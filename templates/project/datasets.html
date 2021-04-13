@@ -1,0 +1,69 @@
+{% extends 'project/base.html' %}
+
+{% load static core_utils %}
+
+{% block js_block %}
+<script type="text/javascript" src="{% static 'js/project/datasets.js' %}"></script>
+{% endblock js_block %}
+
+{% block css_block %}
+<link rel="stylesheet" href="{% static 'css/project/datasets.css' %}" id="theme-link"/>
+{% endblock css_block %}
+
+{% block content_block %}
+<div class="board">
+    <div class="wrapper">
+        <div class="project-datasets-block filters">
+            <div class="title">Теги</div>
+            <div class="inner">
+                <ul>
+                    {% for name, tag in request.terra_project.tags.items %}
+                        <li data-name="filter-{{ name }}"><span>{{ tag }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="project-datasets-block datasets hidden">
+            <div class="title">Выберите датасет</div>
+            <div class="inner">
+                <div class="dataset-card-container custom-scrollbar-wrapper">
+                    <div class="dataset-card-wrapper">
+                        {% for name, dataset in request.terra_project.datasets.items %}
+                            <div class="dataset-card-item {{ dataset.filters.keys|dataset_filters_string }}">
+                                <div class="dataset-card" data-name="{{ name }}">
+                                    <div class="card-title">{{ name }}</div>
+                                    <div class="card-body">
+                                        {% for tag in dataset.filters.values %}
+                                            <div class="card-tag">{{ tag }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="properties">
+    <div class="wrapper custom-scrollbar-wrapper">
+        <form class="params">
+            <div class="params-container">
+                <div class="params-item">
+                    <div class="inner">
+                        <div class="actions-form">
+                            <div class="item prepare"><button>Подготовить</button></div>
+                        </div>
+                        <div class="field-form">
+                            <label for="dataset-task">Выберите задачу</label>
+                            <select name="task" id="dataset-task" class="jquery-ui-menuselect" disabled="disabled"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content_block %}

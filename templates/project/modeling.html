@@ -1,0 +1,131 @@
+{% extends 'project/base.html' %}
+
+{% load static %}
+
+{% block css_block %}
+<link rel="stylesheet" href="{% static 'css/project/modeling.css' %}"/>
+{% endblock css_block %}
+
+{% block js_block %}
+<script type="text/javascript" src="{% static 'js/project/d3/d3.v5.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/project/d3/index.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/project/d3/d3-graphviz.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/project/modeling.js' %}"></script>
+{% endblock js_block %}
+
+{% block content_block %}
+<div class="toolbar project-modeling-toolbar">
+    <div class="wrapper">
+        <ul class="menu-section models">
+            <li data-type="load">
+                <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="save" disabled="disabled">
+                <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            </li>
+        </ul>
+        <ul class="menu-section layers">
+            <li data-type="input">
+                <span><img src="{% static 'imgs/model-menu-3.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="middle" disabled="disabled">
+                <span><img src="{% static 'imgs/model-menu-4.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="output" disabled="disabled">
+                <span><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<div class="board">
+    <div class="wrapper">
+        <div class="canvas-container">
+            <button class="clear hidden">Clear</button>
+            <div class="canvas">
+                <svg>
+                    <g id="canvas-container">
+                        <g id="canvas-lines"></g>
+                        <g id="canvas-nodes"></g>
+                    </g>
+                </svg>
+            </div>
+            <ul class="zoom hidden">
+                <li class="inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
+                <li class="res" data-type="reset"><span><img src="{% static 'imgs/zoom_res.svg' %}" alt="" /></span></li>
+                <li class="dec" data-type="dec"><span><img src="{% static 'imgs/Group-7.svg' %}" alt="" /></span></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="properties project-modeling-properties">
+    <div class="wrapper">
+        <nav class="params-navbar">
+            <ul class="flexbox-left-nowrap">
+                <li class="active"><span>Слой</span></li>
+            </ul>
+        </nav>
+        <div class="params">
+            <form class="params-container layers-form custom-scrollbar-wrapper">
+                <div class="params-item">
+                    <div class="inner">
+                        <input type="hidden" id="field_form-layer_index" name="layer_index" />
+                        <div class="field-form">
+                            <label for="field_form-layer_name">Название слоя</label>
+                            <input disabled="disabled" type="text" id="field_form-layer_name" name="layer_name" />
+                        </div>
+                        <div class="field-form">
+                            <label for="field_form-layer_type">Тип слоя</label>
+                            <select disabled="disabled" name="layer_type" id="field_form-layer_type" class="jquery-ui-menuselect">
+                                <option value=""></option>
+                                {% for layer in layers %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="params-item layer-type-params-container hidden">
+                    <div class="params-title">Параметры слоя</div>
+                    <div class="inner form-inline-label"></div>
+                </div>
+                <div class="params-item">
+                    <div class="inner">
+                        <div class="actions-form">
+                            <div class="item save"><button disabled="disabled">Сохранить</button></div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content_block %}
+
+{% block modal_window %}
+{{ block.super }}
+<div id="modal-window-load-model" class="modal-window-container">
+    <div class="models-data">
+        <div class="models-list">
+            <div class="custom-scrollbar-wrapper">
+                <ul class="loaded-list">
+                    <li><span>model_1_10_06_mnist</span></li>
+                </ul>
+            </div>
+        </div>
+        <div class="model-arch">
+            <div class="wrapper hidden">
+                <div class="modal-arch-info">
+                    <div class="model-arch-info-param">Name: <span></span></div>
+                    <div class="model-arch-info-param">input_shape: <span></span></div>
+                    <div class="model-arch-info-param">datatype: <span></span></div>
+                </div>
+                <div class="model-arch-img"><img src="" alt="" /></div>
+                <div class="model-save-arch-btn"><button>Загрузить</button></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-window-warning" class="modal-window-container">
+    <div class="wrapper"></div>
+</div>
+{% endblock modal_window %}
