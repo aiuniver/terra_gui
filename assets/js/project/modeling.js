@@ -304,8 +304,27 @@
             let _onmouseup = (event)=>{
                 svg.unbind("mousemove", _onmousemove);
                 _targetNode = event.target.parentNode;
+                if(_onContextDrag){
+                    _create_custom_line();
+                }else{
+                    if (event.button === 2) {
+                        let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
+                        if (!Object.keys(params).length) return;
+                        let hint = $(`<div class="hint"></div>`),
+                            text = [];
+                        for (let param in params) {
+                            text.push(`${param}: ${params[param].default || ""}`);
+                        }
+                        hint.html(`${text.join("<br />")}`);
+                        hint.css({
+                            left:event.offsetX,
+                            top:event.offsetY,
+                        });
+                        el.children(".canvas").append(hint);
+                    }
+                }
                 _onContextDrag = false;
-                _create_custom_line();
+
             };
 
             let _onmousemove = (event)=>{
@@ -485,6 +504,81 @@
 
         this.layers = {}
 
+
+        function add_layer(class_name, config){
+            let layer = {
+                config: config,
+                index: $(".node").length+1
+            }
+
+            layer.config.name = layer.index;
+
+            let w = _d3graph._groups[0][0].width.baseVal.value,
+                    h = _d3graph._groups[0][0].height.baseVal.value,
+                    svg = $(_d3graph._groups[0][0]);
+
+                layer.lineTarget = [];
+                layer.lineSource = [];
+
+                let node = _cnodes.append("g")
+                    .attr("id", `node-${layer.index}`)
+                    .attr("class", `node node-type-${class_name}`)
+                    .call(d3.drag()
+                        .on("start", _node_dragstarted)
+                        .on("drag", _node_dragged)
+                        .on("end", _node_dragended)
+                    );
+
+                let rect = node.append("rect");
+
+                let text = node.append("text")
+                    .text(`${layer.index}: ${layer.config.type}`)
+                    .attr("x", 10)
+                    .attr("y", 17);
+
+                let width = text._groups[0][0].getBBox().width + 20;
+                rect.attr("width", width);
+
+                if (layer.x === undefined) layer.x = 30;
+                if (layer.y === undefined) layer.y = 30;
+
+                node.data([layer])
+                    .attr("transform", "translate("+layer.x +","+layer.y +")");
+
+                let _onmousedown = (event)=>{
+                    svg.bind("mousemove", _onmousemove);
+                    _sourceNode = event.target.parentNode;
+                };
+
+                let _onmouseup = (event)=>{
+                    svg.unbind("mousemove", _onmousemove);
+                    _targetNode = event.target.parentNode;
+                    _onContextDrag = false;
+                    _create_custom_line();
+                };
+
+                let _onmousemove = (event)=>{
+                    _onContextDrag = true;
+                };
+
+                $(".node").bind("mousedown", _onmousedown)
+                    .bind("mouseup", _onmouseup);
+        }
+
+        addEventListener("keydown", (event)=>{
+            if(event.which == 187){
+                add_layer("middle", middle_config);
+            }else if(event.which == 189){
+                add_layer("input", middle_config);
+            }else if(event.which == 48){
+                add_layer("output", middle_config);
+            }
+        });
+
+
+
+
+
     }
 
 
@@ -529,7 +623,7 @@
                     if (success) {
                         _model.layers = data.data.layers;
                     } else {
-                        window.StatusBar(data.error, false);
+                        window.StatusBar.message(data.error, false);
                     }
                 },
                 {layers:data}
@@ -558,6 +652,7 @@
                 window.ExchangeRequest(
                     _method,
                     (success, data) => {
+                        console.log(data);
                         if (success) {
                             window.StatusBar.message(window.Messages.get("LAYER_LOADED", [layer]), true);
                             let _layers = data.data.layers,
@@ -596,7 +691,6 @@
                 if ($(item.parentNode).hasClass("layers")) _loadLayer(item.dataset.type);
             });
         });
-
     }
 
 
@@ -645,7 +739,7 @@
     })
 
     addEventListener("keydown", (event)=>{
-        if(event.which == 46){
+        if(event.which == 46 || event.which == 8){
             if($(".node:hover").length != 0){
 
                 for(let i in $(".node:hover")[0].__data__.lineTarget){
@@ -660,5 +754,58 @@
             }
         }
     });
+
+
+
+    let middle_config = {
+          type: "Conv2D",
+          params: {
+            filters: {
+              type: "int",
+              default: 16
+            },
+            kernel_size: {
+              type: "tuple",
+              default: 3
+            },
+            strides: {
+              type: "tuple",
+              default: [
+                1,
+                1
+              ]
+            },
+            padding: {
+              type: "str",
+              default: "same",
+              list: true,
+              available: [
+                "valid",
+                "same"
+              ]
+            },
+            activation: {
+              type: "str",
+              default: "relu",
+              list: true,
+              available: [
+                null,
+                "sigmoid",
+                "softmax",
+                "tanh",
+                "relu",
+                "elu",
+                "selu"
+              ]
+            }
+          },
+          up_link: [
+            1
+          ],
+          inp_shape: [],
+          out_shape: []
+        };
+
+
 
 })(jQuery);
