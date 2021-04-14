@@ -21,7 +21,7 @@
                             <label for="optimazer">Оптимизатор:</label>
                             <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
                                 <option value=""></option>
-                                {% for optimizer in optimizers %}
+                                {% for optimizer in request.terra_project.optimizers %}
                                     <option value="{{ optimizer }}"{% if optimizer|lower == 'adam' %} selected="selected"{% endif %}>{{ optimizer }}</option>
                                 {% endfor %}
                             </select>
@@ -59,7 +59,7 @@
                     </div>
                     -->
                     <div class="inner form-inline-label callbacks-switchers">
-                        {% for name, callback in callbacks.items %}
+                        {% for name, callback in request.terra_project.callbacks.items %}
                             <div class="field-form field-inline">
                                 <label for="callback-{{ name }}">{{ callback.label }}:</label>
                                 <div class="checkout-switch">

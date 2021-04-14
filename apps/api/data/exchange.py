@@ -59,20 +59,14 @@ class ExchangeData:
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)
 
-    # def _execute_get_validated_plan(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.get_validated_plan(**kwargs)
-    #
-    # def _execute_start_nn_train(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.start_nn_train()
-    #
-    # def _execute_get_layers_params(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.get_layers_params(**kwargs)
-    #
-    # def _execute_get_optimizer_kwargs(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.get_optimizer_kwargs(**kwargs)
-    #
-    # def _execute_set_callbacks_switches(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.set_callbacks_switches(kwargs)
-    #
-    # def _execute_start_evaluate(self, **kwargs):
-    #     self.data = settings.EXCHANGE_CLASS.start_evaluate()
+    def _execute_get_optimizer_kwargs(self, **kwargs):
+        return terra_exchange.call("get_optimizer_kwargs", **kwargs)
+
+    def _execute_set_callbacks_switches(self, **kwargs):
+        return terra_exchange.call("set_callbacks_switches", **kwargs)
+
+    def _execute_start_nn_train(self, **kwargs):
+        return terra_exchange.call("start_nn_train", **kwargs)
+
+    def _execute_start_evaluate(self, **kwargs):
+        return terra_exchange.call("start_evaluate", **kwargs)

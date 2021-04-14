@@ -30,12 +30,3 @@ class ModelingView(ProjectViewMixin):
 
 class TrainingView(ProjectViewMixin):
     template_name = "project/training.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs = super().get_context_data(**kwargs)
-        # kwargs["optimizers"] = settings.TERRA_EXCHANGE.get_optimizers_list()
-        # try:
-        #     kwargs["callbacks"] = settings.TERRA_EXCHANGE.get_callbacks_switches()
-        # except KeyError:
-        #     kwargs["callbacks"] = {}
-        return kwargs

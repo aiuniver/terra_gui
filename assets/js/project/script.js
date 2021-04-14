@@ -26,6 +26,9 @@
         let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
+        let _layers_types = options.layers_types || [];
+        let _optimizers = options.optimizers || [];
+        let _callbacks = options.callbacks || {};
 
         Object.defineProperty(this, "error", {
             set: (value) => {
@@ -132,6 +135,33 @@
             },
             get: () => {
                 return _layers;
+            }
+        });
+
+        Object.defineProperty(this, "layers_types", {
+            set: (value) => {
+                _layers_types = value;
+            },
+            get: () => {
+                return _layers_types;
+            }
+        });
+
+        Object.defineProperty(this, "optimizers", {
+            set: (value) => {
+                _optimizers = value;
+            },
+            get: () => {
+                return _optimizers;
+            }
+        });
+
+        Object.defineProperty(this, "callbacks", {
+            set: (value) => {
+                _callbacks = value;
+            },
+            get: () => {
+                return _callbacks;
             }
         });
 

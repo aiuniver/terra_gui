@@ -184,7 +184,7 @@
 
     $(() => {
 
-        if (!window.ProjectConfig.dataset || !window.ProjectConfig.task) {
+        if (!window.TerraProject.dataset || !window.TerraProject.task) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,
@@ -198,7 +198,7 @@
                 }
             });
             warning.open();
-        } else if (!window.ProjectConfig.model_name) {
+        } else if (!Object.keys(window.TerraProject.layers).length) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,
@@ -228,8 +228,12 @@
             $(".callback-params-block > .params-item > .inner > .actions-form > .item > button").attr("disabled", "disabled");
             window.ExchangeRequest(
                 "start_evaluate",
-                (data) => {
-                    $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled");
+                (success, data) => {
+                    if (success) {
+                        $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled");
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
                 }
             );
             return false;
@@ -242,37 +246,46 @@
             ResetGraphics();
             window.ExchangeRequest(
                 "start_nn_train",
-                (data) => {
-                    console.log("Training complete:", data);
+                (success, data) => {
+                    if (success) {
+                        console.log("Training complete:", data);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
                 },
                 {
                     batch:$("#batch-size").val(),
                     epoch:$("#epoch-num").val(),
-                    learning_rate:$("#learning-rate").val()
+                    learning_rate:$("#field_form-learning_rate").val()
                 }
             );
             window.ExchangeRequest(
                 "get_data",
-                (data) => {
-                    if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
-                    window.StatusBar.message(data.data.status_string);
-                    window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                    $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
-                    DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
-                    DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
-                    DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
-                    UpdateTrainingProgress(data.data.prints);
-                    if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
-                    if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
-                    if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
-                    if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
-                    if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length){
-                        if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
-                            $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+                (success, data) => {
+                    if (success) {
+                        if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
+                        window.StatusBar.message(data.data.status_string);
+                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                        $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
+                        DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
+                        DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
+                        DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
+                        UpdateTrainingProgress(data.data.prints);
+                        if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
+                        if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
+                        if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
+                        if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
+                        if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
+                            if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
+                                $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+                            }
                         }
-                    }
-                    if (data.data.stop_flag) {
-
+                        if (data.data.stop_flag) {
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
+                        }
+                    } else {
+                        window.StatusBar.message(data.error, false);
                     }
                 }
             );
@@ -282,9 +295,9 @@
         optimazerSelect.bind("change", (event) => {
             event.preventDefault();
             event.currentTarget.value
-                && window.ProjectConfig.dataset !== null
-                && window.ProjectConfig.model_name !== null
-                && window.ProjectConfig.task !== null
+                && window.TerraProject.dataset !== null
+                && window.TerraProject.model_name !== null
+                && window.TerraProject.task !== null
                 ? $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled")
                 : $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
             $(".wrapper .params-optimazer-block .params-item").html("");
@@ -294,20 +307,15 @@
             `);
             window.ExchangeRequest(
                 "get_optimizer_kwargs",
-                (data) => {
-                    // $("#learning-rate").val(data.data.learning_rate);
-                    // $("#beta-1").val(data.data.beta_1);
-                    // $("#beta-2").val(data.data.beta_2);
-                    // $("#amsgrad").val(true);
-                    // $("#epsilon").val(data.data.epsilon);
-                    let dataLen = Object.keys(data.data).length;
-                    let dataEntries = Object.entries(data.data);
-                    let column = Math.ceil(dataLen / 2)
-                    $(".params-optimazer-block .params-item").append(`
-                        <div class="inner form-inline-label inner-col-1"></div>
-                    `);
-                    dataEntries.forEach(
-                        ([key, param], index) => {
+                (success, data) => {
+                    if (success) {
+                        let dataLen = Object.keys(data.data).length;
+                        let dataEntries = Object.entries(data.data);
+                        let column = Math.ceil(dataLen / 2)
+                        $(".params-optimazer-block .params-item").append(`
+                            <div class="inner form-inline-label inner-col-1"></div>
+                        `);
+                        dataEntries.forEach(([key, param], index) => {
                             let is_boolean = param.type === 'bool';
                             let widget = window.FormWidget(key, {
                                 list: param.list,
@@ -325,9 +333,11 @@
                                 $(".params-optimazer-block .inner.inner-col-1").append(widget);
                             }
                         });
-
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
                 },
-                {"optimizer_name":$(event.currentTarget).val()}
+                {"optimizer":$(event.currentTarget).val()}
             )
         }).selectmenu({
             change:(event) => {
@@ -343,7 +353,13 @@
             });
             window.ExchangeRequest(
                 "set_callbacks_switches",
-                null,
+                (success, data) => {
+                    if (success) {
+                        window.TerraProject.callbacks = data.data.callbacks;
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
                 send_data
             )
         });

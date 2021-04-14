@@ -38,7 +38,7 @@
                                         block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                         block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
                                     } else {
-                                        window.StatusBar.message(data.error, true);
+                                        window.StatusBar.message(data.error, false);
                                     }
                                 },
                                 {"model_file":item.data("name")}

@@ -27,6 +27,8 @@ class TerraExchangeProject:
     model_name: str
     layers: dict
     layers_types: list
+    optimizers: list
+    callbacks: dict
 
     def __init__(self, **kwargs):
         self.error = kwargs.get("error", "")
@@ -38,7 +40,9 @@ class TerraExchangeProject:
         self.task = kwargs.get("task", "")
         self.model_name = kwargs.get("model_name", "")
         self.layers = kwargs.get("layers", {})
-        self.layers_types = kwargs.get("layers_types", {})
+        self.layers_types = kwargs.get("layers_types", [])
+        self.optimizers = kwargs.get("optimizers", [])
+        self.callbacks = kwargs.get("callbacks", {})
 
     def __repr__(self):
         return f"""TerraExchangeProject:
@@ -51,4 +55,6 @@ class TerraExchangeProject:
     task         : {self.task}
     model_name   : {self.model_name}
     layers       : {len(self.layers.keys())}
-    layers_types : {len(self.layers_types)}"""
+    layers_types : {len(self.layers_types)}
+    optimizers   : {len(self.optimizers)}
+    callbacks    : {len(self.callbacks.keys())}"""
