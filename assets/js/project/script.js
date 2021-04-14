@@ -17,6 +17,7 @@
             console.warn(window.Messages.get("PARSE_TERRA_PROJECT_CONFIG_ERROR"));
         }
 
+        let _error = options.error || "";
         let _name = options.name || DEFAULT_NAME;
         let _hardware = options.hardware || DEFAULT_HARDWARE;
         let _datasets = options.datasets || {};
@@ -25,6 +26,15 @@
         let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
+
+        Object.defineProperty(this, "error", {
+            set: (value) => {
+                _error = value;
+            },
+            get: () => {
+                return _error;
+            }
+        });
 
         Object.defineProperty(this, "name", {
             set: (value) => {
@@ -100,7 +110,7 @@
         Object.defineProperty(this, "task_name", {
             get: () => {
                 if (_task) {
-                    return _tasks[_task];
+                    return _tags[_task];
                 } else {
                     return undefined;
                 }
@@ -131,6 +141,10 @@
     $(() => {
 
         window.TerraProject = new TerraProject(window._terra_project);
+
+        if (window.TerraProject.error) {
+            window.StatusBar.message(window.TerraProject.error, false);
+        }
 
         $("header > .user > .item > .menu > .group > .title").bind("click", (event) => {
             $(event.currentTarget).parent().toggleClass("hidden");

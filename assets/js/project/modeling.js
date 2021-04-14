@@ -31,13 +31,17 @@
                             window.StatusBar.message(window.Messages.get("TRYING_TO_LOAD_MODEL", [item.data("name")]));
                             window.ExchangeRequest(
                                 "get_model_from_list",
-                                (data) => {
-                                    window.StatusBar.message(window.Messages.get("MODEL_LOADED", [item.data("name")]), true);
-                                    block.find(".models-data > .model-arch > .wrapper > .model-arch-img > img").attr("src", `data:image/png;base64,${data.data.image}`);
-                                    block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
-                                    block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
+                                (success, data) => {
+                                    if (success) {
+                                        window.StatusBar.message(window.Messages.get("MODEL_LOADED", [item.data("name")]), true);
+                                        block.find(".models-data > .model-arch > .wrapper > .model-arch-img > img").attr("src", `data:image/png;base64,${data.data.image}`);
+                                        block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
+                                        block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
+                                    } else {
+                                        window.StatusBar.message(data.error, true);
+                                    }
                                 },
-                                {"model_name":item.data("name")}
+                                {"model_file":item.data("name")}
                             );
                         });
                     }
@@ -295,7 +299,6 @@
             let _onmousedown = (event)=>{
                 svg.bind("mousemove", _onmousemove);
                 _sourceNode = event.target.parentNode;
-                console.log(2);
             };
 
             let _onmouseup = (event)=>{
@@ -344,8 +347,6 @@
             next_node_data.lineTarget.push(line) ;
             _cnodes.select("#" + _sourceNode.id).data(node_data);
             _cnodes.select("#" + _targetNode.id).data(next_node_data);
-
-            console.log(line);
 
         }
 
@@ -495,7 +496,7 @@
 
         Object.defineProperty(this, "model", {
             set: (value) => {
-                _model.layers = value.layers;
+                _model.layers = value;
             },
             get: () => {
                 return _model;
@@ -524,8 +525,12 @@
             window.StatusBar.clear();
             window.ExchangeRequest(
                 "get_change_validation",
-                (data) => {
-                    _model.layers = data.data.layers;
+                (success, data) => {
+                    if (success) {
+                        _model.layers = data.data.layers;
+                    } else {
+                        window.StatusBar(data.error, false);
+                    }
                 },
                 {layers:data}
             );
@@ -552,28 +557,32 @@
                 if (layer === "output") send_data = {layer_type:"output"}
                 window.ExchangeRequest(
                     _method,
-                    (data) => {
-                        window.StatusBar.message(window.Messages.get("LAYER_LOADED", [layer]), true);
-                        let _layers = data.data.layers,
-                            _indexes = Object.keys(_layers),
-                            _input_layer = _indexes.length ? _indexes[0] : undefined,
-                            _middle_layer = _indexes.length > 2 ? _indexes[_indexes.length - 2] : undefined,
-                            _output_layer = _indexes.length > 1 ? _indexes[_indexes.length - 1] : undefined,
-                            _load_index;
-                        switch (layer) {
-                            case "input":
-                                _load_index = _input_layer;
-                                break;
-                            case "middle":
-                                _load_index = _middle_layer;
-                                break;
-                            case "output":
-                                _load_index = _output_layer;
-                                break;
-                        }
-                        _model.layers = data.data.layers;
-                        if (_load_index !== undefined) {
-                            _model.activeNode(_model.getNodeByIndex(_load_index));
+                    (success, data) => {
+                        if (success) {
+                            window.StatusBar.message(window.Messages.get("LAYER_LOADED", [layer]), true);
+                            let _layers = data.data.layers,
+                                _indexes = Object.keys(_layers),
+                                _input_layer = _indexes.length ? _indexes[0] : undefined,
+                                _middle_layer = _indexes.length > 2 ? _indexes[_indexes.length - 2] : undefined,
+                                _output_layer = _indexes.length > 1 ? _indexes[_indexes.length - 1] : undefined,
+                                _load_index;
+                            switch (layer) {
+                                case "input":
+                                    _load_index = _input_layer;
+                                    break;
+                                case "middle":
+                                    _load_index = _middle_layer;
+                                    break;
+                                case "output":
+                                    _load_index = _output_layer;
+                                    break;
+                            }
+                            _model.layers = data.data.layers;
+                            if (_load_index !== undefined) {
+                                _model.activeNode(_model.getNodeByIndex(_load_index));
+                            }
+                        } else {
+                            window.StatusBar.message(data.error, false);
                         }
                     },
                     send_data
@@ -599,12 +608,7 @@
             params:$(".params-container")
         });
 
-        LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
-            me.model = event.currentTarget.ModelData;
-            LoadModel.close();
-        });
-
-        if (!window.ProjectConfig.dataset || !window.ProjectConfig.task) {
+        if (!window.TerraProject.dataset || !window.TerraProject.task) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,
@@ -618,7 +622,25 @@
                 }
             });
             warning.open();
+        } else {
+            me.model = window.TerraProject.layers;
         }
+
+        LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
+            window.StatusBar.clear();
+            window.ExchangeRequest(
+                "set_model",
+                (success, data) => {
+                    if (success) {
+                        me.model = data.data.layers;
+                        LoadModel.close();
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                {"layers":event.currentTarget.ModelData.layers}
+            )
+        });
 
     })
 

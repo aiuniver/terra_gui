@@ -8,15 +8,19 @@ from .exceptions import TerraExchangeException
 
 
 class TerraExchange:
-    _project: TerraExchangeProject = TerraExchangeProject()
+    __project: TerraExchangeProject = TerraExchangeProject()
 
     @property
     def project(self) -> TerraExchangeProject:
-        return self._project
+        return self.__project
+
+    @project.setter
+    def project(self, props: dict):
+        self.__project = TerraExchangeProject(**props)
 
     @property
     def api_url(self) -> str:
-        return settings.TERRA_EXCHANGE_API_URL
+        return settings.TERRA_AI_EXCHANGE_API_URL
 
     def __get_api_url(self, name: str) -> str:
         return f"{self.api_url}/{name}/"
@@ -68,22 +72,47 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
-    def _call_get_state(self):
+    def _call_get_state(self) -> TerraExchangeResponse:
         return self.__request_post("get_state")
 
-    def _call_set_project_name(self, name: str):
-        self._project.name = name
+    def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
+        self.__project.name = name
         return TerraExchangeResponse()
 
-    def _call_prepare_dataset(self, dataset: str, task: str):
+    def _call_prepare_dataset(self, dataset: str, task: str) -> TerraExchangeResponse:
         response = self.__request_post(
             "prepare_dataset", dataset_name=dataset, task_type=task
         )
         if response.success:
-            self._project.dataset = dataset
-            self._project.task = task
+            self.__project.dataset = dataset
+            self.__project.task = task
             response.data = {"dataset": dataset, "task": task}
         return response
 
-    def _call_get_data(self):
+    def _call_get_data(self) -> TerraExchangeResponse:
         return self.__request_post("get_data")
+
+    def _call_get_models(self) -> TerraExchangeResponse:
+        return self.__request_post("get_models")
+
+    def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
+        return self.__request_post("get_model_from_list", model_name=model_file)
+
+    def _call_set_model(self, layers: dict) -> TerraExchangeResponse:
+        self.__project.layers = layers
+        return TerraExchangeResponse(data={"layers": layers})
+
+    def _call_set_input_layer(self) -> TerraExchangeResponse:
+        response = self.__request_post("set_input_layer")
+        self.__project.layers = response.data.get("layers")
+        return response
+
+    def _call_set_any_layer(self, layer_type: str = "any") -> TerraExchangeResponse:
+        response = self.__request_post("set_any_layer", layer_type=layer_type)
+        self.__project.layers = response.data.get("layers")
+        return response
+
+    def _call_get_change_validation(self, layers: dict) -> TerraExchangeResponse:
+        response = self.__request_post("get_change_validation", layers=layers)
+        self.__project.layers = response.data.get("layers")
+        return response

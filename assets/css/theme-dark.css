@@ -194,13 +194,13 @@ body.namespace-apps_project > .page-training .graphics > .wrapper > .tabs > ul >
 
 /* format-link */
 .format-link {
-    color:#fff;
+    color:#fff !important;
     border-color:#65B9F4;
     background-color:#2B5278;
     box-shadow:0 1px 3px 0 rgba(0,133,255,.5);
 }
 .format-link:hover {
-    border-color:#2B5278;
+    border-color:#2B5278 !important;
     box-shadow:0 1px 3px 0 rgba(0,0,0,.5);
 }
 

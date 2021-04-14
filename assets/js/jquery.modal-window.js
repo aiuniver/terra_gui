@@ -92,10 +92,14 @@
                 if (options.request) {
                     window.ExchangeRequest(
                         options.request[0],
-                        (data) => {
-                            this.addClass("visible");
-                            window.ModalWindow.opened();
-                            if (typeof options.callback === "function") options.callback(this, data.data);
+                        (success, data) => {
+                            if (success) {
+                                this.addClass("visible");
+                                window.ModalWindow.opened();
+                                if (typeof options.callback === "function") options.callback(this, data.data);
+                            } else {
+                                window.StatusBar.message(data.error, false);
+                            }
                         },
                         options.request[1]
                     );

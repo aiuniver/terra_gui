@@ -23,7 +23,7 @@ body.hidden {
     cursor:pointer;
     user-select:none;
     text-decoration:none;
-    transition:border-color .3s ease-in-out, box-shadow .3s ease-in-out, background-color .3s ease-in-out, color .3s ease-in-out;
+    transition:border-color .3s ease-in-out, box-shadow .3s ease-in-out, background-color .3s ease-in-out, color .3s ease-in-out !important;
 }
 
 /* flexbox */

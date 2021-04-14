@@ -79,7 +79,7 @@
                             <label for="field_form-layer_type">Тип слоя</label>
                             <select disabled="disabled" name="layer_type" id="field_form-layer_type" class="jquery-ui-menuselect">
                                 <option value=""></option>
-                                {% for layer in layers %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
+                                {% for layer in request.terra_project.layers_types %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
                             </select>
                         </div>
                     </div>
@@ -107,9 +107,7 @@
     <div class="models-data">
         <div class="models-list">
             <div class="custom-scrollbar-wrapper">
-                <ul class="loaded-list">
-                    <li><span>model_1_10_06_mnist</span></li>
-                </ul>
+                <ul class="loaded-list"></ul>
             </div>
         </div>
         <div class="model-arch">

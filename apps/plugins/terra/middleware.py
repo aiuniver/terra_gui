@@ -36,4 +36,8 @@ class TerraProjectMiddleware(MiddlewareMixin):
             datasets = collect_filters_datasets(response.data.get("datasets", {}), tags)
             terra_exchange.project.datasets = datasets
             terra_exchange.project.tags = tags
+            terra_exchange.project.layers_types = response.data.get("layers_types", [])
+            terra_exchange.project.error = ""
+        else:
+            terra_exchange.project = {"error": "No connection to TerraAI project"}
         request.terra_project = terra_exchange.project.__dict__

@@ -1,11 +1,8 @@
 import json
 import base64
 
-from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import View, TemplateView
-
-from apps.plugins.terra import terra_exchange
 
 
 class ProjectViewMixin(TemplateView):
@@ -29,11 +26,6 @@ class DatasetsView(ProjectViewMixin):
 
 class ModelingView(ProjectViewMixin):
     template_name = "project/modeling.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs = super().get_context_data(**kwargs)
-        # kwargs["layers"] = settings.TERRA_EXCHANGE.get_layers_type_list()
-        return kwargs
 
 
 class TrainingView(ProjectViewMixin):
