@@ -1,5 +1,4 @@
 import os
-import tensorflow
 
 from django.utils.deprecation import MiddlewareMixin
 
@@ -32,23 +31,30 @@ def collect_filters_datasets(datasets: dict, tags: dict) -> dict:
 
 
 def get_hardware_accelerator_type() -> str:
-    device_name = tensorflow.test.gpu_device_name()
-    if device_name != "/device:GPU:0":
-        try:
-            _ = os.environ["COLAB_GPU"]
-            is_it_colab = True
-        except KeyError:
-            is_it_colab = False
-        if is_it_colab:
+    try:
+        import tensorflow
+
+        device_name = tensorflow.test.gpu_device_name()
+        if device_name != "/device:GPU:0":
             try:
-                _ = tensorflow.distribute.cluster_resolver.TPUClusterResolver()
-                res_type = "TPU"
-            except ValueError:
+                _ = os.environ["COLAB_GPU"]
+                is_it_colab = True
+            except KeyError:
+                is_it_colab = False
+            if is_it_colab:
+                try:
+                    _ = tensorflow.distribute.cluster_resolver.TPUClusterResolver()
+                    res_type = "TPU"
+                except ValueError:
+                    res_type = "CPU"
+            else:
                 res_type = "CPU"
         else:
-            res_type = "CPU"
-    else:
-        res_type = "GPU"
+            res_type = "GPU"
+    except Exception as error:
+        print(error)
+        res_type = "CPU"
+
     return res_type
 
 
