@@ -193,7 +193,7 @@
                 callback:(data) => {
                     warning.children(".wrapper").append($(`
                         <p>Для обучения необходимо загрузить датасет.</p>
-                        <p><a class="format-link" href="/project/datasets/">Загрузить датасет</a></p>
+                        <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
                     `));
                 }
             });
@@ -207,7 +207,7 @@
                 callback:(data) => {
                     warning.children(".wrapper").append($(`
                         <p>Для обучения необходимо загрузить модель.</p>
-                        <p><a class="format-link" href="/project/modeling/">Загрузить модель</a></p>
+                        <p><a class="format-link" href="${window.TerraProject.path.modeling}">Загрузить модель</a></p>
                     `));
                 }
             });

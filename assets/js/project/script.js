@@ -29,6 +29,7 @@
         let _layers_types = options.layers_types || [];
         let _optimizers = options.optimizers || [];
         let _callbacks = options.callbacks || {};
+        let _path = options.path || {};
 
         Object.defineProperty(this, "error", {
             set: (value) => {
@@ -162,6 +163,15 @@
             },
             get: () => {
                 return _callbacks;
+            }
+        });
+
+        Object.defineProperty(this, "path", {
+            set: (value) => {
+                _path = value;
+            },
+            get: () => {
+                return _path;
             }
         });
 
