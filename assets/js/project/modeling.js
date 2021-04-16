@@ -245,22 +245,16 @@
                      return "translate(" + d3.event.x + "," + d3.event.y + ")";
                  });
 
-                 //DONT WORK
-
                  let _node_data = _node.data()[0],
-                     lineTarget = _node_data.lineTarget[0]._groups[0],
-                     lineSource = _node_data.lineSource[0]._groups[0];
+                     lineTarget = _node_data.lineTarget,
+                     lineSource = _node_data.lineSource;
 
                  if (lineTarget) {
                      for(let i in lineTarget) {
                          let cx =  d3.event.x + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
                              cy = d3.event.y;
-                             // ox = lineTarget[i]._groups[0][0].transform.baseVal[0].matrix.e,
-                             // oy = lineTarget[i]._groups[0][0].transform.baseVal[0].matrix.f;
-                         // lineTarget[i].select(".dot-target")
-                         //     .attr("cx", cx - ox - 1)
-                         //     .attr("cy", cy - oy - 4);
-                         _clines.select($(lineTarget[i][0].id))
+
+                         _clines.select("#"+lineTarget[i]._groups[0][0].id)
                              .attr("x2", cx)
                              .attr("y2", cy - 4);
                      }
@@ -269,14 +263,10 @@
                      for(let i in lineSource) {
                          let cx = d3.event.x  + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
                              cy = d3.event.y  + _NODE_HEIGHT;
-                         //     ox = lineSource[i]._groups[0][0].transform.baseVal[0].matrix.e,
-                         //     oy = lineSource[i]._groups[0][0].transform.baseVal[0].matrix.f;
-                         // lineSource[i].select(".dot-source")
-                         //     .attr("cx", cx - ox - 1)
-                         //     .attr("cy", cy - oy + 4);
-                         lineSource[i].select("line")
+
+                         _clines.select("#"+lineSource[i]._groups[0][0].id)
                              .attr("x1", cx)
-                             .attr("y1", cy + 4);
+                             .attr("y1", cy - 4);
                      }
                  }
             }
@@ -293,6 +283,7 @@
             });
 
             let _onmousedown = (event)=>{
+                console.log(1);
                 svg.bind("mousemove", _onmousemove);
                 _sourceNode = event.target.parentNode;
                 _targetNode = undefined;
