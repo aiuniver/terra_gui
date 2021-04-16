@@ -3,8 +3,8 @@ from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy
 import numpy as np
 import types
-from terra_ai.guiexchange import Exchange
-from terra_ai.trds import DTS
+from ..colab_exchange import Exchange
+from trds import DTS
 
 __version__ = 0.60
 

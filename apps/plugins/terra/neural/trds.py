@@ -29,7 +29,7 @@ from tqdm.notebook import tqdm
 import threading
 from io import open as ioopen
 from IPython.display import clear_output
-from terra_ai.guiexchange import Exchange
+from ..colab_exchange import Exchange
 
 __version__ = 0.221
 
@@ -40,9 +40,9 @@ class DTS(object):
 
     def __init__(self, exch_obj=tr2dj_obj):
 
-        if 'custom' in globals().keys():
-            for key, value in custom.__dict__.items():
-                self.__dict__[key] = value
+        # if 'custom' in globals().keys():
+        #     for key, value in custom.__dict__.items():
+        #         self.__dict__[key] = value
 
         self.Exch = exch_obj
         self.django_flag = False
