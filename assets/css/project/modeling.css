@@ -324,20 +324,20 @@
 	fill:#65B9F4;
 }
 
-#canvas-lines > .line:hover > line{
-	stroke: #EB5757;
-}
-
-#canvas-lines > .line:hover > circle{
-	fill:#EB5757;
-}
-
 .node > circle{
 	r:2;
 	fill:#65B9F4;
 }
 
 .line{
+	transition:stroke 0.3s ease-in-out;
 	stroke:#65B9F4;
-	stroke-width:1;
+	stroke-width:2;
 }
+
+.line:hover{
+	stroke: #EB5757;
+}
+
+
+

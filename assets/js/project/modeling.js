@@ -68,22 +68,22 @@
             }
 
             this.layersReset = (input, middle, output) => {
-                if (!input) {
-                    input = false;
-                    middle = true;
-                    output = true;
-                } else if (!output) {
-                    input = true;
-                    middle = true;
-                    output = false;
-                } else {
-                    input = true;
-                    middle = false;
-                    output = true;
-                }
-                this.find(".menu-section.layers > li[data-type=input]")[0].disabled = input;
-                this.find(".menu-section.layers > li[data-type=middle]")[0].disabled = middle;
-                this.find(".menu-section.layers > li[data-type=output]")[0].disabled = output;
+               if (!input) {
+                   input = false;
+                   middle = true;
+                   output = true;
+               } else if (!output) {
+                   input = true;
+                   middle = true;
+                   output = false;
+               } else {
+                   input = true;
+                   middle = false;
+                   output = true;
+               }
+               this.find(".menu-section.layers > li[data-type=input]")[0].disabled = false;
+               this.find(".menu-section.layers > li[data-type=middle]")[0].disabled = false;
+               this.find(".menu-section.layers > li[data-type=output]")[0].disabled = false;
             }
 
             Object.defineProperty(this, "items", {
@@ -133,7 +133,48 @@
                 _onContextDrag = false,
                 _onDrag = false,
                 _sourceNode,
-                _targetNode;
+                _targetNode,
+                _lastNodeIndex = 0,
+                _lastLineIndex = 0;
+
+            this.load_layer = (class_name) => {
+
+                let input_cfg = {
+                    type: "input",
+                    params: {}
+                };
+
+                let middle_cfg = {
+                    type: "middle",
+                    params: {}
+                };
+
+                let output_cfg = {
+                    type: "output",
+                    params: {}
+                };
+
+                let layer_cfg = {
+                    lineTarget: {},
+                    lineSource: {}
+                };
+
+                switch (class_name){
+                    case "input":
+                        layer_cfg.config = input_cfg;
+                        break
+
+                    case "middle":
+                         layer_cfg.config = middle_cfg;
+                        break
+
+                    case "output":
+                         layer_cfg.config = output_cfg;
+                        break
+                }
+
+                _create_node(layer_cfg);
+            };
 
             let __clear = () => {
                 _clines.selectAll("g").remove();
@@ -141,12 +182,13 @@
             }
 
             let _create_node = (layer) => {
+                _lastNodeIndex++;
 
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
-                layer.index = $(".node").length + 1;
-                layer.config.name = $(".node").length + 1;
+                layer.index = _lastNodeIndex;
+                layer.config.name = _lastNodeIndex;
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.index}`)
@@ -172,11 +214,14 @@
 
                 let target_circle = node.append("circle")
                     .attr("class", "dot-target")
+                    .attr("visibility", "hidden")
                     .attr("cx", width/2)
                     .attr("cy", -4);
 
+
                 let source_circle = node.append("circle")
                     .attr("class", "dot-source")
+                    .attr("visibility", "hidden")
                     .attr("cx", width/2)
                     .attr("r", 5)
                     .attr("cy", _LINE_HEIGHT);
@@ -188,28 +233,63 @@
                     .bind("mouseup", _onmouseup);
             };
 
+            let _delete_node = (node) => {
+                let target_line = node.__data__.lineTarget,
+                    sourse_line = node.__data__.lineSource;
+
+                for(let line in target_line){
+                    _delete_line($("#"+line)[0]);
+                }
+                for(let line in sourse_line){
+                    _delete_line($("#"+line)[0]);
+                }
+
+                node.remove();
+            };
+
+            let _delete_line = (line) => {
+                let sourse_node = line.__data__.source._groups[0][0],
+                    target_node = line.__data__.target._groups[0][0];
+
+                delete sourse_node.__data__.lineSource[line.id];
+                delete target_node.__data__.lineTarget[line.id];
+
+                if(Object.keys(sourse_node.__data__.lineSource).length < 1){
+                    _cnodes.select("#" + sourse_node.id).select(".dot-source").attr("visibility", "hidden");
+                }
+                if(Object.keys(target_node.__data__.lineTarget).length < 1){
+                     _cnodes.select("#" + target_node.id).select(".dot-target").attr("visibility", "hidden");
+                }
+
+                line.remove();
+            };
+
             let _create_line = (layer) => {
+                _lastLineIndex++;
 
                 let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
+                let line_id =  "line-" + _lastLineIndex;
 
                 let line = _clines.append("line")
-                    .attr("id", `line-${$(".line").length + 1}`)
+                    .attr("id", line_id)
                     .attr("class", "line")
                     .attr("x1", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
                     .attr("y1", _source_node_point.y + _LINE_HEIGHT)
-                    .attr("x2", 30)
-                    .attr("y2", 30);
+                    .attr("x2", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
+                    .attr("y2", _source_node_point.y + _LINE_HEIGHT);
 
                 let node_data = _cnodes.select("#" + _sourceNode.id).data()[0];
 
-                node_data.lineSource.push(line);
+                node_data.lineSource[line_id] = line;
+                _cnodes.select("#" + _sourceNode.id).select(".dot-source").attr("visibility", "visible");
                 _cnodes.select("#" + _sourceNode.id).data(node_data);
             };
 
             let _change_line = () => {
                  let _target_node_point = {x:_targetNode.transform.baseVal[0].matrix.e, y: _targetNode.transform.baseVal[0].matrix.f};
+                 let line_id = "line-" + _lastLineIndex;
 
-                 let line = _clines.select("#line-" + $(".line").length);
+                 let line = _clines.select("#" + line_id);
 
                  line.attr("x2", _target_node_point.x + _targetNode.children[0].width.baseVal.value/2);
                  line.attr("y2", _target_node_point.y - 4);
@@ -217,8 +297,8 @@
                  let next_node_data = _cnodes.select("#" + _targetNode.id).data()[0];
 
                  line.data([{source:  _cnodes.select("#" + _sourceNode.id), target:  _cnodes.select("#" + _targetNode.id)}]);
-
-                 next_node_data.lineTarget.push(line) ;
+                 next_node_data.lineTarget[line_id] = line;
+                 _cnodes.select("#" + _targetNode.id).select(".dot-target").attr("visibility", "visible");
                  _cnodes.select("#" + _targetNode.id).data(next_node_data);
             };
 
@@ -226,7 +306,7 @@
             this.activeNode = (_node) => {
                 _cnodes.selectAll(".node").classed("active", false);
                 _node.classed("active", true);
-                // params.load(_node.data()[0]);
+                //params.load(_node.data()[0]);
             }
 
 
@@ -266,7 +346,7 @@
 
                          _clines.select("#"+lineSource[i]._groups[0][0].id)
                              .attr("x1", cx)
-                             .attr("y1", cy - 4);
+                             .attr("y1", cy + 4);
                      }
                  }
             }
@@ -283,24 +363,28 @@
             });
 
             let _onmousedown = (event)=>{
-                console.log(1);
                 svg.bind("mousemove", _onmousemove);
                 _sourceNode = event.target.parentNode;
                 _targetNode = undefined;
-                _create_line();
+                if(!_onContextDrag){
+                    _create_line();
+                    _onContextDrag = true;
+                }
             };
 
             let _onmouseup = (event)=>{
                 svg.unbind("mousemove", _onmousemove);
                 _targetNode = event.target.parentNode;
+                if(_onContextDrag){
+                    _change_line();
+                }
                 _onContextDrag = false;
-                _change_line();
             };
 
             let _onmousemove = (event)=>{
                 _onContextDrag = true;
 
-                d3.select("#line-" + $(".line").length)
+                d3.select("#line-" + _lastLineIndex)
                     .attr("x2", event.offsetX)
                     .attr("y2", event.offsetY);
             };
@@ -313,6 +397,13 @@
                         lineSource: []
                     }
                     _create_node(layer);
+                }
+                else if(event.which == 46 || event.which == 8){
+                    if($(".node:hover").length != 0){
+                        _delete_node($(".node:hover")[0]);
+                    } else if($(".line:hover").length != 0){
+                        _delete_line($(".line:hover")[0])
+                    }
                 }
             })
 
@@ -404,16 +495,12 @@
 
         terra_toolbar.items.children("span").bind("click", (event) => {
             event.currentTarget.parentNode.execute((item) => {
-                if ($(item.parentNode).hasClass("layers")) _loadLayer(item.dataset.type);
+                if ($(item.parentNode).hasClass("layers")) terra_board.load_layer(item.dataset.type);
+                terra_toolbar.layersReset(item);
             });
         });
 
     });
-
-    let middle_cfg = {
-        type: "middle",
-        params: {}
-    }
 
 })(jQuery);
 
