@@ -4,14 +4,11 @@ import sys
 import os.path
 import os
 import operator
-import tensorflow.keras.optimizers
-import tensorflow
 
 __version__ = 0.1
 
 
 class GUINN:
-
     """
     GUINN: class, for train model
     """
@@ -244,7 +241,7 @@ class GUINN:
         x_train_shape, num_classes
         """
         msg = f'num_classes = {self.DTS.num_classes}, shape = {self.DTS.x_Train.shape}, epochs = {self.epochs},\n' \
-              f'learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n' \ 
+              f'learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n' \
               f'shuffle = {self.shuffle}, loss = {self.loss}, metrics = {self.metrics}\n'
 
         # TODO: change to print_2status_bar then remove debug_mode
