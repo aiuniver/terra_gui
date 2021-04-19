@@ -6,7 +6,7 @@ from threading import Thread
 from dataclasses import dataclass
 from IPython import get_ipython
 
-from neural.trds import DTS
+from .neural.trds import DTS
 
 from django.conf import settings
 
