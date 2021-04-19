@@ -11,8 +11,9 @@ __version__ = 0.1
 
 
 class GUINN:
+
     """
-    GUINN class, for using
+    GUINN: class, for train model
     """
 
     def __init__(self, exch_obj) -> None:
@@ -24,7 +25,8 @@ class GUINN:
         """
 
         self.Exch = exch_obj
-
+        self.DTS = None
+        self.callbacks = None
         '''
         For testing in different setups and environment
         '''
@@ -78,7 +80,7 @@ class GUINN:
         pass
 
         self.nn_name = ''
-        self.model = tensorflow.keras.Model()
+        self.model = None
         self.external_model = False
 
         if self.mounted_drive_writable:
@@ -116,7 +118,6 @@ class GUINN:
             self.history = dict()
             self.best_metric_result = '0000'
 
-            self.callbacks = []
             self.learning_rate = 1e-3
             self.optimizer_name = 'Adam'
             self.loss = 'categorical_crossentropy'
@@ -130,6 +131,26 @@ class GUINN:
             else:
                 self.monitor = self.metrics[0]
             self.monitor2 = 'loss'
+
+    def set_dataset(self, dts_obj: object) -> None:
+        """
+        Setting task nn_name
+
+        Args:
+            dts_obj (object): setting task_name
+        """
+        self.DTS = dts_obj
+        pass
+
+    def set_callback(self, callback_obj: object) -> None:
+        """
+        Setting task nn_name
+
+        Args:
+            callback_obj (object): setting callbacks
+        """
+        self.callbacks = callback_obj
+        pass
 
     def checking_HOME(self) -> None:
         """
@@ -222,8 +243,8 @@ class GUINN:
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
         x_train_shape, num_classes
         """
-        msg = f'num_classes = {self.Exch.DTS.num_classes}, shape = {self.Exch.DTS.x_Train.shape}, epochs = {self.epochs},\n' \
-              f'learning_rate={self.learning_rate}, callbacks = {self.Exch.callbacks}, batch_size = {self.batch_size},\n' \ 
+        msg = f'num_classes = {self.DTS.num_classes}, shape = {self.DTS.x_Train.shape}, epochs = {self.epochs},\n' \
+              f'learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n' \ 
               f'shuffle = {self.shuffle}, loss = {self.loss}, metrics = {self.metrics}\n'
 
         # TODO: change to print_2status_bar then remove debug_mode
@@ -252,6 +273,7 @@ class GUINN:
         This method created for using wth externally compiled models
 
         Args:
+            nnmodel (obj): keras model for fit
             verbose:    verbose arg from tensorflow.keras.model.fit
 
         Return:
@@ -259,7 +281,6 @@ class GUINN:
         """
         self.model = nnmodel
         self.nn_name = f'{self.model.name}'
-        self.callbacks = self.Exch.callbacks
         self.shuffle = self.Exch.shuffle
         self.loss = self.Exch.get_loss_from_django()
         self.metrics = self.Exch.get_metrics_from_django()
@@ -276,11 +297,11 @@ class GUINN:
             print('self.callbacks', self.callbacks)
 
         self.show_training_params()
-        self.history = self.model.fit(self.Exch.DTS.x_Train,
-                                      self.Exch.DTS.y_Train,
+        self.history = self.model.fit(self.DTS.x_Train,
+                                      self.DTS.y_Train,
                                       batch_size=self.batch_size,
                                       shuffle=self.shuffle,
-                                      validation_data=(self.Exch.DTS.x_Val, self.Exch.DTS.y_Val),
+                                      validation_data=(self.DTS.x_Val, self.DTS.y_Val),
                                       epochs=self.epochs,
                                       verbose=verbose,
                                       callbacks=self.callbacks)
