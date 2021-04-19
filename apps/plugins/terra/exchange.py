@@ -5,6 +5,7 @@ from django.conf import settings
 
 from .data import TerraExchangeResponse, TerraExchangeProject
 from .exceptions import TerraExchangeException
+from .neural import colab_exchange
 
 
 class TerraExchange:
@@ -73,7 +74,7 @@ class TerraExchange:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
     def _call_get_state(self, task: str = "") -> TerraExchangeResponse:
-        return self.__request_post("get_state", task=task)
+        return TerraExchangeResponse(data=colab_exchange.get_state(task=task))
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
         self.__project.name = name

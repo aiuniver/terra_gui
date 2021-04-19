@@ -2,21 +2,9 @@ import gc
 import os
 import re
 
-from threading import Thread
-from dataclasses import dataclass
 from IPython import get_ipython
 
 from .neural.trds import DTS
-
-from django.conf import settings
-
-# Delete next three lines in prod
-import environ
-
-# Init environ
-env = environ.Env()
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = environ.Path(__file__) - 3
 
 
 class Exchange:
@@ -476,6 +464,18 @@ class Exchange:
 
     def get_callbacks_switches(self, task: str) -> dict:
         return self.callback_show_options_switches_front[task]
+
+    def get_state(self, task: str) -> dict:
+        data = self.get_datasets_data()
+        data.update(
+            {
+                # "layers_types": self.get_layers_type_list(),
+                # "optimizers": self.get_optimizers_list(),
+                "callbacks": self.callback_show_options_switches_front.get(task, {}),
+                "hardware": self.get_hardware_env(),
+            }
+        )
+        return data
 
     # def get_data(self):
     #     if self.process_flag == "train":
