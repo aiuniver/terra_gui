@@ -37,15 +37,13 @@ from tqdm.notebook import tqdm
 import threading
 from io import open as ioopen
 from IPython.display import clear_output
-from ..colab_exchange import Exchange
+from .. import colab_exchange
 
 __version__ = 0.221
 
-tr2dj_obj = Exchange()
-
 
 class DTS(object):
-    def __init__(self, exch_obj=tr2dj_obj):
+    def __init__(self, exch_obj=colab_exchange):
 
         # if 'custom' in globals().keys():
         #     for key, value in custom.__dict__.items():
