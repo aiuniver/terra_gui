@@ -83,12 +83,18 @@ class ClassificationCallback(keras.callbacks.Callback):
                 xlabel = "epoch"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
-                plot_data[labels] = [[list(range(len(self.history[metric_name]))),
-                                      self.history[metric_name],
-                                      f'{metric_name}'],
-                                     [list(range(len(self.history[val_metric_name]))),
-                                      self.history[val_metric_name],
-                                      f'{val_metric_name}']]
+                plot_data[labels] = [
+                    [
+                        list(range(len(self.history[metric_name]))),
+                        self.history[metric_name],
+                        f"{metric_name}",
+                    ],
+                    [
+                        list(range(len(self.history[val_metric_name]))),
+                        self.history[val_metric_name],
+                        f"{val_metric_name}",
+                    ],
+                ]
 
             if self.class_metrics:
                 for metric_name in self.clbck_metrics:
@@ -96,13 +102,28 @@ class ClassificationCallback(keras.callbacks.Callback):
                         metric_name = metric_name.__name__
                     val_metric_name = f"val_{metric_name}"
                     if metric_name in self.class_metrics:
-                        classes_title = f"{val_metric_name} of {self.classes} classes. {msg_epoch}"
+                        classes_title = (
+                            f"{val_metric_name} of {self.classes} classes. {msg_epoch}"
+                        )
                         xlabel = "epoch"
                         ylabel = val_metric_name
                         labels = (classes_title, xlabel, ylabel)
-                        plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][self.idx][j]))),
-                                              self.predict_cls[val_metric_name][self.idx][j],
-                                              f"{val_metric_name} class {j}", ] for j in range(self.classes)]
+                        plot_data[labels] = [
+                            [
+                                list(
+                                    range(
+                                        len(
+                                            self.predict_cls[val_metric_name][self.idx][
+                                                j
+                                            ]
+                                        )
+                                    )
+                                ),
+                                self.predict_cls[val_metric_name][self.idx][j],
+                                f"{val_metric_name} class {j}",
+                            ]
+                            for j in range(self.classes)
+                        ]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -112,8 +133,7 @@ class ClassificationCallback(keras.callbacks.Callback):
         Returns: array of best or worst predictions indices
         """
         classes = np.argmax(self.y_true, axis=-1)
-        probs = np.array([pred[classes[i]]
-                          for i, pred in enumerate(self.y_pred)])
+        probs = np.array([pred[classes[i]] for i, pred in enumerate(self.y_pred)])
         sorted_args = np.argsort(probs)
         if self.show_best:
             indices = sorted_args[-count:]
@@ -281,8 +301,13 @@ class SegmentationCallback(keras.callbacks.Callback):
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
         self.idx = 0
         self.num_classes = self.dataset.num_classes  # количество классов
-        self.acls_lst = [[[] for i in range(self.num_classes + 1)] for i in range(len(self.clbck_metrics))]  #
-        self.predict_cls = {}  # словарь для сбора истории предикта по классам и метрикам
+        self.acls_lst = [
+            [[] for i in range(self.num_classes + 1)]
+            for i in range(len(self.clbck_metrics))
+        ]  #
+        self.predict_cls = (
+            {}
+        )  # словарь для сбора истории предикта по классам и метрикам
         self.batch_count = 0
         pass
 
@@ -292,39 +317,52 @@ class SegmentationCallback(keras.callbacks.Callback):
             None:
         """
         plot_data = {}
-        msg_epoch = f'Epoch №{self.epoch + 1:03d}'
+        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
                 val_metric_name = f"val_{metric_name}"
                 # определяем, что демонстрируем во 2м и 3м окне
-                metric_title = f'{metric_name} and {val_metric_name} {msg_epoch}'
+                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
                 xlabel = "epoch"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
-                plot_data[labels] = [[list(range(len(self.history[metric_name]))),
-                                      self.history[metric_name],
-                                      f'{metric_name}'],
-                                     [list(range(len(self.history[val_metric_name]))),
-                                      self.history[val_metric_name],
-                                      f'{val_metric_name}']]
+                plot_data[labels] = [
+                    [
+                        list(range(len(self.history[metric_name]))),
+                        self.history[metric_name],
+                        f"{metric_name}",
+                    ],
+                    [
+                        list(range(len(self.history[val_metric_name]))),
+                        self.history[val_metric_name],
+                        f"{val_metric_name}",
+                    ],
+                ]
 
             if self.class_metrics:
                 for idx, metric_name in enumerate(self.clbck_metrics):
                     if not isinstance(metric_name, str):
                         metric_name = metric_name.__name__
-                    val_metric_name = f'val_{metric_name}'
+                    val_metric_name = f"val_{metric_name}"
                     if metric_name in self.class_metrics:
-                        classes_title = f'{val_metric_name} of {self.num_classes} classes. {msg_epoch}'
-                        xlabel = 'epoch'
+                        classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+                        xlabel = "epoch"
                         ylabel = val_metric_name
                         labels = (classes_title, xlabel, ylabel)
                         plot_data[labels] = [
-                            [list(range(len(self.predict_cls[val_metric_name][idx][j]))),
-                             self.predict_cls[val_metric_name][idx][j],
-                             f"{val_metric_name} class {self.dataset.classes_names[j]}"]
-                            for j in range(self.num_classes)]
+                            [
+                                list(
+                                    range(
+                                        len(self.predict_cls[val_metric_name][idx][j])
+                                    )
+                                ),
+                                self.predict_cls[val_metric_name][idx][j],
+                                f"{val_metric_name} class {self.dataset.classes_names[j]}",
+                            ]
+                            for j in range(self.num_classes)
+                        ]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -358,7 +396,7 @@ class SegmentationCallback(keras.callbacks.Callback):
         colored_mask = np.array(colored_mask)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape)
 
-    def _dice_coef(self, smooth=1.):
+    def _dice_coef(self, smooth=1.0):
         """
         Compute dice coefficient for each mask
 
@@ -371,8 +409,10 @@ class SegmentationCallback(keras.callbacks.Callback):
         """
 
         intersection = np.sum(self.y_true * self.y_pred, axis=(1, 2, 3))
-        union = np.sum(self.y_true, axis=(1, 2, 3)) + np.sum(self.y_pred, axis=(1, 2, 3))
-        self.dice = (2. * intersection + smooth) / (union + smooth)
+        union = np.sum(self.y_true, axis=(1, 2, 3)) + np.sum(
+            self.y_pred, axis=(1, 2, 3)
+        )
+        self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
     def plot_images(self):
         """
@@ -416,7 +456,7 @@ class SegmentationCallback(keras.callbacks.Callback):
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
-    def evaluate_accuray(self, smooth=1.):
+    def evaluate_accuray(self, smooth=1.0):
         """
         Compute accuracy for classes
 
@@ -443,7 +483,7 @@ class SegmentationCallback(keras.callbacks.Callback):
             acc_val = summ_val / self.y_true.shape[0]
             self.metric_classes.append(acc_val)
 
-    def evaluate_dice_coef(self, smooth=1.):
+    def evaluate_dice_coef(self, smooth=1.0):
         """
         Compute dice coefficient for classes
 
@@ -454,13 +494,13 @@ class SegmentationCallback(keras.callbacks.Callback):
         -------
         None
         """
-        if self.dataset.tags[0] == 'images':
+        if self.dataset.tags[0] == "images":
             axis = (1, 2)
-        elif self.dataset.tags[0] == 'text':
+        elif self.dataset.tags[0] == "text":
             axis = 1
         intersection = np.sum(self.y_true * self.y_pred, axis=axis)
         union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
-        dice = np.mean((2. * intersection + smooth) / (union + smooth), axis=0)
+        dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         self.metric_classes = dice
 
     def evaluate_loss(self):
@@ -524,11 +564,11 @@ class SegmentationCallback(keras.callbacks.Callback):
             self.y_true = self.dataset.y_Val
 
             # вычисляем результат по классам
-            if metric_name == 'accuracy':
+            if metric_name == "accuracy":
                 self.evaluate_accuray()
-            elif metric_name == 'dice_coef':
+            elif metric_name == "dice_coef":
                 self.evaluate_dice_coef()
-            elif metric_name == 'loss':
+            elif metric_name == "loss":
                 self.evaluate_loss()
 
             # собираем в словарь по метрикам и классам

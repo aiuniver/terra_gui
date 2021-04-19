@@ -510,35 +510,35 @@ class Exchange:
     #     self.process_flag = "train"
     #     self._reset_out_data()
     #     self.nn.load_dataset(self.dts, task_type=self.current_state["task"])
-        # TEST SETTINGS DELETE FOR PROD
-        # if self.nn.env_setup == 'raw' and self.dts.name == 'mnist':
-        #     self.dts.x_Train = self.dts.x_Train[:1000, :, :]
-        #     self.dts.y_Train = self.dts.y_Train[:1000, :]
-        #     self.dts.x_Val = self.dts.x_Val[:1000, :, :]
-        #     self.dts.y_Val = self.dts.y_Val[:1000, :]
+    # TEST SETTINGS DELETE FOR PROD
+    # if self.nn.env_setup == 'raw' and self.dts.name == 'mnist':
+    #     self.dts.x_Train = self.dts.x_Train[:1000, :, :]
+    #     self.dts.y_Train = self.dts.y_Train[:1000, :]
+    #     self.dts.x_Val = self.dts.x_Val[:1000, :, :]
+    #     self.dts.y_Val = self.dts.y_Val[:1000, :]
 
-        # @dataclass
-        # class MyPlan(LayersDef):
-        #     framework = "keras"
-        #     input_datatype = self.dts.input_datatype  # Type of data
-        #     plan_name = self.current_state.get("model")
-        #     num_classes = self.dts.num_classes
-        #     input_shape = self.dts.input_shape
-        #     plan = self.model_plan
-        #
-        # self.epochs = int(epoch)
-        # self.batch_size = int(batch)
+    # @dataclass
+    # class MyPlan(LayersDef):
+    #     framework = "keras"
+    #     input_datatype = self.dts.input_datatype  # Type of data
+    #     plan_name = self.current_state.get("model")
+    #     num_classes = self.dts.num_classes
+    #     input_shape = self.dts.input_shape
+    #     plan = self.model_plan
+    #
+    # self.epochs = int(epoch)
+    # self.batch_size = int(batch)
 
-        # TEST PARAMS DELETE FOR PROD
-        # if self.nn.env_setup == 'raw':
-        #     self.epochs = 1
-        #     self.batch_size = 64
+    # TEST PARAMS DELETE FOR PROD
+    # if self.nn.env_setup == 'raw':
+    #     self.epochs = 1
+    #     self.batch_size = 64
 
-        # training = Thread(target=self.start_training, args=(MyPlan,))
-        # training.start()
-        # training.join()
-        # self.is_trained = True
-        # return self.out_data
+    # training = Thread(target=self.start_training, args=(MyPlan,))
+    # training.start()
+    # training.join()
+    # self.is_trained = True
+    # return self.out_data
 
 
 if __name__ == "__main__":
