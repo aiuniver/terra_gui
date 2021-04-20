@@ -126,6 +126,9 @@
             const _NODE_HEIGHT = 25,
                 _LINE_HEIGHT = 30;
 
+
+            let zoom = d3.zoom().on("zoom", zoomed);
+
             let _d3graph = d3.select(this.find(".canvas > svg")[0]),
                 _clines = _d3graph.select("#canvas-lines"),
                 _cnodes = _d3graph.select("#canvas-nodes"),
@@ -136,6 +139,35 @@
                 _targetNode,
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
+
+            _d3graph.call(zoom);  
+
+            d3.select("#zoom-inc").on("click", () => {  
+                zoom.scaleBy(_d3graph.transition().duration(450), 1.2);
+            });
+            
+            d3.select("#zoom-dec").on("click", () => {
+                zoom.scaleBy(_d3graph.transition().duration(450), 0.8);
+            });
+
+            d3.select("#zoom-reset").on("click", () => {
+                _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
+            });
+                  
+            function zoomed() {
+                _d3graph.select("g").attr("transform", d3.event.transform);
+            };
+
+            d3.select("#canvas-clear").on("click", () => {
+                _clines.selectAll("line").remove();
+                _cnodes.selectAll("g").remove();
+                _lastNodeIndex = 0,
+                _lastLineIndex = 0;
+                _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
+            });
+
+
+                
 
             this.load_layer = (class_name) => {
 
