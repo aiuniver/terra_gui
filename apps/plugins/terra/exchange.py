@@ -72,8 +72,8 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
-    def _call_get_state(self) -> TerraExchangeResponse:
-        return self.__request_post("get_state")
+    def _call_get_state(self, task: str = "") -> TerraExchangeResponse:
+        return self.__request_post("get_state", task=task)
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
         self.__project.name = name
@@ -116,3 +116,19 @@ class TerraExchange:
         response = self.__request_post("get_change_validation", layers=layers)
         self.__project.layers = response.data.get("layers")
         return response
+
+    def _call_get_optimizer_kwargs(self, optimizer: str) -> TerraExchangeResponse:
+        return self.__request_post("get_optimizer_kwargs", optimizer_name=optimizer)
+
+    def _call_set_callbacks_switches(self, **kwargs) -> TerraExchangeResponse:
+        callbacks = self.__project.callbacks
+        for callback in kwargs.items():
+            callbacks[callback[0]]["value"] = callback[1]
+        self.__project.callbacks = callbacks
+        return TerraExchangeResponse(data={"callbacks": callbacks})
+
+    def _call_start_nn_train(self, **kwargs) -> TerraExchangeResponse:
+        return self.__request_post("start_nn_train", **kwargs)
+
+    def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
+        return self.__request_post("start_evaluate", **kwargs)

@@ -4,6 +4,8 @@ import base64
 from django.http import HttpResponse
 from django.views.generic import View, TemplateView
 
+from apps.plugins.terra import terra_exchange
+
 
 class ProjectViewMixin(TemplateView):
     pass
@@ -12,7 +14,7 @@ class ProjectViewMixin(TemplateView):
 class ConfigJSView(View):
     def get(self, request, *arg, **kwargs):
         data = base64.b64encode(
-            json.dumps(request.terra_project).encode("utf-8")
+            json.dumps(terra_exchange.project.as_json_string).encode("utf-8")
         ).decode("utf-8")
         return HttpResponse(
             f'window._terra_project="{data}"',
@@ -30,12 +32,3 @@ class ModelingView(ProjectViewMixin):
 
 class TrainingView(ProjectViewMixin):
     template_name = "project/training.html"
-
-    def get_context_data(self, **kwargs):
-        kwargs = super().get_context_data(**kwargs)
-        # kwargs["optimizers"] = settings.TERRA_EXCHANGE.get_optimizers_list()
-        # try:
-        #     kwargs["callbacks"] = settings.TERRA_EXCHANGE.get_callbacks_switches()
-        # except KeyError:
-        #     kwargs["callbacks"] = {}
-        return kwargs
