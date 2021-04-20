@@ -43,6 +43,8 @@
                                             block.find(".models-data > .model-arch > .wrapper > .model-arch-img > img").attr("src", `data:image/png;base64,${data.data.image}`);
                                             block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                             block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
+                                            terra_board.model_schema = data.data.front_model_schema;
+                                            console.log(terra_board.model_schema);
                                         } else {
                                             window.StatusBar.message(data.error, false);
                                         }
@@ -209,22 +211,26 @@
             };
 
             let __clear = () => {
-                _clines.selectAll("g").remove();
+                _clines.selectAll("line").remove();
                 _cnodes.selectAll("g").remove();
+                _lastNodeIndex = 0;
+                _lastLineIndex = 0;
             }
 
             let _create_node = (layer) => {
+
+                layer.lineTarget = {};
+                layer.lineSource = {};
                 _lastNodeIndex++;
 
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
                 layer.index = _lastNodeIndex;
-                layer.config.name = _lastNodeIndex;
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.index}`)
-                    .attr("class", `node node-type-${layer.config.type}`)
+                    .attr("class", `node node-type-${layer.type}`)
                     .call(d3.drag()
                         .on("start", _node_dragstarted)
                         .on("drag", _node_dragged)
@@ -241,8 +247,10 @@
                 let width = text._groups[0][0].getBBox().width + 20;
                     rect.attr("width", width);
 
-                if (layer.x === undefined ) layer.x = 30;
-                if (layer.y === undefined) layer.y = 30;
+                let margin_row_left = (w - this.model_schema[layer.index][0]*(width+20))/2;
+
+                if (layer.x === undefined ) layer.x = margin_row_left + this.model_schema[layer.index][1]*(width+20);
+                if (layer.y === undefined) layer.y = 60 * this.model_schema[layer.index][2];
 
                 let target_circle = node.append("circle")
                     .attr("class", "dot-target")
@@ -296,7 +304,7 @@
                 line.remove();
             };
 
-            let _create_line = (layer) => {
+            let _create_line = () => {
                 _lastLineIndex++;
 
                 let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
@@ -442,23 +450,23 @@
             Object.defineProperty(this, "model", {
                 set: (layers) => {
                     __clear();
-                    // let num = 0,
-                    //     _layer,
-                    //     _layers = [];
-                    // for (let index in value) {
-                    //     let type = "middle";
-                    //     if (num === Object.keys(value).length - 1) type = "output";
-                    //     if (num === 0) type = "input";
-                    //     _layer = {
-                    //         index:index,
-                    //         config:value[index],
-                    //         type:type
-                    //     };
-                    //     _layers.push(_layer);
-                    //     this.layer = _layer
-                    //     num++;
-                    // }
-                    // _create_model(_layers);
+                    let num = 0,
+                        _layer,
+                        _layers = [];
+                    for (let index in layers) {
+                        let type = "middle";
+                        if (num === Object.keys(layers).length - 1) type = "output";
+                        if (num === 0) type = "input";
+                        _layer = {
+                            index:index,
+                            config:layers[index],
+                            type:type
+                        };
+                        _layers.push(_layer);
+                        this.layer = _layer
+                        num++;
+                    }
+                    _create_model(_layers);
                     // let exists = _existsLayersTypes();
                     // toolbar.layersReset(exists[0], exists[1], exists[2]);
                     // params.reset();
@@ -467,6 +475,24 @@
                     return _cnodes.selectAll("g.node");
                 }
             });
+
+             let _create_model = (layers) => {
+                layers.forEach((layer) => {
+                    _create_node(layer);
+                });
+                layers.forEach((layer) => {
+                    _targetNode = $("#node-"+layer.config.name)[0]
+                    layer.config.up_link.forEach((parent_node) => {
+                        if(parent_node == 0){
+                            return
+                        }
+                        _sourceNode = $("#node-"+parent_node)[0];
+                        _create_line();
+                        _change_line();
+                    })
+                });
+            }
+
 
             return this;
 
@@ -491,23 +517,23 @@
         terra_board = $(".canvas-container").TerraBoard();
         terra_params = $(".params-container").TerraParams();
 
-        if (!window.TerraProject.dataset || !window.TerraProject.task) {
-            // let warning = $("#modal-window-warning").ModalWindow({
-            //     title:"Предупреждение!",
-            //     width:300,
-            //     height:174,
-            //     noclose:true,
-            //     callback:(data) => {
-            //         warning.children(".wrapper").append($(`
-            //             <p>Для редактирования модели необходимо загрузить датасет.</p>
-            //             <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
-            //         `));
-            //     }
-            // });
-            // warning.open();
-        } else {
-            terra_board.model = window.TerraProject.layers;
-        }
+        // if (!window.TerraProject.dataset || !window.TerraProject.task) {
+        //     let warning = $("#modal-window-warning").ModalWindow({
+        //         title:"Предупреждение!",
+        //         width:300,
+        //         height:174,
+        //         noclose:true,
+        //         callback:(data) => {
+        //             warning.children(".wrapper").append($(`
+        //                 <p>Для редактирования модели необходимо загрузить датасет.</p>
+        //                 <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
+        //             `));
+        //         }
+        //     });
+        //     warning.open();
+        // } else {
+        //     terra_board.model = window.TerraProject.layers;
+        // }
 
         LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
             window.StatusBar.clear();
@@ -515,7 +541,7 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        me.model = data.data.layers;
+                        terra_board.model = data.data.layers;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);
