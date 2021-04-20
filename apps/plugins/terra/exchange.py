@@ -81,14 +81,10 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_prepare_dataset(self, dataset: str, task: str) -> TerraExchangeResponse:
-        response = self.__request_post(
-            "prepare_dataset", dataset_name=dataset, task_type=task
-        )
-        if response.success:
-            self.__project.dataset = dataset
-            self.__project.task = task
-            response.data = {"dataset": dataset, "task": task}
-        return response
+        response = colab_exchange.prepare_dataset(dataset_name=dataset, task_type=task)
+        self.__project.dataset = dataset
+        self.__project.task = task
+        return TerraExchangeResponse(data=response)
 
     def _call_get_data(self) -> TerraExchangeResponse:
         return self.__request_post("get_data")
