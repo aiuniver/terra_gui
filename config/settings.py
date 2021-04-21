@@ -52,6 +52,7 @@ INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
     "apps.core.apps.CoreConfig",
     "apps.project.apps.ProjectConfig",
+    "terra_ai.apps.TerraAiConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + INTERNAL_APPS
