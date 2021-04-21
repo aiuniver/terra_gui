@@ -364,7 +364,7 @@ class Exchange:
         self.process_flag = "dataset"
         custom_flag = options.get('source')
         if custom_flag and custom_flag == 'custom':
-            return self._create_custom_dataset()
+            return self._create_custom_dataset(**options)
         return self._prepare_dataset(**options)
 
     def set_stop_training_flag(self):
