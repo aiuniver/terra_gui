@@ -322,6 +322,7 @@ class Exchange:
         with open(dataset_path, 'rb') as f:
             custom_dts = dill.load(f)
         self.dts = custom_dts
+        print('DTS', self.dts, '\n', self.dts.name)
         self._set_dts_name(self.dts.name)
         return self.dts.tags, self.dts.name
 
