@@ -1394,7 +1394,7 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, nn_model: object):
+    def start_training(self, model: object, callback: object):
         # if self.debug_verbose == 3:
         #     print(f"Dataset name: {self.dts.name}")
         #     print(f"Dataset shape: {self.dts.input_shape}")
@@ -1404,6 +1404,9 @@ class Exchange(StatesData, GuiExch):
         #     print(f"x_Train: {self.nn.DTS.x_Train.shape}")
         #     print(f"y_Train: {self.nn.DTS.y_Train.shape}")
         self.nn.set_dataset(self.dts)
+        nn_callback = dill.loads(callback)
+        nn_model = dill.loads(model)
+        self.nn.set_callback(nn_callback)
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
     #
