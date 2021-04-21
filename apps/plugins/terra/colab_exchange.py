@@ -8,6 +8,7 @@ from IPython import get_ipython
 from django.conf import settings
 
 from terra_ai.trds import DTS
+from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 
 
@@ -865,7 +866,7 @@ class StatesData:
         }
 
 
-class Exchange(StatesData):
+class Exchange(StatesData, GuiExch):
     """
     Class for exchange data in google colab between django and terra in training mode
 
@@ -874,7 +875,8 @@ class Exchange(StatesData):
     """
 
     def __init__(self):
-        super().__init__()
+        StatesData.__init__(self)
+        GuiExch.__init__(self)
         # data for output current state of model training process
         self.out_data = {
             "stop_flag": False,
@@ -901,6 +903,7 @@ class Exchange(StatesData):
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
+        self.task_name = ''
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -942,6 +945,18 @@ class Exchange(StatesData):
             return True
         else:
             return False
+
+    @staticmethod
+    def is_google_drive_connected():
+        """
+        Boolean indicator of google drive mounting state
+
+        Returns:
+            (bool): true if drive is on otherwise false
+        """
+        if os.access("/content/drive/", os.F_OK):
+            return True
+        return False
 
     @staticmethod
     def get_hardware_accelerator_type() -> str:
@@ -1207,10 +1222,14 @@ class Exchange(StatesData):
             layers_list.extend(group)
         return layers_list
 
+    def _set_current_task(self, task):
+        self.task_name = task
+
     def prepare_dataset(self, **options):
         self.process_flag = "dataset"
         custom_flag = options.get('source')
         if custom_flag and custom_flag == 'custom':
+            self._set_current_task(options.get("task_type"))
             return self._create_custom_dataset(**options)
         return self._prepare_dataset(**options)
 
@@ -1375,7 +1394,7 @@ class Exchange(StatesData):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, model_plan: object):
+    def start_training(self, nn_model: object):
         # if self.debug_verbose == 3:
         #     print(f"Dataset name: {self.dts.name}")
         #     print(f"Dataset shape: {self.dts.input_shape}")
@@ -1385,7 +1404,7 @@ class Exchange(StatesData):
         #     print(f"x_Train: {self.nn.DTS.x_Train.shape}")
         #     print(f"y_Train: {self.nn.DTS.y_Train.shape}")
         self.nn.set_dataset(self.dts)
-        self.nn.terra_fit(model_plan)
+        self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
     #
     # def start_evaluate(self):
