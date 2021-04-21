@@ -902,6 +902,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
+        self.task_name = ''
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -1220,10 +1221,14 @@ class Exchange(StatesData, GuiExch):
             layers_list.extend(group)
         return layers_list
 
+    def _set_current_task(self, task):
+        self.task_name = task
+
     def prepare_dataset(self, **options):
         self.process_flag = "dataset"
         custom_flag = options.get('source')
         if custom_flag and custom_flag == 'custom':
+            self._set_current_task(options.get("task_type"))
             return self._create_custom_dataset(**options)
         return self._prepare_dataset(**options)
 
