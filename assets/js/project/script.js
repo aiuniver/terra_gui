@@ -26,10 +26,16 @@
         let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
+        let _schema = options.schema || [];
         let _layers_types = options.layers_types || [];
         let _optimizers = options.optimizers || [];
         let _callbacks = options.callbacks || {};
         let _path = options.path || {};
+
+        this.model_clear = () => {
+            _layers = {};
+            _schema = [];
+        };
 
         Object.defineProperty(this, "error", {
             set: (value) => {
@@ -111,6 +117,12 @@
             }
         });
 
+        Object.defineProperty(this, "dataset_selected", {
+            get: () => {
+                return _dataset !== "" && _task !== "";
+            }
+        });
+
         Object.defineProperty(this, "task_name", {
             get: () => {
                 if (_task) {
@@ -136,6 +148,24 @@
             },
             get: () => {
                 return _layers;
+            }
+        });
+
+        Object.defineProperty(this, "schema", {
+            set: (value) => {
+                _schema = value;
+            },
+            get: () => {
+                return _schema;
+            }
+        });
+
+        Object.defineProperty(this, "model_info", {
+            get: () => {
+                return {
+                    "layers": _layers,
+                    "schema": _schema
+                };
             }
         });
 

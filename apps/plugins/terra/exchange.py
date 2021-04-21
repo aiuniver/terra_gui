@@ -35,9 +35,9 @@ class TerraExchange:
             response = requests.get(self.__get_api_url(args[0]))
             return self.__response(response)
         except requests.exceptions.ConnectionError as error:
-            return TerraExchangeResponse(success=False, error=error)
+            return TerraExchangeResponse(success=False, error=str(error))
         except json.JSONDecodeError as error:
-            return TerraExchangeResponse(success=False, error=error)
+            return TerraExchangeResponse(success=False, error=str(error))
 
     def __request_post(self, *args, **kwargs) -> TerraExchangeResponse:
         if len(args) != 1:
@@ -48,9 +48,9 @@ class TerraExchange:
             response = requests.post(self.__get_api_url(args[0]), json=kwargs)
             return self.__response(response)
         except requests.exceptions.ConnectionError as error:
-            return TerraExchangeResponse(success=False, error=error)
+            return TerraExchangeResponse(success=False, error=str(error))
         except json.JSONDecodeError as error:
-            return TerraExchangeResponse(success=False, error=error)
+            return TerraExchangeResponse(success=False, error=str(error))
 
     def __response(self, response: requests.models.Response) -> TerraExchangeResponse:
         if response.ok:
@@ -80,14 +80,25 @@ class TerraExchange:
         self.__project.name = name
         return TerraExchangeResponse()
 
-    def _call_prepare_dataset(self, dataset: str, task: str) -> TerraExchangeResponse:
-        response = colab_exchange.prepare_dataset(dataset_name=dataset, task_type=task)
+    def _call_prepare_dataset(
+        self, dataset: str, task: str, is_custom: bool = False
+    ) -> TerraExchangeResponse:
+        response = colab_exchange.prepare_dataset(
+            dataset_name=dataset,
+            task_type=task,
+            source="custom" if is_custom else "",
+        )
         self.__project.dataset = dataset
         self.__project.task = task
         return TerraExchangeResponse(data=response)
 
     def _call_get_data(self) -> TerraExchangeResponse:
-        return self.__request_post("get_data")
+        response = colab_exchange.get_data()
+        return TerraExchangeResponse(
+            data=response,
+            stop_flag=response.get("stop_flag", True),
+            success=response.get("success", True),
+        )
 
     def _call_get_models(self) -> TerraExchangeResponse:
         return self.__request_post("get_models")
@@ -95,9 +106,10 @@ class TerraExchange:
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
         return self.__request_post("get_model_from_list", model_name=model_file)
 
-    def _call_set_model(self, layers: dict) -> TerraExchangeResponse:
+    def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
         self.__project.layers = layers
-        return TerraExchangeResponse(data={"layers": layers})
+        self.__project.schema = schema
+        return TerraExchangeResponse(data={"layers": layers, "schema": schema})
 
     def _call_set_input_layer(self) -> TerraExchangeResponse:
         response = self.__request_post("set_input_layer")

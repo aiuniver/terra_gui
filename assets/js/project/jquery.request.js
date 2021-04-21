@@ -4,12 +4,6 @@
 (($) => {
 
 
-    window.ExchangeRequest = (action, callback, send_data) => {
-        if (!action) return;
-        return new $.RequestAPI(`/api/v1/exchange/${action}/`, callback, send_data);
-    }
-
-
     $.extend({
 
 
@@ -63,6 +57,12 @@
 
 
     })
+
+
+    window.ExchangeRequest = (action, callback, send_data) => {
+        if (!action) return;
+        return new $.RequestAPI(`/api/v1/exchange/${action}/`, callback, send_data);
+    }
 
 
 })(jQuery);
