@@ -351,6 +351,7 @@ class Exchange:
         self.dts_name = dts_name
 
     def prepare_dataset(self, **options):
+        print(**options)
         self.process_flag = "dataset"
         return self._prepare_dataset(**options)
 
