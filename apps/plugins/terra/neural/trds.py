@@ -30,20 +30,22 @@ import threading
 from io import open as ioopen
 from IPython.display import clear_output
 from apps.plugins.terra import colab_exchange
+__version__ = 0.224
 
-__version__ = 0.223
+tr2dj_obj = colab_exchange
 
 
 class DTS(object):
 
-    def __init__(self, exch_obj=colab_exchange):
+    def __init__(self, exch_obj=tr2dj_obj):
 
-        # if 'custom' in globals().keys():
-        #     for key, value in custom.__dict__.items():
-        #         self.__dict__[key] = value
+        if 'custom' in globals().keys():
+            for key, value in custom.__dict__.items():
+                self.__dict__[key] = value
 
         self.Exch = exch_obj
         self.django_flag = True
+
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ''
         self.name: str = ''
@@ -640,22 +642,30 @@ class DTS(object):
 
         self.input_shape = X.shape[1:]
         self.input_datatype = self._set_datatype(shape=X.shape)
-        self.x_Train, self.x_Val, self.y_Train, self.y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
                                                                               shuffle=True)
+
+        self.X['input_1'] = (x_Train, x_Val, None)
+        self.Y['output_1'] = (y_Train, y_Val, None)
 
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size,
-                                                                                shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1'] = (y_Train, y_Val, y_Test)
+
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-            arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f'Размерность {item}: {self.__dict__[item].shape}')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']):
+                if item_x is not None:
+                    print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -816,22 +826,30 @@ class DTS(object):
 
         self.input_shape = X.shape[1:]
         self.input_datatype = self._set_datatype(shape=X.shape)
-        self.x_Train, self.x_Val, self.y_Train, self.y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
-                                                                              shuffle=True)
+
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
+
+        self.X['input_1'] = (x_Train, x_Val, None)
+        self.Y['output_1'] = (y_Train, y_Val, None)
 
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size,
-                                                                                shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1'] = (y_Train, y_Val, y_Test)
+
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-            arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f'Размерность {item}: {self.__dict__[item].shape}')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']):
+                if item_x is not None:
+                    print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -965,22 +983,29 @@ class DTS(object):
         if 'bag_of_words' in options.keys() and options['bag_of_words'] == True:
             X = tokenizer.sequences_to_matrix(X.tolist())
 
-        self.x_Train, self.x_Val, self.y_Train, self.y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
-                                                                              shuffle=True)
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
+
+        self.X['input_1'] = (x_Train, x_Val, None)
+        self.Y['output_1'] = (y_Train, y_Val, None)
 
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size,
-                                                                                shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1'] = (y_Train, y_Val, y_Test)
+
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-            arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f'Размерность {item}: {self.__dict__[item].shape}')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']):
+                if item_x is not None:
+                    print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -1152,22 +1177,29 @@ class DTS(object):
         self.input_shape = X.shape[1:]
         self.input_datatype = self._set_datatype(shape=X.shape)
 
-        self.x_Train, self.x_Val, self.y_Train, self.y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
-                                                                              shuffle=True)
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
+
+        self.X['input_1'] = (x_Train, x_Val, None)
+        self.Y['output_1'] = (y_Train, y_Val, None)
 
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size,
-                                                                                shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1'] = (y_Train, y_Val, y_Test)
+
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-            arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f'Размерность {item}: {self.__dict__[item].shape}')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']):
+                if item_x is not None:
+                    print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -1267,22 +1299,29 @@ class DTS(object):
         self.input_shape = X.shape[1:]
         self.input_datatype = self._set_datatype(shape=X.shape)
 
-        self.x_Train, self.x_Val, self.y_Train, self.y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
-                                                                              shuffle=True)
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
+
+        self.X['input_1'] = (x_Train, x_Val, None)
+        self.Y['output_1'] = (y_Train, y_Val, None)
 
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size,
-                                                                                shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1'] = (y_Train, y_Val, y_Test)
+
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-            arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f'Размерность {item}: {self.__dict__[item].shape}')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']):
+                if item_x is not None:
+                    print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -1361,17 +1400,16 @@ class DTS(object):
 
         train_len = data.shape[0] - val_len
 
-        self.x_Train, self.x_Val = x_data[:train_len, :], x_data[train_len + x_len + 2:, :]
-        self.y_Train, self.y_Val = np.reshape(y_data[:train_len, 0], (-1, 1)), np.reshape(
+        x_Train, x_Val = x_data[:train_len, :], x_data[train_len + x_len + 2:, :]
+        y_Train, y_Val = np.reshape(y_data[:train_len, 0], (-1, 1)), np.reshape(
             y_data[train_len + x_len + 2:, 0],
             (-1, 1))
-        self.source_shape = self.x_Train.shape[1:]
-        self.source_datatype = self._set_datatype(shape=self.x_Train.shape)
+        self.source_shape = x_Train.shape[1:]
+        self.source_datatype = self._set_datatype(shape=x_Train.shape)
         if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            self.x_Val, self.x_Test, self.y_Val, self.y_Test = train_test_split(self.x_Val, self.y_Val,
-                                                                                test_size=1 - split_size, shuffle=True)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
 
         arrays = ['x_Train', 'x_Val', 'x_Test', 'y_Train', 'y_Val', 'y_Test']
         if 'scaler' in options.keys():
@@ -1381,32 +1419,41 @@ class DTS(object):
             elif options['scaler'].lower() == 'StandardScaler'.lower():
                 x_scaler = StandardScaler()
                 y_scaler = StandardScaler()
-            x_scaler.fit(self.x_Train)
-            y_scaler.fit(self.y_Train)
-            for item in arrays:
-                if hasattr(self, item):
-                    if item in arrays[:3]:
-                        self.__dict__[item] = x_scaler.transform(self.__dict__[item])
-                    elif item in arrays[3:]:
-                        self.__dict__[item] = y_scaler.transform(self.__dict__[item])
+            x_scaler.fit(x_Train)
+            y_scaler.fit(y_Train)
+            x_Train = x_scaler.transform(x_Train)
+            x_Val = x_scaler.transform(x_Val)
+            y_Train = y_scaler.transform(y_Train)
+            y_Val = y_scaler.transform(y_Val)
+            if 'test' in options.keys() and options['test'] == True:
+                x_Test = x_scaler.transform(x_Test)
+                y_Test = y_scaler.transform(y_Test)
             self.x_Scaler = x_scaler
             self.y_Scaler = y_scaler
-        self.input_shape = self.x_Train.shape[1:]
-        self.input_datatype = self._set_datatype(shape=self.x_Train.shape)
+        self.input_shape = x_Train.shape[1:]
+        self.input_datatype = self._set_datatype(shape=x_Train.shape)
+        self.X['input_1'] = (x_Train, x_Val, x_Test)
+        self.Y['output_1'] = (y_Train, y_Val, y_Test)
         if 'timeseriesgenerator' in options.keys() and options['timeseriesgenerator'] == True:
-            for item in arrays[:3]:
-                if hasattr(self, item):
-                    self.__dict__[f'{item[2:]}_data_gen'] = TimeseriesGenerator(self.__dict__[item], self.__dict__[
-                        arrays[arrays.index(item) + 3]], length=x_len, stride=1, batch_size=options[
-                        'timeseries_batch_size'])
+            self.input_datatype = 'timeseries'
+            x_Train_generator = TimeseriesGenerator(x_Train, y_Train, length=x_len, stride=1, batch_size=options['timeseries_batch_size'])
+            x_Val_generator = TimeseriesGenerator(x_Val, y_Val, length=x_len, stride=1, batch_size=options['timeseries_batch_size'])
+            x_Test_generator = TimeseriesGenerator(x_Test, y_Test, length=x_len, stride=1, batch_size=options['timeseries_batch_size'])
+            self.X['input_1'] = (x_Train_generator, x_Val_generator, x_Test_generator)
+            self.Y['output_1'] = (None, None, None)
             if not self.django_flag:
                 print(f'Формирование генератора завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
         else:
             if not self.django_flag:
                 print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
-                for item in arrays:
-                    if hasattr(self, item):
-                        print(f'Размерность {item}: {self.__dict__[item].shape}')
+                x_arrays = ['x_train', 'x_val', 'x_test']
+                for i, item_x in enumerate(self.X['input_1']):
+                    if item_x is not None:
+                        print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+                y_arrays = ['y_train', 'y_val', 'y_test']
+                for i, item_y in enumerate(self.Y['output_1']):
+                    if item_y is not None:
+                        print(f"Размерность {y_arrays[i]}: {item_y.shape}")
         self.dts_prepared = True
 
         return self
@@ -1416,7 +1463,49 @@ class DTS(object):
         self.X = Data[0]
         self.Y = Data[1]
 
-        self.source = 'custom_dataset'
+        self.source = 'custom'
+
+        if options['x_scaler'] in ['StandardScaler', 'MinMaxScaler']:
+            if options['x_scaler'] == 'MinMaxScaler':
+                self.x_Scaler = MinMaxScaler()
+            elif options['x_scaler'] == 'StandardScaler':
+                self.x_Scaler = StandardScaler()
+            list_of_arrays = []
+            self.x_Scaler.fit(self.X[0])
+            for array in self.X:
+                shape_x = array.shape
+                array = array.reshape(-1, 1)
+                array = self.x_Scaler.transform(array)
+                array = array.reshape(shape_x)
+                list_of_arrays.append(array)
+            self.X = tuple(list_of_arrays)
+            del list_of_arrays
+
+        if options['y_scaler'] in ['StandardScaler', 'MinMaxScaler']:
+            if options['y_scaler'] == 'MinMaxScaler':
+                self.y_Scaler = MinMaxScaler()
+            elif options['y_scaler'] == 'StandardScaler':
+                self.y_Scaler = StandardScaler()
+            list_of_arrays = []
+            self.y_Scaler.fit(self.Y[0])
+            for array in self.Y:
+                shape_y = array.shape
+                array = array.reshape(-1, 1)
+                array = self.y_Scaler.transform(array)
+                array = array.reshape(shape_y)
+                list_of_arrays.append(array)
+            self.Y = tuple(list_of_arrays)
+            del list_of_arrays
+
+        # if options['net'] in ['Добавить размерность', 'Выпрямить']:
+        #     if options['net'].lower() == 'Выпрямить':
+        #         x_Train = x_Train.reshape((-1, np.prod(np.array(x_Train.shape)[1:])))
+        #         x_Val = x_Val.reshape((-1, np.prod(np.array(x_Val.shape)[1:])))
+        #     elif options['net'].lower() == 'Добавить размерность':
+        #         x_Train = x_Train[..., None]
+        #         x_Val = x_Val[..., None]
+
+
         for key in list(self.X.keys()):
             self.source_shape.append(self.X[key][0].shape[1:])
             self.source_datatype.append(self._set_datatype(shape=self.X[key][0].shape))
@@ -2064,13 +2153,13 @@ class DTS(object):
             self.load_data(options['dataset_name'])
             if options['task_type'] == 'classification':
                 if 'images' in self.tags:
-                    self.image_classification((54, 96), one_hot_encoding=True, scaler='MinMaxScaler')
+                    self.image_classification((54, 96), one_hot_encoding=True, scaler='MinMaxScaler', test=True)
                 elif 'text' in self.tags:
                     if 'заболевания' in self.name:
                         max_words_count = 20000
                         x_len = 100
                         step = 30
-                    self.text_classification(max_words_count, x_len, step, one_hot_encoding=True)
+                    self.text_classification(max_words_count, x_len, step, one_hot_encoding=True, test=True)
             elif options['task_type'] == 'segmentation':
                 if 'images' in self.tags:
                     if 'самолеты' in self.name:
@@ -2079,25 +2168,22 @@ class DTS(object):
                     elif 'губы' in self.name:
                         classes = {'фон': [0, 0, 0], 'губы': [0, 255, 0]}
                         range = 10
-                    self.image_segmentation((44, 60), classes, range, scaler='MinMaxScaler')
+                    self.image_segmentation((54, 96), classes, range, scaler='MinMaxScaler', test=True)
                 elif 'text' in self.tags:
-                    self.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6)
+                    self.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6, test=True)
             elif options['task_type'] == 'recognition':
                 if 'audio' in self.tags:
                     if 'умный_дом' in self.name:
                         self.file_folder = self.file_folder + '/comands'
                         s_rate = 22050
                         len = 11025
-                    self.voice_recognition(s_rate, len, net='conv', one_hot_encoding=True)
+                    self.voice_recognition(s_rate, len, net='conv', one_hot_encoding=True, test=True)
             elif options['task_type'] == 'regression':
                 if 'трейдинг' in self.name:
-                    # self.data_regression('shares/GAZP_1d_from_MOEX.txt', x_len=80, val_len=300, graph=True,
-                    #                      timeseriesgenerator=True, test=True, timeseries_batch_size=50,
-                    #                      x_cols=['<OPEN>', '<HIGH>', '<LOW>'], y_col=['<CLOSE>'])
-                    self.data_regression('shares/GAZP_1d_from_MOEX.txt', x_len=80, val_len=300, graph=True,
-                                         test=True, x_cols=['<OPEN>', '<HIGH>', '<LOW>'], y_col=['<CLOSE>'])
+                    self.data_regression('shares/GAZP_1d_from_MOEX.txt', x_len=80, val_len=300, graph=True, timeseriesgenerator=True,
+                                         timeseries_batch_size=10, test=True, x_cols=['<OPEN>', '<HIGH>', '<LOW>'], y_col=['<CLOSE>'])
                 if 'квартиры' in self.name:
-                    self.flat_parser()
+                    self.flat_parser(test=True)
         return self
 
 

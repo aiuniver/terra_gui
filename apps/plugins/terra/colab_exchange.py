@@ -2,6 +2,7 @@ import gc
 import os
 import re
 
+import dill as dill
 from IPython import get_ipython
 from django.conf import settings
 
@@ -237,10 +238,18 @@ class Exchange:
 
     def _get_custom_datasets_from_google_drive(self):
         custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
-        custom_datasets = []
+        custom_datasets_dict = {}
         if os.path.exists(custom_datasets_path):
             custom_datasets = os.listdir(custom_datasets_path)
-        return custom_datasets
+            for dataset in custom_datasets:
+                with open(dataset, 'rb') as f:
+                    custom_dts = dill.load(f)
+                tags = custom_dts.tags
+                name = custom_dts.name
+                source = custom_dts.source
+                custom_datasets_dict[name] = [tags, None, source]
+                del custom_dts
+        return custom_datasets_dict
 
     def _create_datasets_data(self) -> dict:
         """
@@ -253,6 +262,8 @@ class Exchange:
         """
         tags = set()
         datasets = self.dts.get_datasets_dict()
+        custom_datasets = self._get_custom_datasets_from_google_drive()
+        datasets.update(custom_datasets)
 
         for params in datasets.values():
             for i in range(len(params[0])):
