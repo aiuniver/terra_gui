@@ -107,6 +107,8 @@ class Exchange:
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.dts = DTS(exch_obj=self)  # dataset init
+        self.custom_datasets = []
+        self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
         self.nn = None  # neural network init
         self.is_trained = False
@@ -237,12 +239,11 @@ class Exchange:
         return out_graphs
 
     def _get_custom_datasets_from_google_drive(self):
-        custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         custom_datasets_dict = {}
-        if os.path.exists(custom_datasets_path):
-            custom_datasets = os.listdir(custom_datasets_path)
-            for dataset in custom_datasets:
-                dataset_path = os.path.join(custom_datasets_path, dataset)
+        if os.path.exists(self.custom_datasets_path):
+            self.custom_datasets = os.listdir(self.custom_datasets_path)
+            for dataset in self.custom_datasets:
+                dataset_path = os.path.join(self.custom_datasets_path, dataset)
                 with open(dataset_path, 'rb') as f:
                     custom_dts = dill.load(f)
                 tags = custom_dts.tags
@@ -315,6 +316,15 @@ class Exchange:
         self._set_dts_name(self.dts.name)
         return self.dts.tags, self.dts.name
 
+    def _create_custom_dataset(self, **options):
+        dataset = options.get('dataset_name')
+        dataset_path = os.path.join(self.custom_datasets_path, dataset)
+        with open(dataset_path, 'rb') as f:
+            custom_dts = dill.load(f)
+        self.dts = custom_dts
+        self._set_dts_name(self.dts.name)
+        return self.dts.tags, self.dts.name
+
     @staticmethod
     def _reformat_tags(tags: list) -> list:
         return list(
@@ -351,8 +361,10 @@ class Exchange:
         self.dts_name = dts_name
 
     def prepare_dataset(self, **options):
-        print(**options)
         self.process_flag = "dataset"
+        custom_flag = options.get('source')
+        if custom_flag and custom_flag == 'custom':
+            return self._create_custom_dataset()
         return self._prepare_dataset(**options)
 
     def set_stop_training_flag(self):
