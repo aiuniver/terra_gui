@@ -494,19 +494,19 @@
         terra_params = $(".params-container").TerraParams();
 
         if (!window.TerraProject.dataset || !window.TerraProject.task) {
-            // let warning = $("#modal-window-warning").ModalWindow({
-            //     title:"Предупреждение!",
-            //     width:300,
-            //     height:174,
-            //     noclose:true,
-            //     callback:(data) => {
-            //         warning.children(".wrapper").append($(`
-            //             <p>Для редактирования модели необходимо загрузить датасет.</p>
-            //             <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
-            //         `));
-            //     }
-            // });
-            // warning.open();
+            let warning = $("#modal-window-warning").ModalWindow({
+                title:"Предупреждение!",
+                width:300,
+                height:174,
+                noclose:true,
+                callback:(data) => {
+                    warning.children(".wrapper").append($(`
+                        <p>Для редактирования модели необходимо загрузить датасет.</p>
+                        <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
+                    `));
+                }
+            });
+            warning.open();
         } else {
             terra_board.model = window.TerraProject.layers;
         }
@@ -517,7 +517,7 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        me.model = data.data.layers;
+                        terra_board.model = data.data.layers;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);
