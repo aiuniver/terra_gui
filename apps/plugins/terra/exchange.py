@@ -44,13 +44,19 @@ class TerraExchange:
             raise TerraExchangeException(
                 "«__request_post» method must contain method name as first argument"
             )
+        print("------------------")
+        print(args)
+        print(kwargs)
+        print(self.__get_api_url(args[0]))
         try:
             response = requests.post(self.__get_api_url(args[0]), json=kwargs)
+            print("RESPONSE:", response.content)
             return self.__response(response)
         except requests.exceptions.ConnectionError as error:
             return TerraExchangeResponse(success=False, error=str(error))
         except json.JSONDecodeError as error:
             return TerraExchangeResponse(success=False, error=str(error))
+        print("------------------")
 
     def __response(self, response: requests.models.Response) -> TerraExchangeResponse:
         if response.ok:
