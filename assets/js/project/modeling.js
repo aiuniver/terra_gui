@@ -4,9 +4,6 @@
 (($) => {
 
 
-    let terra_toolbar, terra_board, terra_params;
-
-
     let LoadModel = $("#modal-window-load-model").ModalWindow({
         title:window.Messages.get("LOAD_MODEL"),
         width:680,
@@ -135,12 +132,50 @@
                 _clines = _d3graph.select("#canvas-lines"),
                 _cnodes = _d3graph.select("#canvas-nodes"),
                 svg = $(_d3graph._groups[0][0]),
+                _layer_row_w = [],
+                _model_schema = [],
                 _onContextDrag = false,
                 _onDrag = false,
                 _sourceNode,
                 _targetNode,
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
+
+            let _layer_row_w_init = (schema) => {
+                for(let i=0; i < schema.length; i++){
+                    let sum = 0;
+                    for(let j=0; j < schema[i].length; j++){
+                        if(schema[i][j] == null){
+                            continue;
+                        }else{
+                            sum += d3.select("#node-"+schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
+                            sum += 50;
+                        }
+                    }
+                    _layer_row_w.push(sum);
+                }
+            };
+
+            let _set_position_nodes = (schema) => {
+                let w = _d3graph._groups[0][0].width.baseVal.value;
+                for(let i=0; i <schema.length; i++){
+                    let end_nodes = 0,
+                        margin_w = (w - _layer_row_w[i])/2,
+                        margin_h = 30;
+                    for(let j=0; j < schema[i].length; j++){
+                        if(schema[i][j] == null){
+                            continue;
+                        }else{
+                            let node = d3.select("#node-"+schema[i][j]);
+                            let node_x = margin_w + end_nodes;
+                            let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
+                            end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
+                            end_nodes += 50;
+                            node.attr("transform", "translate(" + node_x + "," + node_y + ")");
+                        }
+                    }
+                }
+            };
 
             _d3graph.call(zoom);  
 
@@ -161,8 +196,8 @@
             };
 
             d3.select("#canvas-clear").on("click", () => {
-                _clines.selectAll("line").remove();
-                _cnodes.selectAll("g").remove();
+                window.TerraProject.model_clear();
+                this.model = window.TerraProject.model_info;
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
@@ -211,22 +246,29 @@
             };
 
             let __clear = () => {
-                _clines.selectAll("g").remove();
+                _clines.selectAll("line").remove();
                 _cnodes.selectAll("g").remove();
+                _lastNodeIndex = 0;
+                _lastLineIndex = 0;
+                _layer_row_w = [];
             }
 
             let _create_node = (layer) => {
+
+                layer.lineTarget = {};
+                layer.lineSource = {};
                 _lastNodeIndex++;
+
+                let row, col;
 
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
                 layer.index = _lastNodeIndex;
-                layer.config.name = _lastNodeIndex;
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.index}`)
-                    .attr("class", `node node-type-${layer.config.type}`)
+                    .attr("class", `node node-type-${layer.type}`)
                     .call(d3.drag()
                         .on("start", _node_dragstarted)
                         .on("drag", _node_dragged)
@@ -243,8 +285,8 @@
                 let width = text._groups[0][0].getBBox().width + 20;
                     rect.attr("width", width);
 
-                if (layer.x === undefined ) layer.x = 30;
-                if (layer.y === undefined) layer.y = 30;
+                if (layer.x === undefined ) layer.x = w/2;
+                if (layer.y === undefined) layer.y = h/2;
 
                 let target_circle = node.append("circle")
                     .attr("class", "dot-target")
@@ -298,7 +340,7 @@
                 line.remove();
             };
 
-            let _create_line = (layer) => {
+            let _create_line = () => {
                 _lastLineIndex++;
 
                 let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
@@ -439,28 +481,40 @@
                         _delete_line($(".line:hover")[0])
                     }
                 }
-            })
+            });
+
+            Object.defineProperty(this, "model_schema", {
+                set: (schema) => {
+                    if(!Array.isArray(schema)) schema = [];
+                    _model_schema = schema;
+                },
+                get: () => {
+                    return _model_schema;
+                }
+            });
 
             Object.defineProperty(this, "model", {
-                set: (layers) => {
+                set: (model_info) => {
                     __clear();
-                    // let num = 0,
-                    //     _layer,
-                    //     _layers = [];
-                    // for (let index in value) {
-                    //     let type = "middle";
-                    //     if (num === Object.keys(value).length - 1) type = "output";
-                    //     if (num === 0) type = "input";
-                    //     _layer = {
-                    //         index:index,
-                    //         config:value[index],
-                    //         type:type
-                    //     };
-                    //     _layers.push(_layer);
-                    //     this.layer = _layer
-                    //     num++;
-                    // }
-                    // _create_model(_layers);
+                    let layers = model_info.layers,
+                        schema = model_info.schema,
+                        num = 0,
+                        _layer,
+                        _layers = [];
+                    for (let index in layers) {
+                        let type = "middle";
+                        if (num === Object.keys(layers).length - 1) type = "output";
+                        if (num === 0) type = "input";
+                        _layer = {
+                            index:index,
+                            config:layers[index],
+                            type:type
+                        };
+                        _layers.push(_layer);
+                        this.layer = _layer
+                        num++;
+                    }
+                    _create_model(_layers, schema);
                     // let exists = _existsLayersTypes();
                     // toolbar.layersReset(exists[0], exists[1], exists[2]);
                     // params.reset();
@@ -469,6 +523,28 @@
                     return _cnodes.selectAll("g.node");
                 }
             });
+
+             let _create_model = (layers, schema) => {
+                layers.forEach((layer) => {
+                    _create_node(layer);
+                });
+
+                _layer_row_w_init(schema);
+                _set_position_nodes(schema);
+
+                layers.forEach((layer) => {
+                    _targetNode = $("#node-"+layer.config.name)[0]
+                    layer.config.up_link.forEach((parent_node) => {
+                        if(parent_node == 0){
+                            return
+                        }
+                        _sourceNode = $("#node-"+parent_node)[0];
+                        _create_line();
+                        _change_line();
+                    })
+                });
+            }
+
 
             return this;
 
@@ -484,7 +560,7 @@
         }
 
 
-    })
+    });
 
 
     $(() => {
@@ -508,7 +584,7 @@
             });
             warning.open();
         } else {
-            terra_board.model = window.TerraProject.layers;
+            terra_board.model = window.TerraProject.model_info;
         }
 
         LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
@@ -517,13 +593,19 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        terra_board.model = data.data.layers;
+                        window.TerraProject.layers = data.data.layers;
+                        window.TerraProject.schema = data.data.schema;
+                        terra_board.model = window.TerraProject.model_info;
                         LoadModel.close();
                     } else {
+
                         window.StatusBar.message(data.error, false);
                     }
                 },
-                {"layers":event.currentTarget.ModelData.layers}
+                {
+                    "layers": event.currentTarget.ModelData.layers,
+                    "schema": event.currentTarget.ModelData.front_model_schema
+                }
             )
         });
 
