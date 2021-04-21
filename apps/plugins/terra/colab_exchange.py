@@ -242,7 +242,8 @@ class Exchange:
         if os.path.exists(custom_datasets_path):
             custom_datasets = os.listdir(custom_datasets_path)
             for dataset in custom_datasets:
-                with open(dataset, 'rb') as f:
+                dataset_path = os.path.join(custom_datasets_path, dataset)
+                with open(dataset_path, 'rb') as f:
                     custom_dts = dill.load(f)
                 tags = custom_dts.tags
                 name = custom_dts.name
