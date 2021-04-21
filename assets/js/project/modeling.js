@@ -43,7 +43,6 @@
                                             block.find(".models-data > .model-arch > .wrapper > .model-arch-img > img").attr("src", `data:image/png;base64,${data.data.image}`);
                                             block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                             block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
-                                            // terra_board.model_schema = data.data.front_model_schema;
                                         } else {
                                             window.StatusBar.message(data.error, false);
                                         }
@@ -134,6 +133,8 @@
                 _clines = _d3graph.select("#canvas-lines"),
                 _cnodes = _d3graph.select("#canvas-nodes"),
                 svg = $(_d3graph._groups[0][0]),
+                _layer_row_w = [],
+                _model_schema = [],
                 _onContextDrag = false,
                 _onDrag = false,
                 _sourceNode,
@@ -141,24 +142,14 @@
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
 
-            let _model_schema = [
-                [1],
-                [2],
-                [3],
-                [4],
-                [5]
-            ];
-
-            let _layer_row_w = [];
-
-            let _layer_row_w_init = () => {
-                for(let i=0; i <_model_schema.length; i++){
+            let _layer_row_w_init = (schema) => {
+                for(let i=0; i < schema.length; i++){
                     let sum = 0;
-                    for(let j=0; j < _model_schema[i].length; j++){
-                        if(_model_schema[i][j] == null){
+                    for(let j=0; j < schema[i].length; j++){
+                        if(schema[i][j] == null){
                             continue;
                         }else{
-                            sum += d3.select("#node-"+_model_schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
+                            sum += d3.select("#node-"+schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
                             sum += 50;
                         }
                     }
@@ -166,17 +157,17 @@
                 }
             };
 
-            let _set_position_nodes = () => {
+            let _set_position_nodes = (schema) => {
                 let w = _d3graph._groups[0][0].width.baseVal.value;
-                for(let i=0; i <_model_schema.length; i++){
+                for(let i=0; i <schema.length; i++){
                     let end_nodes = 0,
                         margin_w = (w - _layer_row_w[i])/2,
                         margin_h = 30;
-                    for(let j=0; j < _model_schema[i].length; j++){
-                        if(_model_schema[i][j] == null){
+                    for(let j=0; j < schema[i].length; j++){
+                        if(schema[i][j] == null){
                             continue;
                         }else{
-                            let node = d3.select("#node-"+_model_schema[i][j]);
+                            let node = d3.select("#node-"+schema[i][j]);
                             let node_x = margin_w + end_nodes;
                             let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
                             end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
@@ -206,8 +197,8 @@
             };
 
             d3.select("#canvas-clear").on("click", () => {
-                _clines.selectAll("line").remove();
-                _cnodes.selectAll("g").remove();
+                window.TerraProject.model_clear();
+                this.model = window.TerraProject.model_info;
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
@@ -260,6 +251,7 @@
                 _cnodes.selectAll("g").remove();
                 _lastNodeIndex = 0;
                 _lastLineIndex = 0;
+                _layer_row_w = [];
             }
 
             let _create_node = (layer) => {
@@ -293,14 +285,6 @@
 
                 let width = text._groups[0][0].getBBox().width + 20;
                     rect.attr("width", width);
-
-                for(let i=0; i<_model_schema.length; i++){
-                    row = i;
-                    if(_model_schema[i].indexOf(layer.index) != -1){
-                         col = _model_schema[i].indexOf(layer.index);
-                         break;
-                    }
-                }
 
                 if (layer.x === undefined ) layer.x = w/2;
                 if (layer.y === undefined) layer.y = h/2;
@@ -498,12 +482,24 @@
                         _delete_line($(".line:hover")[0])
                     }
                 }
-            })
+            });
+
+            Object.defineProperty(this, "model_schema", {
+                set: (schema) => {
+                    if(!Array.isArray(schema)) schema = [];
+                    _model_schema = schema;
+                },
+                get: () => {
+                    return _model_schema;
+                }
+            });
 
             Object.defineProperty(this, "model", {
-                set: (layers) => {
+                set: (model_info) => {
                     __clear();
-                    let num = 0,
+                    let layers = model_info.layers,
+                        schema = model_info.schema,
+                        num = 0,
                         _layer,
                         _layers = [];
                     for (let index in layers) {
@@ -519,7 +515,7 @@
                         this.layer = _layer
                         num++;
                     }
-                    _create_model(_layers);
+                    _create_model(_layers, schema);
                     // let exists = _existsLayersTypes();
                     // toolbar.layersReset(exists[0], exists[1], exists[2]);
                     // params.reset();
@@ -529,13 +525,13 @@
                 }
             });
 
-             let _create_model = (layers) => {
+             let _create_model = (layers, schema) => {
                 layers.forEach((layer) => {
                     _create_node(layer);
                 });
 
-                _layer_row_w_init();
-                _set_position_nodes();
+                _layer_row_w_init(schema);
+                _set_position_nodes(schema);
 
                 layers.forEach((layer) => {
                     _targetNode = $("#node-"+layer.config.name)[0]
@@ -574,23 +570,23 @@
         terra_board = $(".canvas-container").TerraBoard();
         terra_params = $(".params-container").TerraParams();
 
-        // if (!window.TerraProject.dataset || !window.TerraProject.task) {
-        //     let warning = $("#modal-window-warning").ModalWindow({
-        //         title:"Предупреждение!",
-        //         width:300,
-        //         height:174,
-        //         noclose:true,
-        //         callback:(data) => {
-        //             warning.children(".wrapper").append($(`
-        //                 <p>Для редактирования модели необходимо загрузить датасет.</p>
-        //                 <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
-        //             `));
-        //         }
-        //     });
-        //     warning.open();
-        // } else {
-        //     terra_board.model = window.TerraProject.layers;
-        // }
+        if (!window.TerraProject.dataset || !window.TerraProject.task) {
+            let warning = $("#modal-window-warning").ModalWindow({
+                title:"Предупреждение!",
+                width:300,
+                height:174,
+                noclose:true,
+                callback:(data) => {
+                    warning.children(".wrapper").append($(`
+                        <p>Для редактирования модели необходимо загрузить датасет.</p>
+                        <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
+                    `));
+                }
+            });
+            warning.open();
+        } else {
+            terra_board.model = window.TerraProject.model_info;
+        }
 
         LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
             window.StatusBar.clear();
@@ -598,13 +594,19 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        terra_board.model = data.data.layers;
+                        window.TerraProject.layers = data.data.layers;
+                        window.TerraProject.schema = data.data.schema;
+                        terra_board.model = window.TerraProject.model_info;
                         LoadModel.close();
                     } else {
+
                         window.StatusBar.message(data.error, false);
                     }
                 },
-                {"layers":event.currentTarget.ModelData.layers}
+                {
+                    "layers": event.currentTarget.ModelData.layers,
+                    "schema": event.currentTarget.ModelData.front_model_schema
+                }
             )
         });
 

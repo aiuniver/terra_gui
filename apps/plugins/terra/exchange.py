@@ -98,9 +98,10 @@ class TerraExchange:
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
         return self.__request_post("get_model_from_list", model_name=model_file)
 
-    def _call_set_model(self, layers: dict) -> TerraExchangeResponse:
+    def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
         self.__project.layers = layers
-        return TerraExchangeResponse(data={"layers": layers})
+        self.__project.schema = schema
+        return TerraExchangeResponse(data={"layers": layers, "schema": schema})
 
     def _call_set_input_layer(self) -> TerraExchangeResponse:
         response = self.__request_post("set_input_layer")
