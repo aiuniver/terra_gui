@@ -177,8 +177,6 @@
                     (success, data) => {
                         if (success) {
                             console.log(data);
-                            // window.TerraProject.dataset = data.data.dataset;
-                            // window.TerraProject.task = data.data.task;
                         }
                     },
                     {
@@ -190,6 +188,7 @@
                 window.ExchangeRequest(
                     "get_data",
                     (success, data) => {
+                        console.log(data);
                         if (!success) {
                             datasets.dataset = window.TerraProject.dataset;
                             this.task = window.TerraProject.task;
