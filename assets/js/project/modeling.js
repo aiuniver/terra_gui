@@ -168,10 +168,15 @@
                             continue;
                         }else{
                             let node = d3.select("#node-"+schema[i][j]);
+                            let node_data = node.data();
                             let node_x = margin_w + end_nodes;
                             let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
                             end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
                             end_nodes += 50;
+
+                            node_data[0].x = node_x;
+                            node_data[0].y = node_y;
+                            node.data(node_data);
                             node.attr("transform", "translate(" + node_x + "," + node_y + ")");
                         }
                     }
@@ -308,6 +313,7 @@
 
                 $(".node").bind("mousedown", _onmousedown)
                     .bind("mouseup", _onmouseup);
+
             };
 
             let _delete_node = (node) => {
@@ -436,6 +442,7 @@
             };
 
             $(".canvas-container").bind("contextmenu", (event) => {
+                $(".hint").remove();
                 return false;
             });
 
@@ -443,10 +450,7 @@
                 svg.bind("mousemove", _onmousemove);
                 _sourceNode = event.target.parentNode;
                 _targetNode = undefined;
-                if(!_onContextDrag){
-                    _create_line();
-                    _onContextDrag = true;
-                }
+
             };
 
             let _onmouseup = (event)=>{
@@ -454,16 +458,35 @@
                 _targetNode = event.target.parentNode;
                 if(_onContextDrag){
                     _change_line();
+                }else if (event.button === 2 && !_onContextDrag) {
+                    let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
+                    if (params == null) return;
+                    if (!Object.keys(params).length) return;
+                    let hint = $(`<div class="hint"></div>`),
+                        text = [];
+                    for (let param in params) {
+                        text.push(`${param}: ${params[param].default || ""}`);
+                    }
+                    hint.html(`${text.join("<br />")}`);
+                    hint.css({
+                        left:event.offsetX,
+                        top:event.offsetY,
+                    });
+                    $(".canvas").append(hint);
                 }
                 _onContextDrag = false;
             };
 
             let _onmousemove = (event)=>{
-                _onContextDrag = true;
-
-                d3.select("#line-" + _lastLineIndex)
+                if(_onContextDrag){
+                     d3.select("#line-" + _lastLineIndex)
                     .attr("x2", event.offsetX)
                     .attr("y2", event.offsetY);
+                } else{
+                    console.log("asd")
+                    _create_line();
+                    _onContextDrag = true;
+                }
             };
 
             $(document).bind("keydown", (event) => {
