@@ -6,6 +6,7 @@ let Messages = function() {
     let _values = {
         DATASET_SELECTED: "Dataset «{0}» is selected",
         DATASET_LOADING: "Loading dataset «{0}»...",
+        DATASET_LOADED: "Dataset «{0}» is loaded",
         INTERNAL_SERVER_ERROR: "Internal Server Error! Please try again later...",
         PARSE_TERRA_PROJECT_CONFIG_ERROR: "Terra project config not loaded. The default config is used.",
         TRY_TO_SAVE_PROJECT_NAME: "Trying to save new project name «{0}»",
