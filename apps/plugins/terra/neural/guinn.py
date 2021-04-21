@@ -24,87 +24,96 @@ class GUINN:
         self.Exch = exch_obj
         self.DTS = None
         self.callbacks = None
-        '''
+        """
         For testing in different setups and environment
-        '''
+        """
         self.debug_mode = True
         self.debug_verbose = 3
-        self.default_projects_folder = 'TerraProjects'
+        self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
 
-        '''
+        """
         Checking setup environment
-        '''
-        self.env_setup = 'colab'
+        """
+        self.env_setup = "colab"
         if self.Exch.is_it_colab():
-            self.env_setup = 'colab'
+            self.env_setup = "colab"
 
         self.mounted_drive_writable = False
 
-        if self.env_setup == 'colab':
-            if not self.Exch.is_google_drive_connected():
-                self.Exch.print_2status_bar(('Warning:',
-                                             f'Google Drive is not connected! Using drive on VM!'))
-                if self.debug_mode:
-                    self.mounted_drive_name = ''
-                    self.mounted_drive_path = '/content/'
-                    self.mounted_drive_writable = True
-            else:
-                '''
-                Setting location for TerraProjects - Home for _current_ user 
-                '''
-                self.mounted_drive_name, self.mounted_drive_path = self.Exch.get_google_drive_name_path()
+        if not self.Exch.is_google_drive_connected():
+            self.Exch.print_2status_bar(
+                ("Warning:", f"Google Drive is not connected! Using drive on VM!")
+            )
+            if self.debug_mode:
+                self.mounted_drive_name = ""
+                self.mounted_drive_path = "./TerraAI/projects"
                 self.mounted_drive_writable = True
         else:
-            self.Exch.print_error(('Error',
-                                   f'Unknown error'))
-            sys.exit()
+            """
+            Setting location for TerraProjects - Home for _current_ user
+            """
+            (
+                self.mounted_drive_name,
+                self.mounted_drive_path,
+            ) = self.Exch.get_google_drive_name_path()
+            self.mounted_drive_writable = True
 
         self.HOME = os.path.join(self.mounted_drive_path, self.default_projects_folder)
         self.checking_HOME()
-        self.default_user_model_plans_path = os.path.join(self.HOME, self.default_user_model_plans_folder)
+        self.default_user_model_plans_path = os.path.join(
+            self.HOME, self.default_user_model_plans_folder
+        )
         if not os.access(self.default_user_model_plans_path, os.F_OK):
             os.mkdir(self.default_user_model_plans_path)
-            self.Exch.print_2status_bar(('Info',
-                                         f'Created the Home directory '
-                                         f'{self.default_user_model_plans_path} for keeping projects data'))
+            self.Exch.print_2status_bar(
+                (
+                    "Info",
+                    f"Created the Home directory "
+                    f"{self.default_user_model_plans_path} for keeping projects data",
+                )
+            )
         else:
-            self.Exch.print_2status_bar(('Info',
-                                         f'The Home directory '
-                                         f'{self.default_user_model_plans_path} for keeping projects data, already '
-                                         f'exists'))
+            self.Exch.print_2status_bar(
+                (
+                    "Info",
+                    f"The Home directory "
+                    f"{self.default_user_model_plans_path} for keeping projects data, already "
+                    f"exists",
+                )
+            )
 
         pass
 
-        self.nn_name = ''
+        self.nn_name = ""
         self.model = None
         self.external_model = False
 
         if self.mounted_drive_writable:
 
-            '''
-            Setting location for Projects in Home directory for _current_ user 
-            '''
-            self.project_name = ''
-            self.project_path = ''
+            """
+            Setting location for Projects in Home directory for _current_ user
+            """
+            self.project_name = ""
+            self.project_path = ""
             self.set_project_name(self.project_name)
 
-            '''
+            """
             Setting location for task_name in current project for _current_ user 
             if task_type is currently = ''
             it's setting to None   
-            '''
-            self.task_name = ''
-            self.task_type = ''
-            self.task_path = ''
+            """
+            self.task_name = ""
+            self.task_type = ""
+            self.task_path = ""
             self.set_task_type()
 
-            '''
+            """
             Setting experiment_UUID and experiment_name 
-            '''
-            self.experiment_name = ''
-            self.experiment_UUID = ''
-            self.experiment_path = ''
+            """
+            self.experiment_name = ""
+            self.experiment_UUID = ""
+            self.experiment_path = ""
             self.set_experiment_UUID()
             self.set_experiment_name(str(self.experiment_UUID))
 
@@ -113,12 +122,12 @@ class GUINN:
             self.stop_epoch: int = 0
             self.model_is_trained = False
             self.history = dict()
-            self.best_metric_result = '0000'
+            self.best_metric_result = "0000"
 
             self.learning_rate = 1e-3
-            self.optimizer_name = 'Adam'
-            self.loss = 'categorical_crossentropy'
-            self.metrics: List[str] = ['accuracy']
+            self.optimizer_name = "Adam"
+            self.loss = "categorical_crossentropy"
+            self.metrics: List[str] = ["accuracy"]
             self.batch_size = 32
             self.epochs = 20
             self.shuffle = True
@@ -127,7 +136,7 @@ class GUINN:
                 self.monitor = str(self.metrics[0])
             else:
                 self.monitor = self.metrics[0]
-            self.monitor2 = 'loss'
+            self.monitor2 = "loss"
 
     def set_dataset(self, dts_obj: object) -> None:
         """
@@ -163,18 +172,31 @@ class GUINN:
             self.Exch.set_mounted_drive_status(True)
             if not os.access(self.HOME, os.F_OK):
                 os.mkdir(self.HOME)
-                self.Exch.print_2status_bar(('info',
-                                             f'Created the Home directory {self.HOME} for keeping projects data'))
+                self.Exch.print_2status_bar(
+                    (
+                        "info",
+                        f"Created the Home directory {self.HOME} for keeping projects data",
+                    )
+                )
             else:
                 if self.debug_verbose >= 3:
-                    self.Exch.print_2status_bar(('info',
-                                                 f'The Home directory {self.HOME} for keeping projects data, already '
-                                                 f'exists'))
+                    self.Exch.print_2status_bar(
+                        (
+                            "info",
+                            f"The Home directory {self.HOME} for keeping projects data, already "
+                            f"exists",
+                        )
+                    )
         else:
-            self.Exch.print_error(('Error',
-                                   f'The mounted drive {self.mounted_drive_path} is not writable. '
-                                   f'Check mounted drive for write access'))
-            sys.exit()
+            self.Exch.print_error(
+                (
+                    "Error",
+                    f"The mounted drive {self.mounted_drive_path} is not writable. "
+                    f"Check mounted drive for write access",
+                )
+            )
+            os.makedirs(self.mounted_drive_path)
+            # sys.exit()
         pass
 
     def set_project_name(self, project_name: str) -> None:
@@ -184,8 +206,8 @@ class GUINN:
         Args:
             project_name (str):   nn_name of the project, also used as sub directory
         """
-        if project_name == '':
-            self.project_name = 'noname_project'
+        if project_name == "":
+            self.project_name = "noname_project"
         else:
             self.project_name = project_name
         self.project_path = os.path.join(self.HOME, self.project_name)
@@ -199,7 +221,7 @@ class GUINN:
         self.task_name = self.Exch.task_name
         self.task_type = self.task_name
 
-        if self.task_type == '':
+        if self.task_type == "":
             self.task_type = None
         else:
             self.task_path = os.path.join(self.project_path, self.task_type)
@@ -240,9 +262,11 @@ class GUINN:
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
         x_train_shape, num_classes
         """
-        msg = f'num_classes = {self.DTS.num_classes}, shape = {self.DTS.x_Train.shape}, epochs = {self.epochs},\n' \
-              f'learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n' \
-              f'shuffle = {self.shuffle}, loss = {self.loss}, metrics = {self.metrics}\n'
+        msg = (
+            f"num_classes = {self.DTS.num_classes}, shape = {self.DTS.x_Train.shape}, epochs = {self.epochs},\n"
+            f"learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n"
+            f"shuffle = {self.shuffle}, loss = {self.loss}, metrics = {self.metrics}\n"
+        )
 
         # TODO: change to print_2status_bar then remove debug_mode
         self.Exch.show_text_data(msg)
@@ -256,12 +280,16 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            model_name = f'model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}'
-            file_path_model: str = os.path.join(self.experiment_path, f'{model_name}.h5')
+            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}"
+            file_path_model: str = os.path.join(
+                self.experiment_path, f"{model_name}.h5"
+            )
             self.model.save(file_path_model)
-            self.Exch.print_2status_bar(('Info', f'Model is saved as {file_path_model}'))
+            self.Exch.print_2status_bar(
+                ("Info", f"Model is saved as {file_path_model}")
+            )
         else:
-            self.Exch.print_error(('Error', 'Cannot save. The model is not trained'))
+            self.Exch.print_error(("Error", "Cannot save. The model is not trained"))
             sys.exit()
         pass
 
@@ -277,7 +305,7 @@ class GUINN:
             None
         """
         self.model = nnmodel
-        self.nn_name = f'{self.model.name}'
+        self.nn_name = f"{self.model.name}"
         self.shuffle = self.Exch.shuffle
         self.loss = self.Exch.get_loss_from_django()
         self.metrics = self.Exch.get_metrics_from_django()
@@ -285,37 +313,43 @@ class GUINN:
         self.batch_size = self.Exch.get_batch_size_from_django()
         if self.debug_verbose > 1:
             verbose = 2
-            print('self.loss', self.loss)
-            print('self.metrics', self.metrics)
-            print('self.batch_size', self.batch_size)
-            print('self.epochs', self.epochs)
+            print("self.loss", self.loss)
+            print("self.metrics", self.metrics)
+            print("self.batch_size", self.batch_size)
+            print("self.epochs", self.epochs)
 
         if self.debug_verbose > 1:
-            print('self.callbacks', self.callbacks)
+            print("self.callbacks", self.callbacks)
 
         self.show_training_params()
-        self.history = self.model.fit(self.DTS.x_Train,
-                                      self.DTS.y_Train,
-                                      batch_size=self.batch_size,
-                                      shuffle=self.shuffle,
-                                      validation_data=(self.DTS.x_Val, self.DTS.y_Val),
-                                      epochs=self.epochs,
-                                      verbose=verbose,
-                                      callbacks=self.callbacks)
+        self.history = self.model.fit(
+            self.DTS.x_Train,
+            self.DTS.y_Train,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            validation_data=(self.DTS.x_Val, self.DTS.y_Val),
+            epochs=self.epochs,
+            verbose=verbose,
+            callbacks=self.callbacks,
+        )
         self.model_is_trained = True
 
-        self.best_epoch, self.best_epoch_num, self.stop_epoch = \
-            self._search_best_epoch_data(history=self.history,
-                                         monitor=self.monitor,
-                                         monitor2=self.monitor2
-                                         )
+        (
+            self.best_epoch,
+            self.best_epoch_num,
+            self.stop_epoch,
+        ) = self._search_best_epoch_data(
+            history=self.history, monitor=self.monitor, monitor2=self.monitor2
+        )
         self.best_metric_result = self.best_epoch[self.monitor]
 
         self.save_nnmodel()
         pass
 
     @staticmethod
-    def _search_best_epoch_data(history, monitor="val_accuracy", monitor2="val_loss") -> Tuple[dict, int, int]:
+    def _search_best_epoch_data(
+        history, monitor="val_accuracy", monitor2="val_loss"
+    ) -> Tuple[dict, int, int]:
         """
         Searching in history for best epoch with metrics from 'monitor' kwargs
 
@@ -329,8 +363,8 @@ class GUINN:
             best_epoch_num + 1 (int):   best epoch number
             stop_epoch (int):           stop epoch
         """
-        max_monitors = ['accuracy', 'dice_coef']
-        min_monitors = ['loss', 'mae', 'mape', 'mse', 'msle']
+        max_monitors = ["accuracy", "dice_coef"]
+        min_monitors = ["loss", "mae", "mape", "mse", "msle"]
 
         if not isinstance(monitor, str):
             monitor = str(monitor)
@@ -342,7 +376,7 @@ class GUINN:
             funct = np.argmax
             check = operator.gt
 
-        elif ('error' in monitor) or monitor in min_monitors:
+        elif ("error" in monitor) or monitor in min_monitors:
             funct = np.argmin
             check = operator.lt
 
@@ -352,7 +386,7 @@ class GUINN:
 
         if monitor2 in max_monitors:
             check2 = operator.gt
-        elif ('error' in monitor2) or monitor2 in min_monitors:
+        elif ("error" in monitor2) or monitor2 in min_monitors:
             check2 = operator.lt
         else:
             check2 = operator.gt
@@ -362,18 +396,38 @@ class GUINN:
 
         if np.isnan(history.history[monitor][best_epoch_num]):
             n_range = best_epoch_num - 1
-            best_epoch_num = funct(history.history[monitor][:best_epoch_num - 1])
+            best_epoch_num = funct(history.history[monitor][: best_epoch_num - 1])
         else:
             n_range = len(history.history[monitor])
 
         for i in range(n_range):
-            if (check(history.history[monitor][i], history.history[monitor][best_epoch_num])) & (
-                    check2(history.history[monitor2][i], history.history[monitor2][best_epoch_num])) & (
-                    not np.isnan(history.history[monitor][i])):
+            if (
+                (
+                    check(
+                        history.history[monitor][i],
+                        history.history[monitor][best_epoch_num],
+                    )
+                )
+                & (
+                    check2(
+                        history.history[monitor2][i],
+                        history.history[monitor2][best_epoch_num],
+                    )
+                )
+                & (not np.isnan(history.history[monitor][i]))
+            ):
                 best_epoch_num = i
-            elif (history.history[monitor][i] == history.history[monitor][best_epoch_num]) & (
-                    history.history[monitor2][i] == history.history[monitor2][best_epoch_num]) & (
-                    not np.isnan(history.history[monitor][i])):
+            elif (
+                (
+                    history.history[monitor][i]
+                    == history.history[monitor][best_epoch_num]
+                )
+                & (
+                    history.history[monitor2][i]
+                    == history.history[monitor2][best_epoch_num]
+                )
+                & (not np.isnan(history.history[monitor][i]))
+            ):
                 best_epoch_num = i
 
         early_stop_epoch = len(history.history[monitor])
