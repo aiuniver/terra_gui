@@ -8,6 +8,7 @@ from IPython import get_ipython
 from django.conf import settings
 
 from terra_ai.trds import DTS
+from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 
 
@@ -865,7 +866,7 @@ class StatesData:
         }
 
 
-class Exchange(StatesData):
+class Exchange(StatesData, GuiExch):
     """
     Class for exchange data in google colab between django and terra in training mode
 
