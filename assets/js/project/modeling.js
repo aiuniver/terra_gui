@@ -43,8 +43,7 @@
                                             block.find(".models-data > .model-arch > .wrapper > .model-arch-img > img").attr("src", `data:image/png;base64,${data.data.image}`);
                                             block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                             block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
-                                            terra_board.model_schema = data.data.front_model_schema;
-                                            console.log(terra_board.model_schema);
+                                            // terra_board.model_schema = data.data.front_model_schema;
                                         } else {
                                             window.StatusBar.message(data.error, false);
                                         }
@@ -142,6 +141,52 @@
                 _lastNodeIndex = 0,
                 _lastLineIndex = 0;
 
+            let _model_schema = [
+                [1],
+                [2],
+                [3],
+                [4],
+                [5]
+            ];
+
+            let _layer_row_w = [];
+
+            let layer_row_w_init = () => {
+                for(let i=0; i <_model_schema.length; i++){
+                    let sum = 0;
+                    for(let j=0; j < _model_schema[i].length; j++){
+                        if(_model_schema[i][j] == null){
+                            continue;
+                        }else{
+                            sum += d3.select("#node-"+_model_schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
+                            sum += 50;
+                        }
+                    }
+                    _layer_row_w.push(sum);
+                }
+            };
+
+            let _set_position_nodes = () => {
+                let w = _d3graph._groups[0][0].width.baseVal.value;
+                for(let i=0; i <_model_schema.length; i++){
+                    let end_nodes = 0,
+                        margin_w = (w - _layer_row_w[i])/2,
+                        margin_h = 30;
+                    for(let j=0; j < _model_schema[i].length; j++){
+                        if(_model_schema[i][j] == null){
+                            continue;
+                        }else{
+                            let node = d3.select("#node-"+_model_schema[i][j]);
+                            let node_x = margin_w + end_nodes;
+                            let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
+                            end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
+                            end_nodes += 50;
+                            node.attr("transform", "translate(" + node_x + "," + node_y + ")");
+                        }
+                    }
+                }
+            };
+
             _d3graph.call(zoom);  
 
             d3.select("#zoom-inc").on("click", () => {  
@@ -223,6 +268,8 @@
                 layer.lineSource = {};
                 _lastNodeIndex++;
 
+                let row, col;
+
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
@@ -247,10 +294,16 @@
                 let width = text._groups[0][0].getBBox().width + 20;
                     rect.attr("width", width);
 
-                let margin_row_left = (w - this.model_schema[layer.index][0]*(width+20))/2;
+                for(let i=0; i<_model_schema.length; i++){
+                    row = i;
+                    if(_model_schema[i].indexOf(layer.index) != -1){
+                         col = _model_schema[i].indexOf(layer.index);
+                         break;
+                    }
+                }
 
-                if (layer.x === undefined ) layer.x = margin_row_left + this.model_schema[layer.index][1]*(width+20);
-                if (layer.y === undefined) layer.y = 60 * this.model_schema[layer.index][2];
+                if (layer.x === undefined ) layer.x = w/2;
+                if (layer.y === undefined) layer.y = h/2;
 
                 let target_circle = node.append("circle")
                     .attr("class", "dot-target")
@@ -271,6 +324,10 @@
 
                 $(".node").bind("mousedown", _onmousedown)
                     .bind("mouseup", _onmouseup);
+            };
+
+            let set_position_node = (node_id, row, col) => {
+
             };
 
             let _delete_node = (node) => {
@@ -480,6 +537,10 @@
                 layers.forEach((layer) => {
                     _create_node(layer);
                 });
+
+                layer_row_w_init();
+                _set_position_nodes();
+
                 layers.forEach((layer) => {
                     _targetNode = $("#node-"+layer.config.name)[0]
                     layer.config.up_link.forEach((parent_node) => {
