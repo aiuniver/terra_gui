@@ -3,6 +3,7 @@ import os
 import re
 
 from IPython import get_ipython
+from django.conf import settings
 
 from .neural.trds import DTS
 
@@ -110,6 +111,9 @@ class Exchange:
         self.is_trained = False
         self.debug_verbose = 0
         self.model = None
+        self.epochs = 20
+        self.batch_size = 32
+        self.epoch = 1
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -230,6 +234,13 @@ class Exchange:
             )
             current_graph = []
         return out_graphs
+
+    def _get_custom_datasets_from_google_drive(self):
+        custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+        custom_datasets = []
+        if os.path.exists(custom_datasets_path):
+            custom_datasets = os.listdir(custom_datasets_path)
+        return custom_datasets
 
     def _create_datasets_data(self) -> dict:
         """
@@ -477,14 +488,14 @@ class Exchange:
         )
         return data
 
-    # def get_data(self):
-    #     if self.process_flag == "train":
-    #         self.out_data["progress_status"]["progress_text"] = "Train progress"
-    #         self.out_data["progress_status"]["percents"] = (
-    #             self.epoch / self.epochs
-    #         ) * 100
-    #         self.out_data["progress_status"]["iter_count"] = self.epochs
-    #     return self.out_data
+    def get_data(self):
+        if self.process_flag == "train":
+            self.out_data["progress_status"]["progress_text"] = "Train progress"
+            self.out_data["progress_status"]["percents"] = (
+                self.epoch / self.epochs
+            ) * 100
+            self.out_data["progress_status"]["iter_count"] = self.epochs
+        return self.out_data
 
     # def start_training(self, model_plan: object):
     #     if self.debug_verbose == 3:
