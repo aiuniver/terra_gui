@@ -74,10 +74,14 @@ class TerraExchangeProject:
                    training -> {self.path.get("training", UNDEFINED)}"""
 
     @property
+    def dataset_selected(self) -> bool:
+        return self.dataset != "" and self.task != ""
+
+    @property
     def as_json_string(self) -> dict:
         output = self.__dict__
         path = {}
         for name, value in self.path.items():
             path.update({name: str(value)})
-        output.update({"path": path})
+        output.update({"path": path, "dataset_selected": self.dataset_selected})
         return output

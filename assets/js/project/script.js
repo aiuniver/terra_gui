@@ -111,6 +111,12 @@
             }
         });
 
+        Object.defineProperty(this, "dataset_selected", {
+            get: () => {
+                return _dataset !== "" && _task !== "";
+            }
+        });
+
         Object.defineProperty(this, "task_name", {
             get: () => {
                 if (_task) {

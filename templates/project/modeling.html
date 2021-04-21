@@ -41,7 +41,7 @@
 <div class="board">
     <div class="wrapper">
         <div class="canvas-container">
-            <button class="clear hidden">Clear</button>
+            <button id="canvas-clear" class="clear">Clear</button>
             <div class="canvas">
                 <svg>
                     <g id="canvas-container">
@@ -50,10 +50,10 @@
                     </g>
                 </svg>
             </div>
-            <ul class="zoom hidden">
-                <li class="inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
-                <li class="res" data-type="reset"><span><img src="{% static 'imgs/zoom_res.svg' %}" alt="" /></span></li>
-                <li class="dec" data-type="dec"><span><img src="{% static 'imgs/Group-7.svg' %}" alt="" /></span></li>
+            <ul class="zoom">
+                <li class="inc" id="zoom-inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
+                <li class="res" id="zoom-reset" data-type="reset"><span><img src="{% static 'imgs/zoom_res.svg' %}" alt="" /></span></li>
+                <li class="dec" id="zoom-dec" data-type="dec"><span><img src="{% static 'imgs/Group-7.svg' %}" alt="" /></span></li>
             </ul>
         </div>
     </div>
