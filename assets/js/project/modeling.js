@@ -151,7 +151,7 @@
 
             let _layer_row_w = [];
 
-            let layer_row_w_init = () => {
+            let _layer_row_w_init = () => {
                 for(let i=0; i <_model_schema.length; i++){
                     let sum = 0;
                     for(let j=0; j < _model_schema[i].length; j++){
@@ -324,10 +324,6 @@
 
                 $(".node").bind("mousedown", _onmousedown)
                     .bind("mouseup", _onmouseup);
-            };
-
-            let set_position_node = (node_id, row, col) => {
-
             };
 
             let _delete_node = (node) => {
@@ -538,7 +534,7 @@
                     _create_node(layer);
                 });
 
-                layer_row_w_init();
+                _layer_row_w_init();
                 _set_position_nodes();
 
                 layers.forEach((layer) => {
