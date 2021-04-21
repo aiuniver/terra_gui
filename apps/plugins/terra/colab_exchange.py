@@ -875,8 +875,8 @@ class Exchange(StatesData, GuiExch):
     """
 
     def __init__(self):
-        super(StatesData, self).__init__()
-        super(GuiExch, self).__init__()
+        StatesData.__init__(self)
+        GuiExch.__init__(self)
         # data for output current state of model training process
         self.out_data = {
             "stop_flag": False,
