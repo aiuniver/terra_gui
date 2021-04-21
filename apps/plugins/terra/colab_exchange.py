@@ -6,7 +6,7 @@ import dill as dill
 from IPython import get_ipython
 from django.conf import settings
 
-from .neural.trds import DTS
+from terra_ai.trds import DTS
 
 
 class Exchange:
