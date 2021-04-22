@@ -209,24 +209,87 @@
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
             });
 
-
-                
-
             this.load_layer = (class_name) => {
 
                 let input_cfg = {
-                    type: "input",
-                    params: {}
+                    input_shape: [],
+                    output_shape: [],
+                    params: null,
+                    type: "Input",
+                    up_link: [0]
                 };
 
                 let middle_cfg = {
-                    type: "middle",
-                    params: {}
+                    input_shape: [],
+                    output_shape: [],
+                    params: {
+                        activation: {
+                            available: [
+                                null,
+                                "sigmoid",
+                                "softmax",
+                                "tanh",
+                                "relu",
+                                "elu",
+                                "selu"
+                            ],
+                            default: "relu",
+                            list: true,
+                            type: "str"
+                        },
+                        filters: {
+                            default: 16,
+                            type: "int"
+                        },
+                        kernel_size: {
+                            default: 3,
+                            type: "tuple"
+                        },
+                        padding: {
+                            available: [
+                                "valid",
+                                "same"
+                            ],
+                            default: "same",
+                            list: true,
+                            type: "str"
+                        },
+                        strides: {
+                            default: [1, 1],
+                            type: "tuple"
+                        }
+                    },
+                    type: "Conv2D",
+                    up_link: []
                 };
 
                 let output_cfg = {
-                    type: "output",
-                    params: {}
+                    input_shape: [],
+                    output_shape: [],
+                    params: {
+                         available: [
+                                null,
+                                "sigmoid",
+                                "softmax",
+                                "tanh",
+                                "relu",
+                                "elu",
+                                "selu"
+                         ],
+                        default: "softmax",
+                        list: true,
+                        type: "str",
+                        units: {
+                            default: 3,
+                            type: "int"
+                        },
+                        use_bias: {
+                            default: true,
+                            type: "bool"
+                        }
+                    },
+                    type: "Dense",
+                    up_link: []
                 };
 
                 let layer_cfg = {
@@ -237,14 +300,17 @@
                 switch (class_name){
                     case "input":
                         layer_cfg.config = input_cfg;
+                        layer_cfg.type = "input";
                         break
 
                     case "middle":
                          layer_cfg.config = middle_cfg;
+                         layer_cfg.type = "middle";
                         break
 
                     case "output":
                          layer_cfg.config = output_cfg;
+                         layer_cfg.type = "output";
                         break
                 }
 
@@ -271,6 +337,7 @@
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
                 layer.index = _lastNodeIndex;
+                layer.config.name = _lastNodeIndex;
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.index}`)
@@ -368,9 +435,18 @@
                 _cnodes.select("#" + _sourceNode.id).data(node_data);
             };
 
-            let _change_line = () => {
+            let _change_line = (new_line = false) => {
                  let _target_node_point = {x:_targetNode.transform.baseVal[0].matrix.e, y: _targetNode.transform.baseVal[0].matrix.f};
                  let line_id = "line-" + _lastLineIndex;
+
+                 if(new_line){
+                     let _target_node_d3 = d3.select("#"+_targetNode.id),
+                    _target_node_d3_data = _target_node_d3.data();
+
+                    _target_node_d3_data[0].config.up_link.push(_sourceNode.__data__.index);
+                    _target_node_d3.data(_target_node_d3_data);
+                 }
+
 
                  let line = _clines.select("#" + line_id);
 
@@ -394,7 +470,7 @@
 
 
             let _node_dragstarted = (data) => {
-                terra_board.find(".canvas > .hint").remove();
+                $(".canvas-container").find(".canvas > .hint").remove();
                 let _node = d3.select(`#node-${data.index}`);
                 _node.raise().classed("hover", true);
             }
@@ -442,22 +518,24 @@
             };
 
             $(".canvas-container").bind("contextmenu", (event) => {
-                $(".hint").remove();
                 return false;
+            });
+
+            $(document).bind("mousedown", (event) => {
+                $(".canvas-container").find(".canvas > .hint").remove();
             });
 
             let _onmousedown = (event)=>{
                 svg.bind("mousemove", _onmousemove);
                 _sourceNode = event.target.parentNode;
                 _targetNode = undefined;
-
             };
 
             let _onmouseup = (event)=>{
                 svg.unbind("mousemove", _onmousemove);
                 _targetNode = event.target.parentNode;
                 if(_onContextDrag){
-                    _change_line();
+                    _change_line(true);
                 }else if (event.button === 2 && !_onContextDrag) {
                     let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
                     if (params == null) return;
@@ -483,7 +561,6 @@
                     .attr("x2", event.offsetX)
                     .attr("y2", event.offsetY);
                 } else{
-                    console.log("asd")
                     _create_line();
                     _onContextDrag = true;
                 }
@@ -520,6 +597,7 @@
             Object.defineProperty(this, "model", {
                 set: (model_info) => {
                     __clear();
+                    console.log("dasd")
                     let layers = model_info.layers,
                         schema = model_info.schema,
                         num = 0,
