@@ -473,6 +473,8 @@
                 $(".canvas-container").find(".canvas > .hint").remove();
                 let _node = d3.select(`#node-${data.index}`);
                 _node.raise().classed("hover", true);
+                 if (!_onDrag) this.activeNode(_node);
+                 _onDrag = false;
             }
 
             let _node_dragged = (data) => {
