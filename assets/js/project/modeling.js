@@ -68,19 +68,6 @@
             }
 
             this.layersReset = (input, middle, output) => {
-               if (!input) {
-                   input = false;
-                   middle = true;
-                   output = true;
-               } else if (!output) {
-                   input = true;
-                   middle = true;
-                   output = false;
-               } else {
-                   input = true;
-                   middle = false;
-                   output = true;
-               }
                this.find(".menu-section.layers > li[data-type=input]")[0].disabled = false;
                this.find(".menu-section.layers > li[data-type=middle]")[0].disabled = false;
                this.find(".menu-section.layers > li[data-type=output]")[0].disabled = false;
@@ -93,24 +80,9 @@
             });
 
             this.items.each((index, item) => {
-                Object.defineProperty(item, "disabled", {
-                    set: (value) => {
-                        value
-                            ? item.setAttribute("disabled", "disabled")
-                            : item.removeAttribute("disabled");
-                    },
-                    get: () => {
-                        return item.hasAttribute("disabled");
-                    }
-                });
                 item.execute = (callback) => {
                     let _method = _execute[item.dataset.type];
-                    if (item.disabled) return;
-                    if (typeof _method !== "function") {
-                        item.disabled = true;
-                    } else {
-                        _method(item, callback);
-                    }
+                    if (typeof _method == "function") _method(item, callback);
                 }
             });
 
@@ -375,9 +347,8 @@
                 node.data([layer])
                     .attr("transform", "translate(" + layer.x + "," + layer.y + ")");
 
-                $(".node").bind("mousedown", _onmousedown)
+                $(`#node-${layer.id}`).bind("mousedown", _onmousedown)
                     .bind("mouseup", _onmouseup);
-
             };
 
             let _delete_node = (node) => {
@@ -397,6 +368,8 @@
             let _delete_line = (line) => {
                 let sourse_node = line.__data__.source._groups[0][0],
                     target_node = line.__data__.target._groups[0][0];
+
+                target_node.__data__.config.up_link.splice(target_node.__data__.config.up_link.indexOf(sourse_node.id), 1);
 
                 delete sourse_node.__data__.lineSource[line.id];
                 delete target_node.__data__.lineTarget[line.id];
@@ -433,29 +406,44 @@
             };
 
             let _change_line = (new_line = false) => {
-                 let _target_node_point = {x:_targetNode.transform.baseVal[0].matrix.e, y: _targetNode.transform.baseVal[0].matrix.f};
-                 let line_id = "line-" + _lastLineId;
+                let line_id = "line-" + _lastLineId;
+                let _target_node_point = {x:_targetNode.transform.baseVal[0].matrix.e, y: _targetNode.transform.baseVal[0].matrix.f};
 
-                 if(new_line){
-                     let _target_node_d3 = d3.select("#"+_targetNode.id),
-                    _target_node_d3_data = _target_node_d3.data();
+                let repeat_line = false,
+                    cycle_line = false
+
+                if(new_line){
+                    let _target_node_d3 = d3.select("#"+_targetNode.id),
+                        _target_node_d3_data = _target_node_d3.data(),
+                        _source_node_d3 = d3.select("#"+_sourceNode.id),
+                        _source_node_d3_data = _source_node_d3.data();
+
+                    if(_target_node_d3_data[0].config.up_link.indexOf(_sourceNode.__data__.id) != -1) repeat_line = true;
+                    if(_source_node_d3_data[0].config.up_link.indexOf(_targetNode.__data__.id) != -1) cycle_line = true;
 
                     _target_node_d3_data[0].config.up_link.push(_sourceNode.__data__.id);
                     _target_node_d3.data(_target_node_d3_data);
-                 }
+
+                }
 
 
-                 let line = _clines.select("#" + line_id);
 
-                 line.attr("x2", _target_node_point.x + _targetNode.children[0].width.baseVal.value/2);
-                 line.attr("y2", _target_node_point.y - 4);
+                let line = _clines.select("#" + line_id);
 
-                 let next_node_data = _cnodes.select("#" + _targetNode.id).data()[0];
+                line.attr("x2", _target_node_point.x + _targetNode.children[0].width.baseVal.value/2);
+                line.attr("y2", _target_node_point.y - 4);
 
-                 line.data([{source:  _cnodes.select("#" + _sourceNode.id), target:  _cnodes.select("#" + _targetNode.id)}]);
-                 next_node_data.lineTarget[line_id] = line;
-                 _cnodes.select("#" + _targetNode.id).select(".dot-target").attr("visibility", "visible");
-                 _cnodes.select("#" + _targetNode.id).data(next_node_data);
+                let next_node_data = _cnodes.select("#" + _targetNode.id).data()[0];
+
+                line.data([{source:  _cnodes.select("#" + _sourceNode.id), target:  _cnodes.select("#" + _targetNode.id)}]);
+                next_node_data.lineTarget[line_id] = line;
+                _cnodes.select("#" + _targetNode.id).select(".dot-target").attr("visibility", "visible");
+                _cnodes.select("#" + _targetNode.id).data(next_node_data);
+
+                if(_targetNode.id == _sourceNode.id || repeat_line || cycle_line){
+                    _delete_line($("#" + line_id)[0]);
+                    _lastLineId--;
+                }
             };
 
 
@@ -535,7 +523,8 @@
                 _targetNode = event.target.parentNode;
                 if(_onContextDrag){
                     _change_line(true);
-                }else if (event.button === 2 && !_onContextDrag) {
+                     this.find(".canvas > .hint").remove();
+                }else if (event.button === 2) {
                     let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
                     if (params == null) return;
                     if (!Object.keys(params).length) return;
@@ -670,7 +659,6 @@
 
             this.load = (data) => {
                 this.reset();
-                console.log(data);
                 _layer_id_field.val(data.id);
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
@@ -697,8 +685,7 @@
                 for (let index in serializeData) {
                     data[serializeData[index].name] = serializeData[index].value;
                 }
-                console.log(data)
-                this.submit(data);
+                let ans_data = this.submit(data);
             });
 
 
