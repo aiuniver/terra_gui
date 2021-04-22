@@ -139,8 +139,8 @@
                 _onDrag = false,
                 _sourceNode,
                 _targetNode,
-                _lastNodeIndex = 0,
-                _lastLineIndex = 0;
+                _lastNodeId = 0,
+                _lastLineId = 0;
 
             let _layer_row_w_init = (schema) => {
                 for(let i=0; i < schema.length; i++){
@@ -204,8 +204,8 @@
             d3.select("#canvas-clear").on("click", () => {
                 window.TerraProject.model_clear();
                 this.model = window.TerraProject.model_info;
-                _lastNodeIndex = 0,
-                _lastLineIndex = 0;
+                _lastNodeId = 0,
+                _lastLineId = 0;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
             });
 
@@ -320,27 +320,24 @@
             let __clear = () => {
                 _clines.selectAll("line").remove();
                 _cnodes.selectAll("g").remove();
-                _lastNodeIndex = 0;
-                _lastLineIndex = 0;
+                _lastNodeId = 0;
+                _lastLineId = 0;
                 _layer_row_w = [];
             }
 
             let _create_node = (layer) => {
-
                 layer.lineTarget = {};
                 layer.lineSource = {};
-                _lastNodeIndex++;
-
-                let row, col;
+                _lastNodeId++;
 
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
-                layer.index = _lastNodeIndex;
-                layer.config.name = _lastNodeIndex;
+                layer.id = _lastNodeId;
+                if(!layer.config.name) layer.config.name = `l${_lastNodeId}_${layer.config.type}`;
 
                 let node = _cnodes.append("g")
-                    .attr("id", `node-${layer.index}`)
+                    .attr("id", `node-${layer.id}`)
                     .attr("class", `node node-type-${layer.type}`)
                     .call(d3.drag()
                         .on("start", _node_dragstarted)
@@ -415,10 +412,10 @@
             };
 
             let _create_line = () => {
-                _lastLineIndex++;
+                _lastLineId++;
 
                 let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
-                let line_id =  "line-" + _lastLineIndex;
+                let line_id =  "line-" + _lastLineId;
 
                 let line = _clines.append("line")
                     .attr("id", line_id)
@@ -437,13 +434,13 @@
 
             let _change_line = (new_line = false) => {
                  let _target_node_point = {x:_targetNode.transform.baseVal[0].matrix.e, y: _targetNode.transform.baseVal[0].matrix.f};
-                 let line_id = "line-" + _lastLineIndex;
+                 let line_id = "line-" + _lastLineId;
 
                  if(new_line){
                      let _target_node_d3 = d3.select("#"+_targetNode.id),
                     _target_node_d3_data = _target_node_d3.data();
 
-                    _target_node_d3_data[0].config.up_link.push(_sourceNode.__data__.index);
+                    _target_node_d3_data[0].config.up_link.push(_sourceNode.__data__.id);
                     _target_node_d3.data(_target_node_d3_data);
                  }
 
@@ -465,13 +462,13 @@
             this.activeNode = (_node) => {
                 _cnodes.selectAll(".node").classed("active", false);
                 _node.classed("active", true);
-                //params.load(_node.data()[0]);
+                terra_params.load(_node.data()[0]);
             }
 
 
             let _node_dragstarted = (data) => {
-                $(".canvas-container").find(".canvas > .hint").remove();
-                let _node = d3.select(`#node-${data.index}`);
+                this.find(".canvas > .hint").remove();
+                let _node = d3.select(`#node-${data.id}`);
                 _node.raise().classed("hover", true);
                  if (!_onDrag) this.activeNode(_node);
                  _onDrag = false;
@@ -479,7 +476,7 @@
 
             let _node_dragged = (data) => {
                 _onDrag = true;
-                let _node = d3.select(`#node-${data.index}`);
+                let _node = d3.select(`#node-${data.id}`);
                  _node.attr("transform", () => {
                      data.x = d3.event.x;
                      data.y = d3.event.y;
@@ -513,18 +510,18 @@
             }
 
             let _node_dragended = (data) => {
-                let _node = d3.select(`#node-${data.index}`);
+                let _node = d3.select(`#node-${data.id}`);
                 _node.classed("hover", false);
                 if (!_onDrag) this.activeNode(_node);
                 _onDrag = false;
             };
 
-            $(".canvas-container").bind("contextmenu", (event) => {
+            this.bind("contextmenu", (event) => {
                 return false;
             });
 
             $(document).bind("mousedown", (event) => {
-                $(".canvas-container").find(".canvas > .hint").remove();
+                this.find(".canvas > .hint").remove();
             });
 
             let _onmousedown = (event)=>{
@@ -559,7 +556,7 @@
 
             let _onmousemove = (event)=>{
                 if(_onContextDrag){
-                     d3.select("#line-" + _lastLineIndex)
+                     d3.select("#line-" + _lastLineId)
                     .attr("x2", event.offsetX)
                     .attr("y2", event.offsetY);
                 } else{
@@ -599,7 +596,6 @@
             Object.defineProperty(this, "model", {
                 set: (model_info) => {
                     __clear();
-                    console.log("dasd")
                     let layers = model_info.layers,
                         schema = model_info.schema,
                         num = 0,
@@ -619,9 +615,7 @@
                         num++;
                     }
                     _create_model(_layers, schema);
-                    // let exists = _existsLayersTypes();
-                    // toolbar.layersReset(exists[0], exists[1], exists[2]);
-                    // params.reset();
+                    terra_params.reset();
                 },
                 get: () => {
                     return _cnodes.selectAll("g.node");
@@ -658,6 +652,55 @@
         TerraParams: function() {
 
             if (!this.length) return this;
+
+            let _layer_id_field = $("#field_form-layer_id"),
+            _layer_name_field = $("#field_form-layer_name"),
+            _layer_type_field = $("#field_form-layer_type"),
+            _layer_params = this.find(".layer-type-params-container"),
+            _action_save = this.find(".actions-form > .item.save > button");
+
+            this.reset = () => {
+                _layer_id_field.val("");
+                _layer_name_field.val("").attr("disabled", "disabled");
+                _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
+                _action_save.attr("disabled", "disabled");
+                _layer_params.addClass("hidden");
+                _layer_params.children(".inner").html("");
+            }
+
+            this.load = (data) => {
+                this.reset();
+                console.log(data);
+                _layer_id_field.val(data.id);
+                _layer_name_field.val(data.config.name).removeAttr("disabled");
+                _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
+                _action_save.removeAttr("disabled");
+                for (let name in data.config.params) {
+                    let widget = window.FormWidget(name, data.config.params[name]);
+                    widget.addClass("field-inline");
+                    _layer_params.children(".inner").append(widget);
+                }
+                if (data.config.param == null || Object.keys(data.config.params).length) {
+                    _layer_params.removeClass("hidden");
+                }
+            }
+
+            this.submit = () => {
+                throw window.Messages.get("SUBMIT_PARAMS_METHOD");
+            }
+
+            this.bind("submit", (event) => {
+                event.preventDefault();
+                let form = $(event.currentTarget),
+                    serializeData = form.serializeArray(),
+                    data = {};
+                for (let index in serializeData) {
+                    data[serializeData[index].name] = serializeData[index].value;
+                }
+                console.log(data)
+                this.submit(data);
+            });
+
 
             return this;
 
