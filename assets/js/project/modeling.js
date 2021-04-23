@@ -251,7 +251,7 @@
                             type: "str"
                         },
                         strides: {
-                            default: [1, 1],
+                            default: "1,1",
                             type: "tuple"
                         }
                     },
@@ -747,7 +747,6 @@
                                 break
 
                             case "tuple":
-                                //serializeData[index].value = serializeData[index].value.split(",");
                                 serializeData[index].value = parseInt(serializeData[index].value);
                                 break
 
@@ -802,8 +801,20 @@
                 event.preventDefault();
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
-                node_data = _change_node_data(node_data, serializeData);
-                _redraw_node(node, node_data);
+                _change_node_data(node_data, serializeData);
+
+                window.ExchangeRequest(
+                    "save_layer",
+                    (success, data) => {
+                        if(success){
+                            console.log(data);
+                            _redraw_node(node, node_data);
+                        } else{
+                            window.StatusBar.message(window.Messages.get("SAVE_LAYER_ERROR"), false);
+                        }
+                    },
+                    node_data[0]
+                );
             });
 
 

@@ -14,7 +14,8 @@ let Messages = function() {
         TRYING_TO_LOAD_LAYER: "Loading «{0}» layer...",
         LAYER_LOADED: "«{0}» layer is loaded",
         LAYER_ALREADY_EXISTS: "«{0}» layer already exists",
-        SUBMIT_PARAMS_METHOD: "You must define a submit method of Params object like this: _params.submit = (send_data) => {}"
+        SUBMIT_PARAMS_METHOD: "You must define a submit method of Params object like this: _params.submit = (send_data) => {}",
+        SAVE_LAYER_ERROR: "Save layer error."
     };
 
     this.get = (name, values) => {
