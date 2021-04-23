@@ -339,5 +339,9 @@
 	stroke: #EB5757;
 }
 
+.canvas-container > .canvas-save{
+	top: 35px;
+}
+
 
 
