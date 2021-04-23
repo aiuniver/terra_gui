@@ -20,11 +20,12 @@ let Messages = function() {
     this.get = (name, values) => {
         let value = _values[name];
         if (!value) return "";
-        if (values && values.length) {
+        if (values && Object.keys(values).length) {
             for (let index in values) {
                 value = value.replace("{" + index + "}", values[index]);
             }
         }
+
         return value;
     }
 

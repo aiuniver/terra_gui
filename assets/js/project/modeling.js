@@ -181,6 +181,31 @@
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
             });
 
+            d3.select("#canvas-save").on("click", () => {
+                let nodes = _cnodes.selectAll("g.node").data()
+                for(let node in nodes){
+                    delete nodes[node].lineSource;
+                    delete nodes[node].lineTarget;
+                }
+                let nodes_cfg = [];
+                nodes.forEach((layer) => {
+                    nodes_cfg.push(layer.config);
+                    console.log(layer.config);
+                })
+                window.ExchangeRequest(
+                                    "set_model",
+                                    (success, data) => {
+                                        if (success) {
+                                            this.model = window.TerraProject.model_info;
+                                        } else {
+                                            window.StatusBar.message(data.error, false);
+                                        }
+                                    },
+                                    {"layers": nodes, "schema": _model_schema}
+                                );
+                window.location.reload();
+            });
+
             this.load_layer = (class_name) => {
 
                 let input_cfg = {
@@ -297,16 +322,21 @@
                 _layer_row_w = [];
             }
 
-            let _create_node = (layer) => {
+            let _create_node = (layer, new_node=true) => {
                 layer.lineTarget = {};
                 layer.lineSource = {};
-                _lastNodeId++;
+
 
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
-                layer.id = _lastNodeId;
-                if(!layer.config.name) layer.config.name = `l${_lastNodeId}_${layer.config.type}`;
+                if(new_node){
+                    _lastNodeId++;
+                     layer.id = _lastNodeId;
+                    if(!layer.config.name) layer.config.name = `l${_lastNodeId}_${layer.config.type}`;
+                }
+
+
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.id}`)
@@ -352,6 +382,7 @@
             };
 
             let _delete_node = (node) => {
+
                 let target_line = node.__data__.lineTarget,
                     sourse_line = node.__data__.lineSource;
 
@@ -386,7 +417,6 @@
 
             let _create_line = () => {
                 _lastLineId++;
-
                 let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
                 let line_id =  "line-" + _lastLineId;
 
@@ -590,20 +620,36 @@
                         num = 0,
                         _layer,
                         _layers = [];
-                    for (let index in layers) {
-                        let type = "middle";
-                        if (num === Object.keys(layers).length - 1) type = "output";
-                        if (num === 0) type = "input";
-                        _layer = {
-                            index:index,
-                            config:layers[index],
-                            type:type
-                        };
-                        _layers.push(_layer);
-                        this.layer = _layer
-                        num++;
+
+                    let new_model = true;
+
+                    for(let index in layers){
+                        if(layers[index].x !== undefined){
+                            new_model = false;
+                            break;
+                        }
                     }
-                    _create_model(_layers, schema);
+
+                    if(new_model) {
+                        for (let index in layers) {
+                            let type = "middle";
+                            if (num === Object.keys(layers).length - 1) type = "output";
+                            if (num === 0) type = "input";
+                            _layer = {
+                                index: index,
+                                config: layers[index],
+                                type: type
+                            };
+                            _layers.push(_layer);
+                            this.layer = _layer
+                            num++;
+                        }
+                    } else _layers = layers;
+
+                    _lastNodeId = 0;
+                    _lastLineId = 0;
+
+                    _create_model(_layers, schema, new_model);
                     terra_params.reset();
                 },
                 get: () => {
@@ -611,23 +657,30 @@
                 }
             });
 
-             let _create_model = (layers, schema) => {
+             let _create_model = (layers, schema, new_model) => {
                 layers.forEach((layer) => {
-                    _create_node(layer);
+                    if(layer.id > _lastNodeId){
+                        _lastNodeId = layer.id;
+                    }
+                    _create_node(layer, new_model);
                 });
 
-                _layer_row_w_init(schema);
-                _set_position_nodes(schema);
+                if(new_model){
+                     _layer_row_w_init(schema);
+                    _set_position_nodes(schema);
+                }
 
                 layers.forEach((layer) => {
-                    _targetNode = $("#node-"+layer.config.name)[0]
+                    _targetNode = $("#node-"+layer.id)[0];
                     layer.config.up_link.forEach((parent_node) => {
                         if(parent_node == 0){
-                            return
+                            return;
+                        }else{
+                            _sourceNode = $("#node-"+parent_node)[0];
+                            console.log(parent_node+" --> "+layer.id);
+                            _create_line();
+                            _change_line();
                         }
-                        _sourceNode = $("#node-"+parent_node)[0];
-                        _create_line();
-                        _change_line();
                     })
                 });
             }
@@ -648,6 +701,9 @@
             _layer_params = this.find(".layer-type-params-container"),
             _action_save = this.find(".actions-form > .item.save > button");
 
+            let node,
+                node_data;
+
             this.reset = () => {
                 _layer_id_field.val("");
                 _layer_name_field.val("").attr("disabled", "disabled");
@@ -663,6 +719,10 @@
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
                 _action_save.removeAttr("disabled");
+
+                node = d3.select("#node-" + data.id)
+                node_data = node.data();
+
                 for (let name in data.config.params) {
                     let widget = window.FormWidget(name, data.config.params[name]);
                     widget.addClass("field-inline");
@@ -677,15 +737,76 @@
                 throw window.Messages.get("SUBMIT_PARAMS_METHOD");
             }
 
+            let _change_node_data = (node_data, serializeData) => {
+                for (let index in serializeData) {
+                    console.log(node_data[0].config.params)
+                    if(node_data[0].config.params != null && node_data[0].config.params[serializeData[index].name]){
+                        switch (node_data[0].config.params[serializeData[index].name].type){
+                            case "int":
+                                serializeData[index].value = parseInt(serializeData[index].value);
+                                break
+
+                            case "str":
+                                break
+
+                            case "tuple":
+                                //serializeData[index].value = serializeData[index].value.split(",");
+                                serializeData[index].value = parseInt(serializeData[index].value);
+                                break
+
+                            case "bool":
+                                 serializeData[index].value = serializeData[index].value == 'true';
+                                break
+                        }
+                        node_data[0].config.params[serializeData[index].name].default = serializeData[index].value;
+                    } else if(serializeData[index].name == "layer_type"){
+                        node_data[0].config.type = serializeData[index].value;
+                    } else if(serializeData[index].name == "layer_name"){
+                        node_data[0].config.name = serializeData[index].value;
+                    }
+                }
+
+                return node_data;
+            };
+
+            let _redraw_node = (node, node_data) => {
+                let _LINE_HEIGHT = 30;
+
+                node.select("text").text(`${node_data[0].config.name}: ${node_data[0].config.type}`)
+
+                let width = node.select("text")._groups[0][0].getBBox().width + 20;
+                    node.select("rect").attr("width", width);
+
+                node.select(".dot-target")
+                    .attr("cx", width/2)
+                    .attr("cy", -4);
+
+                node.select(".dot-source")
+                    .attr("cx", width/2)
+                    .attr("cy", _LINE_HEIGHT);
+
+                let linesSourceId = node_data[0].lineSource,
+                    linesTargetId = node_data[0].lineTarget;
+
+                for(let line_id in linesSourceId){
+                    let lineSourse = d3.select("#"+line_id)
+                    lineSourse.attr("x1", node_data[0].x + width/2);
+                    lineSourse.attr("y1", node_data[0].y + _LINE_HEIGHT);
+                }
+
+                for(let line_id in linesTargetId){
+                    let lineTarget = d3.select("#"+line_id)
+                    lineTarget.attr("x2", node_data[0].x + width/2);
+                    lineTarget.attr("y2", node_data[0].y - 4);
+                }
+            };
+
             this.bind("submit", (event) => {
                 event.preventDefault();
                 let form = $(event.currentTarget),
-                    serializeData = form.serializeArray(),
-                    data = {};
-                for (let index in serializeData) {
-                    data[serializeData[index].name] = serializeData[index].value;
-                }
-                let ans_data = this.submit(data);
+                    serializeData = form.serializeArray();
+                node_data = _change_node_data(node_data, serializeData);
+                _redraw_node(node, node_data);
             });
 
 
