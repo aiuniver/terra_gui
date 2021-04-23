@@ -190,7 +190,6 @@
                 let nodes_cfg = [];
                 nodes.forEach((layer) => {
                     nodes_cfg.push(layer.config);
-                    console.log(layer.config);
                 })
                 window.ExchangeRequest(
                                     "set_model",
@@ -400,7 +399,7 @@
                 let sourse_node = line.__data__.source._groups[0][0],
                     target_node = line.__data__.target._groups[0][0];
 
-                target_node.__data__.config.up_link.splice(target_node.__data__.config.up_link.indexOf(sourse_node.id), 1);
+                target_node.__data__.config.up_link.splice(target_node.__data__.config.up_link.indexOf(sourse_node.__data__.id), 1);
 
                 delete sourse_node.__data__.lineSource[line.id];
                 delete target_node.__data__.lineTarget[line.id];
@@ -677,7 +676,6 @@
                             return;
                         }else{
                             _sourceNode = $("#node-"+parent_node)[0];
-                            console.log(parent_node+" --> "+layer.id);
                             _create_line();
                             _change_line();
                         }
@@ -739,7 +737,6 @@
 
             let _change_node_data = (node_data, serializeData) => {
                 for (let index in serializeData) {
-                    console.log(node_data[0].config.params)
                     if(node_data[0].config.params != null && node_data[0].config.params[serializeData[index].name]){
                         switch (node_data[0].config.params[serializeData[index].name].type){
                             case "int":
