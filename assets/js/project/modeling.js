@@ -173,38 +173,42 @@
                   
             function zoomed() {
                 _d3graph.select("g").attr("transform", d3.event.transform);
-            };
+            }
 
-            d3.select("#canvas-clear").on("click", () => {
+            $("#canvas-clear").bind("click", () => {
                 window.TerraProject.model_clear();
                 this.model = window.TerraProject.model_info;
-                _lastNodeId = 0,
+                _lastNodeId = 0;
                 _lastLineId = 0;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
+                $("#canvas-save").trigger("click");
             });
 
-            d3.select("#canvas-save").on("click", () => {
-                let nodes = _cnodes.selectAll("g.node").data()
+            $("#canvas-save").bind("click", () => {
+                let nodes = _cnodes.selectAll("g.node").data(),
+                    send_data = {};
                 for(let node in nodes){
                     delete nodes[node].lineSource;
                     delete nodes[node].lineTarget;
+                    send_data[nodes[node].id] = nodes[node];
                 }
                 let nodes_cfg = [];
                 nodes.forEach((layer) => {
                     nodes_cfg.push(layer.config);
-                })
+                });
+                window.StatusBar.clear();
                 window.ExchangeRequest(
-                                    "set_model",
-                                    (success, data) => {
-                                        if (success) {
-                                            this.model = window.TerraProject.model_info;
-                                        } else {
-                                            window.StatusBar.message(data.error, false);
-                                        }
-                                    },
-                                    {"layers": nodes, "schema": _model_schema}
-                                );
-                window.location.reload();
+                    "set_model",
+                    (success, data) => {
+                        if (success) {
+                            this.model = data.data;
+                            window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    },
+                    {"layers": send_data, "schema": _model_schema}
+                );
             });
 
             this.load_layer = (class_name) => {
@@ -658,31 +662,31 @@
                 }
             });
 
-             let _create_model = (layers, schema, new_model) => {
-                layers.forEach((layer) => {
+            let _create_model = (layers, schema, new_model) => {
+                for (let index in layers) {
+                    let layer = layers[index];
                     if(layer.id > _lastNodeId){
                         _lastNodeId = layer.id;
                     }
                     _create_node(layer, new_model);
-                });
+                }
 
                 if(new_model){
                      _layer_row_w_init(schema);
                     _set_position_nodes(schema);
                 }
 
-                layers.forEach((layer) => {
-                    _targetNode = $("#node-"+layer.id)[0];
+                for (let index in layers) {
+                    let layer = layers[index];
+                    _targetNode = $("#node-" + layer.id)[0];
                     layer.config.up_link.forEach((parent_node) => {
-                        if(parent_node == 0){
-                            return;
-                        }else{
-                            _sourceNode = $("#node-"+parent_node)[0];
+                        if (parent_node !== 0) {
+                            _sourceNode = $("#node-" + parent_node)[0];
                             _create_line();
                             _change_line();
                         }
                     })
-                });
+                }
             }
 
 
@@ -728,7 +732,7 @@
                     widget.addClass("field-inline");
                     _layer_params.children(".inner").append(widget);
                 }
-                if (data.config.param == null || Object.keys(data.config.params).length) {
+                if (data.config.params && Object.keys(data.config.params).length) {
                     _layer_params.removeClass("hidden");
                 }
             }
@@ -804,21 +808,23 @@
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
                 _change_node_data(node_data, serializeData);
-
+                let send_data = $.extend({}, node_data[0]);
+                delete send_data.lineSource;
+                delete send_data.lineTarget;
+                window.StatusBar.clear();
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
                         if(success){
-                            console.log(data);
-                            _redraw_node(node, node_data);
+                            terra_board.model = {"layers":data.data,"schema":[]};
+                            window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
                         } else{
                             window.StatusBar.message(window.Messages.get("SAVE_LAYER_ERROR"), false);
                         }
                     },
-                    node_data[0]
+                    send_data
                 );
             });
-
 
             return this;
 
@@ -863,7 +869,6 @@
                         terra_board.model = window.TerraProject.model_info;
                         LoadModel.close();
                     } else {
-
                         window.StatusBar.message(data.error, false);
                     }
                 },

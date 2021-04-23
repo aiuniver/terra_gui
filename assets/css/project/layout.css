@@ -253,6 +253,19 @@ main > .container {
     -ms-flex-align:stretch;
     align-items:stretch;
 }
+main > .container.locked {
+    position:relative;
+}
+main > .container.locked:before {
+    display:block;
+    content:'';
+    width:100%;
+    height:100%;
+    position:absolute;
+    left:0;
+    top:0;
+    z-index:999;
+}
 main > .container > * {
     height:100%;
 }

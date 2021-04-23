@@ -121,6 +121,10 @@ class TerraExchange:
         self.__project.layers = response.data.get("layers")
         return response
 
+    def _call_save_layer(self, **kwargs) -> TerraExchangeResponse:
+        self.__project.layers[str(kwargs.get("id"))] = kwargs
+        return TerraExchangeResponse(data=self.__project.layers)
+
     def _call_get_change_validation(self, layers: dict) -> TerraExchangeResponse:
         response = self.__request_post("get_change_validation", layers=layers)
         self.__project.layers = response.data.get("layers")

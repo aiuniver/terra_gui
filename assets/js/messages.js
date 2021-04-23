@@ -7,6 +7,7 @@ let Messages = function() {
         DATASET_SELECTED: "Dataset «{0}» is selected",
         DATASET_LOADING: "Loading dataset «{0}»...",
         DATASET_LOADED: "Dataset «{0}» is loaded",
+        MODEL_SAVED: "Model is saved.",
         INTERNAL_SERVER_ERROR: "Internal Server Error! Please try again later...",
         PARSE_TERRA_PROJECT_CONFIG_ERROR: "Terra project config not loaded. The default config is used.",
         TRY_TO_SAVE_PROJECT_NAME: "Trying to save new project name «{0}»",
@@ -18,7 +19,8 @@ let Messages = function() {
         LAYER_LOADED: "«{0}» layer is loaded",
         LAYER_ALREADY_EXISTS: "«{0}» layer already exists",
         SUBMIT_PARAMS_METHOD: "You must define a submit method of Params object like this: _params.submit = (send_data) => {}",
-        SAVE_LAYER_ERROR: "Save layer error."
+        SAVE_LAYER_ERROR: "Save layer error.",
+        LAYER_SAVED: "Layer is saved."
     };
 
     this.get = (name, values) => {

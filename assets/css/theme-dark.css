@@ -2,6 +2,9 @@ body {
     color:#fff;
     background:#0E1621;
 }
+main > .container.locked:before {
+    background:rgba(14,22,33,.8);
+}
 
 /* apps_project */
 body.namespace-apps_project header {
