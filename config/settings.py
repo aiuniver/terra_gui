@@ -151,10 +151,8 @@ STATICFILES_FINDERS = [
 ]
 
 
-# Terra AI exchange API
+# Terra AI
 
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
-
-# Path to custom datasets
-
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
+TERRA_AI_CUSTOM_DATASET = env.str("TERRA_AI_CUSTOM_DATASET", default="")
