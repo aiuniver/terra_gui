@@ -216,7 +216,7 @@
                 let input_cfg = {
                     input_shape: [],
                     output_shape: [],
-                    params: null,
+                    params: {},
                     type: "Input",
                     up_link: [0]
                 };
@@ -807,7 +807,7 @@
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
                 _change_node_data(node_data, serializeData);
-                let send_data = $.extend({}, node_data[0]);
+                let send_data = $.extend({}, window.TerraProject.layers[node_data[0].id]);
                 delete send_data.lineSource;
                 delete send_data.lineTarget;
                 window.StatusBar.clear();

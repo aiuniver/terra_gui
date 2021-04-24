@@ -104,29 +104,29 @@ class TerraExchange:
         return self.__request_post("get_models")
 
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
-        return self.__request_post("get_model_from_list", model_name=model_file)
+        data = self.__request_post("get_model_from_list", model_name=model_file)
+        layers = {}
+        for index, layer in data.data.get("layers").items():
+            layers[index] = {"config": layer}
+        data.data.update({"layers": layers})
+        return data
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
-        _layers = {}
         for index, layer in layers.items():
-            if not layer.get("config", None):
-                params = layer.get("params", None)
-                params = params if params else {}
-                for name, param in params.items():
-                    if param.get("type") == "tuple" and isinstance(
-                        param.get("default"), list
-                    ):
-                        default = list(
-                            map(lambda value: str(value), param.get("default"))
-                        )
-                        param.update({"default": ",".join(default)})
-                        params.update({name: param})
-                layer.update({"params": params})
-                layer = {"config": layer}
-            _layers[str(index)] = layer
-        self.__project.layers = _layers
+            params = layer.get("config").get("params", None)
+            params = params if params else {}
+            for name, param in params.items():
+                if param.get("type") == "tuple" and isinstance(
+                    param.get("default"), list
+                ):
+                    default = list(map(lambda value: str(value), param.get("default")))
+                    param.update({"default": ",".join(default)})
+                    params.update({name: param})
+            layer["config"].update({"params": params})
+            layers[index] = layer
+        self.__project.layers = layers
         self.__project.schema = schema
-        return TerraExchangeResponse(data={"layers": _layers, "schema": schema})
+        return TerraExchangeResponse(data={"layers": layers, "schema": schema})
 
     def _call_set_input_layer(self) -> TerraExchangeResponse:
         response = self.__request_post("set_input_layer")
