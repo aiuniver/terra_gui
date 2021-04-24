@@ -269,7 +269,8 @@
                     input_shape: [],
                     output_shape: [],
                     params: {
-                         available: [
+                        activation: {
+                            available: [
                                 null,
                                 "sigmoid",
                                 "softmax",
@@ -277,10 +278,11 @@
                                 "relu",
                                 "elu",
                                 "selu"
-                         ],
-                        default: "softmax",
-                        list: true,
-                        type: "str",
+                             ],
+                            default: "softmax",
+                            list: true,
+                            type: "str"
+                        },
                         units: {
                             default: 3,
                             type: "int"
@@ -331,7 +333,6 @@
                 layer.lineTarget = {};
                 layer.lineSource = {};
 
-
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
@@ -340,8 +341,6 @@
                      layer.id = _lastNodeId;
                     if(!layer.config.name) layer.config.name = `l${_lastNodeId}_${layer.config.type}`;
                 }
-
-
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${layer.id}`)
@@ -370,7 +369,6 @@
                     .attr("visibility", "hidden")
                     .attr("cx", width/2)
                     .attr("cy", -4);
-
 
                 let source_circle = node.append("circle")
                     .attr("class", "dot-source")
@@ -624,7 +622,7 @@
                         schema = model_info.schema,
                         num = 0,
                         _layer,
-                        _layers = [];
+                        _layers = {};
 
                     let new_model = true;
 
@@ -645,7 +643,7 @@
                                 config: layers[index].config,
                                 type: type
                             };
-                            _layers.push(_layer);
+                            _layers[num] = _layer;
                             this.layer = _layer
                             num++;
                         }
@@ -760,6 +758,7 @@
                                  serializeData[index].value = serializeData[index].value == 'true';
                                 break
                         }
+                        console.log(node_data[0].config.params[serializeData[index].name].default)
                         node_data[0].config.params[serializeData[index].name].default = serializeData[index].value;
                     } else if(serializeData[index].name == "layer_type"){
                         node_data[0].config.type = serializeData[index].value;
