@@ -292,6 +292,7 @@
                 }
 
                 _create_node(layer_cfg);
+                this.activeNode(d3.select(`#node-${_lastNodeId}`));
             };
 
             let __clear = () => {
@@ -634,6 +635,14 @@
             });
 
             let _create_model = (layers, schema, new_model) => {
+                for(let index in layers){
+                    for (let param in layers[index].config.params) {
+                        if (layers[index].config.params[param].type === "tuple") {
+                            layers[index].config.params[param].default = `${layers[index].config.params[param].default || ""}`;
+                        }
+                    }
+                }
+
                 for (let index in layers) {
                     let layer = layers[index];
                     if(layer.id > _lastNodeId){
@@ -726,7 +735,6 @@
                                 break
 
                             case "tuple":
-                                serializeData[index].value = parseInt(serializeData[index].value);
                                 break
 
                             case "bool":
@@ -781,12 +789,6 @@
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
                 _change_node_data(node_data, serializeData);
-                // let send_data = $.extend({}, window.TerraProject.layers);
-                //
-                // for(let index in send_data){
-                //     delete send_data[index].lineSource;
-                //     delete send_data[index].lineTarget;
-                // }
 
                 let nodes = d3.selectAll("g.node").data(),
                  send_data = {};
