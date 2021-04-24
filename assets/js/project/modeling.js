@@ -327,6 +327,7 @@
                 _lastNodeId = 0;
                 _lastLineId = 0;
                 _layer_row_w = [];
+                window.TerraProject.layers = {};
             }
 
             let _create_node = (layer, new_node=true) => {
@@ -644,7 +645,6 @@
                                 type: type
                             };
                             _layers[num] = _layer;
-                            this.layer = _layer
                             num++;
                         }
                     } else _layers = layers;
@@ -685,7 +685,9 @@
                         }
                     })
                 }
+                 window.TerraProject.layers = layers;
             }
+
 
 
             return this;
@@ -758,7 +760,6 @@
                                  serializeData[index].value = serializeData[index].value == 'true';
                                 break
                         }
-                        console.log(node_data[0].config.params[serializeData[index].name].default)
                         node_data[0].config.params[serializeData[index].name].default = serializeData[index].value;
                     } else if(serializeData[index].name == "layer_type"){
                         node_data[0].config.type = serializeData[index].value;
@@ -807,22 +808,43 @@
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
                 _change_node_data(node_data, serializeData);
-                let send_data = $.extend({}, window.TerraProject.layers[node_data[0].id]);
-                delete send_data.lineSource;
-                delete send_data.lineTarget;
+                let send_data = $.extend({}, window.TerraProject.layers);
+
+                // window.StatusBar.clear();
+                // window.ExchangeRequest(
+                //     "save_layer",
+                //     (success, data) => {
+                //         if(success){
+                //             terra_board.model = {"layers":data.data,"schema":[]};
+                //             window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
+                //         } else{
+                //             window.StatusBar.message(data.error, false);
+                //         }
+                //     },
+                //     send_data
+                // );
+
+                for(let index in send_data){
+                    delete send_data[index].lineSource;
+                    delete send_data[index].lineTarget;
+                }
+
+                console.log(send_data);
+
                 window.StatusBar.clear();
                 window.ExchangeRequest(
-                    "save_layer",
+                    "set_model",
                     (success, data) => {
-                        if(success){
-                            terra_board.model = {"layers":data.data,"schema":[]};
-                            window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
-                        } else{
+                        if (success) {
+                            terra_board.model = data.data;
+                            window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                        } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
-                    send_data
+                    {"layers": send_data, "schema": []}
                 );
+
             });
 
             return this;
@@ -863,6 +885,7 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
+                        console.log(data.data.layers);
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
