@@ -642,7 +642,7 @@
                             if (num === 0) type = "input";
                             _layer = {
                                 index: index,
-                                config: layers[index],
+                                config: layers[index].config,
                                 type: type
                             };
                             _layers.push(_layer);
@@ -819,7 +819,7 @@
                             terra_board.model = {"layers":data.data,"schema":[]};
                             window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
                         } else{
-                            window.StatusBar.message(window.Messages.get("SAVE_LAYER_ERROR"), false);
+                            window.StatusBar.message(data.error, false);
                         }
                     },
                     send_data
@@ -884,6 +884,23 @@
                 if ($(item.parentNode).hasClass("layers")) terra_board.load_layer(item.dataset.type);
                 terra_toolbar.layersReset(item);
             });
+        });
+
+        // Слушатель на нажатие [CTRL]+[SHIFT]+V - валидация модели
+        $(document).bind("keyup", (event) => {
+            if (event.keyCode === 86 && event.ctrlKey && event.shiftKey){
+                window.StatusBar.clear();
+                window.ExchangeRequest(
+                    "get_change_validation",
+                    (success, data) => {
+                        if (success) {
+                            console.log(data);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    }
+                );
+            }
         });
 
     });

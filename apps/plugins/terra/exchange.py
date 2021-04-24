@@ -107,9 +107,26 @@ class TerraExchange:
         return self.__request_post("get_model_from_list", model_name=model_file)
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
-        self.__project.layers = layers
+        _layers = {}
+        for index, layer in layers.items():
+            if not layer.get("config", None):
+                params = layer.get("params", None)
+                params = params if params else {}
+                for name, param in params.items():
+                    if param.get("type") == "tuple" and isinstance(
+                        param.get("default"), list
+                    ):
+                        default = list(
+                            map(lambda value: str(value), param.get("default"))
+                        )
+                        param.update({"default": ",".join(default)})
+                        params.update({name: param})
+                layer.update({"params": params})
+                layer = {"config": layer}
+            _layers[str(index)] = layer
+        self.__project.layers = _layers
         self.__project.schema = schema
-        return TerraExchangeResponse(data={"layers": layers, "schema": schema})
+        return TerraExchangeResponse(data={"layers": _layers, "schema": schema})
 
     def _call_set_input_layer(self) -> TerraExchangeResponse:
         response = self.__request_post("set_input_layer")
@@ -125,10 +142,21 @@ class TerraExchange:
         self.__project.layers[str(kwargs.get("id"))] = kwargs
         return TerraExchangeResponse(data=self.__project.layers)
 
-    def _call_get_change_validation(self, layers: dict) -> TerraExchangeResponse:
-        response = self.__request_post("get_change_validation", layers=layers)
-        self.__project.layers = response.data.get("layers")
-        return response
+    def _call_get_change_validation(self) -> TerraExchangeResponse:
+        layers = {}
+        for index, layer in self.__project.layers.items():
+            config = layer.get("config")
+            params = {}
+            for name, param in config.get("params", {}).items():
+                params[name] = param.get("default")
+            config.update({"params": params})
+            layers[str(index)] = config
+        if layers:
+            response = self.__request_post("get_change_validation", layers=layers)
+            # self.__project.layers = response.data.get("layers")
+            return response
+        else:
+            return TerraExchangeResponse()
 
     def _call_get_optimizer_kwargs(self, optimizer: str) -> TerraExchangeResponse:
         return self.__request_post("get_optimizer_kwargs", optimizer_name=optimizer)
