@@ -104,6 +104,15 @@
             this.prepareBtn = this.find(".actions-form > .prepare > button");
             this.taskSelect = this.find("#dataset-task");
 
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    let container = $("body.namespace-apps_project main > .container");
+                    this.prepareBtn.disabled = value;
+                    this.taskSelect.disabled = value;
+                    value ? container.addClass("locked") : container.removeClass("locked");
+                }
+            });
+
             Object.defineProperty(this, "task", {
                 set: (value) => {
                     _task = value;
@@ -169,16 +178,18 @@
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                this.prepareBtn.disabled = true;
-                this.taskSelect.disabled = true;
+                this.locked = true;
+                window.StatusBar.clear();
                 window.StatusBar.message(window.Messages.get("DATASET_LOADING", [`${datasets.dataset} [${this.task_name}]`]));
                 window.ExchangeRequest(
                     "prepare_dataset",
                     (success, data) => {
                         if (success) {
-                            console.log(data);
-                            // window.TerraProject.dataset = data.data.dataset;
-                            // window.TerraProject.task = data.data.task;
+                            window.TerraProject.dataset = datasets.dataset;
+                            window.TerraProject.task = this.task;
+                            window.StatusBar.progress_clear();
+                            window.StatusBar.message(window.Messages.get("DATASET_LOADED", [`${datasets.dataset} [${this.task_name}]`]), true);
+                            this.locked = false;
                         }
                     },
                     {
@@ -195,14 +206,7 @@
                             this.task = window.TerraProject.task;
                             window.StatusBar.message(data.error, false);
                         } else {
-                            // _isLoaded = data.stop_flag;
-                            // // LockedForm(!_isLoaded);
-                            // window.StatusBar.message(data.data.status_string);
-                            // window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                            // if (_isLoaded) {
-                            //     window.StatusBar.message(`Загрузка датасета «${window.TerraProject.dataset} [${window.TerraProject.task}]» завершена`, true);
-                            //     window.StatusBar.progress_clear();
-                            // }
+                            window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                         }
                     }
                 );

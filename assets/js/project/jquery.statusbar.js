@@ -6,7 +6,7 @@
 
     $.fn.extend({
 
-
+        
         StatusBar: function(){
 
             if (!this.length) return this;

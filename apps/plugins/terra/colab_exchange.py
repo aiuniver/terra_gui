@@ -14,19 +14,18 @@ from apps.plugins.terra.neural.guinn import GUINN
 
 @dataclass
 class LayersDef:
-    """ Model Plan layers defaults
-    """
+    """Model Plan layers defaults"""
 
-    ''' Head
-    '''
+    """ Head
+    """
     framework = "keras"
     input_datatype = None  # Type of data
-    plan_name = 'empty_string'
+    plan_name = "empty_string"
     num_classes = 0
     input_shape = None
     plan = []
 
-    '''
+    """
     Conv2D kwargs defaults for information
     -----------------------
     conv2d_kwargs = {
@@ -47,436 +46,409 @@ class LayersDef:
         kernel_constraint=None,
         bias_constraint=None,
     }
-    '''
+    """
 
-    ''' Layers dictionary
-    '''
-    layers_dict = \
-        {
-            # Layers Main
-            1: {1: 'Dense',
-                2: 'Conv1D',
-                3: 'Conv2D',
-                4: 'Conv3D',
-                5: 'SeparableConv1D',
-                6: 'SeparableConv2D',
-                7: 'DepthwiseConv2D',
-                },
-            #   Layers UpScaling
-            2: {1: 'Conv1DTranspose',  # Conv1DTranspose tensorflow 2.3
-                2: 'Conv2DTranspose',
-                3: 'UpSampling1D',
-                4: 'UpSampling2D',
-                },
-            #   Layers DownScaling
-            3: {1: 'MaxPooling1D',
-                2: 'MaxPooling2D',
-                3: 'AveragePooling1D',
-                4: 'AveragePooling2D',
-                },
-            # Layers Connections
-            4: {1: 'Concatenate',
-                2: 'Add',
-                3: 'Multiply',
-                },
-            # Layers and functions Activations
-            5: {1: 'sigmoid',
-                2: 'softmax',
-                3: 'tanh',
-                4: 'relu',
-                5: 'LeakyReLU',
-                6: 'elu',
-                7: 'selu',
-                8: 'PReLU'
-                },
-            # Layers Optimization
-            6: {1: 'Dropout',
-                2: 'BatchNormalization',
-                },
-            # Layers Special
-            7: {1: 'Embedding',
-                2: 'LSTM',
-                3: 'GRU'
-                },
-            # Blocks
-            8: {1: 'Flatten',
-                2: 'Reshape',
-                3: 'GlobalMaxPooling1D',
-                4: 'GlobalMaxPooling2D',
-                5: 'GlobalAveragePooling1D',
-                6: 'GlobalAveragePooling2D',
-                7: 'RepeatVector',
-                },
-            # Input - Output custom layers
-            9: {
-                1: 'Input',
-                2: 'assignment',
-                # 3: 'out'
-            }
-        }
+    """ Layers dictionary
+    """
+    layers_dict = {
+        # Layers Main
+        1: {
+            1: "Dense",
+            2: "Conv1D",
+            3: "Conv2D",
+            4: "Conv3D",
+            5: "SeparableConv1D",
+            6: "SeparableConv2D",
+            7: "DepthwiseConv2D",
+        },
+        #   Layers UpScaling
+        2: {
+            1: "Conv1DTranspose",  # Conv1DTranspose tensorflow 2.3
+            2: "Conv2DTranspose",
+            3: "UpSampling1D",
+            4: "UpSampling2D",
+        },
+        #   Layers DownScaling
+        3: {
+            1: "MaxPooling1D",
+            2: "MaxPooling2D",
+            3: "AveragePooling1D",
+            4: "AveragePooling2D",
+        },
+        # Layers Connections
+        4: {
+            1: "Concatenate",
+            2: "Add",
+            3: "Multiply",
+        },
+        # Layers and functions Activations
+        5: {
+            1: "sigmoid",
+            2: "softmax",
+            3: "tanh",
+            4: "relu",
+            5: "LeakyReLU",
+            6: "elu",
+            7: "selu",
+            8: "PReLU",
+        },
+        # Layers Optimization
+        6: {
+            1: "Dropout",
+            2: "BatchNormalization",
+        },
+        # Layers Special
+        7: {1: "Embedding", 2: "LSTM", 3: "GRU"},
+        # Blocks
+        8: {
+            1: "Flatten",
+            2: "Reshape",
+            3: "GlobalMaxPooling1D",
+            4: "GlobalMaxPooling2D",
+            5: "GlobalAveragePooling1D",
+            6: "GlobalAveragePooling2D",
+            7: "RepeatVector",
+        },
+        # Input - Output custom layers
+        9: {
+            1: "Input",
+            2: "assignment",
+            # 3: 'out'
+        },
+    }
 
-    ''' Default layers kwargs with min, max
+    """ Default layers kwargs with min, max
     param_lh: 
         param_name_lh: (min, max), (iterable int or str) for random generator 
-    '''
+    """
     filters_lh = (1, 1024)
     units_lh = (1, 512)
     kernel_size_lh = (1, 7)
     pool_size_lh = (2, 4, 6)
     strides_lh = (2, 4, 6)
     padding_lh = ("same", "valid")
-    activation_lh = ('relu', 'sigmoid', 'softmax')
+    activation_lh = ("relu", "sigmoid", "softmax")
     size_lh = (2, 2)
     rate_lh = (0.1, 0.5)
     axis_lh = (0, 1)
 
-    ''' Layers defaults 
-    '''
+    """ Layers defaults 
+    """
     # Input_defaults = \
     #     {'shape': None,
     #      }
 
-    Conv1D_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': 1,
-         'padding': 'valid',
-         'data_format': 'channels_last',
-         'dilation_rate': 1,
-         'groups': 1,
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Conv1D_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": 1,
+        "padding": "valid",
+        "data_format": "channels_last",
+        "dilation_rate": 1,
+        "groups": 1,
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    Conv2D_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': (1, 1),
-         'padding': 'valid',
-         'data_format': None,
-         'dilation_rate': (1, 1),
-         'groups': 1,
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Conv2D_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": (1, 1),
+        "padding": "valid",
+        "data_format": None,
+        "dilation_rate": (1, 1),
+        "groups": 1,
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    Conv3D_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': (1, 1, 1),
-         'padding': 'valid',
-         'data_format': None,
-         'dilation_rate': (1, 1, 1),
-         'groups': 1,
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Conv3D_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": (1, 1, 1),
+        "padding": "valid",
+        "data_format": None,
+        "dilation_rate": (1, 1, 1),
+        "groups": 1,
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    Conv1DTranspose_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': 1,
-         'padding': 'valid',
-         'output_padding': None,
-         'data_format': None,
-         'dilation_rate': 1,
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Conv1DTranspose_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": 1,
+        "padding": "valid",
+        "output_padding": None,
+        "data_format": None,
+        "dilation_rate": 1,
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    Conv2DTranspose_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': (1, 1),
-         'padding': 'valid',
-         'output_padding': None,
-         'data_format': None,
-         'dilation_rate': (1, 1),
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Conv2DTranspose_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": (1, 1),
+        "padding": "valid",
+        "output_padding": None,
+        "data_format": None,
+        "dilation_rate": (1, 1),
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    SeparableConv1D_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': 1,
-         'padding': 'valid',
-         'data_format': None,
-         'dilation_rate': 1,
-         'depth_multiplier': 1,
-         'activation': None,
-         'use_bias': True,
-         'depthwise_initializer': 'glorot_uniform',
-         'pointwise_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'depthwise_regularizer': None,
-         'pointwise_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'depthwise_constraint': None,
-         'pointwise_constraint': None,
-         'bias_constraint': None
-         }
+    SeparableConv1D_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": 1,
+        "padding": "valid",
+        "data_format": None,
+        "dilation_rate": 1,
+        "depth_multiplier": 1,
+        "activation": None,
+        "use_bias": True,
+        "depthwise_initializer": "glorot_uniform",
+        "pointwise_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "depthwise_regularizer": None,
+        "pointwise_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "depthwise_constraint": None,
+        "pointwise_constraint": None,
+        "bias_constraint": None,
+    }
 
-    SeparableConv2D_defaults = \
-        {'filters': None,
-         'kernel_size': None,
-         'strides': (1, 1),
-         'padding': 'valid',
-         'data_format': None,
-         'dilation_rate': (1, 1),
-         'depth_multiplier': 1,
-         'activation': None,
-         'use_bias': True,
-         'depthwise_initializer': 'glorot_uniform',
-         'pointwise_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'depthwise_regularizer': None,
-         'pointwise_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'depthwise_constraint': None,
-         'pointwise_constraint': None,
-         'bias_constraint': None
-         }
+    SeparableConv2D_defaults = {
+        "filters": None,
+        "kernel_size": None,
+        "strides": (1, 1),
+        "padding": "valid",
+        "data_format": None,
+        "dilation_rate": (1, 1),
+        "depth_multiplier": 1,
+        "activation": None,
+        "use_bias": True,
+        "depthwise_initializer": "glorot_uniform",
+        "pointwise_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "depthwise_regularizer": None,
+        "pointwise_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "depthwise_constraint": None,
+        "pointwise_constraint": None,
+        "bias_constraint": None,
+    }
 
-    DepthwiseConv2D_defaults = \
-        {'kernel_size': None,
-         'strides': (1, 1),
-         'padding': 'valid',
-         'depth_multiplier': 1,
-         'data_format': None,
-         'dilation_rate': (1, 1),
-         'activation': None,
-         'use_bias': True,
-         'depthwise_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'depthwise_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'depthwise_constraint': None,
-         'bias_constraint': None
-         }
+    DepthwiseConv2D_defaults = {
+        "kernel_size": None,
+        "strides": (1, 1),
+        "padding": "valid",
+        "depth_multiplier": 1,
+        "data_format": None,
+        "dilation_rate": (1, 1),
+        "activation": None,
+        "use_bias": True,
+        "depthwise_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "depthwise_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "depthwise_constraint": None,
+        "bias_constraint": None,
+    }
 
-    MaxPooling1D_defaults = \
-        {'pool_size': 2,
-         'strides': None,
-         'padding': 'valid',
-         'data_format': 'channels_last'
-         }
+    MaxPooling1D_defaults = {
+        "pool_size": 2,
+        "strides": None,
+        "padding": "valid",
+        "data_format": "channels_last",
+    }
 
-    MaxPooling2D_defaults = \
-        {'pool_size': (2, 2),
-         'strides': None,
-         'padding': 'valid',
-         'data_format': None
-         }
-    AveragePooling1D_defaults = \
-        {'pool_size': 2,
-         'strides': None,
-         'padding': 'valid',
-         'data_format': None
-         }
+    MaxPooling2D_defaults = {
+        "pool_size": (2, 2),
+        "strides": None,
+        "padding": "valid",
+        "data_format": None,
+    }
+    AveragePooling1D_defaults = {
+        "pool_size": 2,
+        "strides": None,
+        "padding": "valid",
+        "data_format": None,
+    }
 
-    AveragePooling2D_defaults = \
-        {'pool_size': (2, 2),
-         'strides': None,
-         'padding': 'valid',
-         'data_format': None
-         }
+    AveragePooling2D_defaults = {
+        "pool_size": (2, 2),
+        "strides": None,
+        "padding": "valid",
+        "data_format": None,
+    }
 
-    UpSampling1D_defaults = \
-        {'size': 2
-         }
+    UpSampling1D_defaults = {"size": 2}
 
-    UpSampling2D_defaults = \
-        {'size': (2, 2),
-         'data_format': None,
-         'interpolation': 'nearest'
-         }
+    UpSampling2D_defaults = {
+        "size": (2, 2),
+        "data_format": None,
+        "interpolation": "nearest",
+    }
 
-    LeakyReLU_defaults = \
-        {'alpha': 0.3
-         }
+    LeakyReLU_defaults = {"alpha": 0.3}
 
-    Dropout_defaults = \
-        {'rate': None,
-         'noise_shape': None,
-         'seed': None
-         }
+    Dropout_defaults = {"rate": None, "noise_shape": None, "seed": None}
 
-    Dense_defaults = \
-        {'units': None,
-         'activation': None,
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'bias_constraint': None
-         }
+    Dense_defaults = {
+        "units": None,
+        "activation": None,
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "bias_constraint": None,
+    }
 
-    Add_defaults = \
-        {}
+    Add_defaults = {}
 
-    Multiply_defaults = \
-        {}
+    Multiply_defaults = {}
 
-    Flatten_defaults = \
-        {'data_format': None
-         }
+    Flatten_defaults = {"data_format": None}
 
-    Concatenate_defaults = \
-        {'axis': -1
-         }
+    Concatenate_defaults = {"axis": -1}
 
-    Reshape_defaults = \
-        {'target_shape': None
-         }
+    Reshape_defaults = {"target_shape": None}
 
-    sigmoid_defaults = \
-        {}
+    sigmoid_defaults = {}
 
-    softmax_defaults = \
-        {}
+    softmax_defaults = {}
 
-    tanh_defaults = \
-        {}
+    tanh_defaults = {}
 
-    relu_defaults = \
-        {}
+    relu_defaults = {}
 
-    elu_defaults = \
-        {}
+    elu_defaults = {}
 
-    selu_defaults = \
-        {}
+    selu_defaults = {}
 
-    PReLU_defaults = \
-        {'alpha_initializer': 'zeros',
-         'alpha_regularizer': None,
-         'alpha_constraint': None,
-         'shared_axes': None
-         }
+    PReLU_defaults = {
+        "alpha_initializer": "zeros",
+        "alpha_regularizer": None,
+        "alpha_constraint": None,
+        "shared_axes": None,
+    }
 
-    GlobalMaxPooling1D_defaults = \
-        {'data_format': 'channels_last'
-         }
+    GlobalMaxPooling1D_defaults = {"data_format": "channels_last"}
 
-    GlobalMaxPooling2D_defaults = \
-        {'data_format': None
-         }
+    GlobalMaxPooling2D_defaults = {"data_format": None}
 
-    GlobalAveragePooling1D_defaults = \
-        {'data_format': 'channels_last'
-         }
+    GlobalAveragePooling1D_defaults = {"data_format": "channels_last"}
 
-    GlobalAveragePooling2D_defaults = \
-        {'data_format': None
-         }
+    GlobalAveragePooling2D_defaults = {"data_format": None}
 
-    GRU_defaults = \
-        {'units': None,
-         'activation': 'tanh',
-         'recurrent_activation': 'sigmoid',
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'recurrent_initializer': 'orthogonal',
-         'bias_initializer': 'zeros',
-         'kernel_regularizer': None,
-         'recurrent_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'recurrent_constraint': None,
-         'bias_constraint': None,
-         'dropout': 0.0,
-         'recurrent_dropout': 0.0,
-         'return_sequences': False,
-         'return_state': False,
-         'go_backwards': False,
-         'stateful': False,
-         'unroll': False,
-         'time_major': False,
-         'reset_after': True
-         }
+    GRU_defaults = {
+        "units": None,
+        "activation": "tanh",
+        "recurrent_activation": "sigmoid",
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "recurrent_initializer": "orthogonal",
+        "bias_initializer": "zeros",
+        "kernel_regularizer": None,
+        "recurrent_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "recurrent_constraint": None,
+        "bias_constraint": None,
+        "dropout": 0.0,
+        "recurrent_dropout": 0.0,
+        "return_sequences": False,
+        "return_state": False,
+        "go_backwards": False,
+        "stateful": False,
+        "unroll": False,
+        "time_major": False,
+        "reset_after": True,
+    }
 
-    LSTM_defaults = \
-        {'units': None,
-         'activation': 'tanh',
-         'recurrent_activation': 'sigmoid',
-         'use_bias': True,
-         'kernel_initializer': 'glorot_uniform',
-         'recurrent_initializer': 'orthogonal',
-         'bias_initializer': 'zeros',
-         'unit_forget_bias': True,
-         'kernel_regularizer': None,
-         'recurrent_regularizer': None,
-         'bias_regularizer': None,
-         'activity_regularizer': None,
-         'kernel_constraint': None,
-         'recurrent_constraint': None,
-         'bias_constraint': None,
-         'dropout': 0.0,
-         'recurrent_dropout': 0.0,
-         'return_sequences': False,
-         'return_state': False,
-         'go_backwards': False,
-         'stateful': False,
-         'unroll': False,
-         }
+    LSTM_defaults = {
+        "units": None,
+        "activation": "tanh",
+        "recurrent_activation": "sigmoid",
+        "use_bias": True,
+        "kernel_initializer": "glorot_uniform",
+        "recurrent_initializer": "orthogonal",
+        "bias_initializer": "zeros",
+        "unit_forget_bias": True,
+        "kernel_regularizer": None,
+        "recurrent_regularizer": None,
+        "bias_regularizer": None,
+        "activity_regularizer": None,
+        "kernel_constraint": None,
+        "recurrent_constraint": None,
+        "bias_constraint": None,
+        "dropout": 0.0,
+        "recurrent_dropout": 0.0,
+        "return_sequences": False,
+        "return_state": False,
+        "go_backwards": False,
+        "stateful": False,
+        "unroll": False,
+    }
 
-    Embedding_defaults = \
-        {'input_dim': None,
-         'output_dim': None,
-         'embeddings_initializer': "uniform",
-         'embeddings_regularizer': None,
-         'activity_regularizer': None,
-         'embeddings_constraint': None,
-         'mask_zero': False,
-         'input_length': None,
-         }
+    Embedding_defaults = {
+        "input_dim": None,
+        "output_dim": None,
+        "embeddings_initializer": "uniform",
+        "embeddings_regularizer": None,
+        "activity_regularizer": None,
+        "embeddings_constraint": None,
+        "mask_zero": False,
+        "input_length": None,
+    }
 
-    RepeatVector_defaults = \
-        {'n': None,
-         }
+    RepeatVector_defaults = {
+        "n": None,
+    }
     pass
 
 
@@ -903,7 +875,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
-        self.task_name = ''
+        self.task_name = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -1089,7 +1061,7 @@ class Exchange(StatesData, GuiExch):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
                 dataset_path = os.path.join(self.custom_datasets_path, dataset)
-                with open(dataset_path, 'rb') as f:
+                with open(dataset_path, "rb") as f:
                     custom_dts = dill.load(f)
                 tags = custom_dts.tags.values()
                 name = custom_dts.name
@@ -1162,12 +1134,19 @@ class Exchange(StatesData, GuiExch):
         return self.dts.tags, self.dts.name
 
     def _create_custom_dataset(self, **options):
-        dataset = options.get('dataset_name')
+        dataset = options.get("dataset_name")
         dataset_path = os.path.join(self.custom_datasets_path, dataset)
-        with open(dataset_path, 'rb') as f:
+        with open(dataset_path, "rb") as f:
             custom_dts = dill.load(f)
         self.dts = custom_dts
-        print('DTS', self.dts, '\n', self.dts.name, self.dts.source_shape, self.dts.input_shape)
+        print(
+            "DTS",
+            self.dts,
+            "\n",
+            self.dts.name,
+            self.dts.source_shape,
+            self.dts.input_shape,
+        )
         self._set_dts_name(self.dts.name)
         return self.dts.tags, self.dts.name
 
@@ -1227,8 +1206,8 @@ class Exchange(StatesData, GuiExch):
 
     def prepare_dataset(self, **options):
         self.process_flag = "dataset"
-        custom_flag = options.get('source')
-        if custom_flag and custom_flag == 'custom':
+        custom_flag = options.get("source")
+        if custom_flag and custom_flag == "custom":
             self._set_current_task(options.get("task_type"))
             return self._create_custom_dataset(**options)
         return self._prepare_dataset(**options)
@@ -1409,6 +1388,7 @@ class Exchange(StatesData, GuiExch):
         self.nn.set_callback(nn_callback)
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
+
     #
     # def start_evaluate(self):
     #     self.nn.evaluate()
