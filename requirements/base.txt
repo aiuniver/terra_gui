@@ -2,3 +2,4 @@ Django==3.2
 django-environ==0.4.5
 djangorestframework==3.12.4
 pymorphy2==0.9.1
+dill==0.3.3
