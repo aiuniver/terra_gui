@@ -20,8 +20,11 @@
             <li data-type="load">
                 <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
             </li>
-            <li data-type="save" disabled="disabled">
+            <li data-type="save" id="canvas-save">
                 <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="clear" id="canvas-clear">
+                <span><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section layers">
@@ -35,14 +38,17 @@
                 <span><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
             </li>
         </ul>
+        <ul class="menu-section others">
+            <li data-type="validation" id="validation">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
+        </ul>
     </div>
 </div>
 
 <div class="board">
     <div class="wrapper">
         <div class="canvas-container">
-            <button id="canvas-clear" class="clear">Clear</button>
-            <button id="canvas-save" class="canvas-save clear">Save</button>
             <div class="canvas">
                 <svg>
                     <g id="canvas-container">

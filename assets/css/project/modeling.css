@@ -343,5 +343,15 @@
 	top: 35px;
 }
 
+#canvas-clear > span{
+	padding: 8px;
+}
+
+#canvas-clear > span > img{
+	border: 2px solid #A7BED3;
+	border-radius: 4px;
+}
+
+
 
 
