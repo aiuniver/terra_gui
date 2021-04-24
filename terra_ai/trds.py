@@ -28,11 +28,14 @@ from gensim.models import word2vec
 from tqdm.notebook import tqdm
 import threading
 from io import open as ioopen
-from IPython.display import clear_output
-from apps.plugins.terra import colab_exchange
-__version__ = 0.224
+from IPython.display import clear_output, display
+from terra_ai.guiexchange import Exchange
+import dill
+import ipywidgets as widgets
 
-tr2dj_obj = colab_exchange
+__version__ = 0.226
+
+tr2dj_obj = Exchange()
 
 
 class DTS(object):
@@ -44,17 +47,19 @@ class DTS(object):
                 self.__dict__[key] = value
 
         self.Exch = exch_obj
-        self.django_flag = True
+        self.django_flag = False
+        if self.Exch.property_of != 'TERRA':
+            self.django_flag = True
 
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ''
         self.name: str = ''
         self.source: str = ''
         self.tags: list = []
-        self.source_datatype: list = []
-        self.source_shape: list = []
-        self.input_datatype: list = []
-        self.input_shape: list = []
+        self.source_datatype: dict = {}
+        self.source_shape: dict = {}
+        self.input_datatype: dict = {}
+        self.input_shape: dict = {}
         self.num_classes: int = 0
         self.classes_names: list = []
         self.classes_colors: list = []
@@ -63,6 +68,8 @@ class DTS(object):
 
         self.X: dict = {}
         self.Y: dict = {}
+        self.x_Scaler = {}
+        self.y_Scaler = {}
 
         pass
 
@@ -1460,63 +1467,341 @@ class DTS(object):
 
     def custom_dataset(self, *Data, **options):
 
-        self.X = Data[0]
-        self.Y = Data[1]
+        inputs = list(Data[0].keys())
+        outputs = list(Data[1].keys())
+        if options['split']:
+            indices = np.random.permutation(Data[0][inputs[0]][0].shape[0])
+            train_len = int(options['split'][0] / 100 * len(indices))
+            val_len = int((len(indices) - train_len) / 2)
+            train_mask = indices[:train_len]
+            val_mask = indices[train_len:train_len + val_len]
+            test_mask = indices[train_len + val_len:]
+            for inp in inputs:
+                self.X[inp] = (Data[0][inp][0][train_mask], Data[0][inp][0][val_mask], Data[0][inp][0][test_mask])
+            for out in outputs:
+                self.Y[out] = (Data[1][out][0][train_mask], Data[1][out][0][val_mask], Data[1][out][0][test_mask])
+        else:
+            self.X = Data[0]
+            self.Y = Data[1]
 
         self.source = 'custom'
 
-        if options['x_scaler'] in ['StandardScaler', 'MinMaxScaler']:
-            if options['x_scaler'] == 'MinMaxScaler':
-                self.x_Scaler = MinMaxScaler()
-            elif options['x_scaler'] == 'StandardScaler':
-                self.x_Scaler = StandardScaler()
-            list_of_arrays = []
-            self.x_Scaler.fit(self.X[0])
-            for array in self.X:
-                shape_x = array.shape
-                array = array.reshape(-1, 1)
-                array = self.x_Scaler.transform(array)
-                array = array.reshape(shape_x)
-                list_of_arrays.append(array)
-            self.X = tuple(list_of_arrays)
-            del list_of_arrays
+        for inp in inputs:
 
-        if options['y_scaler'] in ['StandardScaler', 'MinMaxScaler']:
-            if options['y_scaler'] == 'MinMaxScaler':
-                self.y_Scaler = MinMaxScaler()
-            elif options['y_scaler'] == 'StandardScaler':
-                self.y_Scaler = StandardScaler()
-            list_of_arrays = []
-            self.y_Scaler.fit(self.Y[0])
-            for array in self.Y:
-                shape_y = array.shape
-                array = array.reshape(-1, 1)
-                array = self.y_Scaler.transform(array)
-                array = array.reshape(shape_y)
-                list_of_arrays.append(array)
-            self.Y = tuple(list_of_arrays)
-            del list_of_arrays
+            self.source_shape[inp] = self.X[inp][0].shape[1:]
+            self.source_datatype[inp] = self._set_datatype(shape=self.X[inp][0].shape)
 
-        # if options['net'] in ['Добавить размерность', 'Выпрямить']:
-        #     if options['net'].lower() == 'Выпрямить':
-        #         x_Train = x_Train.reshape((-1, np.prod(np.array(x_Train.shape)[1:])))
-        #         x_Val = x_Val.reshape((-1, np.prod(np.array(x_Val.shape)[1:])))
-        #     elif options['net'].lower() == 'Добавить размерность':
-        #         x_Train = x_Train[..., None]
-        #         x_Val = x_Val[..., None]
+            if options['x_scaler'][inp] in ['StandardScaler', 'MinMaxScaler']:
+                if options['x_scaler'][inp] == 'MinMaxScaler':
+                    self.x_Scaler[inp] = MinMaxScaler()
+                elif options['x_scaler'][inp] == 'StandardScaler':
+                    self.x_Scaler[inp] = StandardScaler()
+                list_of_arrays = []
+                self.x_Scaler[inp].fit(self.X[inp][0].reshape(-1, 1))
+                for array in self.X[inp]:
+                    if isinstance(array, np.ndarray):
+                        shape_x = array.shape
+                        array = self.x_Scaler[inp].transform(array.reshape(-1, 1))
+                        array = array.reshape(shape_x)
+                    else:
+                        array = None
+                    list_of_arrays.append(array)
+                self.X[inp] = tuple(list_of_arrays)
+                del list_of_arrays
+            else:
+                self.x_Scaler[inp] = None
+
+            if options['x_shape'][inp] in ['Добавить размерность', 'Выпрямить']:
+                if options['x_shape'][inp] == 'Добавить размерность':
+                    list_of_arrays = []
+                    for array in self.X[inp]:
+                        if isinstance(array, np.ndarray):
+                            list_of_arrays.append(array[..., None])
+                        else:
+                            list_of_arrays.append(None)
+                    self.X[inp] = tuple(list_of_arrays)
+                    del list_of_arrays
+                elif options['x_shape'][inp] == 'Выпрямить':
+                    list_of_arrays = []
+                    for array in self.X[inp]:
+                        if isinstance(array, np.ndarray):
+                            list_of_arrays.append(array.reshape(-1, np.prod(array.shape[1:])))
+                        else:
+                            list_of_arrays.append(None)
+                    self.X[inp] = tuple(list_of_arrays)
+                    del list_of_arrays
+
+            self.input_shape[inp] = self.X[inp][0].shape[1:]
+            self.input_datatype[inp] = self._set_datatype(shape=self.X[inp][0].shape)
+
+        for out in outputs:
+            if options['y_scaler'][out] in ['StandardScaler', 'MinMaxScaler']:
+                if options['y_scaler'][out] == 'MinMaxScaler':
+                    self.y_Scaler[out] = MinMaxScaler()
+                elif options['y_scaler'][out] == 'StandardScaler':
+                    self.y_Scaler[out] = StandardScaler()
+                list_of_arrays = []
+                self.y_Scaler[out].fit(self.Y[out][0].reshape(-1, 1))
+                for array in self.Y[out]:
+                    if isinstance(array, np.ndarray):
+                        shape_y = array.shape
+                        array = self.y_Scaler[out].transform(array.reshape(-1, 1))
+                        array = array.reshape(shape_y)
+                    else:
+                        array = None
+                    list_of_arrays.append(array)
+                self.Y[out] = tuple(list_of_arrays)
+                del list_of_arrays
+            else:
+                self.y_Scaler[out] = None
+
+            if options['y_shape'][out] in ['Добавить размерность', 'Выпрямить']:
+                if options['y_shape'][out] == 'Добавить размерность':
+                    list_of_arrays = []
+                    for array in self.Y[out]:
+                        if isinstance(array, np.ndarray):
+                            list_of_arrays.append(array[..., None])
+                        else:
+                            list_of_arrays.append(None)
+                    self.Y[out] = tuple(list_of_arrays)
+                    del list_of_arrays
+                elif options['y_shape'][out] == 'Выпрямить':
+                    list_of_arrays = []
+                    for array in self.Y[out]:
+                        if isinstance(array, np.ndarray):
+                            list_of_arrays.append(array.reshape(-1, np.prod(array.shape[1:])))
+                        else:
+                            list_of_arrays.append(None)
+                    self.Y[out] = tuple(list_of_arrays)
+                    del list_of_arrays
+
+            if options['one_hot'][out]:
+                list_of_arrays = []
+                for array in self.Y[out]:
+                    if isinstance(array, np.ndarray):
+                        arr = utils.to_categorical(array, len(np.unique(array, axis=0)))
+                    else:
+                        arr = None
+                    list_of_arrays.append(arr)
+                self.Y[out] = tuple(list_of_arrays)
+                del list_of_arrays
 
 
-        for key in list(self.X.keys()):
-            self.source_shape.append(self.X[key][0].shape[1:])
-            self.source_datatype.append(self._set_datatype(shape=self.X[key][0].shape))
+        # for key in list(self.X.keys()):
+        #     self.source_shape.append()
+        #     self.source_datatype.append()
 
-        for key in list(self.X.keys()):
-            self.input_shape.append(self.X[key][0].shape[1:])
-            self.input_datatype.append(self._set_datatype(shape=self.X[key][0].shape))
+        # for key in list(self.X.keys()):
+        #     self.input_shape.append(self.X[key][0].shape[1:])
+        #     self.input_datatype.append(self._set_datatype(shape=self.X[key][0].shape))
 
         self.dts_prepared = True
+        if not self.django_flag:
+            print(f'Формирование массивов завершено.')
+            for inp in inputs:
+                x_arrays = ['Train', 'Validation', 'Test']
+                for i, item_x in enumerate(self.X[inp]):
+                    if item_x is not None:
+                        print(f"Размерность {inp} {x_arrays[i]}: {item_x.shape}")
+            for out in outputs:
+                y_arrays = ['Train', 'Validation', 'Test']
+                for i, item_y in enumerate(self.Y[out]):
+                    if item_y is not None:
+                        print(f"Размерность {out} {y_arrays[i]}: {item_y.shape}")
 
         return self
+
+    def input_parameters(self, inputs, outputs):
+
+        def send_arrays(b):
+
+            print('Начало формирования массивов.')
+            print(globals())
+            self.name = dataset_name.value
+            x_tags = []
+            y_tags = []
+            for i in range(inputs):
+                x_tags.append(globals()[f'x_tag_{i}'].value)
+            for i in range(outputs):
+                y_tags.append(globals()[f'y_tag_{i}'].value)
+
+            self.tags = [x_tags, y_tags]
+            list_of_X = list_of_rows[:inputs]
+            dic_of_X = {}
+            for i in range(len(list_of_X)):
+                if checkbox_split.value:
+                    dic_of_X[list_of_X[i].children[1].value] = (globals()[list_of_X[i].children[2].value], None, None)
+                else:
+                    dic_of_X[list_of_X[i].children[1].value] = (
+                    globals()[list_of_X[i].children[2].value], globals()[list_of_X[i].children[3].value],
+                    globals()[list_of_X[i].children[4].value])
+
+            list_of_Y = list_of_rows[inputs:][:outputs]
+            dic_of_Y = {}
+            for i in range(len(list_of_Y)):
+                if checkbox_split.value:
+                    dic_of_Y[list_of_Y[i].children[1].value] = (globals()[list_of_Y[i].children[2].value], None, None)
+                else:
+                    dic_of_Y[list_of_Y[i].children[1].value] = (
+                    globals()[list_of_Y[i].children[2].value], globals()[list_of_Y[i].children[3].value],
+                    globals()[list_of_Y[i].children[4].value])
+
+            x_scaler = {}
+            for i in range(inputs):
+                x_scaler[globals()[f'x_name_{i}'].value] = globals()[f'scaler_x_{i}'].value
+
+            y_scaler = {}
+            for i in range(outputs):
+                y_scaler[globals()[f'y_name_{i}'].value] = globals()[f'scaler_y_{i}'].value
+
+            x_shape = {}
+            for i in range(inputs):
+                x_shape[globals()[f'x_name_{i}'].value] = globals()[f'net_type_x_{i}'].value
+
+            y_shape = {}
+            for i in range(outputs):
+                y_shape[globals()[f'y_name_{i}'].value] = globals()[f'net_type_y_{i}'].value
+
+            ohe = {}
+            for i in range(outputs):
+                ohe[globals()[f'y_name_{i}'].value] = globals()[f'ohe_{i}'].value
+
+            if checkbox_split.value:
+                split_size = [slider.value, int(round(slider2.value / 2, 0)),
+                              int(100 - slider.value - round(slider2.value / 2, 0))]
+            else:
+                split_size = None
+
+            self.custom_dataset(dic_of_X, dic_of_Y, x_scaler=x_scaler, y_scaler=y_scaler, x_shape=x_shape,
+                                   y_shape=y_shape, one_hot=ohe, split=split_size)
+
+            if checkbox_google.value:
+                directory = '/content/drive/MyDrive/TerraAI/datasets'
+                self.file_folder = directory
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                with open(f"{directory}/{dataset_name.value}.trds", "wb") as f:
+                    dill.dump(dataset, f)
+                print(f'Массивы успешно сохранены в файл {directory}/{dataset_name.value}.trds')
+
+        # Первая вкладка
+        list_of_rows = []
+        disabled_list = []
+        for i in range(inputs):
+            list_of_widgets = []
+            globals()[f'input_{i}'] = {}
+            globals()[f'x_tag_{i}'] = widgets.Dropdown(
+                options=['images', 'video', 'text', 'audio', 'timeseries', 'regression', 'other'], value='other',
+                description=f'Тип данных:', disabled=False)
+            list_of_widgets.append(globals()[f'x_tag_{i}'])
+            globals()[f'x_name_{i}'] = widgets.Text(value='', placeholder='Название входа',
+                                                    description=f'input_{i + 1}:', disabled=False)
+            list_of_widgets.append(globals()[f'x_name_{i}'])
+            globals()[f'xtrain_{i}'] = widgets.Text(value='x_train', description='X/Train:',
+                                                    placeholder='X или x_train', disabled=False)
+            list_of_widgets.append(globals()[f'xtrain_{i}'])
+            globals()[f'xval_{i}'] = widgets.Text(value='x_val', description='Validation:', placeholder='',
+                                                  disabled=False)
+            list_of_widgets.append(globals()[f'xval_{i}'])
+            disabled_list.append(globals()[f'xval_{i}'])
+            globals()[f'xtest_{i}'] = widgets.Text(value='x_test', description='Test:', placeholder='', disabled=False)
+            list_of_widgets.append(globals()[f'xtest_{i}'])
+            disabled_list.append(globals()[f'xtest_{i}'])
+            globals()[f'x_block_{i}'] = widgets.HBox(list_of_widgets)
+            list_of_rows.append(globals()[f'x_block_{i}'])
+            globals()[f'input_{i}'][globals()[f'x_name_{i}']] = (
+            globals()[f'xtrain_{i}'], globals()[f'xval_{i}'], globals()[f'xtest_{i}'])
+        for i in range(outputs):
+            list_of_widgets = []
+            globals()[f'output_{i}'] = {}
+            globals()[f'y_tag_{i}'] = widgets.Dropdown(
+                options=['images', 'text', 'audio', 'classification', 'segmentation', 'object detection', 'other'],
+                value='other', description=f'Тип данных:', disabled=False)
+            list_of_widgets.append(globals()[f'y_tag_{i}'])
+            globals()[f'y_name_{i}'] = widgets.Text(value='', placeholder='Название выхода',
+                                                    description=f'output_{i + 1}:', disabled=False)
+            list_of_widgets.append(globals()[f'y_name_{i}'])
+            globals()[f'ytrain_{i}'] = widgets.Text(value='y_train', description='Y/Train:',
+                                                    placeholder='Y или y_train', disabled=False)
+            list_of_widgets.append(globals()[f'ytrain_{i}'])
+            globals()[f'yval_{i}'] = widgets.Text(value='y_val', description='Validation:', placeholder='',
+                                                  disabled=False)
+            list_of_widgets.append(globals()[f'yval_{i}'])
+            disabled_list.append(globals()[f'yval_{i}'])
+            globals()[f'ytest_{i}'] = widgets.Text(value='y_test', description='Test:', placeholder='', disabled=False)
+            list_of_widgets.append(globals()[f'ytest_{i}'])
+            disabled_list.append(globals()[f'ytest_{i}'])
+            globals()[f'y_block_{i}'] = widgets.HBox(list_of_widgets)
+            list_of_rows.append(globals()[f'y_block_{i}'])
+            globals()[f'output_{i}'][globals()[f'y_name_{i}']] = (
+            globals()[f'ytrain_{i}'], globals()[f'yval_{i}'], globals()[f'ytest_{i}'])
+
+        checkbox_google = widgets.Checkbox(value=False, description='Сохранить в Google Drive', disabled=False)
+        checkbox_split = widgets.Checkbox(value=False, description='Train/Val/Test split', disabled=False)
+
+        dataset_name = widgets.Text(value='', description='Датасет:', placeholder='Название датасета', disabled=False)
+        button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
+        button.on_click(send_arrays)
+        dump_button = widgets.HBox([dataset_name, button])
+
+        slider = widgets.IntSlider(description='Train:', value=80, step=1, min=5, max=95)
+        slider2 = widgets.IntSlider(description='Val+test:', value=20, step=1, min=5, max=95)
+
+        def value_changed(change):
+            slider2.value = 100 - change.new
+
+        slider.observe(value_changed, 'value')
+
+        def value_changed_2(change):
+            slider.value = 100 - change.new
+
+        slider2.observe(value_changed_2, 'value')
+        train_list = widgets.HBox([checkbox_google, checkbox_split, slider, slider2])
+
+        for wid in disabled_list:
+            widgets.link((checkbox_split, 'value'), (wid, 'disabled'))
+
+        list_of_rows.append(train_list)
+        list_of_rows.append(dump_button)
+        first_page = widgets.VBox(list_of_rows)
+
+        # Вторая вкладка
+        list_of_rows_2 = []
+        for i in range(inputs):
+            list_of_widgets_2 = []
+            globals()[f'scaler_x_{i}'] = widgets.Dropdown(options=['Не применять', 'StandardScaler', 'MinMaxScaler'],
+                                                          value='Не применять', description=f'x_Scaler_{i + 1}:',
+                                                          disabled=False)
+            list_of_widgets_2.append(globals()[f'scaler_x_{i}'])
+            globals()[f'net_type_x_{i}'] = widgets.Dropdown(
+                options=['Без изменений', 'Добавить размерность', 'Выпрямить'], value='Без изменений',
+                description='Размерность:', disabled=False)
+            list_of_widgets_2.append(globals()[f'net_type_x_{i}'])
+            globals()[f'block_{i}'] = widgets.HBox(list_of_widgets_2)
+            list_of_rows_2.append(globals()[f'block_{i}'])
+        for i in range(outputs):
+            list_of_widgets_2 = []
+            globals()[f'scaler_y_{i}'] = widgets.Dropdown(options=['Не применять', 'StandardScaler', 'MinMaxScaler'],
+                                                          value='Не применять', description=f'y_Scaler_{i + 1}:',
+                                                          disabled=False)
+            list_of_widgets_2.append(globals()[f'scaler_y_{i}'])
+            globals()[f'net_type_y_{i}'] = widgets.Dropdown(
+                options=['Без изменений', 'Добавить размерность', 'Выпрямить'], value='Без изменений',
+                description='Размерность:', disabled=False)
+            list_of_widgets_2.append(globals()[f'net_type_y_{i}'])
+            globals()[f'ohe_{i}'] = widgets.Checkbox(value=False, description='One-Hot Encoding', disabled=False)
+            list_of_widgets_2.append(globals()[f'ohe_{i}'])
+            globals()[f'block_{i}'] = widgets.HBox(list_of_widgets_2)
+            list_of_rows_2.append(globals()[f'block_{i}'])
+        second_page = widgets.VBox(list_of_rows_2)
+
+        # Соединяем две вкладки
+        load_widget = widgets.Tab()
+        load_widget.children = [first_page, second_page]
+        load_widget.set_title(title='Массивы', index=0)
+        load_widget.set_title(title='Предобработка', index=1)
+
+        display(load_widget)
 
     def flat_parser(self, **options):
 
