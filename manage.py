@@ -3,13 +3,18 @@
 import os
 import sys
 
+from django.conf import settings
+
 
 def main():
     """Run administrative tasks."""
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-    print("--------------------")
-    print(os.environ.get("DATASET"))
-    print("--------------------")
+    dataset = os.environ.get("DATASET", "")
+    if dataset:
+        settings.TERRA_AI_CUSTOM_DATASET = (
+            f"{settings.TERRA_AI_DATA_PATH}/datasets/{dataset}"
+        )
+    print(settings.TERRA_AI_CUSTOM_DATASET)
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
