@@ -1134,7 +1134,7 @@ class Exchange(StatesData, GuiExch):
         return self.dts.tags, self.dts.name
 
     def _create_custom_dataset(self, **options):
-        dataset = options.get("dataset_name")
+        dataset = f'{options.get("dataset_name")}.trds'
         dataset_path = os.path.join(self.custom_datasets_path, dataset)
         with open(dataset_path, "rb") as f:
             custom_dts = dill.load(f)
