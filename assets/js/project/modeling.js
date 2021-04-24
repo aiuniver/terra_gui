@@ -184,33 +184,6 @@
                 $("#canvas-save").trigger("click");
             });
 
-            $("#canvas-save").bind("click", () => {
-                let nodes = _cnodes.selectAll("g.node").data(),
-                    send_data = {};
-                for(let node in nodes){
-                    delete nodes[node].lineSource;
-                    delete nodes[node].lineTarget;
-                    send_data[nodes[node].id] = nodes[node];
-                }
-                let nodes_cfg = [];
-                nodes.forEach((layer) => {
-                    nodes_cfg.push(layer.config);
-                });
-                window.StatusBar.clear();
-                window.ExchangeRequest(
-                    "set_model",
-                    (success, data) => {
-                        if (success) {
-                            this.model = data.data;
-                            window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                        } else {
-                            window.StatusBar.message(data.error, false);
-                        }
-                    },
-                    {"layers": send_data, "schema": _model_schema}
-                );
-            });
-
             this.load_layer = (class_name) => {
 
                 let input_cfg = {
@@ -808,28 +781,21 @@
                 let form = $(event.currentTarget),
                     serializeData = form.serializeArray();
                 _change_node_data(node_data, serializeData);
-                let send_data = $.extend({}, window.TerraProject.layers);
+                // let send_data = $.extend({}, window.TerraProject.layers);
+                //
+                // for(let index in send_data){
+                //     delete send_data[index].lineSource;
+                //     delete send_data[index].lineTarget;
+                // }
 
-                // window.StatusBar.clear();
-                // window.ExchangeRequest(
-                //     "save_layer",
-                //     (success, data) => {
-                //         if(success){
-                //             terra_board.model = {"layers":data.data,"schema":[]};
-                //             window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
-                //         } else{
-                //             window.StatusBar.message(data.error, false);
-                //         }
-                //     },
-                //     send_data
-                // );
+                let nodes = d3.selectAll("g.node").data(),
+                 send_data = {};
+                 for(let node in nodes){
+                     delete nodes[node].lineSource;
+                     delete nodes[node].lineTarget;
+                     send_data[nodes[node].id] = nodes[node];
+                 }
 
-                for(let index in send_data){
-                    delete send_data[index].lineSource;
-                    delete send_data[index].lineTarget;
-                }
-
-                console.log(send_data);
 
                 window.StatusBar.clear();
                 window.ExchangeRequest(
@@ -908,9 +874,31 @@
             });
         });
 
-        // Слушатель на нажатие [CTRL]+[SHIFT]+V - валидация модели
-        $(document).bind("keyup", (event) => {
-            if (event.keyCode === 86 && event.ctrlKey && event.shiftKey){
+         $("#canvas-save").bind("click", () => {
+             let nodes = d3.selectAll("g.node").data(),
+                 send_data = {};
+             for(let node in nodes){
+                 delete nodes[node].lineSource;
+                 delete nodes[node].lineTarget;
+                 send_data[nodes[node].id] = nodes[node];
+             }
+             window.StatusBar.clear();
+             window.ExchangeRequest(
+                 "set_model",
+                 (success, data) => {
+                     if (success) {
+                         terra_board.model = data.data;
+                         window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                     } else {
+                         window.StatusBar.message(data.error, false);
+                     }
+                     },
+                 {"layers": send_data, "schema": []}
+             );
+         });
+
+        // Слушатель на нажатие- валидация модели
+        $("#validation").bind("click", () => {
                 window.StatusBar.clear();
                 window.ExchangeRequest(
                     "get_change_validation",
@@ -922,7 +910,6 @@
                         }
                     }
                 );
-            }
         });
 
     });
