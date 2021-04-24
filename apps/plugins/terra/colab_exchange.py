@@ -1063,6 +1063,7 @@ class Exchange(StatesData, GuiExch):
                 dataset_path = os.path.join(self.custom_datasets_path, dataset)
                 with open(dataset_path, "rb") as f:
                     custom_dts = dill.load(f)
+                print('TAGS: ', custom_dts.tags)
                 tags = custom_dts.tags.values()
                 name = custom_dts.name
                 source = custom_dts.source
