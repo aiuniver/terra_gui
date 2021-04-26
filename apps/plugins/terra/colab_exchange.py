@@ -1135,7 +1135,7 @@ class Exchange(StatesData, GuiExch):
         self.dts.prepare_dataset(**options)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
-        return self.dts.tags, self.dts.name
+        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
 
     def _create_custom_dataset(self, **options):
         self._reset_out_data()
@@ -1157,7 +1157,7 @@ class Exchange(StatesData, GuiExch):
         self._set_start_layers()
         print(self.start_layers)
         print(self.layers_data_state)
-        return self.dts.tags, self.dts.name
+        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
 
     def _set_start_layers(self):
         inputs = self.dts.X
