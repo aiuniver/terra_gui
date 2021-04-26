@@ -1158,12 +1158,14 @@ class Exchange(StatesData, GuiExch):
         return self.dts.tags, self.dts.name
 
     def _set_start_layers(self):
+        print('set_start_layers')
         inputs = self.dts.X
         outputs = self.dts.Y
         self.__create_start_layer(inputs, 'Input')
         self.__create_start_layer(outputs, 'Output')
 
     def __create_start_layer(self, dts_data: dict, layer_type: str):
+        print('create_start_layers')
         available = [data['data_name'] for name, data in dts_data.items()]
         for name, data in dts_data.items():
             idx = name.split['_'][1]
