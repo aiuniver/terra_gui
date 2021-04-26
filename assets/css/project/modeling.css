@@ -282,7 +282,7 @@
 	cursor:pointer;
 }
 #canvas-nodes > .node > rect {
-	height:25px;
+	height:30px;
 	stroke-width:2;
 	rx:4;
 	ry:4;
@@ -352,6 +352,48 @@
 	border-radius: 4px;
 }
 
+/*canvas-nodes > .node-type-input > rect {*/
+#canvas-nodes > .node > .node-menu{
+	fill: #E0E0E0;
+	stroke: #E0E0E0;
+	height: 15px;
+}
+
+#canvas-nodes > .node:hover > .node-menu,
+#canvas-nodes > .node.active > .node-menu,
+#canvas-nodes > .node.hover > .node-menu {
+	fill:#EDEDED;
+	stroke: #EDEDED;
+}
 
 
+.node > .delete-node-circle{
+	r:6;
+	fill: #EB5757;
+}
+
+.node > .delete-node-circle:hover{
+	r:6;
+	fill: #FF3D3D;
+}
+
+.node > .delete-links-circle{
+	r:6;
+	fill: #2F80ED;
+}
+
+.node > .delete-links-circle:hover{
+	r:6;
+	fill: #5BA1FF;
+}
+
+.node > .add-link-circle{
+	r:6;
+	fill: #27AE60;
+}
+
+.node > .add-link-circle:hover{
+	r:6;
+	fill: #17D969;
+}
 

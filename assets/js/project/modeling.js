@@ -98,6 +98,7 @@
             if (!this.length) return this;
 
             const _NODE_HEIGHT = 25,
+                _RECT_SETTINGS = 15,
                 _LINE_HEIGHT = 30;
 
 
@@ -145,7 +146,7 @@
                             let node = d3.select("#node-"+schema[i][j]);
                             let node_data = node.data();
                             let node_x = margin_w + end_nodes;
-                            let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
+                            let node_y = margin_h + (_LINE_HEIGHT + 60)*i;
                             end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
                             end_nodes += 50;
 
@@ -158,7 +159,7 @@
                 }
             };
 
-            _d3graph.call(zoom);  
+            _d3graph.call(zoom).on("dblclick.zoom", null);
 
             d3.select("#zoom-inc").on("click", () => {  
                 zoom.scaleBy(_d3graph.transition().duration(450), 1.2);
@@ -328,6 +329,10 @@
                     );
 
                 let rect = node.append("rect");
+                let rect_settings = node.append("rect")
+                    .attr("class", "node-menu")
+                    .attr("y", _LINE_HEIGHT-5);
+
 
                 let text = node.append("text")
                     .text(`${layer.config.name}: ${layer.config.type}`)
@@ -336,6 +341,7 @@
 
                 let width = text._groups[0][0].getBBox().width + 20;
                     rect.attr("width", width);
+                    rect_settings.attr("width", width);
 
                 if (layer.x === undefined ) layer.x = w/2;
                 if (layer.y === undefined) layer.y = h/2;
@@ -351,13 +357,41 @@
                     .attr("visibility", "hidden")
                     .attr("cx", width/2)
                     .attr("r", 5)
-                    .attr("cy", _LINE_HEIGHT);
+                    .attr("cy", _LINE_HEIGHT + _RECT_SETTINGS);
+
+                let delete_node = node.append("circle")
+                    .on("click", () => {
+                        this.delete_node($("#node-"+layer.id)[0])
+                    })
+                    .attr("class", "delete-node-circle")
+                    .attr("cx", 8)
+                    .attr("r", 5)
+                    .attr("cy", _LINE_HEIGHT + _RECT_SETTINGS/2 - 5);
+
+                let delete_links = node.append("circle")
+                    .on("click", () => {
+                        this.delete_links($("#node-"+layer.id)[0])
+                    })
+                    .attr("class", "delete-links-circle")
+                    .attr("cx", 24)
+                    .attr("r", 5)
+                    .attr("cy", _LINE_HEIGHT + _RECT_SETTINGS/2 - 5);
+
+                let add_link = node.append("circle")
+                    .on("click", () => {
+                        _sourceNode = $("#node-"+layer.id)[0];
+                        _targetNode = undefined;
+                        _onContextDrag = true
+                        _create_line();
+                        svg.bind("mousemove", _onmousemove);
+                    })
+                    .attr("class", "add-link-circle")
+                    .attr("cx", 40)
+                    .attr("r", 5)
+                    .attr("cy", _LINE_HEIGHT + _RECT_SETTINGS/2 - 5);
 
                 node.data([layer])
                     .attr("transform", "translate(" + layer.x + "," + layer.y + ")");
-
-                $(`#node-${layer.id}`).bind("mousedown", _onmousedown)
-                    .bind("mouseup", _onmouseup);
             };
 
             this.delete_node = (node) => {
@@ -373,6 +407,19 @@
                 }
 
                 node.remove();
+            };
+
+            this.delete_links = (node) => {
+
+                let target_line = node.__data__.lineTarget,
+                    source_line = node.__data__.lineSource;
+
+                for(let line in target_line){
+                    _delete_line($("#"+line)[0]);
+                }
+                for(let line in source_line){
+                    _delete_line($("#"+line)[0]);
+                }
             };
 
             let _delete_line = (line) => {
@@ -403,9 +450,9 @@
                     .attr("id", line_id)
                     .attr("class", "line")
                     .attr("x1", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
-                    .attr("y1", _source_node_point.y + _LINE_HEIGHT)
+                    .attr("y1", _source_node_point.y + _LINE_HEIGHT + _RECT_SETTINGS)
                     .attr("x2", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
-                    .attr("y2", _source_node_point.y + _LINE_HEIGHT);
+                    .attr("y2", _source_node_point.y + _LINE_HEIGHT + _RECT_SETTINGS);
 
                 let node_data = _cnodes.select("#" + _sourceNode.id).data()[0];
 
@@ -464,11 +511,20 @@
 
 
             let _node_dragstarted = (data) => {
-                this.find(".canvas > .hint").remove();
-                let _node = d3.select(`#node-${data.id}`);
-                _node.raise().classed("hover", true);
-                 if (!_onDrag) this.activeNode(_node);
-                 _onDrag = false;
+                if(_onContextDrag){
+                        console.log("unbind")
+                         svg.unbind("mousemove", _onmousemove);
+                        _targetNode = $("#node-"+data.id)[0];
+                        _change_line(true);
+                         this.find(".canvas > .hint").remove();
+                        _onContextDrag = false
+                }else{
+                     this.find(".canvas > .hint").remove();
+                    let _node = d3.select(`#node-${data.id}`);
+                    _node.raise().classed("hover", true);
+                     if (!_onDrag) this.activeNode(_node);
+                     _onDrag = false;
+                }
             }
 
             let _node_dragged = (data) => {
@@ -497,7 +553,7 @@
                  if (lineSource) {
                      for(let i in lineSource) {
                          let cx = d3.event.x  + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
-                             cy = d3.event.y  + _NODE_HEIGHT;
+                             cy = d3.event.y  + _NODE_HEIGHT + _RECT_SETTINGS;
 
                          _clines.select("#"+lineSource[i]._groups[0][0].id)
                              .attr("x1", cx)
@@ -521,62 +577,62 @@
                 this.find(".canvas > .hint").remove();
             });
 
-            $(document).bind("keydown", (event) => {
-                if(event.ctrlKey){
-                    _onCtrlPress = true;
-                }
-            });
+            // $(document).bind("keydown", (event) => {
+            //     if(event.ctrlKey){
+            //         _onCtrlPress = true;
+            //     }
+            // });
+            //
+            // $(document).bind("keyup", (event) => {
+            //     if(event.ctrlKey){
+            //         _onCtrlPress = false;
+            //     }
+            // });
 
-            $(document).bind("keyup", (event) => {
-                if(event.ctrlKey){
-                    _onCtrlPress = false;
-                }
-            });
+            // let _onmousedown = (event)=>{
+            //     console.log(_onCtrlPress);
+            //     if(event.which == 1 && _onCtrlPress){
+            //          svg.bind("mousemove", _onmousemove);
+            //         _sourceNode = event.target.parentNode;
+            //         _targetNode = undefined;
+            //     }
+            // };
 
-            let _onmousedown = (event)=>{
-                console.log(_onCtrlPress);
-                if(event.which == 1 && _onCtrlPress){
-                     svg.bind("mousemove", _onmousemove);
-                    _sourceNode = event.target.parentNode;
-                    _targetNode = undefined;
-                }
-            };
-
-            let _onmouseup = (event)=>{
-                if(event.which == 1){
-                    svg.unbind("mousemove", _onmousemove);
-                    _targetNode = event.target.parentNode;
-                    if(_onContextDrag &&  _onCtrlPress){
-                        _change_line(true);
-                         this.find(".canvas > .hint").remove();
-                    }else if (event.button === 2) {
-                        let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
-                        if (params == null) return;
-                        if (!Object.keys(params).length) return;
-                        let hint = $(`<div class="hint"></div>`),
-                            text = [];
-                        for (let param in params) {
-                            text.push(`${param}: ${params[param].default || ""}`);
-                        }
-                        hint.html(`${text.join("<br />")}`);
-                        hint.css({
-                            left:event.offsetX,
-                            top:event.offsetY,
-                        });
-                        $(".canvas").append(hint);
-                    }
-                    _onContextDrag = false;
-                }
-            };
+            // let _onmouseup = (event)=>{
+            //     if(event.which == 1){
+            //         svg.unbind("mousemove", _onmousemove);
+            //         _targetNode = event.target.parentNode;
+            //         if(_onContextDrag &&  _onCtrlPress){
+            //             _change_line(true);
+            //              this.find(".canvas > .hint").remove();
+            //         }else if (event.button === 2) {
+            //             let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
+            //             if (params == null) return;
+            //             if (!Object.keys(params).length) return;
+            //             let hint = $(`<div class="hint"></div>`),
+            //                 text = [];
+            //             for (let param in params) {
+            //                 text.push(`${param}: ${params[param].default || ""}`);
+            //             }
+            //             hint.html(`${text.join("<br />")}`);
+            //             hint.css({
+            //                 left:event.offsetX,
+            //                 top:event.offsetY,
+            //             });
+            //             $(".canvas").append(hint);
+            //         }
+            //         _onContextDrag = false;
+            //     }
+            // };
 
             let _onmousemove = (event)=>{
                 if(_onContextDrag){
+                    let bias_scale = $("#canvas-container")[0].viewportElement.__zoom.k;
+                     let bias_x = $("#canvas-container")[0].viewportElement.__zoom.x;
+                     let bias_y = $("#canvas-container")[0].viewportElement.__zoom.y;
                      d3.select("#line-" + _lastLineId)
-                    .attr("x2", event.offsetX)
-                    .attr("y2", event.offsetY);
-                } else{
-                    _create_line();
-                    _onContextDrag = true;
+                        .attr("x2", (event.offsetX - bias_x)/bias_scale)
+                        .attr("y2", (event.offsetY - bias_y)/bias_scale);
                 }
             };
 
@@ -764,7 +820,7 @@
                 node.select("text").text(`${node_data[0].config.name}: ${node_data[0].config.type}`)
 
                 let width = node.select("text")._groups[0][0].getBBox().width + 20;
-                    node.select("rect").attr("width", width);
+                    node.selectAll("rect").attr("width", width);
 
                 node.select(".dot-target")
                     .attr("cx", width/2)
@@ -819,10 +875,6 @@
                     {"layers": send_data, "schema": []}
                 );
 
-            });
-
-            _action_delete.bind("click", (event) => {
-                terra_board.delete_node(delete_node);
             });
 
             return this;
