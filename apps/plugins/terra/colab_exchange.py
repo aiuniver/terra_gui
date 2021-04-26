@@ -1144,8 +1144,8 @@ class Exchange(StatesData, GuiExch):
             self.dts,
             "\n",
             self.dts.name,
-            self.dts.source_shape,
-            self.dts.input_shape,
+            self.dts.X,
+            self.dts.Y,
         )
         self._set_dts_name(self.dts.name)
         return self.dts.tags, self.dts.name
