@@ -27,7 +27,7 @@
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
         let _schema = options.schema || [];
-        let _layers_types = options.layers_types || [];
+        let _layers_types = options.layers_types || {};
         let _optimizers = options.optimizers || [];
         let _callbacks = options.callbacks || {};
         let _path = options.path || {};

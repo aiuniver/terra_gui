@@ -56,7 +56,44 @@
                     );
                 },
                 save: (item, callback) => {
-                    if (typeof callback === "function") callback(item);
+                    // $("#canvas-save").bind("click", () => {
+                    //  let nodes = d3.selectAll("g.node").data(),
+                    //      send_data = {};
+                    //  for(let node in nodes){
+                    //      delete nodes[node].lineSource;
+                    //      delete nodes[node].lineTarget;
+                    //      send_data[nodes[node].id] = nodes[node];
+                    //  }
+                    //  window.StatusBar.clear();
+                    //  window.ExchangeRequest(
+                    //      "set_model",
+                    //      (success, data) => {
+                    //          if (success) {
+                    //              this.btn.save.disabled = true;
+                    //              terra_board.model = data.data;
+                    //              window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                    //              if (typeof callback === "function") callback(item);
+                    //          } else {
+                    //              window.StatusBar.message(data.error, false);
+                    //          }
+                    //          },
+                    //      {"layers": send_data, "schema": []}
+                    //  );
+                    // });
+                },
+                validation: (item, callback) => {
+                    window.StatusBar.clear();
+                    window.ExchangeRequest(
+                        "get_change_validation",
+                        (success, data) => {
+                            if (success) {
+                                console.log(data);
+                                this.btn.validation.disabled = true;
+                            } else {
+                                window.StatusBar.message(data.error, false);
+                            }
+                        }
+                    );
                 },
                 input: (item, callback) => {
                     if (typeof callback === "function") callback(item);
@@ -66,13 +103,11 @@
                 },
                 output: (item, callback) => {
                     if (typeof callback === "function") callback(item);
+                },
+                clear: (item, callback) => {
+                    terra_board.clear();
+                    $(this.btn.save).trigger("click");
                 }
-            }
-
-            this.layersReset = (input, middle, output) => {
-               this.find(".menu-section.layers > li[data-type=input]")[0].disabled = false;
-               this.find(".menu-section.layers > li[data-type=middle]")[0].disabled = false;
-               this.find(".menu-section.layers > li[data-type=output]")[0].disabled = false;
             }
 
             Object.defineProperty(this, "items", {
@@ -81,10 +116,35 @@
                 }
             });
 
+            Object.defineProperty(this, "btn", {
+                get: () => {
+                    return {
+                        "load":this.find(".menu-section > li[data-type=load]")[0],
+                        "save":this.find(".menu-section > li[data-type=save]")[0],
+                        "validation":this.find(".menu-section > li[data-type=validation]")[0],
+                        "input":this.find(".menu-section > li[data-type=input]")[0],
+                        "middle":this.find(".menu-section > li[data-type=middle]")[0],
+                        "output":this.find(".menu-section > li[data-type=output]")[0],
+                        "clear":this.find(".menu-section > li[data-type=clear]")[0],
+                    };
+                }
+            });
+
             this.items.each((index, item) => {
+                Object.defineProperty(item, "disabled", {
+                    set: (value) => {
+                        if (value) $(item).attr("disabled", "disabled");
+                        else $(item).removeAttr("disabled");
+                    },
+                    get: () => {
+                        return item.hasAttribute("disabled");
+                    }
+                });
                 item.execute = (callback) => {
-                    let _method = _execute[item.dataset.type];
-                    if (typeof _method == "function") _method(item, callback);
+                    if (!item.disabled) {
+                        let _method = _execute[item.dataset.type];
+                        if (typeof _method == "function") _method(item, callback);
+                    }
                 }
             });
 
@@ -120,9 +180,7 @@
                 for(let i=0; i < schema.length; i++){
                     let sum = 0;
                     for(let j=0; j < schema[i].length; j++){
-                        if(schema[i][j] == null){
-                            continue;
-                        }else{
+                        if(schema[i][j]){
                             sum += d3.select("#node-"+schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
                             sum += 50;
                         }
@@ -138,9 +196,7 @@
                         margin_w = (w - _layer_row_w[i])/2,
                         margin_h = 30;
                     for(let j=0; j < schema[i].length; j++){
-                        if(schema[i][j] == null){
-                            continue;
-                        }else{
+                        if(schema[i][j]){
                             let node = d3.select("#node-"+schema[i][j]);
                             let node_data = node.data();
                             let node_x = margin_w + end_nodes;
@@ -174,15 +230,6 @@
             function zoomed() {
                 _d3graph.select("g").attr("transform", d3.event.transform);
             }
-
-            $("#canvas-clear").bind("click", () => {
-                window.TerraProject.model_clear();
-                this.model = window.TerraProject.model_info;
-                _lastNodeId = 0;
-                _lastLineId = 0;
-                _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
-                $("#canvas-save").trigger("click");
-            });
 
             this.load_layer = (class_name) => {
 
@@ -295,15 +342,6 @@
                 this.activeNode(d3.select(`#node-${_lastNodeId}`));
             };
 
-            let __clear = () => {
-                _clines.selectAll("line").remove();
-                _cnodes.selectAll("g").remove();
-                _lastNodeId = 0;
-                _lastLineId = 0;
-                _layer_row_w = [];
-                window.TerraProject.layers = {};
-            }
-
             let _create_node = (layer, new_node=true) => {
                 layer.lineTarget = {};
                 layer.lineSource = {};
@@ -357,6 +395,11 @@
 
                 $(`#node-${layer.id}`).bind("mousedown", _onmousedown)
                     .bind("mouseup", _onmouseup);
+
+                terra_toolbar.btn.save.disabled = false;
+                terra_toolbar.btn.validation.disabled = false;
+                terra_toolbar.btn.clear.disabled = false;
+
             };
 
             let _delete_node = (node) => {
@@ -584,7 +627,6 @@
 
             Object.defineProperty(this, "model", {
                 set: (model_info) => {
-                    __clear();
                     let layers = model_info.layers,
                         schema = model_info.schema,
                         num = 0,
@@ -627,6 +669,12 @@
             });
 
             let _create_model = (layers, schema, new_model) => {
+                _clines.selectAll("line").remove();
+                _cnodes.selectAll("g").remove();
+                _lastNodeId = 0;
+                _lastLineId = 0;
+                _layer_row_w = [];
+
                 for(let index in layers){
                     for (let param in layers[index].config.params) {
                         if (layers[index].config.params[param].type === "tuple") {
@@ -660,9 +708,16 @@
                     })
                 }
                  window.TerraProject.layers = layers;
+                _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
             }
 
-
+            this.clear = () => {
+                window.TerraProject.model_clear();
+                this.model = window.TerraProject.model_info;
+                terra_toolbar.btn.save.disabled = true;
+                terra_toolbar.btn.validation.disabled = true;
+                terra_toolbar.btn.clear.disabled = true;
+            }
 
             return this;
 
@@ -744,38 +799,6 @@
                 return node_data;
             };
 
-            let _redraw_node = (node, node_data) => {
-                let _LINE_HEIGHT = 30;
-
-                node.select("text").text(`${node_data[0].config.name}: ${node_data[0].config.type}`)
-
-                let width = node.select("text")._groups[0][0].getBBox().width + 20;
-                    node.select("rect").attr("width", width);
-
-                node.select(".dot-target")
-                    .attr("cx", width/2)
-                    .attr("cy", -4);
-
-                node.select(".dot-source")
-                    .attr("cx", width/2)
-                    .attr("cy", _LINE_HEIGHT);
-
-                let linesSourceId = node_data[0].lineSource,
-                    linesTargetId = node_data[0].lineTarget;
-
-                for(let line_id in linesSourceId){
-                    let lineSourse = d3.select("#"+line_id)
-                    lineSourse.attr("x1", node_data[0].x + width/2);
-                    lineSourse.attr("y1", node_data[0].y + _LINE_HEIGHT);
-                }
-
-                for(let line_id in linesTargetId){
-                    let lineTarget = d3.select("#"+line_id)
-                    lineTarget.attr("x2", node_data[0].x + width/2);
-                    lineTarget.attr("y2", node_data[0].y - 4);
-                }
-            };
-
             this.bind("submit", (event) => {
                 event.preventDefault();
                 let form = $(event.currentTarget),
@@ -783,13 +806,13 @@
                 _change_node_data(node_data, serializeData);
 
                 let nodes = d3.selectAll("g.node").data(),
-                 send_data = {};
-                 for(let node in nodes){
-                     delete nodes[node].lineSource;
-                     delete nodes[node].lineTarget;
-                     send_data[nodes[node].id] = nodes[node];
-                 }
+                    send_data = {};
 
+                for(let node in nodes){
+                    delete nodes[node].lineSource;
+                    delete nodes[node].lineTarget;
+                    send_data[nodes[node].id] = nodes[node];
+                }
 
                 window.StatusBar.clear();
                 window.ExchangeRequest(
@@ -864,46 +887,7 @@
         terra_toolbar.items.children("span").bind("click", (event) => {
             event.currentTarget.parentNode.execute((item) => {
                 if ($(item.parentNode).hasClass("layers")) terra_board.load_layer(item.dataset.type);
-                terra_toolbar.layersReset(item);
             });
-        });
-
-         $("#canvas-save").bind("click", () => {
-             let nodes = d3.selectAll("g.node").data(),
-                 send_data = {};
-             for(let node in nodes){
-                 delete nodes[node].lineSource;
-                 delete nodes[node].lineTarget;
-                 send_data[nodes[node].id] = nodes[node];
-             }
-             window.StatusBar.clear();
-             window.ExchangeRequest(
-                 "set_model",
-                 (success, data) => {
-                     if (success) {
-                         terra_board.model = data.data;
-                         window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                     } else {
-                         window.StatusBar.message(data.error, false);
-                     }
-                     },
-                 {"layers": send_data, "schema": []}
-             );
-         });
-
-        // Слушатель на нажатие- валидация модели
-        $("#validation").bind("click", () => {
-                window.StatusBar.clear();
-                window.ExchangeRequest(
-                    "get_change_validation",
-                    (success, data) => {
-                        if (success) {
-                            console.log(data);
-                        } else {
-                            window.StatusBar.message(data.error, false);
-                        }
-                    }
-                );
         });
 
     });
