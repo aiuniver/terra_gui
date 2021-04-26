@@ -1150,13 +1150,14 @@ class Exchange(StatesData, GuiExch):
         # )
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
+        self._set_start_layers()
         return self.dts.tags, self.dts.name
 
     def _set_start_layers(self):
         inputs = self.dts.X
         outputs = self.dts.Y
         print('Inputs: ', inputs, '\n', 'Outputs', outputs)
-        
+
     @staticmethod
     def _reformat_tags(tags: list) -> list:
         return list(
