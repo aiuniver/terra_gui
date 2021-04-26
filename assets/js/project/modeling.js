@@ -360,15 +360,15 @@
                     .bind("mouseup", _onmouseup);
             };
 
-            let _delete_node = (node) => {
+            this.delete_node = (node) => {
 
                 let target_line = node.__data__.lineTarget,
-                    sourse_line = node.__data__.lineSource;
+                    source_line = node.__data__.lineSource;
 
                 for(let line in target_line){
                     _delete_line($("#"+line)[0]);
                 }
-                for(let line in sourse_line){
+                for(let line in source_line){
                     _delete_line($("#"+line)[0]);
                 }
 
@@ -580,16 +580,6 @@
                 }
             };
 
-            $(document).bind("keydown", (event) => {
-                if(event.which == 46 || event.which == 8){
-                    if($(".node:hover").length != 0){
-                        _delete_node($(".node:hover")[0]);
-                    } else if($(".line:hover").length != 0){
-                        _delete_line($(".line:hover")[0])
-                    }
-                }
-            });
-
             Object.defineProperty(this, "model_schema", {
                 set: (schema) => {
                     if(!Array.isArray(schema)) schema = [];
@@ -695,9 +685,11 @@
             _layer_name_field = $("#field_form-layer_name"),
             _layer_type_field = $("#field_form-layer_type"),
             _layer_params = this.find(".layer-type-params-container"),
-            _action_save = this.find(".actions-form > .item.save > button");
+            _action_save = this.find(".actions-form > .item.save > #save-node"),
+            _action_delete = this.find(".actions-form > .item.save > #del-node");
 
             let node,
+                delete_node,
                 node_data;
 
             this.reset = () => {
@@ -705,6 +697,7 @@
                 _layer_name_field.val("").attr("disabled", "disabled");
                 _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
                 _action_save.attr("disabled", "disabled");
+                _action_delete.attr("disabled", "disabled");
                 _layer_params.addClass("hidden");
                 _layer_params.children(".inner").html("");
             }
@@ -715,9 +708,12 @@
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
                 _action_save.removeAttr("disabled");
+                _action_delete.removeAttr("disabled");
 
-                node = d3.select("#node-" + data.id)
+                node = d3.select("#node-" + data.id);
                 node_data = node.data();
+                delete_node = $("#node-" + data.id)[0];
+
 
                 for (let name in data.config.params) {
                     let widget = window.FormWidget(name, data.config.params[name]);
@@ -823,6 +819,10 @@
                     {"layers": send_data, "schema": []}
                 );
 
+            });
+
+            _action_delete.bind("click", (event) => {
+                terra_board.delete_node(delete_node);
             });
 
             return this;
