@@ -563,15 +563,7 @@
             };
 
             $(document).bind("keydown", (event) => {
-                if(event.which == 187){
-                    let layer = {
-                        config: middle_cfg,
-                        lineTarget: [],
-                        lineSource: []
-                    }
-                    _create_node(layer);
-                }
-                else if(event.which == 46 || event.which == 8){
+                if(event.which == 46 || event.which == 8){
                     if($(".node:hover").length != 0){
                         _delete_node($(".node:hover")[0]);
                     } else if($(".line:hover").length != 0){
