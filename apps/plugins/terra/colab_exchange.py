@@ -523,6 +523,7 @@ class StatesData:
 
         # dict of layers attributes in format for front
         self.layers_params = {
+            "Input": {"main": {}, "extra": {}},
             "Conv1D": {
                 "main":
                     {
