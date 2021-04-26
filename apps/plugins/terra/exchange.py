@@ -88,8 +88,39 @@ class TerraExchange:
             task_type=task,
             source="custom" if is_custom else "",
         )
-        self.__project.layers = {}
-        self.__project.schema = []
+        print(start_layers)
+        if not len(start_layers.keys()):
+            start_layers[1] = {
+                "name": f"l1_Input",
+                "type": "Input",
+                "params": {"main": {}, "extra": {}},
+                "up_link": [],
+                "inp_shape": [],
+                "out_shape": [],
+            }
+            start_layers[2] = {
+                "name": f"l2_Output",
+                "type": "Output",
+                "params": {"main": {}, "extra": {}},
+                "up_link": [],
+                "inp_shape": [],
+                "out_shape": [],
+            }
+
+        layers = {}
+        schema = [[], []]
+        for index, layer in start_layers.items():
+            schema[int(layer.get("type") != "Input")].append(index)
+            if not len(layer.get("params", {}).keys()):
+                layer["params"] = {"main": {}, "extra": {}}
+            layers[index] = {
+                "index": index,
+                "config": layer,
+                "type": "input" if int(layer.get("type") == "Input") else "output",
+            }
+
+        self.__project.layers = layers
+        self.__project.schema = schema
         self.__project.start_layers = start_layers
         self.__project.dataset = dataset
         self.__project.task = task

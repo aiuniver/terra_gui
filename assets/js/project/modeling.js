@@ -342,7 +342,7 @@
                 this.activeNode(d3.select(`#node-${_lastNodeId}`));
             };
 
-            let _create_node = (layer, new_node=true) => {
+            let _create_node = (layer) => {
                 layer.lineTarget = {};
                 layer.lineSource = {};
 
@@ -627,47 +627,9 @@
 
             Object.defineProperty(this, "model", {
                 set: (model_info) => {
-                    let layers = model_info.layers,
-                        schema = model_info.schema,
-                        start_layers = model_info.start_layers,
-                        num = 0,
-                        _layer,
-                        _layers = {};
-
-                    let new_model = true;
-
-                    if (!Object.keys(layers).length) {
-                        start_layers["1"] = $.extend(true, {}, window.TerraProject.layers_types["Input"]);
-                        start_layers["2"] = $.extend(true, {}, window.TerraProject.layers_types["Dense"]);
-                        console.log(start_layers);
-                    }
-
-                    for(let index in layers){
-                        if(layers[index].x !== undefined){
-                            new_model = false;
-                            break;
-                        }
-                    }
-
-                    if(new_model) {
-                        for (let index in layers) {
-                            let type = "middle";
-                            if (num === Object.keys(layers).length - 1) type = "output";
-                            if (num === 0) type = "input";
-                            _layer = {
-                                index: index,
-                                config: layers[index].config,
-                                type: type
-                            };
-                            _layers[num] = _layer;
-                            num++;
-                        }
-                    } else _layers = layers;
-
                     _lastNodeId = 0;
                     _lastLineId = 0;
-
-                    _create_model(_layers, schema, new_model);
+                    _create_model(model_info.layers, model_info.schema);
                     terra_params.reset();
                 },
                 get: () => {

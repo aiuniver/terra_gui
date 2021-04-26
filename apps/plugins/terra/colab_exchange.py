@@ -523,334 +523,315 @@ class StatesData:
 
         # dict of layers attributes in format for front
         self.layers_params = {
+            "Input": {"main": {}, "extra": {}},
+            "Output": {"main": {}, "extra": {}},
             "Conv1D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "int", "default": None},
+                    "strides": {"type": "int", "default": 1},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "Conv2D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "tuple", "default": None},
+                    "strides": {"type": "tuple", "default": (1, 1)},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "Conv3D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "tuple", "default": None},
+                    "strides": {"type": "tuple", "default": (1, 1, 1)},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "Conv1DTranspose": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "int", "default": None},
+                    "strides": {"type": "int", "default": 1},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "Conv2DTranspose": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "tuple", "default": None},
+                    "strides": {"type": "tuple", "default": (1, 1)},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "SeparableConv1D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "int", "default": None},
+                    "strides": {"type": "int", "default": 1},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "SeparableConv2D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "filters": {"type": "int", "default": None},
+                    "kernel_size": {"type": "tuple", "default": None},
+                    "strides": {"type": "tuple", "default": (1, 1)},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "DepthwiseConv2D": {
-                "main":
-                    {
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
+                "main": {
+                    "kernel_size": {"type": "tuple", "default": None},
+                    "strides": {"type": "tuple", "default": (1, 1)},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                },
+                "extra": {},
             },
             "MaxPooling1D": {
-                "main":
-                    {
-                        "pool_size": {"type": "int", "default": 2},
-                        "strides": {"type": "int", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
+                "main": {
+                    "pool_size": {"type": "int", "default": 2},
+                    "strides": {"type": "int", "default": None},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                },
+                "extra": {},
             },
             "MaxPooling2D": {
-                "main":
-                    {
-                        "pool_size": {"type": "tuple", "default": (2, 2)},
-                        "strides": {"type": "tuple", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
+                "main": {
+                    "pool_size": {"type": "tuple", "default": (2, 2)},
+                    "strides": {"type": "tuple", "default": None},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                },
+                "extra": {},
             },
             "AveragePooling1D": {
-                "main":
-                    {
-                        "pool_size": {"type": "int", "default": 2},
-                        "strides": {"type": "int", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
+                "main": {
+                    "pool_size": {"type": "int", "default": 2},
+                    "strides": {"type": "int", "default": None},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                },
+                "extra": {},
             },
             "AveragePooling2D": {
-                "main":
-                    {
-                        "pool_size": {"type": "tuple", "default": (2, 2)},
-                        "strides": {"type": "tuple", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
+                "main": {
+                    "pool_size": {"type": "tuple", "default": (2, 2)},
+                    "strides": {"type": "tuple", "default": None},
+                    "padding": {
+                        "type": "str",
+                        "default": "valid",
+                        "list": True,
+                        "available": self.padding_values,
                     },
-                'extra': {}
+                },
+                "extra": {},
             },
             "UpSampling1D": {
-                "main":
-                    {"size": {"type": "int", "default": 2}},
-                'extra': {}
+                "main": {"size": {"type": "int", "default": 2}},
+                "extra": {},
             },
             "UpSampling2D": {
-                "main":
-                    {"size": {"type": "tuple", "default": (2, 2)}},
-                'extra': {}
+                "main": {"size": {"type": "tuple", "default": (2, 2)}},
+                "extra": {},
             },
             "LeakyReLU": {
-                "main":
-                    {"alpha": {"type": "float", "default": 0.3}},
-                'extra': {}
+                "main": {"alpha": {"type": "float", "default": 0.3}},
+                "extra": {},
             },
             "Dropout": {
-                "main":
-                    {"rate": {"type": "float", "default": None}},
-                'extra': {}
+                "main": {"rate": {"type": "float", "default": None}},
+                "extra": {},
             },
             "Dense": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                        "use_bias": {"type": "bool", "default": True},
+                "main": {
+                    "units": {"type": "int", "default": None},
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
                     },
-                'extra': {}
+                    "use_bias": {"type": "bool", "default": True},
+                },
+                "extra": {},
             },
-            "Add": {'main': {}, 'extra': {}},
-            "Multiply": {'main': {}, 'extra': {}},
-            "Flatten": {'main': {}, 'extra': {}},
-            "Concatenate": {'main': {}, 'extra': {}},
-            "Reshape": {'main': {}, 'extra': {}},
-            "sigmoid": {'main': {}, 'extra': {}},
-            "softmax": {'main': {}, 'extra': {}},
-            "tanh": {'main': {}, 'extra': {}},
-            "relu": {'main': {}, 'extra': {}},
-            "elu": {'main': {}, 'extra': {}},
-            "selu": {'main': {}, 'extra': {}},
-            "PReLU": {'main': {}, 'extra': {}},
-            "GlobalMaxPooling1D": {'main': {}, 'extra': {}},
-            "GlobalMaxPooling2D": {'main': {}, 'extra': {}},
-            "GlobalAveragePooling1D": {'main': {}, 'extra': {}},
-            "GlobalAveragePooling2D": {'main': {}, 'extra': {}},
+            "Add": {"main": {}, "extra": {}},
+            "Multiply": {"main": {}, "extra": {}},
+            "Flatten": {"main": {}, "extra": {}},
+            "Concatenate": {"main": {}, "extra": {}},
+            "Reshape": {"main": {}, "extra": {}},
+            "sigmoid": {"main": {}, "extra": {}},
+            "softmax": {"main": {}, "extra": {}},
+            "tanh": {"main": {}, "extra": {}},
+            "relu": {"main": {}, "extra": {}},
+            "elu": {"main": {}, "extra": {}},
+            "selu": {"main": {}, "extra": {}},
+            "PReLU": {"main": {}, "extra": {}},
+            "GlobalMaxPooling1D": {"main": {}, "extra": {}},
+            "GlobalMaxPooling2D": {"main": {}, "extra": {}},
+            "GlobalAveragePooling1D": {"main": {}, "extra": {}},
+            "GlobalAveragePooling2D": {"main": {}, "extra": {}},
             "GRU": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "dropout": {"type": "float", "default": 0.0},
-                        "recurrent_dropout": {"type": "float", "default": 0.0},
-                        "return_sequences": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                        "return_state": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
+                "main": {
+                    "units": {"type": "int", "default": None},
+                    "dropout": {"type": "float", "default": 0.0},
+                    "recurrent_dropout": {"type": "float", "default": 0.0},
+                    "return_sequences": {
+                        "type": "bool",
+                        "default": False,
+                        "list": True,
+                        "available": [False, True],
                     },
-                'extra': {}
+                    "return_state": {
+                        "type": "bool",
+                        "default": False,
+                        "list": True,
+                        "available": [False, True],
+                    },
+                },
+                "extra": {},
             },
             "LSTM": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "dropout": {"type": "float", "default": 0.0},
-                        "recurrent_dropout": {"type": "float", "default": 0.0},
-                        "return_sequences": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                        "return_state": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
+                "main": {
+                    "units": {"type": "int", "default": None},
+                    "dropout": {"type": "float", "default": 0.0},
+                    "recurrent_dropout": {"type": "float", "default": 0.0},
+                    "return_sequences": {
+                        "type": "bool",
+                        "default": False,
+                        "list": True,
+                        "available": [False, True],
                     },
-                'extra': {}
+                    "return_state": {
+                        "type": "bool",
+                        "default": False,
+                        "list": True,
+                        "available": [False, True],
+                    },
+                },
+                "extra": {},
             },
             "Embedding": {
-                "main":
-                    {
-                        "input_dim": {"type": "int", "default": None},
-                        "output_dim": {"type": "int", "default": None},
-                        "input_length": {"type": "int", "default": None},
-                    },
-                'extra': {}
+                "main": {
+                    "input_dim": {"type": "int", "default": None},
+                    "output_dim": {"type": "int", "default": None},
+                    "input_length": {"type": "int", "default": None},
+                },
+                "extra": {},
             },
             "RepeatVector": {
-                "main":
-                    {"n": {"type": "int", "default": None}},
-                'extra': {}
+                "main": {"n": {"type": "int", "default": None}},
+                "extra": {},
             },
         }
         self.callback_show_options_switches_front = {
