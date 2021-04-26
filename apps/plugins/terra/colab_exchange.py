@@ -1155,24 +1155,22 @@ class Exchange(StatesData, GuiExch):
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
-        print(self.start_layers)
-        print(self.layers_data_state)
         return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
 
     def _set_start_layers(self):
         inputs = self.dts.X
         outputs = self.dts.Y
-        self.__create_start_layer(inputs, 'Input')
-        self.__create_start_layer(outputs, 'Output')
+        self.__create_start_layer(inputs, "Input")
+        self.__create_start_layer(outputs, "Output")
 
     def __create_start_layer(self, dts_data: dict, layer_type: str):
-        available = [data['data_name'] for name, data in dts_data.items()]
+        available = [data["data_name"] for name, data in dts_data.items()]
         for name, data in dts_data.items():
             self.start_layers_count += 1
             idx = self.start_layers_count
             layer_name = idx
-            data_name = data['data_name']
-            if layer_type == 'Input':
+            data_name = data["data_name"]
+            if layer_type == "Input":
                 input_shape = list(self.dts.input_shape[name])
             else:
                 input_shape = []
@@ -1182,15 +1180,15 @@ class Exchange(StatesData, GuiExch):
                 "data_name": data_name,
                 "data_available": available,
                 "params": {},
-                "up_link": [
-                    0
-                ],
+                "up_link": [0],
                 "inp_shape": input_shape,
-                "out_shape": []
+                "out_shape": [],
             }
-            print('CUR_LAYER: ', current_layer)
             self.start_layers[idx] = current_layer
-            self.layers_data_state[idx] = {"data_name": data_name, "data_available": available}
+            self.layers_data_state[idx] = {
+                "data_name": data_name,
+                "data_available": available,
+            }
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
@@ -1413,8 +1411,8 @@ class Exchange(StatesData, GuiExch):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
             self.out_data["progress_status"]["percents"] = (
-                                                                   self.epoch / self.epochs
-                                                           ) * 100
+                self.epoch / self.epochs
+            ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 

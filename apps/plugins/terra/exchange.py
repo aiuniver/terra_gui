@@ -83,14 +83,25 @@ class TerraExchange:
     def _call_prepare_dataset(
         self, dataset: str, task: str, is_custom: bool = False
     ) -> TerraExchangeResponse:
-        response = colab_exchange.prepare_dataset(
+        tags, name, start_layers, layers_data_state = colab_exchange.prepare_dataset(
             dataset_name=dataset,
             task_type=task,
             source="custom" if is_custom else "",
         )
+        self.__project.layers = {}
+        self.__project.schema = []
+        self.__project.start_layers = start_layers
         self.__project.dataset = dataset
         self.__project.task = task
-        return TerraExchangeResponse(data=response)
+        return TerraExchangeResponse(
+            data={
+                "layers": self.__project.layers,
+                "schema": self.__project.schema,
+                "dataset": self.__project.dataset,
+                "task": self.__project.task,
+                "start_layers": self.__project.start_layers,
+            }
+        )
 
     def _call_get_data(self) -> TerraExchangeResponse:
         response = colab_exchange.get_data()

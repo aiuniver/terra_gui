@@ -629,11 +629,18 @@
                 set: (model_info) => {
                     let layers = model_info.layers,
                         schema = model_info.schema,
+                        start_layers = model_info.start_layers,
                         num = 0,
                         _layer,
                         _layers = {};
 
                     let new_model = true;
+
+                    if (!Object.keys(layers).length) {
+                        start_layers["1"] = $.extend(true, {}, window.TerraProject.layers_types["Input"]);
+                        start_layers["2"] = $.extend(true, {}, window.TerraProject.layers_types["Dense"]);
+                        console.log(start_layers);
+                    }
 
                     for(let index in layers){
                         if(layers[index].x !== undefined){
@@ -844,7 +851,7 @@
         terra_board = $(".canvas-container").TerraBoard();
         terra_params = $(".params-container").TerraParams();
 
-        if (!window.TerraProject.dataset || !window.TerraProject.task) {
+        if (!window.TerraProject.dataset) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,

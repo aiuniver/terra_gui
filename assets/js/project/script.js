@@ -26,6 +26,7 @@
         let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
+        let _start_layers = options.start_layers || {};
         let _schema = options.schema || [];
         let _layers_types = options.layers_types || {};
         let _optimizers = options.optimizers || [];
@@ -151,6 +152,15 @@
             }
         });
 
+        Object.defineProperty(this, "start_layers", {
+            set: (value) => {
+                _start_layers = value;
+            },
+            get: () => {
+                return _start_layers;
+            }
+        });
+
         Object.defineProperty(this, "schema", {
             set: (value) => {
                 _schema = value;
@@ -164,7 +174,8 @@
             get: () => {
                 return {
                     "layers": _layers,
-                    "schema": _schema
+                    "schema": _schema,
+                    "start_layers": _start_layers,
                 };
             }
         });
