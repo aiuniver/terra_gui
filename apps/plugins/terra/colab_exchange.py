@@ -872,6 +872,7 @@ class Exchange(StatesData, GuiExch):
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
         self.start_layers = {}
+        self.start_layers_count = 0
         self.layers_data_state = {}
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
@@ -1137,6 +1138,7 @@ class Exchange(StatesData, GuiExch):
         return self.dts.tags, self.dts.name
 
     def _create_custom_dataset(self, **options):
+        self._reset_out_data()
         dataset = f'{options.get("dataset_name")}.trds'
         dataset_path = os.path.join(self.custom_datasets_path, dataset)
         with open(dataset_path, "rb") as f:
@@ -1166,14 +1168,12 @@ class Exchange(StatesData, GuiExch):
     def __create_start_layer(self, dts_data: dict, layer_type: str):
         available = [data['data_name'] for name, data in dts_data.items()]
         for name, data in dts_data.items():
-            print('name: ', name, '\n', 'data', data)
-            idx = name.split('_')[1]
-            print('idx', idx)
+            self.start_layers_count += 1
+            idx = self.start_layers_count
             layer_name = idx
             data_name = data['data_name']
             if layer_type == 'Input':
                 input_shape = list(self.dts.input_shape[name])
-                print('input_shape', input_shape)
             else:
                 input_shape = []
             current_layer = {
@@ -1208,6 +1208,9 @@ class Exchange(StatesData, GuiExch):
             self.out_data["stop_flag"] = True
 
     def _reset_out_data(self):
+        self.start_layers = {}
+        self.start_layers_count = 0
+        self.layers_data_state = {}
         self.out_data = {
             "stop_flag": False,
             "status_string": "status_string",
