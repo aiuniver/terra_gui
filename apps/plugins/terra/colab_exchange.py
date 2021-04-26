@@ -871,6 +871,9 @@ class Exchange(StatesData, GuiExch):
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
+        self.start_layers = {}
+        self.start_layers_count = 0
+        self.layers_data_state = {}
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
@@ -1131,24 +1134,63 @@ class Exchange(StatesData, GuiExch):
         # else:
         self.dts.prepare_dataset(**options)
         self._set_dts_name(self.dts.name)
-        return self.dts.tags, self.dts.name
+        self.out_data["stop_flag"] = True
+        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
 
     def _create_custom_dataset(self, **options):
+        self._reset_out_data()
         dataset = f'{options.get("dataset_name")}.trds'
         dataset_path = os.path.join(self.custom_datasets_path, dataset)
         with open(dataset_path, "rb") as f:
             custom_dts = dill.load(f)
         self.dts = custom_dts
-        print(
-            "DTS",
-            self.dts,
-            "\n",
-            self.dts.name,
-            self.dts.source_shape,
-            self.dts.input_shape,
-        )
+        # print(
+        #     "DTS",
+        #     self.dts,
+        #     "\n",
+        #     self.dts.name,
+        #     self.dts.X,
+        #     self.dts.Y,
+        # )
         self._set_dts_name(self.dts.name)
-        return self.dts.tags, self.dts.name
+        self.out_data["stop_flag"] = True
+        self._set_start_layers()
+        print(self.start_layers)
+        print(self.layers_data_state)
+        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
+
+    def _set_start_layers(self):
+        inputs = self.dts.X
+        outputs = self.dts.Y
+        self.__create_start_layer(inputs, 'Input')
+        self.__create_start_layer(outputs, 'Output')
+
+    def __create_start_layer(self, dts_data: dict, layer_type: str):
+        available = [data['data_name'] for name, data in dts_data.items()]
+        for name, data in dts_data.items():
+            self.start_layers_count += 1
+            idx = self.start_layers_count
+            layer_name = idx
+            data_name = data['data_name']
+            if layer_type == 'Input':
+                input_shape = list(self.dts.input_shape[name])
+            else:
+                input_shape = []
+            current_layer = {
+                "name": layer_name,
+                "type": layer_type,
+                "data_name": data_name,
+                "data_available": available,
+                "params": {},
+                "up_link": [
+                    0
+                ],
+                "inp_shape": input_shape,
+                "out_shape": []
+            }
+            print('CUR_LAYER: ', current_layer)
+            self.start_layers[idx] = current_layer
+            self.layers_data_state[idx] = {"data_name": data_name, "data_available": available}
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
@@ -1166,6 +1208,9 @@ class Exchange(StatesData, GuiExch):
             self.out_data["stop_flag"] = True
 
     def _reset_out_data(self):
+        self.start_layers = {}
+        self.start_layers_count = 0
+        self.layers_data_state = {}
         self.out_data = {
             "stop_flag": False,
             "status_string": "status_string",
@@ -1368,8 +1413,8 @@ class Exchange(StatesData, GuiExch):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
             self.out_data["progress_status"]["percents"] = (
-                self.epoch / self.epochs
-            ) * 100
+                                                                   self.epoch / self.epochs
+                                                           ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
@@ -1435,4 +1480,5 @@ class Exchange(StatesData, GuiExch):
 
 if __name__ == "__main__":
     b = Exchange()
+    b.prepare_dataset(dataset_name="заболевания", task_type="classification")
     pass
