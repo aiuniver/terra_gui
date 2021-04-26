@@ -111,6 +111,7 @@
                 _model_schema = [],
                 _onContextDrag = false,
                 _onDrag = false,
+                _onCtrlPress = false,
                 _sourceNode,
                 _targetNode,
                 _lastNodeId = 0,
@@ -520,35 +521,52 @@
                 this.find(".canvas > .hint").remove();
             });
 
+            $(document).bind("keydown", (event) => {
+                if(event.ctrlKey){
+                    _onCtrlPress = true;
+                }
+            });
+
+            $(document).bind("keyup", (event) => {
+                if(event.ctrlKey){
+                    _onCtrlPress = false;
+                }
+            });
+
             let _onmousedown = (event)=>{
-                svg.bind("mousemove", _onmousemove);
-                _sourceNode = event.target.parentNode;
-                _targetNode = undefined;
+                console.log(_onCtrlPress);
+                if(event.which == 1 && _onCtrlPress){
+                     svg.bind("mousemove", _onmousemove);
+                    _sourceNode = event.target.parentNode;
+                    _targetNode = undefined;
+                }
             };
 
             let _onmouseup = (event)=>{
-                svg.unbind("mousemove", _onmousemove);
-                _targetNode = event.target.parentNode;
-                if(_onContextDrag){
-                    _change_line(true);
-                     this.find(".canvas > .hint").remove();
-                }else if (event.button === 2) {
-                    let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
-                    if (params == null) return;
-                    if (!Object.keys(params).length) return;
-                    let hint = $(`<div class="hint"></div>`),
-                        text = [];
-                    for (let param in params) {
-                        text.push(`${param}: ${params[param].default || ""}`);
+                if(event.which == 1){
+                    svg.unbind("mousemove", _onmousemove);
+                    _targetNode = event.target.parentNode;
+                    if(_onContextDrag &&  _onCtrlPress){
+                        _change_line(true);
+                         this.find(".canvas > .hint").remove();
+                    }else if (event.button === 2) {
+                        let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
+                        if (params == null) return;
+                        if (!Object.keys(params).length) return;
+                        let hint = $(`<div class="hint"></div>`),
+                            text = [];
+                        for (let param in params) {
+                            text.push(`${param}: ${params[param].default || ""}`);
+                        }
+                        hint.html(`${text.join("<br />")}`);
+                        hint.css({
+                            left:event.offsetX,
+                            top:event.offsetY,
+                        });
+                        $(".canvas").append(hint);
                     }
-                    hint.html(`${text.join("<br />")}`);
-                    hint.css({
-                        left:event.offsetX,
-                        top:event.offsetY,
-                    });
-                    $(".canvas").append(hint);
+                    _onContextDrag = false;
                 }
-                _onContextDrag = false;
             };
 
             let _onmousemove = (event)=>{
