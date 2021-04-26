@@ -1131,6 +1131,7 @@ class Exchange(StatesData, GuiExch):
         # else:
         self.dts.prepare_dataset(**options)
         self._set_dts_name(self.dts.name)
+        self.out_data["stop_flag"] = True
         return self.dts.tags, self.dts.name
 
     def _create_custom_dataset(self, **options):
@@ -1139,23 +1140,23 @@ class Exchange(StatesData, GuiExch):
         with open(dataset_path, "rb") as f:
             custom_dts = dill.load(f)
         self.dts = custom_dts
-        print(
-            "DTS",
-            self.dts,
-            "\n",
-            self.dts.name,
-            self.dts.X,
-            self.dts.Y,
-        )
+        # print(
+        #     "DTS",
+        #     self.dts,
+        #     "\n",
+        #     self.dts.name,
+        #     self.dts.X,
+        #     self.dts.Y,
+        # )
         self._set_dts_name(self.dts.name)
+        self.out_data["stop_flag"] = True
         return self.dts.tags, self.dts.name
 
     def _set_start_layers(self):
         inputs = self.dts.X
         outputs = self.dts.Y
-        print(inputs, outputs)
-
-
+        print('Inputs: ', inputs, '\n', 'Outputs', outputs)
+        
     @staticmethod
     def _reformat_tags(tags: list) -> list:
         return list(
