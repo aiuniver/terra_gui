@@ -1165,13 +1165,14 @@ class Exchange(StatesData, GuiExch):
 
     def __create_start_layer(self, dts_data: dict, layer_type: str):
         available = [data['data_name'] for name, data in dts_data.items()]
-        print(available)
         for name, data in dts_data.items():
             idx = name.split['_'][1]
+            print('idx', idx)
             layer_name = idx
             data_name = data['data_name']
             if layer_type == 'Input':
                 input_shape = list(self.dts.input_shape[name])
+                print('input_shape', input_shape)
             else:
                 input_shape = []
             current_layer = {
