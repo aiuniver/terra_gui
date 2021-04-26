@@ -1166,6 +1166,7 @@ class Exchange(StatesData, GuiExch):
     def __create_start_layer(self, dts_data: dict, layer_type: str):
         available = [data['data_name'] for name, data in dts_data.items()]
         for name, data in dts_data.items():
+            print('name: ', name, '\n', 'data', data)
             idx = name.split['_'][1]
             print('idx', idx)
             layer_name = idx
