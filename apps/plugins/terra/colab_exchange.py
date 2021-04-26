@@ -1261,7 +1261,7 @@ class Exchange(StatesData, GuiExch):
                 input_shape = []
             current_layer = {
                 "name": layer_name,
-                "type": layer_type,
+                "type": layer_type if layer_type == 'Input' else 'Dense',
                 "data_name": data_name,
                 "data_available": available,
                 "params": {},
