@@ -1,9 +1,10 @@
-from typing import List, Tuple
+from typing import Tuple
 import numpy as np
 import sys
 import os.path
 import os
 import operator
+from tensorflow import keras
 
 __version__ = 0.1
 
@@ -27,10 +28,20 @@ class GUINN:
         """
         For testing in different setups and environment
         """
-        self.debug_mode = True
+        self.debug_mode: bool = True
         self.debug_verbose = 3
         self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
+
+        """
+        For samples from dataset
+        """
+        self.x_Train: dict = {}
+        self.x_Val: dict = {}
+        self.y_Train: dict = {}
+        self.y_Val: dict = {}
+        self.x_Test: dict = {}
+        self.y_Test: dict = {}
 
         """
         Checking setup environment
@@ -85,17 +96,17 @@ class GUINN:
 
         pass
 
-        self.nn_name = ""
+        self.nn_name: str = ''
         self.model = None
-        self.external_model = False
+        self.external_model: bool = False
 
         if self.mounted_drive_writable:
 
             """
             Setting location for Projects in Home directory for _current_ user
             """
-            self.project_name = ""
-            self.project_path = ""
+            self.project_name: str = ''
+            self.project_path: str = ''
             self.set_project_name(self.project_name)
 
             """
@@ -103,40 +114,43 @@ class GUINN:
             if task_type is currently = ''
             it's setting to None   
             """
-            self.task_name = ""
-            self.task_type = ""
-            self.task_path = ""
+            self.task_name: str = ''
+            self.task_type: str = ''
+            self.task_path: str = ''
             self.set_task_type()
 
             """
             Setting experiment_UUID and experiment_name 
             """
-            self.experiment_name = ""
-            self.experiment_UUID = ""
-            self.experiment_path = ""
+            self.experiment_name: str = ''
+            self.experiment_UUID: str = ''
+            self.experiment_path: str = ''
             self.set_experiment_UUID()
             self.set_experiment_name(str(self.experiment_UUID))
 
-            self.best_epoch = dict()
+            self.best_epoch: dict = {}
             self.best_epoch_num: int = 0
             self.stop_epoch: int = 0
-            self.model_is_trained = False
-            self.history = dict()
+            self.model_is_trained: bool = True
+            self.history: dict = {}
             self.best_metric_result = "0000"
 
             self.learning_rate = 1e-3
             self.optimizer_name = "Adam"
-            self.loss = "categorical_crossentropy"
-            self.metrics: List[str] = ["accuracy"]
+            self.loss: dict = {'output_1': ["categorical_crossentropy"]}
+            self.metrics: dict = {'output_1': ["accuracy"]}
             self.batch_size = 32
             self.epochs = 20
-            self.shuffle = True
+            self.shuffle: bool = True
 
-            if not isinstance(self.metrics[0], str):
-                self.monitor = str(self.metrics[0])
-            else:
-                self.monitor = self.metrics[0]
-            self.monitor2 = "loss"
+            self.monitor: str = 'input_1_accuracy'
+            self.monitor2: str = "input_1_loss"
+
+            # if not isinstance(self.metrics[0], str):
+            #     self.monitor = str(self.metrics[0])
+            # else:
+            #     self.monitor = self.metrics[0]
+
 
     def set_dataset(self, dts_obj: object) -> None:
         """
@@ -262,11 +276,19 @@ class GUINN:
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
         x_train_shape, num_classes
         """
-        msg = (
-            f"num_classes = {self.DTS.num_classes}, shape = {self.DTS.x_Train.shape}, epochs = {self.epochs},\n"
-            f"learning_rate={self.learning_rate}, callbacks = {self.callbacks}, batch_size = {self.batch_size},\n"
-            f"shuffle = {self.shuffle}, loss = {self.loss}, metrics = {self.metrics}\n"
-        )
+        x_shape = []
+        v_shape = []
+        t_shape = []
+
+        for i in self.DTS.X.keys():
+            x_shape.append([i, self.DTS.X[i]['data'][0].shape])
+            v_shape.append([i, self.DTS.X[i]['data'][1].shape])
+            t_shape.append([i, self.DTS.X[i]['data'][2].shape])
+
+        msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n'\
+        f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
+        f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
+        f'loss = {self.loss}, metrics = {self.metrics} \n'
 
         # TODO: change to print_2status_bar then remove debug_mode
         self.Exch.show_text_data(msg)
@@ -282,7 +304,7 @@ class GUINN:
         if self.model_is_trained:
             model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}"
             file_path_model: str = os.path.join(
-                self.experiment_path, f"{model_name}.h5"
+                self.experiment_path, f"{model_name}_last.h5"
             )
             self.model.save(file_path_model)
             self.Exch.print_2status_bar(
@@ -291,6 +313,49 @@ class GUINN:
         else:
             self.Exch.print_error(("Error", "Cannot save. The model is not trained"))
             sys.exit()
+        pass
+
+    def save_model_weights(self) -> None:
+        """
+        Saving model weights if the model is trained
+
+        Returns:
+            None
+        """
+
+        if self.model_is_trained:
+            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}'
+            file_path_weights: str = os.path.join(self.experiment_path, f'{model_weights_name}.h5')
+            self.model.save_weights(file_path_weights)
+            self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
+        else:
+            self.Exch.print_error(('Error', 'Cannot save. The model is not trained'))
+
+        pass
+
+    def prepare_dataset(self) -> None:
+        """
+        reformat samples of dataset
+
+        Returns:
+            None
+        """
+
+        for input_key in self.DTS.X.keys():
+
+            self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
+            if self.DTS.X[input_key]['data'][1] != None:
+                self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
+            if self.DTS.X[input_key]['data'][2] != None:
+                self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
+
+        for output_key in self.DTS.Y.keys():
+
+            self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
+            if self.DTS.Y[output_key]['data'][1] != None:
+                self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
+            if self.DTS.Y[output_key]['data'][2] != None:
+                self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
     def terra_fit(self, nnmodel, verbose: int = 0) -> None:
@@ -321,35 +386,60 @@ class GUINN:
         if self.debug_verbose > 1:
             print("self.callbacks", self.callbacks)
 
+        self.prepare_dataset()
         self.show_training_params()
-        self.history = self.model.fit(
-            self.DTS.x_Train,
-            self.DTS.y_Train,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            validation_data=(self.DTS.x_Val, self.DTS.y_Val),
-            epochs=self.epochs,
-            verbose=verbose,
-            callbacks=self.callbacks,
-        )
+
+        if self.x_Val['input_1'] is not None:
+
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=(self.x_Val, self.y_Val),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=[self.callbacks, keras.callbacks.ModelCheckpoint(
+                    filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'), verbose=1,
+                    save_best_only=True, save_weights_only=True, monitor='loss', mode='min')]
+            )
+        else:
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_split=0.2,
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=[self.callbacks, keras.callbacks.ModelCheckpoint(
+                    filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'), verbose=1,
+                    save_best_only=True, save_weights_only=True, monitor='loss', mode='min')]
+            )
         self.model_is_trained = True
 
-        (
-            self.best_epoch,
-            self.best_epoch_num,
-            self.stop_epoch,
-        ) = self._search_best_epoch_data(
-            history=self.history, monitor=self.monitor, monitor2=self.monitor2
-        )
-        self.best_metric_result = self.best_epoch[self.monitor]
+        for n_out in self.DTS.Y.keys():
+            for _ in self.loss[n_out]:
+                for metric_out in self.metrics[n_out]:
+                    self.monitor = f'{n_out}_{metric_out}'
+                    self.monitor2 = f'{n_out}_loss'
+                    self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
+                        history=self.history, monitor=self.monitor, monitor2=self.monitor2
+                    )
+                    self.best_metric_result = self.best_epoch[self.monitor]
 
-        self.save_nnmodel()
+        try:
+            self.save_nnmodel()
+        except RuntimeError:
+            self.Exch.print_2status_bar(('Warning', 'Save model failed'))
+        self.save_model_weights()
+
         pass
 
     @staticmethod
     def _search_best_epoch_data(
-        history, monitor="val_accuracy", monitor2="val_loss"
-    ) -> Tuple[dict, int, int]:
+            history, monitor="output_1_val_accuracy", monitor2="output_1_loss"
+            ) -> Tuple[dict, int, int]:
         """
         Searching in history for best epoch with metrics from 'monitor' kwargs
 
@@ -372,11 +462,11 @@ class GUINN:
         if not isinstance(monitor2, str):
             monitor2 = str(monitor2)
 
-        if monitor in max_monitors:
+        if monitor.split('_')[-1] in max_monitors:
             funct = np.argmax
             check = operator.gt
 
-        elif ("error" in monitor) or monitor in min_monitors:
+        elif ("error" in monitor) or monitor.split('_')[-1] in min_monitors:
             funct = np.argmin
             check = operator.lt
 
@@ -384,9 +474,9 @@ class GUINN:
             funct = np.argmin
             check = operator.lt
 
-        if monitor2 in max_monitors:
+        if monitor2.split('_')[-1] in max_monitors:
             check2 = operator.gt
-        elif ("error" in monitor2) or monitor2 in min_monitors:
+        elif ("error" in monitor2) or monitor2.split('_')[-1] in min_monitors:
             check2 = operator.lt
         else:
             check2 = operator.gt
@@ -402,31 +492,31 @@ class GUINN:
 
         for i in range(n_range):
             if (
-                (
-                    check(
-                        history.history[monitor][i],
-                        history.history[monitor][best_epoch_num],
+                    (
+                            check(
+                                history.history[monitor][i],
+                                history.history[monitor][best_epoch_num],
+                            )
                     )
-                )
-                & (
+                    & (
                     check2(
                         history.history[monitor2][i],
                         history.history[monitor2][best_epoch_num],
                     )
-                )
-                & (not np.isnan(history.history[monitor][i]))
+            )
+                    & (not np.isnan(history.history[monitor][i]))
             ):
                 best_epoch_num = i
             elif (
-                (
-                    history.history[monitor][i]
-                    == history.history[monitor][best_epoch_num]
-                )
-                & (
-                    history.history[monitor2][i]
-                    == history.history[monitor2][best_epoch_num]
-                )
-                & (not np.isnan(history.history[monitor][i]))
+                    (
+                            history.history[monitor][i]
+                            == history.history[monitor][best_epoch_num]
+                    )
+                    & (
+                            history.history[monitor2][i]
+                            == history.history[monitor2][best_epoch_num]
+                    )
+                    & (not np.isnan(history.history[monitor][i]))
             ):
                 best_epoch_num = i
 
