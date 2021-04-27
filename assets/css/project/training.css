@@ -194,9 +194,9 @@
     min-width:200px;
 }
 .callback-params-block > .params-item > .inner > .actions-form {
-    max-width:359px;
-    min-width:200px;
-    margin:0 0 0 auto;
+    max-width:200px;
+    min-width:100px;
+    float: right;
 }
 
 /* graphics */
@@ -304,6 +304,40 @@
 .training-progress .info > ul > li:not(:last-child) {
     padding-right:20px;
 }
+
+.output-params-block{
+    width: 300px;
+}
+
+.output-block{
+    margin-top: 12px;
+}
+
+.output-block > span{
+    height: 30px;
+}
+
+.output-block > span > .ui-selectmenu-text{
+    line-height: 30px;
+    font-size: 12px;
+}
+
+.output-block > span > .ui-selectmenu-icon{
+    height: 30px;
+}
+
+.params-title{
+    line-height: 1.25;
+    font-size: .75rem;
+    user-select: none;
+}
+
+.actions-form > .item > button{
+    width: 100px;
+    text-align: center;
+    padding: 0;
+}
+
 
 
 /*
