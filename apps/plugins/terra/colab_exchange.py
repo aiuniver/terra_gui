@@ -854,6 +854,103 @@ class StatesData:
                 'extra': {}
             },
         }
+
+        self.states_for_outputs = {
+            "classification": {
+                "losses": [
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson",
+                ]
+            },
+            "segmentation": {
+                "losses": [
+                    "dice_coef",
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson",
+                ],
+                "metrics": [
+                    "dice_coef",
+                    "meanIoU",
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson",
+                ]
+            },
+            "regression": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mae",
+                    "mse",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
+            },
+            "timeseries": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
+            },
+        }
+
         self.callback_show_options_switches_front = {
             "classification": {
                 "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
@@ -1062,6 +1159,32 @@ class Exchange(StatesData, GuiExch):
             self.loss (str):      loss name
         """
         return self.loss
+
+    def get_states_for_outputs(self) -> dict:
+        """
+        This method send some parametres for output layers, such as losses, metrics and tasks
+        For example:
+        "timeseries": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
+            },
+        :return: dict of parameteres
+        """
+        return self.states_for_outputs
 
     def get_epochs_from_django(self):
         """
@@ -1563,5 +1686,5 @@ class Exchange(StatesData, GuiExch):
 
 if __name__ == "__main__":
     b = Exchange()
-    b.prepare_dataset(dataset_name="заболевания", task_type="classification")
+    b.prepare_dataset(dataset_name="mnist", task_type="classification")
     pass
