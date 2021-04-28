@@ -1,12 +1,4 @@
-from tensorflow.keras.datasets import (
-    mnist,
-    fashion_mnist,
-    cifar10,
-    cifar100,
-    imdb,
-    reuters,
-    boston_housing,
-)
+from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer, text_to_word_sequence
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator, pad_sequences
@@ -41,28 +33,29 @@ from terra_ai.guiexchange import Exchange
 import dill
 import ipywidgets as widgets
 
-__version__ = 0.227
+__version__ = 0.229
 
 tr2dj_obj = Exchange()
 
 
 class DTS(object):
+
     def __init__(self, exch_obj=tr2dj_obj):
 
-        if "custom" in globals().keys():
+        if 'custom' in globals().keys():
             for key, value in custom.__dict__.items():
                 self.__dict__[key] = value
 
         self.Exch = exch_obj
         self.django_flag = False
-        if self.Exch.property_of != "TERRA":
+        if self.Exch.property_of != 'TERRA':
             self.django_flag = True
 
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
-        self.file_folder: str = ""
-        self.name: str = ""
-        self.source: str = ""
-        self.tags: list = []
+        self.file_folder: str = ''
+        self.name: str = ''
+        self.source: str = ''
+        self.tags: dict = {}
         self.source_datatype: dict = {}
         self.source_shape: dict = {}
         self.input_datatype: dict = {}
@@ -70,30 +63,32 @@ class DTS(object):
         self.num_classes: int = 0
         self.classes_names: list = []
         self.classes_colors: list = []
-        self.language: str = ""
+        self.language: str = ''
         self.dts_prepared: bool = False
 
         self.X: dict = {}
         self.Y: dict = {}
         self.x_Scaler = {}
         self.y_Scaler = {}
+        self.tokenizer = {}
+        self.one_hot_encoding = {}
 
         pass
 
     def list_data(self):
 
         data = {
-            "трафик": "Трафик сайта компании.",
-            "трейдинг": "Курсы акций.",
-            "умный_дом": "Голосовые команды для управления умным домом.",
-            "квартиры": "База квартир в Москве.",
-            "диалоги": "Диалоги в формате вопрос-ответ.",
-            "автомобили": "Классификация автомобилей на 2 класса.",
-            "автомобили_3": "Классификация автомобилей на 3 класса.",
-            "заболевания": "Классификация болезней по симптомам.",
-            "договоры": "Сегментация договоров.",
-            "самолеты": "Сегментация самолетов.",
-            "болезни": "Классификация кожных заболеваний по фотографиям.",
+            'трафик': 'Трафик сайта компании.',
+            'трейдинг': 'Курсы акций.',
+            'умный_дом': 'Голосовые команды для управления умным домом.',
+            'квартиры': 'База квартир в Москве.',
+            'диалоги': 'Диалоги в формате вопрос-ответ.',
+            'автомобили': 'Классификация автомобилей на 2 класса.',
+            'автомобили_3': 'Классификация автомобилей на 3 класса.',
+            'заболевания': 'Классификация болезней по симптомам.',
+            'договоры': 'Сегментация договоров.',
+            'самолеты': 'Сегментация самолетов.',
+            'болезни': 'Классификация кожных заболеваний по фотографиям.'
         }
 
         return pd.DataFrame(data.items()).rename(columns={0: "Название", 1: "Описание"})
@@ -105,59 +100,56 @@ class DTS(object):
 
         """
         data = {
-            "keras_datasets(dataset, **options)": "Загрузка стандартных баз: mnist, fashion_mnist, cifar10, cifar100, imdb, "
-            "reuters_newswire, boston_housing",
-            "image_classification(shape, folder_name=None, **options)": "Создание массивов для задачи классификации изображений.",
-            "image_segmentation(shape, classes_dict, mask_range, folder_name=None, **options)": "Создание массивов для задачи сегментации изображений.",
-            "text_classification(max_words_count, x_len, step, folder_name=None, **options)": "Создание массивов для задачи классификации текста.",
-            "text_segmentation(max_words_count, x_len, step, embedding_size, num_classes, folder_name=None)": "Создание "
-            "массивов "
-            "для задачи "
-            "сегментации текста. ",
-            "voice_recognition(sample_rate, length, folder_name=None, **options)": "Создание массивов для распознавания звуковых файлов.",
-            "data_regression(filename, x_len, val_len, **options)": "Создание массивов для задачи регрессии.",
-            "as_array()": "Возвращает массивы X Y",
+            'keras_datasets(dataset, **options)': 'Загрузка стандартных баз: mnist, fashion_mnist, cifar10, cifar100, imdb, '
+                                                  'reuters_newswire, boston_housing',
+            'image_classification(shape, folder_name=None, **options)': 'Создание массивов для задачи классификации изображений.',
+            'image_segmentation(shape, classes_dict, mask_range, folder_name=None, **options)': 'Создание массивов для задачи сегментации изображений.',
+            'text_classification(max_words_count, x_len, step, folder_name=None, **options)': 'Создание массивов для задачи классификации текста.',
+            'text_segmentation(max_words_count, x_len, step, embedding_size, num_classes, folder_name=None)': 'Создание '
+                                                                                                              'массивов ''для задачи '
+                                                                                                              'сегментации текста. ',
+            'voice_recognition(sample_rate, length, folder_name=None, **options)': 'Создание массивов для распознавания звуковых файлов.',
+            'data_regression(filename, x_len, val_len, **options)': 'Создание массивов для задачи регрессии.',
+            'as_array()': 'Возвращает массивы X Y'
         }
-        pd.set_option("display.max_colwidth", None)
+        pd.set_option('display.max_colwidth', None)
 
         return pd.DataFrame(data.items()).rename(columns={0: "Название", 1: "Описание"})
 
     def _set_tag(self, name):
 
-        tags = {
-            "mnist": ["images", "classification"],
-            "fashion_mnist": ["images", "classification"],
-            "cifar10": ["images", "classification"],
-            "cifar100": ["images", "classification"],
-            "imdb": ["text", "classification"],
-            "boston_housing": ["text", "regression"],
-            "reuters": ["text", "classification"],
-            "sber": ["timeseries", "regression"],
-            "автомобили": ["images", "classification"],
-            "автомобили_3": ["images", "classification"],
-            "самолеты": ["images", "segmentation", "objectDetection"],
-            "умный_дом": ["audio", "classification", "smartHome"],
-            "договоры": ["text", "segmentation"],
-            "трейдинг": ["traiding", "timeseries"],
-            "квартиры": ["text", "regression"],
-            "болезни": ["images", "segmentation"],
-            "заболевания": ["text", "classification"],
-            "губы": ["images", "segmentation"],
-            "жанры_музыки": ["audio", "classification"],
-        }
+        tags = {'mnist': ['images', 'classification'],
+                'fashion_mnist': ['images', 'classification'],
+                'cifar10': ['images', 'classification'],
+                'cifar100': ['images', 'classification'],
+                'imdb': ['text', 'classification'],
+                'boston_housing': ['text', 'regression'],
+                'reuters': ['text', 'classification'],
+                'sber': ['timeseries', 'regression'],
+                'автомобили': ['images', 'classification'],
+                'автомобили_3': ['images', 'classification'],
+                'самолеты': ['images', 'segmentation', 'objectDetection'],
+                'умный_дом': ['audio', 'classification', 'smartHome'],
+                'договоры': ['text', 'segmentation'],
+                'трейдинг': ['traiding', 'timeseries'],
+                'квартиры': ['text', 'regression'],
+                'болезни': ['images', 'segmentation'],
+                'заболевания': ['text', 'classification'],
+                'губы': ['images', 'segmentation'],
+                'жанры_музыки': ['audio', 'classification']
+                }
         return tags[name]
 
     def _set_language(self, name):
 
-        language = {
-            "imdb": "English",
-            "boston_housing": "English",
-            "reuters": "English",
-            "заболевания": "Russian",
-            "договоры": "Russian",
-            "умный_дом": "Russian",
-            "квартиры": "Russian",
-        }
+        language = {'imdb': 'English',
+                    'boston_housing': 'English',
+                    'reuters': 'English',
+                    'заболевания': 'Russian',
+                    'договоры': 'Russian',
+                    'умный_дом': 'Russian',
+                    'квартиры': 'Russian'
+                    }
 
         if name in language.keys():
             return language[name]
@@ -166,41 +158,45 @@ class DTS(object):
 
     def _set_source(self, name):
 
-        source = {
-            "mnist": "tensorflow.keras",
-            "fashion_mnist": "tensorflow.keras",
-            "cifar10": "tensorflow.keras",
-            "cifar100": "tensorflow.keras",
-            "imdb": "tensorflow.keras",
-            "boston_housing": "tensorflow.keras",
-            "reuters": "tensorflow.keras",
-            "sber": "terra_ai",
-            "автомобили": "terra_ai",
-            "автомобили_3": "terra_ai",
-            "самолеты": "terra_ai",
-            "умный_дом": "terra_ai",
-            "договоры": "terra_ai",
-            "трейдинг": "terra_ai",
-            "квартиры": "terra_ai",
-            "болезни": "terra_ai",
-            "заболевания": "terra_ai",
-            "губы": "terra_ai",
-            "жанры_музыки": "terra_ai",
-        }
+        source = {'mnist': 'tensorflow.keras',
+                  'fashion_mnist': 'tensorflow.keras',
+                  'cifar10': 'tensorflow.keras',
+                  'cifar100': 'tensorflow.keras',
+                  'imdb': 'tensorflow.keras',
+                  'boston_housing': 'tensorflow.keras',
+                  'reuters': 'tensorflow.keras',
+                  'sber': 'terra_ai',
+                  'автомобили': 'terra_ai',
+                  'автомобили_3': 'terra_ai',
+                  'самолеты': 'terra_ai',
+                  'умный_дом': 'terra_ai',
+                  'договоры': 'terra_ai',
+                  'трейдинг': 'terra_ai',
+                  'квартиры': 'terra_ai',
+                  'болезни': 'terra_ai',
+                  'заболевания': 'terra_ai',
+                  'губы': 'terra_ai',
+                  'жанры_музыки': 'terra_ai'
+                  }
 
         if name in source.keys():
             return source[name]
         else:
-            return "custom_dataset"
+            return 'custom'
 
     def _set_datatype(self, **kwargs):
 
-        dtype = {1: "DIM", 2: "DIM", 3: "1D", 4: "2D", 5: "3D"}
+        dtype = {1: 'DIM',
+                 2: 'DIM',
+                 3: '1D',
+                 4: '2D',
+                 5: '3D'
+                 }
 
-        if "shape" in kwargs.keys():
-            return dtype[len(kwargs["shape"])]
-        elif "text" in kwargs.keys() and kwargs["text"] == True:
-            return "Text"
+        if 'shape' in kwargs.keys():
+            return dtype[len(kwargs['shape'])]
+        elif 'text' in kwargs.keys() and kwargs['text'] == True:
+            return 'Text'
 
     def load_data(self, name, link=None, **options) -> None:
 
@@ -220,144 +216,130 @@ class DTS(object):
 
         self.name = name
         data = {
-            "трафик": ["traff.csv"],
-            "трейдинг": ["shares.zip"],
-            "автомобили": ["car_2.zip"],
-            "умный_дом": ["cHome.zip"],
-            "квартиры": ["moscow.csv"],
-            "диалоги": ["dialog.txt"],
-            "автомобили_3": ["car.zip"],
-            "заболевания": ["symptoms.zip"],
+            'трафик': ['traff.csv'],
+            'трейдинг': ['shares.zip'],
+            'автомобили': ['car_2.zip'],
+            'умный_дом': ['cHome.zip'],
+            'квартиры': ['moscow.csv'],
+            'диалоги': ['dialog.txt'],
+            'автомобили_3': ['car.zip'],
+            'заболевания': ['symptoms.zip'],
             # 'люди':['master.zip', 'coco2017val.zip', 'coco128.zip'], # Этой базы нет в aiu_bucket
-            "договоры": ["docs.zip"],
-            "самолеты": ["airplane.zip", "segment.zip"],
-            "болезни": ["origin.zip", "segmentation.zip"],
-            "губы": ["lips.zip"],
-            "жанры_музыки": ["genres.zip"],
-            "sber": ["SBER_MIN60.txt"],
+            'договоры': ['docs.zip'],
+            'самолеты': ['airplane.zip', 'segment.zip'],
+            'болезни': ['origin.zip', 'segmentation.zip'],
+            'губы': ['lips.zip'],
+            'жанры_музыки': ['genres.zip'],
+            'sber': ['SBER_MIN60.txt']
         }
 
         reference = {
-            "трафик": "Файл в формате csv, содержит информацию о трафике на сайт компании в виде таблицы из двух "
-            "столбцов.\nПервый столбец - дата, второй столбец - объем трафика за сутки.\nВ таблице отражены "
-            "данные за 1095 дней\nСсылка на базу: https://storage.googleapis.com/terra_ai/DataSets/traff.csv",
-            "трейдинг": "Содержит 7 файлов в формате txt с информацией по котировкам акций 3 компаний.\nДанные "
-            "представлены в виде таблицы, отражающей показатели стоимости и объема торгов в "
-            "динамике.\nВсего 9 показателей (компания, дата, время, цена открытия и т.д.)\nСсылка на "
-            "базу: https://storage.googleapis.com/terra_ai/DataSets/shares.zip",
-            "автомобили": "Содержит две папки с изображениями автомобилей в формате png.\nВ первой папке 1088 "
-            "фотографий автомобилей марки Феррари, во второй папке 1161 фотография автомобилей марки "
-            "Мерседес\nСсылка на базу: https://storage.googleapis.com/terra_ai/DataSets/car_2.zip",
-            "умный_дом": 'База состоит из звуковых файлов в формате wav для обучения системы "умный дом".\nБаза '
-            "разделена на тренировочную и тестовую выбороки.\nТренировочная выборка включает 4 папки, "
-            "3 из которых содержат  по 104 файла записью одного из типов команд:\nкондиционер, свет, "
-            "телевизор. И 1 папку с записью обычной речи - 50 файлов.\nТестовая выборка содержит запись "
-            "фрагментов речи - 50 файлов \nСсылка на базу: "
-            "https://storage.googleapis.com/terra_ai/DataSets/cHome.zip",
-            "квартиры": "Файл в формате csv, содержит информацию по квартирам, выставленным на продажу.\nДанные "
-            "представлены в виде таблицы из 14 столбцов, отражающих параметры квартиры (станция метро, "
-            "площадь, тип дома, цена и т.д.)\nВ таблице отражены данные по 252 536 квартирам.",
-            "диалоги": 'Файл в формате txt, содержит текстовые данные в виде набора блоков "вопрос-ответ".\nКаждый '
-            "блок занимает 2 строки. Всего в файле около 76 тысяч блоков.\nСсылка на базу: "
-            "https://storage.googleapis.com/terra_ai/DataSets/dialog.txt",
-            "автомобили_3": "Содержит три папки с изображениями автомобилей в формате png.\nВ первой папке 1088 "
-            "фотографий Феррари, во второй папке 1161 фотография автомобилей марки Мерседес\nВ третье "
-            "папке 1178 фотографий автомобилей марки Рено.\nСсылка на базу: "
-            "https://storage.googleapis.com/terra_ai/DataSets/car.zip",
-            "заболевания": "База содержит 10 папок с файлами в формате txt с описаниями симптомов 10 заболеваний "
-            "желудочно-кишечного тракта\nСсылка на "
-            "базу:https://storage.googleapis.com/terra_ai/DataSets/symptoms.zip",
+            'трафик': 'Файл в формате csv, содержит информацию о трафике на сайт компании в виде таблицы из двух '
+                      'столбцов.\nПервый столбец - дата, второй столбец - объем трафика за сутки.\nВ таблице отражены '
+                      'данные за 1095 дней\nСсылка на базу: https://storage.googleapis.com/terra_ai/DataSets/traff.csv',
+            'трейдинг': 'Содержит 7 файлов в формате txt с информацией по котировкам акций 3 компаний.\nДанные '
+                        'представлены в виде таблицы, отражающей показатели стоимости и объема торгов в '
+                        'динамике.\nВсего 9 показателей (компания, дата, время, цена открытия и т.д.)\nСсылка на '
+                        'базу: https://storage.googleapis.com/terra_ai/DataSets/shares.zip',
+            'автомобили': 'Содержит две папки с изображениями автомобилей в формате png.\nВ первой папке 1088 '
+                          'фотографий автомобилей марки Феррари, во второй папке 1161 фотография автомобилей марки '
+                          'Мерседес\nСсылка на базу: https://storage.googleapis.com/terra_ai/DataSets/car_2.zip',
+            'умный_дом': 'База состоит из звуковых файлов в формате wav для обучения системы "умный дом".\nБаза '
+                         'разделена на тренировочную и тестовую выбороки.\nТренировочная выборка включает 4 папки, '
+                         '3 из которых содержат  по 104 файла записью одного из типов команд:\nкондиционер, свет, '
+                         'телевизор. И 1 папку с записью обычной речи - 50 файлов.\nТестовая выборка содержит запись '
+                         'фрагментов речи - 50 файлов \nСсылка на базу: '
+                         'https://storage.googleapis.com/terra_ai/DataSets/cHome.zip',
+            'квартиры': 'Файл в формате csv, содержит информацию по квартирам, выставленным на продажу.\nДанные '
+                        'представлены в виде таблицы из 14 столбцов, отражающих параметры квартиры (станция метро, '
+                        'площадь, тип дома, цена и т.д.)\nВ таблице отражены данные по 252 536 квартирам.',
+            'диалоги': 'Файл в формате txt, содержит текстовые данные в виде набора блоков "вопрос-ответ".\nКаждый '
+                       'блок занимает 2 строки. Всего в файле около 76 тысяч блоков.\nСсылка на базу: '
+                       'https://storage.googleapis.com/terra_ai/DataSets/dialog.txt',
+            'автомобили_3': 'Содержит три папки с изображениями автомобилей в формате png.\nВ первой папке 1088 '
+                            'фотографий Феррари, во второй папке 1161 фотография автомобилей марки Мерседес\nВ третье '
+                            'папке 1178 фотографий автомобилей марки Рено.\nСсылка на базу: '
+                            'https://storage.googleapis.com/terra_ai/DataSets/car.zip',
+            'заболевания': 'База содержит 10 папок с файлами в формате txt с описаниями симптомов 10 заболеваний '
+                           'желудочно-кишечного тракта\nСсылка на '
+                           'базу:https://storage.googleapis.com/terra_ai/DataSets/symptoms.zip',
             # 'люди':['master.zip', 'coco2017val.zip', 'coco128.zip'], # Этой базы нет в aiu_bucket
-            "договоры": "Содержит 428 файлов в формате txt с текстами договоров.\nСсылка на базу: "
-            "https://storage.googleapis.com/terra_ai/DataSets/docs.zip",
-            "самолеты": 'Содержит две папки с изображениями самолетов в формате jpg.\nВ папке "Самолеты" размещен 981 '
-            'файл с исходными изображениями.\nВ папке "Сегменты" размещен 981 файл с сегментированными '
-            "изображениями.\nСсылка на базу: исходные изображения "
-            "https://storage.googleapis.com/terra_ai/DataSets/airplane.zip"
-            ",\n                сегментированные изобажения "
-            "https://storage.googleapis.com/terra_ai/DataSets/segment.zip",
-            "болезни": "Содержит две папки с файлами в формате jpg. \nВ папке "
-            "origin"
-            "размещены исходные  "
-            "фотографии, с примерами поражения кожи при 10 дерматологических заболеваниях:\nПсориаз 500 "
-            "\nДерматит 500 \nГерпес 499 \nАкне 510 \nНевус 495 \nВитилиго 504 \nХлоазма 499 \nЭкзема 498 "
-            "\nСыпь 522 \nЛишай 502\nВ папке "
-            "segmentation"
-            " размещены сегментированные "
-            "изображения.\nСсылка на базу: исходные изображения "
-            "https://storage.googleapis.com/terra_ai/DataSets/origin.zip \n                сегментированные "
-            "изображения https://storage.googleapis.com/terra_ai/DataSets/segmentation.zip",
+            'договоры': 'Содержит 428 файлов в формате txt с текстами договоров.\nСсылка на базу: '
+                        'https://storage.googleapis.com/terra_ai/DataSets/docs.zip',
+            'самолеты': 'Содержит две папки с изображениями самолетов в формате jpg.\nВ папке "Самолеты" размещен 981 '
+                        'файл с исходными изображениями.\nВ папке "Сегменты" размещен 981 файл с сегментированными '
+                        'изображениями.\nСсылка на базу: исходные изображения '
+                        'https://storage.googleapis.com/terra_ai/DataSets/airplane.zip'
+                        ',\n                сегментированные изобажения '
+                        'https://storage.googleapis.com/terra_ai/DataSets/segment.zip',
+            'болезни': 'Содержит две папки с файлами в формате jpg. \nВ папке ''origin''размещены исходные  '
+                       'фотографии, с примерами поражения кожи при 10 дерматологических заболеваниях:\nПсориаз 500 '
+                       '\nДерматит 500 \nГерпес 499 \nАкне 510 \nНевус 495 \nВитилиго 504 \nХлоазма 499 \nЭкзема 498 '
+                       '\nСыпь 522 \nЛишай 502\nВ папке ''segmentation'' размещены сегментированные '
+                       'изображения.\nСсылка на базу: исходные изображения '
+                       'https://storage.googleapis.com/terra_ai/DataSets/origin.zip \n                сегментированные '
+                       'изображения https://storage.googleapis.com/terra_ai/DataSets/segmentation.zip'
         }
 
         default_path = pathlib.Path().absolute()
-        working_path = default_path.joinpath(os.path.join("datasets", "sources"))
+        working_path = default_path.joinpath(os.path.join('datasets', 'sources'))
         if link:
-            if "drive.google" in link:
+            if 'drive.google' in link:
                 filename = name
-                name = name.split(".")[0]
-                file_id = max(link.split("/"), key=len)
+                name = name.split('.')[0]
+                file_id = max(link.split('/'), key=len)
             else:
-                filename = link.split("/")[-1]
-            if "save_path" in options.keys():
-                main_folder = pathlib.Path(options["save_path"])
+                filename = link.split('/')[-1]
+            if 'save_path' in options.keys():
+                main_folder = pathlib.Path(options['save_path'])
             else:
                 main_folder = working_path
             file_folder = pathlib.Path(os.path.join(main_folder, name))
             if not file_folder.exists():
                 os.makedirs(file_folder)
-            if "zip" in filename or "zip" in link:
-                file_path = pathlib.Path(
-                    os.path.join(main_folder, name, "tmp", filename)
-                )
-                temp_folder = os.path.join(file_folder, "tmp")
+            if 'zip' in filename or 'zip' in link:
+                file_path = pathlib.Path(os.path.join(main_folder, name, 'tmp', filename))
+                temp_folder = os.path.join(file_folder, 'tmp')
                 os.mkdir(temp_folder)
                 os.chdir(temp_folder)
-                if "drive.google" in link:
-                    gdown.download(
-                        "https://drive.google.com/uc?id=" + file_id,
-                        filename,
-                        quiet=self.django_flag,
-                    )
+                if 'drive.google' in link:
+                    gdown.download('https://drive.google.com/uc?id=' + file_id, filename, quiet=self.django_flag)
                 else:
                     gdown.download(link, filename, quiet=self.django_flag)
-                with zipfile.ZipFile(file_path, "r") as zip_ref:
+                with zipfile.ZipFile(file_path, 'r') as zip_ref:
                     zip_ref.extractall(file_folder)
                     os.chdir(str(default_path))
                 rmtree(temp_folder, ignore_errors=True)
             else:
                 os.chdir(file_folder)
-                if "drive.google" in link:
-                    gdown.download(
-                        "https://drive.google.com/uc?id=" + file_id,
-                        filename,
-                        quiet=self.django_flag,
-                    )
+                if 'drive.google' in link:
+                    gdown.download('https://drive.google.com/uc?id=' + file_id, filename, quiet=self.django_flag)
                 else:
                     gdown.download(link, filename, quiet=self.django_flag)
                 os.chdir(str(default_path))
         else:
             if name in data.keys():
-                self.tags = self._set_tag(self.name)
+                tags = self._set_tag(self.name)
+                self.tags = {'input_1': tags[0],
+                             'output_1': tags[1]}
                 self.language = self._set_language(self.name)
                 for base in data[name]:
-                    if "save_path" in options.keys():
-                        main_folder = pathlib.Path(options["save_path"])
+                    if 'save_path' in options.keys():
+                        main_folder = pathlib.Path(options['save_path'])
                     else:
                         main_folder = working_path
                     file_folder = main_folder.joinpath(name)
                     if not file_folder.exists():
                         os.makedirs(file_folder)
-                    url = "https://storage.googleapis.com/terra_ai/DataSets/" + base
-                    if "zip" in base:
-                        file_path = pathlib.Path(
-                            os.path.join(main_folder, name, "tmp", base)
-                        )
-                        temp_folder = file_folder.joinpath("tmp")
+                    url = 'https://storage.googleapis.com/terra_ai/DataSets/' + base
+                    if 'zip' in base:
+                        file_path = pathlib.Path(os.path.join(main_folder, name, 'tmp', base))
+                        temp_folder = file_folder.joinpath('tmp')
                         os.mkdir(temp_folder)
                         os.chdir(temp_folder)
                         gdown.download(url, base, quiet=self.django_flag)
                         os.chdir(str(default_path))
-                        with zipfile.ZipFile(file_path, "r") as zip_ref:
+                        with zipfile.ZipFile(file_path, 'r') as zip_ref:
                             zip_ref.extractall(file_folder)
                             os.chdir(str(default_path))
                         rmtree(temp_folder, ignore_errors=True)
@@ -371,17 +353,13 @@ class DTS(object):
             else:
                 if not name in data.keys():
                     if self.django_flag:
-                        self.Exch.print_error(
-                            ("Error", "Данной базы нет в списке готовых баз.")
-                        )
+                        self.Exch.print_error(('Error', 'Данной базы нет в списке готовых баз.'))
                     else:
-                        assert (
-                            name in data.keys()
-                        ), "Данной базы нет в списке готовых баз."
+                        assert name in data.keys(), 'Данной базы нет в списке готовых баз.'
         self.file_folder = str(file_folder)
         self.source = self._set_source(name)
         if not self.django_flag:
-            print(f"Файлы скачаны в директорию {self.file_folder}")
+            print(f'Файлы скачаны в директорию {self.file_folder}')
 
         return self
 
@@ -408,8 +386,8 @@ class DTS(object):
         """
 
         def print_data(name, x_train, y_train):
-            pics = ["mnist", "fashion_mnist", "cifar10", "cifar100"]
-            text = ["imdb", "reuters", "boston_housing"]
+            pics = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']
+            text = ['imdb', 'reuters', 'boston_housing']
 
             if name in pics:
                 fig, axs = plt.subplots(1, 10, figsize=(25, 3))
@@ -418,193 +396,157 @@ class DTS(object):
                     index = random.choice(label_indexes)
                     img = x_train[index]
                     title = y_train[index]
-                    if name in ["mnist", "fashion_mnist"]:
-                        axs[i].imshow(Image.fromarray(img), cmap="gray")
-                        axs[i].axis("off")
-                        axs[i].set_title(f"{i}: {self.classes_names[title]}")
+                    if name in ['mnist', 'fashion_mnist']:
+                        axs[i].imshow(Image.fromarray(img), cmap='gray')
+                        axs[i].axis('off')
+                        axs[i].set_title(f'{i}: {self.classes_names[title]}')
                     else:
                         axs[i].imshow(Image.fromarray(img))
-                        axs[i].axis("off")
-                        axs[i].set_title(f"{i}: {self.classes_names[title[0]]}")
+                        axs[i].axis('off')
+                        axs[i].set_title(f'{i}: {self.classes_names[title[0]]}')
 
             if name in text:
-                if name in ["imdb", "reuters"]:
-                    pd.DataFrame({"x_train": x_train, "y_train": y_train}).head()
+                if name in ['imdb', 'reuters']:
+                    pd.DataFrame({'x_train': x_train, 'y_train': y_train}).head()
                 else:
                     df = pd.DataFrame(x_train)
-                    df["y_train"] = y_train
+                    df['y_train'] = y_train
                     df.head()
 
             pass
 
         cur_time = time()
         self.name = dataset.lower()
-        self.tags = self._set_tag(self.name)
-        self.source = "tensorflow.keras"
+        tags = self._set_tag(self.name)
+        self.tags = {'input_1': tags[0],
+                     'output_1': tags[1]}
+        self.source = 'tensorflow.keras'
         data = {
-            "mnist": mnist,
-            "fashion_mnist": fashion_mnist,
-            "cifar10": cifar10,
-            "cifar100": cifar100,
-            "imdb": imdb,
-            "reuters": reuters,
-            "boston_housing": boston_housing,
+            'mnist': mnist,
+            'fashion_mnist': fashion_mnist,
+            'cifar10': cifar10,
+            'cifar100': cifar100,
+            'imdb': imdb,
+            'reuters': reuters,
+            'boston_housing': boston_housing
         }
         if not dataset.lower() in data.keys():
-            self.Exch.print_error(
-                ("Error", "Данного датасета нет в списке стандартных датасетов keras.")
-            )
+            self.Exch.print_error(('Error', 'Данного датасета нет в списке стандартных датасетов keras.'))
             if not self.django_flag:
-                assert (
-                    dataset.lower() in data.keys()
-                ), "Данного датасета нет в списке стандартных датасетов keras."
+                assert dataset.lower() in data.keys(), 'Данного датасета нет в списке стандартных датасетов keras.'
         progress_bar = tqdm(range(1), ncols=800)
-        progress_bar.set_description(f"Загрузка датасета {self.name}")
+        progress_bar.set_description(f'Загрузка датасета {self.name}')
         idx = 0
         for _ in progress_bar:
             (x_Train, y_Train), (x_Val, y_Val) = data[self.name].load_data()
             if self.django_flag:
                 idx += 1
-                progress_bar_status = (
-                    progress_bar.desc,
-                    str(round(idx / progress_bar.total, 2)),
-                    f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                )
+                progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                       f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                 self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
 
-        self.source_shape = (
-            x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
-        )
+        self.source_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
         self.language = self._set_language(self.name)
-        self.source_datatype = self._set_datatype(shape=x_Train.shape)
-        if "classification" in self.tags:
+        self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        if 'classification' in self.tags['output_1']:
             self.num_classes = len(np.unique(y_Train, axis=0))
-            if self.name == "fashion_mnist":
-                self.classes_names = [
-                    "T - shirt / top",
-                    "Trouser",
-                    "Pullover",
-                    "Dress",
-                    "Coat",
-                    "Sandal",
-                    "Shirt",
-                    "Sneaker",
-                    "Bag",
-                    "Ankle boot",
-                ]
-            elif self.name == "cifar10":
-                self.classes_names = [
-                    "airplane",
-                    "automobile",
-                    "bird",
-                    "cat",
-                    "deer",
-                    "dog",
-                    "frog",
-                    "horse",
-                    "ship",
-                    "truck",
-                ]
+            if self.name == 'fashion_mnist':
+                self.classes_names = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
+                                      'Sneaker', 'Bag', 'Ankle boot']
+            elif self.name == 'cifar10':
+                self.classes_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
+                                      'truck']
             else:
                 self.classes_names = [str(i) for i in range(self.num_classes)]
 
         if not self.django_flag:
             print_data(self.name, x_Train, y_Train)
 
-        if "net" in options.keys() and self.name in list(data.keys())[:4]:
-            if options["net"].lower() == "linear":
+        if 'net' in options.keys() and self.name in list(data.keys())[:4]:
+            if options['net'].lower() == 'linear':
                 x_Train = x_Train.reshape((-1, np.prod(np.array(x_Train.shape)[1:])))
                 x_Val = x_Val.reshape((-1, np.prod(np.array(x_Val.shape)[1:])))
-            elif options["net"].lower() == "conv":
+            elif options['net'].lower() == 'conv':
                 if len(x_Train.shape) == 3:
                     x_Train = x_Train[..., None]
                     x_Val = x_Val[..., None]
 
-        self.input_shape = (
-            x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
-        )
-        self.input_datatype = self._set_datatype(shape=x_Train.shape)
+        self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
 
-        if (
-            "scaler" in options.keys()
-            and options["scaler"] == "MinMaxScaler"
-            or "scaler" in options.keys()
-            and options["scaler"] == "StandardScaler"
-        ):
+        if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
+                'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
 
-            if self.name == "imdb" or self.name == "reuters":
+            if self.name == 'imdb' or self.name == 'reuters':
                 if not self.django_flag:
-                    print(
-                        f'Scaling required dataset is currently unavaliable. {options["scaler"]} was not implemented.'
-                    )
+                    print(f'Scaling required dataset is currently unavaliable. {options["scaler"]} was not implemented.')
             else:
                 shape_xt = x_Train.shape
                 shape_xv = x_Val.shape
                 x_Train = x_Train.reshape(-1, 1)
                 x_Val = x_Val.reshape(-1, 1)
 
-                if "classification" not in self.tags:
+                if 'classification' not in self.tags['output_1']:
                     shape_yt = y_Train.shape
                     shape_yv = y_Val.shape
                     y_Train = y_Train.reshape(-1, 1)
                     y_Val = y_Val.reshape(-1, 1)
 
-                if options["scaler"] == "MinMaxScaler":
-                    self.x_Scaler = MinMaxScaler()
-                    if "classification" not in self.tags:
-                        self.y_Scaler = MinMaxScaler()
+                self.y_Scaler['output_1'] = None
+                if options['scaler'] == 'MinMaxScaler':
+                    self.x_Scaler['input_1'] = MinMaxScaler()
+                    if 'classification' not in self.tags['output_1']:
+                        self.y_Scaler['output_1'] = MinMaxScaler()
 
-                elif options["scaler"] == "StandardScaler":
-                    self.x_Scaler = StandardScaler()
-                    if "classification" not in self.tags:
-                        self.y_Scaler = StandardScaler()
+                elif options['scaler'] == 'StandardScaler':
+                    self.x_Scaler['input_1'] = StandardScaler()
+                    if 'classification' not in self.tags['output_1']:
+                        self.y_Scaler['output_1'] = StandardScaler()
 
-                self.x_Scaler.fit(x_Train)
-                x_Train = self.x_Scaler.transform(x_Train)
-                x_Val = self.x_Scaler.transform(x_Val)
+                self.x_Scaler['input_1'].fit(x_Train)
+                x_Train = self.x_Scaler['input_1'].transform(x_Train)
+                x_Val = self.x_Scaler['input_1'].transform(x_Val)
                 x_Train = x_Train.reshape(shape_xt)
                 x_Val = x_Val.reshape(shape_xv)
-                if "classification" not in self.tags:
-                    self.y_Scaler.fit(y_Train)
-                    y_Train = self.y_Scaler.transform(y_Train)
-                    y_Val = self.y_Scaler.transform(y_Val)
+                if 'classification' not in self.tags['output_1']:
+                    self.y_Scaler['output_1'].fit(y_Train)
+                    y_Train = self.y_Scaler['output_1'].transform(y_Train)
+                    y_Val = self.y_Scaler['output_1'].transform(y_Val)
                     y_Train = y_Train.reshape(shape_yt)
                     y_Val = y_Val.reshape(shape_yv)
 
-        if "one_hot_encoding" in options.keys() and options["one_hot_encoding"] == True:
-            if "classification" in self.tags:
+        self.one_hot_encoding['output_1'] = False
+        if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] == True:
+            if 'classification' in self.tags['output_1']:
                 y_Train = utils.to_categorical(y_Train, len(np.unique(y_Train, axis=0)))
                 y_Val = utils.to_categorical(y_Val, len(np.unique(y_Val, axis=0)))
+                self.one_hot_encoding['output_1'] = True
             else:
                 if not self.django_flag:
-                    print(
-                        f"One-Hot encoding only available for classification which {self.name} was not meant for. "
-                        f"One-Hot encoding was not implemented."
-                    )
+                    print(f'One-Hot encoding only available for classification which {self.name} was not meant for. '
+                          f'One-Hot encoding was not implemented.')
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] is True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
@@ -646,49 +588,42 @@ class DTS(object):
             img = load_img(img_path, target_size=shape)
             array = img_to_array(img)
 
-            return array.astype("uint8")
+            return array.astype('uint8')
 
         cur_time = time()
         if folder_name == None:
             folder_name = self.file_folder
         X = []
-        Y = np.array([]).astype("uint8")
+        Y = np.array([]).astype('uint8')
         folders = sorted(os.listdir(folder_name))
         for k, folder in enumerate(folders, 1):
             i = folders.index(folder)
             files = [f for f in sorted(os.listdir(os.path.join(folder_name, folder)))]
             progress_bar = tqdm(files, ncols=800)
-            progress_bar.set_description(f"Сохранение изображений из папки {folder}")
+            progress_bar.set_description(f'Сохранение изображений из папки {folder}')
             if len(self.source_shape) < 3:
-                source_shape = Image.open(
-                    os.path.join(folder_name, folder, files[0])
-                ).size
-                self.source_shape = (source_shape[1], source_shape[0], 3)
+                source_shape = Image.open(os.path.join(folder_name, folder, files[0])).size
+                self.source_shape['input_1'] = (source_shape[1], source_shape[0], 3)
             idx = 1
             for file in progress_bar:
                 X.append(load_image(os.path.join(folder_name, folder, file), shape))
                 Y = np.append(Y, i)
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     if idx == progress_bar.total and k == len(folders):
-                        self.Exch.print_progress_bar(
-                            progress_bar_status, stop_flag=True
-                        )
+                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
         X = np.array(X)
-        self.source_datatype = self._set_datatype(shape=X.shape)
+        self.source_datatype['input_1'] = self._set_datatype(shape=X.shape)
         count = len(np.unique(Y, axis=0))
         self.num_classes = count
-        if self.name == "автомобили":
-            self.classes_names = ["Ferrari", "Mercedes"]
-        elif self.name == "автомобили_3":
-            self.classes_names = ["Ferrari", "Mercedes", "Renault"]
+        if self.name == 'автомобили':
+            self.classes_names = ['Ferrari', 'Mercedes']
+        elif self.name == 'автомобили_3':
+            self.classes_names = ['Ferrari', 'Mercedes', 'Renault']
         else:
             self.classes_names = [str(i) for i in range(count)]
 
@@ -698,71 +633,64 @@ class DTS(object):
                 index = np.where(Y == i)[0]
                 index = np.random.choice(index, 1)[0]
                 ax[i].imshow(X[index])
-                ax[i].set_title(f"{i}: {self.classes_names[i]}")
+                ax[i].set_title(f'{i}: {self.classes_names[i]}')
 
-        if (
-            "scaler" in options.keys()
-            and options["scaler"] == "MinMaxScaler"
-            or "scaler" in options.keys()
-            and options["scaler"] == "StandardScaler"
-        ):
+        if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
+                'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
 
             shape_x = X.shape
             X = X.reshape(-1, 1)
 
-            if options["scaler"] == "MinMaxScaler":
-                self.x_Scaler = MinMaxScaler()
+            if options['scaler'] == 'MinMaxScaler':
+                self.x_Scaler['input_1'] = MinMaxScaler()
 
-            elif options["scaler"] == "StandardScaler":
-                self.x_Scaler = StandardScaler()
-
-            self.x_Scaler.fit(X)
-            X = self.x_Scaler.transform(X)
+            elif options['scaler'] == 'StandardScaler':
+                self.x_Scaler['input_1'] = StandardScaler()
+            self.y_Scaler['output_1'] = None
+            self.x_Scaler['input_1'].fit(X)
+            X = self.x_Scaler['input_1'].transform(X)
             X = X.reshape(shape_x)
 
-        if "net" in options.keys() and options["net"].lower() == "linear":
+        if 'net' in options.keys() and options['net'].lower() == 'linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
 
-        if "one_hot_encoding" in options.keys() and options["one_hot_encoding"] == True:
+        self.one_hot_encoding['output_1'] = False
+        if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] == True:
             Y = utils.to_categorical(Y, len(np.unique(Y, axis=0)))
+            self.one_hot_encoding['output_1'] = True
 
-        self.input_shape = X.shape[1:]
-        self.input_datatype = self._set_datatype(shape=X.shape)
-        x_Train, x_Val, y_Train, y_Val = train_test_split(
-            X, Y, test_size=self.divide_ratio[0][1], shuffle=True
-        )
+        self.input_shape['input_1'] = X.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=X.shape)
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1],
+                                                          shuffle=True)
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
-    def image_segmentation(
-        self, shape, classes_dict, mask_range=50, folder_name=None, **options
-    ):
+    def image_segmentation(self, shape, classes_dict, mask_range=50, folder_name=None, **options):
 
         """
         Prepare data for processing in neural network for image segmentation. Show examples from chosen dataset_name.
@@ -801,7 +729,7 @@ class DTS(object):
             img = load_img(img_path, target_size=shape)
             array = img_to_array(img)
 
-            return array.astype("uint8")
+            return array.astype('uint8')
 
         def cluster_to_ohe(image):
             """
@@ -816,7 +744,7 @@ class DTS(object):
             km = KMeans(n_clusters=self.num_classes)
             km.fit(image)
             labels = km.labels_
-            cl_cent = km.cluster_centers_.astype("uint8")[: max(labels) + 1]
+            cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
             cl_mask = utils.to_categorical(labels, max(labels) + 1)
             cl_mask = cl_mask.reshape(shape[0], shape[1], cl_mask.shape[-1])
 
@@ -825,13 +753,9 @@ class DTS(object):
                 mask = np.zeros(shape)
 
                 for j, cl_rgb in enumerate(cl_cent):
-                    if (
-                        rgb[0] in range(cl_rgb[0] - mask_range, cl_rgb[0] + mask_range)
-                        and rgb[1]
-                        in range(cl_rgb[1] - mask_range, cl_rgb[1] + mask_range)
-                        and rgb[2]
-                        in range(cl_rgb[2] - mask_range, cl_rgb[2] + mask_range)
-                    ):
+                    if rgb[0] in range(cl_rgb[0] - mask_range, cl_rgb[0] + mask_range) and \
+                            rgb[1] in range(cl_rgb[1] - mask_range, cl_rgb[1] + mask_range) and \
+                            rgb[2] in range(cl_rgb[2] - mask_range, cl_rgb[2] + mask_range):
                         mask = cl_mask[:, :, j]
 
                 if k == 0:
@@ -852,27 +776,18 @@ class DTS(object):
         folders = sorted(os.listdir(folder_name))
         for i, folder in enumerate(folders):
             if i == 0:
-                progress_bar = tqdm(
-                    sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800
-                )
-                progress_bar.set_description(
-                    f"Сохранение изображений из папки {folder}"
-                )
+                progress_bar = tqdm(sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800)
+                progress_bar.set_description(f'Сохранение изображений из папки {folder}')
                 idx = 0
                 for j, file in enumerate(progress_bar):
                     if len(self.source_shape) < 3:
-                        source_shape = Image.open(
-                            os.path.join(folder_name, folder, file)
-                        ).size
-                        self.source_shape = (source_shape[1], source_shape[0], 3)
+                        source_shape = Image.open(os.path.join(folder_name, folder, file)).size
+                        self.source_shape['input_1'] = (source_shape[1], source_shape[0], 3)
                     X.append(load_image(os.path.join(folder_name, folder, file), shape))
                     if self.django_flag:
                         idx += 1
-                        progress_bar_status = (
-                            progress_bar.desc,
-                            str(round(idx / progress_bar.total, 2)),
-                            f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                        )
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         self.Exch.print_progress_bar(progress_bar_status)
                 X = np.array(X)
                 if not self.django_flag:
@@ -882,21 +797,15 @@ class DTS(object):
                     plt.show()
             if i == 1:
                 if not self.django_flag:
-                    fig, ax = plt.subplots(
-                        1, len(classes_dict.keys()), figsize=(2 * self.num_classes, 3)
-                    )
+                    fig, ax = plt.subplots(1, len(classes_dict.keys()), figsize=(2 * self.num_classes, 3))
                     for i, (key, value) in enumerate(classes_dict.items()):
                         ax[i].imshow(np.full((30, 30, 3), value))
                         ax[i].set_title(key)
-                        ax[i].axis("off")
+                        ax[i].axis('off')
                     plt.show()
 
-                progress_bar = tqdm(
-                    sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800
-                )
-                progress_bar.set_description(
-                    f"Сохранение изображений из папки {folder}"
-                )
+                progress_bar = tqdm(sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800)
+                progress_bar.set_description(f'Сохранение изображений из папки {folder}')
                 idx = 0
                 for file in progress_bar:
                     image = load_image(os.path.join(folder_name, folder, file), shape)
@@ -904,87 +813,73 @@ class DTS(object):
                     Y.append(image_ohe)
                     if self.django_flag:
                         idx += 1
-                        progress_bar_status = (
-                            progress_bar.desc,
-                            str(round(idx / progress_bar.total, 2)),
-                            f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                        )
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         if idx == progress_bar.total:
-                            self.Exch.print_progress_bar(
-                                progress_bar_status, stop_flag=True
-                            )
+                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
                 Y = np.array(Y)
-        self.source_datatype = self._set_datatype(shape=X.shape)
+        self.source_datatype['input_1'] = self._set_datatype(shape=X.shape)
 
         if not self.django_flag:
-            fig, ax = plt.subplots(
-                1, self.num_classes, figsize=(4 * self.num_classes, 6)
-            )
+            fig, ax = plt.subplots(1, self.num_classes, figsize=(4 * self.num_classes, 6))
             for i in range(self.num_classes):
                 ax[i].imshow(Y[index, :, :, i])
                 ax[i].set_title(self.classes_names[i])
             plt.show()
 
-        if (
-            "scaler" in options.keys()
-            and options["scaler"] == "MinMaxScaler"
-            or "scaler" in options.keys()
-            and options["scaler"] == "StandardScaler"
-        ):
+        self.x_Scaler['input_1'] = None
+        self.y_Scaler['output_1'] = None
+        if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
+                'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
 
             shape_x = X.shape
             X = X.reshape(-1, 1)
 
-            if options["scaler"] == "MinMaxScaler":
-                self.x_Scaler = MinMaxScaler()
+            if options['scaler'] == 'MinMaxScaler':
+                self.x_Scaler['input_1'] = MinMaxScaler()
 
-            elif options["scaler"] == "StandardScaler":
-                self.x_Scaler = StandardScaler()
+            elif options['scaler'] == 'StandardScaler':
+                self.x_Scaler['input_1'] = StandardScaler()
 
-            self.x_Scaler.fit(X)
-            X = self.x_Scaler.transform(X)
+            self.x_Scaler['input_1'].fit(X)
+            X = self.x_Scaler['input_1'].transform(X)
             X = X.reshape(shape_x)
 
-        self.input_shape = X.shape[1:]
-        self.input_datatype = self._set_datatype(shape=X.shape)
+        self.one_hot_encoding['output_1'] = True
+        self.input_shape['input_1'] = X.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=X.shape)
 
-        x_Train, x_Val, y_Train, y_Val = train_test_split(
-            X, Y, test_size=self.divide_ratio[0][1], shuffle=True
-        )
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
-    def text_classification(
-        self, max_words_count, x_len, step, folder_name=None, **options
-    ):
+    def text_classification(self, max_words_count, x_len, step, folder_name=None, **options):
         """
         Prepare data for processing in neural network for text classification analysis.
 
@@ -1009,20 +904,21 @@ class DTS(object):
 
         def read_text(file_path):
 
-            with ioopen(file_path, encoding="utf-8", errors="ignore") as f:
+            with ioopen(file_path, encoding='utf-8', errors='ignore') as f:
                 text = f.read()
-                text = text.replace("\n", " ")
+                text = text.replace('\n', ' ')
 
             return text
 
         def create_sets_multi_classes(word_indexes, x_len, step):
+
             def get_set_from_indexes(word_indexes, x_len, step):
 
                 x_sample = []
                 words_len = len(word_indexes)
                 index = 0
                 while index + x_len <= words_len:
-                    x_sample.append(word_indexes[index : index + x_len])
+                    x_sample.append(word_indexes[index:index + x_len])
                     index += step
 
                 return x_sample
@@ -1037,16 +933,11 @@ class DTS(object):
             progress_bar = tqdm(range(self.num_classes), ncols=800)
             idx = 0
             for t in progress_bar:
-                progress_bar.set_description(
-                    f"Обработка класса {self.classes_names[t]}"
-                )
+                progress_bar.set_description(f'Обработка класса {self.classes_names[t]}')
                 x_t = classes_x_samples[t]
                 for i in range(len(x_t)):
                     x_samples.append(x_t[i])
-                if (
-                    "one_hot_encoding" in options.keys()
-                    and options["one_hot_encoding"] == True
-                ):
+                if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] == True:
                     curr_y = utils.to_categorical(t, self.num_classes)
                     for _ in range(len(x_t)):
                         y_samples.append(curr_y)
@@ -1056,15 +947,10 @@ class DTS(object):
 
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     if idx == progress_bar.total and idx == len(classes_x_samples):
-                        self.Exch.print_progress_bar(
-                            progress_bar_status, stop_flag=True
-                        )
+                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
 
@@ -1076,43 +962,30 @@ class DTS(object):
         cur_time = time()
         if folder_name == None:
             folder_name = self.file_folder
-        self.source_datatype = self._set_datatype(text=True)
+        self.source_datatype['input_1'] = self._set_datatype(text=True)
         text_list = []
 
         folder_list = sorted(os.listdir(folder_name))
         for k, folder in enumerate(folder_list, 1):
-            progress_bar = tqdm(
-                sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800
-            )
-            progress_bar.set_description(f"Загрузка файлов из папки {folder}")
+            progress_bar = tqdm(sorted(os.listdir(os.path.join(folder_name, folder))), ncols=800)
+            progress_bar.set_description(f'Загрузка файлов из папки {folder}')
             idx = 0
             for file in progress_bar:
-                self.classes_names.append(file.split(".")[0])
+                self.classes_names.append(file.split('.')[0])
                 text_list.append(read_text(os.path.join(folder_name, folder, file)))
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     if idx == progress_bar.total and k == len(folder_list):
-                        self.Exch.print_progress_bar(
-                            progress_bar_status, stop_flag=True
-                        )
+                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
         self.num_classes = len(self.classes_names)
-        tokenizer = Tokenizer(
-            num_words=max_words_count,
-            filters='–—!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\xa0–\ufeff',
-            lower=True,
-            split=" ",
-            char_level=False,
-            oov_token="unknown",
-        )
+        tokenizer = Tokenizer(num_words=max_words_count, filters='–—!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\xa0–\ufeff',
+                              lower=True, split=' ', char_level=False, oov_token='unknown')
         tokenizer.fit_on_texts(text_list)
-        self.tokenizer = tokenizer
+        self.tokenizer['input_1'] = tokenizer
         text_indexes = tokenizer.texts_to_sequences(text_list)
 
         symbols_train_text = 0
@@ -1126,116 +999,86 @@ class DTS(object):
             words_train_text += len(text_indexes[i])
         if not self.django_flag:
             df = pd.DataFrame(
-                {
-                    "Название класса": self.classes_names,
-                    "Количество слов": word_num,
-                    "Количество символов": char_num,
-                }
-            )
+                {'Название класса': self.classes_names, 'Количество слов': word_num, 'Количество символов': char_num})
             display(df)
-            print(f"В сумме {symbols_train_text} символов, {words_train_text} слов")
+            print(f'В сумме {symbols_train_text} символов, {words_train_text} слов')
         X, Y = create_sets_multi_classes(text_indexes, x_len, step)
-        self.source_shape = X.shape[1:]
-        self.input_shape = X.shape[1:]
-        self.input_datatype = self._set_datatype(shape=X.shape)
-        if "bag_of_words" in options.keys() and options["bag_of_words"] == True:
+        self.source_shape['input_1'] = X.shape[1:]
+        self.input_shape['input_1'] = X.shape[1:]
+        self.x_Scaler['input_1'] = None
+        self.y_Scaler['output_1'] = None
+        self.input_datatype['input_1'] = self._set_datatype(shape=X.shape)
+        self.one_hot_encoding['output_1'] = False
+        if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] == True:
+            self.one_hot_encoding['output_1'] = True
+        if 'bag_of_words' in options.keys() and options['bag_of_words'] == True:
             X = tokenizer.sequences_to_matrix(X.tolist())
 
-        x_Train, x_Val, y_Train, y_Val = train_test_split(
-            X, Y, test_size=self.divide_ratio[0][1], shuffle=True
-        )
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
-    def text_segmentation(
-        self,
-        max_words_count,
-        x_len,
-        step,
-        embedding_size,
-        num_classes,
-        folder_name=None,
-        **options,
-    ):
+    def text_segmentation(self, max_words_count, x_len, step, embedding_size, num_classes, folder_name=None, **options):
         """
-        Prepare data for processing in neural network for text  analysis
+       Prepare data for processing in neural network for text  analysis
 
-         Examples:
-             txt_segm = trds.DTS()
-             txt_segm.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6)
+        Examples:
+            txt_segm = trds.DTS()
+            txt_segm.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6)
 
-         Args:
-             max_words_count (int): size of vocabulary (amount of words);
-             x_len (int) : length of text snippet;
-             step (int) : how many words to shift on each step when  preparing text to processing;
-             embedding_size (int): dimension of array words are presented for processing;
-             split_size (float): test to train ratio;
-             num_classes (int) : indicate number of classes on which data will be separated;
-             folder_name (str): name of the folder.
+        Args:
+            max_words_count (int): size of vocabulary (amount of words);
+            x_len (int) : length of text snippet;
+            step (int) : how many words to shift on each step when  preparing text to processing;
+            embedding_size (int): dimension of array words are presented for processing;
+            split_size (float): test to train ratio;
+            num_classes (int) : indicate number of classes on which data will be separated;
+            folder_name (str): name of the folder.
 
-         **options:
-             test = True, returns test array.
+        **options:
+            test = True, returns test array.
 
-         Returns:
-             Arrays prepared for processing in neural network.
+        Returns:
+            Arrays prepared for processing in neural network.
 
         """
 
         def read_text(file_path):
 
-            with ioopen(file_path, encoding="utf-8", errors="ignore") as f:
+            with ioopen(file_path, encoding='utf-8', errors='ignore') as f:
                 text = f.read()
-            del_symbols = [
-                "\n",
-                "\t",
-                "\ufeff",
-                ".",
-                "_",
-                "-",
-                ",",
-                "!",
-                "?",
-                "–",
-                "(",
-                ")",
-                "«",
-                "»",
-                "№",
-                ";",
-            ]
+            del_symbols = ['\n', "\t", "\ufeff", ".", "_", "-", ",", "!", "?", "–", "(", ")", "«", "»", "№", ";"]
             for d_s in del_symbols:
-                text = text.replace(d_s, " ")
+                text = text.replace(d_s, ' ')
             text = re.sub("[.]", " ", text)
             text = re.sub(":", " ", text)
             text = re.sub("<", " <", text)
             text = re.sub(">", "> ", text)
-            text = " ".join(text.split())
+            text = ' '.join(text.split())
             text = text.lower()
 
             return text
@@ -1243,7 +1086,7 @@ class DTS(object):
         def text_to_words(text):
 
             morph = pymorphy2.MorphAnalyzer()
-            words = text.split(" ")
+            words = text.split(' ')
             words = [morph.parse(word)[0].normal_form for word in words]
 
             return words
@@ -1281,7 +1124,7 @@ class DTS(object):
             index = 0
 
             while index + x_len <= words_len:
-                x_batch.append(word_indexes[index : index + x_len])
+                x_batch.append(word_indexes[index:index + x_len])
                 index += step
 
             return x_batch
@@ -1290,7 +1133,7 @@ class DTS(object):
             x_vector = []
             idx = 0
             progress_bar = tqdm(sen_i, ncols=800)
-            progress_bar.set_description("Формирование массивов")
+            progress_bar.set_description('Формирование массивов')
             for text in progress_bar:
                 tmp = []
                 for word in text:
@@ -1298,15 +1141,10 @@ class DTS(object):
                 x_vector.append(tmp)
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     if idx == progress_bar.total and idx == len(sen_i):
-                        self.Exch.print_progress_bar(
-                            progress_bar_status, stop_flag=True
-                        )
+                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
 
@@ -1315,53 +1153,39 @@ class DTS(object):
         cur_time = time()
         if folder_name == None:
             folder_name = self.file_folder
-        self.source_datatype = self._set_datatype(text=True)
+        self.source_datatype['input_1'] = self._set_datatype(text=True)
         self.num_classes = num_classes
         text_list = []
         folder_list = sorted(os.listdir(folder_name))
         for folder in folder_list:
-            file_list = [
-                i for i in sorted(os.listdir(os.path.join(folder_name, folder)))
-            ]
+            file_list = [i for i in sorted(os.listdir(os.path.join(folder_name, folder)))]
             progress_bar = tqdm(file_list, ncols=800)
-            progress_bar.set_description(f"Загрузка файлов из папки {folder}")
+            progress_bar.set_description(f'Загрузка файлов из папки {folder}')
             idx = 0
             for file in progress_bar:
                 txt = read_text(os.path.join(folder_name, folder, file))
-                if txt != "":
+                if txt != '':
                     text_list.append(txt)
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     self.Exch.print_progress_bar(progress_bar_status)
 
         words = []
         idx = 0
         progress_bar = tqdm(text_list, ncols=800)
-        progress_bar.set_description(f"Составление общего списка слов")
+        progress_bar.set_description(f'Составление общего списка слов')
         for txt in progress_bar:
             words.append(text_to_words(txt))
             if self.django_flag:
                 idx += 1
-                progress_bar_status = (
-                    progress_bar.desc,
-                    str(round(idx / progress_bar.total, 2)),
-                    f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                )
+                progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                       f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                 self.Exch.print_progress_bar(progress_bar_status)
 
-        tokenizer = Tokenizer(
-            num_words=max_words_count,
-            filters='–—!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\xa0–\ufeff',
-            lower=True,
-            split=" ",
-            char_level=False,
-            oov_token="unknown",
-        )
+        tokenizer = Tokenizer(num_words=max_words_count, filters='–—!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\xa0–\ufeff',
+                              lower=True, split=' ', char_level=False, oov_token='unknown')
         tokenizer.fit_on_texts(words)
 
         clean_voc = {}
@@ -1369,8 +1193,8 @@ class DTS(object):
             clean_voc[item[0]] = item[1]
         tok_agreem = tokenizer.texts_to_sequences(words)
 
-        tags_index = ["<s" + str(i) + ">" for i in range(1, num_classes + 1)]
-        closetags = ["</s" + str(i) + ">" for i in range(1, num_classes + 1)]
+        tags_index = ['<s' + str(i) + '>' for i in range(1, num_classes + 1)]
+        closetags = ['</s' + str(i) + '>' for i in range(1, num_classes + 1)]
         tags_index.extend(closetags)
 
         tags_index = np.array([clean_voc[i] for i in tags_index])
@@ -1379,42 +1203,38 @@ class DTS(object):
         x_Train = get_set_from_indexes(decoded_text, x_len, step)
         y_Train = get_set_from_indexes(y_data, x_len, step)
         if not self.django_flag:
-            print("Формирование word2vec")
-        model_gensim = word2vec.Word2Vec(
-            x_Train, size=embedding_size, window=10, min_count=1, workers=10, iter=10
-        )
+            print('Формирование word2vec')
+        model_gensim = word2vec.Word2Vec(x_Train, size=embedding_size, window=10, min_count=1, workers=10, iter=10)
         X, Y = get_sets(model_gensim, x_Train, y_Train)
-        self.source_shape = X.shape[1:]
-        self.input_shape = X.shape[1:]
-        self.input_datatype = self._set_datatype(shape=X.shape)
+        self.x_Scaler['input_1'] = None
+        self.y_Scaler['output_1'] = None
+        self.source_shape['input_1'] = X.shape[1:]
+        self.input_shape['input_1'] = X.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=X.shape)
+        self.one_hot_encoding['output_1'] = False
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
 
-        x_Train, x_Val, y_Train, y_Val = train_test_split(
-            X, Y, test_size=self.divide_ratio[0][1], shuffle=True
-        )
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
-
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
@@ -1454,7 +1274,7 @@ class DTS(object):
             out_audio = []
             y, sr = librosa.load(file_path)
 
-            while len(y) >= length:
+            while (len(y) >= length):
                 section = y[:length]
                 section = np.array(section)
                 out_mfcc.append(librosa.feature.mfcc(section, sr))
@@ -1470,8 +1290,8 @@ class DTS(object):
         if folder_name == None:
             folder_name = self.file_folder
         feature_dim_1 = 20
-        feature_dim_2 = int(0.5 * sample_rate)
-        step_mfcc = int(0.02 * sample_rate)
+        feature_dim_2 = int(.5 * sample_rate)
+        step_mfcc = int(.02 * sample_rate)
         channel = 1
         self.classes_names = [folder for folder in sorted(os.listdir(folder_name))]
         self.num_classes = len(self.classes_names)
@@ -1480,30 +1300,21 @@ class DTS(object):
         Y = np.array([])
         for i, label in enumerate(labels):
             mfcc_vectors = []
-            wavfiles = [
-                os.path.join(folder_name, label, wavfile)
-                for wavfile in sorted(os.listdir(os.path.join(folder_name, label)))
-            ]
+            wavfiles = [os.path.join(folder_name, label, wavfile) for wavfile in
+                        sorted(os.listdir(os.path.join(folder_name, label)))]
             progress_bar = tqdm(wavfiles, ncols=800)
-            progress_bar.set_description(
-                f"Загрузка из папки: {os.path.join(folder_name, label)}"
-            )
+            progress_bar.set_description(f'Загрузка из папки: {os.path.join(folder_name, label)}')
             idx = 0
             for wavfile in progress_bar:
                 mfcc, _ = wav2mfcc(wavfile, length=length, step=step_mfcc)
-                if mfcc.shape[0] != 0:
+                if (mfcc.shape[0] != 0):
                     mfcc_vectors.extend(mfcc)
                 if self.django_flag:
                     idx += 1
-                    progress_bar_status = (
-                        progress_bar.desc,
-                        str(round(idx / progress_bar.total, 2)),
-                        f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                    )
+                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                     if idx == progress_bar.total and i + 1 == len(labels):
-                        self.Exch.print_progress_bar(
-                            progress_bar_status, stop_flag=True
-                        )
+                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
             mfcc_vectors = np.array(mfcc_vectors)
@@ -1513,45 +1324,45 @@ class DTS(object):
                 X = mfcc_vectors
             Y = np.append(Y, np.full(mfcc_vectors.shape[0], fill_value=(i)))
 
-        self.source_shape = X.shape[1:]
-        self.source_datatype = self._set_datatype(shape=X.shape)
+        self.source_shape['input_1'] = X.shape[1:]
+        self.source_datatype['input_1'] = self._set_datatype(shape=X.shape)
+        self.x_Scaler['input_1'] = None
+        self.y_Scaler['output_1'] = None
 
-        if "net" in options.keys() and options["net"] == "conv":
+        if 'net' in options.keys() and options['net'] == 'conv':
             X = X[..., None]
 
-        if "one_hot_encoding" in options.keys() and options["one_hot_encoding"] == True:
+        self.one_hot_encoding['output_1'] = False
+        if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] == True:
             Y = utils.to_categorical(Y)
+            self.one_hot_encoding['output_1'] = True
 
-        self.input_shape = X.shape[1:]
-        self.input_datatype = self._set_datatype(shape=X.shape)
+        self.input_shape['input_1'] = X.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=X.shape)
 
-        x_Train, x_Val, y_Train, y_Val = train_test_split(
-            X, Y, test_size=self.divide_ratio[0][1], shuffle=True
-        )
+        x_Train, x_Val, y_Train, y_Val = train_test_split(X, Y, test_size=self.divide_ratio[0][1], shuffle=True)
 
-        self.X["input_1"] = (x_Train, x_Val, None)
-        self.Y["output_1"] = (y_Train, y_Val, None)
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
 
-        if "test" in options.keys() and options["test"] == True:
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
-            self.X["input_1"] = (x_Train, x_Val, x_Test)
-            self.Y["output_1"] = (y_Train, y_Val, y_Test)
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            x_arrays = ["x_train", "x_val", "x_test"]
-            for i, item_x in enumerate(self.X["input_1"]):
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for i, item_x in enumerate(self.X['input_1']['data']):
                 if item_x is not None:
                     print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-            y_arrays = ["y_train", "y_val", "y_test"]
-            for i, item_y in enumerate(self.Y["output_1"]):
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
                 if item_y is not None:
                     print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
@@ -1584,34 +1395,30 @@ class DTS(object):
         """
 
         folder_name = self.file_folder
-        if self.name == "sber":
-            data = pd.read_csv(
-                os.path.join(folder_name, filename), sep="\t", header=None
-            )
+        if self.name == 'sber':
+            data = pd.read_csv(os.path.join(folder_name, filename), sep='\t', header=None)
         else:
             data = pd.read_csv(os.path.join(folder_name, filename))
 
         if not self.django_flag:
             display(data.head())
 
-        if "x_cols" not in options.keys() and "y_col" not in options.keys():
+        if 'x_cols' not in options.keys() and 'y_col' not in options.keys():
             x_cols = []
             y_col = []
-            x_channel = input("Введите через пробел названия колонок для x_train: ")
-            y_channel = input("Введите название одной колонки для y_train: ")
-            for col_name in x_channel.split(" "):
+            x_channel = input('Введите через пробел названия колонок для x_train: ')
+            y_channel = input('Введите название одной колонки для y_train: ')
+            for col_name in x_channel.split(' '):
                 x_cols.append(col_name)
-            for col_name in y_channel.split(" "):
+            for col_name in y_channel.split(' '):
                 y_col.append(col_name)
         else:
-            x_cols = options["x_cols"]
-            y_col = options["y_col"]
+            x_cols = options['x_cols']
+            y_col = options['y_col']
         if len(y_col) > 1:
-            print_error_msg = (
-                "Нельзя выбрать две колонки для Y для задачи регрессии. Выберите одну."
-            )
+            print_error_msg = 'Нельзя выбрать две колонки для Y для задачи регрессии. Выберите одну.'
             if self.django_flag:
-                self.Exch.print_error(("Error", print_error_msg))
+                self.Exch.print_error(('Error', print_error_msg))
             else:
                 assert not len(y_col) > 1, print_error_msg
         self.classes_names = y_col
@@ -1623,38 +1430,37 @@ class DTS(object):
         y_data = np.array(y_data)
 
         if not self.django_flag:
-            print(f"Количество примеров: {data.shape[0]}")
-            if "graph" in options.keys() and options["graph"] == True:
+            print(f'Количество примеров: {data.shape[0]}')
+            if 'graph' in options.keys() and options['graph'] == True:
                 plt.figure(figsize=(20, 4))
                 plt.grid(True, alpha=0.5)
                 for i in range(len(x_cols)):
                     plt.plot(x_data[:, i], label=[x_cols + y_col][0][i])
                 plt.plot(y_data[:, 0], label=y_col[0])
-                plt.ylabel("Цена")
+                plt.ylabel('Цена')
                 plt.legend()
                 plt.show()
 
         train_len = data.shape[0] - val_len
 
-        x_Train, x_Val = x_data[:train_len, :], x_data[train_len + x_len + 2 :, :]
+        x_Train, x_Val = x_data[:train_len, :], x_data[train_len + x_len + 2:, :]
         y_Train, y_Val = np.reshape(y_data[:train_len, 0], (-1, 1)), np.reshape(
-            y_data[train_len + x_len + 2 :, 0], (-1, 1)
-        )
-        self.source_shape = x_Train.shape[1:]
-        self.source_datatype = self._set_datatype(shape=x_Train.shape)
-        if "test" in options.keys() and options["test"] == True:
+            y_data[train_len + x_len + 2:, 0],
+            (-1, 1))
+        self.source_shape['input_1'] = x_Train.shape[1:]
+        self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            x_Val, x_Test, y_Val, y_Test = train_test_split(
-                x_Val, y_Val, test_size=1 - split_size, shuffle=True
-            )
+            x_Val, x_Test, y_Val, y_Test = train_test_split(x_Val, y_Val, test_size=1 - split_size, shuffle=True)
 
-        arrays = ["x_Train", "x_Val", "x_Test", "y_Train", "y_Val", "y_Test"]
-        if "scaler" in options.keys():
-            if options["scaler"].lower() == "MinMaxScaler".lower():
+        self.x_Scaler['input_1'] = None
+        self.y_Scaler['output_1'] = None
+        if 'scaler' in options.keys():
+            if options['scaler'].lower() == 'MinMaxScaler'.lower():
                 x_scaler = MinMaxScaler()
                 y_scaler = MinMaxScaler()
-            elif options["scaler"].lower() == "StandardScaler".lower():
+            elif options['scaler'].lower() == 'StandardScaler'.lower():
                 x_scaler = StandardScaler()
                 y_scaler = StandardScaler()
             x_scaler.fit(x_Train)
@@ -1663,58 +1469,42 @@ class DTS(object):
             x_Val = x_scaler.transform(x_Val)
             y_Train = y_scaler.transform(y_Train)
             y_Val = y_scaler.transform(y_Val)
-            if "test" in options.keys() and options["test"] == True:
+            if 'test' in options.keys() and options['test'] == True:
                 x_Test = x_scaler.transform(x_Test)
                 y_Test = y_scaler.transform(y_Test)
-            self.x_Scaler = x_scaler
-            self.y_Scaler = y_scaler
-        self.input_shape = x_Train.shape[1:]
-        self.input_datatype = self._set_datatype(shape=x_Train.shape)
-        self.X["input_1"] = (x_Train, x_Val, x_Test)
-        self.Y["output_1"] = (y_Train, y_Val, y_Test)
-        if (
-            "timeseriesgenerator" in options.keys()
-            and options["timeseriesgenerator"] == True
-        ):
-            self.input_datatype = "timeseries"
-            x_Train_generator = TimeseriesGenerator(
-                x_Train,
-                y_Train,
-                length=x_len,
-                stride=1,
-                batch_size=options["timeseries_batch_size"],
-            )
-            x_Val_generator = TimeseriesGenerator(
-                x_Val,
-                y_Val,
-                length=x_len,
-                stride=1,
-                batch_size=options["timeseries_batch_size"],
-            )
-            x_Test_generator = TimeseriesGenerator(
-                x_Test,
-                y_Test,
-                length=x_len,
-                stride=1,
-                batch_size=options["timeseries_batch_size"],
-            )
-            self.X["input_1"] = (x_Train_generator, x_Val_generator, x_Test_generator)
-            self.Y["output_1"] = (None, None, None)
+            self.x_Scaler['input_1'] = x_scaler
+            self.y_Scaler['output_1'] = y_scaler
+        self.input_shape['input_1'] = x_Train.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.one_hot_encoding['output_1'] = False
+        self.X = {'input_1': {'data_name': 'Вход',
+                              'data': (x_Train, x_Val, None)}}
+        self.Y = {'output_1': {'data_name': 'Выход',
+                               'data': (y_Train, y_Val, None)}}
+        if 'test' in options.keys() and options['test'] == True:
+            self.X['input_1']['data'] = (x_Train, x_Val, x_Test)
+            self.Y['output_1']['data'] = (y_Train, y_Val, y_Test)
+        if 'timeseriesgenerator' in options.keys() and options['timeseriesgenerator'] == True:
+            self.input_datatype['input_1'] = 'timeseries'
+            x_Train_generator = TimeseriesGenerator(x_Train, y_Train, length=x_len, stride=1,
+                                                    batch_size=options['timeseries_batch_size'])
+            x_Val_generator = TimeseriesGenerator(x_Val, y_Val, length=x_len, stride=1,
+                                                  batch_size=options['timeseries_batch_size'])
+            x_Test_generator = TimeseriesGenerator(x_Test, y_Test, length=x_len, stride=1,
+                                                   batch_size=options['timeseries_batch_size'])
+            self.X['input_1']['data'] = (x_Train_generator, x_Val_generator, x_Test_generator)
+            self.Y['output_1']['data'] = (None, None, None)
             if not self.django_flag:
-                print(
-                    f"Формирование генератора завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-                )
+                print(f'Формирование генератора завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
         else:
             if not self.django_flag:
-                print(
-                    f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-                )
-                x_arrays = ["x_train", "x_val", "x_test"]
-                for i, item_x in enumerate(self.X["input_1"]):
+                print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+                x_arrays = ['x_train', 'x_val', 'x_test']
+                for i, item_x in enumerate(self.X['input_1']['data']):
                     if item_x is not None:
                         print(f"Размерность {x_arrays[i]}: {item_x.shape}")
-                y_arrays = ["y_train", "y_val", "y_test"]
-                for i, item_y in enumerate(self.Y["output_1"]):
+                y_arrays = ['y_train', 'y_val', 'y_test']
+                for i, item_y in enumerate(self.Y['output_1']['data']):
                     if item_y is not None:
                         print(f"Размерность {y_arrays[i]}: {item_y.shape}")
         self.dts_prepared = True
@@ -1725,44 +1515,37 @@ class DTS(object):
 
         inputs = list(Data[0].keys())
         outputs = list(Data[1].keys())
-        if options["split"]:
-            indices = np.random.permutation(Data[0][inputs[0]][0].shape[0])
-            train_len = int(options["split"][0] / 100 * len(indices))
+        self.X = Data[0]
+        self.Y = Data[1]
+        if options['split']:
+            indices = np.random.permutation(Data[0][inputs[0]]['data'][0].shape[0])
+            train_len = int(options['split'][0] / 100 * len(indices))
             val_len = int((len(indices) - train_len) / 2)
             train_mask = indices[:train_len]
-            val_mask = indices[train_len : train_len + val_len]
-            test_mask = indices[train_len + val_len :]
+            val_mask = indices[train_len:train_len + val_len]
+            test_mask = indices[train_len + val_len:]
             for inp in inputs:
-                self.X[inp] = (
-                    Data[0][inp][0][train_mask],
-                    Data[0][inp][0][val_mask],
-                    Data[0][inp][0][test_mask],
-                )
+                self.X[inp]['data'] = (Data[0][inp]['data'][0][train_mask], Data[0][inp]['data'][0][val_mask],
+                                       Data[0][inp]['data'][0][test_mask])
             for out in outputs:
-                self.Y[out] = (
-                    Data[1][out][0][train_mask],
-                    Data[1][out][0][val_mask],
-                    Data[1][out][0][test_mask],
-                )
-        else:
-            self.X = Data[0]
-            self.Y = Data[1]
+                self.Y[out]['data'] = (Data[1][out]['data'][0][train_mask], Data[1][out]['data'][0][val_mask],
+                                       Data[1][out]['data'][0][test_mask])
 
-        self.source = "custom"
+        self.source = 'custom'
 
         for inp in inputs:
 
-            self.source_shape[inp] = self.X[inp][0].shape[1:]
-            self.source_datatype[inp] = self._set_datatype(shape=self.X[inp][0].shape)
+            self.source_shape[inp] = self.X[inp]['data'][0].shape[1:]
+            self.source_datatype[inp] = self._set_datatype(shape=self.X[inp]['data'][0].shape)
 
-            if options["x_scaler"][inp] in ["StandardScaler", "MinMaxScaler"]:
-                if options["x_scaler"][inp] == "MinMaxScaler":
+            if options['x_scaler'][inp] in ['StandardScaler', 'MinMaxScaler']:
+                if options['x_scaler'][inp] == 'MinMaxScaler':
                     self.x_Scaler[inp] = MinMaxScaler()
-                elif options["x_scaler"][inp] == "StandardScaler":
+                elif options['x_scaler'][inp] == 'StandardScaler':
                     self.x_Scaler[inp] = StandardScaler()
                 list_of_arrays = []
-                self.x_Scaler[inp].fit(self.X[inp][0].reshape(-1, 1))
-                for array in self.X[inp]:
+                self.x_Scaler[inp].fit(self.X[inp]['data'][0].reshape(-1, 1))
+                for array in self.X[inp]['data']:
                     if isinstance(array, np.ndarray):
                         shape_x = array.shape
                         array = self.x_Scaler[inp].transform(array.reshape(-1, 1))
@@ -1770,45 +1553,43 @@ class DTS(object):
                     else:
                         array = None
                     list_of_arrays.append(array)
-                self.X[inp] = tuple(list_of_arrays)
+                self.X[inp]['data'] = tuple(list_of_arrays)
                 del list_of_arrays
             else:
                 self.x_Scaler[inp] = None
 
-            if options["x_shape"][inp] in ["Добавить размерность", "Выпрямить"]:
-                if options["x_shape"][inp] == "Добавить размерность":
+            if options['x_shape'][inp] in ['Добавить размерность', 'Выпрямить']:
+                if options['x_shape'][inp] == 'Добавить размерность':
                     list_of_arrays = []
-                    for array in self.X[inp]:
+                    for array in self.X[inp]['data']:
                         if isinstance(array, np.ndarray):
                             list_of_arrays.append(array[..., None])
                         else:
                             list_of_arrays.append(None)
-                    self.X[inp] = tuple(list_of_arrays)
+                    self.X[inp]['data'] = tuple(list_of_arrays)
                     del list_of_arrays
-                elif options["x_shape"][inp] == "Выпрямить":
+                elif options['x_shape'][inp] == 'Выпрямить':
                     list_of_arrays = []
-                    for array in self.X[inp]:
+                    for array in self.X[inp]['data']:
                         if isinstance(array, np.ndarray):
-                            list_of_arrays.append(
-                                array.reshape(-1, np.prod(array.shape[1:]))
-                            )
+                            list_of_arrays.append(array.reshape(-1, np.prod(array.shape[1:])))
                         else:
                             list_of_arrays.append(None)
-                    self.X[inp] = tuple(list_of_arrays)
+                    self.X[inp]['data'] = tuple(list_of_arrays)
                     del list_of_arrays
 
-            self.input_shape[inp] = self.X[inp][0].shape[1:]
-            self.input_datatype[inp] = self._set_datatype(shape=self.X[inp][0].shape)
+            self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
+            self.input_datatype[inp] = self._set_datatype(shape=self.X[inp]['data'][0].shape)
 
         for out in outputs:
-            if options["y_scaler"][out] in ["StandardScaler", "MinMaxScaler"]:
-                if options["y_scaler"][out] == "MinMaxScaler":
+            if options['y_scaler'][out] in ['StandardScaler', 'MinMaxScaler']:
+                if options['y_scaler'][out] == 'MinMaxScaler':
                     self.y_Scaler[out] = MinMaxScaler()
-                elif options["y_scaler"][out] == "StandardScaler":
+                elif options['y_scaler'][out] == 'StandardScaler':
                     self.y_Scaler[out] = StandardScaler()
                 list_of_arrays = []
-                self.y_Scaler[out].fit(self.Y[out][0].reshape(-1, 1))
-                for array in self.Y[out]:
+                self.y_Scaler[out].fit(self.Y[out]['data'][0].reshape(-1, 1))
+                for array in self.Y[out]['data']:
                     if isinstance(array, np.ndarray):
                         shape_y = array.shape
                         array = self.y_Scaler[out].transform(array.reshape(-1, 1))
@@ -1816,82 +1597,92 @@ class DTS(object):
                     else:
                         array = None
                     list_of_arrays.append(array)
-                self.Y[out] = tuple(list_of_arrays)
+                self.Y[out]['data'] = tuple(list_of_arrays)
                 del list_of_arrays
             else:
                 self.y_Scaler[out] = None
 
-            if options["y_shape"][out] in ["Добавить размерность", "Выпрямить"]:
-                if options["y_shape"][out] == "Добавить размерность":
+            if options['y_shape'][out] in ['Добавить размерность', 'Выпрямить']:
+                if options['y_shape'][out] == 'Добавить размерность':
                     list_of_arrays = []
-                    for array in self.Y[out]:
+                    for array in self.Y[out]['data']:
                         if isinstance(array, np.ndarray):
                             list_of_arrays.append(array[..., None])
                         else:
                             list_of_arrays.append(None)
-                    self.Y[out] = tuple(list_of_arrays)
+                    self.Y[out]['data'] = tuple(list_of_arrays)
                     del list_of_arrays
-                elif options["y_shape"][out] == "Выпрямить":
+                elif options['y_shape'][out] == 'Выпрямить':
                     list_of_arrays = []
-                    for array in self.Y[out]:
+                    for array in self.Y[out]['data']:
                         if isinstance(array, np.ndarray):
-                            list_of_arrays.append(
-                                array.reshape(-1, np.prod(array.shape[1:]))
-                            )
+                            list_of_arrays.append(array.reshape(-1, np.prod(array.shape[1:])))
                         else:
                             list_of_arrays.append(None)
-                    self.Y[out] = tuple(list_of_arrays)
+                    self.Y[out]['data'] = tuple(list_of_arrays)
                     del list_of_arrays
 
-            if options["one_hot"][out]:
+            if options['one_hot'][out]:
                 list_of_arrays = []
-                for array in self.Y[out]:
+                for array in self.Y[out]['data']:
                     if isinstance(array, np.ndarray):
                         arr = utils.to_categorical(array, len(np.unique(array, axis=0)))
                     else:
                         arr = None
                     list_of_arrays.append(arr)
-                self.Y[out] = tuple(list_of_arrays)
+                self.Y[out]['data'] = tuple(list_of_arrays)
+                self.one_hot_encoding[out] = True
                 del list_of_arrays
+            else:
+                self.one_hot_encoding[out] = False
 
         self.dts_prepared = True
         if not self.django_flag:
-            print(f"Формирование массивов завершено.")
+            print(f'Формирование массивов завершено.')
             for inp in inputs:
-                x_arrays = ["Train", "Validation", "Test"]
-                for i, item_x in enumerate(self.X[inp]):
+                x_arrays = ['Train', 'Validation', 'Test']
+                for i, item_x in enumerate(self.X[inp]['data']):
                     if item_x is not None:
                         print(f"{inp} {x_arrays[i]}: {item_x.shape}")
             for out in outputs:
-                y_arrays = ["Train", "Validation", "Test"]
-                for i, item_y in enumerate(self.Y[out]):
+                y_arrays = ['Train', 'Validation', 'Test']
+                for i, item_y in enumerate(self.Y[out]['data']):
                     if item_y is not None:
                         print(f"{out} {y_arrays[i]}: {item_y.shape}")
 
         return self
 
     def parameters(self, inputs, outputs, globals):
+
         def send_arrays(b):
 
-            print("Начало формирования массивов.")
+            full_val = len(set([bool(globals[f'xval_{i}'].value) for i in range(inputs)] + [bool(globals[f'yval_{i}'].value) for i in range(outputs)]))
+            full_test = len(set([bool(globals[f'xtest_{i}'].value) for i in range(inputs)] + [bool(globals[f'ytest_{i}'].value) for i in range(outputs)]))
+            if full_val != 1:
+                assert full_val == 1, 'Колонка валидационной выборки заполнена не полностью.'
+            if full_test != 1:
+                assert full_test == 1, 'Колонка тестовой выборки заполнена не полностью.'
+
+            print('Начало формирования массивов.')
             self.name = dataset_name.value
 
             tags = {}
             for i in range(inputs):
-                tags[globals[f"x_name_{i}"].value] = globals[f"x_tag_{i}"].value
+                tags[globals[f'x_name_{i}'].value] = globals[f'x_tag_{i}'].value
             for i in range(outputs):
-                tags[globals[f"y_name_{i}"].value] = globals[f"y_tag_{i}"].value
+                tags[globals[f'y_name_{i}'].value] = globals[f'y_tag_{i}'].value
             self.tags = tags
+
+
 
             list_of_X = list_of_rows[:inputs]
             dic_of_X = {}
             for i in range(len(list_of_X)):
                 if checkbox_split.value:
-                    dic_of_X[list_of_X[i].children[1].value] = (
-                        globals[list_of_X[i].children[2].value],
-                        None,
-                        None,
-                    )
+                    dic_of_X[list_of_X[i].children[0].description[:-1]] = {
+                        'data_name': list_of_X[i].children[0].value,
+                        'data': (globals[list_of_X[i].children[2].value], None, None)
+                    }
                 else:
                     values = []
                     for j in range(2, 5):
@@ -1899,17 +1690,19 @@ class DTS(object):
                             values.append(globals[list_of_X[i].children[j].value])
                         else:
                             values.append(None)
-                    dic_of_X[list_of_X[i].children[1].value] = tuple(values)
+                    dic_of_X[list_of_X[i].children[0].description[:-1]] = {
+                        'data_name': list_of_X[i].children[0].value,
+                        'data': tuple(values)
+                    }
 
             list_of_Y = list_of_rows[inputs:][:outputs]
             dic_of_Y = {}
             for i in range(len(list_of_Y)):
                 if checkbox_split.value:
-                    dic_of_Y[list_of_Y[i].children[1].value] = (
-                        globals[list_of_Y[i].children[2].value],
-                        None,
-                        None,
-                    )
+                    dic_of_Y[list_of_Y[i].children[0].description[:-1]] = {
+                        'data_name': list_of_Y[i].children[0].value,
+                        'data': (globals[list_of_Y[i].children[2].value], None, None)
+                    }
                 else:
                     values = []
                     for j in range(2, 5):
@@ -1917,198 +1710,127 @@ class DTS(object):
                             values.append(globals[list_of_Y[i].children[j].value])
                         else:
                             values.append(None)
-                    dic_of_Y[list_of_Y[i].children[1].value] = tuple(values)
+                    dic_of_Y[list_of_Y[i].children[0].description[:-1]] = {
+                        'data_name': list_of_Y[i].children[0].value,
+                        'data': tuple(values)
+                    }
 
             x_scaler = {}
             for i in range(inputs):
-                x_scaler[globals[f"x_name_{i}"].value] = globals[f"scaler_x_{i}"].value
+                x_scaler[globals[f'x_name_{i}'].description[:-1]] = globals[f'scaler_x_{i}'].value
 
             y_scaler = {}
             for i in range(outputs):
-                y_scaler[globals[f"y_name_{i}"].value] = globals[f"scaler_y_{i}"].value
+                y_scaler[globals[f'y_name_{i}'].description[:-1]] = globals[f'scaler_y_{i}'].value
 
             x_shape = {}
             for i in range(inputs):
-                x_shape[globals[f"x_name_{i}"].value] = globals[f"net_type_x_{i}"].value
+                x_shape[globals[f'x_name_{i}'].description[:-1]] = globals[f'net_type_x_{i}'].value
 
             y_shape = {}
             for i in range(outputs):
-                y_shape[globals[f"y_name_{i}"].value] = globals[f"net_type_y_{i}"].value
+                y_shape[globals[f'y_name_{i}'].description[:-1]] = globals[f'net_type_y_{i}'].value
 
             ohe = {}
             for i in range(outputs):
-                ohe[globals[f"y_name_{i}"].value] = globals[f"ohe_{i}"].value
+                ohe[globals[f'y_name_{i}'].description[:-1]] = globals[f'ohe_{i}'].value
 
             if checkbox_split.value:
-                split_size = [
-                    slider.value,
-                    int(round(slider2.value / 2, 0)),
-                    int(100 - slider.value - round(slider2.value / 2, 0)),
-                ]
+                split_size = [slider.value, int(round(slider2.value / 2, 0)),
+                              int(100 - slider.value - round(slider2.value / 2, 0))]
             else:
                 split_size = None
 
-            self.custom_dataset(
-                dic_of_X,
-                dic_of_Y,
-                x_scaler=x_scaler,
-                y_scaler=y_scaler,
-                x_shape=x_shape,
-                y_shape=y_shape,
-                one_hot=ohe,
-                split=split_size,
-            )
+            self.custom_dataset(dic_of_X, dic_of_Y, x_scaler=x_scaler, y_scaler=y_scaler, x_shape=x_shape,
+                                y_shape=y_shape, one_hot=ohe, split=split_size)
 
             if checkbox_google.value:
-                directory = "/content/drive/MyDrive/TerraAI/datasets"
+                directory = '/content/drive/MyDrive/TerraAI/datasets'
                 self.file_folder = directory
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 with open(f"{directory}/{dataset_name.value}.trds", "wb") as f:
                     dill.dump(self, f)
-                print(f"Объект сохранен в файл {directory}/{dataset_name.value}.trds")
+                print(f'Объект сохранен в файл {directory}/{dataset_name.value}.trds')
+
+                pass
 
         # Первая вкладка
         list_of_rows = []
         disabled_list = []
         for i in range(inputs):
             list_of_widgets = []
-            globals[f"input_{i}"] = {}
-            globals[f"x_tag_{i}"] = widgets.Dropdown(
-                options=[
-                    "images",
-                    "video",
-                    "text",
-                    "audio",
-                    "timeseries",
-                    "regression",
-                    "other",
-                ],
-                value="other",
-                description=f"Тип данных:",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"x_tag_{i}"])
-            globals[f"x_name_{i}"] = widgets.Text(
-                value="",
-                placeholder="Название входа",
-                description=f"input_{i + 1}:",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"x_name_{i}"])
-            globals[f"xtrain_{i}"] = widgets.Text(
-                value="x_train",
-                description="X/Train:",
-                placeholder="X или x_train",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"xtrain_{i}"])
-            globals[f"xval_{i}"] = widgets.Text(
-                value="x_val", description="Validation:", placeholder="", disabled=False
-            )
-            list_of_widgets.append(globals[f"xval_{i}"])
-            disabled_list.append(globals[f"xval_{i}"])
-            globals[f"xtest_{i}"] = widgets.Text(
-                value="x_test", description="Test:", placeholder="", disabled=False
-            )
-            list_of_widgets.append(globals[f"xtest_{i}"])
-            disabled_list.append(globals[f"xtest_{i}"])
-            globals[f"x_block_{i}"] = widgets.HBox(list_of_widgets)
-            list_of_rows.append(globals[f"x_block_{i}"])
-            globals[f"input_{i}"][globals[f"x_name_{i}"]] = (
-                globals[f"xtrain_{i}"],
-                globals[f"xval_{i}"],
-                globals[f"xtest_{i}"],
-            )
+            globals[f'input_{i}'] = {}
+            globals[f'x_name_{i}'] = widgets.Text(value='', placeholder='Название входа',
+                                                  description=f'input_{i + 1}:', disabled=False)
+            list_of_widgets.append(globals[f'x_name_{i}'])
+            globals[f'x_tag_{i}'] = widgets.Dropdown(
+                options=['images', 'video', 'text', 'audio', 'timeseries', 'regression', 'other'], value='other',
+                description=f'Тип данных:', disabled=False)
+            list_of_widgets.append(globals[f'x_tag_{i}'])
+            globals[f'xtrain_{i}'] = widgets.Text(value='x_train', description='X/Train:',
+                                                  placeholder='X или x_train', disabled=False)
+            list_of_widgets.append(globals[f'xtrain_{i}'])
+            globals[f'xval_{i}'] = widgets.Text(value='x_val', description='Validation:', placeholder='',
+                                                disabled=False)
+            list_of_widgets.append(globals[f'xval_{i}'])
+            disabled_list.append(globals[f'xval_{i}'])
+            globals[f'xtest_{i}'] = widgets.Text(value='x_test', description='Test:', placeholder='', disabled=False)
+            list_of_widgets.append(globals[f'xtest_{i}'])
+            disabled_list.append(globals[f'xtest_{i}'])
+            globals[f'x_block_{i}'] = widgets.HBox(list_of_widgets)
+            list_of_rows.append(globals[f'x_block_{i}'])
+            globals[f'input_{i}'][globals[f'x_name_{i}']] = (
+                globals[f'xtrain_{i}'], globals[f'xval_{i}'], globals[f'xtest_{i}'])
         for i in range(outputs):
             list_of_widgets = []
-            globals[f"output_{i}"] = {}
-            globals[f"y_tag_{i}"] = widgets.Dropdown(
-                options=[
-                    "images",
-                    "text",
-                    "audio",
-                    "classification",
-                    "segmentation",
-                    "object detection",
-                    "other",
-                ],
-                value="other",
-                description=f"Тип данных:",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"y_tag_{i}"])
-            globals[f"y_name_{i}"] = widgets.Text(
-                value="",
-                placeholder="Название выхода",
-                description=f"output_{i + 1}:",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"y_name_{i}"])
-            globals[f"ytrain_{i}"] = widgets.Text(
-                value="y_train",
-                description="Y/Train:",
-                placeholder="Y или y_train",
-                disabled=False,
-            )
-            list_of_widgets.append(globals[f"ytrain_{i}"])
-            globals[f"yval_{i}"] = widgets.Text(
-                value="y_val", description="Validation:", placeholder="", disabled=False
-            )
-            list_of_widgets.append(globals[f"yval_{i}"])
-            disabled_list.append(globals[f"yval_{i}"])
-            globals[f"ytest_{i}"] = widgets.Text(
-                value="y_test", description="Test:", placeholder="", disabled=False
-            )
-            list_of_widgets.append(globals[f"ytest_{i}"])
-            disabled_list.append(globals[f"ytest_{i}"])
-            globals[f"y_block_{i}"] = widgets.HBox(list_of_widgets)
-            list_of_rows.append(globals[f"y_block_{i}"])
-            globals[f"output_{i}"][globals[f"y_name_{i}"]] = (
-                globals[f"ytrain_{i}"],
-                globals[f"yval_{i}"],
-                globals[f"ytest_{i}"],
-            )
+            globals[f'output_{i}'] = {}
+            globals[f'y_name_{i}'] = widgets.Text(value='', placeholder='Название выхода',
+                                                  description=f'output_{i + 1}:', disabled=False)
+            list_of_widgets.append(globals[f'y_name_{i}'])
+            globals[f'y_tag_{i}'] = widgets.Dropdown(
+                options=['images', 'text', 'audio', 'classification', 'segmentation', 'object detection', 'other'],
+                value='other', description=f'Тип данных:', disabled=False)
+            list_of_widgets.append(globals[f'y_tag_{i}'])
+            globals[f'ytrain_{i}'] = widgets.Text(value='y_train', description='Y/Train:',
+                                                  placeholder='Y или y_train', disabled=False)
+            list_of_widgets.append(globals[f'ytrain_{i}'])
+            globals[f'yval_{i}'] = widgets.Text(value='y_val', description='Validation:', placeholder='',
+                                                disabled=False)
+            list_of_widgets.append(globals[f'yval_{i}'])
+            disabled_list.append(globals[f'yval_{i}'])
+            globals[f'ytest_{i}'] = widgets.Text(value='y_test', description='Test:', placeholder='', disabled=False)
+            list_of_widgets.append(globals[f'ytest_{i}'])
+            disabled_list.append(globals[f'ytest_{i}'])
+            globals[f'y_block_{i}'] = widgets.HBox(list_of_widgets)
+            list_of_rows.append(globals[f'y_block_{i}'])
+            globals[f'output_{i}'][globals[f'y_name_{i}']] = (
+                globals[f'ytrain_{i}'], globals[f'yval_{i}'], globals[f'ytest_{i}'])
 
-        checkbox_google = widgets.Checkbox(
-            value=True, description="Сохранить в Google Drive", disabled=False
-        )
-        checkbox_split = widgets.Checkbox(
-            value=False, description="Train/Val/Test split", disabled=False
-        )
+        checkbox_google = widgets.Checkbox(value=True, description='Сохранить в Google Drive', disabled=False)
+        checkbox_split = widgets.Checkbox(value=False, description='Train/Val/Test split', disabled=False)
 
-        dataset_name = widgets.Text(
-            value="",
-            description="Датасет:",
-            placeholder="Название датасета",
-            disabled=False,
-        )
-        button = widgets.Button(
-            description="Сформировать", disabled=False, button_style="", icon="check"
-        )
+        dataset_name = widgets.Text(value='', description='Датасет:', placeholder='Название датасета', disabled=False)
+        button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
         button.on_click(send_arrays)
         dump_button = widgets.HBox([dataset_name, button])
 
-        slider = widgets.IntSlider(
-            description="Train:", value=80, step=1, min=5, max=95
-        )
-        slider2 = widgets.IntSlider(
-            description="Val+test:", value=20, step=1, min=5, max=95
-        )
+        slider = widgets.IntSlider(description='Train:', value=80, step=1, min=5, max=95)
+        slider2 = widgets.IntSlider(description='Val+test:', value=20, step=1, min=5, max=95)
 
         def value_changed(change):
             slider2.value = 100 - change.new
 
-        slider.observe(value_changed, "value")
+        slider.observe(value_changed, 'value')
 
         def value_changed_2(change):
             slider.value = 100 - change.new
 
-        slider2.observe(value_changed_2, "value")
+        slider2.observe(value_changed_2, 'value')
         train_list = widgets.HBox([checkbox_google, checkbox_split, slider, slider2])
 
         for wid in disabled_list:
-            widgets.link((checkbox_split, "value"), (wid, "disabled"))
+            widgets.link((checkbox_split, 'value'), (wid, 'disabled'))
 
         list_of_rows.append(train_list)
         list_of_rows.append(dump_button)
@@ -2118,66 +1840,53 @@ class DTS(object):
         list_of_rows_2 = []
         for i in range(inputs):
             list_of_widgets_2 = []
-            globals[f"scaler_x_{i}"] = widgets.Dropdown(
-                options=["Не применять", "StandardScaler", "MinMaxScaler"],
-                value="Не применять",
-                description=f"x_Scaler_{i + 1}:",
-                disabled=False,
-            )
-            list_of_widgets_2.append(globals[f"scaler_x_{i}"])
-            globals[f"net_type_x_{i}"] = widgets.Dropdown(
-                options=["Без изменений", "Добавить размерность", "Выпрямить"],
-                value="Без изменений",
-                description="Размерность:",
-                disabled=False,
-            )
-            list_of_widgets_2.append(globals[f"net_type_x_{i}"])
-            globals[f"block_{i}"] = widgets.HBox(list_of_widgets_2)
-            list_of_rows_2.append(globals[f"block_{i}"])
+            globals[f'scaler_x_{i}'] = widgets.Dropdown(options=['Не применять', 'StandardScaler', 'MinMaxScaler'],
+                                                        value='Не применять', description=f'x_Scaler_{i + 1}:',
+                                                        disabled=False)
+            list_of_widgets_2.append(globals[f'scaler_x_{i}'])
+            globals[f'net_type_x_{i}'] = widgets.Dropdown(
+                options=['Без изменений', 'Добавить размерность', 'Выпрямить'], value='Без изменений',
+                description='Размерность:', disabled=False)
+            list_of_widgets_2.append(globals[f'net_type_x_{i}'])
+            globals[f'block_{i}'] = widgets.HBox(list_of_widgets_2)
+            list_of_rows_2.append(globals[f'block_{i}'])
         for i in range(outputs):
             list_of_widgets_2 = []
-            globals[f"scaler_y_{i}"] = widgets.Dropdown(
-                options=["Не применять", "StandardScaler", "MinMaxScaler"],
-                value="Не применять",
-                description=f"y_Scaler_{i + 1}:",
-                disabled=False,
-            )
-            list_of_widgets_2.append(globals[f"scaler_y_{i}"])
-            globals[f"net_type_y_{i}"] = widgets.Dropdown(
-                options=["Без изменений", "Добавить размерность", "Выпрямить"],
-                value="Без изменений",
-                description="Размерность:",
-                disabled=False,
-            )
-            list_of_widgets_2.append(globals[f"net_type_y_{i}"])
-            globals[f"ohe_{i}"] = widgets.Checkbox(
-                value=False, description="One-Hot Encoding", disabled=False
-            )
-            list_of_widgets_2.append(globals[f"ohe_{i}"])
-            globals[f"block_{i}"] = widgets.HBox(list_of_widgets_2)
-            list_of_rows_2.append(globals[f"block_{i}"])
+            globals[f'scaler_y_{i}'] = widgets.Dropdown(options=['Не применять', 'StandardScaler', 'MinMaxScaler'],
+                                                        value='Не применять', description=f'y_Scaler_{i + 1}:',
+                                                        disabled=False)
+            list_of_widgets_2.append(globals[f'scaler_y_{i}'])
+            globals[f'net_type_y_{i}'] = widgets.Dropdown(
+                options=['Без изменений', 'Добавить размерность', 'Выпрямить'], value='Без изменений',
+                description='Размерность:', disabled=False)
+            list_of_widgets_2.append(globals[f'net_type_y_{i}'])
+            globals[f'ohe_{i}'] = widgets.Checkbox(value=False, description='One-Hot Encoding', disabled=False)
+            list_of_widgets_2.append(globals[f'ohe_{i}'])
+            globals[f'block_{i}'] = widgets.HBox(list_of_widgets_2)
+            list_of_rows_2.append(globals[f'block_{i}'])
         second_page = widgets.VBox(list_of_rows_2)
 
         # Соединяем две вкладки
         load_widget = widgets.Tab()
         load_widget.children = [first_page, second_page]
-        load_widget.set_title(title="Массивы", index=0)
-        load_widget.set_title(title="Предобработка", index=1)
+        load_widget.set_title(title='Массивы', index=0)
+        load_widget.set_title(title='Предобработка', index=1)
 
         display(load_widget)
 
     def flat_parser(self, **options):
+
         def getRoomsCount(d, maxRoomCount):
             roomsCountStr = d[0]
 
             roomsCount = 0
             try:
                 roomsCount = int(roomsCountStr)
-                if roomsCount > maxRoomCount:
+                if (roomsCount > maxRoomCount):
                     roomsCount = maxRoomCount
             except:
-                if roomsCountStr == roomsCountStr:
-                    if "Ст" in roomsCountStr:
+                if (roomsCountStr == roomsCountStr):
+                    if ("Ст" in roomsCountStr):
                         roomsCount = maxRoomCount + 1
 
             return roomsCount
@@ -2193,11 +1902,11 @@ class DTS(object):
             roomsCount = 0
             try:
                 roomsCount = int(roomsCountStr)
-                if roomsCount > maxRoomCount:
+                if (roomsCount > maxRoomCount):
                     roomsCount = maxRoomCount
             except:
-                if roomsCountStr == roomsCountStr:
-                    if "Ст" in roomsCountStr:
+                if (roomsCountStr == roomsCountStr):
+                    if ("Ст" in roomsCountStr):
                         roomsCount = maxRoomCount + 1
 
             return roomsCount
@@ -2211,7 +1920,7 @@ class DTS(object):
             metroStr = d[1]
             metro = 0
 
-            if metroStr in allMetroNames:
+            if (metroStr in allMetroNames):
                 metro = allMetroNames.index(metroStr) + 1
 
             return metro
@@ -2221,196 +1930,66 @@ class DTS(object):
             metroTypeClasses = 5
             metroType = metroTypeClasses - 1
 
-            metroNamesInsideCircle = [
-                "Площадь Революции",
-                "Арбатская",
-                "Смоленская",
-                "Красные Ворота",
-                "Чистые пруды",
-                "Лубянка",
-                "Охотный Ряд",
-                "Библиотека имени Ленина",
-                "Кропоткинская",
-                "Сухаревская",
-                "Тургеневская",
-                "Китай-город",
-                "Третьяковская",
-                "Трубная",
-                "Сретенский бульвар",
-                "Цветной бульвар",
-                "Чеховская",
-                "Боровицкая",
-                "Полянка",
-                "Маяковская",
-                "Тверская",
-                "Театральная",
-                "Новокузнецкая",
-                "Пушкинская",
-                "Кузнецкий Мост",
-                "Китай-город",
-                "Александровский сад",
-            ]
+            metroNamesInsideCircle = ["Площадь Революции", "Арбатская", "Смоленская", "Красные Ворота", "Чистые пруды",
+                                      "Лубянка", "Охотный Ряд", "Библиотека имени Ленина", "Кропоткинская",
+                                      "Сухаревская",
+                                      "Тургеневская", "Китай-город", "Третьяковская", "Трубная", "Сретенский бульвар",
+                                      "Цветной бульвар", "Чеховская", "Боровицкая", "Полянка", "Маяковская", "Тверская",
+                                      "Театральная", "Новокузнецкая", "Пушкинская", "Кузнецкий Мост", "Китай-город",
+                                      "Александровский сад"]
 
-            metroNamesCircle = [
-                "Киевская",
-                "Парк Культуры",
-                "Октябрьская",
-                "Добрынинская",
-                "Павелецкая",
-                "Таганская",
-                "Курская",
-                "Комсомольская",
-                "Проспект Мира",
-                "Новослободская",
-                "Белорусская",
-                "Краснопресненская",
-            ]
+            metroNamesCircle = ["Киевская", "Парк Культуры", "Октябрьская", "Добрынинская", "Павелецкая", "Таганская",
+                                "Курская", "Комсомольская", "Проспект Мира", "Новослободская", "Белорусская",
+                                "Краснопресненская"]
 
-            metroNames13FromCircle = [
-                "Бауманская",
-                "Электрозаводская",
-                "Семёновская",
-                "Площадь Ильича",
-                "Авиамоторная",
-                "Шоссе Энтузиастов",
-                "Римская",
-                "Крестьянская Застава",
-                "Дубровка",
-                "Пролетарская",
-                "Волгоградский проспект",
-                "Текстильщики",
-                "Автозаводская",
-                "Технопарк",
-                "Коломенская",
-                "Тульская",
-                "Нагатинская",
-                "Нагорная",
-                "Шаболовская",
-                "Ленинский проспект",
-                "Академическая",
-                "Фрунзенская",
-                "Спортивная",
-                "Воробьёвы горы",
-                "Студенческая",
-                "Кутузовская",
-                "Фили",
-                "Парк Победы",
-                "Выставочная",
-                "Международная",
-                "Улица 1905 года",
-                "Беговая",
-                "Полежаевская",
-                "Динамо",
-                "Аэропорт",
-                "Сокол",
-                "Деловой центр",
-                "Шелепиха",
-                "Хорошёвская",
-                "ЦСКА",
-                "Петровский парк",
-                "Савёловская",
-                "Дмитровская",
-                "Тимирязевская",
-                "Достоевская",
-                "Марьина Роща",
-                "Бутырская",
-                "Фонвизинская",
-                "Рижская",
-                "Алексеевская",
-                "ВДНХ",
-                "Красносельская",
-                "Сокольники",
-                "Преображенская площадь",
-            ]
+            metroNames13FromCircle = ["Бауманская", "Электрозаводская", "Семёновская", "Площадь Ильича", "Авиамоторная",
+                                      "Шоссе Энтузиастов", "Римская", "Крестьянская Застава", "Дубровка",
+                                      "Пролетарская",
+                                      "Волгоградский проспект", "Текстильщики", "Автозаводская", "Технопарк",
+                                      "Коломенская",
+                                      "Тульская", "Нагатинская", "Нагорная", "Шаболовская", "Ленинский проспект",
+                                      "Академическая", "Фрунзенская", "Спортивная", "Воробьёвы горы", "Студенческая",
+                                      "Кутузовская", "Фили", "Парк Победы", "Выставочная", "Международная",
+                                      "Улица 1905 года",
+                                      "Беговая", "Полежаевская", "Динамо", "Аэропорт", "Сокол", "Деловой центр",
+                                      "Шелепиха",
+                                      "Хорошёвская", "ЦСКА", "Петровский парк", "Савёловская", "Дмитровская",
+                                      "Тимирязевская",
+                                      "Достоевская", "Марьина Роща", "Бутырская", "Фонвизинская", "Рижская",
+                                      "Алексеевская",
+                                      "ВДНХ", "Красносельская", "Сокольники", "Преображенская площадь"]
 
-            metroNames48FromCircle = [
-                "Партизанская",
-                "Измайловская",
-                "Первомайская",
-                "Щёлковская",
-                "Новокосино",
-                "Новогиреево",
-                "Перово",
-                "Кузьминки",
-                "Рязанский проспект",
-                "Выхино",
-                "Лермонтовский проспект",
-                "Жулебино",
-                "Партизанская",
-                "Измайловская",
-                "Первомайская",
-                "Щёлковская",
-                "Новокосино",
-                "Новогиреево",
-                "Перово",
-                "Кузьминки",
-                "Рязанский проспект",
-                "Выхино",
-                "Лермонтовский проспект",
-                "Жулебино",
-                "Улица Дмитриевского",
-                "Кожуховская",
-                "Печатники",
-                "Волжская",
-                "Люблино",
-                "Братиславская",
-                "Коломенская",
-                "Каширская",
-                "Кантемировская",
-                "Царицыно",
-                "Орехово",
-                "Севастопольская",
-                "Чертановская",
-                "Южная",
-                "Пражская",
-                "Варшавская",
-                "Профсоюзная",
-                "Новые Черёмушки",
-                "Калужская",
-                "Беляево",
-                "Коньково",
-                "Университет",
-                "Багратионовская",
-                "Филёвский парк",
-                "Пионерская",
-                "Кунцевская",
-                "Молодёжная",
-                "Октябрьское Поле",
-                "Щукинская",
-                "Спартак",
-                "Тушинская",
-                "Сходненская",
-                "Войковская",
-                "Водный стадион",
-                "Речной вокзал",
-                "Беломорская",
-                "Ховрино",
-                "Петровско-Разумовская",
-                "Владыкино",
-                "Отрадное",
-                "Бибирево",
-                "Алтуфьево",
-                "Фонвизинская",
-                "Окружная",
-                "Верхние Лихоборы",
-                "Селигерская",
-                "ВДНХ",
-                "Ботанический сад",
-                "Свиблово",
-                "Бабушкинская",
-                "Медведково",
-                "Преображенская площадь",
-                "Черкизовская",
-                "Бульвар Рокоссовского",
-            ]
+            metroNames48FromCircle = ["Партизанская", "Измайловская", "Первомайская", "Щёлковская", "Новокосино",
+                                      "Новогиреево",
+                                      "Перово", "Кузьминки", "Рязанский проспект", "Выхино", "Лермонтовский проспект",
+                                      "Жулебино", "Партизанская", "Измайловская", "Первомайская", "Щёлковская",
+                                      "Новокосино",
+                                      "Новогиреево", "Перово", "Кузьминки", "Рязанский проспект", "Выхино",
+                                      "Лермонтовский проспект", "Жулебино", "Улица Дмитриевского", "Кожуховская",
+                                      "Печатники",
+                                      "Волжская", "Люблино", "Братиславская", "Коломенская", "Каширская",
+                                      "Кантемировская",
+                                      "Царицыно", "Орехово", "Севастопольская", "Чертановская", "Южная", "Пражская",
+                                      "Варшавская", "Профсоюзная", "Новые Черёмушки", "Калужская", "Беляево",
+                                      "Коньково",
+                                      "Университет", "Багратионовская", "Филёвский парк", "Пионерская", "Кунцевская",
+                                      "Молодёжная", "Октябрьское Поле", "Щукинская", "Спартак", "Тушинская",
+                                      "Сходненская",
+                                      "Войковская", "Водный стадион", "Речной вокзал", "Беломорская", "Ховрино",
+                                      "Петровско-Разумовская", "Владыкино", "Отрадное", "Бибирево", "Алтуфьево",
+                                      "Фонвизинская",
+                                      "Окружная", "Верхние Лихоборы", "Селигерская", "ВДНХ", "Ботанический сад",
+                                      "Свиблово",
+                                      "Бабушкинская", "Медведково", "Преображенская площадь", "Черкизовская",
+                                      "Бульвар Рокоссовского"]
 
-            if metroTypeStr in metroNamesInsideCircle:
+            if (metroTypeStr in metroNamesInsideCircle):
                 metroType = 0
-            if metroTypeStr in metroNamesCircle:
+            if (metroTypeStr in metroNamesCircle):
                 metroType = 1
-            if metroTypeStr in metroNames13FromCircle:
+            if (metroTypeStr in metroNames13FromCircle):
                 metroType = 2
-            if metroTypeStr in metroNames48FromCircle:
+            if (metroTypeStr in metroNames48FromCircle):
                 metroType = 3
 
             metroType = utils.to_categorical(metroType, metroTypeClasses)
@@ -2421,25 +2000,25 @@ class DTS(object):
             metroDistance = 0
             metroDistanceType = 0
 
-            if metroDistanceStr == metroDistanceStr:
-                if len(metroDistanceStr) > 0:
-                    if metroDistanceStr[-1] == "п":
+            if (metroDistanceStr == metroDistanceStr):
+                if (len(metroDistanceStr) > 0):
+                    if (metroDistanceStr[-1] == "п"):
                         metroDistanceType = 1
-                    elif metroDistanceStr[-1] == "т":
+                    elif (metroDistanceStr[-1] == "т"):
                         metroDistanceType = 2
 
                     metroDistanceStr = metroDistanceStr[:-1]
                     try:
                         metroDistance = int(metroDistanceStr)
-                        if metroDistance < 3:
+                        if (metroDistance < 3):
                             metroDistance = 1
-                        elif metroDistance < 6:
+                        elif (metroDistance < 6):
                             metroDistance = 2
-                        elif metroDistance < 10:
+                        elif (metroDistance < 10):
                             metroDistance = 3
-                        elif metroDistance < 15:
+                        elif (metroDistance < 15):
                             metroDistance = 4
-                        elif metroDistance < 20:
+                        elif (metroDistance < 20):
                             metroDistance = 5
                         else:
                             metroDistance = 6
@@ -2448,14 +2027,12 @@ class DTS(object):
 
             metroDistanceClasses = 7
 
-            if metroDistanceType == 2:
+            if (metroDistanceType == 2):
                 metroDistance += metroDistanceClasses
-            if metroDistanceType == 0:
+            if (metroDistanceType == 0):
                 metroDistance += 2 * metroDistanceClasses
 
-            metroDistance = utils.to_categorical(
-                metroDistance, 3 * metroDistanceClasses
-            )
+            metroDistance = utils.to_categorical(metroDistance, 3 * metroDistanceClasses)
             return metroDistance
 
         def getHouseTypeAndFloor(d):
@@ -2469,8 +2046,8 @@ class DTS(object):
             floors = 0
             isLastFloor = 0
 
-            if houseStr == houseStr:
-                if len(houseStr) > 1:
+            if (houseStr == houseStr):
+                if (len(houseStr) > 1):
 
                     try:
                         slashIndex = houseStr.index("/")
@@ -2483,24 +2060,24 @@ class DTS(object):
                         print(houseStr)
 
                     floorStr = houseStr[:slashIndex]
-                    floorsStr = houseStr[slashIndex + 1 : spaceIndex]
-                    houseTypeStr = houseStr[spaceIndex + 1 :]
+                    floorsStr = houseStr[slashIndex + 1:spaceIndex]
+                    houseTypeStr = houseStr[spaceIndex + 1:]
 
                     try:
                         floor = int(floorStr)
                         floorSave = floor
-                        if floorSave < 5:
+                        if (floorSave < 5):
                             floor = 2
-                        if floorSave < 10:
+                        if (floorSave < 10):
                             floor = 3
-                        if floorSave < 20:
+                        if (floorSave < 20):
                             floor = 4
-                        if floorSave >= 20:
+                        if (floorSave >= 20):
                             floor = 5
-                        if floorSave == 1:
+                        if (floorSave == 1):
                             floor = 1
 
-                        if floor == floors:
+                        if (floor == floors):
                             isLastFloor = 1
                     except:
                         floor = 0
@@ -2508,29 +2085,29 @@ class DTS(object):
                     try:
                         floors = int(floorsStr)
                         floorsSave = floors
-                        if floorsSave < 5:
+                        if (floorsSave < 5):
                             floors = 1
-                        if floorsSave < 10:
+                        if (floorsSave < 10):
                             floors = 2
-                        if floorsSave < 20:
+                        if (floorsSave < 20):
                             floors = 3
-                        if floorsSave >= 20:
+                        if (floorsSave >= 20):
                             floors = 4
                     except:
                         floors = 0
 
-                    if len(houseTypeStr) > 0:
-                        if "М" in houseTypeStr:
+                    if (len(houseTypeStr) > 0):
+                        if ("М" in houseTypeStr):
                             houseType = 1
-                        if "К" in houseTypeStr:
+                        if ("К" in houseTypeStr):
                             houseType = 2
-                        if "П" in houseTypeStr:
+                        if ("П" in houseTypeStr):
                             houseType = 3
-                        if "Б" in houseTypeStr:
+                        if ("Б" in houseTypeStr):
                             houseType = 4
-                        if "?" in houseTypeStr:
+                        if ("?" in houseTypeStr):
                             houseType = 5
-                        if "-" in houseTypeStr:
+                        if ("-" in houseTypeStr):
                             houseType = 6
 
                 floor = utils.to_categorical(floor, 6)
@@ -2541,24 +2118,9 @@ class DTS(object):
 
         def getBalcony(d):
             balconyStr = d[4]
-            balconyVariants = [
-                "Л",
-                "Б",
-                "2Б",
-                "-",
-                "2Б2Л",
-                "БЛ",
-                "3Б",
-                "2Л",
-                "Эрк",
-                "Б2Л",
-                "ЭркЛ",
-                "3Л",
-                "4Л",
-                "*Л",
-                "*Б",
-            ]
-            if balconyStr == balconyStr:
+            balconyVariants = ['Л', 'Б', '2Б', '-', '2Б2Л', 'БЛ', '3Б', '2Л', 'Эрк', 'Б2Л', 'ЭркЛ', '3Л', '4Л', '*Л',
+                               '*Б']
+            if (balconyStr == balconyStr):
                 balcony = balconyVariants.index(balconyStr) + 1
             else:
                 balcony = 0
@@ -2568,22 +2130,8 @@ class DTS(object):
 
         def getWC(d):
             wcStr = d[5]
-            wcVariants = [
-                "2",
-                "Р",
-                "С",
-                "-",
-                "2С",
-                "+",
-                "4Р",
-                "2Р",
-                "3С",
-                "4С",
-                "4",
-                "3",
-                "3Р",
-            ]
-            if wcStr == wcStr:
+            wcVariants = ['2', 'Р', 'С', '-', '2С', '+', '4Р', '2Р', '3С', '4С', '4', '3', '3Р']
+            if (wcStr == wcStr):
                 wc = wcVariants.index(wcStr) + 1
             else:
                 wc = 0
@@ -2594,7 +2142,7 @@ class DTS(object):
         def getArea(d):
             areaStr = d[6]
 
-            if "/" in areaStr:
+            if ("/" in areaStr):
                 slashIndex = areaStr.index("/")
                 try:
                     area = float(areaStr[:slashIndex])
@@ -2648,17 +2196,14 @@ class DTS(object):
             idx = 0
             xTrain = []
             progress_bar = tqdm(data, ncols=800)
-            progress_bar.set_description(f"Формирование X")
+            progress_bar.set_description(f'Формирование X')
             for d in progress_bar:
                 xTrain.append(getAllParameters(d, allMertroNames))
                 if self.django_flag:
                     idx += 1
                     if idx % 1202 == 0:
-                        progress_bar_status = (
-                            progress_bar.desc,
-                            str(round(idx / progress_bar.total, 2)),
-                            f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                        )
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         self.Exch.print_progress_bar(progress_bar_status)
 
             xTrain = np.array(xTrain)
@@ -2670,21 +2215,16 @@ class DTS(object):
             idx = 0
             yTrain = []
             progress_bar = tqdm(data, ncols=800)
-            progress_bar.set_description(f"Формирование Y")
+            progress_bar.set_description(f'Формирование Y')
             for d in progress_bar:
                 yTrain.append(getCost(d))
                 if self.django_flag:
                     idx += 1
                     if idx % 1202 == 0:
-                        progress_bar_status = (
-                            progress_bar.desc,
-                            str(round(idx / progress_bar.total, 2)),
-                            f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                        )
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         if idx == progress_bar.total and idx == len(data):
-                            self.Exch.print_progress_bar(
-                                progress_bar_status, stop_flag=True
-                            )
+                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
             yTrain = np.array(yTrain)
@@ -2705,15 +2245,15 @@ class DTS(object):
 
             for symbol in text:
 
-                if symbol != "\ufeff":
-                    if symbol != " ":
+                if (symbol != "\ufeff"):
+                    if (symbol != " "):
                         currWord += symbol
                     else:
-                        if currWord != "":
+                        if (currWord != ""):
                             words.append(currWord)
                             currWord = ""
 
-            if currWord != "":
+            if (currWord != ""):
                 words.append(currWord)
 
             return words
@@ -2746,9 +2286,9 @@ class DTS(object):
                 wordIndex = 0
                 wordInVocabulary = word in vocabulary
 
-                if wordInVocabulary:
+                if (wordInVocabulary):
                     index = vocabulary[word]
-                    if index < maxWordsCount:
+                    if (index < maxWordsCount):
                         wordIndex = index
 
                 wordsIndexes.append(wordIndex)
@@ -2766,7 +2306,8 @@ class DTS(object):
             out = []
 
             for x in trainSet:
-                out.append(changeXTo01(x, wordsCount))
+                out.append(
+                    changeXTo01(x, wordsCount))
 
             return np.array(out)
 
@@ -2793,7 +2334,7 @@ class DTS(object):
 
             idx = 0
             progress_bar = tqdm(xTrainComments, ncols=800)
-            progress_bar.set_description(f"Формирование X-Comments")
+            progress_bar.set_description(f'Формирование X-Comments')
             for text in progress_bar:
                 currWords = text2Words(text)
                 currIndexes = words2Indexes(currWords, vocabulary, maxWordsCount)
@@ -2802,11 +2343,8 @@ class DTS(object):
                 if self.django_flag:
                     idx += 1
                     if idx % 1202 == 0:
-                        progress_bar_status = (
-                            progress_bar.desc,
-                            str(round(idx / progress_bar.total, 2)),
-                            f"{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.",
-                        )
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         self.Exch.print_progress_bar(progress_bar_status)
 
             xTrainCommentsIndexes = np.array(xTrainCommentsIndexes)
@@ -2823,11 +2361,12 @@ class DTS(object):
                 xTrainCommentsIndexes.append(currIndexes)
 
             xTrainCommentsIndexes = np.array(xTrainCommentsIndexes)
-            xTrainCommentsIndexes = pad_sequences(xTrainCommentsIndexes, maxlen=cropLen)
+            xTrainCommentsIndexes = pad_sequences(xTrainCommentsIndexes,
+                                                  maxlen=cropLen)
             return xTrainCommentsIndexes
 
         cur_time = time()
-        data = pd.read_csv(f"{self.file_folder}/moscow.csv", sep=";")
+        data = pd.read_csv(f'{self.file_folder}/moscow.csv', sep=';')
         df = data.copy()
         data = data.values
         oneRoomMask = [getRoomsCount(d, 30) == 1 for d in data]
@@ -2843,70 +2382,58 @@ class DTS(object):
 
         yTrain = getYTrain(data1)
 
-        self.x_Scaler = StandardScaler()
-        self.x_Scaler.fit(xTrain[:, -1].reshape(-1, 1))
+        self.x_Scaler['input_1'] = StandardScaler()
+        self.x_Scaler['input_2'] = None
+        self.x_Scaler['input_1'].fit(xTrain[:, -1].reshape(-1, 1))
         xTrainScaled = xTrain.copy()
-        xTrainScaled[:, -1] = self.x_Scaler.transform(
-            xTrain[:, -1].reshape(-1, 1)
-        ).flatten()
+        xTrainScaled[:, -1] = self.x_Scaler['input_1'].transform(xTrain[:, -1].reshape(-1, 1)).flatten()
+        del xTrain
 
-        self.y_Scaler = StandardScaler()
-        self.y_Scaler.fit(yTrain.reshape(-1, 1))
-        yTrainScaled = self.y_Scaler.transform(yTrain.reshape(-1, 1))
+        self.y_Scaler['output_1'] = StandardScaler()
+        self.y_Scaler['output_1'].fit(yTrain.reshape(-1, 1))
+        yTrainScaled = self.y_Scaler['output_1'].transform(yTrain.reshape(-1, 1))
 
-        (
-            self.x_Train,
-            self.x_Val,
-            self.x_TrainC01,
-            self.x_ValC01,
-            self.y_Train,
-            self.y_Val,
-        ) = train_test_split(
-            xTrainScaled,
-            xTrainC01,
-            yTrainScaled,
-            test_size=self.divide_ratio[0][1],
-            shuffle=True,
-        )
-        self.source_shape = self.x_Train.shape[1:]
-        self.source_datatype = self._set_datatype(shape=self.x_Train.shape)
-        if "test" in options.keys() and options["test"] == True:
+        x_Train, x_Val, x_TrainC01, x_ValC01, y_Train, y_Val = train_test_split(xTrainScaled, xTrainC01, yTrainScaled,
+            test_size=self.divide_ratio[0][1], shuffle=True)
+        self.one_hot_encoding['output_1'] = False
+        self.X = {'input_1': {'data_name': 'Характеристики квартиры',
+                              'data': (x_Train, x_Val, None)},
+                  'input_2': {'data_name': 'Описание квартиры',
+                              'data': (x_TrainC01, x_ValC01, None)}}
+        self.Y = {'output_1': {'data_name': 'Цена квартиры',
+                               'data': (y_Train, y_Val, None)}}
+
+        self.source_shape['input_1'] = x_Train.shape[1:]
+        self.source_shape['input_2'] = x_TrainC01.shape[1:]
+        self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.source_datatype['input_2'] = self._set_datatype(shape=x_TrainC01.shape)
+        if 'test' in options.keys() and options['test'] == True:
             split_ratio = self.divide_ratio[1][1:]
             split_size = min(split_ratio) / sum(split_ratio)
-            (
-                self.x_Val,
-                self.x_Test,
-                self.x_ValC01,
-                self.x_TestC01,
-                self.y_Val,
-                self.y_Test,
-            ) = train_test_split(
-                self.x_Val,
-                self.x_ValC01,
-                self.y_Val,
-                test_size=1 - split_size,
-                shuffle=True,
-            )
-        self.input_shape = self.x_Train.shape[1:]
-        self.input_datatype = self._set_datatype(shape=self.x_Train.shape)
+            x_Val, x_Test, x_ValC01, x_TestC01, y_Val, y_Test = train_test_split(x_Val, x_ValC01, y_Val,
+                                                                                 test_size=1 - split_size, shuffle=True)
+            self.X = {'input_1': {'data_name': 'Характеристики квартиры',
+                                  'data': (x_Train, x_Val, x_Test)},
+                      'input_2': {'data_name': 'Описание квартиры',
+                                  'data': (x_TrainC01, x_ValC01, x_TestC01)}}
+            self.Y = {'output_1': {'data_name': 'Цена квартиры',
+                                   'data': (y_Train, y_Val, y_Test)}}
+        self.input_shape['input_1'] = x_Train.shape[1:]
+        self.input_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.input_shape['input_2'] = x_TrainC01.shape[1:]
+        self.input_datatype['input_2'] = self._set_datatype(shape=x_TrainC01.shape)
         self.dts_prepared = True
         if not self.django_flag:
-            print(
-                f"Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек."
-            )
-            arrays = [
-                "x_Train",
-                "x_Val",
-                "x_TrainC01",
-                "x_ValC01",
-                "x_Test",
-                "y_Train",
-                "y_Val",
-                "y_Test",
-            ]
-            for item in arrays:
-                if hasattr(self, item):
-                    print(f"Размерность {item}: {self.__dict__[item].shape}")
+            print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
+            x_arrays = ['x_train', 'x_val', 'x_test']
+            for inp in self.X.keys():
+                for i, item_x in enumerate(self.X[inp]['data']):
+                    if item_x is not None:
+                        print(f"Размерность {x_arrays[i]}: {item_x.shape}")
+            y_arrays = ['y_train', 'y_val', 'y_test']
+            for i, item_y in enumerate(self.Y['output_1']['data']):
+                if item_y is not None:
+                    print(f"Размерность {y_arrays[i]}: {item_y.shape}")
 
         return self
 
@@ -2924,65 +2451,34 @@ class DTS(object):
             Arrays prepared for processing in neural network.
 
         """
-        if hasattr(self, "x_Test") and hasattr(self, "y_Test"):
-            return (
-                (self.x_Train, self.y_Train),
-                (self.x_Val, self.y_Val),
-                (self.x_Test, self.y_Test),
-            )
+        if hasattr(self, 'x_Test') and hasattr(self, 'y_Test'):
+            return (self.x_Train, self.y_Train), (self.x_Val, self.y_Val), (self.x_Test, self.y_Test)
         else:
             return (self.x_Train, self.y_Train), (self.x_Val, self.y_Val)
 
     def get_datasets_dict(self):
 
-        datasets = [
-            "mnist",
-            "fashion_mnist",
-            "cifar10",
-            "cifar100",
-            "imdb",
-            "boston_housing",
-            "reuters",
-            "sber",
-            "автомобили",
-            "автомобили_3",
-            "самолеты",
-            "умный_дом",
-            "договоры",
-            "трейдинг",
-            "квартиры",
-            "болезни",
-            "заболевания",
-            "губы",
-            "жанры_музыки",
-        ]
+        datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
+                    'автомобили', 'автомобили_3', 'самолеты', 'умный_дом', 'договоры', 'трейдинг',
+                    'квартиры', 'болезни', 'заболевания', 'губы', 'жанры_музыки']
         datasets_dict = {}
         for data in datasets:
-            datasets_dict[data] = [
-                self._set_tag(data),
-                self._set_language(data),
-                self._set_source(data),
-            ]
+            datasets_dict[data] = [self._set_tag(data), self._set_language(data), self._set_source(data)]
 
         return datasets_dict
 
     def get_datasets_methods(self):
 
-        func_list = [
-            method
-            for method in dir(self)
-            if callable(getattr(self, method))
-            and not method.startswith("_")
-            and not method.startswith("__")
-        ]
+        func_list = [method for method in dir(self) if
+                     callable(getattr(self, method)) and not method.startswith("_") and not method.startswith("__")]
         datasets_methods = {}
         for func in func_list:
             for tupl in getmembers(self):
                 if tupl[0] == func:
                     params = str(signature(tupl[1]))
-                    idx1 = params.index("(")
-                    idx2 = params.index(")")
-                    params = params[idx1 + 1 : idx2].split(", ")
+                    idx1 = params.index('(')
+                    idx2 = params.index(')')
+                    params = params[idx1 + 1:idx2].split(', ')
                     datasets_methods[func] = params
 
         return datasets_methods
@@ -2995,138 +2491,82 @@ class DTS(object):
 
     def prepare_dataset(self, **options):
 
-        if not "dataset_name" in options.keys() or not "task_type" in options.keys():
+        if not 'dataset_name' in options.keys() or not 'task_type' in options.keys():
             print_error_msg = 'Отсутствует один из необходимых параметров dataset_name="" или task_type=""'
-            self.Exch.print_error(("Error", print_error_msg))
+            self.Exch.print_error(('Error', print_error_msg))
             if not self.django_flag:
-                assert (
-                    "dataset_name" in options.keys() or "task_type" in options.keys()
-                ), print_error_msg
+                assert 'dataset_name' in options.keys() or 'task_type' in options.keys(), print_error_msg
 
-        if options["dataset_name"] == "boston_housing":
-            if options["task_type"] == "regression":
-                self.keras_datasets(
-                    options["dataset_name"], scaler="StandardScaler", test=True
-                )
+        if options['dataset_name'] == 'boston_housing':
+            if options['task_type'] == 'regression':
+                self.keras_datasets(options['dataset_name'], scaler='StandardScaler', test=True)
             else:
                 if not self.django_flag:
-                    print(
-                        "Для датасета",
-                        options["dataset_name"],
-                        "доступен только следующий тип задачи:",
-                        self._set_tag(options["dataset_name"])[1:],
-                    )
-        elif options["dataset_name"] in [
-            "mnist",
-            "fashion_mnist",
-            "cifar10",
-            "cifar100",
-        ]:
-            if options["task_type"] == "classification":
-                self.keras_datasets(
-                    options["dataset_name"],
-                    one_hot_encoding=True,
-                    scaler="MinMaxScaler",
-                    net="conv",
-                    test=True,
-                )
+                    print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
+                          self._set_tag(options['dataset_name'])[1:])
+        elif options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
+            if options['task_type'] == 'classification':
+                self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv',
+                                    test=True)
             else:
                 if not self.django_flag:
-                    print(
-                        "Для датасета",
-                        options["dataset_name"],
-                        "доступен только следующий тип задачи:",
-                        self._set_tag(options["dataset_name"])[1:],
-                    )
-        elif options["dataset_name"] == "imdb":
-            if options["task_type"] == "classification":
-                self.keras_datasets(
-                    options["dataset_name"], one_hot_encoding=True, test=True
-                )
+                    print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
+                          self._set_tag(options['dataset_name'])[1:])
+        elif options['dataset_name'] == 'imdb':
+            if options['task_type'] == 'classification':
+                self.keras_datasets(options['dataset_name'], one_hot_encoding=True, test=True)
             else:
                 if not self.django_flag:
-                    print(
-                        "Для датасета",
-                        options["dataset_name"],
-                        "доступен только следующий тип задачи:",
-                        self._set_tag(options["dataset_name"])[1:],
-                    )
-        elif options["dataset_name"] == "reuters":
-            if options["task_type"] == "classification":
-                self.keras_datasets(options["dataset_name"], test=True)
+                    print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
+                          self._set_tag(options['dataset_name'])[1:])
+        elif options['dataset_name'] == 'reuters':
+            if options['task_type'] == 'classification':
+                self.keras_datasets(options['dataset_name'], test=True)
             else:
                 if not self.django_flag:
-                    print(
-                        "Для датасета",
-                        options["dataset_name"],
-                        "доступен только следующий тип задачи:",
-                        self._set_tag(options["dataset_name"])[1:],
-                    )
+                    print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
+                          self._set_tag(options['dataset_name'])[1:])
 
         else:
-            self.load_data(options["dataset_name"])
-            if options["task_type"] == "classification":
-                if "images" in self.tags:
-                    self.image_classification(
-                        (54, 96),
-                        one_hot_encoding=True,
-                        scaler="MinMaxScaler",
-                        test=True,
-                    )
-                elif "text" in self.tags:
-                    if "заболевания" in self.name:
+            self.load_data(options['dataset_name'])
+            if options['task_type'] == 'classification':
+                if 'images' in self.tags['input_1']:
+                    self.image_classification((54, 96), one_hot_encoding=True, scaler='MinMaxScaler', test=True)
+                elif 'text' in self.tags['input_1']:
+                    if 'заболевания' in self.name:
                         max_words_count = 20000
                         x_len = 100
                         step = 30
-                    self.text_classification(
-                        max_words_count, x_len, step, one_hot_encoding=True, test=True
-                    )
-            elif options["task_type"] == "segmentation":
-                if "images" in self.tags:
-                    if "самолеты" in self.name:
-                        classes = {"небо": [0, 0, 0], "самолёт": [255, 0, 0]}
+                    self.text_classification(max_words_count, x_len, step, one_hot_encoding=True, test=True)
+            elif options['task_type'] == 'segmentation':
+                if 'images' in self.tags['input_1']:
+                    if 'самолеты' in self.name:
+                        classes = {'небо': [0, 0, 0], 'самолёт': [255, 0, 0]}
                         range = 50
-                    elif "губы" in self.name:
-                        classes = {"фон": [0, 0, 0], "губы": [0, 255, 0]}
+                    elif 'губы' in self.name:
+                        classes = {'фон': [0, 0, 0], 'губы': [0, 255, 0]}
                         range = 10
-                    self.image_segmentation(
-                        (54, 96), classes, range, scaler="MinMaxScaler", test=True
-                    )
-                elif "text" in self.tags:
-                    self.text_segmentation(
-                        max_words_count=20000,
-                        x_len=256,
-                        step=30,
-                        embedding_size=300,
-                        num_classes=6,
-                        test=True,
-                    )
-            elif options["task_type"] == "recognition":
-                if "audio" in self.tags:
-                    if "умный_дом" in self.name:
-                        self.file_folder = self.file_folder + "/comands"
+                    self.image_segmentation((54, 96), classes, range, scaler='MinMaxScaler', test=True)
+                elif 'text' in self.tags['input_1']:
+                    self.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6,
+                                           test=True)
+            elif options['task_type'] == 'recognition':
+                if 'audio' in self.tags['input_1']:
+                    if 'умный_дом' in self.name:
+                        self.file_folder = self.file_folder + '/comands'
                         s_rate = 22050
                         len = 11025
-                    self.voice_recognition(
-                        s_rate, len, net="conv", one_hot_encoding=True, test=True
-                    )
-            elif options["task_type"] == "regression":
-                if "трейдинг" in self.name:
-                    self.data_regression(
-                        "shares/GAZP_1d_from_MOEX.txt",
-                        x_len=80,
-                        val_len=300,
-                        graph=True,
-                        timeseriesgenerator=True,
-                        timeseries_batch_size=10,
-                        test=True,
-                        x_cols=["<OPEN>", "<HIGH>", "<LOW>"],
-                        y_col=["<CLOSE>"],
-                    )
-                if "квартиры" in self.name:
+                    self.voice_recognition(s_rate, len, net='conv', one_hot_encoding=True, test=True)
+            elif options['task_type'] == 'regression':
+                if 'трейдинг' in self.name:
+                    self.data_regression('shares/GAZP_1d_from_MOEX.txt', x_len=80, val_len=300, graph=True,
+                                         timeseriesgenerator=True,
+                                         timeseries_batch_size=10, test=True, x_cols=['<OPEN>', '<HIGH>', '<LOW>'],
+                                         y_col=['<CLOSE>'])
+                if 'квартиры' in self.name:
                     self.flat_parser(test=True)
         return self
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     pass
