@@ -85,7 +85,6 @@
                         (success, data) => {
                             if (success) {
                                 console.log(data);
-                                this.btn.validation.disabled = true;
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
@@ -306,11 +305,41 @@
                 if (event.keyCode === 27) {
                     this.removeClass("onlink");
                     if (_new_link) {
+                        if (_onNode) _update_dots_per_node(_d3graph.select(`#${_onNode[0].id}`));
+                        _update_dots_per_node(_d3graph.select(`#node-${_new_link._groups[0][0].sourceID}`));
                         _new_link.remove();
                         _new_link = undefined;
                     }
+                    _clines.selectAll("line").classed("active", false);
+                }
+                if (event.keyCode === 46) {
+                    let line_active = $("line.line.active");
+                    if (line_active.length) {
+                        _remove_line(line_active);
+                        terra_toolbar.btn.save.disabled = false;
+                        $(terra_toolbar.btn.save).children("span").trigger("click");
+                    }
                 }
             });
+
+            let _remove_line = (line) => {
+                let match = line[0].id.match(/^line_([\d]+)_([\d]+)$/);
+                if (match.length === 3) {
+                    let sourceID = parseInt(match[1]),
+                        targetID = parseInt(match[2]),
+                        sourceNode = _d3graph.select(`#node-${sourceID}`),
+                        targetNode = _d3graph.select(`#node-${targetID}`),
+                        sourceData = sourceNode.data()[0],
+                        targetData = targetNode.data()[0];
+                    sourceData.down_link = sourceData.down_link.filter((item) => {return item !== targetID});
+                    targetData.config.up_link = targetData.config.up_link.filter((item) => {return item !== sourceID});
+                    sourceNode.data([sourceData]);
+                    targetNode.data([targetData]);
+                    _update_dots_per_node(sourceNode);
+                    _update_dots_per_node(targetNode);
+                    line.remove();
+                }
+            }
 
             svg.bind("mousemove", (event) => {
                 if (_new_link) {
@@ -339,7 +368,8 @@
 
             let _node_dragged = (data, _, rect) => {
                 let node = $(rect).parent()[0],
-                    _node = d3.select(`#${node.id}`);
+                    _node = d3.select(`#${node.id}`),
+                    info = _node.data()[0];
                 _onDrag = true;
                 _node.attr("transform", (data) => {
                     let transform = _d3graph.select("#canvas-container")._groups[0][0].transform,
@@ -348,6 +378,18 @@
                     data.y = d3.event.sourceEvent.layerY - d3.event.subject.y;
                     return `translate(${data.x},${data.y})`;
                 }).raise();
+
+                let matrix = node.transform.baseVal[0].matrix,
+                    x = matrix.e, y = matrix.f;
+
+                if (info.down_link === undefined) info.down_link = [];
+                info.down_link.forEach((id) => {
+                    _clines.select(`#line_${info.id}_${id}`).attr("x1", x).attr("y1", y+_LINE_HEIGHT/2+2);
+                });
+                info.config.up_link.forEach((id) => {
+                    _clines.select(`#line_${id}_${info.id}`).attr("x2", x).attr("y2", y-_LINE_HEIGHT/2-2);
+                });
+                // console.log(_clines.select(`line[data-target=${info.config.up_link}]`));
                 //
                 //  let _node_data = _node.data()[0],
                 //      lineTarget = _node_data.lineTarget,
@@ -395,7 +437,9 @@
                             targetData = targetNode.data()[0];
                         if (`${sourceID}` !== `${targetID}` && targetData.config.up_link.indexOf(sourceID) === -1) {
                             this.removeClass("onlink");
-                            _new_link.attr("x2", matrix.e).attr("y2", matrix.f - _LINE_HEIGHT / 2 - 2);
+                            _new_link.attr("id", `line_${sourceID}_${targetID}`)
+                                .attr("x2", matrix.e)
+                                .attr("y2", matrix.f - _LINE_HEIGHT / 2 - 2);
                             _new_link = undefined;
                             if (!sourceData.down_link) sourceData.down_link = [];
                             sourceData.down_link.push(targetID);
@@ -488,6 +532,11 @@
                 }
             });
 
+            let _lineclick = (event) => {
+                _clines.selectAll("line").classed("active", false);
+                $(event.currentTarget).addClass("active");
+            }
+
             let _create_line = (dotSource, dotTarget) => {
                 let sourceNode = d3.select(dotSource.closest(".node")[0]),
                     sourceID = sourceNode.data()[0].id,
@@ -497,10 +546,10 @@
                 let targetNode = dotTarget ? d3.select(dotTarget.closest(".node")[0]) : undefined,
                     targetID = targetNode ? targetNode.data()[0].id : "",
                     targetMatrix = targetNode ? targetNode._groups[0][0].transform.baseVal[0].matrix : undefined,
-                    targetPosition = targetMatrix ? [targetMatrix.e, sourceMatrix.f] : undefined;
+                    targetPosition = targetMatrix ? [targetMatrix.e, targetMatrix.f-_LINE_HEIGHT/2-2] : undefined;
 
                 let line = _clines.append("line")
-                    .attr("id", `node_${sourceID}_${targetID}`)
+                    .attr("id", `line_${sourceID}_${targetID}`)
                     .attr("class", "line")
                     .attr("x1", sourcePosition[0])
                     .attr("y1", sourcePosition[1]);
@@ -508,12 +557,15 @@
                 if (targetPosition) {
                     line.attr("x2", targetPosition[0])
                         .attr("y2", targetPosition[1]);
+                    dotTarget.attr("visibility", "visible");
                 } else {
                     _new_link = line;
                     line.attr("x2", sourcePosition[0])
                         .attr("y2", sourcePosition[1]);
                     _new_link._groups[0][0].sourceID = sourceID;
                 }
+
+                $(line._groups[0][0]).bind("click", _lineclick);
 
                 dotSource.attr("visibility", "visible");
             }
@@ -538,6 +590,29 @@
             //     _cnodes.select("#" + _sourceNode.id).data(node_data);
             // };
 
+            let _update_dots_per_node = (node) => {
+                let data = node.data()[0];
+                if (data.down_link === undefined) data.down_link = [];
+                let clear_links = (items) => {
+                    return items.filter((item) => {return item > 0});
+                };
+                data.down_link = clear_links(data.down_link);
+                data.config.up_link = clear_links(data.config.up_link);
+                node.select(".dot-source").attr("visibility", data.down_link.length ? "visible" : "hidden");
+                node.select(".dot-target").attr("visibility", data.config.up_link.length ? "visible" : "hidden");
+            }
+
+            let _clear_links = (node) => {
+                let data = node.data()[0];
+                if (data.down_link === undefined) data.down_link = [];
+                data.down_link.forEach((id) => {
+                    _remove_line($(`#line_${data.id}_${id}`));
+                });
+                data.config.up_link.forEach((id) => {
+                    _remove_line($(`#line_${id}_${data.id}`));
+                });
+            }
+
             let _create_node = (layer) => {
                 layer.lineTarget = {};
                 layer.lineSource = {};
@@ -550,13 +625,13 @@
                     .attr("class", `node node-type-${layer.type}`);
 
                 node.append("circle")
-                    .attr("class", "dot-target")
+                    .attr("class", "dot dot-target")
                     .attr("visibility", "hidden")
                     .attr("cx", 0)
                     .attr("cy", -_NODE_HEIGHT/2-4);
 
                 node.append("circle")
-                    .attr("class", "dot-source")
+                    .attr("class", "dot dot-source")
                     .attr("visibility", "hidden")
                     .attr("cx", 0)
                     .attr("cy", _NODE_HEIGHT/2+4);
@@ -589,27 +664,26 @@
                 $(remove._groups[0][0]).bind("click", (event) => {
                     let g = $(event.currentTarget).closest(".node"),
                         attr_id = g[0].id,
-                        info = _d3graph.select(`#${attr_id}`).data()[0];
-                    window.StatusBar.clear();
-                    window.ExchangeRequest(
-                        "remove_layer",
-                        (success, data) => {
-                            if (success) {
-                                g.remove();
-                                if (`${info.id}` === `${$("#field_form-layer_id").val()}`) terra_params.reset();
-                            } else {
-                                window.StatusBar.message(data.error, false);
-                            }
-                        },
-                        {"id":info.id}
-                    );
+                        node = _d3graph.select(`#${attr_id}`),
+                        info = node.data()[0];
+                    _clear_links(node);
+                    g.remove();
+                    if (`${info.id}` === `${$("#field_form-layer_id").val()}`) terra_params.reset();
+                    let layers = window.TerraProject.layers;
+                    delete layers[info.id];
+                    window.TerraProject.layers = layers;
+                    terra_toolbar.btn.save.disabled = false;
+                    $(terra_toolbar.btn.save).children("span").trigger("click");
                 });
                 $(link._groups[0][0]).bind("click", (event) => {
                     this.addClass("onlink");
                     _create_line($(event.currentTarget).closest(".node").children(".dot-source"));
                 });
                 $(unlink._groups[0][0]).bind("click", (event) => {
-                    console.log("unlink layer");
+                    let node = _d3graph.select(`#${$(event.currentTarget).closest(".node")[0].id}`);
+                    _clear_links(node);
+                    terra_toolbar.btn.save.disabled = false;
+                    $(terra_toolbar.btn.save).children("span").trigger("click");
                 });
 
                 if (["input", "output"].indexOf(layer.type) > -1) remove.remove();
@@ -623,11 +697,18 @@
                 $(node._groups[0][0]).bind("mouseenter", (event) => {
                     _onNode = $(event.currentTarget);
                 }).bind("mouseleave", (event) => {
+                    if (_new_link) {
+                        let node = _d3graph.select(`#${event.currentTarget.id}`),
+                            data = node.data()[0],
+                            sourceID = _new_link._groups[0][0].sourceID;
+                        if (`${sourceID}` !== `${data.id}` && data.config.up_link.indexOf(sourceID) === -1) {
+                            _update_dots_per_node(node);
+                        }
+                    }
                     _onNode = undefined;
                 });
 
                 terra_toolbar.btn.save.disabled = false;
-                terra_toolbar.btn.validation.disabled = false;
                 terra_toolbar.btn.clear.disabled = false;
 
             };
@@ -710,17 +791,14 @@
                 }
                 if (use_schema && schema.length) _update_position_by_schema();
 
-                // for (let index in layers) {
-                //     let layer = layers[index];
-                //     _targetNode = $("#node-" + layer.id)[0];
-                //     layer.config.up_link.forEach((parent_node) => {
-                //         if (parent_node !== 0) {
-                //             _sourceNode = $("#node-" + parent_node)[0];
-                //             _create_line();
-                //             _change_line();
-                //         }
-                //     });
-                // }
+                for (let index in layers) {
+                    let layer = layers[index];
+                    layer.config.up_link.forEach((item) => {
+                        if (item !== 0) {
+                            _create_line($(`#node-${item} > .dot-source`), $(`#node-${layer.id} > .dot-target`));
+                        }
+                    });
+                }
 
                 window.TerraProject.layers = layers;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
@@ -735,7 +813,6 @@
                         if (success) {
                             this.model = data.data;
                             terra_toolbar.btn.save.disabled = true;
-                            terra_toolbar.btn.validation.disabled = true;
                             terra_toolbar.btn.clear.disabled = true;
                         } else {
                             window.StatusBar.message(data.error, false);
@@ -782,6 +859,7 @@
                     if (!Object.keys(params).length) return;
                     for (let name in params) {
                         let param = $.extend(true, {}, params[name]);
+                        param.label = name;
                         if (data[name] !== undefined) param.default = data[name];
                         let widget = window.FormWidget(`${group}_${name}`, param);
                         widget.addClass("field-inline");
@@ -792,7 +870,7 @@
                 let params_config = window.TerraProject.layers_types[config.type];
                 _render_params_config("main", _layer_params_main, params_config.main, config.params.main);
                 _render_params_config("extra", _layer_params_extra, params_config.extra, config.params.extra);
-                if (config.data_available) {
+                if (config.data_available && config.data_available.length) {
                     let widget = window.FormWidget("layer_data", {
                         "label":"Данные слоя",
                         "type":"str",
@@ -938,7 +1016,6 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        console.log(data.data.layers);
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;

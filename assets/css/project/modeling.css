@@ -355,12 +355,12 @@
 }
 
 .line{
-	transition:stroke 0.3s ease-in-out;
 	stroke:#65B9F4;
 	stroke-width:2;
+	cursor:pointer;
 }
 
-.line:hover{
+.line.active {
 	stroke: #EB5757;
 }
 

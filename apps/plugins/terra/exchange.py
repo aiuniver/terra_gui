@@ -62,9 +62,27 @@ class TerraExchange:
             )
 
     def __prepare_layers(self, layers: dict) -> dict:
+        def get_down_link_list(index):
+            output = []
+            for item_index, item in layers.items():
+                if int(index) in item.get("config").get("up_link"):
+                    output.append(int(item_index))
+            return output
+
         for index, layer in layers.items():
             config = layer.get("config", {})
             params = config.get("params", {})
+            if "id" not in layer:
+                layer["id"] = int(index)
+            if "index" not in layer:
+                layer["index"] = int(index)
+            if "type" not in layer:
+                if config.get("type") == "Input":
+                    layer["type"] = "input"
+                else:
+                    layer["type"] = "middle"
+            if "down_link" not in layer:
+                layer["down_link"] = get_down_link_list(index)
             param_conf = colab_exchange.layers_params.get(config.get("type"), {})
             for group_name, group in param_conf.items():
                 if group_name not in params:
@@ -236,27 +254,13 @@ class TerraExchange:
         self.__project.layers = self.__prepare_layers(layers)
         return TerraExchangeResponse(data=self.__project.layers)
 
-    def _call_remove_layer(self, id: str) -> TerraExchangeResponse:
-        layers = self.__project.layers
-        if str(id) in layers:
-            del layers[str(id)]
-        self.__project.layers = layers
-        return TerraExchangeResponse(data=self.__project.layers)
-
     def _call_get_change_validation(self) -> TerraExchangeResponse:
         layers = {}
         for index, layer in self.__project.layers.items():
-            config = layer.get("config")
-            params = {}
-            for name, param in config.get("params", {}).items():
-                params[name] = param.get("default")
-            config.update({"params": params})
+            config = copy.deepcopy(layer.get("config"))
             layers[str(index)] = config
         if layers:
-            print(layers)
-            # response = self.__request_post("get_change_validation", layers=layers)
-            # self.__project.layers = response.data.get("layers")
-            return TerraExchangeResponse()
+            return self.__request_post("get_change_validation", layers=layers)
         else:
             return TerraExchangeResponse()
 

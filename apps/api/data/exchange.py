@@ -62,9 +62,6 @@ class ExchangeData:
     def _execute_save_layer(self, **kwargs):
         return terra_exchange.call("save_layer", **kwargs)
 
-    def _execute_remove_layer(self, **kwargs):
-        return terra_exchange.call("remove_layer", **kwargs)
-
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)
 
