@@ -31,8 +31,9 @@ class TerraExchangeProject:
     task: str
     model_name: str
     layers: dict
+    start_layers: dict
     schema: list
-    layers_types: list
+    layers_types: dict
     optimizers: list
     callbacks: dict
     path: dict
@@ -47,8 +48,9 @@ class TerraExchangeProject:
         self.task = kwargs.get("task", "")
         self.model_name = kwargs.get("model_name", "")
         self.layers = kwargs.get("layers", {})
+        self.start_layers = kwargs.get("start_layers", {})
         self.schema = kwargs.get("schema", [])
-        self.layers_types = kwargs.get("layers_types", [])
+        self.layers_types = kwargs.get("layers_types", {})
         self.optimizers = kwargs.get("optimizers", [])
         self.callbacks = kwargs.get("callbacks", {})
         self.path = {
@@ -68,8 +70,9 @@ class TerraExchangeProject:
     task         : {self.task}
     model_name   : {self.model_name}
     layers       : {len(self.layers.keys())}
+    start_layers : {len(self.start_layers.keys())}
     schema       : {len(self.schema)}
-    layers_types : {len(self.layers_types)}
+    layers_types : {len(self.layers_types.keys())}
     optimizers   : {len(self.optimizers)}
     callbacks    : {len(self.callbacks.keys())}
     path         : datasets -> {self.path.get("modeling", UNDEFINED)}

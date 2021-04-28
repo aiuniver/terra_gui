@@ -154,7 +154,7 @@
 .properties > .wrapper > .params > .params-container {
 	height:100%;
 }
-.properties > .wrapper > .params .layer-type-params-container.hidden {
+.properties > .wrapper > .params .params-item.hidden {
 	display:none;
 }
 
@@ -278,15 +278,42 @@
 	max-height:100%;
 }
 
-#canvas-nodes > .node {
+#canvas-nodes > .node > .tools {
+	display:none;
+}
+.canvas-container.onlink .node > .tools {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .tools,
+#canvas-nodes > .node.active > .tools {
+	display:block;
+}
+#canvas-nodes > .node > .tools > .bg {
+	fill:#2B5278;
+	rx:4;
+	ry:4;
+}
+#canvas-nodes > .node > .tools > .btn {
 	cursor:pointer;
+}
+#canvas-nodes > .node > .tools > .btn.remove {
+	fill:#f00;
+}
+#canvas-nodes > .node > .tools > .btn.link {
+	fill:#0f0;
+}
+#canvas-nodes > .node > .tools > .btn.unlink {
+	fill:#ff0;
 }
 #canvas-nodes > .node > rect {
 	height:25px;
 	stroke-width:2;
 	rx:4;
 	ry:4;
-    transition:fill .3s ease-in-out, stroke .3s ease-in-out;
+}
+#canvas-nodes > .node > rect.pointer {
+	opacity:0;
+	cursor:pointer;
 }
 #canvas-nodes > .node-type-input > rect {
 	fill:#FFB054;
@@ -301,14 +328,12 @@
 	stroke:#8E51F2;
 }
 #canvas-nodes > .node:hover > rect,
-#canvas-nodes > .node.active > rect,
-#canvas-nodes > .node.hover > rect {
+#canvas-nodes > .node.active > rect {
 	fill:#17212B;
 }
 #canvas-nodes > .node > text {
 	fill:#17212B;
 	font-size:.75rem;
-	transition:fill 0.3s ease-in-out;
 }
 #canvas-nodes > .node:hover > text,
 #canvas-nodes > .node.active > text,
@@ -330,12 +355,12 @@
 }
 
 .line{
-	transition:stroke 0.3s ease-in-out;
 	stroke:#65B9F4;
 	stroke-width:2;
+	cursor:pointer;
 }
 
-.line:hover{
+.line.active {
 	stroke: #EB5757;
 }
 

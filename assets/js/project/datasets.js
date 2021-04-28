@@ -67,7 +67,7 @@
                         params.prepareBtn.disabled = false;
                         params.taskSelect.disabled = false;
                         this.find(".dataset-card-item").removeClass("active");
-                        this.find(`.dataset-card[data-name=${_dataset}]`).parent().addClass("active");
+                        this.find(`.dataset-card[data-name="${_dataset}"]`).parent().addClass("active");
                         params.taskSelect.tasks = info.tasks;
                     } else {
                         _dataset = "";
@@ -185,8 +185,11 @@
                     "prepare_dataset",
                     (success, data) => {
                         if (success) {
-                            window.TerraProject.dataset = datasets.dataset;
-                            window.TerraProject.task = this.task;
+                            window.TerraProject.layers = data.data.layers;
+                            window.TerraProject.schema = data.data.schema;
+                            window.TerraProject.dataset = data.data.dataset;
+                            window.TerraProject.task = data.data.task;
+                            window.TerraProject.start_layers = data.data.start_layers;
                             window.StatusBar.progress_clear();
                             window.StatusBar.message(window.Messages.get("DATASET_LOADED", [`${datasets.dataset} [${this.task_name}]`]), true);
                             this.locked = false;
