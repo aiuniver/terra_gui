@@ -7,29 +7,41 @@
     window.FormWidget = (name, options) => {
 
         let field_type = "input",
+            label = options.label ? options.label : name,
             widget_wrapper = $(`<div class="field-form"></div>`);
 
         if (options.list === true) field_type = "select";
-        if (options.checkbox == true) field_type = "checkbox";
 
         let render_widget = {
 
             "input": () => {
-                let type;
+                let type, widget;
                 switch (options.type) {
                     case "int":
                         type = "number";
+                        break;
+                    case "bool":
+                        type = "checkbox";
                         break;
                     default:
                         type = "text";
                         break;
                 }
-                return widget_wrapper.append(
-                    $(`
-                        <label for="field_form-${name}">${name}:</label>
+                if (type === "checkbox") {
+                    widget = $(`
+                        <label for="field_form-${name}">${label}</label>
+                        <div class="checkout-switch">
+                            <input type="${type}" id="field_form-${name}" name="${name}"${options.default === true ? 'checked="checked"' : ''} />
+                            <span class="switcher"></span>
+                        </div>
+                    `);
+                } else {
+                    widget = $(`
+                        <label for="field_form-${name}">${label}:</label>
                         <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}" />
-                    `)
-                );
+                    `);
+                }
+                return widget_wrapper.append(widget);
             },
 
             "select": () => {
@@ -41,22 +53,10 @@
                     `));
                 }
                 let widget = widget_wrapper.append(
-                    $(`<label for="field_form-${name}">${name}:</label>`), select
+                    $(`<label for="field_form-${name}">${label}:</label>`), select
                 );
                 widget.children("select").selectmenu();
                 return widget;
-            },
-
-            "checkbox": ()=>{
-                return widget_wrapper.append(
-                    $(`
-                        <label for="field_form-${options.name}">${options.name}</label>
-                        <div class="checkout-switch">
-                            <input type="checkbox" id="field_form-${options.name}" name="${options.name}" value="${options.default}"/>
-                            <span class="switcher"></span>
-                        </div>
-                    `)
-                );
             }
 
         }

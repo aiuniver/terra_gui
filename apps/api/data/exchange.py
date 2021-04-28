@@ -50,6 +50,9 @@ class ExchangeData:
     def _execute_set_model(self, **kwargs):
         return terra_exchange.call("set_model", **kwargs)
 
+    def _execute_clear_model(self, **kwargs):
+        return terra_exchange.call("clear_model", **kwargs)
+
     def _execute_set_input_layer(self, **kwargs):
         return terra_exchange.call("set_input_layer", **kwargs)
 
@@ -58,6 +61,9 @@ class ExchangeData:
 
     def _execute_save_layer(self, **kwargs):
         return terra_exchange.call("save_layer", **kwargs)
+
+    def _execute_remove_layer(self, **kwargs):
+        return terra_exchange.call("remove_layer", **kwargs)
 
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)

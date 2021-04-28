@@ -75,7 +75,7 @@
         </nav>
         <div class="params">
             <form class="params-container layers-form custom-scrollbar-wrapper">
-                <div class="params-item">
+                <div class="params-item params-config">
                     <div class="inner">
                         <input type="hidden" id="field_form-layer_id" name="layer_id" />
                         <div class="field-form">
@@ -91,11 +91,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="params-item layer-type-params-container hidden">
+                <div class="params-item params-main hidden">
                     <div class="params-title">Параметры слоя</div>
                     <div class="inner form-inline-label"></div>
                 </div>
-                <div class="params-item">
+                <div class="params-item params-extra collapsable collapsed hidden">
+                    <div class="params-title">Дополнительные параметры</div>
+                    <div class="inner form-inline-label"></div>
+                </div>
+                <div class="params-item params-actions">
                     <div class="inner">
                         <div class="actions-form">
                             <div class="item save"><button disabled="disabled">Сохранить</button></div>

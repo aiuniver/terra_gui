@@ -524,7 +524,6 @@ class StatesData:
         # dict of layers attributes in format for front
         self.layers_params = {
             "Input": {"main": {}, "extra": {}},
-            "Output": {"main": {}, "extra": {}},
             "Conv1D": {
                 "main": {
                     "filters": {"type": "int", "default": None},
@@ -763,7 +762,16 @@ class StatesData:
                     },
                     "use_bias": {"type": "bool", "default": True},
                 },
-                "extra": {},
+                "extra": {
+                    "units": {"type": "int", "default": None},
+                    "activation": {
+                        "type": "str",
+                        "default": None,
+                        "list": True,
+                        "available": self.activation_values,
+                    },
+                    "use_bias": {"type": "bool", "default": True},
+                },
             },
             "Add": {"main": {}, "extra": {}},
             "Multiply": {"main": {}, "extra": {}},
@@ -1241,7 +1249,7 @@ class Exchange(StatesData, GuiExch):
                 input_shape = []
             current_layer = {
                 "name": layer_name,
-                "type": layer_type,
+                "type": layer_type if layer_type == "Input" else "Dense",
                 "data_name": data_name,
                 "data_available": available,
                 "params": {},

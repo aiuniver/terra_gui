@@ -56,30 +56,27 @@
                     );
                 },
                 save: (item, callback) => {
-                    // $("#canvas-save").bind("click", () => {
-                    //  let nodes = d3.selectAll("g.node").data(),
-                    //      send_data = {};
-                    //  for(let node in nodes){
-                    //      delete nodes[node].lineSource;
-                    //      delete nodes[node].lineTarget;
-                    //      send_data[nodes[node].id] = nodes[node];
-                    //  }
-                    //  window.StatusBar.clear();
-                    //  window.ExchangeRequest(
-                    //      "set_model",
-                    //      (success, data) => {
-                    //          if (success) {
-                    //              this.btn.save.disabled = true;
-                    //              terra_board.model = data.data;
-                    //              window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                    //              if (typeof callback === "function") callback(item);
-                    //          } else {
-                    //              window.StatusBar.message(data.error, false);
-                    //          }
-                    //          },
-                    //      {"layers": send_data, "schema": []}
-                    //  );
-                    // });
+                     let nodes = d3.selectAll("g.node").data(),
+                         send_data = {};
+                     for(let node in nodes){
+                         delete nodes[node].lineSource;
+                         delete nodes[node].lineTarget;
+                         send_data[nodes[node].id] = nodes[node];
+                     }
+                     window.StatusBar.clear();
+                     window.ExchangeRequest(
+                         "set_model",
+                         (success, data) => {
+                             if (success) {
+                                 this.btn.save.disabled = true;
+                                 window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                                 if (typeof callback === "function") callback(item);
+                             } else {
+                                 window.StatusBar.message(data.error, false);
+                             }
+                         },
+                         {"layers": send_data, "schema": []}
+                     );
                 },
                 validation: (item, callback) => {
                     window.StatusBar.clear();
@@ -106,7 +103,6 @@
                 },
                 clear: (item, callback) => {
                     terra_board.clear();
-                    $(this.btn.save).trigger("click");
                 }
             }
 
@@ -157,7 +153,7 @@
 
             if (!this.length) return this;
 
-            const _NODE_HEIGHT = 25,
+            const _NODE_HEIGHT = 26,
                 _LINE_HEIGHT = 30;
 
 
@@ -171,47 +167,12 @@
                 _model_schema = [],
                 _onContextDrag = false,
                 _onDrag = false,
+                _onNode,
+                _new_link,
                 _sourceNode,
                 _targetNode,
                 _lastNodeId = 0,
                 _lastLineId = 0;
-
-            let _layer_row_w_init = (schema) => {
-                for(let i=0; i < schema.length; i++){
-                    let sum = 0;
-                    for(let j=0; j < schema[i].length; j++){
-                        if(schema[i][j]){
-                            sum += d3.select("#node-"+schema[i][j]).select("rect")._groups[0][0].width.baseVal.value;
-                            sum += 50;
-                        }
-                    }
-                    _layer_row_w.push(sum);
-                }
-            };
-
-            let _set_position_nodes = (schema) => {
-                let w = _d3graph._groups[0][0].width.baseVal.value;
-                for(let i=0; i <schema.length; i++){
-                    let end_nodes = 0,
-                        margin_w = (w - _layer_row_w[i])/2,
-                        margin_h = 30;
-                    for(let j=0; j < schema[i].length; j++){
-                        if(schema[i][j]){
-                            let node = d3.select("#node-"+schema[i][j]);
-                            let node_data = node.data();
-                            let node_x = margin_w + end_nodes;
-                            let node_y = margin_h + (_LINE_HEIGHT + 30)*i;
-                            end_nodes += node.select("rect")._groups[0][0].width.baseVal.value;
-                            end_nodes += 50;
-
-                            node_data[0].x = node_x;
-                            node_data[0].y = node_y;
-                            node.data(node_data);
-                            node.attr("transform", "translate(" + node_x + "," + node_y + ")");
-                        }
-                    }
-                }
-            };
 
             _d3graph.call(zoom);  
 
@@ -232,228 +193,56 @@
             }
 
             this.load_layer = (class_name) => {
-
-                let input_cfg = {
-                    input_shape: [],
-                    output_shape: [],
-                    params: {},
-                    type: "Input",
-                    up_link: [0]
-                };
-
-                let middle_cfg = {
-                    input_shape: [],
-                    output_shape: [],
-                    params: {
-                        activation: {
-                            available: [
-                                null,
-                                "sigmoid",
-                                "softmax",
-                                "tanh",
-                                "relu",
-                                "elu",
-                                "selu"
-                            ],
-                            default: "relu",
-                            list: true,
-                            type: "str"
-                        },
-                        filters: {
-                            default: 16,
-                            type: "int"
-                        },
-                        kernel_size: {
-                            default: 3,
-                            type: "tuple"
-                        },
-                        padding: {
-                            available: [
-                                "valid",
-                                "same"
-                            ],
-                            default: "same",
-                            list: true,
-                            type: "str"
-                        },
-                        strides: {
-                            default: "1,1",
-                            type: "tuple"
-                        }
-                    },
-                    type: "Conv2D",
-                    up_link: []
-                };
-
-                let output_cfg = {
-                    input_shape: [],
-                    output_shape: [],
-                    params: {
-                        activation: {
-                            available: [
-                                null,
-                                "sigmoid",
-                                "softmax",
-                                "tanh",
-                                "relu",
-                                "elu",
-                                "selu"
-                             ],
-                            default: "softmax",
-                            list: true,
-                            type: "str"
-                        },
-                        units: {
-                            default: 3,
-                            type: "int"
-                        },
-                        use_bias: {
-                            default: true,
-                            type: "bool"
-                        }
-                    },
-                    type: "Dense",
-                    up_link: []
-                };
-
-                let layer_cfg = {
-                    lineTarget: {},
-                    lineSource: {}
-                };
-
-                switch (class_name){
+                let type;
+                switch (class_name) {
                     case "input":
-                        layer_cfg.config = input_cfg;
-                        layer_cfg.type = "input";
-                        break
-
-                    case "middle":
-                         layer_cfg.config = middle_cfg;
-                         layer_cfg.type = "middle";
-                        break
-
+                        type = "Input";
+                        break;
                     case "output":
-                         layer_cfg.config = output_cfg;
-                         layer_cfg.type = "output";
-                        break
+                        type = "Dense";
+                        break;
+                    default:
+                        type = "Conv2D";
+                        break;
                 }
 
-                _create_node(layer_cfg);
-                this.activeNode(d3.select(`#node-${_lastNodeId}`));
-            };
+                let _max_id = 0;
+                for (let key in window.TerraProject.layers) {
+                    if (window.TerraProject.layers[key].index > _max_id) _max_id = window.TerraProject.layers[key].index;
+                }
+                _max_id++;
 
-            let _create_node = (layer) => {
-                layer.lineTarget = {};
-                layer.lineSource = {};
+                let layer_config = {
+                    name: `l${_max_id}_${type}`,
+                    input_shape: [],
+                    output_shape: [],
+                    params: $.extend(true, {}, window.TerraProject.layers_types[type]),
+                    type: type,
+                    up_link: []
+                };
 
-                let w = _d3graph._groups[0][0].width.baseVal.value,
-                    h = _d3graph._groups[0][0].height.baseVal.value;
-
-                if(new_node){
-                    _lastNodeId++;
-                     layer.id = _lastNodeId;
-                    if(!layer.config.name) layer.config.name = `l${_lastNodeId}_${layer.config.type}`;
+                for (let group in layer_config.params) {
+                    for (let param in layer_config.params[group]) {
+                        layer_config.params[group][param] = layer_config.params[group][param].default;
+                    }
                 }
 
-                let node = _cnodes.append("g")
-                    .attr("id", `node-${layer.id}`)
-                    .attr("class", `node node-type-${layer.type}`)
-                    .call(d3.drag()
-                        .on("start", _node_dragstarted)
-                        .on("drag", _node_dragged)
-                        .on("end", _node_dragended)
-                    );
+                let layer_default = {
+                    config: layer_config,
+                    type: class_name,
+                    id: _max_id,
+                    index: _max_id,
+                };
 
-                let rect = node.append("rect");
+                _create_node(layer_default);
+                window.TerraProject.layers[_max_id] = layer_default;
+                this.activeNode(d3.select(`#node-${_max_id}`)._groups[0][0]);
 
-                let text = node.append("text")
-                    .text(`${layer.config.name}: ${layer.config.type}`)
-                    .attr("x", 10)
-                    .attr("y", 17);
-
-                let width = text._groups[0][0].getBBox().width + 20;
-                    rect.attr("width", width);
-
-                if (layer.x === undefined ) layer.x = w/2;
-                if (layer.y === undefined) layer.y = h/2;
-
-                let target_circle = node.append("circle")
-                    .attr("class", "dot-target")
-                    .attr("visibility", "hidden")
-                    .attr("cx", width/2)
-                    .attr("cy", -4);
-
-                let source_circle = node.append("circle")
-                    .attr("class", "dot-source")
-                    .attr("visibility", "hidden")
-                    .attr("cx", width/2)
-                    .attr("r", 5)
-                    .attr("cy", _LINE_HEIGHT);
-
-                node.data([layer])
-                    .attr("transform", "translate(" + layer.x + "," + layer.y + ")");
-
-                $(`#node-${layer.id}`).bind("mousedown", _onmousedown)
-                    .bind("mouseup", _onmouseup);
-
-                terra_toolbar.btn.save.disabled = false;
-                terra_toolbar.btn.validation.disabled = false;
-                terra_toolbar.btn.clear.disabled = false;
-
-            };
-
-            let _delete_node = (node) => {
-
-                let target_line = node.__data__.lineTarget,
-                    sourse_line = node.__data__.lineSource;
-
-                for(let line in target_line){
-                    _delete_line($("#"+line)[0]);
-                }
-                for(let line in sourse_line){
-                    _delete_line($("#"+line)[0]);
-                }
-
-                node.remove();
-            };
-
-            let _delete_line = (line) => {
-                let sourse_node = line.__data__.source._groups[0][0],
-                    target_node = line.__data__.target._groups[0][0];
-
-                target_node.__data__.config.up_link.splice(target_node.__data__.config.up_link.indexOf(sourse_node.__data__.id), 1);
-
-                delete sourse_node.__data__.lineSource[line.id];
-                delete target_node.__data__.lineTarget[line.id];
-
-                if(Object.keys(sourse_node.__data__.lineSource).length < 1){
-                    _cnodes.select("#" + sourse_node.id).select(".dot-source").attr("visibility", "hidden");
-                }
-                if(Object.keys(target_node.__data__.lineTarget).length < 1){
-                     _cnodes.select("#" + target_node.id).select(".dot-target").attr("visibility", "hidden");
-                }
-
-                line.remove();
-            };
-
-            let _create_line = () => {
-                _lastLineId++;
-                let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
-                let line_id =  "line-" + _lastLineId;
-
-                let line = _clines.append("line")
-                    .attr("id", line_id)
-                    .attr("class", "line")
-                    .attr("x1", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
-                    .attr("y1", _source_node_point.y + _LINE_HEIGHT)
-                    .attr("x2", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
-                    .attr("y2", _source_node_point.y + _LINE_HEIGHT);
-
-                let node_data = _cnodes.select("#" + _sourceNode.id).data()[0];
-
-                node_data.lineSource[line_id] = line;
-                _cnodes.select("#" + _sourceNode.id).select(".dot-source").attr("visibility", "visible");
-                _cnodes.select("#" + _sourceNode.id).data(node_data);
+                window.ExchangeRequest(
+                    "save_layer",
+                    null,
+                    d3.select(`#node-${_max_id}`).data()[0]
+                );
             };
 
             let _change_line = (new_line = false) => {
@@ -498,62 +287,12 @@
             };
 
 
-            this.activeNode = (_node) => {
+            this.activeNode = (g) => {
+                let node = _cnodes.select(`#${g.id}`);
                 _cnodes.selectAll(".node").classed("active", false);
-                _node.classed("active", true);
-                terra_params.load(_node.data()[0]);
+                node.classed("active", true);
+                terra_params.load(node.data()[0]);
             }
-
-
-            let _node_dragstarted = (data) => {
-                this.find(".canvas > .hint").remove();
-                let _node = d3.select(`#node-${data.id}`);
-                _node.raise().classed("hover", true);
-                 if (!_onDrag) this.activeNode(_node);
-                 _onDrag = false;
-            }
-
-            let _node_dragged = (data) => {
-                _onDrag = true;
-                let _node = d3.select(`#node-${data.id}`);
-                 _node.attr("transform", () => {
-                     data.x = d3.event.x;
-                     data.y = d3.event.y;
-                     return "translate(" + d3.event.x + "," + d3.event.y + ")";
-                 });
-
-                 let _node_data = _node.data()[0],
-                     lineTarget = _node_data.lineTarget,
-                     lineSource = _node_data.lineSource;
-
-                 if (lineTarget) {
-                     for(let i in lineTarget) {
-                         let cx =  d3.event.x + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
-                             cy = d3.event.y;
-
-                         _clines.select("#"+lineTarget[i]._groups[0][0].id)
-                             .attr("x2", cx)
-                             .attr("y2", cy - 4);
-                     }
-                 }
-                 if (lineSource) {
-                     for(let i in lineSource) {
-                         let cx = d3.event.x  + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
-                             cy = d3.event.y  + _NODE_HEIGHT;
-
-                         _clines.select("#"+lineSource[i]._groups[0][0].id)
-                             .attr("x1", cx)
-                             .attr("y1", cy + 4);
-                     }
-                 }
-            }
-
-            let _node_dragended = (data) => {
-                let _node = d3.select(`#node-${data.id}`);
-                _node.classed("hover", false);
-                if (!_onDrag) this.activeNode(_node);
-                _onDrag = false;
-            };
 
             this.bind("contextmenu", (event) => {
                 return false;
@@ -563,57 +302,169 @@
                 this.find(".canvas > .hint").remove();
             });
 
-            let _onmousedown = (event)=>{
-                svg.bind("mousemove", _onmousemove);
-                _sourceNode = event.target.parentNode;
-                _targetNode = undefined;
-            };
-
-            let _onmouseup = (event)=>{
-                svg.unbind("mousemove", _onmousemove);
-                _targetNode = event.target.parentNode;
-                if(_onContextDrag){
-                    _change_line(true);
-                     this.find(".canvas > .hint").remove();
-                }else if (event.button === 2) {
-                    let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
-                    if (params == null) return;
-                    if (!Object.keys(params).length) return;
-                    let hint = $(`<div class="hint"></div>`),
-                        text = [];
-                    for (let param in params) {
-                        text.push(`${param}: ${params[param].default || ""}`);
-                    }
-                    hint.html(`${text.join("<br />")}`);
-                    hint.css({
-                        left:event.offsetX,
-                        top:event.offsetY,
-                    });
-                    $(".canvas").append(hint);
-                }
-                _onContextDrag = false;
-            };
-
-            let _onmousemove = (event)=>{
-                if(_onContextDrag){
-                     d3.select("#line-" + _lastLineId)
-                    .attr("x2", event.offsetX)
-                    .attr("y2", event.offsetY);
-                } else{
-                    _create_line();
-                    _onContextDrag = true;
-                }
-            };
-
-            $(document).bind("keydown", (event) => {
-                if(event.which == 46 || event.which == 8){
-                    if($(".node:hover").length != 0){
-                        _delete_node($(".node:hover")[0]);
-                    } else if($(".line:hover").length != 0){
-                        _delete_line($(".line:hover")[0])
+            $(document).bind("keyup", (event) => {
+                if (event.keyCode === 27) {
+                    this.removeClass("onlink");
+                    if (_new_link) {
+                        _new_link.remove();
+                        _new_link = undefined;
                     }
                 }
             });
+
+            svg.bind("mousemove", (event) => {
+                if (_new_link) {
+                    let x2 = event.offsetX,
+                        y2 = event.offsetY;
+                    if (_onNode) {
+                        if (`${_new_link._groups[0][0].sourceID}` !== `${_onNode[0].__data__.id}` && _onNode[0].__data__.config.up_link.indexOf(_new_link._groups[0][0].sourceID) === -1) {
+                            let matrix = _onNode[0].transform.baseVal[0].matrix;
+                            x2 = matrix.e;
+                            y2 = matrix.f - _LINE_HEIGHT / 2 - 2;
+                            _onNode.children(".dot-target").attr("visibility", "visible");
+                        }
+                    }
+                    _new_link.attr("x2", x2).attr("y2", y2);
+                }
+            });
+
+            let _node_dragstarted = (data, _, rect) => {
+                let node = $(rect).parent()[0];
+                // this.find(".canvas > .hint").remove();
+                // let _node = d3.select(`#node-${data.id}`);
+                // _node.raise().classed("hover", true);
+                //  if (!_onDrag) this.activeNode(_node);
+                //  _onDrag = false;
+            }
+
+            let _node_dragged = (data, _, rect) => {
+                let node = $(rect).parent()[0],
+                    _node = d3.select(`#${node.id}`);
+                _onDrag = true;
+                _node.attr("transform", (data) => {
+                    let transform = _d3graph.select("#canvas-container")._groups[0][0].transform,
+                        zoom_value = transform.baseVal[1].matrix.a;
+                    data.x = d3.event.sourceEvent.layerX - d3.event.subject.x;
+                    data.y = d3.event.sourceEvent.layerY - d3.event.subject.y;
+                    return `translate(${data.x},${data.y})`;
+                }).raise();
+                //
+                //  let _node_data = _node.data()[0],
+                //      lineTarget = _node_data.lineTarget,
+                //      lineSource = _node_data.lineSource;
+                //
+                //  if (lineTarget) {
+                //      for(let i in lineTarget) {
+                //          let cx =  d3.event.x + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
+                //              cy = d3.event.y;
+                //
+                //          _clines.select("#"+lineTarget[i]._groups[0][0].id)
+                //              .attr("x2", cx)
+                //              .attr("y2", cy - 4);
+                //      }
+                //  }
+                //  if (lineSource) {
+                //      for(let i in lineSource) {
+                //          let cx = d3.event.x  + _node.select("rect")._groups[0][0].width.baseVal.value / 2,
+                //              cy = d3.event.y  + _NODE_HEIGHT;
+                //
+                //          _clines.select("#"+lineSource[i]._groups[0][0].id)
+                //              .attr("x1", cx)
+                //              .attr("y1", cy + 4);
+                //      }
+                //  }
+            }
+
+            let _node_dragended = (data, _, rect) => {
+                let node = $(rect).parent()[0],
+                    _node = d3.select(`#${node.id}`);
+                if (_onDrag) {
+                    window.ExchangeRequest(
+                        "save_layer",
+                        null,
+                        _node.data()[0]
+                    );
+                } else {
+                    if (this.hasClass("onlink")) {
+                        let matrix = node.transform.baseVal[0].matrix,
+                            sourceID = _new_link._groups[0][0].sourceID,
+                            sourceNode = _d3graph.select(`#node-${sourceID}`),
+                            sourceData = sourceNode.data()[0],
+                            targetID = node.__data__.id,
+                            targetNode = _d3graph.select(`#node-${targetID}`),
+                            targetData = targetNode.data()[0];
+                        if (`${sourceID}` !== `${targetID}` && targetData.config.up_link.indexOf(sourceID) === -1) {
+                            this.removeClass("onlink");
+                            _new_link.attr("x2", matrix.e).attr("y2", matrix.f - _LINE_HEIGHT / 2 - 2);
+                            _new_link = undefined;
+                            if (!sourceData.down_link) sourceData.down_link = [];
+                            sourceData.down_link.push(targetID);
+                            sourceNode.data([sourceData]);
+                            targetData.config.up_link.push(sourceID);
+                            targetNode.data([targetData]);
+                            terra_toolbar.btn.save.disabled = false;
+                            $(terra_toolbar.btn.save).children("span").trigger("click");
+                        }
+                    } else {
+                        this.activeNode(node);
+                    }
+                }
+                _onDrag = false;
+            };
+
+            let _onmousedown = (event) => {
+                console.log(event);
+                // svg.bind("mousemove", _onmousemove);
+                // _sourceNode = event.target.parentNode;
+                // _targetNode = undefined;
+            };
+
+            let _onmouseup = (event) => {
+                console.log(event);
+                // svg.unbind("mousemove", _onmousemove);
+                // _targetNode = event.target.parentNode;
+                // if(_onContextDrag){
+                //     _change_line(true);
+                //      this.find(".canvas > .hint").remove();
+                // }else if (event.button === 2) {
+                //     let params = _cnodes.select(`#${event.currentTarget.id}`).data()[0].config.params;
+                //     if (params == null) return;
+                //     if (!Object.keys(params).length) return;
+                //     let hint = $(`<div class="hint"></div>`),
+                //         text = [];
+                //     for (let param in params) {
+                //         text.push(`${param}: ${params[param].default || ""}`);
+                //     }
+                //     hint.html(`${text.join("<br />")}`);
+                //     hint.css({
+                //         left:event.offsetX,
+                //         top:event.offsetY,
+                //     });
+                //     $(".canvas").append(hint);
+                // }
+                // _onContextDrag = false;
+            };
+
+            let _onmousemove = (event) => {
+                // if(_onContextDrag){
+                //      d3.select("#line-" + _lastLineId)
+                //     .attr("x2", event.offsetX)
+                //     .attr("y2", event.offsetY);
+                // } else{
+                //     _create_line();
+                //     _onContextDrag = true;
+                // }
+            };
+
+            // $(document).bind("keydown", (event) => {
+            //     if(event.which == 46 || event.which == 8){
+            //         if($(".node:hover").length != 0){
+            //             _delete_node($(".node:hover")[0]);
+            //         } else if($(".line:hover").length != 0){
+            //             _delete_line($(".line:hover")[0])
+            //         }
+            //     }
+            // });
 
             Object.defineProperty(this, "model_schema", {
                 set: (schema) => {
@@ -637,14 +488,213 @@
                 }
             });
 
-            let _create_model = (layers, schema, new_model) => {
+            let _create_line = (dotSource, dotTarget) => {
+                let sourceNode = d3.select(dotSource.closest(".node")[0]),
+                    sourceID = sourceNode.data()[0].id,
+                    sourceMatrix = sourceNode._groups[0][0].transform.baseVal[0].matrix,
+                    sourcePosition = [sourceMatrix.e, sourceMatrix.f+_LINE_HEIGHT/2+2];
+
+                let targetNode = dotTarget ? d3.select(dotTarget.closest(".node")[0]) : undefined,
+                    targetID = targetNode ? targetNode.data()[0].id : "",
+                    targetMatrix = targetNode ? targetNode._groups[0][0].transform.baseVal[0].matrix : undefined,
+                    targetPosition = targetMatrix ? [targetMatrix.e, sourceMatrix.f] : undefined;
+
+                let line = _clines.append("line")
+                    .attr("id", `node_${sourceID}_${targetID}`)
+                    .attr("class", "line")
+                    .attr("x1", sourcePosition[0])
+                    .attr("y1", sourcePosition[1]);
+
+                if (targetPosition) {
+                    line.attr("x2", targetPosition[0])
+                        .attr("y2", targetPosition[1]);
+                } else {
+                    _new_link = line;
+                    line.attr("x2", sourcePosition[0])
+                        .attr("y2", sourcePosition[1]);
+                    _new_link._groups[0][0].sourceID = sourceID;
+                }
+
+                dotSource.attr("visibility", "visible");
+            }
+
+            // let _create_line = () => {
+            //     _lastLineId++;
+            //     let _source_node_point = {x:_sourceNode.transform.baseVal[0].matrix.e, y: _sourceNode.transform.baseVal[0].matrix.f};
+            //     let line_id =  "line-" + _lastLineId;
+            //
+            //     let line = _clines.append("line")
+            //         .attr("id", line_id)
+            //         .attr("class", "line")
+            //         .attr("x1", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
+            //         .attr("y1", _source_node_point.y + _LINE_HEIGHT)
+            //         .attr("x2", _source_node_point.x + _sourceNode.children[0].width.baseVal.value/2)
+            //         .attr("y2", _source_node_point.y + _LINE_HEIGHT);
+            //
+            //     let node_data = _cnodes.select("#" + _sourceNode.id).data()[0];
+            //
+            //     node_data.lineSource[line_id] = line;
+            //     _cnodes.select("#" + _sourceNode.id).select(".dot-source").attr("visibility", "visible");
+            //     _cnodes.select("#" + _sourceNode.id).data(node_data);
+            // };
+
+            let _create_node = (layer) => {
+                layer.lineTarget = {};
+                layer.lineSource = {};
+
+                let w = _d3graph._groups[0][0].width.baseVal.value,
+                    h = _d3graph._groups[0][0].height.baseVal.value;
+
+                let node = _cnodes.append("g")
+                    .attr("id", `node-${layer.id}`)
+                    .attr("class", `node node-type-${layer.type}`);
+
+                node.append("circle")
+                    .attr("class", "dot-target")
+                    .attr("visibility", "hidden")
+                    .attr("cx", 0)
+                    .attr("cy", -_NODE_HEIGHT/2-4);
+
+                node.append("circle")
+                    .attr("class", "dot-source")
+                    .attr("visibility", "hidden")
+                    .attr("cx", 0)
+                    .attr("cy", _NODE_HEIGHT/2+4);
+
+                let tools = node.append("g").attr("class", "tools"),
+                    tools_rect = tools.append("rect").attr("class", "bg").attr("height", 24).attr("y", _NODE_HEIGHT/2-5),
+                    rect = node.append("rect").attr("height", _NODE_HEIGHT),
+                    text = node.append("text").text(`${layer.config.name}: ${layer.config.type}`),
+                    text_box = text._groups[0][0].getBBox(),
+                    width = text_box.width + 20;
+
+                let remove = tools.append("rect").attr("class", "btn remove").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4),
+                    link = tools.append("rect").attr("class", "btn link").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4),
+                    unlink = tools.append("rect").attr("class", "btn unlink").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4);
+
+                let rect_pointer = node.append("rect").attr("class", "pointer").attr("height", _NODE_HEIGHT).call(d3.drag()
+                        .on("start", _node_dragstarted)
+                        .on("drag", _node_dragged)
+                        .on("end", _node_dragended)
+                    );
+
+                text.attr("x", -text_box.width/2).attr("y", 12-text_box.height/2);
+                rect.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
+                rect_pointer.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
+                tools_rect.attr("width", width).attr("x", -(text_box.width+20)/2);
+                remove.attr("x", (text_box.width+20)/2-16);
+                link.attr("x", -(text_box.width+20)/2+4);
+                unlink.attr("x", -(text_box.width+20)/2+20);
+
+                $(remove._groups[0][0]).bind("click", (event) => {
+                    let g = $(event.currentTarget).closest(".node"),
+                        attr_id = g[0].id,
+                        info = _d3graph.select(`#${attr_id}`).data()[0];
+                    window.StatusBar.clear();
+                    window.ExchangeRequest(
+                        "remove_layer",
+                        (success, data) => {
+                            if (success) {
+                                g.remove();
+                                if (`${info.id}` === `${$("#field_form-layer_id").val()}`) terra_params.reset();
+                            } else {
+                                window.StatusBar.message(data.error, false);
+                            }
+                        },
+                        {"id":info.id}
+                    );
+                });
+                $(link._groups[0][0]).bind("click", (event) => {
+                    this.addClass("onlink");
+                    _create_line($(event.currentTarget).closest(".node").children(".dot-source"));
+                });
+                $(unlink._groups[0][0]).bind("click", (event) => {
+                    console.log("unlink layer");
+                });
+
+                if (["input", "output"].indexOf(layer.type) > -1) remove.remove();
+
+                if (layer.x === undefined) layer.x = w/2;
+                if (layer.y === undefined) layer.y = h/2;
+
+                node.data([layer])
+                    .attr("transform", "translate(" + layer.x + "," + layer.y + ")");
+
+                $(node._groups[0][0]).bind("mouseenter", (event) => {
+                    _onNode = $(event.currentTarget);
+                }).bind("mouseleave", (event) => {
+                    _onNode = undefined;
+                });
+
+                terra_toolbar.btn.save.disabled = false;
+                terra_toolbar.btn.validation.disabled = false;
+                terra_toolbar.btn.clear.disabled = false;
+
+            };
+
+            let _create_model = (layers, schema) => {
+                let w = _d3graph._groups[0][0].width.baseVal.value,
+                    h = _d3graph._groups[0][0].height.baseVal.value;
+
                 _clines.selectAll("line").remove();
                 _cnodes.selectAll("g").remove();
                 _lastNodeId = 0;
                 _lastLineId = 0;
                 _layer_row_w = [];
 
-                for(let index in layers){
+                let _update_position_by_schema = () => {
+                    let rows = schema.length,
+                        columns = 0,
+                        schema_width = [],
+                        columns_width = [],
+                        columns_start = [],
+                        total_width = 0,
+                        start_x = 0,
+                        start_y = (h - _NODE_HEIGHT*rows - _LINE_HEIGHT*(rows-1))/2;
+                    schema.forEach((indexes, row) => {
+                        let length = indexes.length,
+                            width = 0;
+                        if (length > columns) columns = length;
+                        schema_width[row] = [];
+                        indexes.forEach((index, column) => {
+                            let g = _cnodes.select(`#node-${index}`)._groups[0][0];
+                            if (g) {
+                                schema_width[row][column] = g.getBBox().width;
+                                width += schema_width[row][column];
+                            }
+                        });
+                        if (width > total_width) total_width = width;
+                    });
+                    total_width += _LINE_HEIGHT*(columns-1);
+                    start_x = (w - total_width)/2;
+                    for (let i=0; i<columns; i++) {
+                        let max_width = 0;
+                        for (let k=0; k<rows; k++) {
+                            let w = schema_width[k][i] || 0;
+                            if (w > max_width) max_width = w;
+                        }
+                        columns_width[i] = max_width;
+                    }
+                    columns_width.forEach((width, index) => {
+                        columns_start[index] = start_x;
+                        if (index > 0) columns_start[index] += columns_width.slice(0, index).reduce((accumulator, currentValue) => accumulator + currentValue) + _LINE_HEIGHT*index;
+                        columns_start[index] += width/2;
+                    });
+                    schema.forEach((indexes, row) => {
+                        indexes.forEach((index, column) => {
+                            let node = _cnodes.select(`#node-${index}`),
+                                g = node._groups[0][0];
+                            if (g) {
+                                let data = node.data()[0];
+                                data.x = columns_start[column];
+                                data.y = start_y + _NODE_HEIGHT*(row+1) + row*_LINE_HEIGHT - _LINE_HEIGHT/2;
+                                node.data([data]).attr("transform", `translate(${data.x},${data.y})`);
+                            }
+                        });
+                    });
+                }
+
+                for (let index in layers) {
                     for (let param in layers[index].config.params) {
                         if (layers[index].config.params[param].type === "tuple") {
                             layers[index].config.params[param].default = `${layers[index].config.params[param].default || ""}`;
@@ -652,41 +702,57 @@
                     }
                 }
 
+                let use_schema = false;
                 for (let index in layers) {
                     let layer = layers[index];
-                    if(layer.id > _lastNodeId){
-                        _lastNodeId = layer.id;
-                    }
-                    _create_node(layer, new_model);
+                    if (layer.x === undefined || layer.y === undefined) use_schema = true;
+                    _create_node(layer);
                 }
+                if (use_schema && schema.length) _update_position_by_schema();
 
-                if(new_model){
-                     _layer_row_w_init(schema);
-                    _set_position_nodes(schema);
-                }
+                // for (let index in layers) {
+                //     let layer = layers[index];
+                //     _targetNode = $("#node-" + layer.id)[0];
+                //     layer.config.up_link.forEach((parent_node) => {
+                //         if (parent_node !== 0) {
+                //             _sourceNode = $("#node-" + parent_node)[0];
+                //             _create_line();
+                //             _change_line();
+                //         }
+                //     });
+                // }
 
-                for (let index in layers) {
-                    let layer = layers[index];
-                    _targetNode = $("#node-" + layer.id)[0];
-                    layer.config.up_link.forEach((parent_node) => {
-                        if (parent_node !== 0) {
-                            _sourceNode = $("#node-" + parent_node)[0];
-                            _create_line();
-                            _change_line();
-                        }
-                    })
-                }
-                 window.TerraProject.layers = layers;
+                window.TerraProject.layers = layers;
                 _d3graph.transition().duration(450).call(zoom.transform, d3.zoomIdentity);
+                $(terra_toolbar.btn.save).children("span").trigger("click");
             }
 
             this.clear = () => {
-                window.TerraProject.model_clear();
-                this.model = window.TerraProject.model_info;
-                terra_toolbar.btn.save.disabled = true;
-                terra_toolbar.btn.validation.disabled = true;
-                terra_toolbar.btn.clear.disabled = true;
+                window.StatusBar.clear();
+                window.ExchangeRequest(
+                    "clear_model",
+                    (success, data) => {
+                        if (success) {
+                            this.model = data.data;
+                            terra_toolbar.btn.save.disabled = true;
+                            terra_toolbar.btn.validation.disabled = true;
+                            terra_toolbar.btn.clear.disabled = true;
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    },
+                )
             }
+
+            $(window).bind("keyup", (event) => {
+                if (event.keyCode === 27) {
+                    let id = $("#field_form-layer_id").val();
+                    if (`${id}` !== "") {
+                        terra_params.reset();
+                        _d3graph.select(`#node-${id}`).classed("active", false);
+                    }
+                }
+            });
 
             return this;
 
@@ -700,19 +766,55 @@
             let _layer_id_field = $("#field_form-layer_id"),
             _layer_name_field = $("#field_form-layer_name"),
             _layer_type_field = $("#field_form-layer_type"),
-            _layer_params = this.find(".layer-type-params-container"),
+            _layer_params_main = this.find(".params-main"),
+            _layer_params_extra = this.find(".params-extra"),
             _action_save = this.find(".actions-form > .item.save > button");
 
-            let node,
-                node_data;
+            let _render_params = (config) => {
+                this.find("#field_form-layer_data").parent().remove();
+                _layer_params_main.addClass("hidden");
+                _layer_params_main.children(".inner").html("");
+                _layer_params_extra.addClass("hidden");
+                _layer_params_extra.children(".inner").html("");
+                this.find(".params-item.collapsable").addClass("collapsed");
+                let _render_params_config = (group, container, params, data) => {
+                    let inner = container.children(".inner");
+                    if (!Object.keys(params).length) return;
+                    for (let name in params) {
+                        let param = $.extend(true, {}, params[name]);
+                        if (data[name] !== undefined) param.default = data[name];
+                        let widget = window.FormWidget(`${group}_${name}`, param);
+                        widget.addClass("field-inline");
+                        inner.append(widget);
+                    }
+                    container.removeClass("hidden");
+                }
+                let params_config = window.TerraProject.layers_types[config.type];
+                _render_params_config("main", _layer_params_main, params_config.main, config.params.main);
+                _render_params_config("extra", _layer_params_extra, params_config.extra, config.params.extra);
+                if (config.data_available) {
+                    let widget = window.FormWidget("layer_data", {
+                        "label":"Данные слоя",
+                        "type":"str",
+                        "list":true,
+                        "default":config.data_name,
+                        "available":config.data_available
+                    });
+                    this.find(".params-config > .inner").append(widget);
+                }
+            }
 
             this.reset = () => {
                 _layer_id_field.val("");
                 _layer_name_field.val("").attr("disabled", "disabled");
                 _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
+                this.find("#field_form-layer_data").parent().remove();
                 _action_save.attr("disabled", "disabled");
-                _layer_params.addClass("hidden");
-                _layer_params.children(".inner").html("");
+                _layer_params_main.addClass("hidden");
+                _layer_params_main.children(".inner").html("");
+                _layer_params_extra.addClass("hidden");
+                _layer_params_extra.children(".inner").html("");
+                this.find(".params-item.collapsable").addClass("collapsed");
             }
 
             this.load = (data) => {
@@ -721,82 +823,75 @@
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
                 _action_save.removeAttr("disabled");
-
-                node = d3.select("#node-" + data.id)
-                node_data = node.data();
-
-                for (let name in data.config.params) {
-                    let widget = window.FormWidget(name, data.config.params[name]);
-                    widget.addClass("field-inline");
-                    _layer_params.children(".inner").append(widget);
-                }
-                if (data.config.params && Object.keys(data.config.params).length) {
-                    _layer_params.removeClass("hidden");
-                }
+                _render_params(data.config);
             }
 
-            this.submit = () => {
-                throw window.Messages.get("SUBMIT_PARAMS_METHOD");
-            }
+            let _prepare_data = (serializeData) => {
+                let _form = {},
+                    _config = {},
+                    _params = {};
+                for (let item in serializeData) _form[serializeData[item].name] = serializeData[item].value;
+                _config = $.extend(true, {}, terra_board.find(`#node-${_form.layer_id}`)[0].__data__);
 
-            let _change_node_data = (node_data, serializeData) => {
-                for (let index in serializeData) {
-                    if(node_data[0].config.params != null && node_data[0].config.params[serializeData[index].name]){
-                        switch (node_data[0].config.params[serializeData[index].name].type){
-                            case "int":
-                                serializeData[index].value = parseInt(serializeData[index].value);
-                                break
+                _config.config.name = `${_form.layer_name ? _form.layer_name : _config.config.name}`;
+                _config.config.type = `${_form.layer_type ? _form.layer_type : _config.config.type}`;
+                if (_config.config.data_name !== undefined) _config.config.data_name = _form.layer_data
 
-                            case "str":
-                                break
-
-                            case "tuple":
-                                break
-
+                _params = window.TerraProject.layers_types[_config.config.type];
+                for (let group in _params) {
+                    for (let name in _params[group]) {
+                        let value = _form[`${group}_${name}`];
+                        switch (_params[group][name].type) {
                             case "bool":
-                                 serializeData[index].value = serializeData[index].value == 'true';
-                                break
+                                value = value !== undefined;
+                                break;
+                            case "int":
+                                if (`${value}` !== "") value = parseInt(value);
+                                break;
                         }
-                        node_data[0].config.params[serializeData[index].name].default = serializeData[index].value;
-                    } else if(serializeData[index].name == "layer_type"){
-                        node_data[0].config.type = serializeData[index].value;
-                    } else if(serializeData[index].name == "layer_name"){
-                        node_data[0].config.name = serializeData[index].value;
+                        _config.config.params[group][name] = value
                     }
                 }
-
-                return node_data;
+                return _config;
             };
+
+            _layer_type_field.bind("change", (event) => {
+                let _config = $.extend(true, {}, terra_board.find(`#node-${_layer_id_field.val()}`)[0].__data__);
+                _render_params({
+                    "type":event.currentTarget.value,
+                    "data_name":_config.config.data_name,
+                    "data_available":_config.config.data_available,
+                    "params":{"main":{},"extra":{}},
+                });
+            }).selectmenu({
+                change:(event, ui) => {
+                    $(event.target).trigger("change");
+                }
+            });
 
             this.bind("submit", (event) => {
                 event.preventDefault();
                 let form = $(event.currentTarget),
-                    serializeData = form.serializeArray();
-                _change_node_data(node_data, serializeData);
-
-                let nodes = d3.selectAll("g.node").data(),
-                    send_data = {};
-
-                for(let node in nodes){
-                    delete nodes[node].lineSource;
-                    delete nodes[node].lineTarget;
-                    send_data[nodes[node].id] = nodes[node];
-                }
-
+                    serializeData = form.serializeArray(),
+                    send_data = _prepare_data(serializeData);
                 window.StatusBar.clear();
                 window.ExchangeRequest(
-                    "set_model",
+                    "save_layer",
                     (success, data) => {
                         if (success) {
-                            terra_board.model = data.data;
-                            window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                            terra_board.model = {"layers":data.data,"schema":[]};
+                            window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
-                    {"layers": send_data, "schema": []}
+                    send_data
                 );
+            });
 
+            this.find(".params-item.collapsable > .params-title").bind("click", (event) => {
+                event.preventDefault();
+                $(event.currentTarget).parent().toggleClass("collapsed");
             });
 
             return this;
@@ -812,6 +907,12 @@
         terra_toolbar = $(".project-modeling-toolbar").TerraToolbar();
         terra_board = $(".canvas-container").TerraBoard();
         terra_params = $(".params-container").TerraParams();
+
+        terra_toolbar.items.children("span").bind("click", (event) => {
+            event.currentTarget.parentNode.execute((item) => {
+                if ($(item.parentNode).hasClass("layers")) terra_board.load_layer(item.dataset.type);
+            });
+        });
 
         if (!window.TerraProject.dataset) {
             let warning = $("#modal-window-warning").ModalWindow({
@@ -851,12 +952,6 @@
                     "schema": event.currentTarget.ModelData.front_model_schema
                 }
             )
-        });
-
-        terra_toolbar.items.children("span").bind("click", (event) => {
-            event.currentTarget.parentNode.execute((item) => {
-                if ($(item.parentNode).hasClass("layers")) terra_board.load_layer(item.dataset.type);
-            });
         });
 
     });
