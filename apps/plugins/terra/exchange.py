@@ -90,6 +90,10 @@ class TerraExchange:
                 for param_name, param in group.items():
                     if param_name not in params[group_name]:
                         params[group_name][param_name] = param.get("default")
+                    elif isinstance(params[group_name][param_name], dict):
+                        params[group_name][param_name] = params[group_name][
+                            param_name
+                        ].get("default")
         return layers
 
     def call(self, *args, **kwargs) -> TerraExchangeResponse:
