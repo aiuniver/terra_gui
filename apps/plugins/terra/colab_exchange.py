@@ -611,8 +611,10 @@ class Exchange(StatesData, GuiExch):
             data_name = data["data_name"]
             if layer_type == "Input":
                 input_shape = list(self.dts.input_shape[name])
+                location = "input"
             else:
                 input_shape = []
+                location = "out"
             current_layer = {
                 "name": layer_name,
                 "type": layer_type if layer_type == "Input" else "Dense",
@@ -622,6 +624,7 @@ class Exchange(StatesData, GuiExch):
                 "up_link": [0],
                 "inp_shape": input_shape,
                 "out_shape": [],
+                "location_type": location,
             }
             self.start_layers[idx] = current_layer
             self.layers_data_state[idx] = {
