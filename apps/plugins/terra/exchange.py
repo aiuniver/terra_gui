@@ -77,10 +77,7 @@ class TerraExchange:
             if "index" not in layer:
                 layer["index"] = int(index)
             if "type" not in layer:
-                if config.get("type") == "Input":
-                    layer["type"] = "input"
-                else:
-                    layer["type"] = "middle"
+                layer["type"] = config.get("location_type")
             if "down_link" not in layer:
                 layer["down_link"] = get_down_link_list(index)
             param_conf = colab_exchange.layers_params.get(config.get("type"), {})
@@ -128,6 +125,7 @@ class TerraExchange:
             start_layers[1] = {
                 "name": f"l1_Input",
                 "type": "Input",
+                "location_type": "input",
                 "params": {"main": {}, "extra": {}},
                 "up_link": [],
                 "inp_shape": [],
@@ -136,6 +134,7 @@ class TerraExchange:
             start_layers[2] = {
                 "name": f"l2_Dense",
                 "type": "Dense",
+                "location_type": "out",
                 "params": {"main": {}, "extra": {}},
                 "up_link": [],
                 "inp_shape": [],
@@ -152,7 +151,7 @@ class TerraExchange:
                 "id": index,
                 "index": index,
                 "config": layer,
-                "type": "input" if int(layer.get("type") == "Input") else "output",
+                "type": layer.get("location_type"),
             }
 
         self.__project.layers = self.__prepare_layers(layers)
@@ -190,6 +189,7 @@ class TerraExchange:
         return data
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
+        print(layers)
         for index, layer in layers.items():
             params = layer.get("config").get("params", None)
             params = params if params else {}
@@ -213,7 +213,7 @@ class TerraExchange:
                     "id": index,
                     "index": index,
                     "config": layer,
-                    "type": "input" if int(layer.get("type") == "Input") else "output",
+                    "type": layer.get("location_type"),
                 }
 
         self.__project.layers = self.__prepare_layers(layers)
@@ -233,7 +233,7 @@ class TerraExchange:
                 "id": index,
                 "index": index,
                 "config": layer,
-                "type": "input" if int(layer.get("type") == "Input") else "output",
+                "type": layer.get("location_type"),
             }
 
         self.__project.layers = self.__prepare_layers(layers)

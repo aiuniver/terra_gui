@@ -27,7 +27,7 @@ class ExchangeData:
                 self.error = response.error
             except Exception as error:
                 self.success = False
-                self.error = str(error)
+                self.error = f"[{error.__class__.__name__}] {error}"
         else:
             self.success = False
             self.error = f"Method «{name}» is undefined"
