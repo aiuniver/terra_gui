@@ -10,446 +10,7 @@ from django.conf import settings
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
-
-
-@dataclass
-class LayersDef:
-    """Model Plan layers defaults"""
-
-    """ Head
-    """
-    framework = "keras"
-    input_datatype = None  # Type of data
-    plan_name = "empty_string"
-    num_classes = 0
-    input_shape = None
-    plan = []
-
-    """
-    Conv2D kwargs defaults for information
-    -----------------------
-    conv2d_kwargs = {
-        filters,
-        kernel_size,
-        strides=(1, 1),
-        padding="valid",
-        data_format=None,
-        dilation_rate=(1, 1),
-        groups=1,
-        activation=None,
-        use_bias=True,
-        kernel_initializer="glorot_uniform",
-        bias_initializer="zeros",
-        kernel_regularizer=None,
-        bias_regularizer=None,
-        activity_regularizer=None,
-        kernel_constraint=None,
-        bias_constraint=None,
-    }
-    """
-
-    """ Layers dictionary
-    """
-    layers_dict = {
-        # Layers Main
-        1: {
-            1: "Dense",
-            2: "Conv1D",
-            3: "Conv2D",
-            4: "Conv3D",
-            5: "SeparableConv1D",
-            6: "SeparableConv2D",
-            7: "DepthwiseConv2D",
-        },
-        #   Layers UpScaling
-        2: {
-            1: "Conv1DTranspose",  # Conv1DTranspose tensorflow 2.3
-            2: "Conv2DTranspose",
-            3: "UpSampling1D",
-            4: "UpSampling2D",
-        },
-        #   Layers DownScaling
-        3: {
-            1: "MaxPooling1D",
-            2: "MaxPooling2D",
-            3: "AveragePooling1D",
-            4: "AveragePooling2D",
-        },
-        # Layers Connections
-        4: {
-            1: "Concatenate",
-            2: "Add",
-            3: "Multiply",
-        },
-        # Layers and functions Activations
-        5: {
-            1: "sigmoid",
-            2: "softmax",
-            3: "tanh",
-            4: "relu",
-            5: "LeakyReLU",
-            6: "elu",
-            7: "selu",
-            8: "PReLU",
-        },
-        # Layers Optimization
-        6: {
-            1: "Dropout",
-            2: "BatchNormalization",
-        },
-        # Layers Special
-        7: {1: "Embedding", 2: "LSTM", 3: "GRU"},
-        # Blocks
-        8: {
-            1: "Flatten",
-            2: "Reshape",
-            3: "GlobalMaxPooling1D",
-            4: "GlobalMaxPooling2D",
-            5: "GlobalAveragePooling1D",
-            6: "GlobalAveragePooling2D",
-            7: "RepeatVector",
-        },
-        # Input - Output custom layers
-        9: {
-            1: "Input",
-            2: "assignment",
-            # 3: 'out'
-        },
-    }
-
-    """ Default layers kwargs with min, max
-    param_lh: 
-        param_name_lh: (min, max), (iterable int or str) for random generator 
-    """
-    filters_lh = (1, 1024)
-    units_lh = (1, 512)
-    kernel_size_lh = (1, 7)
-    pool_size_lh = (2, 4, 6)
-    strides_lh = (2, 4, 6)
-    padding_lh = ("same", "valid")
-    activation_lh = ("relu", "sigmoid", "softmax")
-    size_lh = (2, 2)
-    rate_lh = (0.1, 0.5)
-    axis_lh = (0, 1)
-
-    """ Layers defaults 
-    """
-    # Input_defaults = \
-    #     {'shape': None,
-    #      }
-
-    Conv1D_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": 1,
-        "padding": "valid",
-        "data_format": "channels_last",
-        "dilation_rate": 1,
-        "groups": 1,
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    Conv2D_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": (1, 1),
-        "padding": "valid",
-        "data_format": None,
-        "dilation_rate": (1, 1),
-        "groups": 1,
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    Conv3D_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": (1, 1, 1),
-        "padding": "valid",
-        "data_format": None,
-        "dilation_rate": (1, 1, 1),
-        "groups": 1,
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    Conv1DTranspose_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": 1,
-        "padding": "valid",
-        "output_padding": None,
-        "data_format": None,
-        "dilation_rate": 1,
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    Conv2DTranspose_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": (1, 1),
-        "padding": "valid",
-        "output_padding": None,
-        "data_format": None,
-        "dilation_rate": (1, 1),
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    SeparableConv1D_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": 1,
-        "padding": "valid",
-        "data_format": None,
-        "dilation_rate": 1,
-        "depth_multiplier": 1,
-        "activation": None,
-        "use_bias": True,
-        "depthwise_initializer": "glorot_uniform",
-        "pointwise_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "depthwise_regularizer": None,
-        "pointwise_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "depthwise_constraint": None,
-        "pointwise_constraint": None,
-        "bias_constraint": None,
-    }
-
-    SeparableConv2D_defaults = {
-        "filters": None,
-        "kernel_size": None,
-        "strides": (1, 1),
-        "padding": "valid",
-        "data_format": None,
-        "dilation_rate": (1, 1),
-        "depth_multiplier": 1,
-        "activation": None,
-        "use_bias": True,
-        "depthwise_initializer": "glorot_uniform",
-        "pointwise_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "depthwise_regularizer": None,
-        "pointwise_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "depthwise_constraint": None,
-        "pointwise_constraint": None,
-        "bias_constraint": None,
-    }
-
-    DepthwiseConv2D_defaults = {
-        "kernel_size": None,
-        "strides": (1, 1),
-        "padding": "valid",
-        "depth_multiplier": 1,
-        "data_format": None,
-        "dilation_rate": (1, 1),
-        "activation": None,
-        "use_bias": True,
-        "depthwise_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "depthwise_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "depthwise_constraint": None,
-        "bias_constraint": None,
-    }
-
-    MaxPooling1D_defaults = {
-        "pool_size": 2,
-        "strides": None,
-        "padding": "valid",
-        "data_format": "channels_last",
-    }
-
-    MaxPooling2D_defaults = {
-        "pool_size": (2, 2),
-        "strides": None,
-        "padding": "valid",
-        "data_format": None,
-    }
-    AveragePooling1D_defaults = {
-        "pool_size": 2,
-        "strides": None,
-        "padding": "valid",
-        "data_format": None,
-    }
-
-    AveragePooling2D_defaults = {
-        "pool_size": (2, 2),
-        "strides": None,
-        "padding": "valid",
-        "data_format": None,
-    }
-
-    UpSampling1D_defaults = {"size": 2}
-
-    UpSampling2D_defaults = {
-        "size": (2, 2),
-        "data_format": None,
-        "interpolation": "nearest",
-    }
-
-    LeakyReLU_defaults = {"alpha": 0.3}
-
-    Dropout_defaults = {"rate": None, "noise_shape": None, "seed": None}
-
-    Dense_defaults = {
-        "units": None,
-        "activation": None,
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "bias_constraint": None,
-    }
-
-    Add_defaults = {}
-
-    Multiply_defaults = {}
-
-    Flatten_defaults = {"data_format": None}
-
-    Concatenate_defaults = {"axis": -1}
-
-    Reshape_defaults = {"target_shape": None}
-
-    sigmoid_defaults = {}
-
-    softmax_defaults = {}
-
-    tanh_defaults = {}
-
-    relu_defaults = {}
-
-    elu_defaults = {}
-
-    selu_defaults = {}
-
-    PReLU_defaults = {
-        "alpha_initializer": "zeros",
-        "alpha_regularizer": None,
-        "alpha_constraint": None,
-        "shared_axes": None,
-    }
-
-    GlobalMaxPooling1D_defaults = {"data_format": "channels_last"}
-
-    GlobalMaxPooling2D_defaults = {"data_format": None}
-
-    GlobalAveragePooling1D_defaults = {"data_format": "channels_last"}
-
-    GlobalAveragePooling2D_defaults = {"data_format": None}
-
-    GRU_defaults = {
-        "units": None,
-        "activation": "tanh",
-        "recurrent_activation": "sigmoid",
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "recurrent_initializer": "orthogonal",
-        "bias_initializer": "zeros",
-        "kernel_regularizer": None,
-        "recurrent_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "recurrent_constraint": None,
-        "bias_constraint": None,
-        "dropout": 0.0,
-        "recurrent_dropout": 0.0,
-        "return_sequences": False,
-        "return_state": False,
-        "go_backwards": False,
-        "stateful": False,
-        "unroll": False,
-        "time_major": False,
-        "reset_after": True,
-    }
-
-    LSTM_defaults = {
-        "units": None,
-        "activation": "tanh",
-        "recurrent_activation": "sigmoid",
-        "use_bias": True,
-        "kernel_initializer": "glorot_uniform",
-        "recurrent_initializer": "orthogonal",
-        "bias_initializer": "zeros",
-        "unit_forget_bias": True,
-        "kernel_regularizer": None,
-        "recurrent_regularizer": None,
-        "bias_regularizer": None,
-        "activity_regularizer": None,
-        "kernel_constraint": None,
-        "recurrent_constraint": None,
-        "bias_constraint": None,
-        "dropout": 0.0,
-        "recurrent_dropout": 0.0,
-        "return_sequences": False,
-        "return_state": False,
-        "go_backwards": False,
-        "stateful": False,
-        "unroll": False,
-    }
-
-    Embedding_defaults = {
-        "input_dim": None,
-        "output_dim": None,
-        "embeddings_initializer": "uniform",
-        "embeddings_regularizer": None,
-        "activity_regularizer": None,
-        "embeddings_constraint": None,
-        "mask_zero": False,
-        "input_length": None,
-    }
-
-    RepeatVector_defaults = {
-        "n": None,
-    }
-    pass
+from .layers_dataclasses import LayersDef, GUILayersDef
 
 
 class StatesData:
@@ -522,338 +83,105 @@ class StatesData:
         self.padding_values = ["valid", "same"]
 
         # dict of layers attributes in format for front
-        self.layers_params = {
-            "Input": {"main": {}, "extra": {}},
-            "Conv1D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
+        self.layers_params_source = GUILayersDef
+        self.layers_params = self.layers_params_source.layers_params
+
+        self.states_for_outputs = {
+            "classification": {
+                "losses": [
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson",
+                ]
             },
-            "Conv2D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
+            "segmentation": {
+                "losses": [
+                    "dice_coef",
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson",
+                ],
+                "metrics": [
+                    "dice_coef",
+                    "meanIoU",
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson",
+                ]
             },
-            "Conv3D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
+            "regression": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mae",
+                    "mse",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
             },
-            "Conv1DTranspose": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "Conv2DTranspose": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "SeparableConv1D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "int", "default": None},
-                        "strides": {"type": "int", "default": 1},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "SeparableConv2D": {
-                "main":
-                    {
-                        "filters": {"type": "int", "default": None},
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "DepthwiseConv2D": {
-                "main":
-                    {
-                        "kernel_size": {"type": "tuple", "default": None},
-                        "strides": {"type": "tuple", "default": (1, 1)},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "MaxPooling1D": {
-                "main":
-                    {
-                        "pool_size": {"type": "int", "default": 2},
-                        "strides": {"type": "int", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "MaxPooling2D": {
-                "main":
-                    {
-                        "pool_size": {"type": "tuple", "default": (2, 2)},
-                        "strides": {"type": "tuple", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "AveragePooling1D": {
-                "main":
-                    {
-                        "pool_size": {"type": "int", "default": 2},
-                        "strides": {"type": "int", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "AveragePooling2D": {
-                "main":
-                    {
-                        "pool_size": {"type": "tuple", "default": (2, 2)},
-                        "strides": {"type": "tuple", "default": None},
-                        "padding": {
-                            "type": "str",
-                            "default": "valid",
-                            "list": True,
-                            "available": self.padding_values,
-                        },
-                    },
-                'extra': {}
-            },
-            "UpSampling1D": {
-                "main":
-                    {"size": {"type": "int", "default": 2}},
-                'extra': {}
-            },
-            "UpSampling2D": {
-                "main":
-                    {"size": {"type": "tuple", "default": (2, 2)}},
-                'extra': {}
-            },
-            "LeakyReLU": {
-                "main":
-                    {"alpha": {"type": "float", "default": 0.3}},
-                'extra': {}
-            },
-            "Dropout": {
-                "main":
-                    {"rate": {"type": "float", "default": None}},
-                'extra': {}
-            },
-            "Dense": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "activation": {
-                            "type": "str",
-                            "default": None,
-                            "list": True,
-                            "available": self.activation_values,
-                        },
-                        "use_bias": {"type": "bool", "default": True},
-                    },
-                'extra': {}
-            },
-            "Add": {'main': {}, 'extra': {}},
-            "Multiply": {'main': {}, 'extra': {}},
-            "Flatten": {'main': {}, 'extra': {}},
-            "Concatenate": {'main': {}, 'extra': {}},
-            "Reshape": {'main': {}, 'extra': {}},
-            "sigmoid": {'main': {}, 'extra': {}},
-            "softmax": {'main': {}, 'extra': {}},
-            "tanh": {'main': {}, 'extra': {}},
-            "relu": {'main': {}, 'extra': {}},
-            "elu": {'main': {}, 'extra': {}},
-            "selu": {'main': {}, 'extra': {}},
-            "PReLU": {'main': {}, 'extra': {}},
-            "GlobalMaxPooling1D": {'main': {}, 'extra': {}},
-            "GlobalMaxPooling2D": {'main': {}, 'extra': {}},
-            "GlobalAveragePooling1D": {'main': {}, 'extra': {}},
-            "GlobalAveragePooling2D": {'main': {}, 'extra': {}},
-            "GRU": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "dropout": {"type": "float", "default": 0.0},
-                        "recurrent_dropout": {"type": "float", "default": 0.0},
-                        "return_sequences": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                        "return_state": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                    },
-                'extra': {}
-            },
-            "LSTM": {
-                "main":
-                    {
-                        "units": {"type": "int", "default": None},
-                        "dropout": {"type": "float", "default": 0.0},
-                        "recurrent_dropout": {"type": "float", "default": 0.0},
-                        "return_sequences": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                        "return_state": {
-                            "type": "bool",
-                            "default": False,
-                            "list": True,
-                            "available": [False, True],
-                        },
-                    },
-                'extra': {}
-            },
-            "Embedding": {
-                "main":
-                    {
-                        "input_dim": {"type": "int", "default": None},
-                        "output_dim": {"type": "int", "default": None},
-                        "input_length": {"type": "int", "default": None},
-                    },
-                'extra': {}
-            },
-            "RepeatVector": {
-                "main":
-                    {"n": {"type": "int", "default": None}},
-                'extra': {}
+            "timeseries": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
             },
         }
+
         self.callback_show_options_switches_front = {
             "classification": {
                 "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
@@ -1063,6 +391,32 @@ class Exchange(StatesData, GuiExch):
         """
         return self.loss
 
+    def get_states_for_outputs(self) -> dict:
+        """
+        This method send some parametres for output layers, such as losses, metrics and tasks
+        For example:
+        "timeseries": {
+                "losses": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                ]
+            },
+        :return: dict of parameteres
+        """
+        return self.states_for_outputs
+
     def get_epochs_from_django(self):
         """
         Get epochs q-ty to set it in terra
@@ -1257,8 +611,10 @@ class Exchange(StatesData, GuiExch):
             data_name = data['data_name']
             if layer_type == 'Input':
                 input_shape = list(self.dts.input_shape[name])
+                location = 'input'
             else:
                 input_shape = []
+                location = 'out'
             current_layer = {
                 "name": layer_name,
                 "type": layer_type if layer_type == 'Input' else 'Dense',
@@ -1269,9 +625,9 @@ class Exchange(StatesData, GuiExch):
                     0
                 ],
                 "inp_shape": input_shape,
-                "out_shape": []
+                "out_shape": [],
+                "location_type": location
             }
-            print('CUR_LAYER: ', current_layer)
             self.start_layers[idx] = current_layer
             self.layers_data_state[idx] = {"data_name": data_name, "data_available": available}
 
@@ -1563,5 +919,5 @@ class Exchange(StatesData, GuiExch):
 
 if __name__ == "__main__":
     b = Exchange()
-    b.prepare_dataset(dataset_name="заболевания", task_type="classification")
+    b.prepare_dataset(dataset_name="mnist", task_type="classification")
     pass
