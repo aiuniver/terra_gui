@@ -24,7 +24,7 @@ class GUINN:
 
         self.Exch = exch_obj
         self.DTS = None
-        self.callbacks = None
+        self.callbacks = []
         """
         For testing in different setups and environment
         """
@@ -271,6 +271,38 @@ class GUINN:
         self.experiment_name = experiment_name
         pass
 
+    # def load_dataset(self, dataset_obj: trds.DTS, task_type: str) -> None:
+    #     """
+    #     Load dataset object
+    #
+    #     Args:
+    #         dataset_obj (object):   trds.DTS dataset object
+    #         task_type (str):        task type for NN
+    #
+    #     Returns:
+    #         None
+    #     """
+    #     # print('___nn___NN___load_dataset___', task_type)
+    #     self.DTS = dataset_obj
+        self.input_datatype = self.DTS.input_datatype
+    #     self._reinit(task_type)
+    #     pass
+    #
+    # def _reinit(self, task_type) -> None:
+    #     # print('___nn___NN___reinit___', task_type)
+    #     self.set_task_type(task_type)
+    #     self.set_experiment_UUID()
+    #     if self.django_flag:
+    #         task_type_defaults_kwargs = self.task_type_defaults_dict.get(task_type)
+    #         self.Exch.set_task_type_defaults(task_type_defaults_kwargs)
+    #     self._reset()
+    #     pass
+    #
+    # def _reset(self):
+    #     # print('___nn___NN___reset___')
+    #     self.callbacks = []
+    #     pass
+
     def show_training_params(self) -> None:
         """
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
@@ -344,17 +376,17 @@ class GUINN:
         for input_key in self.DTS.X.keys():
 
             self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
-            if self.DTS.X[input_key]['data'][1] != None:
+            if self.DTS.X[input_key]['data'][1] is not None:
                 self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-            if self.DTS.X[input_key]['data'][2] != None:
+            if self.DTS.X[input_key]['data'][2] is not None:
                 self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
 
         for output_key in self.DTS.Y.keys():
 
             self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
-            if self.DTS.Y[output_key]['data'][1] != None:
+            if self.DTS.Y[output_key]['data'][1] is not None:
                 self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
-            if self.DTS.Y[output_key]['data'][2] != None:
+            if self.DTS.Y[output_key]['data'][2] is not None:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
