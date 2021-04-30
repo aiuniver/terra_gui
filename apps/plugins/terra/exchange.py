@@ -1,4 +1,5 @@
 import json
+import copy
 import requests
 
 from django.conf import settings
@@ -60,6 +61,38 @@ class TerraExchange:
                 success=False, error=response.json().get("detail")
             )
 
+    def __prepare_layers(self, layers: dict) -> dict:
+        def get_down_link_list(index):
+            output = []
+            for item_index, item in layers.items():
+                if int(index) in item.get("config").get("up_link"):
+                    output.append(int(item_index))
+            return output
+
+        for index, layer in layers.items():
+            config = layer.get("config", {})
+            params = config.get("params", {})
+            if "id" not in layer:
+                layer["id"] = int(index)
+            if "index" not in layer:
+                layer["index"] = int(index)
+            if "type" not in layer:
+                layer["type"] = config.get("location_type")
+            if "down_link" not in layer:
+                layer["down_link"] = get_down_link_list(index)
+            param_conf = colab_exchange.layers_params.get(config.get("type"), {})
+            for group_name, group in param_conf.items():
+                if group_name not in params:
+                    params[group_name] = {}
+                for param_name, param in group.items():
+                    if param_name not in params[group_name]:
+                        params[group_name][param_name] = param.get("default")
+                    elif isinstance(params[group_name][param_name], dict):
+                        params[group_name][param_name] = params[group_name][
+                            param_name
+                        ].get("default")
+        return layers
+
     def call(self, *args, **kwargs) -> TerraExchangeResponse:
         if len(args) != 1:
             raise TerraExchangeException(
@@ -83,14 +116,58 @@ class TerraExchange:
     def _call_prepare_dataset(
         self, dataset: str, task: str, is_custom: bool = False
     ) -> TerraExchangeResponse:
-        response = colab_exchange.prepare_dataset(
+        tags, name, start_layers, layers_data_state = colab_exchange.prepare_dataset(
             dataset_name=dataset,
             task_type=task,
             source="custom" if is_custom else "",
         )
+        if not len(start_layers.keys()):
+            start_layers[1] = {
+                "name": f"l1_Input",
+                "type": "Input",
+                "location_type": "input",
+                "params": {"main": {}, "extra": {}},
+                "up_link": [],
+                "inp_shape": [],
+                "out_shape": [],
+            }
+            start_layers[2] = {
+                "name": f"l2_Dense",
+                "type": "Dense",
+                "location_type": "out",
+                "params": {"main": {}, "extra": {}},
+                "up_link": [],
+                "inp_shape": [],
+                "out_shape": [],
+            }
+
+        layers = {}
+        schema = [[], []]
+        for index, layer in start_layers.items():
+            schema[int(layer.get("type") != "Input")].append(index)
+            if not len(layer.get("params", {}).keys()):
+                layer["params"] = {"main": {}, "extra": {}}
+            layers[index] = {
+                "id": index,
+                "index": index,
+                "config": layer,
+                "type": layer.get("location_type"),
+            }
+
+        self.__project.layers = self.__prepare_layers(layers)
+        self.__project.schema = schema
+        self.__project.start_layers = start_layers
         self.__project.dataset = dataset
         self.__project.task = task
-        return TerraExchangeResponse(data=response)
+        return TerraExchangeResponse(
+            data={
+                "layers": self.__project.layers,
+                "schema": self.__project.schema,
+                "dataset": self.__project.dataset,
+                "task": self.__project.task,
+                "start_layers": self.__project.start_layers,
+            }
+        )
 
     def _call_get_data(self) -> TerraExchangeResponse:
         response = colab_exchange.get_data()
@@ -108,10 +185,11 @@ class TerraExchange:
         layers = {}
         for index, layer in data.data.get("layers").items():
             layers[index] = {"config": layer}
-        data.data.update({"layers": layers})
+        data.data.update({"layers": self.__prepare_layers(layers)})
         return data
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
+        print(layers)
         for index, layer in layers.items():
             params = layer.get("config").get("params", None)
             params = params if params else {}
@@ -124,37 +202,69 @@ class TerraExchange:
                     params.update({name: param})
             layer["config"].update({"params": params})
             layers[index] = layer
-        self.__project.layers = layers
+
+        if not layers:
+            schema = [[], []]
+            for index, layer in self.__project.start_layers.items():
+                schema[int(layer.get("type") != "Input")].append(index)
+                if not len(layer.get("params", {}).keys()):
+                    layer["params"] = {"main": {}, "extra": {}}
+                layers[index] = {
+                    "id": index,
+                    "index": index,
+                    "config": layer,
+                    "type": layer.get("location_type"),
+                }
+
+        self.__project.layers = self.__prepare_layers(layers)
         self.__project.schema = schema
-        return TerraExchangeResponse(data={"layers": layers, "schema": schema})
+        return TerraExchangeResponse(
+            data={"layers": self.__project.layers, "schema": schema}
+        )
+
+    def _call_clear_model(self) -> TerraExchangeResponse:
+        layers = {}
+        schema = [[], []]
+        for index, layer in self.__project.start_layers.items():
+            schema[int(layer.get("type") != "Input")].append(index)
+            if not len(layer.get("params", {}).keys()):
+                layer["params"] = {"main": {}, "extra": {}}
+            layers[index] = {
+                "id": index,
+                "index": index,
+                "config": layer,
+                "type": layer.get("location_type"),
+            }
+
+        self.__project.layers = self.__prepare_layers(layers)
+        self.__project.schema = schema
+        return TerraExchangeResponse(
+            data={"layers": self.__project.layers, "schema": schema}
+        )
 
     def _call_set_input_layer(self) -> TerraExchangeResponse:
         response = self.__request_post("set_input_layer")
-        self.__project.layers = response.data.get("layers")
+        self.__project.layers = self.__prepare_layers(response.data.get("layers"))
         return response
 
     def _call_set_any_layer(self, layer_type: str = "any") -> TerraExchangeResponse:
         response = self.__request_post("set_any_layer", layer_type=layer_type)
-        self.__project.layers = response.data.get("layers")
+        self.__project.layers = self.__prepare_layers(response.data.get("layers"))
         return response
 
     def _call_save_layer(self, **kwargs) -> TerraExchangeResponse:
-        self.__project.layers[str(kwargs.get("id"))] = kwargs
+        layers = self.__project.layers
+        layers[str(kwargs.get("id"))] = kwargs
+        self.__project.layers = self.__prepare_layers(layers)
         return TerraExchangeResponse(data=self.__project.layers)
 
     def _call_get_change_validation(self) -> TerraExchangeResponse:
         layers = {}
         for index, layer in self.__project.layers.items():
-            config = layer.get("config")
-            params = {}
-            for name, param in config.get("params", {}).items():
-                params[name] = param.get("default")
-            config.update({"params": params})
+            config = copy.deepcopy(layer.get("config"))
             layers[str(index)] = config
         if layers:
-            response = self.__request_post("get_change_validation", layers=layers)
-            # self.__project.layers = response.data.get("layers")
-            return response
+            return self.__request_post("get_change_validation", layers=layers)
         else:
             return TerraExchangeResponse()
 

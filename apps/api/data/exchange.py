@@ -27,7 +27,7 @@ class ExchangeData:
                 self.error = response.error
             except Exception as error:
                 self.success = False
-                self.error = str(error)
+                self.error = f"[{error.__class__.__name__}] {error}"
         else:
             self.success = False
             self.error = f"Method «{name}» is undefined"
@@ -49,6 +49,9 @@ class ExchangeData:
 
     def _execute_set_model(self, **kwargs):
         return terra_exchange.call("set_model", **kwargs)
+
+    def _execute_clear_model(self, **kwargs):
+        return terra_exchange.call("clear_model", **kwargs)
 
     def _execute_set_input_layer(self, **kwargs):
         return terra_exchange.call("set_input_layer", **kwargs)

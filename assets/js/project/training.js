@@ -184,7 +184,7 @@
 
     $(() => {
 
-        if (!window.TerraProject.dataset || !window.TerraProject.task) {
+        if (!window.TerraProject.dataset) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,
