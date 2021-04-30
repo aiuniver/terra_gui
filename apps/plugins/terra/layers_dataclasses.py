@@ -642,7 +642,7 @@ class GUILayersDef:
                     "list": True,
                     "available": LayersDef.data_format_lh,
                 },
-                "dilation_rate": {"type": "int", "default": 1},  # has exceptions
+                "dilation_rate": {"type": "tuple", "default": (1, 1)},  # has exceptions
                 "groups": {"type": "int", "default": 1},  # has exceptions,
                 "use_bias": {
                         "type": "bool",
