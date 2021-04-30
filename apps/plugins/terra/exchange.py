@@ -189,19 +189,29 @@ class TerraExchange:
         return data
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
-        print(layers)
-        for index, layer in layers.items():
-            params = layer.get("config").get("params", None)
-            params = params if params else {}
-            for name, param in params.items():
-                if param.get("type") == "tuple" and isinstance(
-                    param.get("default"), list
-                ):
-                    default = list(map(lambda value: str(value), param.get("default")))
-                    param.update({"default": ",".join(default)})
-                    params.update({name: param})
-            layer["config"].update({"params": params})
-            layers[index] = layer
+        # for index, layer in layers.items():
+        #     params = layer.get("config").get("params", None)
+        #     params = params if params else {}
+        #     for group_name, group in params.items():
+        #         for name, param in group.items():
+        #             try:
+        #                 param_type = (
+        #                     colab_exchange.layers_params.get(
+        #                         layer.get("config").get("type")
+        #                     )
+        #                     .get(group_name)
+        #                     .get(name)
+        #                     .get("type")
+        #                 )
+        #                 if param_type == "tuple" and isinstance(
+        #                     param.get("default"), (list, tuple)
+        #                 ):
+        #                     default = list(
+        #                         map(lambda value: str(value), param.get("default"))
+        #                     )
+        #                     param.update({"default": ",".join(default)})
+        #             except Exception as error:
+        #                 continue
 
         if not layers:
             schema = [[], []]
@@ -261,9 +271,22 @@ class TerraExchange:
     def _call_get_change_validation(self) -> TerraExchangeResponse:
         layers = {}
         for index, layer in self.__project.layers.items():
-            config = copy.deepcopy(layer.get("config"))
+            config = layer.get("config")
             layers[str(index)] = config
         if layers:
+            for index, layer in layers.items():
+                groups = layer.get("params", {})
+                for group_name, group in groups.items():
+                    for param_name, param in group.items():
+                        param_type = (
+                            colab_exchange.layers_params.get(layer.get("type"))
+                            .get(group_name)
+                            .get(param_name)
+                            .get("type")
+                        )
+                        if param_type == "tuple" and isinstance(param, (tuple, list)):
+                            param = list(map(lambda value: str(value), param))
+                            group[param_name] = ",".join(param)
             return self.__request_post("get_change_validation", layers=layers)
         else:
             return TerraExchangeResponse()
