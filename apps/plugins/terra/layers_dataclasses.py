@@ -533,22 +533,18 @@ class GUILayersDef:
                       # "sparse": {
                       #     "type": "bool",
                       #     "default": False,
-                      #     "list": True,
-                      #     "available": [False, True],
                       # },
                       # "tensor": {"type": "tensor", "default": None},
                       # "ragged": {
                       #     "type": "bool",
                       #     "default": False,
-                      #     "list": True,
-                      #     "available": [False, True],
                       }
                   },
         "Conv1D": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "int", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "int", "default": 1},
                     "strides": {"type": "int", "default": 1},
                     "padding": {
                         "type": "str",
@@ -575,8 +571,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "kernel_initializer": {
                     "type": "str",
@@ -625,8 +619,8 @@ class GUILayersDef:
         "Conv2D": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "tuple", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "tuple", "default": (1, 1)},
                     "strides": {"type": "tuple", "default": (1, 1)},
                     "padding": {
                         "type": "str",
@@ -649,12 +643,10 @@ class GUILayersDef:
                     "available": LayersDef.data_format_lh,
                 },
                 "dilation_rate": {"type": "int", "default": 1},  # has exceptions
-                "groups": {"type": "tuple", "default": (1, 1)},  # has exceptions,
+                "groups": {"type": "int", "default": 1},  # has exceptions,
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "kernel_initializer": {
                     "type": "str",
@@ -703,8 +695,8 @@ class GUILayersDef:
         "Conv3D": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "tuple", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "tuple", "default": (1, 1, 1)},
                     "strides": {"type": "tuple", "default": (1, 1, 1)},
                     "padding": {
                         "type": "str",
@@ -731,8 +723,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "kernel_initializer": {
                     "type": "str",
@@ -781,8 +771,8 @@ class GUILayersDef:
         "Conv1DTranspose": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "int", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "int", "default": 1},
                     "strides": {"type": "int", "default": 1},
                     "padding": {
                         "type": "str",
@@ -809,8 +799,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "kernel_initializer": {
                     "type": "str",
@@ -859,8 +847,8 @@ class GUILayersDef:
         "Conv2DTranspose": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "tuple", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "tuple", "default": (1, 1)},
                     "strides": {"type": "tuple", "default": (1, 1)},
                     "padding": {
                         "type": "str",
@@ -887,8 +875,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "kernel_initializer": {
                     "type": "str",
@@ -937,8 +923,8 @@ class GUILayersDef:
         "SeparableConv1D": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "int", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "int", "default": 1},
                     "strides": {"type": "int", "default": 1},
                     "padding": {
                         "type": "str",
@@ -965,8 +951,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "depthwise_initializer": {
                     "type": "str",
@@ -1033,8 +1017,8 @@ class GUILayersDef:
         "SeparableConv2D": {
             "main":
                 {
-                    "filters": {"type": "int", "default": None},
-                    "kernel_size": {"type": "tuple", "default": None},
+                    "filters": {"type": "int", "default": 32},
+                    "kernel_size": {"type": "tuple", "default": (1, 1)},
                     "strides": {"type": "tuple", "default": (1, 1)},
                     "padding": {
                         "type": "str",
@@ -1061,8 +1045,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "depthwise_initializer": {
                     "type": "str",
@@ -1129,7 +1111,7 @@ class GUILayersDef:
         "DepthwiseConv2D": {
             "main":
                 {
-                    "kernel_size": {"type": "tuple", "default": None},
+                    "kernel_size": {"type": "tuple", "default": (1, 1)},
                     "strides": {"type": "tuple", "default": (1, 1)},
                     "padding": {
                         "type": "str",
@@ -1156,8 +1138,6 @@ class GUILayersDef:
                 "use_bias": {
                         "type": "bool",
                         "default": True,
-                        "list": True,
-                        "available": [False, True],
                     },
                 "depthwise_initializer": {
                     "type": "str",
@@ -1317,7 +1297,7 @@ class GUILayersDef:
         },
         "Dropout": {
             "main":
-                {"rate": {"type": "float", "default": None}},
+                {"rate": {"type": "float", "default": 0.1}},
             'extra': {
                 "noise_shape": {"type": "tensor", "default": None},
                 "seed": {"type": "int", "default": None}
@@ -1326,7 +1306,7 @@ class GUILayersDef:
         "Dense": {
             "main":
                 {
-                    "units": {"type": "int", "default": None},
+                    "units": {"type": "int", "default": 32},
                     "activation": {
                         "type": "str",
                         "default": None,
@@ -1338,8 +1318,6 @@ class GUILayersDef:
                 "use_bias": {
                     "type": "bool",
                     "default": True,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "kernel_initializer": {
                     "type": "str",
@@ -1475,18 +1453,14 @@ class GUILayersDef:
         "GRU": {
             "main":
                 {
-                    "units": {"type": "int", "default": None},
+                    "units": {"type": "int", "default": 32},
                     "return_sequences": {
                         "type": "bool",
                         "default": False,
-                        "list": True,
-                        "available": [False, True],
                     },
                     "return_state": {
                         "type": "bool",
                         "default": False,
-                        "list": True,
-                        "available": [False, True],
                     },
                 },
             'extra': {
@@ -1505,8 +1479,6 @@ class GUILayersDef:
                 "use_bias": {
                     "type": "bool",
                     "default": True,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "kernel_initializer": {
                     "type": "str",
@@ -1573,50 +1545,36 @@ class GUILayersDef:
                 "go_backwards": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "stateful": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "time_major": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "unroll": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "reset_after": {
                     "type": "bool",
                     "default": True,
-                    "list": True,
-                    "available": [False, True],
                 }
             }
         },
         "LSTM": {
             "main":
                 {
-                    "units": {"type": "int", "default": None},
+                    "units": {"type": "int", "default": 32},
                     "return_sequences": {
                         "type": "bool",
                         "default": False,
-                        "list": True,
-                        "available": [False, True],
                     },
                     "return_state": {
                         "type": "bool",
                         "default": False,
-                        "list": True,
-                        "available": [False, True],
                     },
                 },
             'extra': {
@@ -1635,8 +1593,6 @@ class GUILayersDef:
                 "use_bias": {
                     "type": "bool",
                     "default": True,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "kernel_initializer": {
                     "type": "str",
@@ -1659,8 +1615,6 @@ class GUILayersDef:
                 "unit_forget_bias": {
                     "type": "bool",
                     "default": True,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "kernel_regularizer": {
                     "type": "str",
@@ -1709,26 +1663,18 @@ class GUILayersDef:
                 "go_backwards": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "stateful": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "time_major": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 },
                 "unroll": {
                     "type": "bool",
                     "default": False,
-                    "list": True,
-                    "available": [False, True],
                 }
             }
         },
@@ -1769,7 +1715,7 @@ class GUILayersDef:
         },
         "RepeatVector": {
             "main":
-                {"n": {"type": "int", "default": None}},
+                {"n": {"type": "int", "default": 8}},
             'extra': {}
         },
         "BatchNormalization ": {
@@ -1781,14 +1727,10 @@ class GUILayersDef:
                 # "center": {
                 #         "type": "bool",
                 #         "default": True,
-                #         "list": True,
-                #         "available": [False, True],
                 #     },
                 # "scale": {
                 #         "type": "bool",
                 #         "default": True,
-                #         "list": True,
-                #         "available": [False, True],
                 #     },
                 # "beta_initializer": {
                 #     "type": "str",
@@ -1841,22 +1783,16 @@ class GUILayersDef:
                 # "renorm": {
                 #         "type": "bool",
                 #         "default": False,
-                #         "list": True,
-                #         "available": [False, True],
                 #     },
                 # "renorm_clipping": {"type": "dict", "default": None},
                 # "renorm_momentum": {"type": "float", "default": 0.99},
                 # "fused": {
                 #         "type": "bool",
-                #         "default": None,
-                #         "list": True,
-                #         "available": [False, True, None],
+                #         "default": False,
                 #     },
                 # "trainable": {
                 #         "type": "bool",
                 #         "default": True,
-                #         "list": True,
-                #         "available": [False, True],
                 #     },
                 # "virtual_batch_size": {"type": "int", "default": None},
                 # "adjustment": {"type": "func", "default": None},
