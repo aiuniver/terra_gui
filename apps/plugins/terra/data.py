@@ -35,6 +35,7 @@ class TerraExchangeProject:
     layers_types: list
     optimizers: list
     callbacks: dict
+    compile: dict
     path: dict
 
     def __init__(self, **kwargs):
@@ -51,6 +52,7 @@ class TerraExchangeProject:
         self.layers_types = kwargs.get("layers_types", [])
         self.optimizers = kwargs.get("optimizers", [])
         self.callbacks = kwargs.get("callbacks", {})
+        self.compile = kwargs.get("compile", {})
         self.path = {
             "datasets": reverse_lazy("apps_project:datasets"),
             "modeling": reverse_lazy("apps_project:modeling"),
@@ -72,6 +74,7 @@ class TerraExchangeProject:
     layers_types : {len(self.layers_types)}
     optimizers   : {len(self.optimizers)}
     callbacks    : {len(self.callbacks.keys())}
+    compile      : {len(self.compile.keys())}
     path         : datasets -> {self.path.get("modeling", UNDEFINED)}
                    modeling -> {self.path.get("modeling", UNDEFINED)}
                    training -> {self.path.get("training", UNDEFINED)}"""

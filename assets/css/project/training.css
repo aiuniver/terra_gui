@@ -245,7 +245,7 @@
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.opacity{
     display: block;
-    opacity: 0;
+    /*opacity: 0;*/
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.active {
     display:block;
@@ -261,10 +261,12 @@
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container,
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container{
     height:100%;
+    flex-wrap: nowrap;
+    overflow: auto;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
-    width:33.33335%;
+    width:50%;
     height: 100%;
     overflow: hidden;
 }
@@ -306,11 +308,11 @@
 }
 
 .output-params-block{
-    width: 300px;
+    min-width: 500px;
 }
 
 .output-block{
-    margin-top: 12px;
+    margin-top: 5px;
 }
 
 .output-block > span{
@@ -338,9 +340,21 @@
     padding: 0;
 }
 
+.output-item{
+    display: flex;
+    padding: 5px;
+    padding-bottom: 10px;
+}
+
+.output-block{
+    padding: 0 10px;
+}
+
+#optimazer-button{
+    width: 170px;
+}
 
 
-/*
 .page-3-grid{
     display: flex;
     flex-direction: column;
@@ -556,13 +570,94 @@
 }
 
 .graph{
-    width: 30%;
+    display: flex;
+    width: 50%;
     min-width: 450px;
     padding-left: 40px;
     padding-top: 40px;
     padding-right: 40px;
     box-sizing: border-box;
 }
+
+@media (max-width: 575.98px) {
+    .graph{
+        position: relative;
+        width: 100%;
+        min-width: 450px;
+        padding-left: 40px;
+        padding-top: 40px;
+        padding-right: 40px;
+        box-sizing: border-box;
+    }
+
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
+        width:100%;
+    }
+}
+
+@media @media (min-width: 576px) and (max-width: 767.98px) {
+    .graph{
+        width: 50%;
+        min-width: 450px;
+        padding-left: 40px;
+        padding-top: 40px;
+        padding-right: 40px;
+    }
+
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
+        width: 50%;
+    }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .graph{
+        width: 50%;
+        min-width: 450px;
+        padding-left: 40px;
+        padding-top: 40px;
+        padding-right: 40px;
+    }
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
+        width: 40%;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .graph{
+        width: 50%;
+        min-width: 450px;
+        padding-left: 40px;
+        padding-top: 40px;
+        padding-right: 40px;
+    }
+
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
+        width: 50vw;
+    }
+}
+
+@media (min-width: 1200px) {
+     .graph{
+        width: 50%;
+        min-width: 450px;
+        padding-left: 40px;
+        padding-top: 40px;
+        padding-right: 40px;
+    }
+
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,
+    .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container > *{
+        width:50vw;
+    }
+}
+
+
+
+
 .graph:nth-child(2n){
     border-left: 1px solid #0E1621;
     border-right: 1px solid #0E1621;
@@ -642,4 +737,4 @@
     background-color: #17212B;
     border: none;
 }
-*/
+

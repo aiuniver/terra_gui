@@ -17,8 +17,9 @@
             <div class="params-container optimazer-block">
                 <div class="params-item">
                     <div class="inner">
+                    <div class="params-title">Оптимизатор</div>
                         <div class="field-form">
-                            <label for="optimazer">Оптимизатор:</label>
+{#                            <label for="optimazer">Оптимизатор:</label>#}
                             <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
                                 <option value=""></option>
                                 {% for optimizer in request.terra_project.optimizers %}
@@ -46,31 +47,57 @@
                 </div>
             </div>
             <div class="params-container output-params-block custom-scrollbar-wrapper">
-                <div class="params-title">Параметры OutputName1:</div>
-                <div class="params-item">
-                    <div class="field-form output-block">
-                        <label for="output-task">Задача:</label>
-                            <select id="output-task" name="output-task" class="jquery-ui-menuselect output-select">
-                                <option value="">Param</option>
-                                <option value="">fwe</option>
-                            </select>
-                    </div>
-                    <div class="field-form output-block">
-                        <label for="output-loss">Loss:</label>
-                            <select id="output-loss" name="output-loss" class="jquery-ui-menuselect output-select">
-                                <option value="">Param</option>
-                                <option value="">fwe</option>
-                            </select>
-                    </div>
-                    <div class="field-form output-block">
-                        <label for="output-metric">Metric:</label>
-                            <select id="output-metric" name="output-metric" class="jquery-ui-menuselect output-select">
-                                <option value="">Param</option>
-                                <option value="">fwe</option>
-                            </select>
-                    </div>
-                </div>
+                {% for name, layer in request.terra_project.layers.items %}
+                    {% if layer.type == "output" %}
+                        <div class="params-title">Параметры Output-{{ layer.config.name }}</div>
+                        <div class="output-item" id="output-{{ layer.config.name }}">
+                            <div class="field-form output-block select-task">
+                                <label for="output-{{ layer.config.name }}-task">Задача:</label>
+                                    <select id="output-{{ layer.config.name }}-task" name="output-{{ layer.config.name }}-task" class="jquery-ui-menuselect output-select">
+                                        {% for name, classification in request.terra_project.compile.items %}
+                                            <option value="{{ name }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                            </div>
+                            <div class="field-form field-inline output-block select-loss">
+                                <label for="output-{{ layer.config.name }}-loss">Loss:</label>
+                                    <select id="output-{{ layer.config.name }}-loss" name="output-{{ layer.config.name }}-loss" class="jquery-ui-menuselect output-select">
+
+                                    </select>
+                            </div>
+                            <div class="field-form field-inline output-block select-metric">
+                                <label for="output-{{ layer.config.name }}-metric">Metric:</label>
+                                    <select id="output-{{ layer.config.name }}-metric" name="output-{{ layer.config.name }}-metric" class="jquery-ui-menuselect output-select">
+                                    </select>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
+{#                <div class="params-title">Параметры OutputName1:</div>#}
+{#                <div class="params-item">#}
+{#                    <div class="field-form output-block">#}
+{#                        <label for="output-task">Задача:</label>#}
+{#                            <select id="output-task" name="output-task" class="jquery-ui-menuselect output-select">#}
+{#                                <option value="">Param</option>#}
+{#                                <option value="">fwe</option>#}
+{#                            </select>#}
+{#                    </div>#}
+{#                    <div class="field-form output-block">#}
+{#                        <label for="output-loss">Loss:</label>#}
+{#                            <select id="output-loss" name="output-loss" class="jquery-ui-menuselect output-select">#}
+{#                                <option value="">Param</option>#}
+{#                                <option value="">fwe</option>#}
+{#                            </select>#}
+{#                    </div>#}
+{#                    <div class="field-form output-block">#}
+{#                        <label for="output-metric">Metric:</label>#}
+{#                            <select id="output-metric" name="output-metric" class="jquery-ui-menuselect output-select">#}
+{#                                <option value="">Param</option>#}
+{#                                <option value="">fwe</option>#}
+{#                            </select>#}
+{#                    </div>#}
+{#                </div>#}
             <div class="params-container callback-params-block">
                 <div class="params-item">
                     <!--
@@ -85,6 +112,7 @@
                     </div>
                     -->
                     <div class="inner form-inline-label callbacks-switchers">
+                        <div class="params-title">Выводить</div>
                         {% for name, callback in request.terra_project.callbacks.items %}
                             <div class="field-form field-inline">
                                 <label for="callback-{{ name }}">{{ callback.label }}:</label>
@@ -122,7 +150,8 @@
                 <div class="tabs-content">
                     <div class="inner">
                         <div class="tabs-item graphs">
-                            <div class="tab-container flexbox-center-nowrap"></div>
+                            <div class="tab-container flexbox-center-nowrap">
+                            </div>
                         </div>
                         <div class="tabs-item images custom-scrollbar-wrapper">
                             <div class="tab-container"></div>

@@ -92,10 +92,13 @@
 
 
     let DrawGraph = (plotName, container, data_needed_format) => {
+
         for (let i = 0; i < data_needed_format[plotName].length; i++) {
             let div = document.createElement("div");
             div.className = "graph";
             div.innerHTML = `<div class="data-visualizer" style="width: 100%; height: 100%"></div>`;
+
+            console.log(data_needed_format[plotName][i]["list"])
 
             container.append(div);
 
@@ -312,9 +315,9 @@
                         let dataLen = Object.keys(data.data).length;
                         let dataEntries = Object.entries(data.data);
                         let column = Math.ceil(dataLen / 2)
-                        $(".params-optimazer-block .params-item").append(`
-                            <div class="inner form-inline-label inner-col-1"></div>
-                        `);
+                        // $(".params-optimazer-block .params-item").append(`
+                        //     <div class="inner form-inline-label inner-col-1"></div>
+                        // `);
                         dataEntries.forEach(([key, param], index) => {
                             let is_boolean = param.type === 'bool';
                             let widget = window.FormWidget(key, {
@@ -327,11 +330,12 @@
                             });
                             widget.addClass("field-inline");
 
-                            if (index < column && dataLen > 4) {
-                                $(".params-optimazer-block .inner.inner-col-0").append(widget);
-                            } else {
-                                $(".params-optimazer-block .inner.inner-col-1").append(widget);
-                            }
+                            // if (index < column && dataLen > 4) {
+                            //     $(".params-optimazer-block .inner.inner-col-0").append(widget);
+                            // } else {
+                            //     $(".params-optimazer-block .inner.inner-col-1").append(widget);
+                            // }
+                            $(".params-optimazer-block .inner.inner-col-0").append(widget);
                         });
                     } else {
                         window.StatusBar.message(data.error, false);
@@ -344,6 +348,33 @@
                 $(event.target).trigger("change");
             }
         }).trigger("change");
+
+        let selects_task = $(".select-task > span");
+
+
+
+        selects_task.bind("click", (event)=>{
+            let task = $("#"+event.currentTarget.id).children("span.ui-selectmenu-text").text();
+            $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select > option").remove();
+            $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select > option").remove();
+
+            $.each(window.TerraProject.compile[task].losses, function(key, value) {
+                $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select").append('<option value="' + value + '">' + value + '</option>');
+            });
+            $.each(window.TerraProject.compile[task].metrics, function(key, value) {
+                $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select").append('<option value="' + value + '">' + value + '</option>');
+            });
+
+             $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select").selectmenu("refresh");
+            $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select").selectmenu("refresh");
+        })
+        // for(let index in window.TerraProject.layers){
+        //     if(window.TerraProject.layers[index].type == "output"){
+        //         $("#mCSB_1_container").append(`<div class="params-title">Параметры Output-${window.TerraProject.layers[index].config.name}:</div>`)
+        //         $("#mCSB_1_container").append(`<div class="params-item" id="params-item-${window.TerraProject.layers[index].config.name}"></div>`)
+        //         $(`#params-item-${window.TerraProject.layers[index].config.name}`).append()
+        //     }
+        // }
 
         $(".callbacks-switchers > .field-inline > .checkout-switch > input").bind("change", (event) => {
             event.preventDefault();
@@ -378,8 +409,10 @@
         //     document.getElementById("tabs").append(graphElem);
         // }
 
-        // DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container")); // нарисовать для линейного
+        DrawGraph("plots", $(".tab-container"), data_needed_format); // нарисовать для линейного
         // DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container")); // нарисовать для скаттера
+
+        // DrawGraph("plots", $(".tab-container"), data_needed_format);
 
     });
 
