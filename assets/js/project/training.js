@@ -349,25 +349,8 @@
             }
         }).trigger("change");
 
-        let selects_task = $(".select-task > span");
 
 
-
-        selects_task.bind("click", (event)=>{
-            let task = $("#"+event.currentTarget.id).children("span.ui-selectmenu-text").text();
-            $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select > option").remove();
-            $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select > option").remove();
-
-            $.each(window.TerraProject.compile[task].losses, function(key, value) {
-                $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select").append('<option value="' + value + '">' + value + '</option>');
-            });
-            $.each(window.TerraProject.compile[task].metrics, function(key, value) {
-                $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select").append('<option value="' + value + '">' + value + '</option>');
-            });
-
-             $("#"+event.currentTarget.id).parent().parent().find(".select-loss > select").selectmenu("refresh");
-            $("#"+event.currentTarget.id).parent().parent().find(".select-metric > select").selectmenu("refresh");
-        })
         // for(let index in window.TerraProject.layers){
         //     if(window.TerraProject.layers[index].type == "output"){
         //         $("#mCSB_1_container").append(`<div class="params-title">Параметры Output-${window.TerraProject.layers[index].config.name}:</div>`)
@@ -394,6 +377,47 @@
                 send_data
             )
         });
+
+ $( function() {
+    $.widget( "custom.catcomplete", $.ui.autocomplete, {
+      _create: function() {
+        this._super();
+        this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
+      },
+      _renderMenu: function( ul, items ) {
+        var that = this,
+          currentCategory = "";
+        $.each( items, function( index, item ) {
+          var li;
+          if ( item.category != currentCategory ) {
+            ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+            currentCategory = item.category;
+          }
+          li = that._renderItemData( ul, item );
+          if ( item.category ) {
+            li.attr( "aria-label", item.category + " : " + item.label );
+          }
+        });
+      }
+    });
+    var data = [
+      { label: "anders", category: "" },
+      { label: "andreas", category: "" },
+      { label: "antal", category: "" },
+      { label: "annhhx10", category: "Products" },
+      { label: "annk K12", category: "Products" },
+      { label: "annttop C13", category: "Products" },
+      { label: "anders andersson", category: "People" },
+      { label: "andreas andersson", category: "People" },
+      { label: "andreas johnson", category: "People" }
+    ];
+
+    $( "#loss-select" ).catcomplete({
+      delay: 0,
+      source: data
+    });
+  } );
+
 
         // здесь будет проверка на наличие флага "регрессия"
         // if (data_needed_format["scatters"]){

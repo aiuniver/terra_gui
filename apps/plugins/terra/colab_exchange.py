@@ -86,7 +86,99 @@ class StatesData:
         self.layers_params_source = GUILayersDef
         self.layers_params = self.layers_params_source.layers_params
 
-        self.states_for_outputs = {
+        self.states_for_outputs =  {
+            "losses": {
+                "classification": [
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson"
+                ],
+                "segmentation": [
+                    "dice_coef",
+                    "squared_hinge",
+                    "hinge",
+                    "categorical_hinge",
+                    "categorical_crossentropy",
+                    "sparse_categorical_crossentropy",
+                    "binary_crossentropy",
+                    "kl_divergence",
+                    "poisson"
+                ],
+                "regression": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity"
+                ],
+                "timeseries": [
+                    "mse",
+                    "mae",
+                    "mape",
+                    "msle",
+                    "log_cosh",
+                    "cosine_similarity"
+                ]
+            },
+            "metrics": {
+                "classification": [
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson"
+                ],
+                "segmentation": [
+                    "dice_coef",
+                    "meanIoU",
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                    "categorical_accuracy",
+                    "categorical_crossentropy",
+                    "sparse_categorical_accuracy",
+                    "sparse_categorical_crossentropy",
+                    "top_k_categorical_accuracy",
+                    "sparse_top_k_categorical_accuracy",
+                    "hinge",
+                    "kl_divergence",
+                    "binary_crossentropy",
+                    "poisson"
+                ],
+                "regression": [
+                    "accuracy",
+                    "mae",
+                    "mse",
+                    "mape",
+                    "msle",
+                    "log_cosh"
+                ],
+                "timeseries": [
+                    "accuracy",
+                    "mae",
+                    "mse",
+                    "mape",
+                    "msle",
+                    "log_cosh"
+                ]
+            }
+        }
+
+        self.states_for_outputs_old = {
             "classification": {
                 "losses": [
                     "squared_hinge",
