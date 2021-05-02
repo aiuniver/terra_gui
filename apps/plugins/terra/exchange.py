@@ -182,27 +182,184 @@ class TerraExchange:
 
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
         data = self.__request_post("get_model_from_list", model_name=model_file)
+        # data.data["layers"] = {
+        #     1: {
+        #         "name": 1,
+        #         "type": "Input",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {"main": {}, "extra": {}},
+        #         "up_link": [0],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "input",
+        #     },
+        #     2: {
+        #         "name": 2,
+        #         "type": "Input",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {"main": {}, "extra": {}},
+        #         "up_link": [0],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "input",
+        #     },
+        #     3: {
+        #         "name": 3,
+        #         "type": "Conv2D",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {
+        #                 "filters": 100,
+        #                 "kernel_size": 200,
+        #                 "padding": "same",
+        #                 "strides": 1,
+        #                 "activation": "",
+        #             },
+        #             "extra": {},
+        #         },
+        #         "up_link": [1],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     4: {
+        #         "name": 4,
+        #         "type": "Conv2D",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {
+        #                 "filters": 100,
+        #                 "kernel_size": 2,
+        #                 "padding": "same",
+        #                 "strides": (1, 1),
+        #                 "activation": "",
+        #             },
+        #             "extra": {},
+        #         },
+        #         "up_link": [2],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     5: {
+        #         "name": 5,
+        #         "type": "Concatenate",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {"main": {"axis": -1}, "extra": {}},
+        #         "up_link": [3, 4],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     6: {
+        #         "name": 6,
+        #         "type": "Flatten",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {"main": {}, "extra": {}},
+        #         "up_link": [5],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     7: {
+        #         "name": 7,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"units": 3, "activation": ""},
+        #             "extra": {},
+        #         },
+        #         "up_link": [6],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     8: {
+        #         "name": 8,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"activation": "", "units": 32},
+        #             "extra": {},
+        #         },
+        #         "up_link": [7],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     9: {
+        #         "name": 9,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"units": 3, "activation": ""},
+        #             "extra": {},
+        #         },
+        #         "up_link": [8],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "middle",
+        #     },
+        #     10: {
+        #         "name": 10,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"units": 3, "activation": ""},
+        #             "extra": {},
+        #         },
+        #         "up_link": [9],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "out",
+        #     },
+        #     11: {
+        #         "name": 11,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"units": 3, "activation": ""},
+        #             "extra": {},
+        #         },
+        #         "up_link": [9],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "out",
+        #     },
+        #     12: {
+        #         "name": 12,
+        #         "type": "Dense",
+        #         "data_name": "",
+        #         "data_available": [],
+        #         "params": {
+        #             "main": {"units": 3, "activation": ""},
+        #             "extra": {},
+        #         },
+        #         "up_link": [9],
+        #         "inp_shape": [],
+        #         "out_shape": [],
+        #         "location_type": "out",
+        #     },
+        # }
         layers = {}
         for index, layer in data.data.get("layers").items():
             layers[index] = {"config": layer}
-        data.data.update({"layers": self.__prepare_layers(layers)})
+        layers = self.__prepare_layers(layers)
+        data.data.update({"layers": layers})
         return data
 
     def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
-        print(layers)
-        for index, layer in layers.items():
-            params = layer.get("config").get("params", None)
-            params = params if params else {}
-            for name, param in params.items():
-                if param.get("type") == "tuple" and isinstance(
-                    param.get("default"), list
-                ):
-                    default = list(map(lambda value: str(value), param.get("default")))
-                    param.update({"default": ",".join(default)})
-                    params.update({name: param})
-            layer["config"].update({"params": params})
-            layers[index] = layer
-
         if not layers:
             schema = [[], []]
             for index, layer in self.__project.start_layers.items():
@@ -258,13 +415,68 @@ class TerraExchange:
         self.__project.layers = self.__prepare_layers(layers)
         return TerraExchangeResponse(data=self.__project.layers)
 
+    def _prepare_validation_indexes(self, layers: dict) -> dict:
+        rels = {}
+        items = []
+        num = 0
+        new_layers = {}
+
+        def _prepare_up_link(up_link: list) -> list:
+            return list(filter(lambda value: value > 0, up_link))
+
+        def _up_link_to_new_index(up_link) -> list:
+            for index, item in enumerate(up_link):
+                up_link[index] = rels.get(str(item))
+            return up_link
+
+        def _prepare_items(items: list, num: int):
+            update_list = []
+            for item in items:
+                for index, layer in copy.deepcopy(layers).items():
+                    up_link = _prepare_up_link(list(layer.get("up_link")))
+                    if int(item) in up_link:
+                        if index not in update_list:
+                            num += 1
+                            rels[index] = num
+                            up_link = _up_link_to_new_index(up_link)
+                            layer.update({"up_link": up_link})
+                            new_layers[num] = layer
+                            update_list.append(index)
+            if update_list:
+                _prepare_items(update_list, num)
+
+        for index, layer in layers.items():
+            if layer.get("location_type") == "input":
+                num += 1
+                rels[index] = num
+                new_layers[num] = layer
+                items.append(index)
+
+        _prepare_items(items, num)
+
+        return new_layers
+
     def _call_get_change_validation(self) -> TerraExchangeResponse:
         layers = {}
         for index, layer in self.__project.layers.items():
-            config = copy.deepcopy(layer.get("config"))
+            config = layer.get("config")
             layers[str(index)] = config
         if layers:
-            return self.__request_post("get_change_validation", layers=layers)
+            for index, layer in layers.items():
+                groups = layer.get("params", {})
+                for group_name, group in groups.items():
+                    for param_name, param in group.items():
+                        param_type = (
+                            colab_exchange.layers_params.get(layer.get("type"))
+                            .get(group_name)
+                            .get(param_name)
+                            .get("type")
+                        )
+                        if param_type == "tuple" and isinstance(param, (tuple, list)):
+                            param = list(map(lambda value: str(value), param))
+                            group[param_name] = ",".join(param)
+            new_layers = self._prepare_validation_indexes(copy.deepcopy(layers))
+            return self.__request_post("get_change_validation", layers=new_layers)
         else:
             return TerraExchangeResponse()
 

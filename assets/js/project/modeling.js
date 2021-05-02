@@ -76,12 +76,16 @@
                     );
                 },
                 validation: (item, callback) => {
+                    this.btn.validation.disabled = true;
                     window.StatusBar.clear();
+                    window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
+                            this.btn.validation.disabled = false;
                             if (success) {
-                                console.log(data.data);
+                                console.log(data.data.errors_val);
+                                window.StatusBar.clear();
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
