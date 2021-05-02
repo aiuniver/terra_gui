@@ -259,11 +259,10 @@
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container,
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container{
     height:100%;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     overflow: auto;
     display: flex;
-    flex-direction: column;
-    align-content: center;
+    flex-direction: row;
     justify-content: flex-start;
 }
 /*.graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container > *,*/
@@ -279,7 +278,7 @@
     height:130px;
     left:0;
     bottom:0;
-    border-top:1px solid;
+    border-top:1px solid #0E1621;
 }
 .training-progress .info {
     padding:20px;
@@ -570,12 +569,11 @@
 }
 
 .graph{
-    min-width: 450px;
-    width: 80%;
+    min-width: 400px;
+    width: 50%;
     padding: 20px;
-    min-height: 400px;
+    min-height: 300px;
     box-sizing: border-box;
-    align-self: center;
 }
 
 @media (max-width: 575.98px) {
@@ -714,5 +712,6 @@
 main > .container > .properties > .wrapper{
     width: auto;
 }
+
 
 

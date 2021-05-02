@@ -36,7 +36,7 @@
                         <div class="tabs-item text custom-scrollbar-wrapper">
                             <div class="tab-container"></div>
                         </div>
-                        <div class="tabs-item scatters opacity">
+                        <div class="tabs-item scatters opacity custom-scrollbar-wrapper">
                             <div class="tab-container"></div>
                         </div>
                     </div>
@@ -90,17 +90,19 @@
                 <div class="params-item output-params-block">
                 {% for name, layer in request.terra_project.layers.items %}
                     {% if layer.type == "output" %}
-                        <div class="params-title">Параметры Output-{{ layer.config.name }}</div>
-                        <div class="output-item" id="output-{{ layer.config.name }}">
-                            <div class="field-form output-block select-loss">
-                                <label for="output-{{ layer.config.name }}-loss">Loss:</label>
-{#                                    <select id="output-{{ layer.config.name }}-loss" name="output-{{ layer.config.name }}-loss" class="jquery-ui-menuselect loss-select">#}
-{#                                    </select>#}
-                                <input type="text" class="loss-select">
-                            </div>
-                            <div class="field-form output-block select-metric">
-                                <label for="output-{{ layer.config.name }}-metric">Metric:</label>
-                                <input type="text" class="metric-select">
+                        <div class="param-item">
+                            <div class="params-title">Параметры Output-{{ layer.config.name }}</div>
+                            <div class="output-item" id="output-{{ layer.config.name }}">
+                                <div class="field-form output-block select-loss">
+                                    <label for="output-{{ layer.config.name }}-loss">Loss:</label>
+    {#                                    <select id="output-{{ layer.config.name }}-loss" name="output-{{ layer.config.name }}-loss" class="jquery-ui-menuselect loss-select">#}
+    {#                                    </select>#}
+                                    <input type="text" class="loss-select">
+                                </div>
+                                <div class="field-form output-block select-metric">
+                                    <label for="output-{{ layer.config.name }}-metric">Metric:</label>
+                                    <input type="text" class="metric-select">
+                                </div>
                             </div>
                         </div>
                     {% endif %}
