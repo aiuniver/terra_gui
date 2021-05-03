@@ -213,8 +213,8 @@
 
                 let layer_config = {
                     name: `l${_max_id}_${type}`,
-                    input_shape: [],
-                    output_shape: [],
+                    inp_shape: [],
+                    out_shape: [],
                     params: $.extend(true, {}, window.TerraProject.layers_types[type]),
                     type: type,
                     location_type: class_name,
@@ -719,6 +719,7 @@
             _action_save = this.find(".actions-form > .item.save > button");
 
             let _render_params = (config) => {
+                this.find("#field_form-layer_inp_shape").parent().remove();
                 this.find("#field_form-layer_data").parent().remove();
                 _layer_params_main.addClass("hidden");
                 _layer_params_main.children(".inner").html("");
@@ -741,14 +742,23 @@
                 _render_params_config("main", _layer_params_main, params_config.main, config.params.main);
                 _render_params_config("extra", _layer_params_extra, params_config.extra, config.params.extra);
                 if (config.data_available && config.data_available.length) {
-                    let widget = window.FormWidget("layer_data", {
+                    let WidgetData = window.FormWidget("layer_data", {
                         "label":"Данные слоя",
                         "type":"str",
                         "list":true,
                         "default":config.data_name,
                         "available":config.data_available
                     });
-                    this.find(".params-config > .inner").append(widget);
+                    this.find(".params-config > .inner").append(WidgetData);
+                }
+                if (config.location_type === "input") {
+                    let WidgetInputShape = window.FormWidget("layer_inp_shape", {
+                        "label":"Shape",
+                        "type":"tuple",
+                        "list":false,
+                        "default":config.inp_shape
+                    });
+                    this.find(".params-config > .inner").append(WidgetInputShape);
                 }
             }
 
@@ -756,6 +766,7 @@
                 _layer_id_field.val("");
                 _layer_name_field.val("").attr("disabled", "disabled");
                 _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
+                this.find("#field_form-layer_inp_shape").parent().remove();
                 this.find("#field_form-layer_data").parent().remove();
                 _action_save.attr("disabled", "disabled");
                 _layer_params_main.addClass("hidden");
@@ -782,7 +793,8 @@
 
                 _config.config.name = `${_form.layer_name ? _form.layer_name : _config.config.name}`;
                 _config.config.type = `${_form.layer_type ? _form.layer_type : _config.config.type}`;
-                if (_config.config.data_name !== undefined) _config.config.data_name = _form.layer_data
+                _config.config.inp_shape = `${_form.layer_inp_shape ? _form.layer_inp_shape : _config.config.inp_shape}`;
+                if (_config.config.data_name !== undefined) _config.config.data_name = _form.layer_data;
 
                 _params = window.TerraProject.layers_types[_config.config.type];
                 for (let group in _params) {
