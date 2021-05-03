@@ -26,6 +26,8 @@ class GUINN:
         self.DTS = None
         self.callbacks = []
         self.output_params = {}
+        self.clbck_options = {}
+        self.clbck_chp = {}
         """
         For testing in different setups and environment
         """
@@ -132,7 +134,7 @@ class GUINN:
             self.best_epoch: dict = {}
             self.best_epoch_num: int = 0
             self.stop_epoch: int = 0
-            self.model_is_trained: bool = True
+            self.model_is_trained: bool = False
             self.history: dict = {}
             self.best_metric_result = "0000"
 
@@ -152,15 +154,18 @@ class GUINN:
             # else:
             #     self.monitor = self.metrics[0]
 
-    def set_main_params(self, output_params: dict = None, clbck_options: dict = None, callb_chekp: dict = None,
-                        shuffle: bool = True, epoch: int = 10, batch_size: int = 32, ) -> None:
+    def set_main_params(self, output_params: dict = None, clbck_options: dict = None, clbck_chp: dict = None,
+                        shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
         self.output_params = output_params
+        self.clbck_options = clbck_options
+        self.clbck_chp = clbck_chp
+        self.shuffle = shuffle
+        self.epochs = epochs
+        self.batch_size = batch_size
+
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
-            self.loss.update({output_key:self.output_params[output_key]['loss']})
-
-
-
+            self.loss.update({output_key: self.output_params[output_key]['loss']})
         pass
 
     def set_dataset(self, dts_obj: object) -> None:
