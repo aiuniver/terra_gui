@@ -25,6 +25,7 @@ class GUINN:
         self.Exch = exch_obj
         self.DTS = None
         self.callbacks = []
+        self.output_params = {}
         """
         For testing in different setups and environment
         """
@@ -98,7 +99,7 @@ class GUINN:
 
         self.nn_name: str = ''
         self.model = None
-        self.external_model: bool = False
+        # self.external_model: bool = False
 
         if self.mounted_drive_writable:
 
@@ -136,9 +137,9 @@ class GUINN:
             self.best_metric_result = "0000"
 
             self.learning_rate = 1e-3
-            self.optimizer_name = "Adam"
-            self.loss: dict = {'output_1': ["categorical_crossentropy"]}
-            self.metrics: dict = {'output_1': ["accuracy"]}
+            self.optimizer_name: str = ''
+            self.loss: dict = {}
+            self.metrics: dict = {}
             self.batch_size = 32
             self.epochs = 20
             self.shuffle: bool = True
@@ -151,6 +152,16 @@ class GUINN:
             # else:
             #     self.monitor = self.metrics[0]
 
+    def set_main_params(self, output_params: dict = None, clbck_options: dict = None, callb_chekp: dict = None,
+                        shuffle: bool = True, epoch: int = 10, batch_size: int = 32, ) -> None:
+        self.output_params = output_params
+        for output_key in self.output_params.keys():
+            self.metrics.update({output_key: self.output_params[output_key]['metrics']})
+            self.loss.update({output_key:self.output_params[output_key]['loss']})
+
+
+
+        pass
 
     def set_dataset(self, dts_obj: object) -> None:
         """
