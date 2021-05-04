@@ -77,14 +77,14 @@
             <form class="params-container layers-form custom-scrollbar-wrapper">
                 <div class="params-item params-config">
                     <div class="inner">
-                        <input type="hidden" id="field_form-layer_id" name="layer_id" />
+                        <input type="hidden" id="field_form-index" name="index" />
                         <div class="field-form">
-                            <label for="field_form-layer_name">Название слоя</label>
-                            <input disabled="disabled" type="text" id="field_form-layer_name" name="layer_name" />
+                            <label for="field_form-name">Название слоя</label>
+                            <input disabled="disabled" type="text" id="field_form-name" name="name" />
                         </div>
                         <div class="field-form">
-                            <label for="field_form-layer_type">Тип слоя</label>
-                            <select disabled="disabled" name="layer_type" id="field_form-layer_type" class="jquery-ui-menuselect">
+                            <label for="field_form-type">Тип слоя</label>
+                            <select disabled="disabled" name="type" id="field_form-type" class="jquery-ui-menuselect">
                                 <option value=""></option>
                                 {% for layer in request.terra_project.layers_types %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
                             </select>

@@ -53,12 +53,6 @@ class ExchangeData:
     def _execute_clear_model(self, **kwargs):
         return terra_exchange.call("clear_model", **kwargs)
 
-    def _execute_set_input_layer(self, **kwargs):
-        return terra_exchange.call("set_input_layer", **kwargs)
-
-    def _execute_set_any_layer(self, **kwargs):
-        return terra_exchange.call("set_any_layer", **kwargs)
-
     def _execute_save_layer(self, **kwargs):
         return terra_exchange.call("save_layer", **kwargs)
 

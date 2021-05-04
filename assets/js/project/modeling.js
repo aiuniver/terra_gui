@@ -57,8 +57,8 @@
                 },
                 save: (item, callback) => {
                     let send_data = {};
-                    d3.selectAll("g.node").data().forEach((item) => {
-                        send_data[item.id] = item;
+                    d3.selectAll("g.node")._groups[0].forEach((item) => {
+                        send_data[parseInt(item.dataset.index)] = item.__data__;
                     });
                     window.StatusBar.clear();
                     window.ExchangeRequest(
@@ -72,7 +72,10 @@
                                 window.StatusBar.message(data.error, false);
                             }
                         },
-                        {"layers": send_data, "schema": []}
+                        {
+                            "layers": send_data,
+                            "schema": window.TerraProject.schema,
+                        }
                     );
                 },
                 validation: (item, callback) => {
@@ -205,20 +208,17 @@
                         break;
                 }
 
-                let _max_id = 0;
-                for (let key in window.TerraProject.layers) {
-                    if (window.TerraProject.layers[key].index > _max_id) _max_id = window.TerraProject.layers[key].index;
-                }
-                _max_id++;
+                let indexes = Object.keys(window.TerraProject.layers).map((value) => {
+                    return parseInt(value);
+                });
+                if (!indexes.length) indexes = [0];
+                let _max_id = Math.max.apply(Math, indexes)+1;
 
                 let layer_config = {
                     name: `l${_max_id}_${type}`,
-                    inp_shape: [],
-                    out_shape: [],
-                    params: $.extend(true, {}, window.TerraProject.layers_types[type]),
                     type: type,
                     location_type: class_name,
-                    up_link: []
+                    params: $.extend(true, {}, window.TerraProject.layers_types[type]),
                 };
 
                 for (let group in layer_config.params) {
@@ -229,19 +229,24 @@
 
                 let layer_default = {
                     config: layer_config,
-                    type: class_name,
-                    id: _max_id,
-                    index: _max_id,
+                    down_link: [],
+                    x: null,
+                    y: null,
                 };
-
-                _create_node(layer_default);
-                window.TerraProject.layers[_max_id] = layer_default;
-                this.activeNode(d3.select(`#node-${_max_id}`)._groups[0][0]);
 
                 window.ExchangeRequest(
                     "save_layer",
-                    null,
-                    d3.select(`#node-${_max_id}`).data()[0]
+                    (success, data) => {
+                        if (success) {
+                            _create_node(parseInt(data.data.index), data.data.layers[parseInt(data.data.index)]);
+                            window.TerraProject.layers = data.data.layers;
+                            this.activeNode(d3.select(`#node-${data.data.index}`)._groups[0][0]);
+                        }
+                    },
+                    {
+                        "index": _max_id,
+                        "layer": layer_default
+                    }
                 );
             };
 
@@ -249,7 +254,7 @@
                 let node = _cnodes.select(`#${g.id}`);
                 _cnodes.selectAll(".node").classed("active", false);
                 node.classed("active", true);
-                terra_params.load(node.data()[0]);
+                terra_params.load(parseInt(g.dataset.index), node.data()[0]);
             }
 
             this.bind("contextmenu", (event) => {
@@ -270,6 +275,12 @@
                         _new_link = undefined;
                     }
                     _clines.selectAll("line").classed("active", false);
+
+                    let id = $("#field_form-index").val();
+                    if (`${id}` !== "") {
+                        terra_params.reset();
+                        _d3graph.select(`#node-${id}`).classed("active", false);
+                    }
                 }
                 if (event.keyCode === 46) {
                     let line_active = $("line.line.active");
@@ -304,7 +315,7 @@
                 if (_new_link) {
                     let x2 = event.offsetX,
                         y2 = event.offsetY;
-                    if (_onNode && `${_new_link._groups[0][0].sourceID}` !== `${_onNode[0].__data__.id}` && _onNode[0].__data__.config.up_link.indexOf(_new_link._groups[0][0].sourceID) === -1) {
+                    if (_onNode && `${_new_link._groups[0][0].sourceID}` !== `${_onNode[0].dataset.index}` && _onNode[0].__data__.config.up_link.indexOf(_new_link._groups[0][0].sourceID) === -1) {
                         let matrix = _onNode[0].transform.baseVal[0].matrix;
                         x2 = matrix.e;
                         y2 = matrix.f - _LINE_HEIGHT / 2 - 2;
@@ -317,15 +328,6 @@
                     _new_link.attr("x2", x2).attr("y2", y2);
                 }
             });
-
-            let _node_dragstarted = (data, _, rect) => {
-                let node = $(rect).parent()[0];
-                // this.find(".canvas > .hint").remove();
-                // let _node = d3.select(`#node-${data.id}`);
-                // _node.raise().classed("hover", true);
-                //  if (!_onDrag) this.activeNode(_node);
-                //  _onDrag = false;
-            }
 
             let _get_transform = () => {
                 let baseVal = _cc._groups[0][0].transform.baseVal,
@@ -361,12 +363,11 @@
                 let matrix = node.transform.baseVal[0].matrix,
                     x = matrix.e, y = matrix.f;
 
-                if (info.down_link === undefined) info.down_link = [];
-                info.down_link.forEach((id) => {
-                    _clines.select(`#line_${info.id}_${id}`).attr("x1", x).attr("y1", y+_LINE_HEIGHT/2+2);
+                info.down_link.forEach((index) => {
+                    _clines.select(`#line_${node.dataset.index}_${index}`).attr("x1", x).attr("y1", y+_LINE_HEIGHT/2+2);
                 });
-                info.config.up_link.forEach((id) => {
-                    _clines.select(`#line_${id}_${info.id}`).attr("x2", x).attr("y2", y-_LINE_HEIGHT/2-2);
+                info.config.up_link.forEach((index) => {
+                    _clines.select(`#line_${index}_${node.dataset.index}`).attr("x2", x).attr("y2", y-_LINE_HEIGHT/2-2);
                 });
             }
 
@@ -377,15 +378,18 @@
                     window.ExchangeRequest(
                         "save_layer",
                         null,
-                        _node.data()[0]
+                        {
+                            "index": parseInt(node.dataset.index),
+                            "layer": _node.data()[0]
+                        }
                     );
                 } else {
                     if (this.hasClass("onlink")) {
                         let matrix = node.transform.baseVal[0].matrix,
-                            sourceID = _new_link._groups[0][0].sourceID,
+                            sourceID = parseInt(_new_link._groups[0][0].sourceID),
                             sourceNode = _d3graph.select(`#node-${sourceID}`),
                             sourceData = sourceNode.data()[0],
-                            targetID = node.__data__.id,
+                            targetID = parseInt(node.dataset.index),
                             targetNode = _d3graph.select(`#node-${targetID}`),
                             targetData = targetNode.data()[0];
                         if (`${sourceID}` !== `${targetID}` && targetData.config.up_link.indexOf(sourceID) === -1) {
@@ -394,7 +398,6 @@
                                 .attr("x2", matrix.e)
                                 .attr("y2", matrix.f - _LINE_HEIGHT / 2 - 2);
                             _new_link = undefined;
-                            if (!sourceData.down_link) sourceData.down_link = [];
                             sourceData.down_link.push(targetID);
                             sourceNode.data([sourceData]);
                             targetData.config.up_link.push(sourceID);
@@ -436,12 +439,12 @@
 
             let _create_line = (dotSource, dotTarget) => {
                 let sourceNode = d3.select(dotSource.closest(".node")[0]),
-                    sourceID = sourceNode.data()[0].id,
+                    sourceID = parseInt(dotSource.closest(".node")[0].dataset.index),
                     sourceMatrix = sourceNode._groups[0][0].transform.baseVal[0].matrix,
                     sourcePosition = [sourceMatrix.e, sourceMatrix.f+_LINE_HEIGHT/2+2];
 
                 let targetNode = dotTarget ? d3.select(dotTarget.closest(".node")[0]) : undefined,
-                    targetID = targetNode ? targetNode.data()[0].id : "",
+                    targetID = targetNode ? dotTarget.closest(".node")[0].dataset.index : "",
                     targetMatrix = targetNode ? targetNode._groups[0][0].transform.baseVal[0].matrix : undefined,
                     targetPosition = targetMatrix ? [targetMatrix.e, targetMatrix.f-_LINE_HEIGHT/2-2] : undefined;
 
@@ -469,7 +472,6 @@
 
             let _update_dots_per_node = (node) => {
                 let data = node.data()[0];
-                if (data.down_link === undefined) data.down_link = [];
                 let clear_links = (items) => {
                     return items.filter((item) => {return item > 0});
                 };
@@ -480,23 +482,24 @@
             }
 
             let _clear_links = (node) => {
-                let data = node.data()[0];
-                if (data.down_link === undefined) data.down_link = [];
+                let data = node.data()[0],
+                    index = parseInt(node._groups[0][0].dataset.index);
                 data.down_link.forEach((id) => {
-                    _remove_line($(`#line_${data.id}_${id}`));
+                    _remove_line($(`#line_${index}_${id}`));
                 });
                 data.config.up_link.forEach((id) => {
-                    _remove_line($(`#line_${id}_${data.id}`));
+                    _remove_line($(`#line_${id}_${index}`));
                 });
             }
 
-            let _create_node = (layer) => {
+            let _create_node = (index, layer) => {
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value;
 
                 let node = _cnodes.append("g")
-                    .attr("id", `node-${layer.id}`)
-                    .attr("class", `node node-type-${layer.type}`);
+                    .attr("id", `node-${index}`)
+                    .attr("data-index", index)
+                    .attr("class", `node node-type-${layer.config.location_type}`);
 
                 node.append("circle")
                     .attr("class", "dot dot-target")
@@ -522,10 +525,14 @@
                     unlink = tools.append("rect").attr("class", "btn unlink").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4);
 
                 let rect_pointer = node.append("rect").attr("class", "pointer").attr("height", _NODE_HEIGHT).call(d3.drag()
-                        .on("start", _node_dragstarted)
                         .on("drag", _node_dragged)
                         .on("end", _node_dragended)
                     );
+                $(rect_pointer._groups[0][0]).bind("mouseup", (event) => {
+                    if (event.button === 2) {
+                        $(event.currentTarget).closest(".node").find(".tools > .link").trigger("click");
+                    }
+                });
 
                 text.attr("x", -text_box.width/2).attr("y", 12-text_box.height/2);
                 rect.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
@@ -537,14 +544,14 @@
 
                 $(remove._groups[0][0]).bind("click", (event) => {
                     let g = $(event.currentTarget).closest(".node"),
-                        attr_id = g[0].id,
-                        node = _d3graph.select(`#${attr_id}`),
+                        index = parseInt(g[0].dataset.index),
+                        node = _d3graph.select(`#${g[0].id}`),
                         info = node.data()[0];
                     _clear_links(node);
                     g.remove();
-                    if (`${info.id}` === `${$("#field_form-layer_id").val()}`) terra_params.reset();
+                    if (`${index}` === `${$("#field_form-index").val()}`) terra_params.reset();
                     let layers = window.TerraProject.layers;
-                    delete layers[info.id];
+                    delete layers[index];
                     window.TerraProject.layers = layers;
                     terra_toolbar.btn.save.disabled = false;
                     $(terra_toolbar.btn.save).children("span").trigger("click");
@@ -560,10 +567,10 @@
                     $(terra_toolbar.btn.save).children("span").trigger("click");
                 });
 
-                if (["input", "out"].indexOf(layer.type) > -1) remove.remove();
+                if (["input", "output"].indexOf(layer.config.location_type) > -1) remove.remove();
 
-                if (layer.x === undefined) layer.x = w/2;
-                if (layer.y === undefined) layer.y = h/2;
+                if (layer.x === null) layer.x = w/2;
+                if (layer.y === null) layer.y = h/2;
 
                 node.data([layer])
                     .attr("transform", "translate(" + layer.x + "," + layer.y + ")");
@@ -575,7 +582,7 @@
                         let node = _d3graph.select(`#${event.currentTarget.id}`),
                             data = node.data()[0],
                             sourceID = _new_link._groups[0][0].sourceID;
-                        if (`${sourceID}` !== `${data.id}` && data.config.up_link.indexOf(sourceID) === -1) {
+                        if (`${sourceID}` !== `${node._groups[0][0].dataset.index}` && data.config.up_link.indexOf(sourceID) === -1) {
                             _update_dots_per_node(node);
                         }
                     }
@@ -647,19 +654,11 @@
                     });
                 }
 
-                for (let index in layers) {
-                    for (let param in layers[index].config.params) {
-                        if (layers[index].config.params[param].type === "tuple") {
-                            layers[index].config.params[param].default = `${layers[index].config.params[param].default || ""}`;
-                        }
-                    }
-                }
-
                 let use_schema = false;
                 for (let index in layers) {
                     let layer = layers[index];
-                    if (layer.x === undefined || layer.y === undefined) use_schema = true;
-                    _create_node(layer);
+                    if ((layer.x === null || layer.y === null) && ["input", "output"].indexOf(layer.config.location_type) > -1) use_schema = true;
+                    _create_node(parseInt(index), layer);
                 }
                 if (use_schema && schema.length) _update_position_by_schema();
 
@@ -667,7 +666,7 @@
                     let layer = layers[index];
                     layer.config.up_link.forEach((item) => {
                         if (item !== 0) {
-                            _create_line($(`#node-${item} > .dot-source`), $(`#node-${layer.id} > .dot-target`));
+                            _create_line($(`#node-${item} > .dot-source`), $(`#node-${index} > .dot-target`));
                         }
                     });
                 }
@@ -692,16 +691,6 @@
                 )
             }
 
-            $(window).bind("keyup", (event) => {
-                if (event.keyCode === 27) {
-                    let id = $("#field_form-layer_id").val();
-                    if (`${id}` !== "") {
-                        terra_params.reset();
-                        _d3graph.select(`#node-${id}`).classed("active", false);
-                    }
-                }
-            });
-
             return this;
 
         },
@@ -711,16 +700,26 @@
 
             if (!this.length) return this;
 
-            let _layer_id_field = $("#field_form-layer_id"),
-            _layer_name_field = $("#field_form-layer_name"),
-            _layer_type_field = $("#field_form-layer_type"),
+            let _layer_index_field = $("#field_form-index"),
+            _layer_name_field = $("#field_form-name"),
+            _layer_type_field = $("#field_form-type"),
             _layer_params_main = this.find(".params-main"),
             _layer_params_extra = this.find(".params-extra"),
             _action_save = this.find(".actions-form > .item.save > button");
 
+            let _camelize = (text) => {
+                let _capitalize = (word) => {
+                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
+                }
+                let words = text.split("_"),
+                    result = [_capitalize(words[0])];
+                words.slice(1).forEach((word) => result.push(word))
+                return result.join(" ")
+            }
+
             let _render_params = (config) => {
-                this.find("#field_form-layer_inp_shape").parent().remove();
-                this.find("#field_form-layer_data").parent().remove();
+                this.find("#field_form-input_shape").parent().remove();
+                this.find("#field_form-data_name").parent().remove();
                 _layer_params_main.addClass("hidden");
                 _layer_params_main.children(".inner").html("");
                 _layer_params_extra.addClass("hidden");
@@ -732,7 +731,8 @@
                         let param = $.extend(true, {}, params[name]);
                         param.label = name;
                         if (data[name] !== undefined) param.default = data[name];
-                        let widget = window.FormWidget(`${group}_${name}`, param);
+                        param.label = _camelize(name);
+                        let widget = window.FormWidget(`params[${group}][${name}]`, param);
                         widget.addClass("field-inline");
                         inner.append(widget);
                     }
@@ -742,7 +742,7 @@
                 _render_params_config("main", _layer_params_main, params_config.main, config.params.main);
                 _render_params_config("extra", _layer_params_extra, params_config.extra, config.params.extra);
                 if (config.data_available && config.data_available.length) {
-                    let WidgetData = window.FormWidget("layer_data", {
+                    let WidgetData = window.FormWidget("data_name", {
                         "label":"Данные слоя",
                         "type":"str",
                         "list":true,
@@ -752,22 +752,22 @@
                     this.find(".params-config > .inner").append(WidgetData);
                 }
                 if (config.location_type === "input") {
-                    let WidgetInputShape = window.FormWidget("layer_inp_shape", {
+                    let WidgetInputShape = window.FormWidget("input_shape", {
                         "label":"Shape",
                         "type":"tuple",
                         "list":false,
-                        "default":config.inp_shape
+                        "default":config.input_shape
                     });
                     this.find(".params-config > .inner").append(WidgetInputShape);
                 }
             }
 
             this.reset = () => {
-                _layer_id_field.val("");
+                _layer_index_field.val("");
                 _layer_name_field.val("").attr("disabled", "disabled");
                 _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
-                this.find("#field_form-layer_inp_shape").parent().remove();
-                this.find("#field_form-layer_data").parent().remove();
+                this.find("#field_form-input_shape").parent().remove();
+                this.find("#field_form-data_name").parent().remove();
                 _action_save.attr("disabled", "disabled");
                 _layer_params_main.addClass("hidden");
                 _layer_params_main.children(".inner").html("");
@@ -775,47 +775,41 @@
                 _layer_params_extra.children(".inner").html("");
             }
 
-            this.load = (data) => {
+            this.load = (index, data) => {
                 this.reset();
-                _layer_id_field.val(data.id);
+                _layer_index_field.val(index);
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
                 _action_save.removeAttr("disabled");
                 _render_params(data.config);
             }
 
-            let _prepare_data = (serializeData) => {
-                let _form = {},
-                    _config = {},
-                    _params = {};
-                for (let item in serializeData) _form[serializeData[item].name] = serializeData[item].value;
-                _config = $.extend(true, {}, terra_board.find(`#node-${_form.layer_id}`)[0].__data__);
+            let _prepare_data = (_form) => {
+                let _config = $.extend(true, {}, terra_board.find(`#node-${_form.index}`)[0].__data__),
+                    _params = window.TerraProject.layers_types[_form.type];
 
-                _config.config.name = `${_form.layer_name ? _form.layer_name : _config.config.name}`;
-                _config.config.type = `${_form.layer_type ? _form.layer_type : _config.config.type}`;
-                _config.config.inp_shape = `${_form.layer_inp_shape ? _form.layer_inp_shape : _config.config.inp_shape}`;
-                if (_config.config.data_name !== undefined) _config.config.data_name = _form.layer_data;
+                _config.config.name = _form.name;
+                _config.config.type = _form.type;
+                _config.config.data_name = _form.data_name || "";
+                _config.config.input_shape = ((_form.input_shape || "").match(/([\d]+)/g) || []).map((value) => {return parseInt(value)});
 
-                _params = window.TerraProject.layers_types[_config.config.type];
                 for (let group in _params) {
                     for (let name in _params[group]) {
-                        let value = _form[`${group}_${name}`];
+                        let value = _form.params[group][name];
                         switch (_params[group][name].type) {
                             case "bool":
                                 value = value !== undefined;
-                                break;
-                            case "int":
-                                if (`${value}` !== "") value = parseInt(value);
                                 break;
                         }
                         _config.config.params[group][name] = value
                     }
                 }
+
                 return _config;
             };
 
             _layer_type_field.bind("change", (event) => {
-                let _config = $.extend(true, {}, terra_board.find(`#node-${_layer_id_field.val()}`)[0].__data__);
+                let _config = $.extend(true, {}, terra_board.find(`#node-${_layer_index_field.val()}`)[0].__data__);
                 _render_params({
                     "type":event.currentTarget.value,
                     "data_name":_config.config.data_name,
@@ -830,21 +824,21 @@
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                let form = $(event.currentTarget),
-                    serializeData = form.serializeArray(),
-                    send_data = _prepare_data(serializeData);
                 window.StatusBar.clear();
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
                         if (success) {
-                            terra_board.model = {"layers":data.data,"schema":[]};
+                            terra_board.model = {"layers":data.data.layers,"schema":[]};
                             window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
-                    send_data
+                    {
+                        "index": parseInt(_layer_index_field.val()),
+                        "layer": _prepare_data($(event.currentTarget).serializeObject()),
+                    }
                 );
             });
 
@@ -907,7 +901,7 @@
                 },
                 {
                     "layers": event.currentTarget.ModelData.layers,
-                    "schema": event.currentTarget.ModelData.front_model_schema
+                    "schema": event.currentTarget.ModelData.front_model_schema,
                 }
             )
         });

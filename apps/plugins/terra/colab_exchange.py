@@ -1,7 +1,6 @@
 import gc
 import os
 import re
-from dataclasses import dataclass
 
 import dill as dill
 from IPython import get_ipython
@@ -11,6 +10,7 @@ from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 from .layers_dataclasses import LayersDef, GUILayersDef
+from .data import LayerDict, LayerLocation, LayerType, Layer
 
 
 class StatesData:
@@ -284,9 +284,7 @@ class Exchange(StatesData, GuiExch):
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
-        self.start_layers = {}
-        self.start_layers_count = 0
-        self.layers_data_state = {}
+        self.start_layers = LayerDict()
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
@@ -556,7 +554,7 @@ class Exchange(StatesData, GuiExch):
 
         return content
 
-    def _prepare_dataset(self, **options) -> tuple:
+    def _prepare_dataset(self, dataset_name: str, task_type: str, source: str) -> tuple:
         """
         prepare dataset for load to nn
         Args:
@@ -566,71 +564,52 @@ class Exchange(StatesData, GuiExch):
             changed dataset and its tags
         """
         self._reset_out_data()
-        self.dts = DTS(exch_obj=self)
-        gc.collect()
-        # if options.get("dataset_name") == "mnist":
-        #     self.dts.keras_datasets(dataset="mnist", net="conv", one_hot_encoding=True)
-        # else:
-        self.dts.prepare_dataset(**options)
-        self._set_dts_name(self.dts.name)
-        self.out_data["stop_flag"] = True
-        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
-
-    def _create_custom_dataset(self, **options):
-        self._reset_out_data()
-        dataset = f'{options.get("dataset_name")}.trds'
-        dataset_path = os.path.join(self.custom_datasets_path, dataset)
-        with open(dataset_path, "rb") as f:
-            custom_dts = dill.load(f)
-        self.dts = custom_dts
-        # print(
-        #     "DTS",
-        #     self.dts,
-        #     "\n",
-        #     self.dts.name,
-        #     self.dts.X,
-        #     self.dts.Y,
-        # )
+        if source == "custom":
+            self.dts = self._read_trds(dataset_name)
+        else:
+            self.dts = DTS(exch_obj=self)
+            gc.collect()
+            self.dts.prepare_dataset(
+                dataset_name=dataset_name, task_type=task_type, source=source
+            )
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
-        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
+        return self.dts.tags, self.dts.name, self.start_layers
+
+    def _read_trds(self, dataset_name: str) -> DTS:
+        filename = f"{dataset_name}.trds"
+        filepath = os.path.join(self.custom_datasets_path, filename)
+        with open(filepath, "rb") as f:
+            dts = dill.load(f)
+        return dts
 
     def _set_start_layers(self):
-        inputs = self.dts.X
-        outputs = self.dts.Y
-        self.__create_start_layer(inputs, "Input")
-        self.__create_start_layer(outputs, "Output")
+        self.start_layers = LayerDict()
 
-    def __create_start_layer(self, dts_data: dict, layer_type: str):
-        available = [data["data_name"] for name, data in dts_data.items()]
-        for name, data in dts_data.items():
-            self.start_layers_count += 1
-            idx = self.start_layers_count
-            layer_name = idx
-            data_name = data["data_name"]
-            if layer_type == "Input":
-                input_shape = list(self.dts.input_shape[name])
-                location = "input"
-            else:
-                input_shape = []
-                location = "out"
-            current_layer = {
-                "name": layer_name,
-                "type": layer_type if layer_type == "Input" else "Dense",
-                "data_name": data_name,
-                "data_available": available,
-                "params": {},
-                "up_link": [0],
-                "inp_shape": input_shape,
-                "out_shape": [],
-                "location_type": location,
-            }
-            self.start_layers[idx] = current_layer
-            self.layers_data_state[idx] = {
-                "data_name": data_name,
-                "data_available": available,
-            }
+        def _create(dts_data: dict, location: LayerLocation):
+            available = [data["data_name"] for name, data in dts_data.items()]
+            for name, data in dts_data.items():
+                index = len(self.start_layers.items.keys()) + 1
+                data_name = data.get("data_name", "")
+                self.start_layers.items[index] = Layer(
+                    config={
+                        "name": f"l{index}_{data_name}",
+                        "type": LayerType.Input
+                        if location == LayerLocation.input
+                        else LayerType.Dense,
+                        "location_type": location,
+                        "up_link": [],
+                        "input_shape": list(self.dts.input_shape.get("name", [])),
+                        "output_shape": [],
+                        "data_name": data_name,
+                        "data_available": available,
+                        "params": {},
+                    }
+                )
+
+        _create(self.dts.X, LayerLocation.input)
+        _create(self.dts.Y, LayerLocation.output)
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
@@ -648,9 +627,7 @@ class Exchange(StatesData, GuiExch):
             self.out_data["stop_flag"] = True
 
     def _reset_out_data(self):
-        self.start_layers = {}
-        self.start_layers_count = 0
-        self.layers_data_state = {}
+        self.start_layers = LayerDict()
         self.out_data = {
             "stop_flag": False,
             "status_string": "status_string",
@@ -689,13 +666,12 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
-    def prepare_dataset(self, **options):
+    def prepare_dataset(self, dataset_name: str, task_type: str, source: str = ""):
         self.process_flag = "dataset"
-        custom_flag = options.get("source")
-        if custom_flag and custom_flag == "custom":
-            self._set_current_task(options.get("task_type"))
-            return self._create_custom_dataset(**options)
-        return self._prepare_dataset(**options)
+        self._set_current_task(task_type)
+        return self._prepare_dataset(
+            dataset_name=dataset_name, task_type=task_type, source=source
+        )
 
     def set_stop_training_flag(self):
         """

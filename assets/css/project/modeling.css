@@ -323,7 +323,7 @@
 	fill:#89D764;
 	stroke:#89D764;
 }
-#canvas-nodes > .node-type-out > rect {
+#canvas-nodes > .node-type-output > rect {
 	fill:#8E51F2;
 	stroke:#8E51F2;
 }
