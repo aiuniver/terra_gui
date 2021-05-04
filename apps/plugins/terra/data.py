@@ -101,10 +101,15 @@ class LayerConfig(pydantic.BaseModel):
         output["params"] = dict(self.params)
         return output
 
-    @pydantic.validator("up_link", "input_shape", "output_shape", allow_reuse=True)
+    @pydantic.validator("up_link", allow_reuse=True)
     def correct_list_natural_number(cls, value):
         value = list(filter(lambda value: value > 0, value))
         value = list(set(value))
+        return value
+
+    @pydantic.validator("input_shape", "output_shape", allow_reuse=True)
+    def correct_shape(cls, value):
+        value = list(filter(lambda value: value > 0, value))
         return value
 
 
@@ -136,6 +141,59 @@ class LayerDict(pydantic.BaseModel):
         for index, item in self.items.items():
             output["items"][index] = item.as_dict
         return output
+
+    def reset_indexes(self):
+        layers_rels = {}
+
+        def _prepare(num: int = 0, update: list = None):
+            update_next = []
+
+            if update:
+                for index in update:
+                    num += 1
+                    layers_rels[num] = int(index)
+                for index, layer in self.items.items():
+                    if list(set(update) & set(layer.config.up_link)):
+                        update_next.append(int(index))
+            else:
+                for index, layer in self.items.items():
+                    if not layer.config.up_link:
+                        num += 1
+                        layers_rels[num] = int(index)
+                        update_next += layer.down_link
+
+            update_next = list(set(update_next))
+            if update_next:
+                _prepare(num, update_next)
+
+        _prepare()
+
+        layers = {}
+        for index, rel in layers_rels.items():
+            layer = self.items.get(int(rel))
+            layer.down_link = list(
+                map(
+                    lambda value: int(
+                        list(layers_rels.keys())[
+                            list(layers_rels.values()).index(int(value))
+                        ]
+                    ),
+                    layer.down_link,
+                )
+            )
+            layer.config.up_link = list(
+                map(
+                    lambda value: int(
+                        list(layers_rels.keys())[
+                            list(layers_rels.values()).index(int(value))
+                        ]
+                    ),
+                    layer.config.up_link,
+                )
+            )
+            layers[index] = layer
+
+        self.items = layers
 
 
 @dataclass

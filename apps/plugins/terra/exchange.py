@@ -170,68 +170,17 @@ class TerraExchange:
             }
         )
 
-    def _prepare_validation_indexes(self, layers: dict) -> dict:
-        rels = {}
-        items = []
-        num = 0
-        new_layers = {}
-
-        def _prepare_up_link(up_link: list) -> list:
-            return list(filter(lambda value: value > 0, up_link))
-
-        def _up_link_to_new_index(up_link) -> list:
-            for index, item in enumerate(up_link):
-                up_link[index] = rels.get(str(item))
-            return up_link
-
-        def _prepare_items(items: list, num: int):
-            update_list = []
-            for item in items:
-                for index, layer in copy.deepcopy(layers).items():
-                    up_link = _prepare_up_link(list(layer.get("up_link")))
-                    if int(item) in up_link:
-                        if index not in update_list:
-                            num += 1
-                            rels[index] = num
-                            up_link = _up_link_to_new_index(up_link)
-                            layer.update({"up_link": up_link})
-                            new_layers[num] = layer
-                            update_list.append(index)
-            if update_list:
-                _prepare_items(update_list, num)
-
-        for index, layer in layers.items():
-            if layer.get("location_type") == "input":
-                num += 1
-                rels[index] = num
-                new_layers[num] = layer
-                items.append(index)
-
-        _prepare_items(items, num)
-
-        return new_layers
-
     def _call_get_change_validation(self) -> TerraExchangeResponse:
-        layers = {}
-        for index, layer in self.__project.layers.items():
-            config = layer.get("config")
-            layers[str(index)] = config
+        self.__project.layers.reset_indexes()
+        layers = self.__project.layers
         if layers:
-            for index, layer in layers.items():
-                groups = layer.get("params", {})
-                for group_name, group in groups.items():
-                    for param_name, param in group.items():
-                        param_type = (
-                            colab_exchange.layers_params.get(layer.get("type"))
-                            .get(group_name)
-                            .get(param_name)
-                            .get("type")
-                        )
-                        if param_type == "tuple" and isinstance(param, (tuple, list)):
-                            param = list(map(lambda value: str(value), param))
-                            group[param_name] = ",".join(param)
-            new_layers = self._prepare_validation_indexes(copy.deepcopy(layers))
-            return self.__request_post("get_change_validation", layers=new_layers)
+            configs = dict(
+                map(
+                    lambda value: [int(value[0]), value[1].get("config")],
+                    layers.as_dict.get("items").items(),
+                )
+            )
+            return self.__request_post("get_change_validation", layers=configs)
         else:
             return TerraExchangeResponse()
 

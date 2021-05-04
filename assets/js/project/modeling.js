@@ -82,12 +82,18 @@
                     this.btn.validation.disabled = true;
                     window.StatusBar.clear();
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
+                    terra_board.model.classed("error", false);
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
                             this.btn.validation.disabled = false;
                             if (success) {
-                                console.log(data.data.errors_val);
+                                for (let index in data.data.errors_val) {
+                                    let error = data.data.errors_val[index];
+                                    if (error) {
+                                        terra_board.set_layer_error(index);
+                                    }
+                                }
                                 window.StatusBar.clear();
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -193,6 +199,10 @@
             });
 
             _d3graph.call(zoom);
+
+            this.set_layer_error = (index) => {
+                _cnodes.select(`#node-${index}`).classed("error", true);
+            }
 
             this.load_layer = (class_name) => {
                 let type;
