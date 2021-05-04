@@ -3,8 +3,10 @@ import numpy as np
 import sys
 import os.path
 import os
+import gc
 import operator
 from tensorflow import keras
+from apps.plugins.terra.neural.customcallback import CustomCallback
 
 __version__ = 0.1
 
@@ -176,16 +178,6 @@ class GUINN:
             dts_obj (object): setting task_name
         """
         self.DTS = dts_obj
-        pass
-
-    def set_callback(self, callback_obj: object) -> None:
-        """
-        Setting task nn_name
-
-        Args:
-            callback_obj (object): setting callbacks
-        """
-        self.callbacks = callback_obj
         pass
 
     def checking_HOME(self) -> None:
@@ -435,6 +427,13 @@ class GUINN:
             print("self.callbacks", self.callbacks)
 
         self.prepare_dataset()
+        clsclbk = CustomCallback(params=self.output_param, step=1, show_final=True, dataset=self.DTS,
+                                 exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val)
+        self.callbacks = [clsclbk]
+        self.callbacks.append(keras.callbacks.ModelCheckpoint(
+            filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'),
+            verbose=1, save_best_only=True, save_weights_only=True, monitor='loss', mode='min'))
+
         self.show_training_params()
 
         if self.x_Val['input_1'] is not None:
@@ -447,9 +446,7 @@ class GUINN:
                 validation_data=(self.x_Val, self.y_Val),
                 epochs=self.epochs,
                 verbose=verbose,
-                callbacks=[self.callbacks, keras.callbacks.ModelCheckpoint(
-                    filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'), verbose=1,
-                    save_best_only=True, save_weights_only=True, monitor='loss', mode='min')]
+                callbacks=self.callbacks
             )
         else:
             self.history = self.model.fit(
@@ -460,17 +457,20 @@ class GUINN:
                 validation_split=0.2,
                 epochs=self.epochs,
                 verbose=verbose,
-                callbacks=[self.callbacks, keras.callbacks.ModelCheckpoint(
-                    filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'), verbose=1,
-                    save_best_only=True, save_weights_only=True, monitor='loss', mode='min')]
+                callbacks=self.callbacks
             )
         self.model_is_trained = True
 
         for n_out in self.DTS.Y.keys():
             for _ in self.loss[n_out]:
                 for metric_out in self.metrics[n_out]:
-                    self.monitor = f'{n_out}_{metric_out}'
-                    self.monitor2 = f'{n_out}_loss'
+                    if len(self.y_Train) > 1 or (len(self.metrics[n_out]) > 1 and
+                                                 'loss' not in self.metrics[n_out]):
+                        self.monitor = f'{n_out}_{metric_out}'
+                        self.monitor2 = f'{n_out}_loss'
+                    else:
+                        self.monitor = f'{metric_out}'
+                        self.monitor2 = f'loss'
                     self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
                         history=self.history, monitor=self.monitor, monitor2=self.monitor2
                     )
@@ -484,9 +484,17 @@ class GUINN:
 
         pass
 
+    def nn_cleaner(self) -> None:
+        keras.backend.clear_session()
+        del self.model
+        gc.collect()
+        self.model = keras.Model()
+        self.callbacks = []
+        pass
+
     @staticmethod
     def _search_best_epoch_data(
-            history, monitor="output_1_val_accuracy", monitor2="output_1_loss"
+            history, monitor="val_accuracy", monitor2="loss"
             ) -> Tuple[dict, int, int]:
         """
         Searching in history for best epoch with metrics from 'monitor' kwargs
