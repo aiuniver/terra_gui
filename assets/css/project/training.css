@@ -237,7 +237,7 @@
     height:100%;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item {
-    display:none;
+    /*display:none;*/
     height:100%;
     overflow:hidden;
 }
@@ -255,6 +255,8 @@
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container {
     padding:20px;
+    display: flex;
+    flex-wrap: wrap;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container,
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.scatters .tab-container{
@@ -348,6 +350,12 @@
 
 .output-block{
     padding: 0 10px;
+    display: flex;
+    align-items: center;
+}
+
+.output-block > label{
+    width: 80px;
 }
 
 #optimazer-button{
@@ -576,34 +584,6 @@
     box-sizing: border-box;
 }
 
-@media (max-width: 575.98px) {
-
-}
-
- @media (min-width: 576px) and (max-width: 767.98px) {
-
-}
-
-@media (min-width: 768px) and (max-width: 991.98px) {
-
-}
-
-@media (min-width: 992px) and (max-width: 1199.98px) {
-
-}
-
-@media (min-width: 1200px) {
-
-}
-
-
-
-
-.graph:nth-child(2n){
-    border-left: 1px solid #0E1621;
-    border-right: 1px solid #0E1621;
-}
-
 .graph-titles{
     display: flex;
     padding-bottom: 24px;
@@ -713,5 +693,128 @@ main > .container > .properties > .wrapper{
     width: auto;
 }
 
+.toolbar > .wrapper {
+    border-right: 1px solid #0E1621;
+}
+
+
+/*arrow styles*/
+.arrow-accordion {
+    position: relative;
+    cursor: pointer;
+    width: 20px;
+    height: 10px;
+    float: right;
+    margin: -3px;
+}
+.arrow-accordion-left {
+    position: absolute;
+    background-color: transparent;
+    top: 10px;
+    left: 0;
+    width: 10px;
+    height: 2px;
+    display: block;
+    transform: rotate(45deg);
+    float: right;
+    border-radius: 2px;
+}
+.arrow-accordion-left:after {
+    content: "";
+    background-color: #337AB7;
+    width: 10px;
+    height: 2px;
+    display: block;
+    float: right;
+    border-radius: 1px 2px 2px 1px;
+    transition: all 0.5s cubic-bezier(0.25, 1.7, 0.35, 0.8);
+    z-index: -1;
+}
+
+.arrow-accordion-right {
+    position: absolute;
+    background-color: transparent;
+    top: 10px;
+    left: 6px;
+    width: 10px;
+    height: 2px;
+    display: block;
+    transform: rotate(-45deg);
+    float: right;
+    border-radius: 2px;
+}
+.arrow-accordion-right:after {
+    content: "";
+    background-color: #337AB7;
+    width: 10px;
+    height: 2px;
+    display: block;
+    float: right;
+    border-radius: 2px 1px 1px 2px;
+    transition: all 0.5s cubic-bezier(0.25, 1.7, 0.35, 0.8);
+    z-index: -1;
+}
+.open .arrow-accordion-left:after {
+    transform-origin: center center;
+    transform: rotate(-85deg);
+}
+.open .arrow-accordion-right:after {
+    transform-origin: center center;
+    transform: rotate(85deg);
+}
+
+.open{
+    padding: 0 20px;
+}
+
+.open > .optimazer-item,
+.open > .callback-item,
+.open > .outputs-content,
+.open > .param-item{
+    display: none;
+}
+
+.open > .params-title{
+   margin-bottom: 0;
+}
+
+.scroll-block{
+    height: 82%;
+}
+
+.output-params-block > .params-title{
+    background-color: #0E1621;
+}
+
+.outputs-content{
+    padding: 10px 0;
+}
+
+#training-btns{
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    padding: 20px;
+}
+
+@media (max-width: 575.98px) {
+
+}
+
+ @media (min-width: 576px) and (max-width: 767.98px) {
+
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+
+}
+
+@media (min-width: 992px) and (max-width: 1199.98px) {
+
+}
+
+@media (min-width: 1200px) {
+
+}
 
 

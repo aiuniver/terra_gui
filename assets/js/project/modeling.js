@@ -915,7 +915,6 @@
                 "set_model",
                 (success, data) => {
                     if (success) {
-                        console.log(data.data.layers);
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;

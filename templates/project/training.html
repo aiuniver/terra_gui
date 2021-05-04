@@ -13,30 +13,33 @@
 {% endblock js_block %}
 
 {% block content_block %}
+
+<div class="toolbar project-trainig-toolbar">
+    <div class="wrapper">
+        <ul class="menu-section">
+            <li data-type="graphs">
+                <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="imgs" id="canvas-save">
+                <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="text" id="validation">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="scatters" id="validation">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+
 <div class="board">
     <div class="graphics">
             <div class="wrapper">
-                <div class="tabs">
-                    <ul class="flexbox-left-nowrap">
-                        <li class="graphs disabled"><span>График</span></li>
-                        <li class="images disabled"><span>Изображения</span></li>
-                        <li class="text disabled"><span>Текст</span></li>
-                        <li class="scatters disabled"><span>Скаттеры</span></li>
-                    </ul>
-                </div>
                 <div class="tabs-content">
                     <div class="inner">
-                        <div class="tabs-item graphs">
-                            <div class="tab-container custom-scrollbar-wrapper">
-                            </div>
-                        </div>
-                        <div class="tabs-item images custom-scrollbar-wrapper">
-                            <div class="tab-container"></div>
-                        </div>
-                        <div class="tabs-item text custom-scrollbar-wrapper">
-                            <div class="tab-container"></div>
-                        </div>
-                        <div class="tabs-item scatters opacity custom-scrollbar-wrapper">
+                        <div class="tabs-item graphics custom-scrollbar-wrapper">
                             <div class="tab-container"></div>
                         </div>
                     </div>
@@ -52,81 +55,117 @@
 <div class="properties project-modeling-properties">
     <div class="wrapper">
         <div class="params">
-            <form class="params-container layers-form custom-scrollbar-wrapper">
-                <div class="params-item">
-                    <div class="inner">
-                    <div class="params-title">Оптимизатор</div>
-                        <div class="field-form">
-{#                            <label for="optimazer">Оптимизатор:</label>#}
-                            <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
-                                <option value=""></option>
-                                {% for optimizer in request.terra_project.optimizers %}
-                                    <option value="{{ optimizer }}"{% if optimizer|lower == 'adam' %} selected="selected"{% endif %}>{{ optimizer }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="field-form form-inline-label">
-                            <div class="field-form field-inline">
-                                <label for="batch-size">Размер батча:</label>
-                                <input name="batch-size" id="batch-size" type="number" value="32" />
-                            </div>
-                            <div class="field-form field-inline">
-                                <label for="epoch-num">Количество эпох:</label>
-                                <input name="epoch-num" id="epoch-num" type="number" value="20" />
-                            </div>
-                            <div class="field-form field-inline">
-                                <label for="epoch-num">learning_rate:</label>
-                                <input name="epoch-num" id="epoch-num" type="number" value="20" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="params-item params-optimazer-block">
-                    <div class="params-title">Параметры оптимизатора</div>
+            <form class="params-container layers-form">
+                <div class="scroll-block custom-scrollbar-wrapper">
                     <div class="params-item">
-                        <div class="inner form-inline-label"></div>
-                    </div>
-                </div>
-                <div class="params-item output-params-block">
-                {% for name, layer in request.terra_project.layers.items %}
-                    {% if layer.type == "output" %}
-                        <div class="param-item">
-                            <div class="params-title">Параметры Output-{{ layer.config.name }}</div>
-                            <div class="output-item" id="output-{{ layer.config.name }}">
-                                <div class="field-form output-block select-loss">
-                                    <label for="output-{{ layer.config.name }}-loss">Loss:</label>
-    {#                                    <select id="output-{{ layer.config.name }}-loss" name="output-{{ layer.config.name }}-loss" class="jquery-ui-menuselect loss-select">#}
-    {#                                    </select>#}
-                                    <input type="text" class="loss-select">
+                        <div class="inner">
+                        <div class="params-title click-menu">Оптимизатор</div>
+                            <div class="field-form">
+    {#                            <label for="optimazer">Оптимизатор:</label>#}
+                                <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
+                                    <option value=""></option>
+                                    {% for optimizer in request.terra_project.optimizers %}
+                                        <option value="{{ optimizer }}"{% if optimizer|lower == 'adam' %} selected="selected"{% endif %}>{{ optimizer }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="field-form form-inline-label">
+                                <div class="field-form field-inline">
+                                    <label for="batch-size">Размер батча:</label>
+                                    <input name="batch-size" id="batch-size" type="number" value="32" />
                                 </div>
-                                <div class="field-form output-block select-metric">
-                                    <label for="output-{{ layer.config.name }}-metric">Metric:</label>
-                                    <input type="text" class="metric-select">
+                                <div class="field-form field-inline">
+                                    <label for="epoch-num">Количество эпох:</label>
+                                    <input name="epoch-num" id="epoch-num" type="number" value="20" />
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="epoch-num">learning_rate:</label>
+                                    <input name="epoch-num" id="epoch-num" type="number" value="20" />
                                 </div>
                             </div>
                         </div>
-                    {% endif %}
-                {% endfor %}
-            </div>
-                <div class="callbacks-switchers params-item">
-                        <div class="params-title">Выводить</div>
-                        <div class="callback-item">
-                            {% for name, callback in request.terra_project.callbacks.items %}
-                                <div class="field-form field-inline">
-                                    <label for="callback-{{ name }}">{{ callback.label }}:</label>
-                                    <div class="checkout-switch">
-                                        <input{% if callback.value %} checked="checked"{% endif %} type="checkbox" id="callback-{{ name }}" name="{{ name }}" />
-                                        <span class="switcher"></span>
-                                    </div>
-                                </div>
-                            {% endfor %}
+                    </div>
+                    <div class="params-item params-optimazer-block">
+                        <div class="params-title click-menu">Параметры оптимизатора
+                            <div class="arrow-accordion">
+                                <span class="arrow-accordion-left"></span>
+                                <span class="arrow-accordion-right"></span>
+                            </div>
                         </div>
+                        <div class="optimazer-item">
+                            <div class="inner form-inline-label"></div>
+                        </div>
+                    </div>
+                        <div class="params-item output-params-block">
+                            <div class="params-title click-menu">Параметры Outputs
+                                <div class="arrow-accordion">
+                                    <span class="arrow-accordion-left"></span>
+                                    <span class="arrow-accordion-right"></span>
+                                </div>
+                            </div>
+                            <div class="param-item">
+                                <div class="outputs-content">
+                                     {% for name, layer in request.terra_project.layers.items %}
+                                        {% if layer.type == "output" %}
+                                            <div class="params-title">Параметры Output-{{ layer.config.name }}</div>
+                                            <div class="output-item" id="output-{{ layer.config.name }}">
+                                                  <div class="field-form field-inline output-block select-task">
+                                                    <label for="output-{{ layer.config.name }}-task">Task:</label>
+                                                        <select id="output-{{ layer.config.name }}-task" name="output-{{ layer.config.name }}-task" class="jquery-ui-menuselect task-select">
+                                                            {% for param in request.terra_project.compile %}
+                                                                <option value="{{ param }}">{{ param }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                </div>
+                                                <div class="field-form field-inline output-block select-loss">
+                                                    <label for="output-{{ layer.config.name }}-loss">Loss:</label>
+                                                        <select id="output-{{ layer.config.name }}-loss" name="output-{{ layer.config.name }}-loss" class="jquery-ui-menuselect loss-select">
+                                                            {% for param in request.terra_project.compile.classification.metrics %}
+                                                                <option value="{{ param }}">{{ param }}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                </div>
+                                                <div class="field-form field-inline output-block select-metric">
+                                                    <label for="output-{{ layer.config.name }}-metric">Metric:</label>
+                                                     <select id="output-{{ layer.config.name }}-metric" name="output-{{ layer.config.name }}-metric" class="jquery-ui-menuselect metric-select">
+                                                         {% for param in request.terra_project.compile.classification.losses %}
+                                                             <option value="{{ param }}">{{ param }}</option>
+                                                         {% endfor %}
+                                                        </select>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    <div class="params-item callbacks-switchers">
+                            <div class="params-title click-menu">
+                                Выводить
+                                <div class="arrow-accordion">
+                                    <span class="arrow-accordion-left"></span>
+                                    <span class="arrow-accordion-right"></span>
+                                </div>
+                            </div>
+                            <div class="callback-item">
+                                {% for name, callback in request.terra_project.callbacks.items %}
+                                    <div class="field-form field-inline">
+                                        <label for="callback-{{ name }}">{{ callback.label }}:</label>
+                                        <div class="checkout-switch">
+                                            <input{% if callback.value %} checked="checked"{% endif %} type="checkbox" id="callback-{{ name }}" name="{{ name }}" />
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                    </div>
                 </div>
-                <div class="params-item">
+
+                <div class="params-item" id="training-btns">
                     <div class="inner actions">
                         <div class="actions-form">
                             <div class="item training">
-                                <button disabled="disabled">Обучить</button>
+                                <button>Обучить</button>
                             </div>
                             <div class="item evaluate">
                                 <button disabled="disabled">Evaluate</button>
@@ -139,3 +178,10 @@
     </div>
 </div>
 {% endblock content_block %}
+
+{% block modal_window %}
+{{ block.super }}
+<div id="modal-window-warning" class="modal-window-container">
+    <div class="wrapper"></div>
+</div>
+{% endblock modal_window %}

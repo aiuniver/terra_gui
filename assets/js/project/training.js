@@ -98,8 +98,6 @@
             div.className = "graph";
             div.innerHTML = `<div class="data-visualizer" style="width: 100%; height: 100%"></div>`;
 
-            console.log(data_needed_format[plotName][i]["list"])
-
             container.append(div);
 
             let layout = {
@@ -183,7 +181,6 @@
         content.find(".tabs-item.images .tab-container").html("");
         content.find(".tabs-item.text .tab-container").html("");
     }
-
 
     $(() => {
 
@@ -303,9 +300,9 @@
                 && window.TerraProject.task !== null
                 ? $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled")
                 : $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
-            $(".wrapper .params-optimazer-block .params-item").html("");
+            $(".wrapper .params-optimazer-block .optimazer-item").html("");
 
-            $(".wrapper .params-optimazer-block .params-item").append(`
+            $(".wrapper .params-optimazer-block .optimazer-item").append(`
                 <div class="inner form-inline-label inner-col-0"></div>
             `);
             window.ExchangeRequest(
@@ -349,16 +346,6 @@
             }
         }).trigger("change");
 
-
-
-        // for(let index in window.TerraProject.layers){
-        //     if(window.TerraProject.layers[index].type == "output"){
-        //         $("#mCSB_1_container").append(`<div class="params-title">Параметры Output-${window.TerraProject.layers[index].config.name}:</div>`)
-        //         $("#mCSB_1_container").append(`<div class="params-item" id="params-item-${window.TerraProject.layers[index].config.name}"></div>`)
-        //         $(`#params-item-${window.TerraProject.layers[index].config.name}`).append()
-        //     }
-        // }
-
         $(".callbacks-switchers > .field-inline > .checkout-switch > input").bind("change", (event) => {
             event.preventDefault();
             let send_data = {};
@@ -378,46 +365,44 @@
             )
         });
 
- $( function() {
-    $.widget( "custom.catcomplete", $.ui.autocomplete, {
-      _create: function() {
-        this._super();
-        this.widget().menu( "option", "items", "> :not(.ui-autocomplete-category)" );
-      },
-      _renderMenu: function( ul, items ) {
-        var that = this,
-          currentCategory = "";
-        $.each( items, function( index, item ) {
-          var li;
-          if ( item.category != currentCategory ) {
-            ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
-            currentCategory = item.category;
-          }
-          li = that._renderItemData( ul, item );
-          if ( item.category ) {
-            li.attr( "aria-label", item.category + " : " + item.label );
-          }
+        $(".task-select").bind("change", (event) => {
+            event.preventDefault();
+
+        }).selectmenu({
+            change:(event) => {
+                $(event.target).trigger("change");
+                let loss = $("#"+event.target.parentNode.parentNode.id).find(".loss-select");
+                let metric = $("#"+event.target.parentNode.parentNode.id).find(".metric-select");
+                loss.empty();
+                metric.empty();
+
+                window.TerraProject.compile[event.target.value].losses.forEach((elem) => {
+                    loss.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                 window.TerraProject.compile[event.target.value].metrics.forEach((elem) => {
+                    metric.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                loss.selectmenu("refresh");
+                metric.selectmenu("refresh");
+
+                // $("#"+event.target.parentNode.parentNode.id).find(".loss-select").refresh();
+            }
+        }).trigger("change");
+
+
+        $(".click-menu").bind("click", (event)=>{
+            $(event.target).parent().toggleClass('open');
         });
-      }
-    });
-    var data = [
-      { label: "anders", category: "" },
-      { label: "andreas", category: "" },
-      { label: "antal", category: "" },
-      { label: "annhhx10", category: "Products" },
-      { label: "annk K12", category: "Products" },
-      { label: "annttop C13", category: "Products" },
-      { label: "anders andersson", category: "People" },
-      { label: "andreas andersson", category: "People" },
-      { label: "andreas johnson", category: "People" }
-    ];
 
-    $( "#loss-select" ).catcomplete({
-      delay: 0,
-      source: data
-    });
-  } );
+        $(".item.training > button").bind("click", (event)=>{
+            event.preventDefault();
+            let form = $(event.currentTarget),
+                serializeData = form.parents('.params-container').serializeArray();
 
+            console.log(serializeData)
+        });
 
         // здесь будет проверка на наличие флага "регрессия"
         // if (data_needed_format["scatters"]){
