@@ -1,9 +1,141 @@
+import json
+
+import pydantic
+
+from enum import Enum
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass
 
 from django.urls import reverse_lazy
 
 
-UNDEFINED = "\033[0;31mundefined\033[0m"
+class Color(str, Enum):
+    red = "\033[0;31m"
+    reset = "\033[0m"
+
+
+class LayerLocation(str, Enum):
+    input = "input"
+    middle = "middle"
+    output = "output"
+
+
+class LayerType(str, Enum):
+    Input = "Input"
+    Conv1D = "Conv1D"
+    Conv2D = "Conv2D"
+    Conv3D = "Conv3D"
+    Conv1DTranspose = "Conv1DTranspose"
+    Conv2DTranspose = "Conv2DTranspose"
+    SeparableConv1D = "SeparableConv1D"
+    SeparableConv2D = "SeparableConv2D"
+    DepthwiseConv2D = "DepthwiseConv2D"
+    MaxPooling1D = "MaxPooling1D"
+    MaxPooling2D = "MaxPooling2D"
+    AveragePooling1D = "AveragePooling1D"
+    AveragePooling2D = "AveragePooling2D"
+    UpSampling1D = "UpSampling1D"
+    UpSampling2D = "UpSampling2D"
+    LeakyReLU = "LeakyReLU"
+    Dropout = "Dropout"
+    Dense = "Dense"
+    Add = "Add"
+    Multiply = "Multiply"
+    Flatten = "Flatten"
+    Concatenate = "Concatenate"
+    Reshape = "Reshape"
+    sigmoid = "sigmoid"
+    softmax = "softmax"
+    tanh = "tanh"
+    relu = "relu"
+    elu = "elu"
+    selu = "selu"
+    PReLU = "PReLU"
+    GlobalMaxPooling1D = "GlobalMaxPooling1D"
+    GlobalMaxPooling2D = "GlobalMaxPooling2D"
+    GlobalAveragePooling1D = "GlobalAveragePooling1D"
+    GlobalAveragePooling2D = "GlobalAveragePooling2D"
+    GRU = "GRU"
+    LSTM = "LSTM"
+    Embedding = "Embedding"
+    RepeatVector = "RepeatVector"
+    BatchNormalization = "BatchNormalization"
+
+
+class LayerConfigParam(pydantic.BaseModel):
+    main: Dict[str, Optional[Any]] = {}
+    extra: Dict[str, Optional[Any]] = {}
+
+    @pydantic.validator("main", "extra", allow_reuse=True)
+    def correct_dict_str_values(cls, value):
+        for name, item in value.items():
+            try:
+                if item is None:
+                    item = ""
+                if isinstance(item, (tuple, list)):
+                    item = ",".join(list(map(lambda value: str(value), item)))
+                if isinstance(item, dict):
+                    item = json.dumps(item)
+            except Exception:
+                item = ""
+            value[name] = item
+        return value
+
+
+class LayerConfig(pydantic.BaseModel):
+    name: str = ""
+    type: LayerType = LayerType.Dense
+    location_type: LayerLocation = LayerLocation.middle
+    up_link: List[int] = []
+    input_shape: List[int] = []
+    output_shape: List[int] = []
+    data_name: str = ""
+    data_available: List[str] = []
+    params: LayerConfigParam = LayerConfigParam()
+
+    @property
+    def as_dict(self) -> dict:
+        output = dict(self)
+        output["type"] = self.type.value
+        output["location_type"] = self.location_type.value
+        output["params"] = dict(self.params)
+        return output
+
+    @pydantic.validator("up_link", "input_shape", "output_shape", allow_reuse=True)
+    def correct_list_natural_number(cls, value):
+        value = list(filter(lambda value: value > 0, value))
+        value = list(set(value))
+        return value
+
+
+class Layer(pydantic.BaseModel):
+    x: Optional[float]
+    y: Optional[float]
+    down_link: List[int] = []
+    config: LayerConfig = LayerConfig()
+
+    @property
+    def as_dict(self) -> dict:
+        output = dict(self)
+        output["config"] = self.config.as_dict
+        return output
+
+    @pydantic.validator("down_link", allow_reuse=True)
+    def validate_list_natural_number(cls, value):
+        value = list(filter(lambda value: value > 0, value))
+        value = list(set(value))
+        return value
+
+
+class LayerDict(pydantic.BaseModel):
+    items: Dict[int, Layer] = {}
+
+    @property
+    def as_dict(self) -> dict:
+        output = {"items": {}}
+        for index, item in self.items.items():
+            output["items"][index] = item.as_dict
+        return output
 
 
 @dataclass
@@ -30,8 +162,8 @@ class TerraExchangeProject:
     dataset: str
     task: str
     model_name: str
-    layers: dict
-    start_layers: dict
+    layers: LayerDict
+    start_layers: LayerDict
     schema: list
     layers_types: dict
     optimizers: list
@@ -47,8 +179,8 @@ class TerraExchangeProject:
         self.dataset = kwargs.get("dataset", "")
         self.task = kwargs.get("task", "")
         self.model_name = kwargs.get("model_name", "")
-        self.layers = kwargs.get("layers", {})
-        self.start_layers = kwargs.get("start_layers", {})
+        self.layers = kwargs.get("layers", LayerDict())
+        self.start_layers = kwargs.get("start_layers", LayerDict())
         self.schema = kwargs.get("schema", [])
         self.layers_types = kwargs.get("layers_types", {})
         self.optimizers = kwargs.get("optimizers", [])
@@ -69,15 +201,15 @@ class TerraExchangeProject:
     dataset      : {self.dataset}
     task         : {self.task}
     model_name   : {self.model_name}
-    layers       : {len(self.layers.keys())}
-    start_layers : {len(self.start_layers.keys())}
+    layers       : {len(self.layers.items.keys())}
+    start_layers : {len(self.start_layers.items.keys())}
     schema       : {len(self.schema)}
     layers_types : {len(self.layers_types.keys())}
     optimizers   : {len(self.optimizers)}
     callbacks    : {len(self.callbacks.keys())}
-    path         : datasets -> {self.path.get("modeling", UNDEFINED)}
-                   modeling -> {self.path.get("modeling", UNDEFINED)}
-                   training -> {self.path.get("training", UNDEFINED)}"""
+    path         : datasets -> {self.path.get("modeling", f"{Color.red}undefined{Color.reset}")}
+                   modeling -> {self.path.get("modeling", f"{Color.red}undefined{Color.reset}")}
+                   training -> {self.path.get("training", f"{Color.red}undefined{Color.reset}")}"""
 
     @property
     def dataset_selected(self) -> bool:
@@ -85,9 +217,16 @@ class TerraExchangeProject:
 
     @property
     def as_json_string(self) -> dict:
-        output = self.__dict__
+        output = dict(self.__dict__)
         path = {}
         for name, value in self.path.items():
             path.update({name: str(value)})
-        output.update({"path": path, "dataset_selected": self.dataset_selected})
+        output.update(
+            {
+                "path": path,
+                "dataset_selected": self.dataset_selected,
+                "layers": self.layers.as_dict.get("items"),
+                "start_layers": self.start_layers.as_dict.get("items"),
+            }
+        )
         return output

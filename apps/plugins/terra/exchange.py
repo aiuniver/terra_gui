@@ -4,7 +4,13 @@ import requests
 
 from django.conf import settings
 
-from .data import TerraExchangeResponse, TerraExchangeProject
+from .data import (
+    TerraExchangeResponse,
+    TerraExchangeProject,
+    LayerLocation,
+    LayerDict,
+    Layer,
+)
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
 
@@ -61,38 +67,6 @@ class TerraExchange:
                 success=False, error=response.json().get("detail")
             )
 
-    def __prepare_layers(self, layers: dict) -> dict:
-        def get_down_link_list(index):
-            output = []
-            for item_index, item in layers.items():
-                if int(index) in item.get("config").get("up_link"):
-                    output.append(int(item_index))
-            return output
-
-        for index, layer in layers.items():
-            config = layer.get("config", {})
-            params = config.get("params", {})
-            if "id" not in layer:
-                layer["id"] = int(index)
-            if "index" not in layer:
-                layer["index"] = int(index)
-            if "type" not in layer:
-                layer["type"] = config.get("location_type")
-            if "down_link" not in layer:
-                layer["down_link"] = get_down_link_list(index)
-            param_conf = colab_exchange.layers_params.get(config.get("type"), {})
-            for group_name, group in param_conf.items():
-                if group_name not in params:
-                    params[group_name] = {}
-                for param_name, param in group.items():
-                    if param_name not in params[group_name]:
-                        params[group_name][param_name] = param.get("default")
-                    elif isinstance(params[group_name][param_name], dict):
-                        params[group_name][param_name] = params[group_name][
-                            param_name
-                        ].get("default")
-        return layers
-
     def call(self, *args, **kwargs) -> TerraExchangeResponse:
         if len(args) != 1:
             raise TerraExchangeException(
@@ -116,56 +90,27 @@ class TerraExchange:
     def _call_prepare_dataset(
         self, dataset: str, task: str, is_custom: bool = False
     ) -> TerraExchangeResponse:
-        tags, name, start_layers, layers_data_state = colab_exchange.prepare_dataset(
+        tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
             task_type=task,
             source="custom" if is_custom else "",
         )
-        if not len(start_layers.keys()):
-            start_layers[1] = {
-                "name": f"l1_Input",
-                "type": "Input",
-                "location_type": "input",
-                "params": {"main": {}, "extra": {}},
-                "up_link": [],
-                "inp_shape": [],
-                "out_shape": [],
-            }
-            start_layers[2] = {
-                "name": f"l2_Dense",
-                "type": "Dense",
-                "location_type": "out",
-                "params": {"main": {}, "extra": {}},
-                "up_link": [],
-                "inp_shape": [],
-                "out_shape": [],
-            }
-
-        layers = {}
         schema = [[], []]
-        for index, layer in start_layers.items():
-            schema[int(layer.get("type") != "Input")].append(index)
-            if not len(layer.get("params", {}).keys()):
-                layer["params"] = {"main": {}, "extra": {}}
-            layers[index] = {
-                "id": index,
-                "index": index,
-                "config": layer,
-                "type": layer.get("location_type"),
-            }
+        for index, layer in start_layers.items.items():
+            schema[int(layer.config.location_type != LayerLocation.input)].append(index)
 
-        self.__project.layers = self.__prepare_layers(layers)
-        self.__project.schema = schema
+        self.__project.layers = start_layers
         self.__project.start_layers = start_layers
+        self.__project.schema = schema
         self.__project.dataset = dataset
         self.__project.task = task
         return TerraExchangeResponse(
             data={
-                "layers": self.__project.layers,
+                "layers": self.__project.layers.as_dict.get("items"),
                 "schema": self.__project.schema,
                 "dataset": self.__project.dataset,
                 "task": self.__project.task,
-                "start_layers": self.__project.start_layers,
+                "start_layers": self.__project.start_layers.as_dict.get("items"),
             }
         )
 
@@ -182,238 +127,48 @@ class TerraExchange:
 
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
         data = self.__request_post("get_model_from_list", model_name=model_file)
-        # data.data["layers"] = {
-        #     1: {
-        #         "name": 1,
-        #         "type": "Input",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {"main": {}, "extra": {}},
-        #         "up_link": [0],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "input",
-        #     },
-        #     2: {
-        #         "name": 2,
-        #         "type": "Input",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {"main": {}, "extra": {}},
-        #         "up_link": [0],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "input",
-        #     },
-        #     3: {
-        #         "name": 3,
-        #         "type": "Conv2D",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {
-        #                 "filters": 100,
-        #                 "kernel_size": 200,
-        #                 "padding": "same",
-        #                 "strides": 1,
-        #                 "activation": "",
-        #             },
-        #             "extra": {},
-        #         },
-        #         "up_link": [1],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     4: {
-        #         "name": 4,
-        #         "type": "Conv2D",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {
-        #                 "filters": 100,
-        #                 "kernel_size": 2,
-        #                 "padding": "same",
-        #                 "strides": (1, 1),
-        #                 "activation": "",
-        #             },
-        #             "extra": {},
-        #         },
-        #         "up_link": [2],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     5: {
-        #         "name": 5,
-        #         "type": "Concatenate",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {"main": {"axis": -1}, "extra": {}},
-        #         "up_link": [3, 4],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     6: {
-        #         "name": 6,
-        #         "type": "Flatten",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {"main": {}, "extra": {}},
-        #         "up_link": [5],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     7: {
-        #         "name": 7,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"units": 3, "activation": ""},
-        #             "extra": {},
-        #         },
-        #         "up_link": [6],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     8: {
-        #         "name": 8,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"activation": "", "units": 32},
-        #             "extra": {},
-        #         },
-        #         "up_link": [7],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     9: {
-        #         "name": 9,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"units": 3, "activation": ""},
-        #             "extra": {},
-        #         },
-        #         "up_link": [8],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "middle",
-        #     },
-        #     10: {
-        #         "name": 10,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"units": 3, "activation": ""},
-        #             "extra": {},
-        #         },
-        #         "up_link": [9],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "out",
-        #     },
-        #     11: {
-        #         "name": 11,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"units": 3, "activation": ""},
-        #             "extra": {},
-        #         },
-        #         "up_link": [9],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "out",
-        #     },
-        #     12: {
-        #         "name": 12,
-        #         "type": "Dense",
-        #         "data_name": "",
-        #         "data_available": [],
-        #         "params": {
-        #             "main": {"units": 3, "activation": ""},
-        #             "extra": {},
-        #         },
-        #         "up_link": [9],
-        #         "inp_shape": [],
-        #         "out_shape": [],
-        #         "location_type": "out",
-        #     },
-        # }
-        layers = {}
+        layers = LayerDict()
         for index, layer in data.data.get("layers").items():
-            layers[index] = {"config": layer}
-        layers = self.__prepare_layers(layers)
-        data.data.update({"layers": layers})
+            layers.items[int(index)] = Layer(config=layer)
+        for index, layer in layers.items.items():
+            for _index in layer.config.up_link:
+                layers.items[_index].down_link.append(index)
+        data.data.update({"layers": layers.as_dict.get("items")})
         return data
 
-    def _call_set_model(self, layers: dict, schema: list) -> TerraExchangeResponse:
-        if not layers:
-            schema = [[], []]
-            for index, layer in self.__project.start_layers.items():
-                schema[int(layer.get("type") != "Input")].append(index)
-                if not len(layer.get("params", {}).keys()):
-                    layer["params"] = {"main": {}, "extra": {}}
-                layers[index] = {
-                    "id": index,
-                    "index": index,
-                    "config": layer,
-                    "type": layer.get("location_type"),
-                }
-
-        self.__project.layers = self.__prepare_layers(layers)
-        self.__project.schema = schema
+    def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
+        layers = kwargs.get("layers")
+        schema = kwargs.get("schema")
+        if layers:
+            self.__project.layers = LayerDict()
+            for index, layer in layers.items():
+                self.__project.layers.items[int(index)] = Layer(**layer)
+        else:
+            self.__project.layers = self.__project.start_layers
         return TerraExchangeResponse(
-            data={"layers": self.__project.layers, "schema": schema}
+            data={
+                "layers": self.__project.layers.as_dict.get("items"),
+                "schema": schema,
+            }
         )
 
     def _call_clear_model(self) -> TerraExchangeResponse:
-        layers = {}
-        schema = [[], []]
-        for index, layer in self.__project.start_layers.items():
-            schema[int(layer.get("type") != "Input")].append(index)
-            if not len(layer.get("params", {}).keys()):
-                layer["params"] = {"main": {}, "extra": {}}
-            layers[index] = {
-                "id": index,
-                "index": index,
-                "config": layer,
-                "type": layer.get("location_type"),
-            }
-
-        self.__project.layers = self.__prepare_layers(layers)
-        self.__project.schema = schema
+        self.__project.layers = self.__project.start_layers
         return TerraExchangeResponse(
-            data={"layers": self.__project.layers, "schema": schema}
+            data={
+                "layers": self.__project.layers.as_dict.get("items"),
+                "schema": self.__project.schema,
+            }
         )
 
-    def _call_set_input_layer(self) -> TerraExchangeResponse:
-        response = self.__request_post("set_input_layer")
-        self.__project.layers = self.__prepare_layers(response.data.get("layers"))
-        return response
-
-    def _call_set_any_layer(self, layer_type: str = "any") -> TerraExchangeResponse:
-        response = self.__request_post("set_any_layer", layer_type=layer_type)
-        self.__project.layers = self.__prepare_layers(response.data.get("layers"))
-        return response
-
-    def _call_save_layer(self, **kwargs) -> TerraExchangeResponse:
-        layers = self.__project.layers
-        layers[str(kwargs.get("id"))] = kwargs
-        self.__project.layers = self.__prepare_layers(layers)
-        return TerraExchangeResponse(data=self.__project.layers)
+    def _call_save_layer(self, index: int, layer: dict) -> TerraExchangeResponse:
+        self.__project.layers.items[int(index)] = Layer(**layer)
+        return TerraExchangeResponse(
+            data={
+                "index": int(index),
+                "layers": self.__project.layers.as_dict.get("items"),
+            }
+        )
 
     def _prepare_validation_indexes(self, layers: dict) -> dict:
         rels = {}

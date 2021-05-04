@@ -342,7 +342,6 @@ main > .container > .properties > .wrapper .mCSB_container {
     background:url('../../imgs/collapse.svg') center no-repeat;
     background-size:contain;
     transform:rotate(-180deg);
-    transition:transform .3s ease-in-out;
 }
 .params-container .params-item.collapsable.collapsed > .params-title:after {
     transform:rotate(0);
