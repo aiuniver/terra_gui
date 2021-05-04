@@ -311,6 +311,9 @@
 	rx:4;
 	ry:4;
 }
+#canvas-nodes > .node.error > rect {
+	stroke:#f00 !important;
+}
 #canvas-nodes > .node > rect.pointer {
 	opacity:0;
 	cursor:pointer;
