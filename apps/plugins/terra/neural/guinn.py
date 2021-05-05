@@ -148,13 +148,8 @@ class GUINN:
             self.epochs = 20
             self.shuffle: bool = True
 
-            self.monitor: str = 'input_1_accuracy'
-            self.monitor2: str = "input_1_loss"
-
-            # if not isinstance(self.metrics[0], str):
-            #     self.monitor = str(self.metrics[0])
-            # else:
-            #     self.monitor = self.metrics[0]
+            self.monitor: str = 'accuracy'
+            self.monitor2: str = "loss"
 
     def set_main_params(self, output_params: dict = None, clbck_options: dict = None, clbck_chp: dict = None,
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
@@ -178,6 +173,11 @@ class GUINN:
             dts_obj (object): setting task_name
         """
         self.DTS = dts_obj
+        self._reset()
+        pass
+
+    def _reset(self):
+        self.callbacks = []
         pass
 
     def checking_HOME(self) -> None:
@@ -278,38 +278,6 @@ class GUINN:
         """
         self.experiment_name = experiment_name
         pass
-
-    # def load_dataset(self, dataset_obj: trds.DTS, task_type: str) -> None:
-    #     """
-    #     Load dataset object
-    #
-    #     Args:
-    #         dataset_obj (object):   trds.DTS dataset object
-    #         task_type (str):        task type for NN
-    #
-    #     Returns:
-    #         None
-    #     """
-    #     # print('___nn___NN___load_dataset___', task_type)
-    #     self.DTS = dataset_obj
-        self.input_datatype = self.DTS.input_datatype
-    #     self._reinit(task_type)
-    #     pass
-    #
-    # def _reinit(self, task_type) -> None:
-    #     # print('___nn___NN___reinit___', task_type)
-    #     self.set_task_type(task_type)
-    #     self.set_experiment_UUID()
-    #     if self.django_flag:
-    #         task_type_defaults_kwargs = self.task_type_defaults_dict.get(task_type)
-    #         self.Exch.set_task_type_defaults(task_type_defaults_kwargs)
-    #     self._reset()
-    #     pass
-    #
-    # def _reset(self):
-    #     # print('___nn___NN___reset___')
-    #     self.callbacks = []
-    #     pass
 
     def show_training_params(self) -> None:
         """
