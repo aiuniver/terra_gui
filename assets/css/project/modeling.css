@@ -306,7 +306,6 @@
 	fill:#ff0;
 }
 #canvas-nodes > .node > rect {
-	height:30px;
 	stroke-width:2;
 	rx:4;
 	ry:4;

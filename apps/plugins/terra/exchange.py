@@ -171,7 +171,7 @@ class TerraExchange:
         )
 
     def _call_get_change_validation(self) -> TerraExchangeResponse:
-        self.__project.layers.reset_indexes()
+        # self.__project.layers.reset_indexes()
         layers = self.__project.layers
         if layers:
             configs = dict(
