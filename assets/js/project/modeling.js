@@ -88,13 +88,20 @@
                         (success, data) => {
                             this.btn.validation.disabled = false;
                             if (success) {
+                                window.StatusBar.clear();
+                                let is_error = false;
                                 for (let index in data.data.errors_val) {
                                     let error = data.data.errors_val[index];
                                     if (error) {
                                         terra_board.set_layer_error(index);
+                                        is_error = true;
                                     }
                                 }
-                                window.StatusBar.clear();
+                                if (is_error) {
+                                    window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_ERROR"), false);
+                                } else {
+                                    window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
+                                }
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
@@ -539,7 +546,7 @@
                         .on("end", _node_dragended)
                     );
                 $(rect_pointer._groups[0][0]).bind("mouseup", (event) => {
-                    if (event.button === 2) {
+                    if (event.button === 2 && !_new_link) {
                         $(event.currentTarget).closest(".node").find(".tools > .link").trigger("click");
                     }
                 });

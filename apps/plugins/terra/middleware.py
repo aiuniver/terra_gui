@@ -48,4 +48,4 @@ class TerraProjectMiddleware(MiddlewareMixin):
             terra_exchange.project.error = ""
         else:
             terra_exchange.project = {"error": "No connection to TerraAI project"}
-        request.terra_project = terra_exchange.project.__dict__
+        request.terra_project = terra_exchange.project
