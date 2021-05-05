@@ -17,49 +17,49 @@ class StatesData:
     def __init__(self):
         self.django_optimizers_dict = {
             "SGD": {
-                "learning_rate": {"type": "float", "value": 0.01},
+                "lr": {"type": "float", "value": 0.01},
                 "momentum": {"type": "float", "value": 0.0},
                 "nesterov": {"type": "bool", "value": False},
             },
             "RMSprop": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "rho": {"type": "float", "value": 0.9},
                 "momentum": {"type": "float", "value": 0.0},
                 "epsilon": {"type": "float", "value": 1e-07},
                 "centered": {"type": "bool", "value": False},
             },
             "Adam": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "beta_1": {"type": "float", "value": 0.9},
                 "beta_2": {"type": "float", "value": 0.999},
                 "epsilon": {"type": "float", "value": 1e-07},
                 "amsgrad": {"type": "bool", "value": False},
             },
             "Adadelta": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "rho": {"type": "float", "value": 0.95},
                 "epsilon": {"type": "float", "value": 1e-07},
             },
             "Adagrad": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "initial_accumulator_value": {"type": "float", "value": 0.1},
                 "epsilon": {"type": "float", "value": 1e-07},
             },
             "Adamax": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "beta_1": {"type": "float", "value": 0.9},
                 "beta_2": {"type": "float", "value": 0.999},
                 "epsilon": {"type": "float", "value": 1e-07},
             },
             "Nadam": {
-                "learning_rate": {"type": "float", "value": 0.001},
+                "lr": {"type": "float", "value": 0.001},
                 "beta_1": {"type": "float", "value": 0.9},
                 "beta_2": {"type": "float", "value": 0.999},
                 "epsilon": {"type": "float", "value": 1e-07},
             },
             "Ftrl": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "learning_rate_power": {"type": "float", "value": -0.5},
+                "lr": {"type": "float", "value": 0.001},
+                "lr_power": {"type": "float", "value": -0.5},
                 "initial_accumulator_value": {"type": "float", "value": 0.1},
                 "l1_regularization_strength": {"type": "float", "value": 0.0},
                 "l2_regularization_strength": {"type": "float", "value": 0.0},
@@ -184,69 +184,69 @@ class StatesData:
 
         self.callback_show_options_switches_front = {
             "classification": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_loss_for_classes": {
                     "value": False,
-                    "label": "Выводить loss по каждому классу",
+                    "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "value": False,
-                    "label": "Выводить данные метрики по каждому классу",
+                    "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "value": False,
-                    "label": "Выводить худшие изображения по метрике",
+                    "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "value": False,
-                    "label": "Выводить лучшие изображения по метрике",
+                    "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "segmentation": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_loss_for_classes": {
                     "value": False,
-                    "label": "Выводить loss по каждому классу",
+                    "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "value": False,
-                    "label": "Выводить данные метрики по каждому классу",
+                    "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "value": False,
-                    "label": "Выводить худшие изображения по метрике",
+                    "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "value": False,
-                    "label": "Выводить лучшие изображения по метрике",
+                    "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "regression": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
-                "plot_scatter": {"value": False, "label": "Выводить скаттер"},
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
+                "plot_scatter": {"value": False, "label": "скаттер"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "timeseries": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_autocorrelation": {
                     "value": False,
-                    "label": "Вывод графика автокорреляции",
+                    "label": "график автокорреляции",
                 },
                 "plot_pred_and_true": {
                     "value": False,
-                    "label": "Вывод графиков предсказания и истинного ряда",
+                    "label": "графики предсказания и истинного ряда",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
         }
 
@@ -815,6 +815,7 @@ class Exchange(StatesData, GuiExch):
                 "optimizers": self.get_optimizers_list(),
                 "callbacks": self.callback_show_options_switches_front.get(task, {}),
                 "hardware": self.get_hardware_env(),
+                "compile": self.get_states_for_outputs(),
             }
         )
         return data

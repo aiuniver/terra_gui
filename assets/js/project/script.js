@@ -31,6 +31,7 @@
         let _layers_types = options.layers_types || {};
         let _optimizers = options.optimizers || [];
         let _callbacks = options.callbacks || {};
+        let _compile = options.compile || {};
         let _path = options.path || {};
 
         this.model_clear = () => {
@@ -204,6 +205,15 @@
             },
             get: () => {
                 return _callbacks;
+            }
+        });
+
+        Object.defineProperty(this, "compile", {
+            set: (value) => {
+                _compile = value;
+            },
+            get: () => {
+                return _compile;
             }
         });
 
