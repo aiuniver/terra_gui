@@ -286,9 +286,9 @@ class GUINN:
         t_shape = []
 
         for i_key in self.DTS.X.keys():
-            x_shape.append([i, self.DTS.X[i_key]['data'][0].shape])
-            v_shape.append([i, self.DTS.X[i_key]['data'][1].shape])
-            t_shape.append([i, self.DTS.X[i_key]['data'][2].shape])
+            x_shape.append([i_key, self.DTS.X[i_key]['data'][0].shape])
+            v_shape.append([i_key, self.DTS.X[i_key]['data'][1].shape])
+            t_shape.append([i_key, self.DTS.X[i_key]['data'][2].shape])
 
         msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n'\
         f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
