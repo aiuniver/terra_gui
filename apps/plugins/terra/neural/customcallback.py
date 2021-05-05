@@ -14,7 +14,7 @@ class CustomCallback(keras.callbacks.Callback):
     """ CustomCallback for all task type"""
 
     def __init__(self, params: dict = None, step=1, show_final=True, dataset=DTS(), exchange=Exchange(),
-                 samples_x: dict = None, samples_y: dict = None):
+                 samples_x: dict = None, samples_y: dict = None, clbck_options: dict = None):
 
         """
         Init for Custom callback
@@ -37,6 +37,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.step = step
         self.clbck_params = params
         self.show_final = show_final
+        self.clbck_options = clbck_options
         self.Exch = exchange
         self.DTS = dataset
 
@@ -168,7 +169,7 @@ class CustomCallback(keras.callbacks.Callback):
         if task_type == 'classification' or task_type == 'segmentation':
             callback_kwargs['num_classes'] = num_classes
 
-        clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
+        clbck_options = self.clbck_options
 
         for option_name, option_value in clbck_options.items():
             if option_name == 'show_every_epoch':

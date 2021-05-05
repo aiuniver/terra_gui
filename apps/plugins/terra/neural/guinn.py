@@ -52,10 +52,8 @@ class GUINN:
         Checking setup environment
         """
         self.env_setup = "colab"
-        if self.Exch.is_it_colab():
-            self.env_setup = "colab"
-
-        self.mounted_drive_writable = False
+        # if self.Exch.is_it_colab():
+        #     self.env_setup = "colab"
 
         if not self.Exch.is_google_drive_connected():
             self.Exch.print_2status_bar(
@@ -105,51 +103,49 @@ class GUINN:
         self.model = None
         # self.external_model: bool = False
 
-        if self.mounted_drive_writable:
+        """
+        Setting location for Projects in Home directory for _current_ user
+        """
+        self.project_name: str = ''
+        self.project_path: str = ''
+        self.set_project_name(self.project_name)
 
-            """
-            Setting location for Projects in Home directory for _current_ user
-            """
-            self.project_name: str = ''
-            self.project_path: str = ''
-            self.set_project_name(self.project_name)
+        """
+        Setting location for task_name in current project for _current_ user 
+        if task_type is currently = ''
+        it's setting to None   
+        """
+        self.task_name: str = ''
+        self.task_type: str = ''
+        self.task_path: str = ''
+        self.set_task_type()
 
-            """
-            Setting location for task_name in current project for _current_ user 
-            if task_type is currently = ''
-            it's setting to None   
-            """
-            self.task_name: str = ''
-            self.task_type: str = ''
-            self.task_path: str = ''
-            self.set_task_type()
+        """
+        Setting experiment_UUID and experiment_name 
+        """
+        self.experiment_name: str = ''
+        self.experiment_UUID: str = ''
+        self.experiment_path: str = ''
+        self.set_experiment_UUID()
+        self.set_experiment_name(str(self.experiment_UUID))
 
-            """
-            Setting experiment_UUID and experiment_name 
-            """
-            self.experiment_name: str = ''
-            self.experiment_UUID: str = ''
-            self.experiment_path: str = ''
-            self.set_experiment_UUID()
-            self.set_experiment_name(str(self.experiment_UUID))
+        self.best_epoch: dict = {}
+        self.best_epoch_num: int = 0
+        self.stop_epoch: int = 0
+        self.model_is_trained: bool = False
+        self.history: dict = {}
+        self.best_metric_result = "0000"
 
-            self.best_epoch: dict = {}
-            self.best_epoch_num: int = 0
-            self.stop_epoch: int = 0
-            self.model_is_trained: bool = False
-            self.history: dict = {}
-            self.best_metric_result = "0000"
+        self.learning_rate = 1e-3
+        self.optimizer_name: str = ''
+        self.loss: dict = {}
+        self.metrics: dict = {}
+        self.batch_size = 32
+        self.epochs = 20
+        self.shuffle: bool = True
 
-            self.learning_rate = 1e-3
-            self.optimizer_name: str = ''
-            self.loss: dict = {}
-            self.metrics: dict = {}
-            self.batch_size = 32
-            self.epochs = 20
-            self.shuffle: bool = True
-
-            self.monitor: str = 'accuracy'
-            self.monitor2: str = "loss"
+        self.monitor: str = 'accuracy'
+        self.monitor2: str = "loss"
 
     def set_main_params(self, output_params: dict = None, clbck_options: dict = None, clbck_chp: dict = None,
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
@@ -174,6 +170,7 @@ class GUINN:
         """
         self.DTS = dts_obj
         self._reset()
+        self.prepare_dataset()
         pass
 
     def _reset(self):
@@ -288,10 +285,10 @@ class GUINN:
         v_shape = []
         t_shape = []
 
-        for i in self.DTS.X.keys():
-            x_shape.append([i, self.DTS.X[i]['data'][0].shape])
-            v_shape.append([i, self.DTS.X[i]['data'][1].shape])
-            t_shape.append([i, self.DTS.X[i]['data'][2].shape])
+        for i_key in self.DTS.X.keys():
+            x_shape.append([i, self.DTS.X[i_key]['data'][0].shape])
+            v_shape.append([i, self.DTS.X[i_key]['data'][1].shape])
+            t_shape.append([i, self.DTS.X[i_key]['data'][2].shape])
 
         msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n'\
         f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
@@ -366,7 +363,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel, verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object = keras.Model(), verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -379,11 +376,6 @@ class GUINN:
         """
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
-        self.shuffle = self.Exch.shuffle
-        self.loss = self.Exch.get_loss_from_django()
-        self.metrics = self.Exch.get_metrics_from_django()
-        self.epochs = self.Exch.get_epochs_from_django()
-        self.batch_size = self.Exch.get_batch_size_from_django()
         if self.debug_verbose > 1:
             verbose = 2
             print("self.loss", self.loss)
@@ -391,16 +383,14 @@ class GUINN:
             print("self.batch_size", self.batch_size)
             print("self.epochs", self.epochs)
 
-        if self.debug_verbose > 1:
-            print("self.callbacks", self.callbacks)
-
-        self.prepare_dataset()
-        clsclbk = CustomCallback(params=self.output_param, step=1, show_final=True, dataset=self.DTS,
+        clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val)
         self.callbacks = [clsclbk]
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=True, save_weights_only=True, monitor='loss', mode='min'))
+        if self.debug_verbose > 1:
+            print("self.callbacks", self.callbacks)
 
         self.show_training_params()
 
