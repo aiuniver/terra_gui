@@ -77,7 +77,7 @@ class CustomCallback(keras.callbacks.Callback):
                                                            },
                                         'segmentation': {'optimizer_name': 'Adam',
                                                          'loss': 'categorical_crossentropy',
-                                                         'metrics': ["binary_accuracy"],  # 'dice_coef'
+                                                         'metrics': ["accuracy"],  # 'dice_coef'
                                                          'batch_size': 16,
                                                          'epochs': 20,
                                                          'shuffle': False,
