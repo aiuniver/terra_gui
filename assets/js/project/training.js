@@ -92,6 +92,7 @@
 
 
     let DrawGraph = (plotName, container, data_needed_format) => {
+
         for (let i = 0; i < data_needed_format[plotName].length; i++) {
             let div = document.createElement("div");
             div.className = "graph";
@@ -180,7 +181,6 @@
         content.find(".tabs-item.images .tab-container").html("");
         content.find(".tabs-item.text .tab-container").html("");
     }
-
 
     $(() => {
 
@@ -300,9 +300,9 @@
                 && window.TerraProject.task !== null
                 ? $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled")
                 : $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
-            $(".wrapper .params-optimazer-block .params-item").html("");
+            $(".wrapper .params-optimazer-block .optimazer-item").html("");
 
-            $(".wrapper .params-optimazer-block .params-item").append(`
+            $(".wrapper .params-optimazer-block .optimazer-item").append(`
                 <div class="inner form-inline-label inner-col-0"></div>
             `);
             window.ExchangeRequest(
@@ -312,9 +312,9 @@
                         let dataLen = Object.keys(data.data).length;
                         let dataEntries = Object.entries(data.data);
                         let column = Math.ceil(dataLen / 2)
-                        $(".params-optimazer-block .params-item").append(`
-                            <div class="inner form-inline-label inner-col-1"></div>
-                        `);
+                        // $(".params-optimazer-block .params-item").append(`
+                        //     <div class="inner form-inline-label inner-col-1"></div>
+                        // `);
                         dataEntries.forEach(([key, param], index) => {
                             let is_boolean = param.type === 'bool';
                             let widget = window.FormWidget(key, {
@@ -327,11 +327,12 @@
                             });
                             widget.addClass("field-inline");
 
-                            if (index < column && dataLen > 4) {
-                                $(".params-optimazer-block .inner.inner-col-0").append(widget);
-                            } else {
-                                $(".params-optimazer-block .inner.inner-col-1").append(widget);
-                            }
+                            // if (index < column && dataLen > 4) {
+                            //     $(".params-optimazer-block .inner.inner-col-0").append(widget);
+                            // } else {
+                            //     $(".params-optimazer-block .inner.inner-col-1").append(widget);
+                            // }
+                            $(".params-optimazer-block .inner.inner-col-0").append(widget);
                         });
                     } else {
                         window.StatusBar.message(data.error, false);
@@ -364,6 +365,43 @@
             )
         });
 
+        $(".task-select").bind("change", (event) => {
+            event.preventDefault();
+
+        }).selectmenu({
+            change:(event) => {
+                $(event.target).trigger("change");
+                let loss = $("#"+event.target.parentNode.parentNode.id).find(".loss-select");
+                let metric = $("#"+event.target.parentNode.parentNode.id).find(".metric-select");
+                loss.empty();
+                metric.empty();
+
+                window.TerraProject.compile[event.target.value].losses.forEach((elem) => {
+                    loss.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                 window.TerraProject.compile[event.target.value].metrics.forEach((elem) => {
+                    metric.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                loss.selectmenu("refresh");
+                metric.selectmenu("refresh");
+
+                // $("#"+event.target.parentNode.parentNode.id).find(".loss-select").refresh();
+            }
+        }).trigger("change");
+
+
+        $(".click-menu").bind("click", (event)=>{
+            $(event.target).parent().toggleClass('open');
+        });
+
+        $(".item.training > button").bind("click", (event)=>{
+            event.preventDefault();
+            let form = $(event.currentTarget),
+                serializeData = form.parents('.params-container').serializeArray();
+        });
+
         // здесь будет проверка на наличие флага "регрессия"
         // if (data_needed_format["scatters"]){
         //     let tabLink = document.createElement("li");
@@ -378,8 +416,10 @@
         //     document.getElementById("tabs").append(graphElem);
         // }
 
-        // DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container")); // нарисовать для линейного
+        DrawGraph("plots", $(".tab-container"), data_needed_format); // нарисовать для линейного
         // DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container")); // нарисовать для скаттера
+
+        // DrawGraph("plots", $(".tab-container"), data_needed_format);
 
     });
 
