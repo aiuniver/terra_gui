@@ -600,7 +600,7 @@ class Exchange(StatesData, GuiExch):
                         else LayerType.Dense,
                         "location_type": location,
                         "up_link": [],
-                        "input_shape": list(self.dts.input_shape.get("name", [])),
+                        "input_shape": list(self.dts.input_shape.get(name, [])),
                         "output_shape": [],
                         "data_name": data_name,
                         "data_available": available,
@@ -610,6 +610,7 @@ class Exchange(StatesData, GuiExch):
 
         _create(self.dts.X, LayerLocation.input)
         _create(self.dts.Y, LayerLocation.output)
+        print(self.start_layers)
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
