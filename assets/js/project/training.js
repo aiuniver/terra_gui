@@ -400,8 +400,6 @@
             event.preventDefault();
             let form = $(event.currentTarget),
                 serializeData = form.parents('.params-container').serializeArray();
-
-            console.log(serializeData)
         });
 
         // здесь будет проверка на наличие флага "регрессия"
