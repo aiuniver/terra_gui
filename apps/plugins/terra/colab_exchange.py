@@ -610,7 +610,6 @@ class Exchange(StatesData, GuiExch):
 
         _create(self.dts.X, LayerLocation.input)
         _create(self.dts.Y, LayerLocation.output)
-        print(self.start_layers)
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
