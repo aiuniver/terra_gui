@@ -180,6 +180,7 @@ class TerraExchange:
                     layers.as_dict.get("items").items(),
                 )
             )
+            print('Layers = ', configs)
             return self.__request_post("get_change_validation", layers=configs)
         else:
             return TerraExchangeResponse()

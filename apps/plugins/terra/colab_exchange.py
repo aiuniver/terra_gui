@@ -595,6 +595,7 @@ class Exchange(StatesData, GuiExch):
                 self.start_layers.items[index] = Layer(
                     config={
                         "name": f"l{index}_{data_name}",
+                        "dts_layer_name": name,
                         "type": LayerType.Input
                         if location == LayerLocation.input
                         else LayerType.Dense,

@@ -14,6 +14,22 @@ class Color(str, Enum):
     reset = "\033[0m"
 
 
+class OptimizerType(str, Enum):
+    SGD = "SGD"
+    RMSpro = "RMSprop"
+    Adam = "Adam"
+    Adadelta = "Adadelta"
+    Adagrad = "Adagrad"
+    Adamax = "Adamax"
+    Nadam = "Nadam"
+    Ftrl = "Ftrl"
+
+
+class OptimizerParams(pydantic.BaseModel):
+    params: Dict[str, Optional[Any]] = {}
+
+
+
 class LayerLocation(str, Enum):
     input = "input"
     middle = "middle"
@@ -84,6 +100,7 @@ class LayerConfigParam(pydantic.BaseModel):
 
 class LayerConfig(pydantic.BaseModel):
     name: str = ""
+    dts_layer_name: str = ""
     type: LayerType = LayerType.Dense
     location_type: LayerLocation = LayerLocation.middle
     up_link: List[int] = []
