@@ -1,5 +1,4 @@
 import json
-import copy
 import requests
 
 from django.conf import settings
@@ -168,7 +167,6 @@ class TerraExchange:
         )
 
     def _call_get_change_validation(self) -> TerraExchangeResponse:
-        # self.__project.layers.reset_indexes()
         layers = self.__project.layers
         if layers:
             configs = dict(
@@ -177,7 +175,7 @@ class TerraExchange:
                     layers.as_dict.get("items").items(),
                 )
             )
-            print('Layers = ', configs)
+            print("Layers = ", configs)
             return self.__request_post("get_change_validation", layers=configs)
         else:
             return TerraExchangeResponse()
