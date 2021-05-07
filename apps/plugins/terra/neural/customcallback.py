@@ -14,7 +14,7 @@ class CustomCallback(keras.callbacks.Callback):
     """ CustomCallback for all task type"""
 
     def __init__(self, params: dict = None, step=1, show_final=True, dataset=DTS(), exchange=Exchange(),
-                 samples_x: dict = None, samples_y: dict = None, clbck_options: dict = None):
+                 samples_x: dict = None, samples_y: dict = None):
 
         """
         Init for Custom callback
@@ -37,7 +37,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.step = step
         self.clbck_params = params
         self.show_final = show_final
-        self.clbck_options = clbck_options
         self.Exch = exchange
         self.DTS = dataset
 
@@ -78,12 +77,12 @@ class CustomCallback(keras.callbacks.Callback):
                                                            },
                                         'segmentation': {'optimizer_name': 'Adam',
                                                          'loss': 'categorical_crossentropy',
-                                                         'metrics': ["accuracy"],  # 'dice_coef'
+                                                         'metrics': ['dice_coef'], 
                                                          'batch_size': 16,
                                                          'epochs': 20,
                                                          'shuffle': False,
                                                          'clbck_object': SegmentationCallback,
-                                                         'callback_kwargs': {'metrics': ['loss'],  # , 'dice_coef'
+                                                         'callback_kwargs': {'metrics': ['dice_coef'],
                                                                              'step': 1,
                                                                              'class_metrics': [],
                                                                              'num_classes': 2,
@@ -169,7 +168,7 @@ class CustomCallback(keras.callbacks.Callback):
         if task_type == 'classification' or task_type == 'segmentation':
             callback_kwargs['num_classes'] = num_classes
 
-        clbck_options = self.clbck_options
+        clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
 
         for option_name, option_value in clbck_options.items():
             if option_name == 'show_every_epoch':
@@ -267,6 +266,8 @@ class CustomCallback(keras.callbacks.Callback):
                                    metrics=self.clbck_params[_key]['metrics'],
                                    num_classes=self.clbck_params.setdefault(_key)['num_classes'])
 
+    def on_train_begin(self, logs=None):
+
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self.Exch.show_current_epoch(epoch)
@@ -277,8 +278,10 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        self.y_pred = self.model.predict(self.x_Val)
-
+        if self.x_Val['input_1'] is not None:
+            self.y_pred = self.model.predict(self.x_Val)
+        else:
+            self.y_pred = None
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(epoch, logs=logs, output_key=output_key, y_pred=self.y_pred[i],
@@ -855,9 +858,9 @@ class SegmentationCallback:
         None
         """
         # TODO сделать для нескольких входов
-        if self.dataset.tags[input_key][0] == 'images':
+        if self.dataset.tags[input_key] == 'images':
             axis = (1, 2)
-        elif self.dataset.tags[input_key][0] == 'text':
+        elif self.dataset.tags[input_key] == 'text':
             axis = 1
         intersection = np.sum(self.y_true * self.y_pred, axis=axis)
         union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
@@ -883,7 +886,7 @@ class SegmentationCallback:
     #     self.Exch.show_current_epoch(epoch)
     #     pass
 
-    def epoch_end(self, epoch, logs: dict = None, output_key: str = None,
+    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
                   y_pred: list = None, y_true: dict = None, loss: str = None):
         """
         Returns:
@@ -930,13 +933,14 @@ class SegmentationCallback:
             if self.y_pred is not None:
 
                 # вычисляем результат по классам
-                if metric_name == 'accuracy':
+                if metric_name.endswith('accuracy'):
                     self.evaluate_accuracy()
-                elif metric_name == 'dice_coef':
+                elif metric_name.endswith('dice_coef'):
                     self.evaluate_dice_coef(input_key='input_1')
-                elif metric_name == 'loss':
+                elif metric_name.endswith('loss'):
                     self.evaluate_loss()
-
+                else:
+                    print('Metric name is not supported')
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
                 for j in range(self.num_classes):
@@ -947,7 +951,7 @@ class SegmentationCallback:
 
         if self.step > 0:
             if self.epoch % self.step == 0:
-                self.plot_result()
+                self.plot_result(output_key=output_key)
 
         self.Exch.print_epoch_monitor(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
@@ -956,13 +960,13 @@ class SegmentationCallback:
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
         if self.show_final:
-            self.plot_result()
+            self.plot_result(output_key=output_key)
             if self.show_best or self.show_worst:
                 self.plot_images(input_key='input_1')
         pass
 
 
-class TimeseriesCallback(keras.callbacks.Callback):
+class TimeseriesCallback:
     def __init__(
             self,
             metrics=["loss"],
@@ -993,6 +997,21 @@ class TimeseriesCallback(keras.callbacks.Callback):
         self.dataset = dataset
         self.corr_step = corr_step
         self.Exch = exchange
+
+        self.epoch = 0
+        self.x_Val = {}
+        self.y_true = []
+        self.y_pred = []
+        self.loss = ''
+
+        self.losses = (
+            self.metrics if "loss" in self.metrics else self.metrics + ["loss"]
+        )
+        self.met = [[] for _ in range(len(self.losses))]
+        self.valmet = [[] for _ in range(len(self.losses))]
+        self.history = {}
+        self.predicts = {}
+
 
     def plot_result(self):
         showmet = self.losses[self.idx]
@@ -1077,21 +1096,12 @@ class TimeseriesCallback(keras.callbacks.Callback):
         }
         return correlation_data
 
-    def on_train_begin(self, logs=None):
-        self.losses = (
-            self.metrics if "loss" in self.metrics else self.metrics + ["loss"]
-        )
-        self.met = [[] for _ in range(len(self.losses))]
-        self.valmet = [[] for _ in range(len(self.losses))]
-        self.history = {}
-        if len(self.dataset.x_Val):
-            self.predicts = {}
-
-    def on_epoch_begin(self, epoch, logs=None):
-        self.Exch.show_current_epoch(epoch)
-
-    def on_epoch_end(self, epoch, logs=None):
+    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
+                  y_pred: list = None, y_true: dict = None, loss: str = None):
         self.epoch = epoch
+        self.y_pred = y_pred
+        self.y_true = y_true
+        self.loss = loss
         epoch_metric_data = ""
         epoch_val_metric_data = ""
         for i in range(len(self.losses)):
@@ -1108,7 +1118,7 @@ class TimeseriesCallback(keras.callbacks.Callback):
             self.history[metric_name] = self.met[i]
             self.history[val_metric_name] = self.valmet[i]
 
-            if len(self.dataset.x_Val):
+            if self.y_pred is not None:
                 y_pred = self.model.predict(self.dataset.x_Val)
                 y_true = self.dataset.y_Val
                 self.predicts[val_metric_name] = (y_true, y_pred)
@@ -1130,7 +1140,7 @@ class TimeseriesCallback(keras.callbacks.Callback):
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
-    def on_train_end(self, logs=None):
+    def train_end(self, logs=None):
         if self.show_final:
             self.comment = f"on {self.epoch + 1} epochs"
             self.idx = 0
