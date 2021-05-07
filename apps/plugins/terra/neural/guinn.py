@@ -362,7 +362,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel: object = keras.Model(), verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
