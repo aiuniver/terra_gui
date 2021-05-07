@@ -568,6 +568,7 @@ class Exchange(StatesData, GuiExch):
             self.dts = self._read_trds(dataset_name)
         else:
             self.dts = DTS(exch_obj=self)
+            print('DTS = ', self.dts)
             gc.collect()
             self.dts.prepare_dataset(
                 dataset_name=dataset_name, source=source
