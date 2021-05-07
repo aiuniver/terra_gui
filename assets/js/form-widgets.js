@@ -31,21 +31,21 @@
                     widget = $(`
                         <label for="field_form-${name}">${label}</label>
                         <div class="checkout-switch">
-                            <input type="${type}" id="field_form-${name}" name="${name}"${options.default === true ? 'checked="checked"' : ''} />
+                            <input type="${type}" id="field_form-${name}" name="${name}"${options.default === true ? 'checked="checked"' : ''}${options.disabled ? ' disabled="disabled"' : ""} />
                             <span class="switcher"></span>
                         </div>
                     `);
                 } else {
                     widget = $(`
                         <label for="field_form-${name}">${label}:</label>
-                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}" />
+                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}"${options.disabled ? ' disabled="disabled"' : ""} />
                     `);
                 }
                 return widget_wrapper.append(widget);
             },
 
             "select": () => {
-                let select = $(`<select name="${name}" id="field_form-${name}" class="jquery-ui-menuselect"></select>`);
+                let select = $(`<select name="${name}" id="field_form-${name}" class="jquery-ui-menuselect"${options.disabled ? ' disabled="disabled"' : ""}></select>`);
                 for (let index in options.available) {
                     let option = options.available[index] || "";
                     select.append($(`

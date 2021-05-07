@@ -764,16 +764,18 @@
                         "type":"str",
                         "list":true,
                         "default":config.data_name,
-                        "available":config.data_available
+                        "available":config.data_available,
+                        "disabled":true,
                     });
                     this.find(".params-config > .inner").append(WidgetData);
                 }
                 if (config.location_type === "input") {
                     let WidgetInputShape = window.FormWidget("input_shape", {
-                        "label":"Shape",
+                        "label":"Размерность входа",
                         "type":"tuple",
                         "list":false,
-                        "default":config.input_shape
+                        "default":config.input_shape,
+                        "disabled":true,
                     });
                     this.find(".params-config > .inner").append(WidgetInputShape);
                 }
@@ -796,7 +798,9 @@
                 this.reset();
                 _layer_index_field.val(index);
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
-                _layer_type_field.val(data.config.type).removeAttr("disabled").selectmenu("refresh");
+                _layer_type_field.val(data.config.type);
+                if (data.config.location_type !== "input") _layer_type_field.removeAttr("disabled");
+                _layer_type_field.selectmenu("refresh");
                 _action_save.removeAttr("disabled");
                 _render_params(data.config);
             }
