@@ -80,19 +80,18 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
-    def _call_get_state(self, task: str = "") -> TerraExchangeResponse:
-        return TerraExchangeResponse(data=colab_exchange.get_state(task=task))
+    def _call_get_state(self) -> TerraExchangeResponse:
+        return TerraExchangeResponse(data=colab_exchange.get_state())
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
         self.__project.name = name
         return TerraExchangeResponse()
 
     def _call_prepare_dataset(
-        self, dataset: str, task: str, is_custom: bool = False
+        self, dataset: str, is_custom: bool = False
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
-            task_type=task,
             source="custom" if is_custom else "",
         )
         schema = [[], []]
@@ -103,13 +102,11 @@ class TerraExchange:
         self.__project.start_layers = start_layers
         self.__project.schema = schema
         self.__project.dataset = dataset
-        self.__project.task = task
         return TerraExchangeResponse(
             data={
                 "layers": self.__project.layers.as_dict.get("items"),
                 "schema": self.__project.schema,
                 "dataset": self.__project.dataset,
-                "task": self.__project.task,
                 "start_layers": self.__project.start_layers.as_dict.get("items"),
             }
         )
@@ -180,6 +177,7 @@ class TerraExchange:
                     layers.as_dict.get("items").items(),
                 )
             )
+            print('Layers = ', configs)
             return self.__request_post("get_change_validation", layers=configs)
         else:
             return TerraExchangeResponse()
