@@ -23,7 +23,6 @@
         let _datasets = options.datasets || {};
         let _tags = options.tags || {};
         let _dataset = options.dataset || "";
-        let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
         let _start_layers = options.start_layers || {};
@@ -110,28 +109,9 @@
             }
         });
 
-        Object.defineProperty(this, "task", {
-            set: (value) => {
-                _task = value;
-            },
-            get: () => {
-                return _task;
-            }
-        });
-
         Object.defineProperty(this, "dataset_selected", {
             get: () => {
-                return _dataset !== "" && _task !== "";
-            }
-        });
-
-        Object.defineProperty(this, "task_name", {
-            get: () => {
-                if (_task) {
-                    return _tags[_task];
-                } else {
-                    return undefined;
-                }
+                return _dataset !== "";
             }
         });
 
