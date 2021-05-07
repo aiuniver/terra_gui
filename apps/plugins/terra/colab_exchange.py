@@ -554,7 +554,7 @@ class Exchange(StatesData, GuiExch):
 
         return content
 
-    def _prepare_dataset(self, dataset_name: str, task_type: str, source: str) -> tuple:
+    def _prepare_dataset(self, dataset_name: str, source: str) -> tuple:
         """
         prepare dataset for load to nn
         Args:
@@ -568,10 +568,12 @@ class Exchange(StatesData, GuiExch):
             self.dts = self._read_trds(dataset_name)
         else:
             self.dts = DTS(exch_obj=self)
+            print('DTS = ', self.dts)
             gc.collect()
             self.dts.prepare_dataset(
-                dataset_name=dataset_name, task_type=task_type, source=source
+                dataset_name=dataset_name, source=source
             )
+            print('TASK_TYPE = ', self.dts.task_type)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
@@ -595,6 +597,7 @@ class Exchange(StatesData, GuiExch):
                 self.start_layers.items[index] = Layer(
                     config={
                         "name": f"l{index}_{data_name}",
+                        "dts_layer_name": name,
                         "type": LayerType.Input
                         if location == LayerLocation.input
                         else LayerType.Dense,
@@ -666,11 +669,10 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
-    def prepare_dataset(self, dataset_name: str, task_type: str, source: str = ""):
+    def prepare_dataset(self, dataset_name: str, source: str = ""):
         self.process_flag = "dataset"
-        self._set_current_task(task_type)
         return self._prepare_dataset(
-            dataset_name=dataset_name, task_type=task_type, source=source
+            dataset_name=dataset_name, source=source
         )
 
     def set_stop_training_flag(self):
@@ -807,13 +809,13 @@ class Exchange(StatesData, GuiExch):
     def get_callbacks_switches(self, task: str) -> dict:
         return self.callback_show_options_switches_front[task]
 
-    def get_state(self, task: str) -> dict:
+    def get_state(self) -> dict:
         data = self.get_datasets_data()
         data.update(
             {
                 "layers_types": self.get_layers_type_list(),
                 "optimizers": self.get_optimizers_list(),
-                "callbacks": self.callback_show_options_switches_front.get(task, {}),
+                "callbacks": self.callback_show_options_switches_front.get('classification', {}),
                 "hardware": self.get_hardware_env(),
                 "compile": self.get_states_for_outputs(),
             }
@@ -897,5 +899,6 @@ class Exchange(StatesData, GuiExch):
 
 if __name__ == "__main__":
     b = Exchange()
-    b.prepare_dataset(dataset_name="mnist", task_type="classification")
+    b.prepare_dataset(dataset_name="mnist")
+    print(b.dts.task_type)
     pass
