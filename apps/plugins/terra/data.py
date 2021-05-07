@@ -235,7 +235,6 @@ class TerraExchangeProject:
     datasets: dict
     tags: dict
     dataset: str
-    task: str
     model_name: str
     layers: LayerDict
     start_layers: LayerDict
@@ -253,7 +252,6 @@ class TerraExchangeProject:
         self.datasets = kwargs.get("datasets", {})
         self.tags = kwargs.get("tags", {})
         self.dataset = kwargs.get("dataset", "")
-        self.task = kwargs.get("task", "")
         self.model_name = kwargs.get("model_name", "")
         self.layers = kwargs.get("layers", LayerDict())
         self.start_layers = kwargs.get("start_layers", LayerDict())
@@ -276,7 +274,6 @@ class TerraExchangeProject:
     datasets     : {len(self.datasets.keys())}
     tags         : {len(self.tags.keys())}
     dataset      : {self.dataset}
-    task         : {self.task}
     model_name   : {self.model_name}
     layers       : {len(self.layers.items.keys())}
     start_layers : {len(self.start_layers.items.keys())}
@@ -291,7 +288,7 @@ class TerraExchangeProject:
 
     @property
     def dataset_selected(self) -> bool:
-        return self.dataset != "" and self.task != ""
+        return self.dataset != ""
 
     @property
     def as_json_string(self) -> dict:

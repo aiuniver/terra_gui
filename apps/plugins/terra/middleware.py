@@ -30,7 +30,7 @@ def collect_filters_datasets(datasets: dict, tags: dict) -> dict:
 
 class TerraProjectMiddleware(MiddlewareMixin):
     def process_request(self, request):
-        response = terra_exchange.call("get_state", task=terra_exchange.project.task)
+        response = terra_exchange.call("get_state")
         if response.success:
             tags = response.data.get("tags", {})
             datasets = collect_filters_datasets(response.data.get("datasets", {}), tags)
