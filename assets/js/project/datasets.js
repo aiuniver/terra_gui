@@ -65,16 +65,14 @@
                     if (info) {
                         _dataset = value;
                         params.prepareBtn.disabled = false;
-                        params.taskSelect.disabled = false;
                         this.find(".dataset-card-item").removeClass("active");
                         this.find(`.dataset-card[data-name="${_dataset}"]`).parent().addClass("active");
-                        params.taskSelect.tasks = info.tasks;
+                        window.StatusBar.message(window.Messages.get("DATASET_SELECTED", [_dataset]), true);
                     } else {
                         _dataset = "";
                         params.prepareBtn.disabled = true;
-                        params.taskSelect.disabled = true;
                         this.find(".dataset-card-item").removeClass("active");
-                        params.taskSelect.tasks = [];
+                        window.StatusBar.message_clear();
                     }
                 },
                 get: () => {
@@ -99,38 +97,13 @@
 
             if (!this.length) return this;
 
-            let _task = "";
-
             this.prepareBtn = this.find(".actions-form > .prepare > button");
-            this.taskSelect = this.find("#dataset-task");
 
             Object.defineProperty(this, "locked", {
                 set: (value) => {
                     let container = $("body.namespace-apps_project main > .container");
                     this.prepareBtn.disabled = value;
-                    this.taskSelect.disabled = value;
                     value ? container.addClass("locked") : container.removeClass("locked");
-                }
-            });
-
-            Object.defineProperty(this, "task", {
-                set: (value) => {
-                    _task = value;
-                    if (_task) {
-                        window.StatusBar.message(window.Messages.get("DATASET_SELECTED", [`${datasets.dataset}[${_task}]`]), true);
-                    } else {
-                        window.StatusBar.message_clear();
-                    }
-                },
-                get: () => {
-                    return _task;
-                }
-            });
-
-            Object.defineProperty(this, "task_name", {
-                get: () => {
-                    let name = window.TerraProject.tags[_task];
-                    return name || "";
                 }
             });
 
@@ -142,38 +115,6 @@
                 get: () => {
                     return this.prepareBtn.attr("disabled") !== undefined;
                 }
-            });
-
-            Object.defineProperty(this.taskSelect, "disabled", {
-                set: (value) => {
-                    if (value) this.taskSelect.attr("disabled", "disabled");
-                    else this.taskSelect.removeAttr("disabled");
-                    $(this.taskSelect).selectmenu("refresh");
-                },
-                get: () => {
-                    return this.taskSelect.attr("disabled") !== undefined;
-                }
-            });
-
-            Object.defineProperty(this.taskSelect, "tasks", {
-                set: (value) => {
-                    let options = "";
-                    value.forEach((name) => {
-                        options = `${options}<option value="${name}">${window.TerraProject.tags[name]}</option>`;
-                    });
-                    this.task = value.length ? value[0] : "";
-                    this.taskSelect.disabled = value.length === 0;
-                    $(this.taskSelect).html(options);
-                    $(this.taskSelect).selectmenu("refresh");
-                }
-            });
-
-            this.taskSelect.selectmenu({
-                change:(event, ui) => {
-                    this.taskSelect.val(ui.item.value).trigger("change");
-                }
-            }).bind("change", (event) => {
-                this.task = event.currentTarget.value;
             });
 
             this.bind("submit", (event) => {
