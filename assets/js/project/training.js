@@ -187,10 +187,7 @@
     let ResetGraphics = () => {
         let content = $(".graphics > .wrapper > .tabs-content > .inner");
         $(".graphics > .wrapper > .tabs > ul > li").removeClass("active").addClass("disabled");
-        content.find(".tabs-item.graphs .tab-container").html("");
-        content.find(".tabs-item.scatters .tab-container").html("");
-        content.find(".tabs-item.images .tab-container").html("");
-        content.find(".tabs-item.text .tab-container").html("");
+        content.find(".tab-container").html("");
     }
 
     $(() => {
@@ -309,8 +306,8 @@
                 && window.TerraProject.dataset !== null
                 && window.TerraProject.model_name !== null
                 && window.TerraProject.task !== null
-                ? $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled")
-                : $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+                ? $(".actions-form > .training > button").removeAttr("disabled")
+                : $(".actions-form > .training > button").attr("disabled", "disabled");
             $(".wrapper .params-optimazer-block .optimazer-item").html("");
 
             $(".wrapper .params-optimazer-block .optimazer-item").append(`
@@ -415,7 +412,7 @@
         // });
 
 
-        $(".item.training > button").bind("submit", (event) => {
+        $(".item.training > button").bind("click", (event) => {
             event.preventDefault();
             window.StatusBar.clear();
             UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
