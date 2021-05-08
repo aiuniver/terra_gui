@@ -168,12 +168,8 @@ class GUINN:
             dts_obj (object): setting task_name
         """
         self.DTS = dts_obj
-        self._reset()
         self.prepare_dataset()
-        pass
-
-    def _reset(self):
-        self.callbacks = []
+        self.nn_cleaner()
         pass
 
     def checking_HOME(self) -> None:
