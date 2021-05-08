@@ -93,7 +93,7 @@
                                 for (let index in data.data) {
                                     let error = data.data[index];
                                     if (error) {
-                                        terra_board.set_layer_error(index, error);
+                                        terra_board.set_layer_error(index, JSON.stringify(error));
                                         is_error = true;
                                     }
                                 }

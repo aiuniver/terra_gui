@@ -132,7 +132,7 @@ class TerraExchange:
             layers.items[int(index)] = Layer(config=layer)
         for index, layer in layers.items.items():
             for _index in layer.config.up_link:
-                layers.items[_index].down_link.append(index)
+                layers.items[int(_index)].down_link.append(int(index))
         data.data.update({"layers": layers.as_dict.get("items")})
         return data
 
