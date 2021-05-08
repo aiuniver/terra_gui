@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+import os.path
 
 import environ
+import tempfile
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -155,3 +157,10 @@ STATICFILES_FINDERS = [
 
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
+
+
+# Terra GUI
+
+TERRA_GUI_AUTOSAVE_FILE = f"{tempfile.gettempdir()}/terra-gui-autosave.tai-project"
+if not os.path.isfile(TERRA_GUI_AUTOSAVE_FILE):
+    open(TERRA_GUI_AUTOSAVE_FILE, "a").close()
