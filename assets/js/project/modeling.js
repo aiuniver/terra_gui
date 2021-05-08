@@ -809,9 +809,8 @@
                     _params = window.TerraProject.layers_types[_form.type];
 
                 _config.config.name = _form.name;
-                _config.config.type = _form.type;
+                _config.config.type = _layer_type_field.val();
                 _config.config.data_name = _form.data_name || "";
-                _config.config.input_shape = ((_form.input_shape || "").match(/([\d]+)/g) || []).map((value) => {return parseInt(value)});
 
                 for (let group in _params) {
                     for (let name in _params[group]) {
