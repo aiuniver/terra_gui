@@ -1718,7 +1718,7 @@ class GUILayersDef:
                 {"n": {"type": "int", "default": 8}},
             'extra': {}
         },
-        "BatchNormalization ": {
+        "BatchNormalization": {
             'main': {},
             'extra': {
                 # "axis": {"type": "int", "default": -1},
