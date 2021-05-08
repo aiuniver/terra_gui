@@ -16,7 +16,7 @@ class Color(str, Enum):
 
 class OptimizerType(str, Enum):
     SGD = "SGD"
-    RMSpro = "RMSprop"
+    RMSprop = "RMSprop"
     Adam = "Adam"
     Adadelta = "Adadelta"
     Adagrad = "Adagrad"
