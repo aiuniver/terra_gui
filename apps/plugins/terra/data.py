@@ -1,11 +1,11 @@
 import json
-
 import pydantic
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.urls import reverse_lazy
 
 
@@ -194,8 +194,8 @@ class TerraExchangeProject:
         self.tags = kwargs.get("tags", {})
         self.dataset = kwargs.get("dataset", "")
         self.model_name = kwargs.get("model_name", "")
-        self.layers = kwargs.get("layers", LayerDict())
-        self.start_layers = kwargs.get("start_layers", LayerDict())
+        self.layers = LayerDict(**kwargs.get("layers", {"items": {}}))
+        self.start_layers = LayerDict(**kwargs.get("start_layers", {"items": {}}))
         self.schema = kwargs.get("schema", [])
         self.layers_types = kwargs.get("layers_types", {})
         self.optimizers = kwargs.get("optimizers", [])
@@ -246,3 +246,17 @@ class TerraExchangeProject:
             }
         )
         return output
+
+    @property
+    def data(self) -> dict:
+        return {
+            "name": self.name,
+            "dataset": self.dataset,
+            "model_name": self.model_name,
+            "layers": self.layers.as_dict,
+            "start_layers": self.start_layers.as_dict,
+        }
+
+    def save(self):
+        with open(settings.TERRA_GUI_AUTOSAVE_FILE, "w") as file:
+            json.dump(self.data, file)

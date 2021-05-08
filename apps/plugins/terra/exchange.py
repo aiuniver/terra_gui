@@ -17,6 +17,14 @@ from .neural import colab_exchange
 class TerraExchange:
     __project: TerraExchangeProject = TerraExchangeProject()
 
+    def __init__(self):
+        with open(settings.TERRA_GUI_AUTOSAVE_FILE, "r") as file:
+            try:
+                data = json.load(file)
+            except Exception as error:
+                data = {}
+            self.__project = TerraExchangeProject(**data)
+
     @property
     def project(self) -> TerraExchangeProject:
         return self.__project
@@ -78,6 +86,9 @@ class TerraExchange:
             return method(**kwargs)
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
+
+    def _call_save_project(self):
+        self.__project.save()
 
     def _call_get_state(self) -> TerraExchangeResponse:
         return TerraExchangeResponse(data=colab_exchange.get_state())
