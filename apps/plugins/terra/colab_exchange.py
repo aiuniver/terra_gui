@@ -568,12 +568,10 @@ class Exchange(StatesData, GuiExch):
             self.dts = self._read_trds(dataset_name)
         else:
             self.dts = DTS(exch_obj=self)
-            print('DTS = ', self.dts)
             gc.collect()
             self.dts.prepare_dataset(
                 dataset_name=dataset_name, source=source
             )
-            print('TASK_TYPE = ', self.dts.task_type)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
@@ -802,6 +800,9 @@ class Exchange(StatesData, GuiExch):
 
     def get_datasets_data(self):
         return self._create_datasets_data()
+
+    def get_dataset_input_shape(self):
+        return self.dts.input_shape
 
     def get_hardware_env(self):
         return self.hardware_accelerator_type

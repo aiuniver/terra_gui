@@ -3,7 +3,7 @@ import json
 import pydantic
 
 from enum import Enum
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
 from django.urls import reverse_lazy
@@ -103,7 +103,7 @@ class LayerConfig(pydantic.BaseModel):
     type: LayerType = LayerType.Dense
     location_type: LayerLocation = LayerLocation.middle
     up_link: List[int] = []
-    input_shape: List[int] = []
+    input_shape: Union[List[int], List[List[int]]] = []
     output_shape: List[int] = []
     data_name: str = ""
     data_available: List[str] = []
@@ -119,13 +119,8 @@ class LayerConfig(pydantic.BaseModel):
 
     @pydantic.validator("up_link", allow_reuse=True)
     def correct_list_natural_number(cls, value):
-        value = list(filter(lambda value: value > 0, value))
+        value = list(filter(lambda value: int(value) > 0, value))
         value = list(set(value))
-        return value
-
-    @pydantic.validator("input_shape", "output_shape", allow_reuse=True)
-    def correct_shape(cls, value):
-        value = list(filter(lambda value: value > 0, value))
         return value
 
 
