@@ -661,7 +661,7 @@
 
 .callbacks-switchers{
     padding-right: 50px;
-    align-items: flex-end;
+    align-items: flex-start;
     display: flex;
     flex-direction: column;
 }
@@ -675,18 +675,19 @@
 .callback-item{
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    padding-right: 30px;
+    align-items: flex-start;
     padding-top: 20px;
+    padding-left: 20px;
 }
 
 .callback-item > .field-form{
     display: flex;
     justify-content: center;
+    padding: 5px 0;
 }
 
 .callback-item > .field-form > label{
-    margin-right: 10px;
+    margin-left: 10px;
 }
 
 .toolbar > .wrapper {
@@ -766,7 +767,8 @@
 .open > .optimazer-item,
 .open > .callback-item,
 .open > .outputs-content,
-.open > .param-item{
+.open > .param-item,
+.open > .checkpoint-item{
     display: none;
 }
 
@@ -793,6 +795,35 @@
     padding: 20px;
 }
 
+.field-form > label {
+    margin: 0;
+    padding-right: 7px;
+    text-align: right;
+}
+
+.switchers{
+    padding: 10px;
+}
+
+.switchers,
+.switchers > .field-inline{
+    display: flex;
+}
+
+.switchers > .field-inline{
+    padding-left: 20px;
+    align-items: center;
+}
+
+.switchers > .field-inline > .checkout-switch{
+    margin-left: 7px;
+}
+
+.inner > .form-inline-label{
+    display: flex;
+    flex-wrap: wrap;
+}
+
 @media (max-width: 575.98px) {
 
 }
@@ -812,5 +843,7 @@
 @media (min-width: 1200px) {
 
 }
+
+
 
 

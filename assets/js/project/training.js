@@ -63,6 +63,17 @@
                 'yaxis': {'title': 'val_accuracy'}
             }
         ],
+        'scatters': [
+            {
+                "list": [
+                {'x': [1, 5, 7, 2, 9, 3], 'y': [10, 40, 20, 50, 30, 60], 'name': 'label', 'mode': 'markers'},
+                {'x': [1, 6, 3, 8, 4, 5], 'y': [10, 80, 20, 70, 30, 15], 'name': 'label2', 'mode': 'markers'}
+            ],
+                'title': 'scatter',
+                 'xaxis': {'title': 'epoch'},
+                'yaxis': {'title': 'val_accuracy'}
+            }
+        ],
         'texts': "num_classes = 2, shape = (1799, 54, 96, 3), epochs = 20,\nlearning_rate=0.001, callbacks = [], batch_size = 32,\nshuffle = True, loss = categorical_crossentropy, metrics = ['accuracy']\n",
         'prints': [
             'Epoch 000 - loss:  0.7809 - accuracy:  0.7360 - val_loss:  0.5165 - val_accuracy:  0.7711',
@@ -239,57 +250,57 @@
             return false;
         });
 
-        $(".callback-params-block > .params-item > .inner > .actions-form").bind("click", (event) => {
-            event.preventDefault();
-            window.StatusBar.clear();
-            UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
-            ResetGraphics();
-            window.ExchangeRequest(
-                "start_nn_train",
-                (success, data) => {
-                    if (success) {
-                        console.log("Training complete:", data);
-                    } else {
-                        window.StatusBar.message(data.error, false);
-                    }
-                },
-                {
-                    batch:$("#batch-size").val(),
-                    epoch:$("#epoch-num").val(),
-                    learning_rate:$("#field_form-learning_rate").val()
-                }
-            );
-            window.ExchangeRequest(
-                "get_data",
-                (success, data) => {
-                    if (success) {
-                        if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
-                        window.StatusBar.message(data.data.status_string);
-                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                        $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
-                        DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
-                        DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
-                        DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
-                        UpdateTrainingProgress(data.data.prints);
-                        if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
-                        if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
-                        if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
-                        if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
-                        if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
-                            if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
-                                $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
-                            }
-                        }
-                        if (data.data.stop_flag) {
-                            $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
-                            $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
-                        }
-                    } else {
-                        window.StatusBar.message(data.error, false);
-                    }
-                }
-            );
-        });
+        // $(".callback-params-block > .params-item > .inner > .actions-form").bind("submit", (event) => {
+        //     event.preventDefault();
+        //     window.StatusBar.clear();
+        //     UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
+        //     ResetGraphics();
+        //     window.ExchangeRequest(
+        //         "start_nn_train",
+        //         (success, data) => {
+        //             if (success) {
+        //                 console.log("Training complete:", data);
+        //             } else {
+        //                 window.StatusBar.message(data.error, false);
+        //             }
+        //         },
+        //         {
+        //             batch:$("#batch-size").val(),
+        //             epoch:$("#epoch-num").val(),
+        //             learning_rate:$("#field_form-learning_rate").val()
+        //         }
+        //     );
+        //     window.ExchangeRequest(
+        //         "get_data",
+        //         (success, data) => {
+        //             if (success) {
+        //                 if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
+        //                 window.StatusBar.message(data.data.status_string);
+        //                 window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+        //                 $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
+        //                 DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
+        //                 DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
+        //                 DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
+        //                 UpdateTrainingProgress(data.data.prints);
+        //                 if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
+        //                 if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
+        //                 if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
+        //                 if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
+        //                 if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
+        //                     if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
+        //                         $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+        //                     }
+        //                 }
+        //                 if (data.data.stop_flag) {
+        //                     $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+        //                     $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
+        //                 }
+        //             } else {
+        //                 window.StatusBar.message(data.error, false);
+        //             }
+        //         }
+        //     );
+        // });
 
         let optimazerSelect = $("#optimazer");
         optimazerSelect.bind("change", (event) => {
@@ -395,12 +406,70 @@
         $(".click-menu").bind("click", (event)=>{
             $(event.target).parent().toggleClass('open');
         });
+        //
+        // $(".item.training > button").bind("click", (event)=>{
+        //     event.preventDefault();
+        //     let form = $(event.currentTarget),
+        //         serializeData = form.parents('.params-container').serializeArray();
+        //     console.log("asdfa")
+        // });
 
-        $(".item.training > button").bind("click", (event)=>{
+
+        $(".item.training > button").bind("submit", (event) => {
             event.preventDefault();
-            let form = $(event.currentTarget),
-                serializeData = form.parents('.params-container').serializeArray();
+            window.StatusBar.clear();
+            UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
+            ResetGraphics();
+            window.ExchangeRequest(
+                "start_nn_train",
+                (success, data) => {
+                    if (success) {
+                        console.log("Training complete:", data);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                {
+                    batch:$("#batch-size").val(),
+                    epoch:$("#epoch-num").val(),
+                    learning_rate:$("#learning_rate").val()
+                }
+            );
+            window.ExchangeRequest(
+                "get_data",
+                (success, data) => {
+                    if (success) {
+                        if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
+                        window.StatusBar.message(data.data.status_string);
+                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                        $(".tab-container").html("");
+                        DrawGraph("plots", $(".tab-container"), data.data); // нарисовать для линейного
+                        DrawGraph("scatters", $(".tab-container"), data.data); // нарисовать для скаттера
+                        DisplayText(data_needed_format, $(".tab-container")); // вывод текста
+                        UpdateTrainingProgress(data.data.prints);
+                        if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
+                        if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
+                        if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
+                        if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
+                        if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
+                            if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
+                                $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+                            }
+                        }
+                        if (data.data.stop_flag) {
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
+                        }
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                }
+            );
         });
+
+
+
+
 
         // здесь будет проверка на наличие флага "регрессия"
         // if (data_needed_format["scatters"]){
@@ -417,7 +486,8 @@
         // }
 
         DrawGraph("plots", $(".tab-container"), data_needed_format); // нарисовать для линейного
-        // DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container")); // нарисовать для скаттера
+        UpdateTrainingProgress(data_needed_format['prints']);
+        DrawGraph("scatters", $(".tab-container"), data_needed_format); // нарисовать для скаттера
 
         // DrawGraph("plots", $(".tab-container"), data_needed_format);
 
