@@ -371,8 +371,8 @@
                 _onDrag = true;
                 _node.attr("transform", (data) => {
                     let transform = _get_transform();
-                    data.x = (d3.event.sourceEvent.layerX - d3.event.subject.x - transform.x)/transform.s;
-                    data.y = (d3.event.sourceEvent.layerY - d3.event.subject.y - transform.y)/transform.s;
+                    data.x = (d3.event.sourceEvent.layerX - transform.x)/transform.s - d3.event.subject.x;
+                    data.y = (d3.event.sourceEvent.layerY - transform.y)/transform.s - d3.event.subject.y;
                     return `translate(${data.x},${data.y})`;
                 }).raise();
 
