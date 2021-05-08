@@ -122,7 +122,11 @@ class TerraExchange:
         return self.__request_post("get_models")
 
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
-        data = self.__request_post("get_model_from_list", model_name=model_file)
+        data = self.__request_post(
+            "get_model_from_list",
+            model_name=model_file,
+            input_shape=colab_exchange.get_dataset_input_shape(),
+        )
         layers = LayerDict()
         for index, layer in data.data.get("layers").items():
             layers.items[int(index)] = Layer(config=layer)
@@ -175,7 +179,6 @@ class TerraExchange:
                     layers.as_dict.get("items").items(),
                 )
             )
-            print("Layers = ", configs)
             return self.__request_post("get_change_validation", layers=configs)
         else:
             return TerraExchangeResponse()

@@ -90,16 +90,14 @@
                             if (success) {
                                 window.StatusBar.clear();
                                 let is_error = false;
-                                for (let index in data.data.errors_val) {
-                                    let error = data.data.errors_val[index];
+                                for (let index in data.data) {
+                                    let error = data.data[index];
                                     if (error) {
-                                        terra_board.set_layer_error(index);
+                                        terra_board.set_layer_error(index, error);
                                         is_error = true;
                                     }
                                 }
-                                if (is_error) {
-                                    window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_ERROR"), false);
-                                } else {
+                                if (!is_error) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                 }
                             } else {
@@ -207,8 +205,9 @@
 
             _d3graph.call(zoom);
 
-            this.set_layer_error = (index) => {
+            this.set_layer_error = (index, message) => {
                 _cnodes.select(`#node-${index}`).classed("error", true);
+                window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
             }
 
             this.load_layer = (class_name) => {
