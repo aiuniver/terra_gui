@@ -31,14 +31,14 @@
                     widget = $(`
                         <label for="field_form-${name}">${label}</label>
                         <div class="checkout-switch">
-                            <input type="${type}" id="field_form-${name}" name="${name}"${options.default === true ? 'checked="checked"' : ''}${options.disabled ? ' disabled="disabled"' : ""} />
+                            <input type="${type}" id="field_form-${name}" name="${name}"${options.default === true ? 'checked="checked"' : ''}${options.disabled ? ' disabled="disabled"' : ""}${options.readonly ? ' readonly="readonly"' : ""} />
                             <span class="switcher"></span>
                         </div>
                     `);
                 } else {
                     widget = $(`
                         <label for="field_form-${name}">${label}:</label>
-                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}"${options.disabled ? ' disabled="disabled"' : ""} />
+                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}"${options.disabled ? ' disabled="disabled"' : ""}${options.readonly ? ' readonly="readonly"' : ""} />
                     `);
                 }
                 return widget_wrapper.append(widget);
