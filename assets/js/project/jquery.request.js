@@ -41,7 +41,8 @@
                             setTimeout(execute, 1000);
                         }
                     },
-                    error:() => {
+                    error:(xhr) => {
+                        console.log(xhr.getAllResponseHeaders());
                         if (typeof callback === "function") {
                             callback(false, {"error":window.Messages.get("INTERNAL_SERVER_ERROR")});
                         }
