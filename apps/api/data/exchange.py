@@ -26,7 +26,7 @@ class ExchangeData:
                 self.data = response.data
                 self.error = response.error
                 if name != "get_data":
-                    terra_exchange.call("save_project")
+                    terra_exchange.call("autosave_project")
             except Exception as error:
                 self.success = False
                 self.error = f"[{error.__class__.__name__}] {error}"

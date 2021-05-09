@@ -257,6 +257,6 @@ class TerraExchangeProject:
             "start_layers": self.start_layers.as_dict,
         }
 
-    def save(self):
+    def autosave(self):
         with open(settings.TERRA_GUI_AUTOSAVE_FILE, "w") as file:
             json.dump(self.data, file)
