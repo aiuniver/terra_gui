@@ -42,7 +42,7 @@
                         }
                     },
                     error:(xhr) => {
-                        console.log(xhr);
+                        if (xhr.status === 502) window.location.reload();
                         if (typeof callback === "function") {
                             callback(false, {"error":window.Messages.get("INTERNAL_SERVER_ERROR")});
                         }
