@@ -260,9 +260,9 @@
         /**
          * Сохранение результата обучения
          */
-        // $(window).bind("beforeunload", (event) => {
-        //     window.ExchangeRequest("save_learning");
-        // });
+        $(window).bind("beforeunload", (event) => {
+            window.ExchangeRequest("autosave_project", null, null, true);
+        });
 
     });
 

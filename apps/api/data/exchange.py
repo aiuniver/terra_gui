@@ -34,6 +34,9 @@ class ExchangeData:
             self.success = False
             self.error = f"Method «{name}» is undefined"
 
+    def _execute_autosave_project(self, **kwargs):
+        return terra_exchange.call("autosave_project", **kwargs)
+
     def _execute_set_project_name(self, **kwargs):
         return terra_exchange.call("set_project_name", **kwargs)
 
