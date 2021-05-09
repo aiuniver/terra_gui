@@ -10,61 +10,95 @@ from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 from .layers_dataclasses import LayersDef, GUILayersDef
-from .data import LayerDict, LayerLocation, LayerType, Layer
+from .data import (LayerDict, LayerLocation, LayerType, Layer,
+                   Optimizer, OptimizersDict, OptimizerType,
+                   OptimizerParams, TrainConfig)
 
 
 class StatesData:
     def __init__(self):
-        self.django_optimizers_dict = {
+        self.optimizers_dict = {
             "SGD": {
-                "lr": {"type": "float", "value": 0.01},
-                "momentum": {"type": "float", "value": 0.0},
-                "nesterov": {"type": "bool", "value": False},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.01}
+                },
+                "extra": {
+                    "momentum": {"type": "float", "value": 0.0},
+                    "nesterov": {"type": "bool", "value": False}
+                },
             },
             "RMSprop": {
-                "lr": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.9},
-                "momentum": {"type": "float", "value": 0.0},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "centered": {"type": "bool", "value": False},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "rho": {"type": "float", "value": 0.9},
+                    "momentum": {"type": "float", "value": 0.0},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                    "centered": {"type": "bool", "value": False}
+                },
             },
             "Adam": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "amsgrad": {"type": "bool", "value": False},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                    "amsgrad": {"type": "bool", "value": False}
+                },
             },
             "Adadelta": {
-                "lr": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.95},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "rho": {"type": "float", "value": 0.95},
+                    "epsilon": {"type": "float", "value": 1e-07}
+                },
             },
             "Adagrad": {
-                "lr": {"type": "float", "value": 0.001},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "initial_accumulator_value": {"type": "float", "value": 0.1},
+                    "epsilon": {"type": "float", "value": 1e-07}
+                },
             },
             "Adamax": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07}
+                },
             },
             "Nadam": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07}
+                },
             },
             "Ftrl": {
-                "lr": {"type": "float", "value": 0.001},
-                "lr_power": {"type": "float", "value": -0.5},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "l1_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_shrinkage_regularization_strength": {"type": "float", "value": 0.0},
-                "beta": {"type": "float", "value": 0.0},
+                "main": {
+                    "learning_rate": {"type": "float", "value": 0.001}
+                },
+                "extra": {
+                    "lr_power": {"type": "float", "value": -0.5},
+                    "initial_accumulator_value": {"type": "float", "value": 0.1},
+                    "l1_regularization_strength": {"type": "float", "value": 0.0},
+                    "l2_regularization_strength": {"type": "float", "value": 0.0},
+                    "l2_shrinkage_regularization_strength": {"type": "float", "value": 0.0},
+                    "beta": {"type": "float", "value": 0.0}
+                },
             },
         }
 
@@ -300,6 +334,7 @@ class Exchange(StatesData, GuiExch):
         self.epochs = 20
         self.shuffle = True
         self.epoch = 1
+        self.optimizers = self._set_optimizers()
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -645,6 +680,18 @@ class Exchange(StatesData, GuiExch):
             "texts": [],
         }
 
+    def _set_optimizers(self):
+        optimizers = OptimizersDict()
+        for name, params in self.optimizers_dict.items():
+            optimizer_params = OptimizerParams()
+            optimizer = Optimizer()
+            optimizer.name = OptimizerType(name)
+            optimizer_params.main = params.get('main', {})
+            optimizer_params.extra = params.get('extra', {})
+            optimizer.params = optimizer_params
+            optimizers.items.setdefault(name, optimizer)
+        return optimizers.as_dict
+
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
 
@@ -815,7 +862,7 @@ class Exchange(StatesData, GuiExch):
         data.update(
             {
                 "layers_types": self.get_layers_type_list(),
-                "optimizers": self.get_optimizers_list(),
+                "optimizers": self.get_optimizers(),
                 "callbacks": self.callback_show_options_switches_front.get('classification', {}),
                 "hardware": self.get_hardware_env(),
                 "compile": self.get_states_for_outputs(),
@@ -826,15 +873,24 @@ class Exchange(StatesData, GuiExch):
     def get_layers_type_list(self):
         return self.layers_params
 
-    def get_optimizers_list(self):
-        return list(self.django_optimizers_dict.keys())
+    def get_optimizers(self):
+        return self.optimizers
+
+    def get_optimizer_kwargs(self, optimizer_name):
+        optimizer_params = {'main': {}, 'extra': {}}
+        default_params = self.optimizers.get('items', {}).get(optimizer_name, {}).get('params', {})
+        for name, params in default_params.items():
+            for _param_name, values in params.items():
+                optimizer_params[name][_param_name] = values.get('value')
+        optimizer_kwargs = OptimizerParams(main=optimizer_params.get('main'), extra=optimizer_params.get('extra'))
+        return optimizer_kwargs.as_dict
 
     def get_data(self):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
             self.out_data["progress_status"]["percents"] = (
-                self.epoch / self.epochs
-            ) * 100
+                                                                   self.epoch / self.epochs
+                                                           ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
