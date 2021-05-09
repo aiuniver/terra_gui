@@ -26,7 +26,69 @@ class OptimizerType(str, Enum):
 
 
 class OptimizerParams(pydantic.BaseModel):
-    params: Dict[str, Optional[Any]] = {}
+    main: Dict[str, Optional[Any]] = {}
+    extra: Dict[str, Optional[Any]] = {}
+
+    @pydantic.validator("main", "extra", allow_reuse=True)
+    def correct_dict_str_values(cls, value):
+        for name, item in value.items():
+            try:
+                if item is None:
+                    item = ""
+                if isinstance(item, (tuple, list)):
+                    item = ",".join(list(map(lambda value: str(value), item)))
+                if isinstance(item, dict):
+                    item = json.dumps(item)
+            except Exception:
+                item = ""
+            value[name] = item
+        return value
+
+    @property
+    def as_dict(self) -> dict:
+        output = dict(self)
+        output["main"] = dict(self.main)
+        output["extra"] = dict(self.extra)
+        return output
+
+
+class Optimizer(pydantic.BaseModel):
+    name: OptimizerType = OptimizerType.Adam
+    params: OptimizerParams = OptimizerParams()
+
+    @property
+    def as_dict(self) -> dict:
+        output = dict(self)
+        output["name"] = self.name.value
+        output["params"] = dict(self.params)
+        return output
+
+
+class OptimizersDict(pydantic.BaseModel):
+    items: Dict[str, Optimizer] = {}
+
+    @property
+    def as_dict(self) -> dict:
+        output = {"items": {}}
+        for index, item in self.items.items():
+            output["items"][index] = item.as_dict
+        return output
+
+
+class TrainConfig(pydantic.BaseModel):
+    batch_sizes: int = 32
+    epochs_count: int = 20
+    optimizer: Optimizer = Optimizer()
+    outputs: Dict[str, Optional[Any]] = {}
+    checkpoint: Dict[str, Optional[Any]] = {}
+    callbacks: Dict[str, Optional[Any]] = {}
+
+    @property
+    def as_dict(self) -> dict:
+        output = dict(self)
+        # output["name"] = self.name.value
+        output["optimizer"] = self.optimizer.as_dict
+        return output
 
 
 class LayerLocation(str, Enum):
@@ -181,7 +243,7 @@ class TerraExchangeProject:
     start_layers: LayerDict
     schema: list
     layers_types: dict
-    optimizers: list
+    optimizers: OptimizersDict
     callbacks: dict
     compile: dict
     path: dict
@@ -198,7 +260,7 @@ class TerraExchangeProject:
         self.start_layers = LayerDict(**kwargs.get("start_layers", {"items": {}}))
         self.schema = kwargs.get("schema", [])
         self.layers_types = kwargs.get("layers_types", {})
-        self.optimizers = kwargs.get("optimizers", [])
+        self.optimizers = kwargs.get("optimizers", {})
         self.callbacks = kwargs.get("callbacks", {})
         self.compile = kwargs.get("compile", {})
         self.path = {
@@ -220,7 +282,7 @@ class TerraExchangeProject:
     start_layers : {len(self.start_layers.items.keys())}
     schema       : {len(self.schema)}
     layers_types : {len(self.layers_types.keys())}
-    optimizers   : {len(self.optimizers)}
+    optimizers   : {len(self.optimizers.items.keys())}
     callbacks    : {len(self.callbacks.keys())}
     compile      : {len(self.compile.keys())}
     path         : datasets -> {self.path.get("modeling", f"{Color.red}undefined{Color.reset}")}
@@ -260,3 +322,22 @@ class TerraExchangeProject:
     def save(self):
         with open(settings.TERRA_GUI_AUTOSAVE_FILE, "w") as file:
             json.dump(self.data, file)
+
+
+if __name__ == '__main__':
+    train_config = TrainConfig()
+    optimizer = Optimizer()
+    params = OptimizerParams(
+        main={"lr": 0.001},
+        extra={"beta_1": 0.9,
+               "beta_2": 0.999,
+               "epsilon": 1e-07,
+               "amsgrad": False,
+               }
+    )
+    optimizer.params = params
+    train_config.optimizer = optimizer
+    print(train_config.as_dict)
+    print(optimizer.as_dict)
+
+

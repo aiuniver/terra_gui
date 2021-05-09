@@ -37,7 +37,7 @@ class TerraProjectMiddleware(MiddlewareMixin):
             terra_exchange.project.datasets = datasets
             terra_exchange.project.tags = tags
             terra_exchange.project.layers_types = response.data.get("layers_types", {})
-            terra_exchange.project.optimizers = response.data.get("optimizers", [])
+            terra_exchange.project.optimizers = list(response.data.get("optimizers", {}).get('items', {}).keys())
             terra_exchange.project.compile = response.data.get("compile", {})
             terra_exchange.project.callbacks = (
                 terra_exchange.project.callbacks

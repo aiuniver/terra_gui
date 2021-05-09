@@ -32,9 +32,6 @@ class Exchange:
         self.task_name = ""
 
         self.optimizer_name = "Adam"
-        self.optimizers_dict = self.get_optimizers_dict_from_terra()
-        self.optimizers_kwargs = self.optimizers_dict.get(self.optimizer_name)
-
         self.loss = "categorical_crossentropy"
         self.metrics = ["accuracy"]
         self.batch_size = 32

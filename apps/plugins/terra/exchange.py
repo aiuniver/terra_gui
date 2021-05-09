@@ -195,7 +195,7 @@ class TerraExchange:
             return TerraExchangeResponse()
 
     def _call_get_optimizer_kwargs(self, optimizer: str) -> TerraExchangeResponse:
-        return self.__request_post("get_optimizer_kwargs", optimizer_name=optimizer)
+        return TerraExchangeResponse(data=colab_exchange.get_optimizer_kwargs(optimizer_name=optimizer))
 
     def _call_set_callbacks_switches(self, **kwargs) -> TerraExchangeResponse:
         callbacks = self.__project.callbacks
