@@ -87,8 +87,8 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
-    def _call_save_project(self):
-        self.__project.save()
+    def _call_autosave_project(self):
+        self.__project.autosave()
 
     def _call_get_state(self) -> TerraExchangeResponse:
         return TerraExchangeResponse(data=colab_exchange.get_state())
