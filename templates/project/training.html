@@ -14,7 +14,7 @@
 
 {% block content_block %}
 
-<div class="toolbar project-trainig-toolbar">
+<div class="toolbar project-training-toolbar">
     <div class="wrapper">
         <ul class="menu-section">
             <li data-type="graphs">
@@ -80,8 +80,8 @@
                                 <label for="optimazer">Оптимизатор:</label>
                                 <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
                                     <option value=""></option>
-                                    {% for optimizer in request.terra_project.optimizers %}
-                                        <option value="{{ optimizer }}"{% if optimizer|lower == 'adam' %} selected="selected"{% endif %}>{{ optimizer }}</option>
+                                    {% for name in request.terra_project.optimizers %}
+                                        <option value="{{ name }}"{% if name|lower == 'adam' %} selected="selected"{% endif %}>{{ name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>

@@ -177,6 +177,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     optimizers: Dict[str, OptimizerParams] = {}
     callbacks: dict = {}
     compile: dict = {}
+    training: TrainConfig = TrainConfig()
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),
         "modeling": reverse_lazy("apps_project:modeling"),
