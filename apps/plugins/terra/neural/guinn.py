@@ -153,7 +153,7 @@ class GUINN:
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
         self.output_params = output_params
         self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
-        self.chp_monitor = clbck_chp['monitor']  # это словарь {output: 'output_1', out_monitor: 'mse'}
+        self.chp_monitor = clbck_chp['monitor']  # это словарь {output: 'output_1', 'out_type': 'loss', out_monitor: 'mse'}
         self.chp_mode = clbck_chp['mode']  # 'min' или 'max'
         self.chp_save_best = clbck_chp['save_best']  # bool
         self.chp_save_weights = clbck_chp['save_weights']  # bool
