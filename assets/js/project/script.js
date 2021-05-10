@@ -31,6 +31,7 @@
         let _optimizers = options.optimizers || {};
         let _callbacks = options.callbacks || {};
         let _compile = options.compile || {};
+        let _training = options.training || {};
         let _path = options.path || {};
 
         this.model_clear = () => {
@@ -202,6 +203,15 @@
             }
         });
 
+        Object.defineProperty(this, "training", {
+            set: (value) => {
+                _training = value;
+            },
+            get: () => {
+                return _training;
+            }
+        });
+
         Object.defineProperty(this, "path", {
             set: (value) => {
                 _path = value;
@@ -224,6 +234,11 @@
 
         $("header > .user > .item > .menu > .group > .title").bind("click", (event) => {
             $(event.currentTarget).parent().toggleClass("hidden");
+        });
+
+        $(".params-item.collapsable > .params-title").bind("click", (event) => {
+            event.preventDefault();
+            $(event.currentTarget).parent().toggleClass("collapsed");
         });
 
         /**

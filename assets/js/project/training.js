@@ -312,6 +312,7 @@
 
             $(".wrapper .params-optimazer-block .optimazer-item").append(`
                 <div class="inner form-inline-label inner-col-0"></div>
+                <div class="inner form-inline-label inner-col-1"></div>
             `);
             window.ExchangeRequest(
                 "get_optimizer_kwargs",
@@ -320,7 +321,7 @@
                         let dataLen = Object.keys(data.data).length;
                         let dataEntries = Object.entries(data.data);
                         let column = Math.ceil(dataLen / 2)
-                        // $(".params-optimazer-block .params-item").append(`
+                        // $(".params-item .params-optimazer-block").append(`
                         //     <div class="inner form-inline-label inner-col-1"></div>
                         // `);
                         dataEntries.forEach(([key, param], index) => {
@@ -335,12 +336,12 @@
                             });
                             widget.addClass("field-inline");
 
-                            // if (index < column && dataLen > 4) {
-                            //     $(".params-optimazer-block .inner.inner-col-0").append(widget);
-                            // } else {
-                            //     $(".params-optimazer-block .inner.inner-col-1").append(widget);
-                            // }
-                            $(".params-optimazer-block .inner.inner-col-0").append(widget);
+                            if (index < column && dataLen > 2) {
+                                $(".optimazer-item .inner-col-0").append(widget);
+                            } else {
+                                $(".optimazer-item .inner-col-1").append(widget);
+                                console.log( $(".optimazer-item > .inner-col-1"))
+                            }
                         });
                     } else {
                         window.StatusBar.message(data.error, false);
@@ -482,9 +483,9 @@
         //     document.getElementById("tabs").append(graphElem);
         // }
 
-        DrawGraph("plots", $(".tab-container"), data_needed_format); // нарисовать для линейного
+        DrawGraph("plots", $(".graphics > .content"), data_needed_format); // нарисовать для линейного
         UpdateTrainingProgress(data_needed_format['prints']);
-        DrawGraph("scatters", $(".tab-container"), data_needed_format); // нарисовать для скаттера
+        DrawGraph("scatters", $(".scatters > .content"), data_needed_format); // нарисовать для скаттера
 
         // DrawGraph("plots", $(".tab-container"), data_needed_format);
 

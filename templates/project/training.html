@@ -14,7 +14,7 @@
 
 {% block content_block %}
 
-<div class="toolbar project-trainig-toolbar">
+<div class="toolbar project-training-toolbar">
     <div class="wrapper">
         <ul class="menu-section">
             <li data-type="graphs">
@@ -40,7 +40,24 @@
             <div class="tabs-content">
                 <div class="inner">
                     <div class="tabs-item graphics custom-scrollbar-wrapper">
-                        <div class="tab-container"></div>
+                        <div class="tab-container">
+                            <div class="graphics">
+                                <div class="category-title">Графики</div>
+                                <div class="content"></div>
+                            </div>
+                            <div class="scatters">
+                                <div class="category-title">Скаттеры</div>
+                                <div class="content"></div>
+                            </div>
+                            <div class="images">
+                                <div class="category-title">Картинки</div>
+                                <div class="content"></div>
+                            </div>
+                            <div class="text">
+                                <div class="category-title">Текст</div>
+                                <div class="content"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -59,12 +76,12 @@
                 <div class="scroll-block custom-scrollbar-wrapper">
                     <div class="params-item">
                         <div class="inner">
-                        <div class="params-title click-menu">Оптимизатор</div>
-                            <div class="field-form">
+                            <div class="field-form field-inline">
+                                <label for="optimazer">Оптимизатор:</label>
                                 <select id="optimazer" name="optimazer" class="jquery-ui-menuselect">
                                     <option value=""></option>
-                                    {% for optimizer in request.terra_project.optimizers %}
-                                        <option value="{{ optimizer }}"{% if optimizer|lower == 'adam' %} selected="selected"{% endif %}>{{ optimizer }}</option>
+                                    {% for name in request.terra_project.optimizers %}
+                                        <option value="{{ name }}"{% if name|lower == 'adam' %} selected="selected"{% endif %}>{{ name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -78,36 +95,27 @@
                                     <input name="epoch-num" id="epoch-num" type="number" value="20" />
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="learning_rate">Learning_rate:</label>
+                                    <label for="learning_rate">Learning rate:</label>
                                     <input name="learning_rate" id="learning_rate" type="number" value="0.001" />
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="params-item params-optimazer-block">
-                        <div class="params-title click-menu">Параметры оптимизатора
-                            <div class="arrow-accordion">
-                                <span class="arrow-accordion-left"></span>
-                                <span class="arrow-accordion-right"></span>
-                            </div>
-                        </div>
-                        <div class="optimazer-item">
-                            <div class="inner form-inline-label"></div>
+                    <div class="params-item params-optimazer-block collapsable">
+                        <div class="params-title">Параметры оптимизатора</div>
+                        <div class="optimazer-item inner">
+                            <div class="inner form-inline-label inner-col-0"></div>
+                            <div class="inner form-inline-label inner-col-1"></div>
                         </div>
                     </div>
-                        <div class="params-item output-params-block">
-                            <div class="params-title click-menu">Параметры Outputs
-                                <div class="arrow-accordion">
-                                    <span class="arrow-accordion-left"></span>
-                                    <span class="arrow-accordion-right"></span>
-                                </div>
-                            </div>
-                            <div class="param-item">
+                        <div class="params-item output-params-block collapsable">
+                            <div class="params-title">Параметры Outputs</div>
+                            <div class="param-item inner">
                                 <div class="outputs-content">
                                     {% for index, layer in request.terra_project.layers.items.items %}
                                         {% if layer.config.location_type == "output" %}
                                             <div class="params-title">Параметры слоя «{{ layer.config.name }}»</div>
-                                            <div class="output-item" id="output-{{ index }}">
+                                            <div class="output-item form-inline-label" id="output-{{ index }}">
                                                 <div class="field-form field-inline output-block select-task">
                                                     <label for="output-{{ index }}-task">Task:</label>
                                                         <select id="output-{{ index }}-task" name="output-{{ index }}-task" class="jquery-ui-menuselect task-select">
@@ -139,14 +147,9 @@
                             </div>
                         </div>
 
-                    <div class="params-item checkpoint-block">
-                        <div class="params-title click-menu">Checkpoint
-                            <div class="arrow-accordion">
-                                <span class="arrow-accordion-left"></span>
-                                <span class="arrow-accordion-right"></span>
-                            </div>
-                        </div>
-                        <div class="checkpoint-item">
+                    <div class="params-item checkpoint-block collapsable">
+                        <div class="params-title">Checkpoint</div>
+                        <div class="checkpoint-item inner form-inline-label">
                              <div class="field-form field-inline output-block">
                                  <label for="display">Монитор:</label>
                                  <select name="display" id="display" class="jquery-ui-menuselect">
@@ -178,22 +181,16 @@
                         </div>
                     </div>
 
-                    <div class="params-item callbacks-switchers">
-                            <div class="params-title click-menu">
-                                Выводить
-                                <div class="arrow-accordion">
-                                    <span class="arrow-accordion-left"></span>
-                                    <span class="arrow-accordion-right"></span>
-                                </div>
-                            </div>
-                            <div class="callback-item">
+                    <div class="params-item callbacks-switchers collapsable">
+                            <div class="params-title">Выводить</div>
+                            <div class="inner callback-item">
                                 {% for name, callback in request.terra_project.callbacks.items %}
-                                    <div class="field-form field-inline">
+                                    <div class="field-form field-inline field-reverse">
+                                        <label for="callback-{{ name }}">{{ callback.label }}</label>
                                          <div class="checkout-switch">
                                             <input type="checkbox" id="callback-{{ name }}" name="{{ name }}"{% if callback.value %} checked="checked"{% endif %} />
                                             <span class="switcher"></span>
                                         </div>
-                                        <label for="callback-{{ name }}">{{ callback.label }}</label>
                                     </div>
                                 {% endfor %}
                             </div>
