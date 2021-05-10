@@ -32,6 +32,13 @@ class OptimizerType(str, Enum):
     Ftrl = "Ftrl"
 
 
+class TaskType(str, Enum):
+    classification = 'classification'
+    timeseries = "timeseries"
+    regression = "regression"
+    segmentation = "segmentation"
+
+
 class LayerLocation(str, Enum):
     input = "input"
     middle = "middle"
@@ -98,13 +105,25 @@ class OptimizerParams(pydantic.BaseModel):
         return value
 
 
+class Callback(pydantic.BaseModel):
+    name: TaskType = TaskType.classification
+    switches: Dict[str, bool] = {}
+
+
+class OutputConfig(pydantic.BaseModel):
+    task: TaskType = TaskType.classification
+    loss: str = ""
+    metric: List[str] = []
+    num_classes: int = 2
+    callback_switches: Callback = Callback()
+
+
 class TrainConfig(pydantic.BaseModel):
     batch_sizes: int = 32
     epochs_count: int = 20
     optimizer: Dict[str, OptimizerParams] = {}
-    outputs: Dict[str, Optional[Any]] = {}
+    outputs: Dict[str, OutputConfig] = {}
     checkpoint: Dict[str, Optional[Any]] = {}
-    callbacks: Dict[str, Optional[Any]] = {}
 
 
 class LayerConfigParam(pydantic.BaseModel):

@@ -4,7 +4,7 @@ from tensorflow.keras.losses import BinaryCrossentropy
 import numpy as np
 import types
 from ..colab_exchange import Exchange
-from trds import DTS
+from terra_ai.trds import DTS
 
 __version__ = 0.60
 
