@@ -858,16 +858,11 @@ class Exchange(StatesData, GuiExch):
 
     def get_optimizer_kwargs(self, optimizer_name):
         optimizer_params = {"main": {}, "extra": {}}
-        default_params = (
-            self.optimizers.get("items", {}).get(optimizer_name, {}).get("params", {})
-        )
-        for name, params in default_params.items():
+        for name, params in self.optimizers.get(optimizer_name).items():
             for _param_name, values in params.items():
-                optimizer_params[name][_param_name] = values.get("value")
-        optimizer_kwargs = OptimizerParams(
-            main=optimizer_params.get("main"), extra=optimizer_params.get("extra")
-        )
-        return optimizer_kwargs.as_dict
+                optimizer_params[name][_param_name] = values.get("default")
+        optimizer_kwargs = OptimizerParams(**optimizer_params)
+        return optimizer_kwargs.dict()
 
     def get_data(self):
         if self.process_flag == "train":
