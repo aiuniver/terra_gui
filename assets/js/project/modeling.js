@@ -859,11 +859,6 @@
                 );
             });
 
-            this.find(".params-item.collapsable > .params-title").bind("click", (event) => {
-                event.preventDefault();
-                $(event.currentTarget).parent().toggleClass("collapsed");
-            });
-
             return this;
 
         }

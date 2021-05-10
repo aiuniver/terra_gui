@@ -284,6 +284,11 @@
             window.ExchangeRequest("save_learning");
         });
 
+        $(".params-item.collapsable > .params-title").bind("click", (event) => {
+                event.preventDefault();
+                $(event.currentTarget).parent().toggleClass("collapsed");
+            });
+
     });
 
 
