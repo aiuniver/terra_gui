@@ -14,7 +14,7 @@ class ProjectViewMixin(TemplateView):
 class ConfigJSView(View):
     def get(self, request, *arg, **kwargs):
         data = base64.b64encode(
-            json.dumps(terra_exchange.project.as_json_string).encode("utf-8")
+            json.dumps(terra_exchange.project.dict()).encode("utf-8")
         ).decode("utf-8")
         return HttpResponse(
             f'window._terra_project="{data}"',
