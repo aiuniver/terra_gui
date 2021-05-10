@@ -256,6 +256,7 @@
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container {
     padding:20px;
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item.graphs .tab-container,
@@ -313,23 +314,6 @@
     min-width: 300px;
 }
 
-.output-block{
-    margin-top: 5px;
-}
-
-.output-block > span{
-    height: 30px;
-}
-
-.output-block > span > .ui-selectmenu-text{
-    line-height: 30px;
-    font-size: 12px;
-}
-
-.output-block > span > .ui-selectmenu-icon{
-    height: 30px;
-}
-
 .params-title{
     line-height: 1.25;
     font-size: .75rem;
@@ -345,7 +329,7 @@
     display: flex;
     flex-direction: column;
     padding: 5px;
-    padding-bottom: 10px;
+    padding-top: 10px;
 }
 
 .output-block{
@@ -567,8 +551,9 @@
     padding: 15px 0;
 }
 
-.graphics {
-    /*margin-bottom: 170px;*/
+.content{
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .graph-elem-block {
@@ -659,31 +644,16 @@
     border: none;
 }
 
-.callbacks-switchers{
-    padding-right: 50px;
-    align-items: flex-start;
-    display: flex;
-    flex-direction: column;
-}
-
-.callbacks-switchers > .params-title{
-    align-self: self-start;
-    position: absolute;
-    width: 100%;
-}
-
 .callback-item{
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     padding-top: 20px;
-    padding-left: 20px;
 }
 
 .callback-item > .field-form{
     display: flex;
     justify-content: center;
-    padding: 5px 0;
 }
 
 .callback-item > .field-form > label{
@@ -795,12 +765,6 @@
     padding: 20px;
 }
 
-.field-form > label {
-    margin: 0;
-    padding-right: 7px;
-    text-align: right;
-}
-
 .switchers{
     padding: 10px;
 }
@@ -811,8 +775,7 @@
 }
 
 .switchers > .field-inline{
-    padding-left: 20px;
-    align-items: center;
+    padding-left: 12px;
 }
 
 .switchers > .field-inline > .checkout-switch{
@@ -821,7 +784,29 @@
 
 .inner > .form-inline-label{
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
+    padding-top: 10px;
+}
+
+#learning_rate{
+    max-width: 90px;
+}
+
+.optimazer-item{
+    display: flex;
+}
+
+.form-inline-label > .field-inline > label {
+    width: 100px;
+}
+
+.field-reverse{
+    flex-direction: row-reverse;
+}
+
+.params-container .params-item > .inner > :not(:last-child) {
+     margin-bottom: 0px;
 }
 
 @media (max-width: 575.98px) {

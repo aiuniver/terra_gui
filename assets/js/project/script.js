@@ -269,6 +269,11 @@
             window.ExchangeRequest("autosave_project", null, null, true);
         });
 
+        $(".params-item.collapsable > .params-title").bind("click", (event) => {
+                event.preventDefault();
+                $(event.currentTarget).parent().toggleClass("collapsed");
+            });
+
     });
 
 
