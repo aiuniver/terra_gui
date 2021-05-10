@@ -25,18 +25,22 @@
         let _dataset = options.dataset || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
-        let _start_layers = options.start_layers || {};
-        let _schema = options.schema || [];
+        let _layers_start = options.layers_start || {};
+        let _layers_schema = options.layers_schema || [];
         let _layers_types = options.layers_types || {};
-        let _optimizers = options.optimizers || [];
+        let _optimizers = options.optimizers || {};
         let _callbacks = options.callbacks || {};
         let _compile = options.compile || {};
         let _path = options.path || {};
 
         this.model_clear = () => {
             _layers = {};
-            _schema = [];
+            _layers_schema = [];
         };
+
+        this.dataset_exists = (dataset_name) => {
+            return this.datasets[dataset_name] !== undefined;
+        }
 
         Object.defineProperty(this, "error", {
             set: (value) => {
@@ -83,11 +87,12 @@
         });
 
         Object.defineProperty(this, "datasets", {
-            set: (value) => {
-                _datasets = value;
-            },
             get: () => {
-                return _datasets;
+                let output = {};
+                _datasets.forEach((item) => {
+                    output[item.name] = item;
+                });
+                return output;
             }
         });
 
@@ -133,31 +138,21 @@
             }
         });
 
-        Object.defineProperty(this, "start_layers", {
+        Object.defineProperty(this, "layers_start", {
             set: (value) => {
-                _start_layers = value;
+                _layers_start = value;
             },
             get: () => {
-                return _start_layers;
+                return _layers_start;
             }
         });
 
-        Object.defineProperty(this, "schema", {
+        Object.defineProperty(this, "layers_schema", {
             set: (value) => {
-                _schema = value;
+                _layers_schema = value;
             },
             get: () => {
-                return _schema;
-            }
-        });
-
-        Object.defineProperty(this, "model_info", {
-            get: () => {
-                return {
-                    "layers": _layers,
-                    "schema": _schema,
-                    "start_layers": _start_layers,
-                };
+                return _layers_schema;
             }
         });
 
@@ -167,6 +162,16 @@
             },
             get: () => {
                 return _layers_types;
+            }
+        });
+
+        Object.defineProperty(this, "model_info", {
+            get: () => {
+                return {
+                    "layers": _layers,
+                    "schema": _layers_schema,
+                    "start_layers": _layers_start,
+                };
             }
         });
 

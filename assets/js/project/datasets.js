@@ -61,8 +61,7 @@
 
             Object.defineProperty(this, "dataset", {
                 set: (value) => {
-                    let info = window.TerraProject.datasets[value];
-                    if (info) {
+                    if (window.TerraProject.dataset_exists(value)) {
                         _dataset = value;
                         params.prepareBtn.disabled = false;
                         this.find(".dataset-card-item").removeClass("active");
@@ -137,7 +136,7 @@
                     },
                     {
                         dataset:datasets.dataset,
-                        is_custom:window.TerraProject.datasets[datasets.dataset].filters.custom !== undefined
+                        is_custom:window.TerraProject.datasets[datasets.dataset].tags.custom !== undefined
                     }
                 );
                 window.ExchangeRequest(

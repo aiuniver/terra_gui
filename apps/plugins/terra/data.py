@@ -1,17 +1,24 @@
+import os
 import json
 import pydantic
+import tempfile
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
-from django.conf import settings
 from django.urls import reverse_lazy
 
 
 class Color(str, Enum):
     red = "\033[0;31m"
     reset = "\033[0m"
+
+
+class Hardware(str, Enum):
+    CPU = "CPU"
+    GPU = "GPU"
+    TRU = "TRU"
 
 
 class OptimizerType(str, Enum):
@@ -26,7 +33,35 @@ class OptimizerType(str, Enum):
 
 
 class OptimizerParams(pydantic.BaseModel):
-    params: Dict[str, Optional[Any]] = {}
+    main: Dict[str, Optional[Any]] = {}
+    extra: Dict[str, Optional[Any]] = {}
+
+    @pydantic.validator("main", "extra", allow_reuse=True)
+    def correct_dict_str_values(cls, value):
+        for name, item in value.items():
+            try:
+                if item is None:
+                    item = ""
+                if isinstance(item, (tuple, list)):
+                    item = ",".join(list(map(lambda value: str(value), item)))
+            except Exception:
+                item = ""
+            value[name] = item
+        return value
+
+
+class Optimizer(pydantic.BaseModel):
+    name: OptimizerType = OptimizerType.Adam
+    params: OptimizerParams = OptimizerParams()
+
+
+class TrainConfig(pydantic.BaseModel):
+    batch_sizes: int = 32
+    epochs_count: int = 20
+    optimizer: Dict[str, Optimizer] = {}
+    outputs: Dict[str, Optional[Any]] = {}
+    checkpoint: Dict[str, Optional[Any]] = {}
+    callbacks: Dict[str, Optional[Any]] = {}
 
 
 class LayerLocation(str, Enum):
@@ -89,8 +124,6 @@ class LayerConfigParam(pydantic.BaseModel):
                     item = ""
                 if isinstance(item, (tuple, list)):
                     item = ",".join(list(map(lambda value: str(value), item)))
-                if isinstance(item, dict):
-                    item = json.dumps(item)
             except Exception:
                 item = ""
             value[name] = item
@@ -109,14 +142,6 @@ class LayerConfig(pydantic.BaseModel):
     data_available: List[str] = []
     params: LayerConfigParam = LayerConfigParam()
 
-    @property
-    def as_dict(self) -> dict:
-        output = dict(self)
-        output["type"] = self.type.value
-        output["location_type"] = self.location_type.value
-        output["params"] = dict(self.params)
-        return output
-
     @pydantic.validator("up_link", allow_reuse=True)
     def correct_list_natural_number(cls, value):
         value = list(filter(lambda value: int(value) > 0, value))
@@ -130,12 +155,6 @@ class Layer(pydantic.BaseModel):
     down_link: List[int] = []
     config: LayerConfig = LayerConfig()
 
-    @property
-    def as_dict(self) -> dict:
-        output = dict(self)
-        output["config"] = self.config.as_dict
-        return output
-
     @pydantic.validator("down_link", allow_reuse=True)
     def validate_list_natural_number(cls, value):
         value = list(filter(lambda value: value > 0, value))
@@ -143,15 +162,61 @@ class Layer(pydantic.BaseModel):
         return value
 
 
-class LayerDict(pydantic.BaseModel):
-    items: Dict[int, Layer] = {}
+class Dataset(pydantic.BaseModel):
+    name: str = ""
+    tags: dict = {}
 
-    @property
-    def as_dict(self) -> dict:
-        output = {"items": {}}
-        for index, item in self.items.items():
-            output["items"][index] = item.as_dict
+
+class TerraExchangeProject(pydantic.BaseModel):
+    error: str = ""
+    name: str = "NoName"
+    hardware: Hardware = Hardware.CPU
+    datasets: List[Dataset] = []
+    tags: dict = {}
+    dataset: str = ""
+    model_name: str = ""
+    layers: Dict[int, Layer] = {}
+    layers_start: Dict[int, Layer] = {}
+    layers_schema: List[List[int]] = []
+    layers_types: Dict[str, LayerConfigParam] = {}
+    optimizers: Dict[str, Optimizer] = {}
+    callbacks: dict = {}
+    compile: dict = {}
+    path: dict = {
+        "datasets": reverse_lazy("apps_project:datasets"),
+        "modeling": reverse_lazy("apps_project:modeling"),
+        "training": reverse_lazy("apps_project:training"),
+    }
+
+    _autosave_filepath: str = f"{tempfile.gettempdir()}/terra-gui-autosave.tai-project"
+
+    def __init__(self, **kwargs):
+        if not os.path.isfile(self._autosave_filepath):
+            open(self._autosave_filepath, "a").close()
+
+        with open(self._autosave_filepath, "r") as file:
+            try:
+                kwargs.update(**json.load(file))
+            except Exception:
+                pass
+
+        super().__init__(**kwargs)
+
+    def dict(self, *args, **kwargs):
+        output = super().dict(*args, **kwargs)
+        output["path"] = {
+            "datasets": str(self.path.get("datasets", "")),
+            "modeling": str(self.path.get("modeling", "")),
+            "training": str(self.path.get("training", "")),
+        }
         return output
+
+    def save(self, path):
+        with open(path, "w") as file:
+            json.dump(self.dict(), file)
+
+    def autosave(self):
+        self.save(self._autosave_filepath)
 
 
 @dataclass
@@ -166,97 +231,3 @@ class TerraExchangeResponse:
         self.error = kwargs.get("error", "")
         self.data = kwargs.get("data", {})
         self.stop_flag = kwargs.get("stop_flag", True)
-
-
-@dataclass
-class TerraExchangeProject:
-    error: str
-    name: str
-    hardware: str
-    datasets: dict
-    tags: dict
-    dataset: str
-    model_name: str
-    layers: LayerDict
-    start_layers: LayerDict
-    schema: list
-    layers_types: dict
-    optimizers: list
-    callbacks: dict
-    compile: dict
-    path: dict
-
-    def __init__(self, **kwargs):
-        self.error = kwargs.get("error", "")
-        self.name = kwargs.get("name", "NoName")
-        self.hardware = kwargs.get("hardware", "CPU")
-        self.datasets = kwargs.get("datasets", {})
-        self.tags = kwargs.get("tags", {})
-        self.dataset = kwargs.get("dataset", "")
-        self.model_name = kwargs.get("model_name", "")
-        self.layers = LayerDict(**kwargs.get("layers", {"items": {}}))
-        self.start_layers = LayerDict(**kwargs.get("start_layers", {"items": {}}))
-        self.schema = kwargs.get("schema", [])
-        self.layers_types = kwargs.get("layers_types", {})
-        self.optimizers = kwargs.get("optimizers", [])
-        self.callbacks = kwargs.get("callbacks", {})
-        self.compile = kwargs.get("compile", {})
-        self.path = {
-            "datasets": reverse_lazy("apps_project:datasets"),
-            "modeling": reverse_lazy("apps_project:modeling"),
-            "training": reverse_lazy("apps_project:training"),
-        }
-
-    def __repr__(self):
-        return f"""TerraExchangeProject:
-    error        : {True if self.error else False}
-    name         : {self.name}
-    hardware     : {self.hardware}
-    datasets     : {len(self.datasets.keys())}
-    tags         : {len(self.tags.keys())}
-    dataset      : {self.dataset}
-    model_name   : {self.model_name}
-    layers       : {len(self.layers.items.keys())}
-    start_layers : {len(self.start_layers.items.keys())}
-    schema       : {len(self.schema)}
-    layers_types : {len(self.layers_types.keys())}
-    optimizers   : {len(self.optimizers)}
-    callbacks    : {len(self.callbacks.keys())}
-    compile      : {len(self.compile.keys())}
-    path         : datasets -> {self.path.get("modeling", f"{Color.red}undefined{Color.reset}")}
-                   modeling -> {self.path.get("modeling", f"{Color.red}undefined{Color.reset}")}
-                   training -> {self.path.get("training", f"{Color.red}undefined{Color.reset}")}"""
-
-    @property
-    def dataset_selected(self) -> bool:
-        return self.dataset != ""
-
-    @property
-    def as_json_string(self) -> dict:
-        output = dict(self.__dict__)
-        path = {}
-        for name, value in self.path.items():
-            path.update({name: str(value)})
-        output.update(
-            {
-                "path": path,
-                "dataset_selected": self.dataset_selected,
-                "layers": self.layers.as_dict.get("items"),
-                "start_layers": self.start_layers.as_dict.get("items"),
-            }
-        )
-        return output
-
-    @property
-    def data(self) -> dict:
-        return {
-            "name": self.name,
-            "dataset": self.dataset,
-            "model_name": self.model_name,
-            "layers": self.layers.as_dict,
-            "start_layers": self.start_layers.as_dict,
-        }
-
-    def autosave(self):
-        with open(settings.TERRA_GUI_AUTOSAVE_FILE, "w") as file:
-            json.dump(self.data, file)

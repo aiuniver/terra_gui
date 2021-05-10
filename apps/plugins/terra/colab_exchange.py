@@ -10,61 +10,84 @@ from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 from .layers_dataclasses import LayersDef, GUILayersDef
-from .data import LayerDict, LayerLocation, LayerType, Layer
+from .data import (
+    LayerLocation,
+    LayerType,
+    OptimizerParams,
+)
 
 
 class StatesData:
     def __init__(self):
-        self.django_optimizers_dict = {
+        self.optimizers_dict = {
             "SGD": {
-                "lr": {"type": "float", "value": 0.01},
-                "momentum": {"type": "float", "value": 0.0},
-                "nesterov": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "value": 0.01}},
+                "extra": {
+                    "momentum": {"type": "float", "value": 0.0},
+                    "nesterov": {"type": "bool", "value": False},
+                },
             },
             "RMSprop": {
-                "lr": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.9},
-                "momentum": {"type": "float", "value": 0.0},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "centered": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "rho": {"type": "float", "value": 0.9},
+                    "momentum": {"type": "float", "value": 0.0},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                    "centered": {"type": "bool", "value": False},
+                },
             },
             "Adam": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "amsgrad": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                    "amsgrad": {"type": "bool", "value": False},
+                },
             },
             "Adadelta": {
-                "lr": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.95},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "rho": {"type": "float", "value": 0.95},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                },
             },
             "Adagrad": {
-                "lr": {"type": "float", "value": 0.001},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "initial_accumulator_value": {"type": "float", "value": 0.1},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                },
             },
             "Adamax": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                },
             },
             "Nadam": {
-                "lr": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "value": 0.9},
+                    "beta_2": {"type": "float", "value": 0.999},
+                    "epsilon": {"type": "float", "value": 1e-07},
+                },
             },
             "Ftrl": {
-                "lr": {"type": "float", "value": 0.001},
-                "lr_power": {"type": "float", "value": -0.5},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "l1_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_shrinkage_regularization_strength": {"type": "float", "value": 0.0},
-                "beta": {"type": "float", "value": 0.0},
+                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "extra": {
+                    "lr_power": {"type": "float", "value": -0.5},
+                    "initial_accumulator_value": {"type": "float", "value": 0.1},
+                    "l1_regularization_strength": {"type": "float", "value": 0.0},
+                    "l2_regularization_strength": {"type": "float", "value": 0.0},
+                    "l2_shrinkage_regularization_strength": {
+                        "type": "float",
+                        "value": 0.0,
+                    },
+                    "beta": {"type": "float", "value": 0.0},
+                },
             },
         }
 
@@ -284,7 +307,7 @@ class Exchange(StatesData, GuiExch):
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
-        self.start_layers = LayerDict()
+        self.start_layers = {}
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
@@ -300,6 +323,7 @@ class Exchange(StatesData, GuiExch):
         self.epochs = 20
         self.shuffle = True
         self.epoch = 1
+        self.optimizers = self._set_optimizers()
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -519,17 +543,30 @@ class Exchange(StatesData, GuiExch):
             "tags": datasets tags
 
         """
-        tags = set()
-        datasets = self.dts.get_datasets_dict()
-        custom_datasets = self._get_custom_datasets_from_google_drive()
-        datasets.update(custom_datasets)
+        output = {"datasets": [], "tags": {}}
 
-        for params in datasets.values():
-            for i in range(len(params[0])):
-                tags.add(params[0][i])
-            for param in params[1:]:
-                if param:
-                    tags.add(param)
+        datasets_dict = self.dts.get_datasets_dict()
+        datasets_dict.update(self._get_custom_datasets_from_google_drive())
+
+        for name, data in datasets_dict.items():
+            dataset_tags = dict(
+                map(
+                    lambda item: (self._reformat_tags([item])[0], item),
+                    sum(
+                        list(
+                            map(
+                                lambda value: value
+                                if isinstance(value, list)
+                                else [value],
+                                list(filter(None, data)),
+                            )
+                        ),
+                        [],
+                    ),
+                )
+            )
+            output["tags"].update(dataset_tags)
+            output["datasets"].append({"name": name, "tags": dataset_tags})
 
         # TODO for next relise step:
 
@@ -539,20 +576,9 @@ class Exchange(StatesData, GuiExch):
         #     'tags': tags,
         #     'methods': methods,
         # }
-        tags = dict(
-            map(
-                lambda item: (self._reformat_tags([item])[0], item),
-                list(tags),
-            )
-        )
         # tags = self._reformat_tags(list(tags))
 
-        content = {
-            "datasets": datasets,
-            "tags": tags,
-        }
-
-        return content
+        return output
 
     def _prepare_dataset(self, dataset_name: str, source: str) -> tuple:
         """
@@ -569,9 +595,7 @@ class Exchange(StatesData, GuiExch):
         else:
             self.dts = DTS(exch_obj=self)
             gc.collect()
-            self.dts.prepare_dataset(
-                dataset_name=dataset_name, source=source
-            )
+            self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
@@ -585,15 +609,15 @@ class Exchange(StatesData, GuiExch):
         return dts
 
     def _set_start_layers(self):
-        self.start_layers = LayerDict()
+        self.start_layers = {}
 
         def _create(dts_data: dict, location: LayerLocation):
             available = [data["data_name"] for name, data in dts_data.items()]
             for name, data in dts_data.items():
-                index = len(self.start_layers.items.keys()) + 1
+                index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
-                self.start_layers.items[index] = Layer(
-                    config={
+                self.start_layers[index] = {
+                    "config": {
                         "name": f"l{index}_{data_name}",
                         "dts_layer_name": name,
                         "type": LayerType.Input
@@ -607,7 +631,7 @@ class Exchange(StatesData, GuiExch):
                         "data_available": available,
                         "params": {},
                     }
-                )
+                }
 
         _create(self.dts.X, LayerLocation.input)
         _create(self.dts.Y, LayerLocation.output)
@@ -628,7 +652,7 @@ class Exchange(StatesData, GuiExch):
             self.out_data["stop_flag"] = True
 
     def _reset_out_data(self):
-        self.start_layers = LayerDict()
+        self.start_layers = {}
         self.out_data = {
             "stop_flag": False,
             "status_string": "status_string",
@@ -644,6 +668,9 @@ class Exchange(StatesData, GuiExch):
             "images": [],
             "texts": [],
         }
+
+    def _set_optimizers(self):
+        return self.optimizers_dict
 
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
@@ -669,9 +696,7 @@ class Exchange(StatesData, GuiExch):
 
     def prepare_dataset(self, dataset_name: str, source: str = ""):
         self.process_flag = "dataset"
-        return self._prepare_dataset(
-            dataset_name=dataset_name, source=source
-        )
+        return self._prepare_dataset(dataset_name=dataset_name, source=source)
 
     def set_stop_training_flag(self):
         """
@@ -815,8 +840,10 @@ class Exchange(StatesData, GuiExch):
         data.update(
             {
                 "layers_types": self.get_layers_type_list(),
-                "optimizers": self.get_optimizers_list(),
-                "callbacks": self.callback_show_options_switches_front.get('classification', {}),
+                "optimizers": self.get_optimizers(),
+                "callbacks": self.callback_show_options_switches_front.get(
+                    "classification", {}
+                ),
                 "hardware": self.get_hardware_env(),
                 "compile": self.get_states_for_outputs(),
             }
@@ -826,8 +853,21 @@ class Exchange(StatesData, GuiExch):
     def get_layers_type_list(self):
         return self.layers_params
 
-    def get_optimizers_list(self):
-        return list(self.django_optimizers_dict.keys())
+    def get_optimizers(self):
+        return self.optimizers
+
+    def get_optimizer_kwargs(self, optimizer_name):
+        optimizer_params = {"main": {}, "extra": {}}
+        default_params = (
+            self.optimizers.get("items", {}).get(optimizer_name, {}).get("params", {})
+        )
+        for name, params in default_params.items():
+            for _param_name, values in params.items():
+                optimizer_params[name][_param_name] = values.get("value")
+        optimizer_kwargs = OptimizerParams(
+            main=optimizer_params.get("main"), extra=optimizer_params.get("extra")
+        )
+        return optimizer_kwargs.as_dict
 
     def get_data(self):
         if self.process_flag == "train":
