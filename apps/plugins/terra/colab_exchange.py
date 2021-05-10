@@ -876,8 +876,11 @@ class Exchange(StatesData, GuiExch):
     def start_training(self, model: object, training: dict) -> None:
         self.nn.set_dataset(self.dts)
         nn_model = dill.loads(model)
-
-        self.nn.set_callback(training.get('outputs', {}))
+        output_params = training.get('outputs', {})
+        clbck_chp = training.get('checkpoint', {})
+        epochs = training.get('epochs_count', 10)
+        batch_size = training.get('batch_size', 32)
+        self.nn.set_main_params(output_params=output_params, clbck_chp=clbck_chp, epochs=epochs, batch_size=batch_size)
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
