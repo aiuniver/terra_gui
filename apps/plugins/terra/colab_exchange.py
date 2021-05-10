@@ -21,72 +21,72 @@ class StatesData:
     def __init__(self):
         self.optimizers_dict = {
             "SGD": {
-                "main": {"learning_rate": {"type": "float", "value": 0.01}},
+                "main": {"learning_rate": {"type": "float", "default": 0.01}},
                 "extra": {
-                    "momentum": {"type": "float", "value": 0.0},
-                    "nesterov": {"type": "bool", "value": False},
+                    "momentum": {"type": "float", "default": 0.0},
+                    "nesterov": {"type": "bool", "default": False},
                 },
             },
             "RMSprop": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "rho": {"type": "float", "value": 0.9},
-                    "momentum": {"type": "float", "value": 0.0},
-                    "epsilon": {"type": "float", "value": 1e-07},
-                    "centered": {"type": "bool", "value": False},
+                    "rho": {"type": "float", "default": 0.9},
+                    "momentum": {"type": "float", "default": 0.0},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                    "centered": {"type": "bool", "default": False},
                 },
             },
             "Adam": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "beta_1": {"type": "float", "value": 0.9},
-                    "beta_2": {"type": "float", "value": 0.999},
-                    "epsilon": {"type": "float", "value": 1e-07},
-                    "amsgrad": {"type": "bool", "value": False},
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                    "amsgrad": {"type": "bool", "default": False},
                 },
             },
             "Adadelta": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "rho": {"type": "float", "value": 0.95},
-                    "epsilon": {"type": "float", "value": 1e-07},
+                    "rho": {"type": "float", "default": 0.95},
+                    "epsilon": {"type": "float", "default": 1e-07},
                 },
             },
             "Adagrad": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "initial_accumulator_value": {"type": "float", "value": 0.1},
-                    "epsilon": {"type": "float", "value": 1e-07},
+                    "initial_accumulator_value": {"type": "float", "default": 0.1},
+                    "epsilon": {"type": "float", "default": 1e-07},
                 },
             },
             "Adamax": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "beta_1": {"type": "float", "value": 0.9},
-                    "beta_2": {"type": "float", "value": 0.999},
-                    "epsilon": {"type": "float", "value": 1e-07},
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
                 },
             },
             "Nadam": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "beta_1": {"type": "float", "value": 0.9},
-                    "beta_2": {"type": "float", "value": 0.999},
-                    "epsilon": {"type": "float", "value": 1e-07},
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
                 },
             },
             "Ftrl": {
-                "main": {"learning_rate": {"type": "float", "value": 0.001}},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "lr_power": {"type": "float", "value": -0.5},
-                    "initial_accumulator_value": {"type": "float", "value": 0.1},
-                    "l1_regularization_strength": {"type": "float", "value": 0.0},
-                    "l2_regularization_strength": {"type": "float", "value": 0.0},
+                    "lr_power": {"type": "float", "default": -0.5},
+                    "initial_accumulator_value": {"type": "float", "default": 0.1},
+                    "l1_regularization_strength": {"type": "float", "default": 0.0},
+                    "l2_regularization_strength": {"type": "float", "default": 0.0},
                     "l2_shrinkage_regularization_strength": {
                         "type": "float",
-                        "value": 0.0,
+                        "default": 0.0,
                     },
-                    "beta": {"type": "float", "value": 0.0},
+                    "beta": {"type": "float", "default": 0.0},
                 },
             },
         }

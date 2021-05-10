@@ -32,38 +32,6 @@ class OptimizerType(str, Enum):
     Ftrl = "Ftrl"
 
 
-class OptimizerParams(pydantic.BaseModel):
-    main: Dict[str, Optional[Any]] = {}
-    extra: Dict[str, Optional[Any]] = {}
-
-    @pydantic.validator("main", "extra", allow_reuse=True)
-    def correct_dict_str_values(cls, value):
-        for name, item in value.items():
-            try:
-                if item is None:
-                    item = ""
-                if isinstance(item, (tuple, list)):
-                    item = ",".join(list(map(lambda value: str(value), item)))
-            except Exception:
-                item = ""
-            value[name] = item
-        return value
-
-
-class Optimizer(pydantic.BaseModel):
-    name: OptimizerType = OptimizerType.Adam
-    params: OptimizerParams = OptimizerParams()
-
-
-class TrainConfig(pydantic.BaseModel):
-    batch_sizes: int = 32
-    epochs_count: int = 20
-    optimizer: Dict[str, Optimizer] = {}
-    outputs: Dict[str, Optional[Any]] = {}
-    checkpoint: Dict[str, Optional[Any]] = {}
-    callbacks: Dict[str, Optional[Any]] = {}
-
-
 class LayerLocation(str, Enum):
     input = "input"
     middle = "middle"
@@ -110,6 +78,33 @@ class LayerType(str, Enum):
     Embedding = "Embedding"
     RepeatVector = "RepeatVector"
     BatchNormalization = "BatchNormalization"
+
+
+class OptimizerParams(pydantic.BaseModel):
+    main: Dict[str, Optional[Any]] = {}
+    extra: Dict[str, Optional[Any]] = {}
+
+    @pydantic.validator("main", "extra", allow_reuse=True)
+    def correct_dict_str_values(cls, value):
+        for name, item in value.items():
+            try:
+                if item is None:
+                    item = ""
+                if isinstance(item, (tuple, list)):
+                    item = ",".join(list(map(lambda value: str(value), item)))
+            except Exception:
+                item = ""
+            value[name] = item
+        return value
+
+
+class TrainConfig(pydantic.BaseModel):
+    batch_sizes: int = 32
+    epochs_count: int = 20
+    optimizer: Dict[str, OptimizerParams] = {}
+    outputs: Dict[str, Optional[Any]] = {}
+    checkpoint: Dict[str, Optional[Any]] = {}
+    callbacks: Dict[str, Optional[Any]] = {}
 
 
 class LayerConfigParam(pydantic.BaseModel):
@@ -179,7 +174,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     layers_start: Dict[int, Layer] = {}
     layers_schema: List[List[int]] = []
     layers_types: Dict[str, LayerConfigParam] = {}
-    optimizers: Dict[str, Optimizer] = {}
+    optimizers: Dict[str, OptimizerParams] = {}
     callbacks: dict = {}
     compile: dict = {}
     path: dict = {
@@ -211,7 +206,7 @@ class TerraExchangeProject(pydantic.BaseModel):
         }
         return output
 
-    def save(self, path):
+    def save(self, path: str):
         with open(path, "w") as file:
             json.dump(self.dict(), file)
 
