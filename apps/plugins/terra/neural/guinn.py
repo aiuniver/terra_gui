@@ -27,8 +27,11 @@ class GUINN:
         self.DTS = None
         self.callbacks = []
         self.output_params = {}
-        self.clbck_options = {}
-        self.clbck_chp = {}
+        self.chp_indicator = 'val'
+        self.chp_monitor = {'output': 'output_1', 'out_monitor': 'mse'}
+        self.chp_mode = 'min'
+        self.chp_save_best = True
+        self.chp_save_weights = True
         """
         For testing in different setups and environment
         """
@@ -146,11 +149,14 @@ class GUINN:
         self.monitor: str = 'accuracy'
         self.monitor2: str = "loss"
 
-    def set_main_params(self, output_params: dict = None, clbck_options: dict = None, clbck_chp: dict = None,
+    def set_main_params(self, output_params: dict = None, clbck_chp: dict = None,
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
         self.output_params = output_params
-        self.clbck_options = clbck_options
-        self.clbck_chp = clbck_chp
+        self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
+        self.chp_monitor = clbck_chp['monitor']  # это словарь {output: 'output_1', out_monitor: 'mse'}
+        self.chp_mode = clbck_chp['mode']  # 'min' или 'max'
+        self.chp_save_best = clbck_chp['save_best']  # bool
+        self.chp_save_weights = clbck_chp['save_weights']  # bool
         self.shuffle = shuffle
         self.epochs = epochs
         self.batch_size = batch_size
@@ -383,7 +389,9 @@ class GUINN:
         self.callbacks = [clsclbk]
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'),
-            verbose=1, save_best_only=True, save_weights_only=True, monitor='loss', mode='min'))
+            verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
+            monitor=self.chp_monitor, mode=self.chp_mode))
+
         if self.debug_verbose > 1:
             print("self.callbacks", self.callbacks)
 
