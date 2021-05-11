@@ -64,8 +64,8 @@ class ExchangeData:
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)
 
-    def _execute_start_nn_train(self, **kwargs):
-        return terra_exchange.call("start_nn_train", **kwargs)
+    def _execute_start_training(self, **kwargs):
+        return terra_exchange.call("start_training", **kwargs)
 
     def _execute_start_evaluate(self, **kwargs):
         return terra_exchange.call("start_evaluate", **kwargs)

@@ -15,10 +15,7 @@
 
             let _field_optimizer = $("#field_form-optimazer"),
                 _field_learning_rate = $("#field_form-learning_rate"),
-                _field_output_task = $(".field_form-output_task"),
                 _field_output_loss = $(".field_form-output_loss"),
-                _field_output_metric = $(".field_form-output_metric"),
-                _field_output_num_classes = $(".field_form-output_num_classes"),
                 _params_optimazer_extra = $(".params-optimazer-extra");
 
             let _camelize = (text) => {
@@ -80,6 +77,7 @@
                     output_name = item.data("output"),
                     task = event.currentTarget.selectedOptions[0].parentNode.label,
                     field_metric = $(`.field_form-${output_name}-output_metric`),
+                    field_num_classes = $(`.field_form-${output_name}-output_num_classes`),
                     metrics = [];
                 $(`.field_form-${output_name}-output_task`).val(task);
                 field_metric.html("");
@@ -101,11 +99,25 @@
                     field_metric.attr("disabled", "disabled");
                 }
                 field_metric.selectmenu("refresh");
+                if (["classification", "segmentation"].indexOf(task) > -1) {
+                    field_num_classes.val(window.TerraProject.training.outputs[output_name].num_classes);
+                    field_num_classes.removeAttr("disabled");
+                } else {
+                    field_num_classes.attr("disabled", "disabled").val(2);
+                }
             }).trigger("change");
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                console.log($(event.currentTarget).serializeObject());
+                let data = $(event.currentTarget).serializeObject();
+                window.ExchangeRequest(
+                    "start_training",
+                    (success, data) => {
+                        console.log("SUCCESS:", success);
+                        console.log("DATA:", data);
+                    },
+                    data
+                )
             });
 
             return this;
@@ -117,6 +129,36 @@
 
 
     $(() => {
+
+        if (!window.TerraProject.dataset) {
+            let warning = $("#modal-window-warning").ModalWindow({
+                title:"Предупреждение!",
+                width:300,
+                height:174,
+                noclose:true,
+                callback:(data) => {
+                    warning.children(".wrapper").append($(`
+                        <p>Для обучения необходимо загрузить датасет.</p>
+                        <p><a class="format-link" href="${window.TerraProject.path.datasets}">Загрузить датасет</a></p>
+                    `));
+                }
+            });
+            warning.open();
+        } else if (!Object.keys(window.TerraProject.layers).length) {
+            let warning = $("#modal-window-warning").ModalWindow({
+                title:"Предупреждение!",
+                width:300,
+                height:174,
+                noclose:true,
+                callback:(data) => {
+                    warning.children(".wrapper").append($(`
+                        <p>Для обучения необходимо загрузить модель.</p>
+                        <p><a class="format-link" href="${window.TerraProject.path.modeling}">Загрузить модель</a></p>
+                    `));
+                }
+            });
+            warning.open();
+        }
 
         $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
 
