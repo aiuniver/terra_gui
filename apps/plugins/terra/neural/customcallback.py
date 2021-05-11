@@ -434,19 +434,23 @@ class ClassificationCallback:
                                       self.history[val_metric_name],
                                       f'{val_metric_name}']]
 
-            #     if self.class_metrics:
-            #         for metric_name in self.clbck_metrics:
-            #             if not isinstance(metric_name, str):
-            #                 metric_name = metric_name.__name__
-            #             val_metric_name = f"val_{metric_name}"
-            #             if metric_name in self.class_metrics:
-            #                 classes_title = f"{val_metric_name} of {self.classes} classes. {msg_epoch}"
-            #                 xlabel = "epoch"
-            #                 ylabel = val_metric_name
-            #                 labels = (classes_title, xlabel, ylabel)
-            #                 plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][self.idx][j]))),
-            #                                       self.predict_cls[val_metric_name][self.idx][j],
-            #                                       f"{val_metric_name} class {j}", ] for j in range(self.classes)]
+            if self.class_metrics:
+                for metric_name in self.class_metrics:
+                    if not isinstance(metric_name, str):
+                        metric_name = metric_name.__name__
+                    if len(self.dataset.Y) > 1:
+                        metric_name = f'{output_key}_{metric_name}'
+                        val_metric_name = f"val_{metric_name}"
+                    else:
+                        val_metric_name = f"val_{metric_name}"
+                    # if metric_name in self.class_metrics:
+                    classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+                    xlabel = "epoch"
+                    ylabel = val_metric_name
+                    labels = (classes_title, xlabel, ylabel)
+                    plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][self.idx][j]))),
+                                          self.predict_cls[val_metric_name][self.idx][j],
+                                          f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -521,6 +525,8 @@ class ClassificationCallback:
         elif "binary_crossentropy" in self.loss:
             pred_classes = y_pred
             true_classes = y_true
+        # else:
+
         for j in range(self.num_classes):
             y_true_count_sum = 0
             y_pred_count_sum = 0
