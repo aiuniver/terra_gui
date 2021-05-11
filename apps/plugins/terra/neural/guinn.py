@@ -394,6 +394,8 @@ class GUINN:
         Return:
             None
         """
+        self.nn_cleaner()
+
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
         if self.debug_verbose > 1:
