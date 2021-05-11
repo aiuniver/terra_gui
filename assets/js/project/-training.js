@@ -299,8 +299,8 @@
         //     );
         // });
 
-        let optimazerSelect = $("#optimazer");
-        optimazerSelect.bind("change", (event) => {
+        let optimizerSelect = $("#optimizer");
+        optimizerSelect.bind("change", (event) => {
             event.preventDefault();
             event.currentTarget.value
                 && window.TerraProject.dataset !== null
@@ -308,9 +308,9 @@
                 && window.TerraProject.task !== null
                 ? $(".actions-form > .training > button").removeAttr("disabled")
                 : $(".actions-form > .training > button").attr("disabled", "disabled");
-            $(".wrapper .params-optimazer-block .optimazer-item").html("");
+            $(".wrapper .params-optimizer-block .optimizer-item").html("");
 
-            $(".wrapper .params-optimazer-block .optimazer-item").append(`
+            $(".wrapper .params-optimizer-block .optimizer-item").append(`
                 <div class="inner form-inline-label inner-col-0"></div>
                 <div class="inner form-inline-label inner-col-1"></div>
             `);
@@ -322,7 +322,7 @@
                         let dataLen = Object.keys(data.data).length;
                         let dataEntries = Object.entries(data.data);
                         let column = Math.ceil(dataLen / 2)
-                        // $(".params-item .params-optimazer-block").append(`
+                        // $(".params-item .params-optimizer-block").append(`
                         //     <div class="inner form-inline-label inner-col-1"></div>
                         // `);
                         dataEntries.forEach(([key, param], index) => {
@@ -338,10 +338,10 @@
                             widget.addClass("field-inline");
 
                             if (index < column && dataLen > 2) {
-                                $(".optimazer-item .inner-col-0").append(widget);
+                                $(".optimizer-item .inner-col-0").append(widget);
                             } else {
-                                $(".optimazer-item .inner-col-1").append(widget);
-                                console.log( $(".optimazer-item > .inner-col-1"))
+                                $(".optimizer-item .inner-col-1").append(widget);
+                                console.log( $(".optimizer-item > .inner-col-1"))
                             }
                         });
                     } else {

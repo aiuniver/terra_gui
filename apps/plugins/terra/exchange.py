@@ -9,6 +9,7 @@ from .data import (
     LayerLocation,
     Layer,
     OutputConfig,
+    TrainConfig,
 )
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
@@ -204,8 +205,7 @@ class TerraExchange:
             return TerraExchangeResponse()
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
-        print("START TRAINING:", kwargs)
-        return self.__request_post("start_training", **kwargs)
+        return self.__request_post("start_training", **TrainConfig(**kwargs).dict())
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)

@@ -13,10 +13,10 @@
 
             let _optimizers = {};
 
-            let _field_optimizer = $("#field_form-optimazer"),
+            let _field_optimizer = $("#field_form-optimizer"),
                 _field_learning_rate = $("#field_form-learning_rate"),
                 _field_output_loss = $(".field_form-output_loss"),
-                _params_optimazer_extra = $(".params-optimazer-extra");
+                _params_optimizer_extra = $(".params-optimizer-extra");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -43,19 +43,19 @@
                     let params = _optimizers[value] ? _optimizers[value] : _get_defaults(window.TerraProject.optimizers[value]);
                     _optimizers[value] = params;
                     _field_learning_rate.val(params.main.learning_rate);
-                    _params_optimazer_extra.children(".inner").html("");
+                    _params_optimizer_extra.children(".inner").html("");
                     if (Object.keys(params.extra).length) {
                         let _params = $.extend(true, {}, window.TerraProject.optimizers[value].extra);
                         for (let param in _params) {
                             _params[param].default = _optimizers[value].extra[param];
                             if (!_params[param].label) _params[param].label = _camelize(param);
-                            let widget = window.FormWidget(`optimazer[params][extra][${param}]`, _params[param]);
+                            let widget = window.FormWidget(`optimizer[params][extra][${param}]`, _params[param]);
                             widget.addClass("field-inline field-reverse");
-                            _params_optimazer_extra.children(".inner").append(widget);
+                            _params_optimizer_extra.children(".inner").append(widget);
                         }
-                        _params_optimazer_extra.removeClass("hidden");
+                        _params_optimizer_extra.removeClass("hidden");
                     } else {
-                        _params_optimazer_extra.addClass("hidden");
+                        _params_optimizer_extra.addClass("hidden");
                     }
                 }
             });
@@ -109,14 +109,28 @@
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                let data = $(event.currentTarget).serializeObject();
+                window.StatusBar.clear();
+                // let form = $(event.currentTarget).serializeObject(),
+                //     data = {};
+                // let process_data = (o, data) => {
+                //     for (let name in o) {
+                //         console.log(name, o[name]);
+                //     }
+                // }
+                // data = process_data()
+                // console.log(data);
+                // console.log(window.TerraProject.training);
                 window.ExchangeRequest(
                     "start_training",
                     (success, data) => {
-                        console.log("SUCCESS:", success);
-                        console.log("DATA:", data);
+                        if (success) {
+                            // console.log("SUCCESS:", success);
+                            // console.log("DATA:", data);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
                     },
-                    data
+                    $(event.currentTarget).serializeObject()
                 )
             });
 

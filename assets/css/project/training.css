@@ -62,19 +62,19 @@
     user-select:none;
 }
 
-/* optimazer-block */
-.optimazer-block > .params-item {
+/* optimizer-block */
+.optimizer-block > .params-item {
     padding-right:0;
 }
-.optimazer-block > .params-item > .inner {
+.optimizer-block > .params-item > .inner {
     width:200px;
 }
-.optimazer-block > .params-item > .inner > .form-inline-label > .field-inline > label {
+.optimizer-block > .params-item > .inner > .form-inline-label > .field-inline > label {
     width:120px;
 }
 
-/* params-optimazer-block */
-.params-optimazer-block > .params-item {
+/* params-optimizer-block */
+.params-optimizer-block > .params-item {
     padding-right:0;
     display:-webkit-box;
     display:-moz-box;
@@ -105,7 +105,7 @@
     -ms-flex-align:start;
     align-items:flex-start;
 }
-.params-optimazer-block > .params-item > .inner {
+.params-optimizer-block > .params-item > .inner {
     -webkit-box-ordinal-group:1;
     -moz-box-ordinal-group:1;
     -webkit-order:0;
@@ -120,14 +120,14 @@
     -ms-flex-item-align:auto;
     align-self:auto;
 }
-.params-optimazer-block > .params-item > .form-inline-label > .field-inline > input[type=number] {
+.params-optimizer-block > .params-item > .form-inline-label > .field-inline > input[type=number] {
     min-width:100px;
 }
-.params-optimazer-block > .params-item > .inner > .field-inline > label {
+.params-optimizer-block > .params-item > .inner > .field-inline > label {
     width:100px;
 }
-.params-optimazer-block > .params-item > .inner > .field-inline > input[type=text],
-.params-optimazer-block > .params-item > .inner > .field-inline > input[type=number] {
+.params-optimizer-block > .params-item > .inner > .field-inline > input[type=text],
+.params-optimizer-block > .params-item > .inner > .field-inline > input[type=number] {
     max-width:none;
     width:60px;
 }
@@ -391,7 +391,7 @@
 #field_form-learning_rate {
     max-width:90px;
 }
-.params-optimazer-extra > .inner {
+.params-optimizer-extra > .inner {
     display:-webkit-box;
     display:-moz-box;
     display:-ms-flexbox;
@@ -421,7 +421,7 @@
     -ms-flex-align:center;
     align-items:center;
 }
-.params-optimazer-extra > .inner > .field-inline.field-reverse > .checkout-switch {
+.params-optimizer-extra > .inner > .field-inline.field-reverse > .checkout-switch {
     margin-left:0;
 }
 .params-output > .inner > .form-inline-label {
@@ -517,7 +517,7 @@
     width: 80px;
 }
 
-#optimazer-button{
+#optimizer-button{
     width: 100%;
 }
 
@@ -854,7 +854,7 @@
     padding: 0 20px;
 }
 
-.open > .optimazer-item,
+.open > .optimizer-item,
 .open > .callback-item,
 .open > .outputs-content,
 .open > .param-item,

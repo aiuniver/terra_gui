@@ -75,8 +75,8 @@
                         <div class="params-item params-optimizer">
                             <div class="inner">
                                 <div class="field-form field-inline">
-                                    <label for="field_form-optimazer">Оптимизатор</label>
-                                    <select id="field_form-optimazer" name="optimazer[name]" class="jquery-ui-menuselect">
+                                    <label for="field_form-optimizer">Оптимизатор</label>
+                                    <select id="field_form-optimizer" name="optimizer[name]" class="jquery-ui-menuselect">
                                         {% for name in request.terra_project.optimizers %}
                                             <option value="{{ name }}"{% if name == request.terra_project.training.optimizer.name %} selected="selected"{% endif %}>{{ name }}</option>
                                         {% endfor %}
@@ -93,13 +93,13 @@
                                     </div>
                                     <div class="field-form field-inline">
                                         <label for="field_form-learning_rate">Learning rate</label>
-                                        <input name="optimazer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
+                                        <input name="optimizer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="params-item params-optimazer-extra collapsable hidden">
+                        <div class="params-item params-optimizer-extra collapsable hidden">
                             <div class="params-title">Параметры оптимизатора</div>
                             <div class="inner form-inline-label"></div>
                         </div>
