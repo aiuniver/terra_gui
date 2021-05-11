@@ -3,7 +3,7 @@ from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
 import types
-# from terra_ai.callbacks import ClassificationCallback, SegmentationCallback, TimeseriesCallback, RegressionCallback
+import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
@@ -14,7 +14,7 @@ class CustomCallback(keras.callbacks.Callback):
     """ CustomCallback for all task type"""
 
     def __init__(self, params: dict = None, step=1, show_final=True, dataset=DTS(), exchange=Exchange(),
-                 samples_x: dict = None, samples_y: dict = None):
+                 samples_x: dict = None, samples_y: dict = None, batch_size: int = None, epochs: int = None):
 
         """
         Init for Custom callback
@@ -51,10 +51,16 @@ class CustomCallback(keras.callbacks.Callback):
         self.data_tag = []
         self.x_Val = samples_x
         self.y_true = samples_y
+        self.batch_size = batch_size
+        self.epochs = epochs
+        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0]//self.batch_size
         # self.samples_chek()
         self.y_pred = []
         self.epoch = 0
         self.history = {}
+        self._start_time = time.time()
+        self._now_time = time.time()
+        self._time_first_step = time.time()
 
         self.task_type_defaults_dict = {'classification': {'optimizer_name': 'Adam',
                                                            'loss': 'categorical_crossentropy',
@@ -77,7 +83,7 @@ class CustomCallback(keras.callbacks.Callback):
                                                            },
                                         'segmentation': {'optimizer_name': 'Adam',
                                                          'loss': 'categorical_crossentropy',
-                                                         'metrics': ['dice_coef'], 
+                                                         'metrics': ['dice_coef'],
                                                          'batch_size': 16,
                                                          'epochs': 20,
                                                          'shuffle': False,
@@ -223,32 +229,32 @@ class CustomCallback(keras.callbacks.Callback):
                     #     else:
                     #         self.callback_kwargs['show_best'] = False
 
-            if task_type == 'regression':
-                for option_name, option_value in clbck_options.items():
-                    if option_name == 'plot_scatter':
-                        if option_value:
-                            callback_kwargs['plot_scatter'] = True
-                        else:
-                            callback_kwargs['plot_scatter'] = False
+        if task_type == 'regression':
+            for option_name, option_value in clbck_options.items():
+                if option_name == 'plot_scatter':
+                    if option_value:
+                        callback_kwargs['plot_scatter'] = True
+                    else:
+                        callback_kwargs['plot_scatter'] = False
 
-            if task_type == 'timeseries':
-                for option_name, option_value in clbck_options.items():
-                    if option_name == 'plot_autocorrelation':
-                        if option_value:
-                            callback_kwargs['corr_step'] = 10
-                        else:
-                            callback_kwargs['corr_step'] = 0
-                    elif option_name == 'plot_pred_and_true':
-                        if option_value:
-                            callback_kwargs['plot_pred_and_true'] = True
-                        else:
-                            callback_kwargs['plot_pred_and_true'] = False
+        if task_type == 'timeseries':
+            for option_name, option_value in clbck_options.items():
+                if option_name == 'plot_autocorrelation':
+                    if option_value:
+                        callback_kwargs['corr_step'] = 10
+                    else:
+                        callback_kwargs['corr_step'] = 0
+                elif option_name == 'plot_pred_and_true':
+                    if option_value:
+                        callback_kwargs['plot_pred_and_true'] = True
+                    else:
+                        callback_kwargs['plot_pred_and_true'] = False
 
-            self.callback_kwargs.append(callback_kwargs)
-            clbck_object = __task_type_defaults_kwargs['clbck_object']
-            self.clbck_object.append(clbck_object)
-            initialized_callback = clbck_object(**callback_kwargs)
-            self.callbacks.append(initialized_callback)
+        self.callback_kwargs.append(callback_kwargs)
+        clbck_object = __task_type_defaults_kwargs['clbck_object']
+        self.clbck_object.append(clbck_object)
+        initialized_callback = clbck_object(**callback_kwargs)
+        self.callbacks.append(initialized_callback)
 
         pass
 
@@ -266,12 +272,51 @@ class CustomCallback(keras.callbacks.Callback):
                                    metrics=self.clbck_params[_key]['metrics'],
                                    num_classes=self.clbck_params.setdefault(_key)['num_classes'])
 
+    def _estimate_step(self, current, start, now):
+        if current:
+            _time_per_unit = (now - start) / current
+        else:
+            _time_per_unit = (now - start)
+        return _time_per_unit
+
+    def update_progress(self, target, current, start_time, finalize=None):
+        """
+        Updates the progress bar.
+        """
+        _now_time = time.time()
+
+        time_per_unit = self._estimate_step(current, start_time, _now_time)
+
+        eta = time_per_unit * (target - current)
+        if eta > 3600:
+            eta_format = '%d:%02d:%02d' % (eta // 3600,
+                                           (eta % 3600) // 60, eta % 60)
+        elif eta > 60:
+            eta_format = '%d:%02d' % (eta // 60, eta % 60)
+        else:
+            eta_format = '%ds' % eta
+
+        info = ' - ETA: %s' % eta_format
+        return info
+
     def on_train_begin(self, logs=None):
+        self._start_time = time.time()
+        self.Exch.show_current_epoch(self.epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
+        self._time_first_step = time.time()
+        msg = f'Epoch {epoch+1}/{self.epochs}:'
+        # print(msg)
         self.Exch.show_current_epoch(epoch)
         pass
+
+    # def on_train_batch_begin(self, batch, logs=None):
+    #     self._time_first_step = time.time()
+
+    def on_train_batch_end(self, batch, logs=None):
+        msg = f'Batch {batch}/{self.num_batches}:'
+        # print(msg, self.update_progress(self.num_batches, batch, self._time_first_step))
 
     def on_epoch_end(self, epoch, logs=None):
         """
@@ -281,7 +326,7 @@ class CustomCallback(keras.callbacks.Callback):
         if self.x_Val['input_1'] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
-            self.y_pred = None
+            self.y_pred = self.y_true
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(epoch, logs=logs, output_key=output_key, y_pred=self.y_pred[i],
@@ -290,6 +335,8 @@ class CustomCallback(keras.callbacks.Callback):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(epoch, logs=logs, output_key=output_key, y_pred=self.y_pred,
                                             y_true=self.y_true[output_key], loss=self.loss[i])
+
+        # print(self.update_progress(self.epochs, epoch, self._start_time))
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
@@ -369,7 +416,7 @@ class ClassificationCallback:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
-                if len(self.dataset.Y) > 1 or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f'{output_key}_{metric_name}'
                     val_metric_name = f"val_{metric_name}"
@@ -564,8 +611,8 @@ class ClassificationCallback:
                 metric_name = self.clbck_metrics[metric_idx].__name__
                 self.clbck_metrics[metric_idx] = metric_name
 
-            if len(self.dataset.Y) > 1 or (len(self.clbck_metrics) > 1 and
-                                           'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and
+                                           # 'loss' not in self.clbck_metrics):
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -675,7 +722,7 @@ class SegmentationCallback:
         self.num_classes = num_classes  # количество классов
         self.acls_lst = [[[] for i in range(self.num_classes + 1)] for i in range(len(self.clbck_metrics))]
         self.predict_cls = ({})  # словарь для сбора истории предикта по классам и метрикам
-        self.batch_count = 0
+        # self.batch_count = 0
         self.x_Val = {}
         self.y_true = []
         self.y_pred = []
@@ -695,7 +742,7 @@ class SegmentationCallback:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
 
-                if len(self.dataset.Y) > 1 or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f'{output_key}_{metric_name}'
                     val_metric_name = f"val_{metric_name}"
@@ -905,7 +952,7 @@ class SegmentationCallback:
             if not isinstance(self.clbck_metrics[metric_idx], str):
                 metric_name = self.clbck_metrics[metric_idx].__name__
                 self.clbck_metrics[metric_idx] = metric_name
-            if len(self.dataset.Y) > 1 or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -931,7 +978,7 @@ class SegmentationCallback:
             )
 
             if self.y_pred is not None:
-
+                # TODO Добавить другие варианты по используемым метрикам
                 # вычисляем результат по классам
                 if metric_name.endswith('accuracy'):
                     self.evaluate_accuracy()
@@ -969,11 +1016,11 @@ class SegmentationCallback:
 class TimeseriesCallback:
     def __init__(
             self,
-            metrics=["loss"],
+            metrics=None,
             step=1,
             corr_step=50,
             show_final=True,
-            plot_true_and_pred=True,
+            plot_pred_and_true=True,
             dataset=DTS(),
             exchange=Exchange(),
     ):
@@ -983,17 +1030,19 @@ class TimeseriesCallback:
             metrics (list):             список используемых метрик (по умолчанию clbck_metrics = list()), что соответсвует 'loss'
             step int():                 шаг вывода хода обучения, по умолчанию step = 1
             show_final (bool):          выводить ли в конце обучения график, по умолчанию True
-            plot_true_and_pred (bool):  выводить ли графики реальных и предсказанных рядов
+            plot_pred_and_true (bool):  выводить ли графики реальных и предсказанных рядов
             dataset (DTS):              экземпляр класса DTS
             corr_step (int):            количество шагов для отображения корреляции (при <= 0 не отображается)
         Returns:
             None
         """
         super().__init__()
+        if metrics is None:
+            metrics = ["loss"]
         self.metrics = metrics
         self.step = step
         self.show_final = show_final
-        self.plot_true_and_pred = plot_true_and_pred
+        self.plot_pred_and_true = plot_pred_and_true
         self.dataset = dataset
         self.corr_step = corr_step
         self.Exch = exchange
@@ -1012,50 +1061,60 @@ class TimeseriesCallback:
         self.history = {}
         self.predicts = {}
 
+    def plot_result(self, output_key=None):
+        for i in range(len(self.losses)):
+            # проверяем есть ли метрика заданная функцией
+            if type(self.losses[i]) == types.FunctionType:
+                metric_name = self.losses[i].__name__
+                self.losses[i] = metric_name
+            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+                showmet = f'{output_key}_{self.losses[i]}'
+                vshowmet = f"val_{showmet}"
+            else:
+                showmet = f'{self.losses[i]}'
+                vshowmet = f"val_{showmet}"
+        # showmet = self.losses[self.idx]
+        # vshowmet = f"val_{showmet}"
+            epochcomment = f" epoch {self.epoch + 1}"
+            loss_len = len(self.history[showmet])
+            data = {}
 
-    def plot_result(self):
-        showmet = self.losses[self.idx]
-        vshowmet = f"val_{showmet}"
-        epochcomment = f" epoch {self.epoch + 1}"
-        loss_len = len(self.history["loss"])
-        data = {}
+        # loss_title = (f"loss and val_loss {epochcomment}", "epochs", f"{showmet}")
+        # data.update(
+        #     {
+        #         loss_title: [
+        #             [range(loss_len), self.history["loss"], "loss"],
+        #             [range(loss_len), self.history["val_loss"], "val_loss"],
+        #         ]
+        #     }
+        # )
 
-        loss_title = (f"loss and val_loss {epochcomment}", "epochs", f"{showmet}")
-        data.update(
-            {
-                loss_title: [
-                    [range(loss_len), self.history["loss"], "loss"],
-                    [range(loss_len), self.history["val_loss"], "val_loss"],
-                ]
-            }
-        )
-
-        metric_title = (
-            f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}",
-            "epochs",
-            f"{showmet}",
-        )
-        data.update(
-            {
-                metric_title: [
-                    [range(loss_len), self.history[showmet], showmet],
-                    [range(loss_len), self.history[vshowmet], vshowmet],
-                ]
-            }
-        )
-
-        if self.plot_true_and_pred:
-            y_true, y_pred = self.predicts[vshowmet]
-            pred_title = ("Predictions", "epochs", f"{showmet}")
+            metric_title = (
+                f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}",
+                "epochs",
+                f"{showmet}",
+            )
             data.update(
                 {
-                    pred_title: [
-                        [range(len(y_true)), y_true, "Actual"],
-                        [range(len(y_pred)), y_pred, "Prediction"],
+                    metric_title: [
+                        [range(loss_len), self.history[showmet], showmet],
+                        [range(loss_len), self.history[vshowmet], vshowmet],
                     ]
                 }
             )
-        self.Exch.show_plot_data(data)
+
+            if self.plot_pred_and_true:
+                y_true, y_pred = self.predicts[vshowmet]
+                pred_title = ("Predictions", "steps", f"{showmet}")
+                data.update(
+                    {
+                        pred_title: [
+                            [range(len(y_true)), y_true, "Actual"],
+                            [range(len(y_pred)), y_pred, "Prediction"],
+                        ]
+                    }
+                )
+            self.Exch.show_plot_data(data)
 
     @staticmethod
     def autocorr(a, b):
@@ -1085,9 +1144,9 @@ class TimeseriesCallback:
                     y_true[: yLen - i, channel], y_true[i:, channel]
                 )
             )
-        corr_label = f"Предсказание на {channel + 1} шаг"
+        corr_label = f"Предсказание на {corr_steps + 1} шаг"
         autocorr_label = "Эталон"
-        title = "Автокорреляция"
+        title = ("Автокорреляция", '', '')
         correlation_data = {
             title: [
                 [range(corr_steps), corr_list, corr_label],
@@ -1109,9 +1168,13 @@ class TimeseriesCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
+            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+                metric_name = f'{output_key}_{self.losses[i]}'
+                val_metric_name = f"val_{metric_name}"
             else:
-                metric_name = self.losses[i]
-            val_metric_name = f"val_{metric_name}"
+                metric_name = f'{self.losses[i]}'
+                val_metric_name = f"val_{metric_name}"
+
             # собираем в словарь по метрикам
             self.met[i].append(logs[metric_name])
             self.valmet[i].append(logs[val_metric_name])
@@ -1119,8 +1182,6 @@ class TimeseriesCallback:
             self.history[val_metric_name] = self.valmet[i]
 
             if self.y_pred is not None:
-                y_pred = self.model.predict(self.dataset.x_Val)
-                y_true = self.dataset.y_Val
                 self.predicts[val_metric_name] = (y_true, y_pred)
                 self.vmet_name = val_metric_name
 
@@ -1135,47 +1196,51 @@ class TimeseriesCallback:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.comment = f" epoch {epoch + 1}"
                 self.idx = 0
-                self.plot_result()
-        self.exchange.print_epoch_monitor(
+                self.plot_result(output_key=output_key)
+        self.Exch.print_epoch_monitor(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
-    def train_end(self, logs=None):
+    def train_end(self, output_key: str = None, x_val: dict = None):
+        self.x_Val = x_val
         if self.show_final:
             self.comment = f"on {self.epoch + 1} epochs"
             self.idx = 0
-            self.plot_result()
+            self.plot_result(output_key=output_key)
         if self.corr_step > 0:
             y_true, y_pred = self.predicts[self.vmet_name]
             corr_data = TimeseriesCallback.collect_correlation_data(
                 y_pred, y_true, 0, self.corr_step
             )
             # Plot correlation and autocorrelation graphics
-            self.exchange.show_plot_data(corr_data)
+            self.Exch.show_plot_data(corr_data)
 
 
-class RegressionCallback(keras.callbacks.Callback):
+class RegressionCallback:
     def __init__(
             self,
-            metrics,
+            metrics=None,
             step=1,
             data_tag="text",
             show_final=True,
-            plot_scatter=False,
+            plot_scatter=True,
             dataset=DTS(),
             exchange=Exchange(),
     ):
         """
-        Init for classification callback
+        Init for regression callback
         Args:
             metrics (list):         список используемых метрик
             step int():             шаг вывода хода обучения, по умолчанию step = 1
+            plot_scatter (bool):    вывод граыика скатера по умолчанию True
             show_final (bool):      выводить ли в конце обучения график, по умолчанию True
             exchange:               экземпляр Exchange (для вывода текстовой и графической инф-ии)
         Returns:
             None
         """
         super().__init__()
+        if metrics is None:
+            metrics = ["loss"]
         self.step = step
         self.metrics = metrics
         self.show_final = show_final
@@ -1183,82 +1248,102 @@ class RegressionCallback(keras.callbacks.Callback):
         self.data_tag = data_tag
         self.dataset = dataset
         self.exchange = exchange
-        pass
 
-    def plot_result(self):
-        showmet = self.losses[self.idx]
-        vshowmet = f"val_{showmet}"
-        epochcomment = f" epoch {self.epoch + 1}"
-        loss_len = len(self.history["loss"])
-        data = {}
+        self.epoch = 0
+        self.x_Val = {}
+        self.y_true = []
+        self.y_pred = []
+        self.loss = ''
+        self.max_accuracy_value = 0
 
-        loss_title = f"loss and val_loss{epochcomment}"
-        xlabel = "epoch"
-        ylabel = "loss"
-        key = (loss_title, xlabel, ylabel)
-        value = [
-            [range(loss_len), self.history["loss"], "loss"],
-            [range(loss_len), self.history["val_loss"], "val_loss"],
-        ]
-        data.update({key: value})
-
-        metric_title = f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}"
-        xlabel = "epoch"
-        ylabel = f"{showmet}"
-        key = (metric_title, xlabel, ylabel)
-        value = [
-            (range(loss_len), self.history[showmet], showmet),
-            (range(loss_len), self.history[vshowmet], vshowmet),
-        ]
-        data.update({key: value})
-        self.exchange.show_plot_data(data)
-
-        if self.plot_scatter:
-            data = {}
-            scatter_title = "Scatter"
-            xlabel = "True values"
-            ylabel = "Predictions"
-            y_true, y_pred = self.predicts[vshowmet]
-            key = (scatter_title, xlabel, ylabel)
-            value = [(y_true, y_pred, "Regression")]
-            data.update({key: value})
-            self.exchange.show_scatter_data(data)
-
-        pass
-
-    def on_train_begin(self, logs={}):
-        self.losses = self.metrics + ["loss"]
+        self.losses = (
+            self.metrics if "loss" in self.metrics else self.metrics + ["loss"]
+        )
         self.met = [[] for _ in range(len(self.losses))]
         self.valmet = [[] for _ in range(len(self.losses))]
         self.history = {}
         self.predicts = {}
-        pass
 
-    def on_epoch_begin(self, epoch, logs=None):
-        self.exchange.show_current_epoch(epoch)
-        pass
-
-    def on_epoch_end(self, epoch, logs={}):
-        self.epoch = epoch
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+    def plot_result(self, output_key=None):
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
+            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+                showmet = f'{output_key}_{self.losses[i]}'
+                vshowmet = f"val_{showmet}"
             else:
-                metric_name = self.losses[i]
-            val_metric_name = f"val_{metric_name}"
+                showmet = f'{self.losses[i]}'
+                vshowmet = f"val_{showmet}"
+            # showmet = self.losses[self.idx]
+            # vshowmet = f"val_{showmet}"
+            epochcomment = f" epoch {self.epoch + 1}"
+            loss_len = len(self.history[showmet])
+            data = {}
+
+            # loss_title = f"loss and val_loss{epochcomment}"
+            # xlabel = "epoch"
+            # ylabel = f"{showmet}"
+            # key = (loss_title, xlabel, ylabel)
+            # value = [
+            #     [range(loss_len), self.history[showmet], showmet],
+            #     [range(loss_len), self.history[vshowmet], vshowmet],
+            # ]
+            # data.update({key: value})
+
+            metric_title = f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}"
+            xlabel = "epoch"
+            ylabel = f"{showmet}"
+            key = (metric_title, xlabel, ylabel)
+            value = [
+                (range(loss_len), self.history[showmet], showmet),
+                (range(loss_len), self.history[vshowmet], vshowmet),
+            ]
+            data.update({key: value})
+            self.exchange.show_plot_data(data)
+
+            if self.plot_scatter:
+                data = {}
+                scatter_title = "Scatter"
+                xlabel = "True values"
+                ylabel = "Predictions"
+                y_true, y_pred = self.predicts[vshowmet]
+                key = (scatter_title, xlabel, ylabel)
+                value = [(y_true, y_pred, "Regression")]
+                data.update({key: value})
+                self.exchange.show_scatter_data(data)
+
+        pass
+
+    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
+                  y_pred: list = None, y_true: dict = None, loss: str = None):
+
+        self.epoch = epoch
+        self.y_pred = y_pred
+        self.y_true = y_true
+        self.loss = loss
+        epoch_metric_data = ""
+        epoch_val_metric_data = ""
+        # self.idx = 0
+        for i in range(len(self.losses)):
+            # проверяем есть ли метрика заданная функцией
+            if type(self.losses[i]) == types.FunctionType:
+                metric_name = self.losses[i].__name__
+                self.losses[i] = metric_name
+            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+                metric_name = f'{output_key}_{self.losses[i]}'
+                val_metric_name = f"val_{metric_name}"
+            else:
+                metric_name = f'{self.losses[i]}'
+                val_metric_name = f"val_{metric_name}"
             # собираем в словарь по метрикам
             self.met[i].append(logs[metric_name])
             self.valmet[i].append(logs[val_metric_name])
             self.history[metric_name] = self.met[i]
             self.history[val_metric_name] = self.valmet[i]
 
-            if len(self.dataset.x_Val):
-                y_pred = self.model.predict(self.dataset.x_Val)
-                y_true = self.dataset.y_Val
+            if self.y_pred is not None:
                 self.predicts[val_metric_name] = (y_true, y_pred)
 
             epoch_metric_data += (
@@ -1272,16 +1357,17 @@ class RegressionCallback(keras.callbacks.Callback):
             if self.epoch % self.step == 0:
                 self.comment = f" epoch {epoch + 1}"
                 self.idx = 0
-                self.plot_result()
+                self.plot_result(output_key=output_key)
 
         self.exchange.print_epoch_monitor(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
 
-    def on_train_end(self, logs={}):
+    def train_end(self, output_key: str = None, x_val: dict = None):
+        self.x_Val = x_val
         if self.show_final:
             self.comment = f"on {self.epoch + 1} epochs"
             self.idx = 0
-            self.plot_result()
+            self.plot_result(output_key=output_key)
         pass
