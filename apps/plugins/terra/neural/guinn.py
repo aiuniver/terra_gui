@@ -337,7 +337,7 @@ class GUINN:
             )
         else:
             self.Exch.print_error(("Error", "Cannot save. The model is not trained"))
-            sys.exit()
+            # sys.exit()
         pass
 
     def save_model_weights(self) -> None:
