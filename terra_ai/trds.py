@@ -33,7 +33,7 @@ from terra_ai.guiexchange import Exchange
 import dill
 import ipywidgets as widgets
 
-__version__ = 0.229
+__version__ = 0.233
 
 tr2dj_obj = Exchange()
 
@@ -65,6 +65,7 @@ class DTS(object):
         self.classes_colors: list = []
         self.language: str = ''
         self.dts_prepared: bool = False
+        self.task_type: dict = {}
 
         self.X: dict = {}
         self.Y: dict = {}
@@ -1665,15 +1666,15 @@ class DTS(object):
 
             print('Начало формирования массивов.')
             self.name = dataset_name.value
-
             tags = {}
+            task = {}
             for i in range(inputs):
-                tags[globals[f'x_name_{i}'].value] = globals[f'x_tag_{i}'].value
+                tags[f'input_{i+1}'] = globals[f'x_tag_{i}'].value
             for i in range(outputs):
-                tags[globals[f'y_name_{i}'].value] = globals[f'y_tag_{i}'].value
+                tags[f'output_{i+1}'] = globals[f'y_tag_{i}'].value
+                task[f'output_{i+1}'] = globals[f'y_task_{i}'].value
             self.tags = tags
-
-
+            self.task_type = task
 
             list_of_X = list_of_rows[:inputs]
             dic_of_X = {}
@@ -1715,6 +1716,10 @@ class DTS(object):
                         'data': tuple(values)
                     }
 
+            ohe = {}
+            for i in range(outputs):
+                ohe[globals[f'y_name_{i}'].description[:-1]] = globals[f'ohe_{i}'].value
+
             x_scaler = {}
             for i in range(inputs):
                 x_scaler[globals[f'x_name_{i}'].description[:-1]] = globals[f'scaler_x_{i}'].value
@@ -1722,6 +1727,8 @@ class DTS(object):
             y_scaler = {}
             for i in range(outputs):
                 y_scaler[globals[f'y_name_{i}'].description[:-1]] = globals[f'scaler_y_{i}'].value
+                if ohe[globals[f'y_name_{i}'].description[:-1]]:
+                    y_scaler[globals[f'y_name_{i}'].description[:-1]] = 'Не применять'
 
             x_shape = {}
             for i in range(inputs):
@@ -1730,10 +1737,8 @@ class DTS(object):
             y_shape = {}
             for i in range(outputs):
                 y_shape[globals[f'y_name_{i}'].description[:-1]] = globals[f'net_type_y_{i}'].value
-
-            ohe = {}
-            for i in range(outputs):
-                ohe[globals[f'y_name_{i}'].description[:-1]] = globals[f'ohe_{i}'].value
+                if ohe[globals[f'y_name_{i}'].description[:-1]]:
+                    y_shape[globals[f'y_name_{i}'].description[:-1]] = 'Без изменений'
 
             if checkbox_split.value:
                 split_size = [slider.value, int(round(slider2.value / 2, 0)),
@@ -1765,7 +1770,7 @@ class DTS(object):
                                                   description=f'input_{i + 1}:', disabled=False)
             list_of_widgets.append(globals[f'x_name_{i}'])
             globals[f'x_tag_{i}'] = widgets.Dropdown(
-                options=['images', 'video', 'text', 'audio', 'timeseries', 'regression', 'other'], value='other',
+                options=[('Картинки', 'images'), ('Видео', 'video'), ('Текст', 'text'), ('Аудио', 'audio'), ('Временной ряд', 'timeseries'), ('Датафрейм', 'regression'), ('Другое', 'other')], value='other',
                 description=f'Тип данных:', disabled=False)
             list_of_widgets.append(globals[f'x_tag_{i}'])
             globals[f'xtrain_{i}'] = widgets.Text(value='x_train', description='X/Train:',
@@ -1789,9 +1794,18 @@ class DTS(object):
                                                   description=f'output_{i + 1}:', disabled=False)
             list_of_widgets.append(globals[f'y_name_{i}'])
             globals[f'y_tag_{i}'] = widgets.Dropdown(
-                options=['images', 'text', 'audio', 'classification', 'segmentation', 'object detection', 'other'],
+                options=[('Картинки', 'images'), ('Текст', 'text'), ('Аудио', 'audio'), ('Другое', 'other')],
                 value='other', description=f'Тип данных:', disabled=False)
-            list_of_widgets.append(globals[f'y_tag_{i}'])
+            globals[f'y_task_{i}'] = widgets.Dropdown(
+                options=[('Классификация', 'classification'), ('Сегментация', 'segmentation'),
+                         ('Обнаружение объектов', 'object_detection'), ('Автокодировщик', 'autoencoder'),
+                         ('Генеративно-состязательная сеть', 'gan'), ('Регрессия', 'regression'),
+                         ('Временные ряды', 'timeseries'), ('Предсказание временного ряда', 'timeseries_prediction')],
+                value='classification',
+                description='Тип задачи:',
+            )
+            globals[f'y_tag_task_{i}'] = widgets.VBox([globals[f'y_tag_{i}'], globals[f'y_task_{i}']])
+            list_of_widgets.append(globals[f'y_tag_task_{i}'])
             globals[f'ytrain_{i}'] = widgets.Text(value='y_train', description='Y/Train:',
                                                   placeholder='Y или y_train', disabled=False)
             list_of_widgets.append(globals[f'ytrain_{i}'])
@@ -1814,7 +1828,6 @@ class DTS(object):
         button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
         button.on_click(send_arrays)
         dump_button = widgets.HBox([dataset_name, button])
-
         slider = widgets.IntSlider(description='Train:', value=80, step=1, min=5, max=95)
         slider2 = widgets.IntSlider(description='Val+test:', value=20, step=1, min=5, max=95)
 
@@ -1861,9 +1874,11 @@ class DTS(object):
                 description='Размерность:', disabled=False)
             list_of_widgets_2.append(globals[f'net_type_y_{i}'])
             globals[f'ohe_{i}'] = widgets.Checkbox(value=False, description='One-Hot Encoding', disabled=False)
-            list_of_widgets_2.append(globals[f'ohe_{i}'])
-            globals[f'block_{i}'] = widgets.HBox(list_of_widgets_2)
+            globals[f'block_{i}'] = widgets.HBox([*list_of_widgets_2, globals[f'ohe_{i}']])
             list_of_rows_2.append(globals[f'block_{i}'])
+            for wid in list_of_widgets_2:
+                widgets.link((globals[f'ohe_{i}'], 'value'), (wid, 'disabled'))
+
         second_page = widgets.VBox(list_of_rows_2)
 
         # Соединяем две вкладки
@@ -2491,21 +2506,22 @@ class DTS(object):
 
     def prepare_dataset(self, **options):
 
-        if not 'dataset_name' in options.keys() or not 'task_type' in options.keys():
-            print_error_msg = 'Отсутствует один из необходимых параметров dataset_name="" или task_type=""'
+        if not 'dataset_name' in options.keys():
+            print_error_msg = 'Отсутствует необходимый параметр dataset_name=""'
             self.Exch.print_error(('Error', print_error_msg))
             if not self.django_flag:
                 assert 'dataset_name' in options.keys() or 'task_type' in options.keys(), print_error_msg
 
+        self.task_type['output_1'] = self._set_tag(options['dataset_name'])[1]
         if options['dataset_name'] == 'boston_housing':
-            if options['task_type'] == 'regression':
+            if self.task_type['output_1'] == 'regression':
                 self.keras_datasets(options['dataset_name'], scaler='StandardScaler', test=True)
             else:
                 if not self.django_flag:
                     print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
                           self._set_tag(options['dataset_name'])[1:])
         elif options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-            if options['task_type'] == 'classification':
+            if self.task_type['output_1'] == 'classification':
                 self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv',
                                     test=True)
             else:
@@ -2513,14 +2529,14 @@ class DTS(object):
                     print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
                           self._set_tag(options['dataset_name'])[1:])
         elif options['dataset_name'] == 'imdb':
-            if options['task_type'] == 'classification':
+            if self.task_type['output_1'] == 'classification':
                 self.keras_datasets(options['dataset_name'], one_hot_encoding=True, test=True)
             else:
                 if not self.django_flag:
                     print('Для датасета', options['dataset_name'], 'доступен только следующий тип задачи:',
                           self._set_tag(options['dataset_name'])[1:])
         elif options['dataset_name'] == 'reuters':
-            if options['task_type'] == 'classification':
+            if self.task_type['output_1'] == 'classification':
                 self.keras_datasets(options['dataset_name'], test=True)
             else:
                 if not self.django_flag:
@@ -2529,7 +2545,7 @@ class DTS(object):
 
         else:
             self.load_data(options['dataset_name'])
-            if options['task_type'] == 'classification':
+            if self.task_type['output_1'] == 'classification':
                 if 'images' in self.tags['input_1']:
                     self.image_classification((54, 96), one_hot_encoding=True, scaler='MinMaxScaler', test=True)
                 elif 'text' in self.tags['input_1']:
@@ -2538,7 +2554,7 @@ class DTS(object):
                         x_len = 100
                         step = 30
                     self.text_classification(max_words_count, x_len, step, one_hot_encoding=True, test=True)
-            elif options['task_type'] == 'segmentation':
+            elif self.task_type['output_1'] == 'segmentation':
                 if 'images' in self.tags['input_1']:
                     if 'самолеты' in self.name:
                         classes = {'небо': [0, 0, 0], 'самолёт': [255, 0, 0]}
@@ -2546,18 +2562,18 @@ class DTS(object):
                     elif 'губы' in self.name:
                         classes = {'фон': [0, 0, 0], 'губы': [0, 255, 0]}
                         range = 10
-                    self.image_segmentation((54, 96), classes, range, scaler='MinMaxScaler', test=True)
+                    self.image_segmentation((44, 60), classes, range, scaler='MinMaxScaler', test=True) #54,96
                 elif 'text' in self.tags['input_1']:
                     self.text_segmentation(max_words_count=20000, x_len=256, step=30, embedding_size=300, num_classes=6,
                                            test=True)
-            elif options['task_type'] == 'recognition':
+            elif self.task_type['output_1'] == 'recognition':
                 if 'audio' in self.tags['input_1']:
                     if 'умный_дом' in self.name:
                         self.file_folder = self.file_folder + '/comands'
                         s_rate = 22050
                         len = 11025
                     self.voice_recognition(s_rate, len, net='conv', one_hot_encoding=True, test=True)
-            elif options['task_type'] == 'regression':
+            elif self.task_type['output_1'] == 'regression':
                 if 'трейдинг' in self.name:
                     self.data_regression('shares/GAZP_1d_from_MOEX.txt', x_len=80, val_len=300, graph=True,
                                          timeseriesgenerator=True,

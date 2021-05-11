@@ -25,12 +25,17 @@ class ExchangeData:
                 self.stop_flag = response.stop_flag
                 self.data = response.data
                 self.error = response.error
+                if name != "get_data":
+                    terra_exchange.call("autosave_project")
             except Exception as error:
                 self.success = False
-                self.error = str(error)
+                self.error = f"[{error.__class__.__name__}] {error}"
         else:
             self.success = False
             self.error = f"Method «{name}» is undefined"
+
+    def _execute_autosave_project(self, **kwargs):
+        return terra_exchange.call("autosave_project", **kwargs)
 
     def _execute_set_project_name(self, **kwargs):
         return terra_exchange.call("set_project_name", **kwargs)
@@ -50,11 +55,8 @@ class ExchangeData:
     def _execute_set_model(self, **kwargs):
         return terra_exchange.call("set_model", **kwargs)
 
-    def _execute_set_input_layer(self, **kwargs):
-        return terra_exchange.call("set_input_layer", **kwargs)
-
-    def _execute_set_any_layer(self, **kwargs):
-        return terra_exchange.call("set_any_layer", **kwargs)
+    def _execute_clear_model(self, **kwargs):
+        return terra_exchange.call("clear_model", **kwargs)
 
     def _execute_save_layer(self, **kwargs):
         return terra_exchange.call("save_layer", **kwargs)

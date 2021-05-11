@@ -309,8 +309,14 @@ main > .container > .properties > .wrapper .mCSB_container {
 .params-container .params-item:last-child {
     padding-bottom:0;
 }
+.params-container .params-item.collapsed {
+    padding-bottom:0;
+}
 .params-container .params-item > .inner > :not(:last-child) {
     margin-bottom:20px;
+}
+.params-container .params-item.collapsed > .inner {
+    display:none;
 }
 .params-container .params-item > .params-title {
     display:block;
@@ -319,6 +325,26 @@ main > .container > .properties > .wrapper .mCSB_container {
     padding:5px 20px;
     font-size:.75rem;
     user-select:none;
+}
+.params-container .params-item.collapsable > .params-title {
+    position:relative;
+    cursor:pointer;
+}
+.params-container .params-item.collapsable > .params-title:after {
+    display:block;
+    content:'';
+    width:8px;
+    height:9px;
+    margin:-5px 0 0 0;
+    position:absolute;
+    top:50%;
+    right:20px;
+    background:url('../../imgs/collapse.svg') center no-repeat;
+    background-size:contain;
+    transform:rotate(-180deg);
+}
+.params-container .params-item.collapsable.collapsed > .params-title:after {
+    transform:rotate(0);
 }
 .field-form > label {
     display:block;
@@ -363,7 +389,7 @@ main > .container > .properties > .wrapper .mCSB_container {
     align-items:center;
 }
 .form-inline-label > .field-inline > label {
-    width:110px;
+    width:120px;
     margin:0;
     padding:0 10px 0 0;
     text-align:right;

@@ -209,6 +209,9 @@ input[type=number] {
 }
 
 /* jquery-ui */
+.ui-widget {
+    font-family:"Open Sans", sans-serif;
+}
 .jquery-ui-menuselect {
     height:42px;
     visibility:hidden;

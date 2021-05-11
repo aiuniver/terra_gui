@@ -23,19 +23,25 @@
         let _datasets = options.datasets || {};
         let _tags = options.tags || {};
         let _dataset = options.dataset || "";
-        let _task = options.task || "";
         let _model_name = options.model_name || "";
         let _layers = options.layers || {};
-        let _schema = options.schema || [];
-        let _layers_types = options.layers_types || [];
-        let _optimizers = options.optimizers || [];
+        let _layers_start = options.layers_start || {};
+        let _layers_schema = options.layers_schema || [];
+        let _layers_types = options.layers_types || {};
+        let _optimizers = options.optimizers || {};
         let _callbacks = options.callbacks || {};
+        let _compile = options.compile || {};
+        let _training = options.training || {};
         let _path = options.path || {};
 
         this.model_clear = () => {
             _layers = {};
-            _schema = [];
+            _layers_schema = [];
         };
+
+        this.dataset_exists = (dataset_name) => {
+            return this.datasets[dataset_name] !== undefined;
+        }
 
         Object.defineProperty(this, "error", {
             set: (value) => {
@@ -82,11 +88,12 @@
         });
 
         Object.defineProperty(this, "datasets", {
-            set: (value) => {
-                _datasets = value;
-            },
             get: () => {
-                return _datasets;
+                let output = {};
+                _datasets.forEach((item) => {
+                    output[item.name] = item;
+                });
+                return output;
             }
         });
 
@@ -108,28 +115,9 @@
             }
         });
 
-        Object.defineProperty(this, "task", {
-            set: (value) => {
-                _task = value;
-            },
-            get: () => {
-                return _task;
-            }
-        });
-
         Object.defineProperty(this, "dataset_selected", {
             get: () => {
-                return _dataset !== "" && _task !== "";
-            }
-        });
-
-        Object.defineProperty(this, "task_name", {
-            get: () => {
-                if (_task) {
-                    return _tags[_task];
-                } else {
-                    return undefined;
-                }
+                return _dataset !== "";
             }
         });
 
@@ -151,21 +139,21 @@
             }
         });
 
-        Object.defineProperty(this, "schema", {
+        Object.defineProperty(this, "layers_start", {
             set: (value) => {
-                _schema = value;
+                _layers_start = value;
             },
             get: () => {
-                return _schema;
+                return _layers_start;
             }
         });
 
-        Object.defineProperty(this, "model_info", {
+        Object.defineProperty(this, "layers_schema", {
+            set: (value) => {
+                _layers_schema = value;
+            },
             get: () => {
-                return {
-                    "layers": _layers,
-                    "schema": _schema
-                };
+                return _layers_schema;
             }
         });
 
@@ -175,6 +163,16 @@
             },
             get: () => {
                 return _layers_types;
+            }
+        });
+
+        Object.defineProperty(this, "model_info", {
+            get: () => {
+                return {
+                    "layers": _layers,
+                    "schema": _layers_schema,
+                    "start_layers": _layers_start,
+                };
             }
         });
 
@@ -193,6 +191,24 @@
             },
             get: () => {
                 return _callbacks;
+            }
+        });
+
+        Object.defineProperty(this, "compile", {
+            set: (value) => {
+                _compile = value;
+            },
+            get: () => {
+                return _compile;
+            }
+        });
+
+        Object.defineProperty(this, "training", {
+            set: (value) => {
+                _training = value;
+            },
+            get: () => {
+                return _training;
             }
         });
 
@@ -218,6 +234,11 @@
 
         $("header > .user > .item > .menu > .group > .title").bind("click", (event) => {
             $(event.currentTarget).parent().toggleClass("hidden");
+        });
+
+        $(".params-item.collapsable > .params-title").bind("click", (event) => {
+            event.preventDefault();
+            $(event.currentTarget).parent().toggleClass("collapsed");
         });
 
         /**
@@ -260,7 +281,7 @@
          * Сохранение результата обучения
          */
         $(window).bind("beforeunload", (event) => {
-            window.ExchangeRequest("save_learning");
+            window.ExchangeRequest("autosave_project", null, null, true);
         });
 
     });

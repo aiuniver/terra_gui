@@ -12,8 +12,8 @@ def menu_active(value: str, request) -> str:
 
 
 @register.filter
-def dataset_filters_string(filters: list) -> str:
-    items = list(map(lambda item: f"filter-{item}", filters))
+def dataset_tags_string(tags: list) -> str:
+    items = list(map(lambda item: f"filter-{item}", tags))
     return " ".join(items)
 
 

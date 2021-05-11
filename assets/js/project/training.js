@@ -63,6 +63,17 @@
                 'yaxis': {'title': 'val_accuracy'}
             }
         ],
+        'scatters': [
+            {
+                "list": [
+                {'x': [1, 5, 7, 2, 9, 3], 'y': [10, 40, 20, 50, 30, 60], 'name': 'label', 'mode': 'markers'},
+                {'x': [1, 6, 3, 8, 4, 5], 'y': [10, 80, 20, 70, 30, 15], 'name': 'label2', 'mode': 'markers'}
+            ],
+                'title': 'scatter',
+                 'xaxis': {'title': 'epoch'},
+                'yaxis': {'title': 'val_accuracy'}
+            }
+        ],
         'texts': "num_classes = 2, shape = (1799, 54, 96, 3), epochs = 20,\nlearning_rate=0.001, callbacks = [], batch_size = 32,\nshuffle = True, loss = categorical_crossentropy, metrics = ['accuracy']\n",
         'prints': [
             'Epoch 000 - loss:  0.7809 - accuracy:  0.7360 - val_loss:  0.5165 - val_accuracy:  0.7711',
@@ -92,6 +103,7 @@
 
 
     let DrawGraph = (plotName, container, data_needed_format) => {
+
         for (let i = 0; i < data_needed_format[plotName].length; i++) {
             let div = document.createElement("div");
             div.className = "graph";
@@ -175,16 +187,12 @@
     let ResetGraphics = () => {
         let content = $(".graphics > .wrapper > .tabs-content > .inner");
         $(".graphics > .wrapper > .tabs > ul > li").removeClass("active").addClass("disabled");
-        content.find(".tabs-item.graphs .tab-container").html("");
-        content.find(".tabs-item.scatters .tab-container").html("");
-        content.find(".tabs-item.images .tab-container").html("");
-        content.find(".tabs-item.text .tab-container").html("");
+        content.find(".tab-container").html("");
     }
-
 
     $(() => {
 
-        if (!window.TerraProject.dataset || !window.TerraProject.task) {
+        if (!window.TerraProject.dataset) {
             let warning = $("#modal-window-warning").ModalWindow({
                 title:"Предупреждение!",
                 width:300,
@@ -239,57 +247,57 @@
             return false;
         });
 
-        $(".callback-params-block > .params-item > .inner > .actions-form").bind("click", (event) => {
-            event.preventDefault();
-            window.StatusBar.clear();
-            UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
-            ResetGraphics();
-            window.ExchangeRequest(
-                "start_nn_train",
-                (success, data) => {
-                    if (success) {
-                        console.log("Training complete:", data);
-                    } else {
-                        window.StatusBar.message(data.error, false);
-                    }
-                },
-                {
-                    batch:$("#batch-size").val(),
-                    epoch:$("#epoch-num").val(),
-                    learning_rate:$("#field_form-learning_rate").val()
-                }
-            );
-            window.ExchangeRequest(
-                "get_data",
-                (success, data) => {
-                    if (success) {
-                        if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
-                        window.StatusBar.message(data.data.status_string);
-                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                        $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
-                        DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
-                        DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
-                        DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
-                        UpdateTrainingProgress(data.data.prints);
-                        if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
-                        if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
-                        if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
-                        if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
-                        if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
-                            if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
-                                $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
-                            }
-                        }
-                        if (data.data.stop_flag) {
-                            $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
-                            $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
-                        }
-                    } else {
-                        window.StatusBar.message(data.error, false);
-                    }
-                }
-            );
-        });
+        // $(".callback-params-block > .params-item > .inner > .actions-form").bind("submit", (event) => {
+        //     event.preventDefault();
+        //     window.StatusBar.clear();
+        //     UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
+        //     ResetGraphics();
+        //     window.ExchangeRequest(
+        //         "start_nn_train",
+        //         (success, data) => {
+        //             if (success) {
+        //                 console.log("Training complete:", data);
+        //             } else {
+        //                 window.StatusBar.message(data.error, false);
+        //             }
+        //         },
+        //         {
+        //             batch:$("#batch-size").val(),
+        //             epoch:$("#epoch-num").val(),
+        //             learning_rate:$("#field_form-learning_rate").val()
+        //         }
+        //     );
+        //     window.ExchangeRequest(
+        //         "get_data",
+        //         (success, data) => {
+        //             if (success) {
+        //                 if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
+        //                 window.StatusBar.message(data.data.status_string);
+        //                 window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+        //                 $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").html("");
+        //                 DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container"), data.data); // нарисовать для линейного
+        //                 DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container"), data.data); // нарисовать для скаттера
+        //                 DisplayText(data_needed_format, $(".graphics .tabs-item.text .tab-container")); // вывод текста
+        //                 UpdateTrainingProgress(data.data.prints);
+        //                 if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
+        //                 if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
+        //                 if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
+        //                 if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
+        //                 if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
+        //                     if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
+        //                         $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+        //                     }
+        //                 }
+        //                 if (data.data.stop_flag) {
+        //                     $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+        //                     $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
+        //                 }
+        //             } else {
+        //                 window.StatusBar.message(data.error, false);
+        //             }
+        //         }
+        //     );
+        // });
 
         let optimazerSelect = $("#optimazer");
         optimazerSelect.bind("change", (event) => {
@@ -298,12 +306,13 @@
                 && window.TerraProject.dataset !== null
                 && window.TerraProject.model_name !== null
                 && window.TerraProject.task !== null
-                ? $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").removeAttr("disabled")
-                : $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
-            $(".wrapper .params-optimazer-block .params-item").html("");
+                ? $(".actions-form > .training > button").removeAttr("disabled")
+                : $(".actions-form > .training > button").attr("disabled", "disabled");
+            $(".wrapper .params-optimazer-block .optimazer-item").html("");
 
-            $(".wrapper .params-optimazer-block .params-item").append(`
+            $(".wrapper .params-optimazer-block .optimazer-item").append(`
                 <div class="inner form-inline-label inner-col-0"></div>
+                <div class="inner form-inline-label inner-col-1"></div>
             `);
             window.ExchangeRequest(
                 "get_optimizer_kwargs",
@@ -312,9 +321,9 @@
                         let dataLen = Object.keys(data.data).length;
                         let dataEntries = Object.entries(data.data);
                         let column = Math.ceil(dataLen / 2)
-                        $(".params-optimazer-block .params-item").append(`
-                            <div class="inner form-inline-label inner-col-1"></div>
-                        `);
+                        // $(".params-item .params-optimazer-block").append(`
+                        //     <div class="inner form-inline-label inner-col-1"></div>
+                        // `);
                         dataEntries.forEach(([key, param], index) => {
                             let is_boolean = param.type === 'bool';
                             let widget = window.FormWidget(key, {
@@ -327,10 +336,11 @@
                             });
                             widget.addClass("field-inline");
 
-                            if (index < column && dataLen > 4) {
-                                $(".params-optimazer-block .inner.inner-col-0").append(widget);
+                            if (index < column && dataLen > 2) {
+                                $(".optimazer-item .inner-col-0").append(widget);
                             } else {
-                                $(".params-optimazer-block .inner.inner-col-1").append(widget);
+                                $(".optimazer-item .inner-col-1").append(widget);
+                                console.log( $(".optimazer-item > .inner-col-1"))
                             }
                         });
                     } else {
@@ -364,6 +374,101 @@
             )
         });
 
+        $(".task-select").bind("change", (event) => {
+            event.preventDefault();
+
+        }).selectmenu({
+            change:(event) => {
+                $(event.target).trigger("change");
+                let loss = $("#"+event.target.parentNode.parentNode.id).find(".loss-select");
+                let metric = $("#"+event.target.parentNode.parentNode.id).find(".metric-select");
+                loss.empty();
+                metric.empty();
+
+                window.TerraProject.compile[event.target.value].losses.forEach((elem) => {
+                    loss.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                 window.TerraProject.compile[event.target.value].metrics.forEach((elem) => {
+                    metric.append(`<option value="${elem}">${elem}</option>`);
+                });
+
+                loss.selectmenu("refresh");
+                metric.selectmenu("refresh");
+
+                // $("#"+event.target.parentNode.parentNode.id).find(".loss-select").refresh();
+            }
+        }).trigger("change");
+
+
+        $(".click-menu").bind("click", (event)=>{
+            $(event.target).parent().toggleClass('open');
+        });
+        //
+        // $(".item.training > button").bind("click", (event)=>{
+        //     event.preventDefault();
+        //     let form = $(event.currentTarget),
+        //         serializeData = form.parents('.params-container').serializeArray();
+        //     console.log("asdfa")
+        // });
+
+
+        $(".item.training > button").bind("click", (event) => {
+            event.preventDefault();
+            window.StatusBar.clear();
+            UpdateTrainingProgress([WAITING_FOR_THE_DATA]);
+            ResetGraphics();
+            window.ExchangeRequest(
+                "start_nn_train",
+                (success, data) => {
+                    if (success) {
+                        console.log("Training complete:", data);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                {
+                    batch:$("#batch-size").val(),
+                    epoch:$("#epoch-num").val(),
+                    learning_rate:$("#learning_rate").val()
+                }
+            );
+            window.ExchangeRequest(
+                "get_data",
+                (success, data) => {
+                    if (success) {
+                        if (!data.data.prints.length) data.data.prints = [WAITING_FOR_THE_DATA]
+                        window.StatusBar.message(data.data.status_string);
+                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                        $(".tab-container").html("");
+                        DrawGraph("plots", $(".tab-container"), data.data); // нарисовать для линейного
+                        DrawGraph("scatters", $(".tab-container"), data.data); // нарисовать для скаттера
+                        DisplayText(data_needed_format, $(".tab-container")); // вывод текста
+                        UpdateTrainingProgress(data.data.prints);
+                        if (data.data.plots.length) $(".graphics > .wrapper > .tabs > ul > li.graphs").removeClass("disabled");
+                        if (data.data.images.length) $(".graphics > .wrapper > .tabs > ul > li.images").removeClass("disabled");
+                        if (data.data.texts) $(".graphics > .wrapper > .tabs > ul > li.text").removeClass("disabled");
+                        if (data.data.scatters.length) $(".graphics > .wrapper > .tabs > ul > li.scatters").removeClass("disabled");
+                        if (data.data.plots.length || data.data.images.length || data.data.texts || data.data.scatters.length) {
+                            if (!$(".graphics > .wrapper > .tabs > ul > li.active").length) {
+                                $(".graphics > .wrapper > .tabs > ul > li").not(".disabled").first().children("span").trigger("click");
+                            }
+                        }
+                        if (data.data.stop_flag) {
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .training > button").attr("disabled", "disabled");
+                            $(".callback-params-block > .params-item > .inner > .actions-form > .evaluate > button").removeAttr("disabled");
+                        }
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                }
+            );
+        });
+
+
+
+
+
         // здесь будет проверка на наличие флага "регрессия"
         // if (data_needed_format["scatters"]){
         //     let tabLink = document.createElement("li");
@@ -378,8 +483,11 @@
         //     document.getElementById("tabs").append(graphElem);
         // }
 
-        // DrawGraph("plots", $(".graphics .tabs-item.graphs > .tab-container")); // нарисовать для линейного
-        // DrawGraph("scatters", $(".graphics .tabs-item.scatters > .tab-container")); // нарисовать для скаттера
+        DrawGraph("plots", $(".graphics > .content"), data_needed_format); // нарисовать для линейного
+        UpdateTrainingProgress(data_needed_format['prints']);
+        DrawGraph("scatters", $(".scatters > .content"), data_needed_format); // нарисовать для скаттера
+
+        // DrawGraph("plots", $(".tab-container"), data_needed_format);
 
     });
 

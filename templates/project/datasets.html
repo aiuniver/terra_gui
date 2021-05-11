@@ -28,12 +28,12 @@
             <div class="inner">
                 <div class="dataset-card-container custom-scrollbar-wrapper">
                     <div class="dataset-card-wrapper">
-                        {% for name, dataset in request.terra_project.datasets.items %}
-                            <div class="dataset-card-item {{ dataset.filters.keys|dataset_filters_string }}">
-                                <div class="dataset-card" data-name="{{ name }}">
-                                    <div class="card-title">{{ name }}</div>
+                        {% for dataset in request.terra_project.datasets %}
+                            <div class="dataset-card-item {{ dataset.tags.keys|dataset_tags_string }}">
+                                <div class="dataset-card" data-name="{{ dataset.name }}">
+                                    <div class="card-title">{{ dataset.name }}</div>
                                     <div class="card-body">
-                                        {% for tag in dataset.filters.values %}
+                                        {% for tag in dataset.tags.values %}
                                             <div class="card-tag">{{ tag }}</div>
                                         {% endfor %}
                                     </div>
@@ -55,10 +55,6 @@
                     <div class="inner">
                         <div class="actions-form">
                             <div class="item prepare"><button disabled="disabled">Подготовить</button></div>
-                        </div>
-                        <div class="field-form">
-                            <label for="dataset-task">Выберите задачу</label>
-                            <select name="task" id="dataset-task" class="jquery-ui-menuselect" disabled="disabled"></select>
                         </div>
                     </div>
                 </div>

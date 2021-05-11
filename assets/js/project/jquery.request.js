@@ -7,7 +7,7 @@
     $.extend({
 
 
-        RequestAPI: function(url, callback, send_data){
+        RequestAPI: function(url, callback, send_data, not_need_reload){
 
             let request;
 
@@ -22,6 +22,7 @@
                     data:JSON.stringify(send_data),
                     contentType:"application/json; charset=UTF-8",
                     success:(data, status) => {
+
                         if (status !== "success") {
                             if (typeof callback === "function") {
                                 callback(false, {"error":window.Messages.get("INTERNAL_SERVER_ERROR")});
@@ -41,7 +42,8 @@
                             setTimeout(execute, 1000);
                         }
                     },
-                    error:() => {
+                    error:(xhr) => {
+                        if (xhr.status === 502 && !not_need_reload) window.location.reload();
                         if (typeof callback === "function") {
                             callback(false, {"error":window.Messages.get("INTERNAL_SERVER_ERROR")});
                         }
@@ -59,9 +61,9 @@
     })
 
 
-    window.ExchangeRequest = (action, callback, send_data) => {
+    window.ExchangeRequest = (action, callback, send_data, need_reload) => {
         if (!action) return;
-        return new $.RequestAPI(`/api/v1/exchange/${action}/`, callback, send_data);
+        return new $.RequestAPI(`/api/v1/exchange/${action}/`, callback, send_data, need_reload);
     }
 
 

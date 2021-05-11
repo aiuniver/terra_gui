@@ -20,27 +20,27 @@
             <li data-type="load">
                 <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
             </li>
-            <li data-type="save" id="canvas-save">
+            <li data-type="save" disabled="disabled">
                 <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
             </li>
-            <li data-type="clear" id="canvas-clear">
-                <span><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
+            <li data-type="validation">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section layers">
-            <li data-type="input">
+            <li data-type="input" disabled="disabled">
                 <span><img src="{% static 'imgs/model-menu-3.svg' %}" alt="" /></span>
             </li>
             <li data-type="middle">
                 <span><img src="{% static 'imgs/model-menu-4.svg' %}" alt="" /></span>
             </li>
-            <li data-type="output">
+            <li data-type="output" disabled="disabled">
                 <span><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section others">
-            <li data-type="validation" id="validation">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="clear" disabled="disabled">
+                <span><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -75,30 +75,34 @@
         </nav>
         <div class="params">
             <form class="params-container layers-form custom-scrollbar-wrapper">
-                <div class="params-item">
+                <div class="params-item params-config">
                     <div class="inner">
-                        <input type="hidden" id="field_form-layer_id" name="layer_id" />
+                        <input type="hidden" id="field_form-index" name="index" />
                         <div class="field-form">
-                            <label for="field_form-layer_name">Название слоя</label>
-                            <input disabled="disabled" type="text" id="field_form-layer_name" name="layer_name" />
+                            <label for="field_form-name">Название слоя</label>
+                            <input disabled="disabled" type="text" id="field_form-name" name="name" />
                         </div>
                         <div class="field-form">
-                            <label for="field_form-layer_type">Тип слоя</label>
-                            <select disabled="disabled" name="layer_type" id="field_form-layer_type" class="jquery-ui-menuselect">
+                            <label for="field_form-type">Тип слоя</label>
+                            <select disabled="disabled" name="type" id="field_form-type" class="jquery-ui-menuselect">
                                 <option value=""></option>
                                 {% for layer in request.terra_project.layers_types %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="params-item layer-type-params-container hidden">
+                <div class="params-item params-main hidden">
                     <div class="params-title">Параметры слоя</div>
                     <div class="inner form-inline-label"></div>
                 </div>
-                <div class="params-item">
+                <div class="params-item params-extra collapsable collapsed hidden">
+                    <div class="params-title">Дополнительные параметры</div>
+                    <div class="inner form-inline-label"></div>
+                </div>
+                <div class="params-item params-actions">
                     <div class="inner">
                         <div class="actions-form">
-                            <div class="item save"><button disabled="disabled">Сохранить</button></div>
+                            <div class="item save"><button id="save-node" disabled="disabled">Сохранить</button></div>
                         </div>
                     </div>
                 </div>

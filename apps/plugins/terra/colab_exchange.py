@@ -1,7 +1,6 @@
 import gc
 import os
 import re
-from dataclasses import dataclass
 
 import dill as dill
 from IPython import get_ipython
@@ -11,60 +10,84 @@ from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 from .layers_dataclasses import LayersDef, GUILayersDef
+from .data import (
+    LayerLocation,
+    LayerType,
+    OptimizerParams,
+)
 
 
 class StatesData:
     def __init__(self):
-        self.django_optimizers_dict = {
+        self.optimizers_dict = {
             "SGD": {
-                "learning_rate": {"type": "float", "value": 0.01},
-                "momentum": {"type": "float", "value": 0.0},
-                "nesterov": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "default": 0.01}},
+                "extra": {
+                    "momentum": {"type": "float", "default": 0.0},
+                    "nesterov": {"type": "bool", "default": False},
+                },
             },
             "RMSprop": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.9},
-                "momentum": {"type": "float", "value": 0.0},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "centered": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "rho": {"type": "float", "default": 0.9},
+                    "momentum": {"type": "float", "default": 0.0},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                    "centered": {"type": "bool", "default": False},
+                },
             },
             "Adam": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
-                "amsgrad": {"type": "bool", "value": False},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                    "amsgrad": {"type": "bool", "default": False},
+                },
             },
             "Adadelta": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "rho": {"type": "float", "value": 0.95},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "rho": {"type": "float", "default": 0.95},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                },
             },
             "Adagrad": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "initial_accumulator_value": {"type": "float", "default": 0.1},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                },
             },
             "Adamax": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                },
             },
             "Nadam": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "beta_1": {"type": "float", "value": 0.9},
-                "beta_2": {"type": "float", "value": 0.999},
-                "epsilon": {"type": "float", "value": 1e-07},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "beta_1": {"type": "float", "default": 0.9},
+                    "beta_2": {"type": "float", "default": 0.999},
+                    "epsilon": {"type": "float", "default": 1e-07},
+                },
             },
             "Ftrl": {
-                "learning_rate": {"type": "float", "value": 0.001},
-                "learning_rate_power": {"type": "float", "value": -0.5},
-                "initial_accumulator_value": {"type": "float", "value": 0.1},
-                "l1_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_regularization_strength": {"type": "float", "value": 0.0},
-                "l2_shrinkage_regularization_strength": {"type": "float", "value": 0.0},
-                "beta": {"type": "float", "value": 0.0},
+                "main": {"learning_rate": {"type": "float", "default": 0.001}},
+                "extra": {
+                    "lr_power": {"type": "float", "default": -0.5},
+                    "initial_accumulator_value": {"type": "float", "default": 0.1},
+                    "l1_regularization_strength": {"type": "float", "default": 0.0},
+                    "l2_regularization_strength": {"type": "float", "default": 0.0},
+                    "l2_shrinkage_regularization_strength": {
+                        "type": "float",
+                        "default": 0.0,
+                    },
+                    "beta": {"type": "float", "default": 0.0},
+                },
             },
         }
 
@@ -112,7 +135,7 @@ class StatesData:
                     "kl_divergence",
                     "binary_crossentropy",
                     "poisson",
-                ]
+                ],
             },
             "segmentation": {
                 "losses": [
@@ -142,7 +165,7 @@ class StatesData:
                     "kl_divergence",
                     "binary_crossentropy",
                     "poisson",
-                ]
+                ],
             },
             "regression": {
                 "losses": [
@@ -160,7 +183,7 @@ class StatesData:
                     "mape",
                     "msle",
                     "log_cosh",
-                ]
+                ],
             },
             "timeseries": {
                 "losses": [
@@ -178,75 +201,75 @@ class StatesData:
                     "mape",
                     "msle",
                     "log_cosh",
-                ]
+                ],
             },
         }
 
         self.callback_show_options_switches_front = {
             "classification": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_loss_for_classes": {
                     "value": False,
-                    "label": "Выводить loss по каждому классу",
+                    "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "value": False,
-                    "label": "Выводить данные метрики по каждому классу",
+                    "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "value": False,
-                    "label": "Выводить худшие изображения по метрике",
+                    "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "value": False,
-                    "label": "Выводить лучшие изображения по метрике",
+                    "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "segmentation": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_loss_for_classes": {
                     "value": False,
-                    "label": "Выводить loss по каждому классу",
+                    "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "value": False,
-                    "label": "Выводить данные метрики по каждому классу",
+                    "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "value": False,
-                    "label": "Выводить худшие изображения по метрике",
+                    "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "value": False,
-                    "label": "Выводить лучшие изображения по метрике",
+                    "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "regression": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
-                "plot_scatter": {"value": False, "label": "Выводить скаттер"},
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
+                "plot_scatter": {"value": False, "label": "скаттер"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
             "timeseries": {
-                "show_every_epoch": {"value": False, "label": "Выводить каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "Выводить loss"},
-                "plot_metric": {"value": False, "label": "Выводить данные метрики"},
+                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
+                "plot_loss_metric": {"value": False, "label": "loss"},
+                "plot_metric": {"value": False, "label": "данные метрики"},
                 "plot_autocorrelation": {
                     "value": False,
-                    "label": "Вывод графика автокорреляции",
+                    "label": "график автокорреляции",
                 },
                 "plot_pred_and_true": {
                     "value": False,
-                    "label": "Вывод графиков предсказания и истинного ряда",
+                    "label": "графики предсказания и истинного ряда",
                 },
-                "plot_final": {"value": False, "label": "Выводить графики в конце"},
+                "plot_final": {"value": False, "label": "графики в конце"},
             },
         }
 
@@ -285,8 +308,6 @@ class Exchange(StatesData, GuiExch):
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
         self.start_layers = {}
-        self.start_layers_count = 0
-        self.layers_data_state = {}
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
@@ -302,6 +323,7 @@ class Exchange(StatesData, GuiExch):
         self.epochs = 20
         self.shuffle = True
         self.epoch = 1
+        self.optimizers = self._set_optimizers()
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -521,17 +543,30 @@ class Exchange(StatesData, GuiExch):
             "tags": datasets tags
 
         """
-        tags = set()
-        datasets = self.dts.get_datasets_dict()
-        custom_datasets = self._get_custom_datasets_from_google_drive()
-        datasets.update(custom_datasets)
+        output = {"datasets": [], "tags": {}}
 
-        for params in datasets.values():
-            for i in range(len(params[0])):
-                tags.add(params[0][i])
-            for param in params[1:]:
-                if param:
-                    tags.add(param)
+        datasets_dict = self.dts.get_datasets_dict()
+        datasets_dict.update(self._get_custom_datasets_from_google_drive())
+
+        for name, data in datasets_dict.items():
+            dataset_tags = dict(
+                map(
+                    lambda item: (self._reformat_tags([item])[0], item),
+                    sum(
+                        list(
+                            map(
+                                lambda value: value
+                                if isinstance(value, list)
+                                else [value],
+                                list(filter(None, data)),
+                            )
+                        ),
+                        [],
+                    ),
+                )
+            )
+            output["tags"].update(dataset_tags)
+            output["datasets"].append({"name": name, "tags": dataset_tags})
 
         # TODO for next relise step:
 
@@ -541,22 +576,11 @@ class Exchange(StatesData, GuiExch):
         #     'tags': tags,
         #     'methods': methods,
         # }
-        tags = dict(
-            map(
-                lambda item: (self._reformat_tags([item])[0], item),
-                list(tags),
-            )
-        )
         # tags = self._reformat_tags(list(tags))
 
-        content = {
-            "datasets": datasets,
-            "tags": tags,
-        }
+        return output
 
-        return content
-
-    def _prepare_dataset(self, **options) -> tuple:
+    def _prepare_dataset(self, dataset_name: str, source: str) -> tuple:
         """
         prepare dataset for load to nn
         Args:
@@ -566,70 +590,51 @@ class Exchange(StatesData, GuiExch):
             changed dataset and its tags
         """
         self._reset_out_data()
-        self.dts = DTS(exch_obj=self)
-        gc.collect()
-        # if options.get("dataset_name") == "mnist":
-        #     self.dts.keras_datasets(dataset="mnist", net="conv", one_hot_encoding=True)
-        # else:
-        self.dts.prepare_dataset(**options)
-        self._set_dts_name(self.dts.name)
-        self.out_data["stop_flag"] = True
-        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
-
-    def _create_custom_dataset(self, **options):
-        self._reset_out_data()
-        dataset = f'{options.get("dataset_name")}.trds'
-        dataset_path = os.path.join(self.custom_datasets_path, dataset)
-        with open(dataset_path, "rb") as f:
-            custom_dts = dill.load(f)
-        self.dts = custom_dts
-        # print(
-        #     "DTS",
-        #     self.dts,
-        #     "\n",
-        #     self.dts.name,
-        #     self.dts.X,
-        #     self.dts.Y,
-        # )
+        if source == "custom":
+            self.dts = self._read_trds(dataset_name)
+        else:
+            self.dts = DTS(exch_obj=self)
+            gc.collect()
+            self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
-        return self.dts.tags, self.dts.name, self.start_layers, self.layers_data_state
+        return self.dts.tags, self.dts.name, self.start_layers
+
+    def _read_trds(self, dataset_name: str) -> DTS:
+        filename = f"{dataset_name}.trds"
+        filepath = os.path.join(self.custom_datasets_path, filename)
+        with open(filepath, "rb") as f:
+            dts = dill.load(f)
+        return dts
 
     def _set_start_layers(self):
-        inputs = self.dts.X
-        outputs = self.dts.Y
-        self.__create_start_layer(inputs, 'Input')
-        self.__create_start_layer(outputs, 'Output')
+        self.start_layers = {}
 
-    def __create_start_layer(self, dts_data: dict, layer_type: str):
-        available = [data['data_name'] for name, data in dts_data.items()]
-        for name, data in dts_data.items():
-            self.start_layers_count += 1
-            idx = self.start_layers_count
-            layer_name = idx
-            data_name = data['data_name']
-            if layer_type == 'Input':
-                input_shape = list(self.dts.input_shape[name])
-                location = 'input'
-            else:
-                input_shape = []
-                location = 'out'
-            current_layer = {
-                "name": layer_name,
-                "type": layer_type if layer_type == 'Input' else 'Dense',
-                "data_name": data_name,
-                "data_available": available,
-                "params": {},
-                "up_link": [
-                    0
-                ],
-                "inp_shape": input_shape,
-                "out_shape": [],
-                "location_type": location
-            }
-            self.start_layers[idx] = current_layer
-            self.layers_data_state[idx] = {"data_name": data_name, "data_available": available}
+        def _create(dts_data: dict, location: LayerLocation):
+            available = [data["data_name"] for name, data in dts_data.items()]
+            for name, data in dts_data.items():
+                index = len(self.start_layers.keys()) + 1
+                data_name = data.get("data_name", "")
+                self.start_layers[index] = {
+                    "config": {
+                        "name": f"l{index}_{data_name}",
+                        "dts_layer_name": name,
+                        "type": LayerType.Input
+                        if location == LayerLocation.input
+                        else LayerType.Dense,
+                        "location_type": location,
+                        "up_link": [],
+                        "input_shape": list(self.dts.input_shape.get(name, [])),
+                        "output_shape": [],
+                        "data_name": data_name,
+                        "data_available": available,
+                        "params": {},
+                    }
+                }
+
+        _create(self.dts.X, LayerLocation.input)
+        _create(self.dts.Y, LayerLocation.output)
 
     @staticmethod
     def _reformat_tags(tags: list) -> list:
@@ -648,8 +653,6 @@ class Exchange(StatesData, GuiExch):
 
     def _reset_out_data(self):
         self.start_layers = {}
-        self.start_layers_count = 0
-        self.layers_data_state = {}
         self.out_data = {
             "stop_flag": False,
             "status_string": "status_string",
@@ -665,6 +668,9 @@ class Exchange(StatesData, GuiExch):
             "images": [],
             "texts": [],
         }
+
+    def _set_optimizers(self):
+        return self.optimizers_dict
 
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
@@ -688,13 +694,9 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
-    def prepare_dataset(self, **options):
+    def prepare_dataset(self, dataset_name: str, source: str = ""):
         self.process_flag = "dataset"
-        custom_flag = options.get("source")
-        if custom_flag and custom_flag == "custom":
-            self._set_current_task(options.get("task_type"))
-            return self._create_custom_dataset(**options)
-        return self._prepare_dataset(**options)
+        return self._prepare_dataset(dataset_name=dataset_name, source=source)
 
     def set_stop_training_flag(self):
         """
@@ -824,20 +826,26 @@ class Exchange(StatesData, GuiExch):
     def get_datasets_data(self):
         return self._create_datasets_data()
 
+    def get_dataset_input_shape(self):
+        return self.dts.input_shape
+
     def get_hardware_env(self):
         return self.hardware_accelerator_type
 
     def get_callbacks_switches(self, task: str) -> dict:
         return self.callback_show_options_switches_front[task]
 
-    def get_state(self, task: str) -> dict:
+    def get_state(self) -> dict:
         data = self.get_datasets_data()
         data.update(
             {
                 "layers_types": self.get_layers_type_list(),
-                "optimizers": self.get_optimizers_list(),
-                "callbacks": self.callback_show_options_switches_front.get(task, {}),
+                "optimizers": self.get_optimizers(),
+                "callbacks": self.callback_show_options_switches_front.get(
+                    "classification", {}
+                ),
                 "hardware": self.get_hardware_env(),
+                "compile": self.get_states_for_outputs(),
             }
         )
         return data
@@ -845,31 +853,34 @@ class Exchange(StatesData, GuiExch):
     def get_layers_type_list(self):
         return self.layers_params
 
-    def get_optimizers_list(self):
-        return list(self.django_optimizers_dict.keys())
+    def get_optimizers(self):
+        return self.optimizers
+
+    def get_optimizer_kwargs(self, optimizer_name):
+        optimizer_params = {"main": {}, "extra": {}}
+        for name, params in self.optimizers.get(optimizer_name).items():
+            for _param_name, values in params.items():
+                optimizer_params[name][_param_name] = values.get("default")
+        optimizer_kwargs = OptimizerParams(**optimizer_params)
+        return optimizer_kwargs.dict()
 
     def get_data(self):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
             self.out_data["progress_status"]["percents"] = (
-                                                                   self.epoch / self.epochs
-                                                           ) * 100
+                self.epoch / self.epochs
+            ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, model: object, callback: object):
-        # if self.debug_verbose == 3:
-        #     print(f"Dataset name: {self.dts.name}")
-        #     print(f"Dataset shape: {self.dts.input_shape}")
-        #     print(f"Plan: ")
-        #     for idx, l in enumerate(model_plan.plan, start=1):
-        #         print(f"Layer {idx}: {l}")
-        #     print(f"x_Train: {self.nn.DTS.x_Train.shape}")
-        #     print(f"y_Train: {self.nn.DTS.y_Train.shape}")
+    def start_training(self, model: object, training: dict) -> None:
         self.nn.set_dataset(self.dts)
-        nn_callback = dill.loads(callback)
         nn_model = dill.loads(model)
-        self.nn.set_callback(nn_callback)
+        output_params = training.get('outputs', {})
+        clbck_chp = training.get('checkpoint', {})
+        epochs = training.get('epochs_count', 10)
+        batch_size = training.get('batch_size', 32)
+        self.nn.set_main_params(output_params=output_params, clbck_chp=clbck_chp, epochs=epochs, batch_size=batch_size)
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
@@ -919,5 +930,6 @@ class Exchange(StatesData, GuiExch):
 
 if __name__ == "__main__":
     b = Exchange()
-    b.prepare_dataset(dataset_name="mnist", task_type="classification")
+    b.prepare_dataset(dataset_name="mnist")
+    print(b.dts.task_type)
     pass

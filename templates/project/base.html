@@ -87,8 +87,8 @@
     <div class="progress">
         <div class="wrapper"><i><span></span></i><span></span></div>
     </div>
-    <div class="state {{ request.terra_project.hardware|lower }}">
-        <div class="wrapper">{{ request.terra_project.hardware }}</div>
+    <div class="state {{ request.terra_project.hardware.value|lower }}">
+        <div class="wrapper">{{ request.terra_project.hardware.value }}</div>
     </div>
 </footer>
 {% endblock content %}
