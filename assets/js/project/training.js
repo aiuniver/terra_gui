@@ -15,6 +15,10 @@
 
             let _field_optimizer = $("#field_form-optimazer"),
                 _field_learning_rate = $("#field_form-learning_rate"),
+                _field_output_task = $(".field_form-output_task"),
+                _field_output_loss = $(".field_form-output_loss"),
+                _field_output_metric = $(".field_form-output_metric"),
+                _field_output_num_classes = $(".field_form-output_num_classes"),
                 _params_optimazer_extra = $(".params-optimazer-extra");
 
             let _camelize = (text) => {
@@ -57,7 +61,7 @@
                         _params_optimazer_extra.addClass("hidden");
                     }
                 }
-            })
+            });
 
             _field_optimizer.selectmenu({
                 change:(event) => {
@@ -65,6 +69,38 @@
                 }
             }).bind("change", (event) => {
                 this.optimizer = $(event.currentTarget).val();
+            }).trigger("change");
+
+            _field_output_loss.selectmenu({
+                change:(event) => {
+                    $(event.target).trigger("change");
+                }
+            }).bind("change", (event) => {
+                let item = $(event.currentTarget),
+                    output_name = item.data("output"),
+                    task = event.currentTarget.selectedOptions[0].parentNode.label,
+                    field_metric = $(`.field_form-${output_name}-output_metric`),
+                    metrics = [];
+                $(`.field_form-${output_name}-output_task`).val(task);
+                field_metric.html("");
+                try {
+                    metrics = window.TerraProject.compile[task].metrics;
+                } catch {}
+                if (metrics) {
+                    metrics.forEach((item) => {
+                        let option = $(`<option value="${item}">${item}</option>`),
+                            metric = [];
+                        try {
+                            metric = window.TerraProject.training.outputs[output_name].metric;
+                        } catch {}
+                        if (metric.indexOf(item) > -1) option.attr("selected", "selected");
+                        field_metric.append(option);
+                    });
+                    field_metric.removeAttr("disabled");
+                } else {
+                    field_metric.attr("disabled", "disabled");
+                }
+                field_metric.selectmenu("refresh");
             }).trigger("change");
 
             this.bind("submit", (event) => {

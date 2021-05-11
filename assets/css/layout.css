@@ -240,7 +240,7 @@ input[type=number] {
 .ui-selectmenu-text {
     line-height:40px;
     margin:0;
-    padding:0 50px 0 10px;
+    padding:0 40px 0 10px;
     white-space:nowrap;
 }
 .ui-selectmenu-icon {
@@ -275,6 +275,16 @@ input[type=number] {
     vertical-align:top;
     border:0;
 }
+.ui-selectmenu-menu .ui-menu .ui-selectmenu-optgroup {
+    line-height:1;
+    margin:0;
+    padding:5px 10px;
+    color:#242F3D;
+    font-size:1rem;
+    vertical-align:top;
+    background:#fff;
+}
+
 
 /* mCustomScrollBar */
 .mCustomScrollBox {

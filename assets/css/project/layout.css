@@ -424,7 +424,7 @@ main > .container > .properties > .wrapper .mCSB_container {
 .form-inline-label > .field-inline .ui-selectmenu-text {
     line-height:20px;
     font-size:.75rem;
-    padding-right:30px;
+    padding-right:20px;
 }
 .form-inline-label > .field-inline .ui-selectmenu-icon {
     width:20px;

@@ -1,6 +1,6 @@
 {% extends 'project/base.html' %}
 
-{% load static %}
+{% load static core_utils %}
 
 {% block css_block %}
 <link rel="stylesheet" href="{% static 'css/project/training.css' %}"/>
@@ -104,43 +104,38 @@
                             <div class="inner form-inline-label"></div>
                         </div>
 
-                        <div class="params-item output-params-block collapsable">
-                            <div class="params-title">Параметры Outputs</div>
-                            <div class="param-item inner">
-                                <div class="outputs-content">
-                                    {% for index, layer in request.terra_project.layers.items.items %}
-                                        {% if layer.config.location_type == "output" %}
-                                            <div class="params-title">Параметры слоя «{{ layer.config.name }}»</div>
-                                            <div class="output-item form-inline-label" id="output-{{ index }}">
-                                                <div class="field-form field-inline output-block select-task">
-                                                    <label for="output-{{ index }}-task">Task:</label>
-                                                        <select id="output-{{ index }}-task" name="output-{{ index }}-task" class="jquery-ui-menuselect task-select">
-                                                            {% for param in request.terra_project.compile %}
-                                                                <option value="{{ param }}">{{ param }}</option>
+                        <div class="params-item params-output collapsable">
+                            <div class="params-title">Параметры outputs слоев</div>
+                            {% for layer in request.terra_project.layers.values %}
+                                {% if layer.config.location_type == "output" %}
+                                    <div class="inner">
+                                        <div class="title">Слой <b>«{{ layer.config.name }}»</b></div>
+                                        <div class="form-inline-label">
+                                            <div class="field-form field-inline field-reverse">
+                                                <label for="field_form-output-{{ layer.config.dts_layer_name }}-loss">Loss</label>
+                                                <input type="hidden" name="outputs[{{ layer.config.dts_layer_name }}][task]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_task field_form-{{ layer.config.dts_layer_name }}-output_task" />
+                                                <select id="field_form-output-{{ layer.config.dts_layer_name }}-loss" name="outputs[{{ layer.config.dts_layer_name }}][loss]" data-output="{{ layer.config.dts_layer_name }}" class="jquery-ui-menuselect field_form-output_loss field_form-{{ layer.config.dts_layer_name }}-output_loss">
+                                                    {% for task, items in request.terra_project.compile.items %}
+                                                        <optgroup label="{{ task }}">
+                                                            {% for loss in items.losses %}
+                                                                <option value="{{ loss }}"{% task_loss_selected layer.config.dts_layer_name task loss %}>{{ loss }}</option>
                                                             {% endfor %}
-                                                        </select>
-                                                </div>
-                                                <div class="field-form field-inline output-block select-loss">
-                                                    <label for="output-{{ index }}-loss">Loss:</label>
-                                                        <select id="output-{{ index }}-loss" name="output-{{ index }}-loss" class="jquery-ui-menuselect loss-select">
-                                                            {% for param in request.terra_project.compile.classification.metrics %}
-                                                                <option value="{{ param }}">{{ param }}</option>
-                                                            {% endfor %}
-                                                        </select>
-                                                </div>
-                                                <div class="field-form field-inline output-block select-metric">
-                                                    <label for="output-{{ index }}-metric">Metric:</label>
-                                                     <select id="output-{{ index }}-metric" name="output-{{ index }}-metric" class="jquery-ui-menuselect metric-select">
-                                                         {% for param in request.terra_project.compile.classification.losses %}
-                                                             <option value="{{ param }}">{{ param }}</option>
-                                                         {% endfor %}
-                                                        </select>
-                                                </div>
+                                                        </optgroup>
+                                                    {% endfor %}
+                                                </select>
                                             </div>
-                                        {% endif %}
-                                    {% endfor %}
-                                </div>
-                            </div>
+                                            <div class="field-form field-inline field-reverse">
+                                                <label for="output-{{ layer.config.dts_layer_name }}-metric">Метрика</label>
+                                                <select id="output-{{ layer.config.dts_layer_name }}-metric" name="outputs[{{ layer.config.dts_layer_name }}][metric][]" data-output="{{ layer.config.dts_layer_name }}" class="jquery-ui-menuselect field_form-output_metric field_form-{{ layer.config.dts_layer_name }}-output_metric" disabled="disabled"></select>
+                                            </div>
+                                            <div class="field-form field-inline field-reverse">
+                                                <label for="output-{{ layer.config.dts_layer_name }}-num_classes">Количество классов</label>
+                                                <input id="output-{{ layer.config.dts_layer_name }}-num_classes" name="outputs[{{ layer.config.dts_layer_name }}][num_classes]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_num_classes field_form-{{ layer.config.dts_layer_name }}-output_num_classes" type="number" value="" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
                         </div>
 
                         <div class="params-item checkpoint-block collapsable">
