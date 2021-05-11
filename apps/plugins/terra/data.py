@@ -98,10 +98,15 @@ class OptimizerParams(pydantic.BaseModel):
         return value
 
 
+class Optimizer(pydantic.BaseModel):
+    name: OptimizerType = OptimizerType.Adam
+    params: OptimizerParams = OptimizerParams()
+
+
 class TrainConfig(pydantic.BaseModel):
     batch_sizes: int = 32
     epochs_count: int = 20
-    optimizer: Dict[str, OptimizerParams] = {}
+    optimizer: Optimizer = Optimizer()
     outputs: Dict[str, Optional[Any]] = {}
     checkpoint: Dict[str, Optional[Any]] = {}
     callbacks: Dict[str, Optional[Any]] = {}

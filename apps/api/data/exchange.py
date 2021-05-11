@@ -64,12 +64,6 @@ class ExchangeData:
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)
 
-    def _execute_get_optimizer_kwargs(self, **kwargs):
-        return terra_exchange.call("get_optimizer_kwargs", **kwargs)
-
-    def _execute_set_callbacks_switches(self, **kwargs):
-        return terra_exchange.call("set_callbacks_switches", **kwargs)
-
     def _execute_start_nn_train(self, **kwargs):
         return terra_exchange.call("start_nn_train", **kwargs)
 

@@ -191,18 +191,6 @@ class TerraExchange:
         else:
             return TerraExchangeResponse()
 
-    def _call_get_optimizer_kwargs(self, optimizer: str) -> TerraExchangeResponse:
-        return TerraExchangeResponse(
-            data=colab_exchange.get_optimizer_kwargs(optimizer_name=optimizer)
-        )
-
-    def _call_set_callbacks_switches(self, **kwargs) -> TerraExchangeResponse:
-        callbacks = self.__project.callbacks
-        for callback in kwargs.items():
-            callbacks[callback[0]]["value"] = callback[1]
-        self.__project.callbacks = callbacks
-        return TerraExchangeResponse(data={"callbacks": callbacks})
-
     def _call_start_nn_train(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_nn_train", **kwargs)
 
