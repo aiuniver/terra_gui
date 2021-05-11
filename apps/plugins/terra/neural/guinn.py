@@ -327,9 +327,9 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}"
+            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last"
             file_path_model: str = os.path.join(
-                self.experiment_path, f"{model_name}_last.h5"
+                self.experiment_path, f"{model_name}.h5"
             )
             self.model.save(file_path_model)
             self.Exch.print_2status_bar(
@@ -349,7 +349,7 @@ class GUINN:
         """
 
         if self.model_is_trained:
-            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}'
+            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
             file_path_weights: str = os.path.join(self.experiment_path, f'{model_weights_name}.h5')
             self.model.save_weights(file_path_weights)
             self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
