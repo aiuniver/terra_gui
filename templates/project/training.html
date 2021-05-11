@@ -69,13 +69,13 @@
 <div class="properties project-training-properties">
     <div class="wrapper">
         <div class="params">
-            <form class="params-container">
+            <form class="params-container" novalidate="novalidate" autocomplete="off">
                 <div class="params-item">
                     <div class="inner settings custom-scrollbar-wrapper">
                         <div class="params-item params-optimizer">
                             <div class="inner">
                                 <div class="field-form field-inline">
-                                    <label for="field_form-optimazer">Оптимизатор:</label>
+                                    <label for="field_form-optimazer">Оптимизатор</label>
                                     <select id="field_form-optimazer" name="optimazer[name]" class="jquery-ui-menuselect">
                                         {% for name in request.terra_project.optimizers %}
                                             <option value="{{ name }}"{% if name == request.terra_project.training.optimizer.name %} selected="selected"{% endif %}>{{ name }}</option>
@@ -84,27 +84,24 @@
                                 </div>
                                 <div class="field-form form-inline-label">
                                     <div class="field-form field-inline">
-                                        <label for="field_form-batch_sizes">Размер батча:</label>
+                                        <label for="field_form-batch_sizes">Размер батча</label>
                                         <input name="batch_sizes" id="field_form-batch_sizes" type="number" value="{{ request.terra_project.training.batch_sizes }}" />
                                     </div>
                                     <div class="field-form field-inline">
-                                        <label for="field_form-epochs_count">Количество эпох:</label>
+                                        <label for="field_form-epochs_count">Количество эпох</label>
                                         <input name="epochs_count" id="field_form-epochs_count" type="number" value="{{ request.terra_project.training.epochs_count }}" />
                                     </div>
                                     <div class="field-form field-inline">
-                                        <label for="field_form-learning_rate">Learning rate:</label>
+                                        <label for="field_form-learning_rate">Learning rate</label>
                                         <input name="optimazer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="params-item params-optimazer-extra collapsable">
+                        <div class="params-item params-optimazer-extra collapsable hidden">
                             <div class="params-title">Параметры оптимизатора</div>
-                            <div class="optimazer-item inner">
-                                <div class="inner form-inline-label inner-col-0"></div>
-                                <div class="inner form-inline-label inner-col-1"></div>
-                            </div>
+                            <div class="inner form-inline-label"></div>
                         </div>
 
                         <div class="params-item output-params-block collapsable">

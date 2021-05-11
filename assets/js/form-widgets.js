@@ -18,6 +18,7 @@
                 let type, widget;
                 switch (options.type) {
                     case "int":
+                    case "float":
                         type = "number";
                         break;
                     case "bool":
@@ -37,7 +38,7 @@
                     `);
                 } else {
                     widget = $(`
-                        <label for="field_form-${name}">${label}:</label>
+                        <label for="field_form-${name}">${label}</label>
                         <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}"${options.disabled ? ' disabled="disabled"' : ""}${options.readonly ? ' readonly="readonly"' : ""} />
                     `);
                 }
@@ -53,7 +54,7 @@
                     `));
                 }
                 let widget = widget_wrapper.append(
-                    $(`<label for="field_form-${name}">${label}:</label>`), select
+                    $(`<label for="field_form-${name}">${label}</label>`), select
                 );
                 widget.children("select").selectmenu();
                 return widget;
