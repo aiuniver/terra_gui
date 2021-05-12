@@ -1,3 +1,4 @@
+import base64
 import gc
 import os
 import re
@@ -207,69 +208,127 @@ class StatesData:
 
         self.callback_show_options_switches_front = {
             "classification": {
-                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "loss"},
-                "plot_metric": {"value": False, "label": "данные метрики"},
+                "show_every_epoch": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "каждую эпоху",
+                },
+                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_metric": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики",
+                },
                 "plot_loss_for_classes": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "графики в конце"},
+                "plot_final": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "графики в конце",
+                },
             },
             "segmentation": {
-                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "loss"},
-                "plot_metric": {"value": False, "label": "данные метрики"},
+                "show_every_epoch": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "каждую эпоху",
+                },
+                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_metric": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики",
+                },
                 "plot_loss_for_classes": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "лучшие изображения по метрике",
                 },
-                "plot_final": {"value": False, "label": "графики в конце"},
+                "plot_final": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "графики в конце",
+                },
             },
             "regression": {
-                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "loss"},
-                "plot_metric": {"value": False, "label": "данные метрики"},
-                "plot_scatter": {"value": False, "label": "скаттер"},
-                "plot_final": {"value": False, "label": "графики в конце"},
+                "show_every_epoch": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "каждую эпоху",
+                },
+                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_metric": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики",
+                },
+                "plot_scatter": {"type": "bool", "default": False, "label": "скаттер"},
+                "plot_final": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "графики в конце",
+                },
             },
             "timeseries": {
-                "show_every_epoch": {"value": False, "label": "каждую эпоху"},
-                "plot_loss_metric": {"value": False, "label": "loss"},
-                "plot_metric": {"value": False, "label": "данные метрики"},
+                "show_every_epoch": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "каждую эпоху",
+                },
+                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_metric": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики",
+                },
                 "plot_autocorrelation": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "график автокорреляции",
                 },
                 "plot_pred_and_true": {
-                    "value": False,
+                    "type": "bool",
+                    "default": False,
                     "label": "графики предсказания и истинного ряда",
                 },
-                "plot_final": {"value": False, "label": "графики в конце"},
+                "plot_final": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "графики в конце",
+                },
             },
         }
 
@@ -479,6 +538,8 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = data[2]
         elif key_name == "prints":
             self.out_data["prints"].append(data)
+        elif key_name == "texts":
+            self.out_data["texts"].append(data)
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -841,9 +902,7 @@ class Exchange(StatesData, GuiExch):
             {
                 "layers_types": self.get_layers_type_list(),
                 "optimizers": self.get_optimizers(),
-                "callbacks": self.callback_show_options_switches_front.get(
-                    "classification", {}
-                ),
+                "callbacks": self.callback_show_options_switches_front,
                 "hardware": self.get_hardware_env(),
                 "compile": self.get_states_for_outputs(),
             }
@@ -873,19 +932,23 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, model: object, callback: object):
-        # if self.debug_verbose == 3:
-        #     print(f"Dataset name: {self.dts.name}")
-        #     print(f"Dataset shape: {self.dts.input_shape}")
-        #     print(f"Plan: ")
-        #     for idx, l in enumerate(model_plan.plan, start=1):
-        #         print(f"Layer {idx}: {l}")
-        #     print(f"x_Train: {self.nn.DTS.x_Train.shape}")
-        #     print(f"y_Train: {self.nn.DTS.y_Train.shape}")
+    def start_training(self, model: str, **kwargs) -> None:
+        training = kwargs
+        print(training)
+        model = self.nn.model
         self.nn.set_dataset(self.dts)
-        nn_callback = dill.loads(callback)
-        nn_model = dill.loads(model)
-        self.nn.set_callback(nn_callback)
+        nn_model = dill.loads(base64.b64decode(model))
+        output_params = training.get("outputs", {})
+        clbck_chp = training.get("checkpoint", {})
+        epochs = training.get("epochs_count", 10)
+        batch_size = training.get("batch_sizes", 32)
+        print("STATS = ", output_params, clbck_chp, epochs, batch_size)
+        self.nn.set_main_params(
+            output_params=output_params,
+            clbck_chp=clbck_chp,
+            epochs=epochs,
+            batch_size=batch_size,
+        )
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 

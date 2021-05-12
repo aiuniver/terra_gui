@@ -32,6 +32,23 @@ class OptimizerType(str, Enum):
     Ftrl = "Ftrl"
 
 
+class TaskType(str, Enum):
+    classification = "classification"
+    timeseries = "timeseries"
+    regression = "regression"
+    segmentation = "segmentation"
+
+
+class CheckpointIndicatorType(str, Enum):
+    train = "train"
+    val = "val"
+
+
+class CheckpointModeType(str, Enum):
+    min = "min"
+    max = "max"
+
+
 class LayerLocation(str, Enum):
     input = "input"
     middle = "middle"
@@ -98,13 +115,37 @@ class OptimizerParams(pydantic.BaseModel):
         return value
 
 
+class Optimizer(pydantic.BaseModel):
+    name: OptimizerType = OptimizerType.Adam
+    params: OptimizerParams = OptimizerParams()
+
+
+class Checkpoint(pydantic.BaseModel):
+    indicator: CheckpointIndicatorType = CheckpointIndicatorType.val
+    monitor: Dict[str, str] = {
+        "output": "output_1",
+        "out_type": "metrics",
+        "out_monitor": "accuracy",
+    }  # need to reformat
+    mode: CheckpointModeType = CheckpointModeType.max
+    save_best: bool = False
+    save_weights: bool = False
+
+
+class OutputConfig(pydantic.BaseModel):
+    task: TaskType = TaskType.classification
+    loss: str = ""
+    metrics: List[str] = []
+    num_classes: int = 2
+    callbacks: Dict[str, bool] = {}
+
+
 class TrainConfig(pydantic.BaseModel):
     batch_sizes: int = 32
     epochs_count: int = 20
-    optimizer: Dict[str, OptimizerParams] = {}
-    outputs: Dict[str, Optional[Any]] = {}
-    checkpoint: Dict[str, Optional[Any]] = {}
-    callbacks: Dict[str, Optional[Any]] = {}
+    optimizer: Optimizer = Optimizer()
+    outputs: Dict[str, OutputConfig] = {}
+    checkpoint: Checkpoint = Checkpoint()
 
 
 class LayerConfigParam(pydantic.BaseModel):
@@ -178,6 +219,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     callbacks: dict = {}
     compile: dict = {}
     training: TrainConfig = TrainConfig()
+    model_plan: Optional[list] = []
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),
         "modeling": reverse_lazy("apps_project:modeling"),

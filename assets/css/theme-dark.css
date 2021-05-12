@@ -288,12 +288,17 @@ input[type=button][disabled=disabled]:hover {
     background:#242F3D;
 }
 .ui-menu .ui-menu-item-wrapper {
-    color:#fff;
+    color:#A7BED3;
+}
+.ui-selectmenu-menu .ui-menu .ui-selectmenu-optgroup {
+    color:#242F3D;
+    background:#fff;
 }
 .ui-selectmenu-button-open {
     border-color:#fff !important;
 }
 .ui-state-active, .ui-widget-content .ui-state-active {
+    color:#fff;
     background:#6C7883;
 }
 
