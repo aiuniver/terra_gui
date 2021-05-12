@@ -42,12 +42,18 @@
                     }
                     let params = _optimizers[value] ? _optimizers[value] : _get_defaults(window.TerraProject.optimizers[value]);
                     _optimizers[value] = params;
-                    _field_learning_rate.val(params.main.learning_rate);
+                    _field_learning_rate.val(
+                        window.TerraProject.training.optimizer.name === value
+                            ? window.TerraProject.training.optimizer.params.main.learning_rate
+                            : params.main.learning_rate
+                    );
                     _params_optimizer_extra.children(".inner").html("");
                     if (Object.keys(params.extra).length) {
                         let _params = $.extend(true, {}, window.TerraProject.optimizers[value].extra);
                         for (let param in _params) {
-                            _params[param].default = _optimizers[value].extra[param];
+                            _params[param].default = window.TerraProject.training.optimizer.name === value
+                                ? window.TerraProject.training.optimizer.params.extra[param]
+                                : _optimizers[value].extra[param];
                             if (!_params[param].label) _params[param].label = _camelize(param);
                             let widget = window.FormWidget(`optimizer[params][extra][${param}]`, _params[param]);
                             widget.addClass("field-inline field-reverse");
