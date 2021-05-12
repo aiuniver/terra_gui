@@ -122,7 +122,11 @@ class Optimizer(pydantic.BaseModel):
 
 class Checkpoint(pydantic.BaseModel):
     indicator: CheckpointIndicatorType = CheckpointIndicatorType.val
-    monitor: Dict[str, str] = {'output': 'output_1', 'out_type': 'metrics', 'out_monitor': 'accuracy'}  # need to reformat
+    monitor: Dict[str, str] = {
+        "output": "output_1",
+        "out_type": "metrics",
+        "out_monitor": "accuracy",
+    }  # need to reformat
     mode: CheckpointModeType = CheckpointModeType.max
     save_best: bool = False
     save_weights: bool = False
@@ -131,7 +135,7 @@ class Checkpoint(pydantic.BaseModel):
 class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""
-    metric: List[str] = []
+    metrics: List[str] = []
     num_classes: int = 2
     callbacks: Dict[str, bool] = {}
 
@@ -141,7 +145,7 @@ class TrainConfig(pydantic.BaseModel):
     epochs_count: int = 20
     optimizer: Optimizer = Optimizer()
     outputs: Dict[str, OutputConfig] = {}
-    checkpoint: Dict[str, Optional[Any]] = {}
+    checkpoint: Checkpoint = Checkpoint()
 
 
 class LayerConfigParam(pydantic.BaseModel):
@@ -215,6 +219,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     callbacks: dict = {}
     compile: dict = {}
     training: TrainConfig = TrainConfig()
+    model_plan: Optional[list] = []
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),
         "modeling": reverse_lazy("apps_project:modeling"),

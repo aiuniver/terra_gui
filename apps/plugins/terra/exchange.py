@@ -17,7 +17,6 @@ from .neural import colab_exchange
 
 class TerraExchange:
     __project: TerraExchangeProject = TerraExchangeProject()
-    __model_plan: list = []
 
     @property
     def project(self) -> TerraExchangeProject:
@@ -201,21 +200,29 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            return self.__request_post("get_change_validation", layers=configs)
+            response = self.__request_post("get_change_validation", layers=configs)
+            self.project.model_plan = response.data.get("plan")
+            return TerraExchangeResponse(data=response.data.get("errors"))
         else:
             return TerraExchangeResponse()
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+        response_validate = self.call("get_change_validation")
+        errors = response_validate.data
+        if list(filter(None, errors.values())):
+            return TerraExchangeResponse(data={"validation_errors": errors})
+
         self.project.training = TrainConfig(**kwargs)
-        model_plan = colab_exchange.get_model_plan()
         response = self.__request_post(
             "get_model_to_colab",
-            model_plan=model_plan,
+            model_plan=self.project.model_plan,
             training=self.project.training.dict(),
         )
+        print(self.project.model_plan)
+        print(self.project.training.dict())
         print(response)
         # response = colab_exchange.start_training(**self.project.training.dict())
-        return TerraExchangeResponse(data=response)
+        return response
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)

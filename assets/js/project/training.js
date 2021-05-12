@@ -11,13 +11,15 @@
 
             if (!this.length) return this;
 
-            let _optimizers = {};
+            let _validate = false,
+                _optimizers = {};
 
             let _field_optimizer = $("#field_form-optimizer"),
                 _field_learning_rate = $("#field_form-learning_rate"),
                 _field_output_loss = $(".field_form-output_loss"),
                 _params_optimizer_extra = $(".params-optimizer-extra"),
-                _params_callbacks = $(".params-callbacks");
+                _action_training = $(".params-container .actions-form > .training > button"),
+                _action_evaluate = $(".params-container .actions-form > .evaluate > button");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -28,6 +30,20 @@
                 words.slice(1).forEach((word) => result.push(word))
                 return result.join(" ")
             }
+
+            Object.defineProperty(this, "validate", {
+                set: (value) => {
+                    _validate = value;
+                    if (value) {
+                        _action_training.attr("disabled", "disabled");
+                    } else {
+                        _action_training.removeAttr("disabled");
+                    }
+                },
+                get: () => {
+                    return _validate;
+                }
+            });
 
             Object.defineProperty(this, "optimizer", {
                 set: (value) => {
@@ -85,30 +101,30 @@
                 let item = $(event.currentTarget),
                     output_name = item.data("output"),
                     task = event.currentTarget.selectedOptions[0].parentNode.label,
-                    field_metric = $(`.field_form-${output_name}-output_metric`),
+                    field_metrics = $(`.field_form-${output_name}-output_metrics`),
                     field_num_classes = $(`.field_form-${output_name}-output_num_classes`),
                     callbacks = window.TerraProject.callbacks[task] === undefined ? {} : window.TerraProject.callbacks[task],
                     metrics = [];
                 $(`.field_form-${output_name}-output_task`).val(task);
-                field_metric.html("");
+                field_metrics.html("");
                 try {
                     metrics = window.TerraProject.compile[task].metrics;
                 } catch {}
                 if (metrics) {
                     metrics.forEach((item) => {
                         let option = $(`<option value="${item}">${item}</option>`),
-                            metric = [];
+                            metrics = [];
                         try {
-                            metric = window.TerraProject.training.outputs[output_name].metric;
+                            metrics = window.TerraProject.training.outputs[output_name].metrics;
                         } catch {}
-                        if (metric.indexOf(item) > -1) option.attr("selected", "selected");
-                        field_metric.append(option);
+                        if (metrics.indexOf(item) > -1) option.attr("selected", "selected");
+                        field_metrics.append(option);
                     });
-                    field_metric.removeAttr("disabled");
+                    field_metrics.removeAttr("disabled");
                 } else {
-                    field_metric.attr("disabled", "disabled");
+                    field_metrics.attr("disabled", "disabled");
                 }
-                field_metric.selectmenu("refresh");
+                field_metrics.selectmenu("refresh");
                 if (["classification", "segmentation"].indexOf(task) > -1) {
                     field_num_classes.val(window.TerraProject.training.outputs[output_name].num_classes);
                     field_num_classes.removeAttr("disabled");
@@ -133,44 +149,53 @@
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                window.StatusBar.clear();
-                let data = $(event.currentTarget).serializeObject();
-                for (let param_name in window.TerraProject.optimizers[data.optimizer.name].extra) {
-                    let param = window.TerraProject.optimizers[data.optimizer.name].extra[param_name];
-                    if (!data.optimizer.params.extra) data.optimizer.params.extra = {};
-                    switch (param.type) {
-                        case "bool":
-                            data.optimizer.params.extra[param_name] = data.optimizer.params.extra[param_name] !== undefined;
-                            break;
-                    }
-                }
-                for (let output_name in data.outputs) {
-                    data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
-                    let task = data.outputs[output_name].task,
-                        callbacks = data.outputs[output_name].callbacks;
-                    if (!callbacks) callbacks = {}
-                    for (let name in window.TerraProject.callbacks[task]) {
-                        let value = callbacks[name];
-                        switch (window.TerraProject.callbacks[task][name].type) {
+                if (!this.validate) {
+                    this.validate = true;
+                    window.StatusBar.clear();
+                    let data = $(event.currentTarget).serializeObject();
+                    for (let param_name in window.TerraProject.optimizers[data.optimizer.name].extra) {
+                        let param = window.TerraProject.optimizers[data.optimizer.name].extra[param_name];
+                        if (!data.optimizer.params.extra) data.optimizer.params.extra = {};
+                        switch (param.type) {
                             case "bool":
-                                callbacks[name] = value !== undefined;
+                                data.optimizer.params.extra[param_name] = data.optimizer.params.extra[param_name] !== undefined;
                                 break;
                         }
                     }
-                    data.outputs[output_name].callbacks = callbacks;
-                }
-                window.ExchangeRequest(
-                    "start_training",
-                    (success, data) => {
-                        if (success) {
-                            console.log("SUCCESS:", success);
-                            console.log("DATA:", data);
-                        } else {
-                            window.StatusBar.message(data.error, false);
+                    for (let output_name in data.outputs) {
+                        data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
+                        let task = data.outputs[output_name].task,
+                            callbacks = data.outputs[output_name].callbacks;
+                        if (!callbacks) callbacks = {}
+                        for (let name in window.TerraProject.callbacks[task]) {
+                            let value = callbacks[name];
+                            switch (window.TerraProject.callbacks[task][name].type) {
+                                case "bool":
+                                    callbacks[name] = value !== undefined;
+                                    break;
+                            }
                         }
-                    },
-                    data
-                )
+                        data.outputs[output_name].callbacks = callbacks;
+                    }
+                    window.ExchangeRequest(
+                        "start_training",
+                        (success, data) => {
+                            this.validate = false;
+                            if (success) {
+                                if (data.data.validation_errors) {
+                                    $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
+                                    window.location = window.TerraProject.path.modeling;
+                                } else {
+                                    console.log("SUCCESS:", success);
+                                    console.log("DATA:", data);
+                                }
+                            } else {
+                                window.StatusBar.message(data.error, false);
+                            }
+                        },
+                        data
+                    )
+                }
             });
 
             return this;

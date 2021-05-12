@@ -93,7 +93,7 @@
                                 for (let index in data.data) {
                                     let error = data.data[index];
                                     if (error) {
-                                        terra_board.set_layer_error(index, JSON.stringify(error));
+                                        terra_board.set_layer_error(index, is_error ? "" : JSON.stringify(error));
                                         is_error = true;
                                     }
                                 }
@@ -207,7 +207,7 @@
 
             this.set_layer_error = (index, message) => {
                 _cnodes.select(`#node-${index}`).classed("error", true);
-                window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
+                if (message) window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
             }
 
             this.load_layer = (class_name) => {
@@ -897,6 +897,10 @@
             warning.open();
         } else {
             terra_board.model = window.TerraProject.model_info;
+            if ($.cookie("model_need_validation")) {
+                $(terra_toolbar.btn.validation).children("span").trigger("click");
+                $.removeCookie("model_need_validation", {path:window.TerraProject.path.modeling});
+            }
         }
 
         LoadModel.find(".model-save-arch-btn > button").bind("click", (event) => {
