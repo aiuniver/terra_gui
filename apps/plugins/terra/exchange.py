@@ -213,14 +213,19 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validation_errors": errors})
 
         self.project.training = TrainConfig(**kwargs)
+        # print(self.project.model_name)
+        # print(self.project.model_plan)
+        model_plan = colab_exchange.get_model_plan(
+            self.project.model_plan, self.project.model_name
+        )
+        # print(model_plan)
+        # print(self.project.training.dict())
         response = self.__request_post(
             "get_model_to_colab",
-            model_plan=self.project.model_plan,
+            model_plan=model_plan,
             training=self.project.training.dict(),
         )
-        print(self.project.model_plan)
-        print(self.project.training.dict())
-        print(response)
+        # print(response)
         # response = colab_exchange.start_training(**self.project.training.dict())
         return response
 

@@ -137,7 +137,7 @@ class ModelPlan(pydantic.BaseModel):
     input_datatype: str = "2D"
     plan_name: str = ""
     num_classes: int = 10
-    input_shape: Dict[str, Optional[Any]] = {'input_1': (28, 28, 1)}
+    input_shape: Dict[str, Optional[Any]] = {"input_1": (28, 28, 1)}
     plan: List[tuple] = []
 
 
@@ -220,6 +220,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     tags: dict = {}
     dataset: str = ""
     model_name: str = ""
+    model_plan: Optional[list] = []
     layers: Dict[int, Layer] = {}
     layers_start: Dict[int, Layer] = {}
     layers_schema: List[List[int]] = []
@@ -228,7 +229,6 @@ class TerraExchangeProject(pydantic.BaseModel):
     callbacks: dict = {}
     compile: dict = {}
     training: TrainConfig = TrainConfig()
-    model_plan: Optional[list] = []
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),
         "modeling": reverse_lazy("apps_project:modeling"),
