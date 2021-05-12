@@ -110,17 +110,12 @@ class Optimizer(pydantic.BaseModel):
     params: OptimizerParams = OptimizerParams()
 
 
-class Callback(pydantic.BaseModel):
-    name: TaskType = TaskType.classification
-    switches: Dict[str, bool] = {}
-
-
 class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""
     metric: List[str] = []
     num_classes: int = 2
-    callback_switches: Callback = Callback()
+    callbacks: Dict[str, bool] = {}
 
 
 class TrainConfig(pydantic.BaseModel):
