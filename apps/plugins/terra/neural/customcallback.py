@@ -53,7 +53,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.y_true = samples_y
         self.batch_size = batch_size
         self.epochs = epochs
-        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0]//self.batch_size
+        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
         # self.samples_chek()
         self.y_pred = []
         self.epoch = 0
@@ -306,7 +306,7 @@ class CustomCallback(keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self._time_first_step = time.time()
-        msg = f'Epoch {epoch+1}/{self.epochs}:'
+        msg = f'Epoch {epoch + 1}/{self.epochs}:'
         # print(msg)
         self.Exch.show_current_epoch(epoch)
         pass
@@ -448,8 +448,8 @@ class ClassificationCallback:
                     xlabel = "epoch"
                     ylabel = val_metric_name
                     labels = (classes_title, xlabel, ylabel)
-                    plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][self.idx][j]))),
-                                          self.predict_cls[val_metric_name][self.idx][j],
+                    plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
+                                          self.predict_cls[val_metric_name][j],
                                           f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
@@ -459,7 +459,14 @@ class ClassificationCallback:
         Computes indices of images based on instance mode ('worst', 'best')
         Returns: array of best or worst predictions indices
         """
-        classes = np.argmax(self.y_true, axis=-1)
+        if "categorical_crossentropy" in self.loss:
+            classes = np.argmax(self.y_true, axis=-1)
+        elif "sparse_categorical_crossentropy" in self.loss:
+            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+        elif "binary_crossentropy" in self.loss:
+            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+        else:
+            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         probs = np.array([pred[classes[i]]
                           for i, pred in enumerate(self.y_pred)])
         sorted_args = np.argsort(probs)
@@ -478,38 +485,51 @@ class ClassificationCallback:
 
         classes_labels = np.arange(self.num_classes)
         data = []
+        if "categorical_crossentropy" in self.loss:
+            y_pred = np.argmax(self.y_pred, axis=-1)
+            y_true = np.argmax(self.y_true, axis=-1)
+        elif "sparse_categorical_crossentropy" in self.loss:
+            y_pred = np.argmax(self.y_pred, axis=-1)
+            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
+        elif "binary_crossentropy" in self.loss:
+            y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
+        else:
+            y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
+
         for idx in img_indices:
             # TODO нужно как то определять тип входа по тэгу (images)
             image = self.x_Val['input_1'][idx]
-            true_idx = np.argmax(self.y_true[idx])
-            pred_idx = np.argmax(self.y_pred[idx])
+            true_idx = y_true[idx]
+            pred_idx = y_pred[idx]
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
             data.append((image, title))
         self.Exch.show_image_data(data)
 
-    # Распознаём тестовую выборку и выводим результаты
-    def recognize_classes(self):
-        y_pred_classes = np.argmax(self.y_pred, axis=-1)
-        y_true_classes = np.argmax(self.y_true, axis=-1)
-        classes_accuracy = []
-        for j in range(self.num_classes + 1):
-            accuracy_value = 0
-            y_true_count_sum = 0
-            y_pred_count_sum = 0
-            for i in range(self.y_true.shape[0]):
-                y_true_diff = y_true_classes[i] - j
-                if not y_true_diff:
-                    y_pred_count_sum += 1
-                y_pred_diff = y_pred_classes[i] - j
-                if not (y_true_diff and y_pred_diff):
-                    y_true_count_sum += 1
-                if not y_pred_count_sum:
-                    accuracy_value = 0
-                else:
-                    accuracy_value = y_true_count_sum / y_pred_count_sum
-            classes_accuracy.append(accuracy_value)
-        return classes_accuracy
+    # # Распознаём тестовую выборку и выводим результаты
+    # def recognize_classes(self):
+    #     y_pred_classes = np.argmax(self.y_pred, axis=-1)
+    #     y_true_classes = np.argmax(self.y_true, axis=-1)
+    #     classes_accuracy = []
+    #     for j in range(self.num_classes + 1):
+    #         accuracy_value = 0
+    #         y_true_count_sum = 0
+    #         y_pred_count_sum = 0
+    #         for i in range(self.y_true.shape[0]):
+    #             y_true_diff = y_true_classes[i] - j
+    #             if not y_true_diff:
+    #                 y_pred_count_sum += 1
+    #             y_pred_diff = y_pred_classes[i] - j
+    #             if not (y_true_diff and y_pred_diff):
+    #                 y_true_count_sum += 1
+    #             if not y_pred_count_sum:
+    #                 accuracy_value = 0
+    #             else:
+    #                 accuracy_value = y_true_count_sum / y_pred_count_sum
+    #         classes_accuracy.append(accuracy_value)
+    #     return classes_accuracy
 
     # Распознаём тестовую выборку и выводим результаты
     def evaluate_accuracy(self):
@@ -521,12 +541,13 @@ class ClassificationCallback:
             true_classes = np.argmax(y_true, axis=-1)
         elif "sparse_categorical_crossentropy" in self.loss:
             pred_classes = np.argmax(y_pred, axis=-1)
-            true_classes = y_true
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
         elif "binary_crossentropy" in self.loss:
-            pred_classes = y_pred
-            true_classes = y_true
-        # else:
-
+            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
+        else:
+            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
         for j in range(self.num_classes):
             y_true_count_sum = 0
             y_pred_count_sum = 0
@@ -548,8 +569,18 @@ class ClassificationCallback:
         y_true = self.y_true
         y_pred = self.y_pred
         metric_classes = []
-        pred_classes = np.argmax(y_pred, axis=-1)
-        true_classes = np.argmax(y_true, axis=-1)
+        if "categorical_crossentropy" in self.loss:
+            pred_classes = np.argmax(y_pred, axis=-1)
+            true_classes = np.argmax(y_true, axis=-1)
+        elif "sparse_categorical_crossentropy" in self.loss:
+            pred_classes = np.argmax(y_pred, axis=-1)
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
+        elif "binary_crossentropy" in self.loss:
+            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
+        else:
+            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+            true_classes = np.reshape(y_true, (y_true.shape[0]))
         for j in range(self.num_classes):
             tp = 0
             fp = 0
@@ -570,7 +601,7 @@ class ClassificationCallback:
             metric_classes.append(f1)
         return metric_classes
 
-    # TODO как разбирать по классам при "sparse_categorical_crossentropy" и "binary_crossentropy"
+    # TODO как разбирать лосс по классам при "sparse_categorical_crossentropy" и "binary_crossentropy"
     def evaluate_loss(self):
         y_true = self.y_true
         y_pred = self.y_pred
@@ -581,17 +612,20 @@ class ClassificationCallback:
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
                 metric_classes.append(loss)
         elif "sparse_categorical_crossentropy" in self.loss:
-            y_pred = np.expand_dims(np.argmax(y_pred, axis=-1), axis=-1)
+            y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
-                loss = cross_entropy(np.where(y_true == i, y_true, 0)[0], np.where(y_pred == i, y_pred, 0)[0]).numpy()
+                loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
                 metric_classes.append(loss)
         elif "binary_crossentropy" in self.loss:
-            cross_entropy = BinaryCrossentropy()
+            y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
+            y_pred = tf.keras.utils.to_categorical(self.y_pred, num_classes=self.num_classes)
+            cross_entropy = CategoricalCrossentropy()
+            for i in range(self.num_classes):
+                loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
+                metric_classes.append(loss)
+        # else:
 
-        # for i in range(num_classes):
-        #     loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
-        #     metric_classes.append(loss)
         return metric_classes
 
     # def epoch_begin(self, epoch: int=0):
@@ -617,8 +651,8 @@ class ClassificationCallback:
                 metric_name = self.clbck_metrics[metric_idx].__name__
                 self.clbck_metrics[metric_idx] = metric_name
 
-            if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and
-                                           # 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and
+                # 'loss' not in self.clbck_metrics):
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -628,7 +662,7 @@ class ClassificationCallback:
             # определяем лучшую метрику для вывода данных при class_metrics='best'
             if logs[val_metric_name] > self.max_accuracy_value:
                 self.max_accuracy_value = logs[val_metric_name]
-                self.idx = metric_idx
+            self.idx = metric_idx
             # собираем в словарь по метрикам
             self.accuracy_metric[metric_idx].append(logs[metric_name])
             self.accuracy_val_metric[metric_idx].append(logs[val_metric_name])
@@ -645,33 +679,37 @@ class ClassificationCallback:
             )
 
             if self.y_pred is not None:
-
+                # try:
                 # # распознаем и выводим результат по классам
                 # classes_accuracy = self.recognize_classes(self.y_pred[output_num], self.y_true[output_key])
                 # распознаем и выводим результат по классам
                 # TODO считаем каждую метрику на каждом выходе
                 if metric_name.endswith('accuracy'):
                     metric_classes = self.evaluate_accuracy()
+                elif metric_name.endswith('loss'):
+                    metric_classes = self.evaluate_loss()
                 else:
                     metric_classes = self.evaluate_f1()
-                #     metric_classes = self.evaluate_loss(output_num=output_num, output_key=output_key,
-                #                                         num_classes=num_classes)
+
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
                 for j in range(self.num_classes):
                     self.acls_lst[metric_idx][j].append(metric_classes[j])
-                dcls = {str(val_metric_name): self.acls_lst}
+                dcls = {str(val_metric_name): self.acls_lst[metric_idx]}
                 dclsup.update(dcls)
                 self.predict_cls.update(dclsup)
+                # except Exception:
+                #     pass
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.plot_result(output_key)
 
+        # self.Exch.show_text_data(self.predict_cls)
         self.Exch.print_epoch_monitor(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
-        return self.predict_cls
+        # return
 
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
@@ -748,7 +786,7 @@ class SegmentationCallback:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
 
-                if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f'{output_key}_{metric_name}'
                     val_metric_name = f"val_{metric_name}"
@@ -958,7 +996,7 @@ class SegmentationCallback:
             if not isinstance(self.clbck_metrics[metric_idx], str):
                 metric_name = self.clbck_metrics[metric_idx].__name__
                 self.clbck_metrics[metric_idx] = metric_name
-            if len(self.dataset.Y) > 1: # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -1073,27 +1111,27 @@ class TimeseriesCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 showmet = f'{output_key}_{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
             else:
                 showmet = f'{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
-        # showmet = self.losses[self.idx]
-        # vshowmet = f"val_{showmet}"
+            # showmet = self.losses[self.idx]
+            # vshowmet = f"val_{showmet}"
             epochcomment = f" epoch {self.epoch + 1}"
             loss_len = len(self.history[showmet])
             data = {}
 
-        # loss_title = (f"loss and val_loss {epochcomment}", "epochs", f"{showmet}")
-        # data.update(
-        #     {
-        #         loss_title: [
-        #             [range(loss_len), self.history["loss"], "loss"],
-        #             [range(loss_len), self.history["val_loss"], "val_loss"],
-        #         ]
-        #     }
-        # )
+            # loss_title = (f"loss and val_loss {epochcomment}", "epochs", f"{showmet}")
+            # data.update(
+            #     {
+            #         loss_title: [
+            #             [range(loss_len), self.history["loss"], "loss"],
+            #             [range(loss_len), self.history["val_loss"], "val_loss"],
+            #         ]
+            #     }
+            # )
 
             metric_title = (
                 f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}",
@@ -1174,7 +1212,7 @@ class TimeseriesCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 metric_name = f'{output_key}_{self.losses[i]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -1276,7 +1314,7 @@ class RegressionCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 showmet = f'{output_key}_{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
             else:
@@ -1337,7 +1375,7 @@ class RegressionCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1: # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 metric_name = f'{output_key}_{self.losses[i]}'
                 val_metric_name = f"val_{metric_name}"
             else:
