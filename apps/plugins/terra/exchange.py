@@ -17,6 +17,7 @@ from .neural import colab_exchange
 
 class TerraExchange:
     __project: TerraExchangeProject = TerraExchangeProject()
+    __model_plan: list = []
 
     @property
     def project(self) -> TerraExchangeProject:
@@ -206,7 +207,14 @@ class TerraExchange:
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         self.project.training = TrainConfig(**kwargs)
-        response = colab_exchange.start_training(**self.project.training.dict())
+        model_plan = colab_exchange.get_model_plan()
+        response = self.__request_post(
+            "get_model_to_colab",
+            model_plan=model_plan,
+            training=self.project.training.dict(),
+        )
+        print(response)
+        # response = colab_exchange.start_training(**self.project.training.dict())
         return TerraExchangeResponse(data=response)
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
