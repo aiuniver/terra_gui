@@ -1,3 +1,4 @@
+import base64
 import gc
 import os
 import re
@@ -931,12 +932,12 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, **kwargs) -> None:
+    def start_training(self, model: str, **kwargs) -> None:
         training = kwargs
         print(training)
-        # model = self.nn.model
+        model = self.nn.model
         self.nn.set_dataset(self.dts)
-        # nn_model = dill.loads(model)
+        nn_model = dill.loads(base64.b64decode(model))
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
         epochs = training.get("epochs_count", 10)
@@ -948,7 +949,7 @@ class Exchange(StatesData, GuiExch):
             epochs=epochs,
             batch_size=batch_size,
         )
-        # self.nn.terra_fit(nn_model)
+        self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
     #
