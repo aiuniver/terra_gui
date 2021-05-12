@@ -39,6 +39,16 @@ class TaskType(str, Enum):
     segmentation = "segmentation"
 
 
+class CheckpointIndicatorType(str, Enum):
+    train = "train"
+    val = "val"
+
+
+class CheckpointModeType(str, Enum):
+    min = "min"
+    max = "max"
+
+
 class LayerLocation(str, Enum):
     input = "input"
     middle = "middle"
@@ -113,6 +123,14 @@ class Optimizer(pydantic.BaseModel):
 class Callback(pydantic.BaseModel):
     name: TaskType = TaskType.classification
     switches: Dict[str, bool] = {}
+
+
+class Checkpoint(pydantic.BaseModel):
+    indicator: CheckpointIndicatorType = CheckpointIndicatorType.val
+    monitor: Dict[str, str] = {'output': 'output_1', 'out_type': 'metrics', 'out_monitor': 'accuracy'}  # need to reformat
+    mode: CheckpointModeType = CheckpointModeType.max
+    save_best: bool = False
+    save_weights: bool = False
 
 
 class OutputConfig(pydantic.BaseModel):
