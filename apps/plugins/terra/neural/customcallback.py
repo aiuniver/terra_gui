@@ -315,8 +315,8 @@ class CustomCallback(keras.callbacks.Callback):
     #     self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-        msg = f'Batch {batch}/{self.num_batches}:'
-        # print(msg, self.update_progress(self.num_batches, batch, self._time_first_step))
+        msg = f'batch {batch}/{self.num_batches}: {self.update_progress(self.num_batches, batch, self._time_first_step)}'
+        self.Exch.print_2status_bar(('Progress: ', msg))
 
     def on_epoch_end(self, epoch, logs=None):
         """
@@ -706,7 +706,7 @@ class ClassificationCallback:
                 self.plot_result(output_key)
 
         # self.Exch.show_text_data(self.predict_cls)
-        self.Exch.print_epoch_monitor(
+        self.Exch.show_text_data(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         # return
@@ -1044,7 +1044,7 @@ class SegmentationCallback:
             if self.epoch % self.step == 0:
                 self.plot_result(output_key=output_key)
 
-        self.Exch.print_epoch_monitor(
+        self.Exch.show_text_data(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
@@ -1241,7 +1241,7 @@ class TimeseriesCallback:
                 self.comment = f" epoch {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
-        self.Exch.print_epoch_monitor(
+        self.Exch.show_text_data(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
@@ -1403,7 +1403,7 @@ class RegressionCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
 
-        self.exchange.print_epoch_monitor(
+        self.exchange.show_text_data(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
