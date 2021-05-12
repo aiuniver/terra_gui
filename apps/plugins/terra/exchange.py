@@ -1,3 +1,4 @@
+import base64
 import json
 import requests
 
@@ -220,13 +221,15 @@ class TerraExchange:
         )
         # print(model_plan)
         # print(self.project.training.dict())
-        response = self.__request_post(
-            "get_model_to_colab",
-            model_plan=model_plan,
-            training=self.project.training.dict(),
-        )
+        # response = self.__request_post(
+        #     "get_model_to_colab",
+        #     model_plan=model_plan,
+        #     training=self.project.training.dict(),
+        # )
+        with open('F:\\Работа\\UII\\my_model.h5', 'rb') as f:
+            model = base64.b64encode(f.read())
         # print(response)
-        # response = colab_exchange.start_training(**self.project.training.dict())
+        response = colab_exchange.start_training(model=model, **self.project.training.dict())
         return response
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:

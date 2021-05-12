@@ -298,6 +298,7 @@ class GUINN:
 
         # TODO: change to print_2status_bar then remove debug_mode
         self.Exch.show_text_data(msg)
+
         pass
 
     def save_nnmodel(self) -> None:
@@ -397,7 +398,7 @@ class GUINN:
 
         self.show_training_params()
 
-        if self.x_Val['input_1'] is not None:
+        if self.x_Val.get('input_1', None) is not None:
 
             self.history = self.model.fit(
                 self.x_Train,

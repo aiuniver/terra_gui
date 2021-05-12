@@ -2,10 +2,12 @@ import base64
 import gc
 import os
 import re
+import tempfile
 
 import dill as dill
 from IPython import get_ipython
 from django.conf import settings
+from tensorflow.keras.models import load_model
 
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
@@ -941,17 +943,22 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, model: str, **kwargs) -> None:
+    def start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
-        print(training)
-        model = self.nn.model
+        model_filepath = f"{tempfile.gettempdir()}\\tmp_model.h5"
+
+        with open(model_filepath, 'wb') as model_file:
+            model_file.write(base64.b64decode(model))
+
         self.nn.set_dataset(self.dts)
-        nn_model = dill.loads(base64.b64decode(model))
+        nn_model = load_model(model_filepath)
+        for layer in nn_model.layers:
+            print(layer.get_config())
+
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
         epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
-        print("STATS = ", output_params, clbck_chp, epochs, batch_size)
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
