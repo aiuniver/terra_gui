@@ -205,6 +205,7 @@ class TerraExchange:
             return TerraExchangeResponse()
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+        print(TrainConfig(**kwargs).dict())
         return self.__request_post("start_training", **TrainConfig(**kwargs).dict())
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:

@@ -110,27 +110,30 @@
             this.bind("submit", (event) => {
                 event.preventDefault();
                 window.StatusBar.clear();
-                // let form = $(event.currentTarget).serializeObject(),
-                //     data = {};
-                // let process_data = (o, data) => {
-                //     for (let name in o) {
-                //         console.log(name, o[name]);
-                //     }
-                // }
-                // data = process_data()
-                // console.log(data);
-                // console.log(window.TerraProject.training);
+                let data = $(event.currentTarget).serializeObject();
+                for (let param_name in window.TerraProject.optimizers[data.optimizer.name].extra) {
+                    let param = window.TerraProject.optimizers[data.optimizer.name].extra[param_name];
+                    if (!data.optimizer.params.extra) data.optimizer.params.extra = {};
+                    switch (param.type) {
+                        case "bool":
+                            data.optimizer.params.extra[param_name] = data.optimizer.params.extra[param_name] !== undefined;
+                            break;
+                    }
+                }
+                for (let output_name in data.outputs) {
+                    data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
+                }
                 window.ExchangeRequest(
                     "start_training",
                     (success, data) => {
                         if (success) {
-                            // console.log("SUCCESS:", success);
-                            // console.log("DATA:", data);
+                            console.log("SUCCESS:", success);
+                            console.log("DATA:", data);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
-                    $(event.currentTarget).serializeObject()
+                    data
                 )
             });
 
