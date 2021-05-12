@@ -424,7 +424,8 @@
 .params-optimizer-extra > .inner > .field-inline.field-reverse > .checkout-switch {
     margin-left:0;
 }
-.params-output > .inner > .form-inline-label {
+.params-output > .inner > .form-inline-label,
+.params-callbacks > .inner > .form-inline-label {
     display:-webkit-box;
     display:-moz-box;
     display:-ms-flexbox;
@@ -453,6 +454,12 @@
     -webkit-align-items:center;
     -ms-flex-align:center;
     align-items:center;
+}
+.params-callbacks > .inner > .form-inline-label > .field-inline {
+    width:100%;
+}
+.params-callbacks > .inner > .form-inline-label > .field-inline > .checkout-switch {
+    margin-left:0;
 }
 
 

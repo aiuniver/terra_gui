@@ -120,11 +120,6 @@ class Optimizer(pydantic.BaseModel):
     params: OptimizerParams = OptimizerParams()
 
 
-class Callback(pydantic.BaseModel):
-    name: TaskType = TaskType.classification
-    switches: Dict[str, bool] = {}
-
-
 class Checkpoint(pydantic.BaseModel):
     indicator: CheckpointIndicatorType = CheckpointIndicatorType.val
     monitor: Dict[str, str] = {'output': 'output_1', 'out_type': 'metrics', 'out_monitor': 'accuracy'}  # need to reformat
@@ -138,7 +133,7 @@ class OutputConfig(pydantic.BaseModel):
     loss: str = ""
     metric: List[str] = []
     num_classes: int = 2
-    callback_switches: Callback = Callback()
+    callbacks: Dict[str, bool] = {}
 
 
 class TrainConfig(pydantic.BaseModel):

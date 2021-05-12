@@ -16,7 +16,8 @@
             let _field_optimizer = $("#field_form-optimizer"),
                 _field_learning_rate = $("#field_form-learning_rate"),
                 _field_output_loss = $(".field_form-output_loss"),
-                _params_optimizer_extra = $(".params-optimizer-extra");
+                _params_optimizer_extra = $(".params-optimizer-extra"),
+                _params_callbacks = $(".params-callbacks");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -42,12 +43,18 @@
                     }
                     let params = _optimizers[value] ? _optimizers[value] : _get_defaults(window.TerraProject.optimizers[value]);
                     _optimizers[value] = params;
-                    _field_learning_rate.val(params.main.learning_rate);
+                    _field_learning_rate.val(
+                        window.TerraProject.training.optimizer.name === value && window.TerraProject.training.optimizer.params.main.learning_rate !== undefined
+                            ? window.TerraProject.training.optimizer.params.main.learning_rate
+                            : params.main.learning_rate
+                    );
                     _params_optimizer_extra.children(".inner").html("");
                     if (Object.keys(params.extra).length) {
                         let _params = $.extend(true, {}, window.TerraProject.optimizers[value].extra);
                         for (let param in _params) {
-                            _params[param].default = _optimizers[value].extra[param];
+                            _params[param].default = window.TerraProject.training.optimizer.name === value && window.TerraProject.training.optimizer.params.extra[param] !== undefined
+                                ? window.TerraProject.training.optimizer.params.extra[param]
+                                : _optimizers[value].extra[param];
                             if (!_params[param].label) _params[param].label = _camelize(param);
                             let widget = window.FormWidget(`optimizer[params][extra][${param}]`, _params[param]);
                             widget.addClass("field-inline field-reverse");
@@ -57,6 +64,8 @@
                     } else {
                         _params_optimizer_extra.addClass("hidden");
                     }
+                    window.TerraProject.training.optimizer.name = value;
+                    window.TerraProject.training.optimizer.params = _optimizers[value];
                 }
             });
 
@@ -78,6 +87,7 @@
                     task = event.currentTarget.selectedOptions[0].parentNode.label,
                     field_metric = $(`.field_form-${output_name}-output_metric`),
                     field_num_classes = $(`.field_form-${output_name}-output_num_classes`),
+                    callbacks = window.TerraProject.callbacks[task] === undefined ? {} : window.TerraProject.callbacks[task],
                     metrics = [];
                 $(`.field_form-${output_name}-output_task`).val(task);
                 field_metric.html("");
@@ -105,6 +115,20 @@
                 } else {
                     field_num_classes.attr("disabled", "disabled").val(2);
                 }
+                let inner = $(`.params-callbacks > .callback-${output_name} > .form-inline-label`);
+                inner.html("");
+                for (let name in callbacks) {
+                    let callback = callbacks[name],
+                        value = false;
+                    try {
+                        value = window.TerraProject.training.outputs[output_name].callbacks[name];
+                    } catch {}
+                    if (!value) value = false;
+                    callback.default = value;
+                    let widget = window.FormWidget(`outputs[${output_name}][callbacks][${name}]`, callback);
+                    widget.addClass("field-inline field-reverse");
+                    inner.append(widget);
+                }
             }).trigger("change");
 
             this.bind("submit", (event) => {
@@ -122,6 +146,18 @@
                 }
                 for (let output_name in data.outputs) {
                     data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
+                    let task = data.outputs[output_name].task,
+                        callbacks = data.outputs[output_name].callbacks;
+                    if (!callbacks) callbacks = {}
+                    for (let name in window.TerraProject.callbacks[task]) {
+                        let value = callbacks[name];
+                        switch (window.TerraProject.callbacks[task][name].type) {
+                            case "bool":
+                                callbacks[name] = value !== undefined;
+                                break;
+                        }
+                    }
+                    data.outputs[output_name].callbacks = callbacks;
                 }
                 window.ExchangeRequest(
                     "start_training",
