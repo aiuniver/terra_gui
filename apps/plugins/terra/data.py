@@ -132,6 +132,15 @@ class Checkpoint(pydantic.BaseModel):
     save_weights: bool = False
 
 
+class ModelPlan(pydantic.BaseModel):
+    framework: str = "keras"
+    input_datatype: str = "2D"
+    plan_name: str = ""
+    num_classes: int = 10
+    input_shape: Dict[str, Optional[Any]] = {'input_1': (28, 28, 1)}
+    plan: List[tuple] = []
+
+
 class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""

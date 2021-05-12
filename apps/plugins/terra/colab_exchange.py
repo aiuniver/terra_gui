@@ -15,6 +15,7 @@ from .data import (
     LayerLocation,
     LayerType,
     OptimizerParams,
+    ModelPlan,
 )
 
 
@@ -914,6 +915,14 @@ class Exchange(StatesData, GuiExch):
 
     def get_optimizers(self):
         return self.optimizers
+
+    def get_model_plan(self, plan, model_name):
+        model_plan = ModelPlan()
+        model_plan.input_datatype = self.dts.input_datatype
+        model_plan.input_shape = self.dts.input_shape
+        model_plan.plan = plan
+        model_plan.plan_name = model_name
+        return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
         optimizer_params = {"main": {}, "extra": {}}
