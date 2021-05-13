@@ -721,7 +721,8 @@
             _layer_type_field = $("#field_form-type"),
             _layer_params_main = this.find(".params-main"),
             _layer_params_extra = this.find(".params-extra"),
-            _action_save = this.find(".actions-form > .item.save > button");
+            _action_save = this.find(".actions-form > .item.save > button"),
+            _action_clone = this.find(".actions-form > .item.clone > button");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -787,6 +788,7 @@
                 this.find("#field_form-input_shape").parent().remove();
                 this.find("#field_form-data_name").parent().remove();
                 _action_save.attr("disabled", "disabled");
+                _action_clone.attr("disabled", "disabled");
                 _layer_params_main.addClass("hidden");
                 _layer_params_main.children(".inner").html("");
                 _layer_params_extra.addClass("hidden");
@@ -801,6 +803,7 @@
                 if (data.config.location_type !== "input") _layer_type_field.removeAttr("disabled");
                 _layer_type_field.selectmenu("refresh");
                 _action_save.removeAttr("disabled");
+                if (data.config.location_type === "middle") _action_clone.removeAttr("disabled");
                 _render_params(data.config);
             }
 
@@ -839,6 +842,37 @@
                 change:(event, ui) => {
                     $(event.target).trigger("change");
                 }
+            });
+
+            _action_clone.bind("click", (event) => {
+                event.preventDefault();
+                window.StatusBar.clear();
+                let indexes = Object.keys(window.TerraProject.layers).map((value) => {
+                    return parseInt(value);
+                });
+                if (!indexes.length) indexes = [0];
+                let _max_id = Math.max.apply(Math, indexes)+1,
+                    layer = _prepare_data($(event.currentTarget).closest("form").serializeObject());
+                layer.config.name = `l${_max_id}_${layer.config.type}`;
+                layer.config.up_link = [];
+                layer.down_link = [];
+                layer.x = null;
+                layer.y = null;
+                window.ExchangeRequest(
+                    "save_layer",
+                    (success, data) => {
+                        if (success) {
+                            terra_board.model = {"layers":data.data.layers,"schema":[]};
+                            window.StatusBar.message(window.Messages.get("LAYER_CLONED"), true);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    },
+                    {
+                        "index": _max_id,
+                        "layer": layer,
+                    }
+                );
             });
 
             this.bind("submit", (event) => {

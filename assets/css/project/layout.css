@@ -220,7 +220,7 @@ nav.menu > ul > .item > a {
 
 main {
     height:100%;
-    padding:94px 0 21px 0;
+    padding:94px 0 31px 0;
 }
 main > .container {
     height:100%;
@@ -439,12 +439,12 @@ main > .container > .properties > .wrapper .mCSB_container {
 
 footer {
     width:100%;
-    line-height:20px;
+    line-height:30px;
     position:fixed;
     left:0;
     bottom:0;
     z-index:900;
-    font-size:.625rem;
+    font-size:.75rem;
     white-space:nowrap;
     user-select:none;
     display:-webkit-box;
@@ -526,7 +526,7 @@ footer > .progress > .wrapper > i {
     overflow:hidden;
 }
 footer > .progress > .wrapper > i > span {
-    line-height:14px;
+    line-height:24px;
     position:absolute;
     left:0;
     top:0;
@@ -535,7 +535,7 @@ footer > .progress > .wrapper > i > span {
 }
 footer > .progress > .wrapper > span {
     display:block;
-    line-height:20px;
+    line-height:30px;
     padding:0 10px;
     position:absolute;
     left:0;
@@ -548,6 +548,7 @@ footer > .progress > .wrapper > span {
 /* state */
 footer > .state > .wrapper {
     width:59px;
+    font-weight:600;
     text-align:center;
 }
 footer > .state > .wrapper:before {

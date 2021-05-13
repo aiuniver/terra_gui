@@ -154,7 +154,7 @@
     justify-content:flex-end;
 }
 .card-tag {
-    font-size:12px;
+    font-size:.75rem;
     line-height:20px;
     color:#A7BED3;
     padding-left:10px;
