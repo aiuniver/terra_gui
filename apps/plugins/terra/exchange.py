@@ -15,6 +15,9 @@ from .exceptions import TerraExchangeException
 from .neural import colab_exchange
 
 
+DEFAULT_MODEL_NAME = "NoName"
+
+
 class TerraExchange:
     __project: TerraExchangeProject = TerraExchangeProject()
 
@@ -117,6 +120,7 @@ class TerraExchange:
         self.project.layers_start = layers
         self.project.layers_schema = schema
         self.project.dataset = dataset
+        self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -153,6 +157,7 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         data.data.update({"layers": output})
+        self.project.model_name = model_file
         return data
 
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
@@ -176,6 +181,7 @@ class TerraExchange:
         self.project.layers = {}
         for index, layer in self.project.dict().get("layers_start"):
             self.project.layers[int(index)] = Layer(**layer)
+        self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -225,8 +231,9 @@ class TerraExchange:
             model_plan=model_plan,
             training=self.project.training.dict(),
         )
-        # print(response)
-        # response = colab_exchange.start_training(**self.project.training.dict())
+        print(response)
+        model = response.data.get('model', '')
+        response = colab_exchange.start_training(model=model, **self.project.training.dict())
         return response
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:

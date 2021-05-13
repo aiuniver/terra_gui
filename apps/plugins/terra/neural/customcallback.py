@@ -1,3 +1,5 @@
+import copy
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.losses import (
@@ -184,17 +186,17 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-
         __task_type_defaults_kwargs = self.task_type_defaults_dict.get(task_type)
         callback_kwargs = __task_type_defaults_kwargs["callback_kwargs"]
         if metrics:
-            callback_kwargs["metrics"] = metrics
+            callback_kwargs["metrics"] = copy.copy(metrics)
         if task_type == "classification" or task_type == "segmentation":
             callback_kwargs["num_classes"] = num_classes
 
         clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
 
         for option_name, option_value in clbck_options.items():
+
             if option_name == "show_every_epoch":
                 if option_value:
                     callback_kwargs["step"] = 1
@@ -281,13 +283,13 @@ class CustomCallback(keras.callbacks.Callback):
         for _key in self.clbck_params.keys():
             self.metrics.append(self.clbck_params[_key]["metrics"])
             self.loss.append(self.clbck_params[_key]["loss"])
-            self.task_name.append(self.clbck_params[_key]["task_name"])
+            self.task_name.append(self.clbck_params[_key]["task"])
             self.num_classes.append(self.clbck_params.setdefault(_key)["num_classes"])
             self.y_Scaler.append(self.DTS.y_Scaler.setdefault(_key))
             self.tokenizer.append(self.DTS.tokenizer.setdefault(_key))
             self.one_hot_encoding.append(self.DTS.one_hot_encoding.setdefault(_key))
             self.prepare_callbacks(
-                task_type=self.clbck_params[_key]["task_name"],
+                task_type=self.clbck_params[_key]["task"].value,
                 metrics=self.clbck_params[_key]["metrics"],
                 num_classes=self.clbck_params.setdefault(_key)["num_classes"],
             )
