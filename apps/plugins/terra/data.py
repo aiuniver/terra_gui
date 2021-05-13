@@ -33,10 +33,20 @@ class OptimizerType(str, Enum):
 
 
 class TaskType(str, Enum):
-    classification = 'classification'
+    classification = "classification"
     timeseries = "timeseries"
     regression = "regression"
     segmentation = "segmentation"
+
+
+class CheckpointIndicatorType(str, Enum):
+    train = "train"
+    val = "val"
+
+
+class CheckpointModeType(str, Enum):
+    min = "min"
+    max = "max"
 
 
 class LayerLocation(str, Enum):
@@ -105,25 +115,46 @@ class OptimizerParams(pydantic.BaseModel):
         return value
 
 
-class Callback(pydantic.BaseModel):
-    name: TaskType = TaskType.classification
-    switches: Dict[str, bool] = {}
+class Optimizer(pydantic.BaseModel):
+    name: OptimizerType = OptimizerType.Adam
+    params: OptimizerParams = OptimizerParams()
+
+
+class Checkpoint(pydantic.BaseModel):
+    indicator: CheckpointIndicatorType = CheckpointIndicatorType.val
+    monitor: Dict[str, str] = {
+        "output": "output_1",
+        "out_type": "metrics",
+        "out_monitor": "accuracy",
+    }  # need to reformat
+    mode: CheckpointModeType = CheckpointModeType.max
+    save_best: bool = False
+    save_weights: bool = False
+
+
+class ModelPlan(pydantic.BaseModel):
+    framework: str = "keras"
+    input_datatype: str = "2D"
+    plan_name: str = ""
+    num_classes: int = 10
+    input_shape: Dict[str, Optional[Any]] = {"input_1": (28, 28, 1)}
+    plan: List[tuple] = []
 
 
 class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""
-    metric: List[str] = []
+    metrics: List[str] = []
     num_classes: int = 2
-    callback_switches: Callback = Callback()
+    callbacks: Dict[str, bool] = {}
 
 
 class TrainConfig(pydantic.BaseModel):
     batch_sizes: int = 32
     epochs_count: int = 20
-    optimizer: Dict[str, OptimizerParams] = {}
+    optimizer: Optimizer = Optimizer()
     outputs: Dict[str, OutputConfig] = {}
-    checkpoint: Dict[str, Optional[Any]] = {}
+    checkpoint: Checkpoint = Checkpoint()
 
 
 class LayerConfigParam(pydantic.BaseModel):
@@ -189,6 +220,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     tags: dict = {}
     dataset: str = ""
     model_name: str = ""
+    model_plan: Optional[list] = []
     layers: Dict[int, Layer] = {}
     layers_start: Dict[int, Layer] = {}
     layers_schema: List[List[int]] = []

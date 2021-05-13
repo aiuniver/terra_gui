@@ -157,7 +157,7 @@ class GUINN:
         # print('___nn___NN___set_optimizer___', optimizer_name)
         # self.optimizer_name = optimizer_name
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
-        self.optimizer = self.optimizer_object(**self.optimizers_kwargs)
+        self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
         pass
 
     def set_chp_monitor(self) -> None:

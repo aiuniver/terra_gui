@@ -1,3 +1,4 @@
+import copy
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
@@ -11,10 +12,19 @@ __version__ = 0.01
 
 
 class CustomCallback(keras.callbacks.Callback):
-    """ CustomCallback for all task type"""
+    """CustomCallback for all task type"""
 
-    def __init__(self, params: dict = None, step=1, show_final=True, dataset=DTS(), exchange=Exchange(),
-                 samples_x: dict = None, samples_y: dict = None, batch_size: int = None, epochs: int = None):
+    def __init__(
+            self,
+            params: dict = None,
+            step=1,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
+            samples_x: dict = None,
+            samples_y: dict = None,
+            batch_size: int = None,
+            epochs: int = None):
 
         """
         Init for Custom callback
@@ -62,79 +72,88 @@ class CustomCallback(keras.callbacks.Callback):
         self._now_time = time.time()
         self._time_first_step = time.time()
 
-        self.task_type_defaults_dict = {'classification': {'optimizer_name': 'Adam',
-                                                           'loss': 'categorical_crossentropy',
-                                                           'metrics': ['accuracy'],
-                                                           'batch_size': 32,
-                                                           'epochs': 20,
-                                                           'shuffle': True,
-                                                           'clbck_object': ClassificationCallback,
-                                                           'callback_kwargs': {'metrics': ['loss', 'accuracy'],
-                                                                               'step': 1,
-                                                                               'class_metrics': [],
-                                                                               'num_classes': 2,
-                                                                               'data_tag': 'images',
-                                                                               'show_best': True,
-                                                                               'show_worst': False,
-                                                                               'show_final': True,
-                                                                               'dataset': self.DTS,
-                                                                               'exchange': self.Exch
-                                                                               }
-                                                           },
-                                        'segmentation': {'optimizer_name': 'Adam',
-                                                         'loss': 'categorical_crossentropy',
-                                                         'metrics': ['dice_coef'],
-                                                         'batch_size': 16,
-                                                         'epochs': 20,
-                                                         'shuffle': False,
-                                                         'clbck_object': SegmentationCallback,
-                                                         'callback_kwargs': {'metrics': ['dice_coef'],
-                                                                             'step': 1,
-                                                                             'class_metrics': [],
-                                                                             'num_classes': 2,
-                                                                             'data_tag': 'images',
-                                                                             'show_worst': False,
-                                                                             'show_final': True,
-                                                                             'dataset': self.DTS,
-                                                                             'exchange': self.Exch
-                                                                             }
-                                                         },
-                                        'regression': {'optimizer_name': 'Adam',
-                                                       'loss': 'mse',
-                                                       'metrics': ['mae'],
-                                                       'batch_size': 32,
-                                                       'epochs': 20,
-                                                       'shuffle': True,
-                                                       'clbck_object': RegressionCallback,
-                                                       'callback_kwargs': {'metrics': ['loss', 'mse'],
-                                                                           'step': 1,
-                                                                           'plot_scatter': True,
-                                                                           'show_final': True,
-                                                                           'dataset': self.DTS,
-                                                                           'exchange': self.Exch
-                                                                           }
-                                                       },
-                                        'timeseries': {'optimizer_name': 'Adam',
-                                                       'loss': 'mse',
-                                                       'metrics': ['mae'],
-                                                       'batch_size': 32,
-                                                       'epochs': 20,
-                                                       'shuffle': False,
-                                                       'clbck_object': TimeseriesCallback,
-                                                       'callback_kwargs': {'metrics': ['loss', 'mse'],
-                                                                           'step': 1,
-                                                                           'corr_step': 10,
-                                                                           'plot_pred_and_true': True,
-                                                                           'show_final': True,
-                                                                           'dataset': self.DTS,
-                                                                           'exchange': self.Exch
-                                                                           }
-                                                       },
-                                        }
+        self.task_type_defaults_dict = {
+            "classification": {
+                "optimizer_name": "Adam",
+                "loss": "categorical_crossentropy",
+                "metrics": ["accuracy"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": ClassificationCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "accuracy"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_best": True,
+                    "show_worst": False,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "segmentation": {
+                "optimizer_name": "Adam",
+                "loss": "categorical_crossentropy",
+                "metrics": ["dice_coef"],
+                "batch_size": 16,
+                "epochs": 20,
+                "shuffle": False,
+                "clbck_object": SegmentationCallback,
+                "callback_kwargs": {
+                    "metrics": ["dice_coef"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_worst": False,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "regression": {
+                "optimizer_name": "Adam",
+                "loss": "mse",
+                "metrics": ["mae"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": RegressionCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "mse"],
+                    "step": 1,
+                    "plot_scatter": True,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "timeseries": {
+                "optimizer_name": "Adam",
+                "loss": "mse",
+                "metrics": ["mae"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": False,
+                "clbck_object": TimeseriesCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "mse"],
+                    "step": 1,
+                    "corr_step": 10,
+                    "plot_pred_and_true": True,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+        }
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        print('self.callbacks in Customcallbacks', self.callbacks)
+        print("self.callbacks in Customcallbacks", self.callbacks)
 
     # def samples_chek(self):
     #     """
@@ -158,7 +177,9 @@ class CustomCallback(keras.callbacks.Callback):
     #             self.Exch.print_error(('Error',
     #                                    f'No y_Val in {output_key} -> Failed'))
 
-    def prepare_callbacks(self, task_type: str = "", metrics: list = None, num_classes: int = None) -> None:
+    def prepare_callbacks(
+        self, task_type: str = "", metrics: list = None, num_classes: int = None
+    ) -> None:
         """
         if terra in raw mode  - setting callback if its set
         if terra with django - checking switches and set callback options from switches
@@ -168,61 +189,62 @@ class CustomCallback(keras.callbacks.Callback):
         """
 
         __task_type_defaults_kwargs = self.task_type_defaults_dict.get(task_type)
-        callback_kwargs = __task_type_defaults_kwargs['callback_kwargs']
+        callback_kwargs = __task_type_defaults_kwargs["callback_kwargs"]
         if metrics:
-            callback_kwargs['metrics'] = metrics
-        if task_type == 'classification' or task_type == 'segmentation':
-            callback_kwargs['num_classes'] = num_classes
+            callback_kwargs["metrics"] = copy.copy(metrics)
+        if task_type == "classification" or task_type == "segmentation":
+            callback_kwargs["num_classes"] = num_classes
 
         clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
 
         for option_name, option_value in clbck_options.items():
-            if option_name == 'show_every_epoch':
-                if option_value:
-                    callback_kwargs['step'] = 1
-                else:
-                    callback_kwargs['step'] = 0
-            elif option_name == 'plot_loss_metric':
-                if option_value:
-                    if not ('loss' in callback_kwargs['metrics']):
-                        callback_kwargs['metrics'].append('loss')
-                else:
-                    if 'loss' in callback_kwargs['metrics']:
-                        callback_kwargs['metrics'].remove('loss')
-            elif option_name == 'plot_metric':
-                if option_value:
-                    if not (metrics[0] in callback_kwargs['metrics']):
-                        callback_kwargs['metrics'].append(metrics[0])
-                else:
-                    if metrics[0] in callback_kwargs['metrics']:
-                        callback_kwargs['metrics'].remove(metrics[0])
-            elif option_name == 'plot_final':
-                if option_value:
-                    callback_kwargs['show_final'] = True
-                else:
-                    callback_kwargs['show_final'] = False
 
-        if (task_type == 'classification') or (task_type == 'segmentation'):
+            if option_name == "show_every_epoch":
+                if option_value:
+                    callback_kwargs["step"] = 1
+                else:
+                    callback_kwargs["step"] = 0
+            elif option_name == "plot_loss_metric":
+                if option_value:
+                    if not ("loss" in callback_kwargs["metrics"]):
+                        callback_kwargs["metrics"].append("loss")
+                else:
+                    if "loss" in callback_kwargs["metrics"]:
+                        callback_kwargs["metrics"].remove("loss")
+            elif option_name == "plot_metric":
+                if option_value:
+                    if not (metrics[0] in callback_kwargs["metrics"]):
+                        callback_kwargs["metrics"].append(metrics[0])
+                else:
+                    if metrics[0] in callback_kwargs["metrics"]:
+                        callback_kwargs["metrics"].remove(metrics[0])
+            elif option_name == "plot_final":
+                if option_value:
+                    callback_kwargs["show_final"] = True
+                else:
+                    callback_kwargs["show_final"] = False
+
+        if (task_type == "classification") or (task_type == "segmentation"):
             for option_name, option_value in clbck_options.items():
-                if option_name == 'plot_loss_for_classes':
+                if option_name == "plot_loss_for_classes":
                     if option_value:
-                        if not ('loss' in callback_kwargs['class_metrics']):
-                            callback_kwargs['class_metrics'].append('loss')
+                        if not ("loss" in callback_kwargs["class_metrics"]):
+                            callback_kwargs["class_metrics"].append("loss")
                     else:
-                        if 'loss' in callback_kwargs['class_metrics']:
-                            callback_kwargs['class_metrics'].remove('loss')
-                elif option_name == 'plot_metric_for_classes':
+                        if "loss" in callback_kwargs["class_metrics"]:
+                            callback_kwargs["class_metrics"].remove("loss")
+                elif option_name == "plot_metric_for_classes":
                     if option_value:
-                        if not (metrics[0] in callback_kwargs['class_metrics']):
-                            callback_kwargs['class_metrics'].append(metrics[0])
+                        if not (metrics[0] in callback_kwargs["class_metrics"]):
+                            callback_kwargs["class_metrics"].append(metrics[0])
                     else:
-                        if metrics[0] in callback_kwargs['class_metrics']:
-                            callback_kwargs['class_metrics'].remove(metrics[0])
-                elif option_name == 'show_worst_images' and option_value:
+                        if metrics[0] in callback_kwargs["class_metrics"]:
+                            callback_kwargs["class_metrics"].remove(metrics[0])
+                elif option_name == "show_worst_images" and option_value:
                     if option_value:
-                        callback_kwargs['show_worst'] = True
+                        callback_kwargs["show_worst"] = True
                     else:
-                        callback_kwargs['show_worst'] = False
+                        callback_kwargs["show_worst"] = False
                     # elif option_name == 'show_best_images':
                     #     if option_value:
                     #         self.callback_kwargs['show_best'] = True
@@ -261,18 +283,19 @@ class CustomCallback(keras.callbacks.Callback):
     def prepare_params(self):
 
         for _key in self.clbck_params.keys():
-            self.metrics.append(self.clbck_params[_key]['metrics'])
-            self.loss.append(self.clbck_params[_key]['loss'])
-            self.task_name.append(self.clbck_params[_key]['task_name'])
-            self.num_classes.append(self.clbck_params.setdefault(_key)['num_classes'])
+            self.metrics.append(self.clbck_params[_key]["metrics"])
+            self.loss.append(self.clbck_params[_key]["loss"])
+            self.task_name.append(self.clbck_params[_key]["task"])
+            self.num_classes.append(self.clbck_params.setdefault(_key)["num_classes"])
             self.y_Scaler.append(self.DTS.y_Scaler.setdefault(_key))
             self.tokenizer.append(self.DTS.tokenizer.setdefault(_key))
             self.one_hot_encoding.append(self.DTS.one_hot_encoding.setdefault(_key))
-            self.prepare_callbacks(task_type=self.clbck_params[_key]['task_name'],
-                                   metrics=self.clbck_params[_key]['metrics'],
-                                   num_classes=self.clbck_params.setdefault(_key)['num_classes'])
+            self.prepare_callbacks(
+                task_type=self.clbck_params[_key]["task"].value,
+                metrics=self.clbck_params[_key]["metrics"],
+                num_classes=self.clbck_params.setdefault(_key)["num_classes"])
 
-    def _estimate_step(self, current, start, now):
+      def _estimate_step(self, current, start, now):
         if current:
             _time_per_unit = (now - start) / current
         else:
@@ -323,18 +346,30 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        if self.x_Val['input_1'] is not None:
+        if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
             self.y_pred = self.y_true
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(epoch, logs=logs, output_key=output_key, y_pred=self.y_pred[i],
-                                            y_true=self.y_true[output_key], loss=self.loss[i])
+                self.callbacks[i].epoch_end(
+                    epoch,
+                    logs=logs,
+                    output_key=output_key,
+                    y_pred=self.y_pred[i],
+                    y_true=self.y_true[output_key],
+                    loss=self.loss[i],
+                )
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(epoch, logs=logs, output_key=output_key, y_pred=self.y_pred,
-                                            y_true=self.y_true[output_key], loss=self.loss[i])
+                self.callbacks[i].epoch_end(
+                    epoch,
+                    logs=logs,
+                    output_key=output_key,
+                    y_pred=self.y_pred,
+                    y_true=self.y_true[output_key],
+                    loss=self.loss[i],
+                )
 
         # print(self.update_progress(self.epochs, epoch, self._start_time))
 
@@ -344,20 +379,20 @@ class CustomCallback(keras.callbacks.Callback):
 
 
 class ClassificationCallback:
-    """ Callback for classification """
+    """Callback for classification"""
 
     def __init__(
-            self,
-            metrics=[],
-            step=1,
-            class_metrics=[],
-            num_classes=2,
-            data_tag="images",
-            show_worst=False,
-            show_best=False,
-            show_final=True,
-            dataset=DTS(),
-            exchange=Exchange()
+        self,
+        metrics=[],
+        step=1,
+        class_metrics=[],
+        num_classes=2,
+        data_tag="images",
+        show_worst=False,
+        show_best=False,
+        show_final=True,
+        dataset=DTS(),
+        exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -402,7 +437,7 @@ class ClassificationCallback:
         self.x_Val = {}
         self.y_true = []
         self.y_pred = []
-        self.loss = ''
+        self.loss = ""
         pass
 
     def plot_result(self, output_key: str = None):
@@ -418,7 +453,7 @@ class ClassificationCallback:
                     metric_name = metric_name.__name__
                 if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                     # определяем, что демонстрируем во 2м и 3м окне
-                    metric_name = f'{output_key}_{metric_name}'
+                    metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
                 else:
                     val_metric_name = f"val_{metric_name}"
@@ -427,12 +462,18 @@ class ClassificationCallback:
                 xlabel = "epoch"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
-                plot_data[labels] = [[list(range(len(self.history[metric_name]))),
-                                      self.history[metric_name],
-                                      f'{metric_name}'],
-                                     [list(range(len(self.history[val_metric_name]))),
-                                      self.history[val_metric_name],
-                                      f'{val_metric_name}']]
+                plot_data[labels] = [
+                    [
+                        list(range(len(self.history[metric_name]))),
+                        self.history[metric_name],
+                        f"{metric_name}",
+                    ],
+                    [
+                        list(range(len(self.history[val_metric_name]))),
+                        self.history[val_metric_name],
+                        f"{val_metric_name}",
+                    ],
+                ]
 
             if self.class_metrics:
                 for metric_name in self.class_metrics:
@@ -632,8 +673,15 @@ class ClassificationCallback:
     #     self.epoch = epoch
     #     pass
 
-    def epoch_end(self, epoch, logs: dict = None, output_key: str = None,
-                  y_pred: list = None, y_true: dict = None, loss: str = None):
+    def epoch_end(
+        self,
+        epoch,
+        logs: dict = None,
+        output_key: str = None,
+        y_pred: list = None,
+        y_true: dict = None,
+        loss: str = None,
+    ):
         """
         Returns:
             {}:
@@ -656,7 +704,7 @@ class ClassificationCallback:
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
-                metric_name = f'{self.clbck_metrics[metric_idx]}'
+                metric_name = f"{self.clbck_metrics[metric_idx]}"
                 val_metric_name = f"val_{metric_name}"
 
             # определяем лучшую метрику для вывода данных при class_metrics='best'
@@ -684,7 +732,7 @@ class ClassificationCallback:
                 # classes_accuracy = self.recognize_classes(self.y_pred[output_num], self.y_true[output_key])
                 # распознаем и выводим результат по классам
                 # TODO считаем каждую метрику на каждом выходе
-                if metric_name.endswith('accuracy'):
+                if metric_name.endswith("accuracy"):
                     metric_classes = self.evaluate_accuracy()
                 elif metric_name.endswith('loss'):
                     metric_classes = self.evaluate_loss()
@@ -720,20 +768,20 @@ class ClassificationCallback:
 
 
 class SegmentationCallback:
-    """ Callback for segmentation"""
+    """Callback for segmentation"""
 
     def __init__(
-            self,
-            metrics=[],
-            step=1,
-            num_classes=2,
-            class_metrics=[],
-            data_tag="images",
-            show_worst=False,
-            show_best=False,
-            show_final=True,
-            dataset=DTS(),
-            exchange=Exchange(),
+        self,
+        metrics=[],
+        step=1,
+        num_classes=2,
+        class_metrics=[],
+        data_tag="images",
+        show_worst=False,
+        show_best=False,
+        show_final=True,
+        dataset=DTS(),
+        exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -764,13 +812,18 @@ class SegmentationCallback:
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
         self.idx = 0
         self.num_classes = num_classes  # количество классов
-        self.acls_lst = [[[] for i in range(self.num_classes + 1)] for i in range(len(self.clbck_metrics))]
-        self.predict_cls = ({})  # словарь для сбора истории предикта по классам и метрикам
-        # self.batch_count = 0
+        self.acls_lst = [
+            [[] for i in range(self.num_classes + 1)]
+            for i in range(len(self.clbck_metrics))
+        ]
+        self.predict_cls = (
+            {}
+        )  # словарь для сбора истории предикта по классам и метрикам
+        self.batch_count = 0
         self.x_Val = {}
         self.y_true = []
         self.y_pred = []
-        self.loss = ''
+        self.loss = ""
         self.metric_classes = []
         pass
 
@@ -780,7 +833,7 @@ class SegmentationCallback:
             None:
         """
         plot_data = {}
-        msg_epoch = f'Epoch №{self.epoch + 1:03d}'
+        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
@@ -788,21 +841,27 @@ class SegmentationCallback:
 
                 if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                     # определяем, что демонстрируем во 2м и 3м окне
-                    metric_name = f'{output_key}_{metric_name}'
+                    metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
                 else:
                     val_metric_name = f"val_{metric_name}"
                 # определяем, что демонстрируем во 2м и 3м окне
-                metric_title = f'{metric_name} and {val_metric_name} {msg_epoch}'
+                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
                 xlabel = "epoch"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
-                plot_data[labels] = [[list(range(len(self.history[metric_name]))),
-                                      self.history[metric_name],
-                                      f'{metric_name}'],
-                                     [list(range(len(self.history[val_metric_name]))),
-                                      self.history[val_metric_name],
-                                      f'{val_metric_name}']]
+                plot_data[labels] = [
+                    [
+                        list(range(len(self.history[metric_name]))),
+                        self.history[metric_name],
+                        f"{metric_name}",
+                    ],
+                    [
+                        list(range(len(self.history[val_metric_name]))),
+                        self.history[val_metric_name],
+                        f"{val_metric_name}",
+                    ],
+                ]
 
             # if self.class_metrics:
             #     for idx, metric_name in enumerate(self.clbck_metrics):
@@ -845,14 +904,12 @@ class SegmentationCallback:
         mask = mask.reshape(-1, self.num_classes)
         for pix in range(len(mask)):
             colored_mask.append(
-                index2color(
-                    mask[pix], self.num_classes, self.dataset.classes_colors
-                )
+                index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
             )
         colored_mask = np.array(colored_mask)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
-    def _dice_coef(self, smooth=1.):
+    def _dice_coef(self, smooth=1.0):
         """
         Compute dice coefficient for each mask
 
@@ -865,8 +922,10 @@ class SegmentationCallback:
         """
 
         intersection = np.sum(self.y_true * self.y_pred, axis=(1, 2, 3))
-        union = np.sum(self.y_true, axis=(1, 2, 3)) + np.sum(self.y_pred, axis=(1, 2, 3))
-        self.dice = (2. * intersection + smooth) / (union + smooth)
+        union = np.sum(self.y_true, axis=(1, 2, 3)) + np.sum(
+            self.y_pred, axis=(1, 2, 3)
+        )
+        self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
     def plot_images(self, input_key: str = None):
         """
@@ -910,7 +969,7 @@ class SegmentationCallback:
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
-    def evaluate_accuracy(self, smooth=1.):
+    def evaluate_accuracy(self, smooth=1.0):
         """
         Compute accuracy for classes
 
@@ -932,12 +991,12 @@ class SegmentationCallback:
                 truezero = np.abs(truesegments[i] - testsegment)
                 predzero = np.abs(predsegments[i] - testsegment)
                 summ_val += (
-                                    testsegment.size - np.count_nonzero(truezero + predzero)
-                            ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
+                    testsegment.size - np.count_nonzero(truezero + predzero)
+                ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
             acc_val = summ_val / self.y_true.shape[0]
             self.metric_classes.append(acc_val)
 
-    def evaluate_dice_coef(self, input_key: str = 'input_1', smooth=1.):
+    def evaluate_dice_coef(self, input_key: str = "input_1", smooth=1.0):
         """
         Compute dice coefficient for classes
 
@@ -949,13 +1008,13 @@ class SegmentationCallback:
         None
         """
         # TODO сделать для нескольких входов
-        if self.dataset.tags[input_key] == 'images':
+        if self.dataset.tags[input_key] == "images":
             axis = (1, 2)
-        elif self.dataset.tags[input_key] == 'text':
+        elif self.dataset.tags[input_key] == "text":
             axis = 1
         intersection = np.sum(self.y_true * self.y_pred, axis=axis)
         union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
-        dice = np.mean((2. * intersection + smooth) / (union + smooth), axis=0)
+        dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         self.metric_classes = dice
 
     def evaluate_loss(self):
@@ -977,8 +1036,15 @@ class SegmentationCallback:
     #     self.Exch.show_current_epoch(epoch)
     #     pass
 
-    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
-                  y_pred: list = None, y_true: dict = None, loss: str = None):
+    def epoch_end(
+        self,
+        epoch: int = None,
+        logs: dict = None,
+        output_key: str = None,
+        y_pred: list = None,
+        y_true: dict = None,
+        loss: str = None,
+    ):
         """
         Returns:
             {}:
@@ -1000,7 +1066,7 @@ class SegmentationCallback:
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
-                metric_name = f'{self.clbck_metrics[metric_idx]}'
+                metric_name = f"{self.clbck_metrics[metric_idx]}"
                 val_metric_name = f"val_{metric_name}"
 
             if logs[val_metric_name] > max_accuracy_value:
@@ -1024,14 +1090,14 @@ class SegmentationCallback:
             if self.y_pred is not None:
                 # TODO Добавить другие варианты по используемым метрикам
                 # вычисляем результат по классам
-                if metric_name.endswith('accuracy'):
+                if metric_name.endswith("accuracy"):
                     self.evaluate_accuracy()
-                elif metric_name.endswith('dice_coef'):
-                    self.evaluate_dice_coef(input_key='input_1')
-                elif metric_name.endswith('loss'):
+                elif metric_name.endswith("dice_coef"):
+                    self.evaluate_dice_coef(input_key="input_1")
+                elif metric_name.endswith("loss"):
                     self.evaluate_loss()
                 else:
-                    print('Metric name is not supported')
+                    print("Metric name is not supported")
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
                 for j in range(self.num_classes):
@@ -1053,7 +1119,7 @@ class SegmentationCallback:
         if self.show_final:
             self.plot_result(output_key=output_key)
             if self.show_best or self.show_worst:
-                self.plot_images(input_key='input_1')
+                self.plot_images(input_key="input_1")
         pass
 
 
@@ -1095,7 +1161,7 @@ class TimeseriesCallback:
         self.x_Val = {}
         self.y_true = []
         self.y_pred = []
-        self.loss = ''
+        self.loss = ""
 
         self.losses = (
             self.metrics if "loss" in self.metrics else self.metrics + ["loss"]
@@ -1199,8 +1265,15 @@ class TimeseriesCallback:
         }
         return correlation_data
 
-    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
-                  y_pred: list = None, y_true: dict = None, loss: str = None):
+    def epoch_end(
+        self,
+        epoch: int = None,
+        logs: dict = None,
+        output_key: str = None,
+        y_pred: list = None,
+        y_true: dict = None,
+        loss: str = None,
+    ):
         self.epoch = epoch
         self.y_pred = y_pred
         self.y_true = y_true
@@ -1262,14 +1335,14 @@ class TimeseriesCallback:
 
 class RegressionCallback:
     def __init__(
-            self,
-            metrics=None,
-            step=1,
-            data_tag="text",
-            show_final=True,
-            plot_scatter=True,
-            dataset=DTS(),
-            exchange=Exchange(),
+        self,
+        metrics,
+        step=1,
+        data_tag="text",
+        show_final=True,
+        plot_scatter=False,
+        dataset=DTS(),
+        exchange=Exchange(),
     ):
         """
         Init for regression callback
@@ -1360,8 +1433,15 @@ class RegressionCallback:
 
         pass
 
-    def epoch_end(self, epoch: int = None, logs: dict = None, output_key: str = None,
-                  y_pred: list = None, y_true: dict = None, loss: str = None):
+    def epoch_end(
+            self,
+            epoch: int = None,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None
+    ):
 
         self.epoch = epoch
         self.y_pred = y_pred
@@ -1369,7 +1449,6 @@ class RegressionCallback:
         self.loss = loss
         epoch_metric_data = ""
         epoch_val_metric_data = ""
-        # self.idx = 0
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
