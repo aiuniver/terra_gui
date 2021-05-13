@@ -952,6 +952,7 @@ class Exchange(StatesData, GuiExch):
 
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_filepath)
+        nn_model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
@@ -963,8 +964,6 @@ class Exchange(StatesData, GuiExch):
             epochs=epochs,
             batch_size=batch_size,
         )
-        print(nn_model)
-        print(nn_model.summary())
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
