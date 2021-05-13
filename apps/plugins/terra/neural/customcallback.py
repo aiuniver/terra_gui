@@ -293,9 +293,10 @@ class CustomCallback(keras.callbacks.Callback):
             self.prepare_callbacks(
                 task_type=self.clbck_params[_key]["task"].value,
                 metrics=self.clbck_params[_key]["metrics"],
-                num_classes=self.clbck_params.setdefault(_key)["num_classes"])
+                num_classes=self.clbck_params.setdefault(_key)["num_classes"]
+                )
 
-      def _estimate_step(self, current, start, now):
+    def _estimate_step(self, current, start, now):
         if current:
             _time_per_unit = (now - start) / current
         else:
