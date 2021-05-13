@@ -952,8 +952,6 @@ class Exchange(StatesData, GuiExch):
 
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_filepath)
-        for layer in nn_model.layers:
-            print(layer.get_config())
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
@@ -965,6 +963,8 @@ class Exchange(StatesData, GuiExch):
             epochs=epochs,
             batch_size=batch_size,
         )
+        print(nn_model)
+        print(nn_model.summary())
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
