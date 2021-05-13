@@ -51,13 +51,6 @@ class GUINN:
         self.x_Test: dict = {}
         self.y_Test: dict = {}
 
-        # """
-        # Checking setup environment
-        # """
-        # self.env_setup = "colab"
-        # # if self.Exch.is_it_colab():
-        # #     self.env_setup = "colab"
-
         if not self.Exch.is_google_drive_connected():
             self.Exch.print_2status_bar(
                 ("Warning:", f"Google Drive is not connected! Using drive on VM!")
@@ -141,6 +134,9 @@ class GUINN:
 
         self.learning_rate = 1e-3
         self.optimizer_name: str = 'Adam'
+        self.optimizer_object = keras.optimizers.Adam
+        self.optimizer_kwargs = {}
+        self.optimizer = keras.optimizers.Adam
         self.loss: dict = {}
         self.metrics: dict = {}
         self.batch_size = 32
@@ -149,6 +145,20 @@ class GUINN:
 
         self.monitor: str = 'accuracy'
         self.monitor2: str = "loss"
+
+    def set_optimizer(self) -> None:
+        """
+        Set optimizer method for using terra w/o gui
+
+        Args:
+            optimizer_name (str):   name of keras optimizer
+            kwargs (dict):          kwargs for optimizer
+        """
+        # print('___nn___NN___set_optimizer___', optimizer_name)
+        # self.optimizer_name = optimizer_name
+        self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
+        self.optimizer = self.optimizer_object(**self.optimizers_kwargs)
+        pass
 
     def set_chp_monitor(self) -> None:
         if len(self.x_Train) > 1:
@@ -169,7 +179,8 @@ class GUINN:
                     self.chp_monitor = f'val_{self.chp_monitors["out_monitor"]}'
 
     def set_main_params(self, output_params: dict = None, clbck_chp: dict = None,
-                        shuffle: bool = True, epochs: int = 10, batch_size: int = 32) -> None:
+                        shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
+                        optimizer_params: dict = None) -> None:
         self.output_params = output_params
         self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
         self.chp_monitors = clbck_chp['monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
@@ -179,6 +190,10 @@ class GUINN:
         self.shuffle = shuffle
         self.epochs = epochs
         self.batch_size = batch_size
+        self.optimizer_name = optimizer_params['op_name']
+        self.optimizer_kwargs = optimizer_params['op_kwargs']
+
+        self.set_optimizer()
         self.set_chp_monitor()
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
@@ -398,6 +413,10 @@ class GUINN:
 
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
+        self.model.compile(loss=self.loss,
+                           optimizer=self.optimizer,
+                           metrics=self.metrics
+                           )
         if self.debug_verbose > 1:
             verbose = 2
             print("self.loss", self.loss)
@@ -410,6 +429,9 @@ class GUINN:
                                  batch_size=self.batch_size, epochs=self.epochs)
         self.callbacks = [clsclbk]
         # self.chp_monitor = 'loss'
+        # self.chp_mode = 'min'
+        # self.chp_save_best = True
+        # self.chp_save_weights = True
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
@@ -419,7 +441,6 @@ class GUINN:
             print("self.callbacks", self.callbacks)
 
         self.show_training_params()
-
         if self.x_Val['input_1'] is not None:
 
             self.history = self.model.fit(
