@@ -1,4 +1,3 @@
-import base64
 import json
 import requests
 
@@ -14,6 +13,9 @@ from .data import (
 )
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
+
+
+DEFAULT_MODEL_NAME = "NoName"
 
 
 class TerraExchange:
@@ -118,6 +120,7 @@ class TerraExchange:
         self.project.layers_start = layers
         self.project.layers_schema = schema
         self.project.dataset = dataset
+        self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -154,6 +157,7 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         data.data.update({"layers": output})
+        self.project.model_name = model_file
         return data
 
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
@@ -177,6 +181,7 @@ class TerraExchange:
         self.project.layers = {}
         for index, layer in self.project.dict().get("layers_start"):
             self.project.layers[int(index)] = Layer(**layer)
+        self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -214,22 +219,20 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validation_errors": errors})
 
         self.project.training = TrainConfig(**kwargs)
-        # print(self.project.model_name)
-        # print(self.project.model_plan)
+        print(self.project.model_name)
+        print(self.project.model_plan)
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
-        # print(model_plan)
-        # print(self.project.training.dict())
-        # response = self.__request_post(
-        #     "get_model_to_colab",
-        #     model_plan=model_plan,
-        #     training=self.project.training.dict(),
-        # )
-        with open('F:\\Работа\\UII\\my_model.h5', 'rb') as f:
-            model = base64.b64encode(f.read())
-        # print(response)
-        response = colab_exchange.start_training(model=model, **self.project.training.dict())
+        print(model_plan)
+        print(self.project.training.dict())
+        response = self.__request_post(
+            "get_model_to_colab",
+            model_plan=model_plan,
+            training=self.project.training.dict(),
+        )
+        print(response)
+        # response = colab_exchange.start_training(model=model, **self.project.training.dict())
         return response
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
