@@ -945,28 +945,32 @@ class Exchange(StatesData, GuiExch):
 
     def start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
+        print(training)
         model_filepath = f"{tempfile.gettempdir()}\\tmp_model.h5"
 
-        with open(model_filepath, "wb") as model_file:
+        with open(model_filepath, 'wb') as model_file:
             model_file.write(base64.b64decode(model))
 
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_filepath)
-        nn_model.compile(
-            optimizer="adam",
-            loss={"output_1": "categorical_crossentropy"},
-            metrics={"output_1": ["accuracy"]},
-        )
+        # nn_model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
+
+        output_optimizer_params = {'op_name': "", 'op_kwargs': {}}
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
         epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
+        optimizer_params = training.get('optimizer', {})
+        output_optimizer_params['op_name'] = optimizer_params.get('name')
+        for key, val in optimizer_params.get('params', {}).items():
+            output_optimizer_params['op_kwargs'].update(val)
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
             epochs=epochs,
             batch_size=batch_size,
+            optimizer_params=output_optimizer_params
         )
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True

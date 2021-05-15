@@ -190,9 +190,8 @@ class GUINN:
         self.shuffle = shuffle
         self.epochs = epochs
         self.batch_size = batch_size
-        self.optimizer_name = optimizer_params['op_name']
+        self.optimizer_name = optimizer_params['op_name'].value
         self.optimizer_kwargs = optimizer_params['op_kwargs']
-
         self.set_optimizer()
         self.set_chp_monitor()
         for output_key in self.output_params.keys():
@@ -398,7 +397,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -417,6 +416,7 @@ class GUINN:
                            optimizer=self.optimizer,
                            metrics=self.metrics
                            )
+        # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
         if self.debug_verbose > 1:
             verbose = 2
             print("self.loss", self.loss)
