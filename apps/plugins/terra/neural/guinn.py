@@ -182,9 +182,9 @@ class GUINN:
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
                         optimizer_params: dict = None) -> None:
         self.output_params = output_params
-        self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
+        self.chp_indicator = clbck_chp['indicator'].value  # 'train' или 'val'
         self.chp_monitors = clbck_chp['monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
-        self.chp_mode = clbck_chp['mode']  # 'min' или 'max'
+        self.chp_mode = clbck_chp['mode'].value  # 'min' или 'max'
         self.chp_save_best = clbck_chp['save_best']  # bool
         self.chp_save_weights = clbck_chp['save_weights']  # bool
         self.shuffle = shuffle
@@ -197,6 +197,7 @@ class GUINN:
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
             self.loss.update({output_key: self.output_params[output_key]['loss']})
+        print(self.loss, self.metrics)
         pass
 
     def set_dataset(self, dts_obj: object) -> None:
