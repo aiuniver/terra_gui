@@ -162,6 +162,18 @@
                                 break;
                         }
                     }
+                    for (let group in window.TerraProject.optimizers[data.optimizer.name]) {
+                        for (let param in window.TerraProject.optimizers[data.optimizer.name][group]) {
+                            switch (window.TerraProject.optimizers[data.optimizer.name][group][param].type) {
+                                case "int":
+                                    data.optimizer.params[group][param] = parseInt(data.optimizer.params[group][param]);
+                                    break;
+                                case "float":
+                                    data.optimizer.params[group][param] = parseFloat(data.optimizer.params[group][param]);
+                                    break;
+                            }
+                        }
+                    }
                     for (let output_name in data.outputs) {
                         data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
                         let task = data.outputs[output_name].task,

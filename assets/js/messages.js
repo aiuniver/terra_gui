@@ -17,6 +17,7 @@ let Messages = function() {
         MODEL_LOADED: "Model «{0}» loaded",
         TRYING_TO_LOAD_LAYER: "Loading «{0}» layer...",
         LAYER_LOADED: "«{0}» layer is loaded",
+        LAYER_CLONED: "«{0}» layer is cloned",
         LAYER_ALREADY_EXISTS: "«{0}» layer already exists",
         SUBMIT_PARAMS_METHOD: "You must define a submit method of Params object like this: _params.submit = (send_data) => {}",
         LAYER_SAVED: "Layer is saved.",
