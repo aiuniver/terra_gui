@@ -28,7 +28,8 @@ class GUINN:
         self.callbacks = []
         self.output_params = {}
         self.chp_indicator = 'val'
-        self.chp_monitor = {'output': 'output_1', 'out_monitor': 'mse'}
+        self.chp_monitor = 'loss'
+        self.chp_monitors = {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
         self.chp_mode = 'min'
         self.chp_save_best = True
         self.chp_save_weights = True
@@ -36,7 +37,7 @@ class GUINN:
         For testing in different setups and environment
         """
         self.debug_mode: bool = True
-        self.debug_verbose = 3
+        self.debug_verbose = 0
         self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
 
@@ -49,13 +50,6 @@ class GUINN:
         self.y_Val: dict = {}
         self.x_Test: dict = {}
         self.y_Test: dict = {}
-
-        # """
-        # Checking setup environment
-        # """
-        # self.env_setup = "colab"
-        # # if self.Exch.is_it_colab():
-        # #     self.env_setup = "colab"
 
         if not self.Exch.is_google_drive_connected():
             self.Exch.print_2status_bar(
@@ -117,10 +111,10 @@ class GUINN:
         if task_type is currently = ''
         it's setting to None   
         """
-        self.task_name: str = ''
-        self.task_type: str = ''
-        self.task_path: str = ''
-        self.set_task_type()
+        # self.task_name: str = ''
+        # self.task_type: str = ''
+        # self.task_path: str = ''
+        # self.set_task_type()
 
         """
         Setting experiment_UUID and experiment_name 
@@ -139,7 +133,10 @@ class GUINN:
         self.best_metric_result = "0000"
 
         self.learning_rate = 1e-3
-        self.optimizer_name: str = ''
+        self.optimizer_name: str = 'Adam'
+        self.optimizer_object = keras.optimizers.Adam
+        self.optimizer_kwargs = {}
+        self.optimizer = keras.optimizers.Adam
         self.loss: dict = {}
         self.metrics: dict = {}
         self.batch_size = 32
@@ -149,21 +146,58 @@ class GUINN:
         self.monitor: str = 'accuracy'
         self.monitor2: str = "loss"
 
+    def set_optimizer(self) -> None:
+        """
+        Set optimizer method for using terra w/o gui
+
+        Args:
+            optimizer_name (str):   name of keras optimizer
+            kwargs (dict):          kwargs for optimizer
+        """
+        # print('___nn___NN___set_optimizer___', optimizer_name)
+        # self.optimizer_name = optimizer_name
+        self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
+        self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
+        pass
+
+    def set_chp_monitor(self) -> None:
+        if len(self.x_Train) > 1:
+            if self.chp_indicator == 'train':
+                self.chp_monitor = f'{self.chp_monitors["output"]}_{self.chp_monitors["out_monitor"]}'
+            else:
+                self.chp_monitor = f'val_{self.chp_monitors["output"]}_{self.chp_monitors["out_monitor"]}'
+        else:
+            if self.chp_indicator == 'train':
+                if self.chp_monitors["out_type"] == 'loss':
+                    self.chp_monitor = 'loss'
+                else:
+                    self.chp_monitor = f'{self.chp_monitors["out_monitor"]}'
+            else:
+                if self.chp_monitors["out_type"] == 'loss':
+                    self.chp_monitor = 'val_loss'
+                else:
+                    self.chp_monitor = f'val_{self.chp_monitors["out_monitor"]}'
+
     def set_main_params(self, output_params: dict = None, clbck_chp: dict = None,
-                        shuffle: bool = True, epochs: int = 10, batch_size: int = 32, ) -> None:
+                        shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
+                        optimizer_params: dict = None) -> None:
         self.output_params = output_params
-        self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
-        self.chp_monitor = clbck_chp['monitor']  # это словарь {output: 'output_1', out_monitor: 'mse'}
-        self.chp_mode = clbck_chp['mode']  # 'min' или 'max'
+        self.chp_indicator = clbck_chp['indicator'].value  # 'train' или 'val'
+        self.chp_monitors = clbck_chp['monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
+        self.chp_mode = clbck_chp['mode'].value  # 'min' или 'max'
         self.chp_save_best = clbck_chp['save_best']  # bool
         self.chp_save_weights = clbck_chp['save_weights']  # bool
         self.shuffle = shuffle
         self.epochs = epochs
         self.batch_size = batch_size
-
+        self.optimizer_name = optimizer_params['op_name'].value
+        self.optimizer_kwargs = optimizer_params['op_kwargs']
+        self.set_optimizer()
+        self.set_chp_monitor()
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
             self.loss.update({output_key: self.output_params[output_key]['loss']})
+        print(self.loss, self.metrics)
         pass
 
     def set_dataset(self, dts_obj: object) -> None:
@@ -233,30 +267,30 @@ class GUINN:
         self.project_path = os.path.join(self.HOME, self.project_name)
         pass
 
-    def set_task_type(self) -> None:
-        """
-        Setting task_type to crete logistic 'pipe' from start to end
-        also set the task_name to same string value if it's not changed from default
-        """
-        self.task_name = self.Exch.task_name
-        self.task_type = self.task_name
+    # def set_task_type(self) -> None:
+    #     """
+    #     Setting task_type to crete logistic 'pipe' from start to end
+    #     also set the task_name to same string value if it's not changed from default
+    #     """
+    #     self.task_name = self.Exch.task_name
+    #     self.task_type = self.task_name
+    #
+    #     if self.task_type == "":
+    #         self.task_type = None
+    #     else:
+    #         self.task_path = os.path.join(self.project_path, self.task_type)
+    #     pass
 
-        if self.task_type == "":
-            self.task_type = None
-        else:
-            self.task_path = os.path.join(self.project_path, self.task_type)
-        pass
-
-    def set_task_name(self, task_name: str) -> None:
-        """
-        Setting task nn_name
-
-        Args:
-            task_name (str): setting task_name
-        """
-        self.task_name = task_name
-        self.Exch.set_task_name(self.task_name)
-        pass
+    # def set_task_name(self, task_name: str) -> None:
+    #     """
+    #     Setting task nn_name
+    #
+    #     Args:
+    #         task_name (str): setting task_name
+    #     """
+    #     self.task_name = task_name
+    #     self.Exch.set_task_name(self.task_name)
+    #     pass
 
     def set_experiment_UUID(self) -> None:
         """
@@ -264,7 +298,7 @@ class GUINN:
         """
 
         self.experiment_UUID = self.Exch.experiment_UUID
-        self.experiment_path = os.path.join(self.task_path, str(self.experiment_UUID))
+        self.experiment_path = os.path.join(self.project_path, str(self.experiment_UUID))
         pass
 
     def set_experiment_name(self, experiment_name: str) -> None:
@@ -298,7 +332,6 @@ class GUINN:
 
         # TODO: change to print_2status_bar then remove debug_mode
         self.Exch.show_text_data(msg)
-
         pass
 
     def save_nnmodel(self) -> None:
@@ -309,9 +342,9 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}"
+            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last"
             file_path_model: str = os.path.join(
-                self.experiment_path, f"{model_name}_last.h5"
+                self.experiment_path, f"{model_name}.h5"
             )
             self.model.save(file_path_model)
             self.Exch.print_2status_bar(
@@ -319,7 +352,7 @@ class GUINN:
             )
         else:
             self.Exch.print_error(("Error", "Cannot save. The model is not trained"))
-            sys.exit()
+            # sys.exit()
         pass
 
     def save_model_weights(self) -> None:
@@ -331,7 +364,7 @@ class GUINN:
         """
 
         if self.model_is_trained:
-            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}'
+            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
             file_path_weights: str = os.path.join(self.experiment_path, f'{model_weights_name}.h5')
             self.model.save_weights(file_path_weights)
             self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
@@ -365,7 +398,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -376,8 +409,15 @@ class GUINN:
         Return:
             None
         """
+        self.nn_cleaner()
+
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
+        self.model.compile(loss=self.loss,
+                           optimizer=self.optimizer,
+                           metrics=self.metrics
+                           )
+        # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
         if self.debug_verbose > 1:
             verbose = 2
             print("self.loss", self.loss)
@@ -386,8 +426,13 @@ class GUINN:
             print("self.epochs", self.epochs)
 
         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                 exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val)
+                                 exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
+                                 batch_size=self.batch_size, epochs=self.epochs)
         self.callbacks = [clsclbk]
+        # self.chp_monitor = 'loss'
+        # self.chp_mode = 'min'
+        # self.chp_save_best = True
+        # self.chp_save_weights = True
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.experiment_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
@@ -397,8 +442,7 @@ class GUINN:
             print("self.callbacks", self.callbacks)
 
         self.show_training_params()
-
-        if self.x_Val.get('input_1', None) is not None:
+        if self.x_Val['input_1'] is not None:
 
             self.history = self.model.fit(
                 self.x_Train,
@@ -426,8 +470,7 @@ class GUINN:
         for n_out in self.DTS.Y.keys():
             for _ in self.loss[n_out]:
                 for metric_out in self.metrics[n_out]:
-                    if len(self.y_Train) > 1 or (len(self.metrics[n_out]) > 1 and
-                                                 'loss' not in self.metrics[n_out]):
+                    if len(self.y_Train) > 1:  # or (len(self.metrics[n_out]) > 1 and 'loss' not in self.metrics[n_out])
                         self.monitor = f'{n_out}_{metric_out}'
                         self.monitor2 = f'{n_out}_loss'
                     else:
