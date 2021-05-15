@@ -27,7 +27,7 @@ class Exchange:
         self.stop_flag = False
         self.epoch = 0
 
-        self.experiment_UUID = None
+        self.experiment_UUID = 'unic_uiid'
         self.experiment_name = ""
         self.task_name = ""
 
