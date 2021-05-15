@@ -946,13 +946,14 @@ class Exchange(StatesData, GuiExch):
     def start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
         print(training)
-        model_filepath = f"{tempfile.gettempdir()}\\tmp_model.h5"
-
-        with open(model_filepath, 'wb') as model_file:
-            model_file.write(base64.b64decode(model))
+        # model_filepath = f"{tempfile.gettempdir()}\\tmp_model.h5"
+        model_file = tempfile.NamedTemporaryFile(prefix='tmp_model_')
+        open(model_file.name, 'wb')
+        model_file.write(base64.b64decode(model))
 
         self.nn.set_dataset(self.dts)
-        nn_model = load_model(model_filepath)
+        nn_model = load_model(model_file)
+        model_file.close()
         # nn_model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
 
         output_optimizer_params = {'op_name': "", 'op_kwargs': {}}
