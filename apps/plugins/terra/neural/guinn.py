@@ -155,7 +155,6 @@ class GUINN:
             kwargs (dict):          kwargs for optimizer
         """
         # print('___nn___NN___set_optimizer___', optimizer_name)
-        # self.optimizer_name = optimizer_name
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
         pass
