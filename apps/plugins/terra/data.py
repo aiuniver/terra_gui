@@ -224,15 +224,6 @@ class ProjectPath(pydantic.BaseModel):
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
 
-        if not os.path.isfile(self.config):
-            open(self.config, "a").close()
-
-        with open(self.config, "r") as file:
-            try:
-                kwargs.update(**json.load(file))
-            except Exception:
-                pass
-
 
 class TerraExchangeProject(pydantic.BaseModel):
     error: str = ""
@@ -257,6 +248,20 @@ class TerraExchangeProject(pydantic.BaseModel):
         "training": reverse_lazy("apps_project:training"),
     }
     dir: ProjectPath = ProjectPath()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        if not os.path.isfile(self.dir.config):
+            open(self.dir.config, "a").close()
+
+        with open(self.dir.config, "r") as file:
+            try:
+                kwargs.update(**json.load(file))
+            except Exception:
+                pass
+
+        super().__init__(**kwargs)
 
     def dict(self, *args, **kwargs):
         output = super().dict(*args, **kwargs)
