@@ -40,6 +40,7 @@ class GUINN:
         self.debug_verbose = 0
         self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
+        self.mounted_drive_path = "./TerraAI/projects"
         self.training_path = ''
 
         """
@@ -343,7 +344,7 @@ class GUINN:
         if self.model_is_trained:
             model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last"
             file_path_model: str = os.path.join(
-                self.traning_path, f"{model_name}.h5"
+                self.training_path, f"{model_name}.h5"
             )
             self.model.save(file_path_model)
             self.Exch.print_2status_bar(
@@ -432,6 +433,7 @@ class GUINN:
         # self.chp_mode = 'min'
         # self.chp_save_best = True
         # self.chp_save_weights = True
+        print('PATHHHH', os.path.join(self.training_path, f'{self.nn_name}_best.h5'))
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.training_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,

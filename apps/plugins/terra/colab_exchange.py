@@ -948,15 +948,14 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def _start_training(self, model: bytes, **kwargs) -> None:
+    def start_training(self, model: bytes, **kwargs) -> None:
         self.process_flag = "train"
         self._reset_out_data()
-
         training = kwargs
         print(training)
+
         model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
-        training_path = training.get('pathname', '')
-        self.nn.mounted_drive_path = training_path
+        self.nn.training_path = training.get('pathname', '')
 
         with open(model_file.name, 'wb') as f:
             f.write(base64.b64decode(model))
@@ -983,19 +982,19 @@ class Exchange(StatesData, GuiExch):
             batch_size=batch_size,
             optimizer_params=output_optimizer_params
         )
-        threading.enumerate()
+
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
-    def start_training(self, model: bytes, **kwargs) -> dict:
-        training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
-        training.start()
-        threading.enumerate()
-        training.join()
-        self.is_trained = True
-        threading.enumerate()
-        print('TRAIN START')
-        return {}
+    # def start_training(self, model: bytes, **kwargs) -> dict:
+    #     training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
+    #     training.start()
+    #     threading.enumerate()
+    #     training.join()
+    #     self.is_trained = True
+    #     threading.enumerate()
+    #     print('TRAIN START')
+    #     return {}
 
     #
     # def start_evaluate(self):
