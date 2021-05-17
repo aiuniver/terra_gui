@@ -19,7 +19,7 @@
                 _field_output_loss = $(".field_form-output_loss"),
                 _params_optimizer_extra = $(".params-optimizer-extra"),
                 _action_training = $(".params-container .actions-form > .training > button"),
-                _action_evaluate = $(".params-container .actions-form > .evaluate > button");
+                _action_reset = $(".params-container .actions-form > .reset > button");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -34,11 +34,6 @@
             Object.defineProperty(this, "validate", {
                 set: (value) => {
                     _validate = value;
-                    if (value) {
-                        _action_training.attr("disabled", "disabled");
-                    } else {
-                        _action_training.removeAttr("disabled");
-                    }
                 },
                 get: () => {
                     return _validate;
@@ -150,6 +145,8 @@
             this.bind("submit", (event) => {
                 event.preventDefault();
                 if (!this.validate) {
+                    _action_training.attr("disabled", "disabled");
+                    _action_reset.attr("disabled", "disabled");
                     this.validate = true;
                     window.StatusBar.clear();
                     let data = $(event.currentTarget).serializeObject();
@@ -192,7 +189,6 @@
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
-                            this.validate = false;
                             if (success) {
                                 if (output.data.validation_errors) {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
@@ -202,20 +198,29 @@
                                     window.ExchangeRequest(
                                         "get_data",
                                         (success, data) => {
-                                            console.log("SUCCESS:", success, ", DATA:", data);
-                                            console.log("STOP_FLAG:", data.stop_flag);
-                                            console.log("DATA:", data.data);
-                                            console.log("===============================");
-                                            // if (!success) {
-                                            //     datasets.dataset = window.TerraProject.dataset;
-                                            //     window.StatusBar.message(data.error, false);
-                                            // } else {
-                                            //     window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                                            // }
+                                            if (success) {
+                                                console.log("SUCCESS:", success, ", DATA:", data);
+                                                console.log("STOP_FLAG:", data.stop_flag);
+                                                console.log("DATA:", data.data);
+                                                console.log("===============================");
+                                                window.StatusBar.message(data.data.status_string);
+                                                window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                                if (data.stop_flag) {
+                                                    this.validate = false;
+                                                    _action_training.removeAttr("disabled");
+                                                    _action_reset.removeAttr("disabled");
+                                                }
+                                            } else {
+                                                this.validate = false;
+                                                _action_training.removeAttr("disabled");
+                                                window.StatusBar.message(data.error, false)
+                                            }
                                         }
                                     );
                                 }
                             } else {
+                                this.validate = false;
+                                _action_training.removeAttr("disabled");
                                 window.StatusBar.message(output.error, false);
                             }
                         },
