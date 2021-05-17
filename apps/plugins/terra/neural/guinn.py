@@ -107,16 +107,6 @@ class GUINN:
         self.set_project_name(self.project_name)
 
         """
-        Setting location for task_name in current project for _current_ user 
-        if task_type is currently = ''
-        it's setting to None   
-        """
-        # self.task_name: str = ''
-        # self.task_type: str = ''
-        # self.task_path: str = ''
-        # self.set_task_type()
-
-        """
         Setting experiment_UUID and experiment_name 
         """
         self.experiment_name: str = ''
