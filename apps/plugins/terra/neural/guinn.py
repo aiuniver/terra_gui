@@ -182,22 +182,22 @@ class GUINN:
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
                         optimizer_params: dict = None) -> None:
         self.output_params = output_params
-        self.chp_indicator = clbck_chp['indicator']  # 'train' или 'val'
+        self.chp_indicator = clbck_chp['indicator'].value  # 'train' или 'val'
         self.chp_monitors = clbck_chp['monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
-        self.chp_mode = clbck_chp['mode']  # 'min' или 'max'
+        self.chp_mode = clbck_chp['mode'].value  # 'min' или 'max'
         self.chp_save_best = clbck_chp['save_best']  # bool
         self.chp_save_weights = clbck_chp['save_weights']  # bool
         self.shuffle = shuffle
         self.epochs = epochs
         self.batch_size = batch_size
-        self.optimizer_name = optimizer_params['op_name']
+        self.optimizer_name = optimizer_params['op_name'].value
         self.optimizer_kwargs = optimizer_params['op_kwargs']
-
         self.set_optimizer()
         self.set_chp_monitor()
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
             self.loss.update({output_key: self.output_params[output_key]['loss']})
+        print(self.loss, self.metrics)
         pass
 
     def set_dataset(self, dts_obj: object) -> None:
@@ -398,7 +398,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 1) -> None:
+    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -417,6 +417,7 @@ class GUINN:
                            optimizer=self.optimizer,
                            metrics=self.metrics
                            )
+        # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
         if self.debug_verbose > 1:
             verbose = 2
             print("self.loss", self.loss)
