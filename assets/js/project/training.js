@@ -190,18 +190,22 @@
                         data.outputs[output_name].callbacks = callbacks;
                     }
                     window.ExchangeRequest(
-                        "start_training",
-                        (success, data) => {
+                        "before_start_training",
+                        (success, output) => {
                             this.validate = false;
                             if (success) {
-                                if (data.data.validation_errors) {
+                                if (output.data.validation_errors) {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
                                 } else {
+                                    window.ExchangeRequest("start_training", null, data);
                                     window.ExchangeRequest(
                                         "get_data",
                                         (success, data) => {
                                             console.log("SUCCESS:", success, ", DATA:", data);
+                                            console.log("STOP_FLAG:", data.stop_flag);
+                                            console.log("DATA:", data.data);
+                                            console.log("===============================");
                                             // if (!success) {
                                             //     datasets.dataset = window.TerraProject.dataset;
                                             //     window.StatusBar.message(data.error, false);
@@ -212,7 +216,7 @@
                                     );
                                 }
                             } else {
-                                window.StatusBar.message(data.error, false);
+                                window.StatusBar.message(output.error, false);
                             }
                         },
                         data
