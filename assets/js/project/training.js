@@ -191,10 +191,10 @@
                     }
                     window.ExchangeRequest(
                         "before_start_training",
-                        (success, data) => {
+                        (success, output) => {
                             this.validate = false;
                             if (success) {
-                                if (data.data.validation_errors) {
+                                if (output.data.validation_errors) {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
                                 } else {
@@ -216,7 +216,7 @@
                                     );
                                 }
                             } else {
-                                window.StatusBar.message(data.error, false);
+                                window.StatusBar.message(output.error, false);
                             }
                         },
                         data
