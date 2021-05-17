@@ -212,12 +212,15 @@ class TerraExchange:
         else:
             return TerraExchangeResponse()
 
-    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
         response_validate = self.call("get_change_validation")
         errors = response_validate.data
         if list(filter(None, errors.values())):
             return TerraExchangeResponse(data={"validation_errors": errors})
 
+        return TerraExchangeResponse()
+
+    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         self.project.training = TrainConfig(**kwargs)
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
@@ -231,7 +234,11 @@ class TerraExchange:
             return response
 
         model = response.data.get("model", "")
-        colab_exchange.start_training(model=model, **self.project.training.dict())
+        colab_exchange.start_training(
+            model=model,
+            pathname=self.project.dir.training,
+            **self.project.training.dict(),
+        )
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
