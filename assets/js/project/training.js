@@ -190,7 +190,7 @@
                         data.outputs[output_name].callbacks = callbacks;
                     }
                     window.ExchangeRequest(
-                        "start_training",
+                        "before_start_training",
                         (success, data) => {
                             this.validate = false;
                             if (success) {
@@ -198,10 +198,14 @@
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
                                 } else {
+                                    window.ExchangeRequest("start_training", null, data);
                                     window.ExchangeRequest(
                                         "get_data",
                                         (success, data) => {
                                             console.log("SUCCESS:", success, ", DATA:", data);
+                                            console.log("STOP_FLAG:", data.stop_flag);
+                                            console.log("DATA:", data.data);
+                                            console.log("===============================");
                                             // if (!success) {
                                             //     datasets.dataset = window.TerraProject.dataset;
                                             //     window.StatusBar.message(data.error, false);
