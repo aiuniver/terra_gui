@@ -1,4 +1,6 @@
 from typing import Tuple
+
+import environ
 import numpy as np
 import sys
 import os
@@ -50,6 +52,7 @@ class GUINN:
         self.y_Val: dict = {}
         self.x_Test: dict = {}
         self.y_Test: dict = {}
+        self.mounted_drive_path = environ.Path(__file__) - 2
 
         if not self.Exch.is_google_drive_connected():
             self.Exch.print_2status_bar(
@@ -63,13 +66,12 @@ class GUINN:
             """
             Setting location for TerraProjects - Home for _current_ user
             """
-            (
-                self.mounted_drive_name,
-                self.mounted_drive_path,
-            ) = self.Exch.get_google_drive_name_path()
+
+            self.mounted_drive_name, self.mounted_drive_path = self.Exch.get_google_drive_name_path()
             self.mounted_drive_writable = True
 
         self.HOME = os.path.join(self.mounted_drive_path, self.default_projects_folder)
+
         self.checking_HOME()
         self.default_user_model_plans_path = os.path.join(
             self.HOME, self.default_user_model_plans_folder
