@@ -126,7 +126,7 @@ class GUINN:
         self.optimizer_name: str = 'Adam'
         self.optimizer_object = keras.optimizers.Adam
         self.optimizer_kwargs = {}
-        self.optimizer = keras.optimizers.Adam
+        self.optimizer = keras.optimizers.Adam()
         self.loss: dict = {}
         self.metrics: dict = {}
         self.batch_size = 32
