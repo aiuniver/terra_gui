@@ -3,6 +3,7 @@ import gc
 import os
 import re
 import tempfile
+from threading import Thread
 
 import dill as dill
 from IPython import get_ipython
@@ -546,6 +547,7 @@ class Exchange(StatesData, GuiExch):
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
+        print(self.out_data)
 
     @staticmethod
     def _reformatting_graphics_data(mode: str, data: dict) -> list:
@@ -943,8 +945,9 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
-    def start_training(self, model: bytes, **kwargs) -> None:
+    def _start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
+        print(training)
         model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
 
         with open(model_file.name, 'wb') as f:
@@ -974,6 +977,14 @@ class Exchange(StatesData, GuiExch):
         )
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
+
+    def start_training(self, model: bytes, **kwargs) -> dict:
+        training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
+        training.start()
+        training.join()
+        self.is_trained = True
+        print('TRAIN START')
+        return {}
 
     #
     # def start_evaluate(self):

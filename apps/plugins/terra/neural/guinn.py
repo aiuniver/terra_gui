@@ -1,4 +1,6 @@
 from typing import Tuple
+
+import environ
 import numpy as np
 import sys
 import os
@@ -7,7 +9,7 @@ import operator
 from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 
-__version__ = 0.1
+__version__ = 0.2
 
 
 class GUINN:
@@ -36,7 +38,7 @@ class GUINN:
         """
         For testing in different setups and environment
         """
-        self.debug_mode: bool = True
+        self.debug_mode: bool = False
         self.debug_verbose = 0
         self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
@@ -50,6 +52,7 @@ class GUINN:
         self.y_Val: dict = {}
         self.x_Test: dict = {}
         self.y_Test: dict = {}
+        self.mounted_drive_path = environ.Path(__file__) - 2
 
         if not self.Exch.is_google_drive_connected():
             self.Exch.print_2status_bar(
@@ -63,13 +66,12 @@ class GUINN:
             """
             Setting location for TerraProjects - Home for _current_ user
             """
-            (
-                self.mounted_drive_name,
-                self.mounted_drive_path,
-            ) = self.Exch.get_google_drive_name_path()
+
+            self.mounted_drive_name, self.mounted_drive_path = self.Exch.get_google_drive_name_path()
             self.mounted_drive_writable = True
 
         self.HOME = os.path.join(self.mounted_drive_path, self.default_projects_folder)
+
         self.checking_HOME()
         self.default_user_model_plans_path = os.path.join(
             self.HOME, self.default_user_model_plans_folder
@@ -398,7 +400,7 @@ class GUINN:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         pass
 
-    def terra_fit(self, nnmodel: object, verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -467,19 +469,19 @@ class GUINN:
             )
         self.model_is_trained = True
 
-        for n_out in self.DTS.Y.keys():
-            for _ in self.loss[n_out]:
-                for metric_out in self.metrics[n_out]:
-                    if len(self.y_Train) > 1:  # or (len(self.metrics[n_out]) > 1 and 'loss' not in self.metrics[n_out])
-                        self.monitor = f'{n_out}_{metric_out}'
-                        self.monitor2 = f'{n_out}_loss'
-                    else:
-                        self.monitor = f'{metric_out}'
-                        self.monitor2 = f'loss'
-                    self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
-                        history=self.history, monitor=self.monitor, monitor2=self.monitor2
-                    )
-                    self.best_metric_result = self.best_epoch[self.monitor]
+        # for n_out in self.DTS.Y.keys():
+        #     for _ in self.loss[n_out]:
+        #         for metric_out in self.metrics[n_out]:
+        #             if len(self.y_Train) > 1:  # or (len(self.metrics[n_out]) > 1 and 'loss' not in self.metrics[n_out])
+        #                 self.monitor = f'{n_out}_{metric_out}'
+        #                 self.monitor2 = f'{n_out}_loss'
+        #             else:
+        #                 self.monitor = f'{metric_out}'
+        #                 self.monitor2 = f'loss'
+        self.monitor = self.chp_monitor
+        self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
+            history=self.history, monitor=self.monitor, monitor2=self.monitor2)
+        self.best_metric_result = self.best_epoch[self.monitor]
 
         try:
             self.save_nnmodel()
@@ -499,7 +501,7 @@ class GUINN:
 
     @staticmethod
     def _search_best_epoch_data(
-            history, monitor="val_accuracy", monitor2="loss"
+            history, monitor="accuracy", monitor2="loss"
             ) -> Tuple[dict, int, int]:
         """
         Searching in history for best epoch with metrics from 'monitor' kwargs
