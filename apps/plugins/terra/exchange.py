@@ -231,10 +231,8 @@ class TerraExchange:
             return response
 
         model = response.data.get("model", "")
-        response = colab_exchange.start_training(
-            model=model, **self.project.training.dict()
-        )
-        return TerraExchangeResponse(data=response)
+        colab_exchange.start_training(model=model, **self.project.training.dict())
+        return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)

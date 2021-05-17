@@ -1,12 +1,12 @@
 import os
 import json
 import pydantic
-import tempfile
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.urls import reverse_lazy
 
 
@@ -212,6 +212,28 @@ class Dataset(pydantic.BaseModel):
     tags: dict = {}
 
 
+class ProjectPath(pydantic.BaseModel):
+    datasets: str = f"{settings.TERRA_AI_PROJECT_PATH}/datasets"
+    modeling: str = f"{settings.TERRA_AI_PROJECT_PATH}/modeling"
+    training: str = f"{settings.TERRA_AI_PROJECT_PATH}/training"
+    config: str = f"{settings.TERRA_AI_PROJECT_PATH}/project.conf"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        os.makedirs(self.datasets, exist_ok=True)
+        os.makedirs(self.modeling, exist_ok=True)
+        os.makedirs(self.training, exist_ok=True)
+
+        if not os.path.isfile(self.config):
+            open(self.config, "a").close()
+
+        with open(self.config, "r") as file:
+            try:
+                kwargs.update(**json.load(file))
+            except Exception:
+                pass
+
+
 class TerraExchangeProject(pydantic.BaseModel):
     error: str = ""
     name: str = "NoName"
@@ -234,20 +256,7 @@ class TerraExchangeProject(pydantic.BaseModel):
         "modeling": reverse_lazy("apps_project:modeling"),
         "training": reverse_lazy("apps_project:training"),
     }
-
-    _autosave_filepath: str = f"{tempfile.gettempdir()}/terra-gui-autosave.tai-project"
-
-    def __init__(self, **kwargs):
-        if not os.path.isfile(self._autosave_filepath):
-            open(self._autosave_filepath, "a").close()
-
-        with open(self._autosave_filepath, "r") as file:
-            try:
-                kwargs.update(**json.load(file))
-            except Exception:
-                pass
-
-        super().__init__(**kwargs)
+    dir: ProjectPath = ProjectPath()
 
     def dict(self, *args, **kwargs):
         output = super().dict(*args, **kwargs)
@@ -258,12 +267,9 @@ class TerraExchangeProject(pydantic.BaseModel):
         }
         return output
 
-    def save(self, path: str):
-        with open(path, "w") as file:
-            json.dump(self.dict(), file)
-
     def autosave(self):
-        self.save(self._autosave_filepath)
+        with open(self.dir.config, "w") as file:
+            json.dump(self.dict(), file)
 
 
 @dataclass
