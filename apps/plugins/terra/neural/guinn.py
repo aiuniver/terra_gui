@@ -36,7 +36,7 @@ class GUINN:
         """
         For testing in different setups and environment
         """
-        self.debug_mode: bool = False
+        self.debug_mode: bool = True
         self.debug_verbose = 0
         self.default_projects_folder = "TerraProjects"
         self.default_user_model_plans_folder = "ModelPlans"
@@ -319,7 +319,6 @@ class GUINN:
         x_shape = []
         v_shape = []
         t_shape = []
-
         for i_key in self.DTS.X.keys():
             x_shape.append([i_key, self.DTS.X[i_key]['data'][0].shape])
             v_shape.append([i_key, self.DTS.X[i_key]['data'][1].shape])
@@ -364,7 +363,8 @@ class GUINN:
         """
 
         if self.model_is_trained:
-            model_weights_name = f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
+            model_weights_name = \
+                f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
             file_path_weights: str = os.path.join(self.experiment_path, f'{model_weights_name}.h5')
             self.model.save_weights(file_path_weights)
             self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))

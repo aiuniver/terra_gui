@@ -408,6 +408,7 @@ class ClassificationCallback:
             None
         """
         # super().__init__()
+        self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
         self.data_tag = data_tag
@@ -797,6 +798,7 @@ class SegmentationCallback:
             None
         """
         # super().__init__()
+        self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
         self.data_tag = data_tag
@@ -1147,6 +1149,7 @@ class TimeseriesCallback:
             None
         """
         super().__init__()
+        self.__name__ = "Callback for timeseries"
         if metrics is None:
             metrics = ["loss"]
         self.metrics = metrics
@@ -1356,6 +1359,7 @@ class RegressionCallback:
             None
         """
         super().__init__()
+        self.__name__ = "Callback for regression"
         if metrics is None:
             metrics = ["loss"]
         self.step = step
