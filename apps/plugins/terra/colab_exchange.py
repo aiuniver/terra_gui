@@ -3,6 +3,7 @@ import gc
 import os
 import re
 import tempfile
+import threading
 from threading import Thread
 
 import dill as dill
@@ -13,6 +14,7 @@ from tensorflow.keras.models import load_model
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
+
 from .layers_dataclasses import LayersDef, GUILayersDef
 from .data import (
     LayerLocation,
@@ -376,6 +378,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
         self.task_name = ""
+        self.mounted_drive_path = ''
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -547,7 +550,7 @@ class Exchange(StatesData, GuiExch):
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
-        print(self.out_data)
+        # print(self.out_data)
 
     @staticmethod
     def _reformatting_graphics_data(mode: str, data: dict) -> list:
@@ -946,9 +949,14 @@ class Exchange(StatesData, GuiExch):
         return self.out_data
 
     def _start_training(self, model: bytes, **kwargs) -> None:
+        self.process_flag = "train"
+        self._reset_out_data()
+
         training = kwargs
         print(training)
         model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
+        training_path = training.get('pathname', '')
+        self.nn.mounted_drive_path = training_path
 
         with open(model_file.name, 'wb') as f:
             f.write(base64.b64decode(model))
@@ -975,14 +983,17 @@ class Exchange(StatesData, GuiExch):
             batch_size=batch_size,
             optimizer_params=output_optimizer_params
         )
+        threading.enumerate()
         self.nn.terra_fit(nn_model)
         self.out_data["stop_flag"] = True
 
     def start_training(self, model: bytes, **kwargs) -> dict:
         training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
         training.start()
+        threading.enumerate()
         training.join()
         self.is_trained = True
+        threading.enumerate()
         print('TRAIN START')
         return {}
 
