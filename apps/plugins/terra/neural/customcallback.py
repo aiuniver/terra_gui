@@ -178,8 +178,8 @@ class CustomCallback(keras.callbacks.Callback):
     #                                    f'No y_Val in {output_key} -> Failed'))
 
     def prepare_callbacks(
-        self, task_type: str = "", metrics: list = None, num_classes: int = None
-    ) -> None:
+        self, task_type: str = "", metrics: list = None, num_classes: int = None,
+            clbck_options: dict = {}) -> None:
         """
         if terra in raw mode  - setting callback if its set
         if terra with django - checking switches and set callback options from switches
@@ -194,8 +194,6 @@ class CustomCallback(keras.callbacks.Callback):
             callback_kwargs["metrics"] = copy.copy(metrics)
         if task_type == "classification" or task_type == "segmentation":
             callback_kwargs["num_classes"] = num_classes
-
-        clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
 
         for option_name, option_value in clbck_options.items():
 
@@ -293,7 +291,8 @@ class CustomCallback(keras.callbacks.Callback):
             self.prepare_callbacks(
                 task_type=self.clbck_params[_key]["task"].value,
                 metrics=self.clbck_params[_key]["metrics"],
-                num_classes=self.clbck_params.setdefault(_key)["num_classes"]
+                num_classes=self.clbck_params.setdefault(_key)["num_classes"],
+                clbck_options=self.clbck_params[_key]["callbacks"],
                 )
 
     def _estimate_step(self, current, start, now):
