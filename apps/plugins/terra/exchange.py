@@ -227,10 +227,11 @@ class TerraExchange:
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
+        training_data = self.project.dict().get("training")
         response = self.__request_post(
             "get_model_to_colab",
             model_plan=model_plan,
-            training=self.project.training.dict(),
+            training=training_data,
         )
         if not response.success:
             return response
@@ -239,7 +240,7 @@ class TerraExchange:
         colab_exchange.start_training(
             model=model,
             pathname=self.project.dir.training,
-            **self.project.training.dict(),
+            **training_data,
         )
         return TerraExchangeResponse()
 
