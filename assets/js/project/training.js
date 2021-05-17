@@ -198,8 +198,18 @@
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
                                 } else {
-                                    console.log("SUCCESS:", success);
-                                    console.log("DATA:", data);
+                                    window.ExchangeRequest(
+                                        "get_data",
+                                        (success, data) => {
+                                            console.log("SUCCESS:", success, ", DATA:", data);
+                                            // if (!success) {
+                                            //     datasets.dataset = window.TerraProject.dataset;
+                                            //     window.StatusBar.message(data.error, false);
+                                            // } else {
+                                            //     window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                            // }
+                                        }
+                                    );
                                 }
                             } else {
                                 window.StatusBar.message(data.error, false);
