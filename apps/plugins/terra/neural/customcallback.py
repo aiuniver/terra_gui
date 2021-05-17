@@ -53,6 +53,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.metrics = []
         self.loss = []
         self.callbacks = []
+        self.callbacks_name = []
         self.task_name = []
         self.num_classes = []
         self.y_Scaler = []
@@ -153,7 +154,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        print("self.callbacks in Customcallbacks", self.callbacks)
+        self.Exch.show_text_data(
+            f"Added callbacks: {self.callbacks_name}"
+        )
 
     # def samples_chek(self):
     #     """
@@ -275,6 +278,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.clbck_object.append(clbck_object)
         initialized_callback = clbck_object(**callback_kwargs)
         self.callbacks.append(initialized_callback)
+        self.callbacks_name.append(initialized_callback.__name__)
 
         pass
 
