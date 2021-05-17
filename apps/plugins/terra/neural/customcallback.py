@@ -8,7 +8,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.01
+__version__ = 0.02
 
 
 class CustomCallback(keras.callbacks.Callback):
