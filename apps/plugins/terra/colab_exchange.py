@@ -983,8 +983,11 @@ class Exchange(StatesData, GuiExch):
             batch_size=batch_size,
             optimizer_params=output_optimizer_params
         )
-
-        self.nn.terra_fit(nn_model)
+        try:
+            self.nn.terra_fit(nn_model)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
 
     # def start_training(self, model: bytes, **kwargs) -> dict:
