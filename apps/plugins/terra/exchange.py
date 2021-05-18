@@ -181,7 +181,7 @@ class TerraExchange:
 
     def _call_clear_model(self) -> TerraExchangeResponse:
         self.project.layers = {}
-        for index, layer in self.project.dict().get("layers_start"):
+        for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
@@ -200,7 +200,11 @@ class TerraExchange:
             }
         )
 
-    def _call_get_change_validation(self) -> TerraExchangeResponse:
+    def _call_get_keras_code(self) -> TerraExchangeResponse:
+        return TerraExchangeResponse(data={"code": ""})
+
+    def _call_get_change_validation(self, svg: str) -> TerraExchangeResponse:
+        self.project.dir.clear_modeling()
         if self.project.layers:
             configs = dict(
                 map(
@@ -208,9 +212,20 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            response = self.__request_post("get_change_validation", layers=configs)
-            self.project.model_plan = response.data.get("plan")
-            return TerraExchangeResponse(data=response.data.get("errors"))
+            response = self.__request_post(
+                "get_change_validation",
+                layers=configs,
+                modelling_plan=colab_exchange.get_model_plan(),
+            )
+            if response.success:
+                if not len(list(filter(None, response.data.get("errors").values()))):
+                    self.project.dir.save_modeling(
+                        svg=svg, yaml=response.data.get("yaml_model")
+                    )
+                    self.project.model_plan = response.data.get("plan")
+                return TerraExchangeResponse(data=response.data.get("errors"))
+            else:
+                return response
         else:
             return TerraExchangeResponse()
 
@@ -218,6 +233,7 @@ class TerraExchange:
         self.project.training = TrainConfig(**kwargs)
         colab_exchange._reset_out_data()
         response_validate = self.call("get_change_validation")
+
         errors = response_validate.data
         if list(filter(None, errors.values())):
             return TerraExchangeResponse(data={"validation_errors": errors})

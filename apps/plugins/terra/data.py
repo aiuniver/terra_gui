@@ -1,5 +1,6 @@
 import os
 import json
+import cairosvg
 import pydantic
 
 from enum import Enum
@@ -138,6 +139,7 @@ class ModelPlan(pydantic.BaseModel):
     plan_name: str = ""
     num_classes: int = 10
     input_shape: Dict[str, Optional[Any]] = {"input_1": (28, 28, 1)}
+    output_shape: Dict[str, Optional[Any]] = {"output_1": (28, 28, 1)}
     plan: List[tuple] = []
 
 
@@ -223,6 +225,17 @@ class ProjectPath(pydantic.BaseModel):
         os.makedirs(self.datasets, exist_ok=True)
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
+
+    def save_modeling(self, svg: str, yaml: dict):
+        print("Save modeling")
+        print("SVG")
+        print(svg)
+        print("YAML")
+        print(yaml)
+        # cairosvg.svg2png(svg, write_to="asd.png")
+
+    def clear_modeling(self):
+        print("Clear modeling")
 
 
 class TerraExchangeProject(pydantic.BaseModel):

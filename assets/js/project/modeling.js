@@ -15,6 +15,24 @@
     });
 
 
+    let KerasCode = $("#modal-window-keras-code").ModalWindow({
+        title:"Код на Keras",
+        width:680,
+        height:440,
+        request:["get_keras_code"],
+        callback:(ui, data) => {
+            let map_replace = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&#34;',
+                "'": '&#39;'
+            };
+            ui.find(".wrapper .content").html(`<code>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code>`);
+        }
+    });
+
+
     $.fn.extend({
 
 
@@ -86,6 +104,7 @@
                     });
                     window.StatusBar.clear();
                     terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "set_model",
                         (success, data) => {
@@ -109,6 +128,7 @@
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
                     terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -126,12 +146,17 @@
                                 if (!is_error) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                     terra_toolbar.btn.save_model.disabled = false;
+                                    terra_toolbar.btn.keras.disabled = false;
                                 }
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
-                        }
+                        },
+                        {svg:terra_board.svg}
                     );
+                },
+                keras: (item, callback) => {
+                    KerasCode.open();
                 },
                 input: (item, callback) => {
                     if (typeof callback === "function") callback(item);
@@ -160,6 +185,7 @@
                         "save_model":this.find(".menu-section > li[data-type=save_model]")[0],
                         "save":this.find(".menu-section > li[data-type=save]")[0],
                         "validation":this.find(".menu-section > li[data-type=validation]")[0],
+                        "keras":this.find(".menu-section > li[data-type=keras]")[0],
                         "input":this.find(".menu-section > li[data-type=input]")[0],
                         "middle":this.find(".menu-section > li[data-type=middle]")[0],
                         "output":this.find(".menu-section > li[data-type=output]")[0],
@@ -279,6 +305,7 @@
                 };
 
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -320,7 +347,6 @@
                         _new_link = undefined;
                     }
                     _clines.selectAll("line").classed("active", false);
-
                     let id = $("#field_form-index").val();
                     if (`${id}` !== "") {
                         terra_params.reset();
@@ -420,7 +446,6 @@
                 let node = $(rect).parent()[0],
                     _node = d3.select(`#${node.id}`);
                 if (_onDrag) {
-                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
                         null,
@@ -475,6 +500,21 @@
                 },
                 get: () => {
                     return _cnodes.selectAll("g.node");
+                }
+            });
+
+            Object.defineProperty(this, "svg", {
+                get: () => {
+                    let _d3_svg = d3.select(svg.clone()[0]);
+                    _d3_svg.attr("width", svg.width())
+                        .attr("height", svg.height());
+                    let _svg = _d3_svg._groups[0][0];
+                    _svg.setAttribute("xlink", "http://www.w3.org/1999/xlink");
+                    let _serializer = new XMLSerializer(),
+                        _svg_string = _serializer.serializeToString(_svg);
+                    _svg_string = _svg_string.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+                    _svg_string = _svg_string.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+                    return _svg_string;
                 }
             });
 
@@ -570,10 +610,14 @@
                     link = tools.append("rect").attr("class", "btn link").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4),
                     unlink = tools.append("rect").attr("class", "btn unlink").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4);
 
-                let rect_pointer = node.append("rect").attr("class", "pointer").attr("height", _NODE_HEIGHT).call(d3.drag()
+                let rect_pointer = node.append("rect")
+                    .attr("class", "pointer")
+                    .attr("height", _NODE_HEIGHT)
+                    .call(d3.drag()
                         .on("drag", _node_dragged)
                         .on("end", _node_dragended)
                     );
+
                 $(rect_pointer._groups[0][0]).bind("mouseup", (event) => {
                     if (event.button === 2 && !_new_link) {
                         $(event.currentTarget).closest(".node").find(".tools > .link").trigger("click");
@@ -591,8 +635,7 @@
                 $(remove._groups[0][0]).bind("click", (event) => {
                     let g = $(event.currentTarget).closest(".node"),
                         index = parseInt(g[0].dataset.index),
-                        node = _d3graph.select(`#${g[0].id}`),
-                        info = node.data()[0];
+                        node = _d3graph.select(`#${g[0].id}`);
                     _clear_links(node);
                     g.remove();
                     if (`${index}` === `${$("#field_form-index").val()}`) terra_params.reset();
@@ -889,6 +932,7 @@
                 layer.x = null;
                 layer.y = null;
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -910,6 +954,7 @@
                 event.preventDefault();
                 window.StatusBar.clear();
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {

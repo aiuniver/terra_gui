@@ -29,6 +29,9 @@
             <li data-type="validation">
                 <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
+            <li data-type="keras" disabled="disabled">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
         </ul>
         <ul class="menu-section layers">
             <li data-type="input" disabled="disabled">
@@ -53,12 +56,7 @@
     <div class="wrapper">
         <div class="canvas-container">
             <div class="canvas">
-                <svg>
-                    <g id="canvas-container">
-                        <g id="canvas-lines"></g>
-                        <g id="canvas-nodes"></g>
-                    </g>
-                </svg>
+                <svg><g id="canvas-container"><g id="canvas-lines"></g><g id="canvas-nodes"></g></g></svg>
             </div>
             <ul class="zoom">
                 <li class="inc" id="zoom-inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
@@ -136,6 +134,14 @@
                 <div class="model-save-arch-btn"><button>Загрузить</button></div>
             </div>
         </div>
+    </div>
+</div>
+<div id="modal-window-keras-code" class="modal-window-container">
+    <div class="wrapper custom-scrollbar-wrapper">
+        <div class="content"></div>
+    </div>
+    <div class="action">
+        <span></span>
     </div>
 </div>
 <div id="modal-window-warning" class="modal-window-container">
