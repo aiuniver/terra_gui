@@ -202,13 +202,10 @@
                                         "get_data",
                                         (success, data) => {
                                             if (success) {
-                                                console.log("SUCCESS:", success, ", DATA:", data);
-                                                console.log("STOP_FLAG:", data.stop_flag);
-                                                console.log("DATA:", data.data);
-                                                console.log("===============================");
                                                 window.StatusBar.message(data.data.status_string);
                                                 window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                                                 training_results.charts = data.data.plots;
+                                                training_results.texts = data.data.texts;
                                                 if (data.stop_flag) {
                                                     this.validate = false;
                                                     _action_training.removeAttr("disabled");
@@ -247,10 +244,10 @@
                     return this.children(".charts").children(".content");
                 },
                 set: (charts) => {
-                    this.charts.children(".inner").html("");
+                    this.charts.children(".inner").html(charts.length ? '<div class="wrapper"></div>' : '');
                     charts.forEach((item) => {
                         let div = $('<div class="item"><div></div></div>');
-                        this.charts.children(".inner").append(div);
+                        this.charts.children(".inner").children(".wrapper").append(div);
                         Plotly.newPlot(
                             div.children("div")[0],
                             item.list,
@@ -312,6 +309,20 @@
             Object.defineProperty(this, "texts", {
                 get: () => {
                     return this.children(".texts").children(".content");
+                },
+                set: (texts) => {
+                    let map_replace = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&#34;',
+                        "'": '&#39;'
+                    };
+                    this.texts.children(".inner").html(
+                        texts.map((item) => {
+                            return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
+                        }).join("")
+                    );
                 }
             });
 

@@ -889,6 +889,11 @@ class Exchange(StatesData, GuiExch):
         self._set_data("texts", data, stop_flag)
         pass
 
+    def show_current_epoch(self, epoch: int):
+        self.epoch = epoch + 1
+        print(self.epoch)
+        pass
+
     def get_stop_training_flag(self):
         return self.stop_training_flag
 
@@ -951,6 +956,7 @@ class Exchange(StatesData, GuiExch):
     def start_training(self, model: bytes, **kwargs) -> None:
         self.process_flag = "train"
         self._reset_out_data()
+        print(self.out_data)
         training = kwargs
         print(training)
 
@@ -968,7 +974,7 @@ class Exchange(StatesData, GuiExch):
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        epochs = training.get("epochs_count", 10)
+        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
         optimizer_params = training.get('optimizer', {})
         output_optimizer_params['op_name'] = optimizer_params.get('name')
@@ -978,12 +984,15 @@ class Exchange(StatesData, GuiExch):
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=epochs,
+            epochs=self.epochs,
             batch_size=batch_size,
             optimizer_params=output_optimizer_params
         )
-
-        self.nn.terra_fit(nn_model)
+        try:
+            self.nn.terra_fit(nn_model)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
 
     # def start_training(self, model: bytes, **kwargs) -> dict:
