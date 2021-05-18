@@ -932,6 +932,7 @@ class Exchange(StatesData, GuiExch):
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
+        model_plan.output_shape = {}
         model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
         return model_plan.dict()

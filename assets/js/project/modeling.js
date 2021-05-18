@@ -4,44 +4,6 @@
 (($) => {
 
 
-    function getSVGString( svgNode ) {
-        svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
-
-        var serializer = new XMLSerializer();
-        var svgString = serializer.serializeToString(svgNode);
-        svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
-        svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
-
-        return svgString;
-    }
-    function svgString2Image( svgString, width, height, format, callback ) {
-        var format = format ? format : 'png';
-
-        var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
-        console.log(imgsrc);
-
-        var canvas = document.createElement("canvas");
-        var context = canvas.getContext("2d");
-
-        canvas.width = width;
-        canvas.height = height;
-
-        var image = new Image();
-        image.src = imgsrc;
-        var out = canvas.toDataURL("image/png");
-        image.onload = function() {
-            context.clearRect ( 0, 0, width, height );
-            context.drawImage(image, 0, 0, width, height);
-            canvas.toBlob( function(blob) {
-                var filesize = Math.round( blob.length/1024 ) + ' KB';
-                if ( callback ) callback( blob, filesize );
-            });
-        };
-        console.log(out);
-        // send_data(out)
-    }
-
-
     let terra_toolbar, terra_board, terra_params;
     
 
@@ -171,15 +133,6 @@
                         "get_change_validation",
                         (success, data) => {
                             this.btn.validation.disabled = false;
-                            // let svg = document.getElementsByTagName("svg")[0],
-                            //     svg_string = getSVGString(svg);
-                            // svgString2Image(
-                            //     svg_string,
-                            //     svg.width.baseVal.value,
-                            //     svg.height.baseVal.value,
-                            //     "png"
-                            // );
-                            // console.log(svg_string);
                             if (success) {
                                 window.StatusBar.clear();
                                 let is_error = false;
@@ -198,7 +151,8 @@
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
-                        }
+                        },
+                        {svg:terra_board.svg}
                     );
                 },
                 keras: (item, callback) => {
@@ -393,7 +347,6 @@
                         _new_link = undefined;
                     }
                     _clines.selectAll("line").classed("active", false);
-
                     let id = $("#field_form-index").val();
                     if (`${id}` !== "") {
                         terra_params.reset();
@@ -547,6 +500,21 @@
                 },
                 get: () => {
                     return _cnodes.selectAll("g.node");
+                }
+            });
+
+            Object.defineProperty(this, "svg", {
+                get: () => {
+                    let _d3_svg = d3.select(svg.clone()[0]);
+                    _d3_svg.attr("width", svg.width())
+                        .attr("height", svg.height());
+                    let _svg = _d3_svg._groups[0][0];
+                    _svg.setAttribute("xlink", "http://www.w3.org/1999/xlink");
+                    let _serializer = new XMLSerializer(),
+                        _svg_string = _serializer.serializeToString(_svg);
+                    _svg_string = _svg_string.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+                    _svg_string = _svg_string.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+                    return _svg_string;
                 }
             });
 
