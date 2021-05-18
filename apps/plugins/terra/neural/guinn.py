@@ -33,14 +33,6 @@ class GUINN:
         self.chp_save_best = True
         self.chp_save_weights = True
 
-        # """
-        # For testing in different setups and environment
-        # """
-        # self.debug_mode: bool = True
-        # self.debug_verbose = 0
-        # self.default_projects_folder = "TerraProjects"
-        # self.default_user_model_plans_folder = "ModelPlans"
-
         """
         For samples from dataset
         """
