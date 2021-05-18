@@ -208,7 +208,10 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            response = self.__request_post("get_change_validation", layers=configs)
+            model_plan = colab_exchange.get_model_plan(
+                self.project.model_plan, self.project.model_name
+            )
+            response = self.__request_post("get_change_validation", layers=configs, modelling_plan=model_plan)
             self.project.model_plan = response.data.get("plan")
             return TerraExchangeResponse(data=response.data.get("errors"))
         else:
