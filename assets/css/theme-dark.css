@@ -124,7 +124,7 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 .project-datasets-block.datasets .card-tag::before {
     content:url('../imgs/Vector.png');
 }
-.project-modeling-toolbar > .wrapper {
+.toolbar > .wrapper {
     border-color:#0E1621;
 }
 .project-modeling-properties > .wrapper > .params-navbar {
