@@ -333,7 +333,7 @@ class CustomCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
         msg = f'Epoch {epoch + 1}/{self.epochs}:'
         # print(msg)
-        self.Exch.show_current_epoch(epoch)
+        # self.Exch.show_current_epoch(epoch)
         pass
 
     def on_train_batch_end(self, batch, logs=None):
@@ -369,6 +369,7 @@ class CustomCallback(keras.callbacks.Callback):
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
                 )
+        self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
         # print(self.update_progress(self.epochs, epoch, self._start_time))
 
