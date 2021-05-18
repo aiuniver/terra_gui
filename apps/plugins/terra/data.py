@@ -224,6 +224,12 @@ class ProjectPath(pydantic.BaseModel):
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
 
+    def clear_modeling(self):
+        print("Clear modeling")
+
+    def save_modeling(self):
+        print("Save modeling")
+
 
 class TerraExchangeProject(pydantic.BaseModel):
     error: str = ""

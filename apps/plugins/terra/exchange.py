@@ -200,7 +200,11 @@ class TerraExchange:
             }
         )
 
+    def _call_get_keras_code(self) -> TerraExchangeResponse:
+        return TerraExchangeResponse(data={"code": ""})
+
     def _call_get_change_validation(self) -> TerraExchangeResponse:
+        self.project.dir.clear_modeling()
         if self.project.layers:
             configs = dict(
                 map(
@@ -208,8 +212,14 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            response = self.__request_post("get_change_validation", layers=configs)
-            self.project.model_plan = response.data.get("plan")
+            model_plan = colab_exchange.get_model_plan()
+            response = self.__request_post(
+                "get_change_validation", layers=configs, model_plan=model_plan
+            )
+            print(response)
+            if not len(list(filter(None, response.data.get("errors").values()))):
+                self.project.dir.save_modeling()
+                self.project.model_plan = response.data.get("plan")
             return TerraExchangeResponse(data=response.data.get("errors"))
         else:
             return TerraExchangeResponse()

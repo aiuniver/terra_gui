@@ -15,6 +15,24 @@
     });
 
 
+    let KerasCode = $("#modal-window-keras-code").ModalWindow({
+        title:"Код на Keras",
+        width:680,
+        height:440,
+        request:["get_keras_code"],
+        callback:(ui, data) => {
+            let map_replace = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&#34;',
+                "'": '&#39;'
+            };
+            ui.find(".wrapper .content").html(`<code>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code>`);
+        }
+    });
+
+
     $.fn.extend({
 
 
@@ -86,6 +104,7 @@
                     });
                     window.StatusBar.clear();
                     terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "set_model",
                         (success, data) => {
@@ -109,6 +128,7 @@
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
                     terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -126,12 +146,16 @@
                                 if (!is_error) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                     terra_toolbar.btn.save_model.disabled = false;
+                                    terra_toolbar.btn.keras.disabled = false;
                                 }
                             } else {
                                 window.StatusBar.message(data.error, false);
                             }
                         }
                     );
+                },
+                keras: (item, callback) => {
+                    KerasCode.open();
                 },
                 input: (item, callback) => {
                     if (typeof callback === "function") callback(item);
@@ -160,6 +184,7 @@
                         "save_model":this.find(".menu-section > li[data-type=save_model]")[0],
                         "save":this.find(".menu-section > li[data-type=save]")[0],
                         "validation":this.find(".menu-section > li[data-type=validation]")[0],
+                        "keras":this.find(".menu-section > li[data-type=keras]")[0],
                         "input":this.find(".menu-section > li[data-type=input]")[0],
                         "middle":this.find(".menu-section > li[data-type=middle]")[0],
                         "output":this.find(".menu-section > li[data-type=output]")[0],
@@ -279,6 +304,7 @@
                 };
 
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -420,7 +446,6 @@
                 let node = $(rect).parent()[0],
                     _node = d3.select(`#${node.id}`);
                 if (_onDrag) {
-                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
                         null,
@@ -889,6 +914,7 @@
                 layer.x = null;
                 layer.y = null;
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -910,6 +936,7 @@
                 event.preventDefault();
                 window.StatusBar.clear();
                 terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {

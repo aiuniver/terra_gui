@@ -64,6 +64,9 @@ class ExchangeData:
     def _execute_get_change_validation(self, **kwargs):
         return terra_exchange.call("get_change_validation", **kwargs)
 
+    def _execute_get_keras_code(self, **kwargs):
+        return terra_exchange.call("get_keras_code", **kwargs)
+
     def _execute_before_start_training(self, **kwargs):
         return terra_exchange.call("before_start_training", **kwargs)
 

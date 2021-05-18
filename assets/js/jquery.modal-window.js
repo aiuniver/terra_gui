@@ -4,7 +4,7 @@
 (($) => {
 
 
-    const MW_CLASSNAME = "modal-window-container";
+    const MW_CLASSNAME = ".modal-window-container";
 
 
     let ModalWindow = function(mw) {

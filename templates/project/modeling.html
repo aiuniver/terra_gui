@@ -29,6 +29,9 @@
             <li data-type="validation">
                 <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
+            <li data-type="keras" disabled="disabled">
+                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
         </ul>
         <ul class="menu-section layers">
             <li data-type="input" disabled="disabled">
@@ -136,6 +139,14 @@
                 <div class="model-save-arch-btn"><button>Загрузить</button></div>
             </div>
         </div>
+    </div>
+</div>
+<div id="modal-window-keras-code" class="modal-window-container">
+    <div class="wrapper custom-scrollbar-wrapper">
+        <div class="content"></div>
+    </div>
+    <div class="action">
+        <span></span>
     </div>
 </div>
 <div id="modal-window-warning" class="modal-window-container">
