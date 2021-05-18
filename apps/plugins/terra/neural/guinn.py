@@ -5,6 +5,7 @@ import gc
 import operator
 from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
+from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
 __version__ = 0.3
 
@@ -58,6 +59,7 @@ class GUINN:
         self.optimizer = keras.optimizers.Adam()
         self.loss: dict = {}
         self.metrics: dict = {}
+        self.custom_losses_dict: dict = {'dice_coef': DiceCoefficient}
         self.batch_size = 32
         self.epochs = 20
         self.shuffle: bool = True
@@ -84,6 +86,14 @@ class GUINN:
         """
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
+        pass
+
+    def set_custom_metrics(self):
+        # print('___nn___NN___set_custom_metrics___')
+        for i_key in self.metrics.keys():
+            for idx, metric in enumerate(self.metrics[i_key]):
+                if metric in self.custom_losses_dict.keys():
+                    self.metrics[i_key][idx] = self.custom_losses_dict[metric]()
         pass
 
     def set_chp_monitor(self) -> None:
