@@ -620,6 +620,4 @@ class Exchange:
             res_type = "GPU"
         return res_type
 
-    def show_current_epoch(self, epoch: int):
-        self.epoch = epoch
-        pass
+

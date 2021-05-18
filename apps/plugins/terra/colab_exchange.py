@@ -3,6 +3,8 @@ import gc
 import os
 import re
 import tempfile
+import threading
+from threading import Thread
 
 import dill as dill
 from IPython import get_ipython
@@ -12,6 +14,7 @@ from tensorflow.keras.models import load_model
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
+
 from .layers_dataclasses import LayersDef, GUILayersDef
 from .data import (
     LayerLocation,
@@ -375,6 +378,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
         self.dts_name = None
         self.task_name = ""
+        self.mounted_drive_path = ''
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -546,6 +550,7 @@ class Exchange(StatesData, GuiExch):
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
+        # print(self.out_data)
 
     @staticmethod
     def _reformatting_graphics_data(mode: str, data: dict) -> list:
@@ -884,6 +889,11 @@ class Exchange(StatesData, GuiExch):
         self._set_data("texts", data, stop_flag)
         pass
 
+    def show_current_epoch(self, epoch: int):
+        self.epoch = epoch + 1
+        print(self.epoch)
+        pass
+
     def get_stop_training_flag(self):
         return self.stop_training_flag
 
@@ -944,8 +954,14 @@ class Exchange(StatesData, GuiExch):
         return self.out_data
 
     def start_training(self, model: bytes, **kwargs) -> None:
+        self.process_flag = "train"
+        self._reset_out_data()
+        print(self.out_data)
         training = kwargs
+        print(training)
+
         model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
+        self.nn.training_path = training.get('pathname', '')
 
         with open(model_file.name, 'wb') as f:
             f.write(base64.b64decode(model))
@@ -958,7 +974,7 @@ class Exchange(StatesData, GuiExch):
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        epochs = training.get("epochs_count", 10)
+        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
         optimizer_params = training.get('optimizer', {})
         output_optimizer_params['op_name'] = optimizer_params.get('name')
@@ -968,12 +984,26 @@ class Exchange(StatesData, GuiExch):
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=epochs,
+            epochs=self.epochs,
             batch_size=batch_size,
             optimizer_params=output_optimizer_params
         )
-        self.nn.terra_fit(nn_model)
+        try:
+            self.nn.terra_fit(nn_model)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
+
+    # def start_training(self, model: bytes, **kwargs) -> dict:
+    #     training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
+    #     training.start()
+    #     threading.enumerate()
+    #     training.join()
+    #     self.is_trained = True
+    #     threading.enumerate()
+    #     print('TRAIN START')
+    #     return {}
 
     #
     # def start_evaluate(self):

@@ -581,6 +581,9 @@ footer > .state > .wrapper:before {
 .toolbar > .wrapper > .menu-section > li {
 	position:relative;
 }
+.toolbar > .wrapper > .menu-section > li.hidden {
+    display:none;
+}
 .toolbar > .wrapper > .menu-section > li > span {
     display:block;
 	padding:8px;

@@ -96,7 +96,7 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_prepare_dataset(
-        self, dataset: str, is_custom: bool = False
+        self, dataset: str, is_custom: bool = False, not_load_layers: bool = False
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
@@ -108,19 +108,21 @@ class TerraExchange:
                 int(layer.get("config").get("location_type") != LayerLocation.input)
             ].append(index)
 
-        layers = {}
-        outputs = {}
-        for index, layer in start_layers.items():
-            layers[int(index)] = Layer(**layer)
-            if layers[int(index)].config.location_type == LayerLocation.output:
-                outputs[layers[int(index)].config.dts_layer_name] = OutputConfig()
-        self.project.training.outputs = outputs
+        if not not_load_layers:
+            layers = {}
+            outputs = {}
+            for index, layer in start_layers.items():
+                layers[int(index)] = Layer(**layer)
+                if layers[int(index)].config.location_type == LayerLocation.output:
+                    outputs[layers[int(index)].config.dts_layer_name] = OutputConfig()
+            self.project.training.outputs = outputs
 
-        self.project.layers = layers
-        self.project.layers_start = layers
-        self.project.layers_schema = schema
-        self.project.dataset = dataset
-        self.project.model_name = DEFAULT_MODEL_NAME
+            self.project.layers = layers
+            self.project.layers_start = layers
+            self.project.layers_schema = schema
+            self.project.dataset = dataset
+            self.project.model_name = DEFAULT_MODEL_NAME
+
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -212,29 +214,36 @@ class TerraExchange:
         else:
             return TerraExchangeResponse()
 
-    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange._reset_out_data()
         response_validate = self.call("get_change_validation")
         errors = response_validate.data
         if list(filter(None, errors.values())):
             return TerraExchangeResponse(data={"validation_errors": errors})
 
+        return TerraExchangeResponse()
+
+    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         self.project.training = TrainConfig(**kwargs)
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
+        training_data = self.project.dict().get("training")
         response = self.__request_post(
             "get_model_to_colab",
             model_plan=model_plan,
-            training=self.project.training.dict(),
+            training=training_data,
         )
         if not response.success:
             return response
 
         model = response.data.get("model", "")
-        response = colab_exchange.start_training(
-            model=model, **self.project.training.dict()
+        colab_exchange.start_training(
+            model=model,
+            pathname=self.project.dir.training,
+            **training_data,
         )
-        return response
+        return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)

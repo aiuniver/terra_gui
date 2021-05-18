@@ -55,12 +55,37 @@
                         }
                     );
                 },
+                save_model: (item, callback) => {
+                    console.log(item, callback);
+                    // let send_data = {};
+                    // d3.selectAll("g.node")._groups[0].forEach((item) => {
+                    //     send_data[parseInt(item.dataset.index)] = item.__data__;
+                    // });
+                    // window.StatusBar.clear();
+                    // window.ExchangeRequest(
+                    //     "set_model",
+                    //     (success, data) => {
+                    //         if (success) {
+                    //             this.btn.save.disabled = true;
+                    //             window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                    //             if (typeof callback === "function") callback(item);
+                    //         } else {
+                    //             window.StatusBar.message(data.error, false);
+                    //         }
+                    //     },
+                    //     {
+                    //         "layers": send_data,
+                    //         "schema": window.TerraProject.schema,
+                    //     }
+                    // );
+                },
                 save: (item, callback) => {
                     let send_data = {};
                     d3.selectAll("g.node")._groups[0].forEach((item) => {
                         send_data[parseInt(item.dataset.index)] = item.__data__;
                     });
                     window.StatusBar.clear();
+                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "set_model",
                         (success, data) => {
@@ -83,6 +108,7 @@
                     window.StatusBar.clear();
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
+                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -99,6 +125,7 @@
                                 }
                                 if (!is_error) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
+                                    terra_toolbar.btn.save_model.disabled = false;
                                 }
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -130,6 +157,7 @@
                 get: () => {
                     return {
                         "load":this.find(".menu-section > li[data-type=load]")[0],
+                        "save_model":this.find(".menu-section > li[data-type=save_model]")[0],
                         "save":this.find(".menu-section > li[data-type=save]")[0],
                         "validation":this.find(".menu-section > li[data-type=validation]")[0],
                         "input":this.find(".menu-section > li[data-type=input]")[0],
@@ -250,6 +278,7 @@
                     y: null,
                 };
 
+                terra_toolbar.btn.save_model.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -391,6 +420,7 @@
                 let node = $(rect).parent()[0],
                     _node = d3.select(`#${node.id}`);
                 if (_onDrag) {
+                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
                         null,
@@ -858,6 +888,7 @@
                 layer.down_link = [];
                 layer.x = null;
                 layer.y = null;
+                terra_toolbar.btn.save_model.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -878,6 +909,7 @@
             this.bind("submit", (event) => {
                 event.preventDefault();
                 window.StatusBar.clear();
+                terra_toolbar.btn.save_model.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
