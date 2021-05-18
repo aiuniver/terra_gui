@@ -1,13 +1,12 @@
 from typing import Tuple
 import numpy as np
-import sys
 import os
 import gc
 import operator
 from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 
-__version__ = 0.2
+__version__ = 0.3
 
 
 class GUINN:
@@ -52,79 +51,14 @@ class GUINN:
         self.x_Test: dict = {}
         self.y_Test: dict = {}
 
-        # if not self.Exch.is_google_drive_connected():
-        #     self.Exch.print_2status_bar(
-        #         ("Warning:", f"Google Drive is not connected! Using drive on VM!")
-        #     )
-        #     if self.debug_mode:
-        #         self.mounted_drive_name = ""
-        #         self.mounted_drive_path = "./TerraAI/projects"
-        #         self.mounted_drive_writable = True
-        # else:
-        #     """
-        #     Setting location for TerraProjects - Home for _current_ user
-        #     """
-        #     (
-        #         self.mounted_drive_name,
-        #         self.mounted_drive_path,
-        #     ) = self.Exch.get_google_drive_name_path()
-        #     self.mounted_drive_writable = True
-        #
-        # self.HOME = os.path.join(self.mounted_drive_path, self.default_projects_folder)
-        # self.checking_HOME()
-        # self.default_user_model_plans_path = os.path.join(
-        #     self.HOME, self.default_user_model_plans_folder
-        # )
-        # if not os.access(self.default_user_model_plans_path, os.F_OK):
-        #     os.mkdir(self.default_user_model_plans_path)
-        #     self.Exch.print_2status_bar(
-        #         (
-        #             "Info",
-        #             f"Created the Home directory "
-        #             f"{self.default_user_model_plans_path} for keeping projects data",
-        #         )
-        #     )
-        # else:
-        #     self.Exch.print_2status_bar(
-        #         (
-        #             "Info",
-        #             f"The Home directory "
-        #             f"{self.default_user_model_plans_path} for keeping projects data, already "
-        #             f"exists",
-        #         )
-        #     )
-        #
-        # pass
-
+        """
+        For model settings
+        """
         self.nn_name: str = ''
         self.model = keras.Model
         self.modelling_path: str = ""
         self.training_path: str = ""
         # self.external_model: bool = False
-
-        # """
-        # Setting location for Projects in Home directory for _current_ user
-        # """
-        # self.project_name: str = ''
-        # self.project_path: str = ''
-        # self.set_project_name(self.project_name)
-        #
-        # """
-        # Setting experiment_UUID and experiment_name
-        # """
-        # self.experiment_name: str = ''
-        # self.experiment_UUID: str = ''
-        # self.experiment_path: str = ''
-        # self.set_experiment_UUID()
-        # self.set_experiment_name(str(self.experiment_UUID))
-
-        self.best_epoch: dict = {}
-        self.best_epoch_num: int = 0
-        self.stop_epoch: int = 0
-        self.model_is_trained: bool = False
-        self.history: dict = {}
-        self.best_metric_result = "0000"
-
         self.learning_rate = 1e-3
         self.optimizer_name: str = 'Adam'
         self.optimizer_object = keras.optimizers.Adam
@@ -136,6 +70,15 @@ class GUINN:
         self.epochs = 20
         self.shuffle: bool = True
 
+        """
+        Logs
+        """
+        self.best_epoch: dict = {}
+        self.best_epoch_num: int = 0
+        self.stop_epoch: int = 0
+        self.model_is_trained: bool = False
+        self.history: dict = {}
+        self.best_metric_result = "0000"
         self.monitor: str = 'accuracy'
         self.monitor2: str = "loss"
 
@@ -147,7 +90,6 @@ class GUINN:
             optimizer_name (str):   name of keras optimizer
             kwargs (dict):          kwargs for optimizer
         """
-        # print('___nn___NN___set_optimizer___', optimizer_name)
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
         pass
@@ -189,7 +131,7 @@ class GUINN:
         for output_key in self.output_params.keys():
             self.metrics.update({output_key: self.output_params[output_key]['metrics']})
             self.loss.update({output_key: self.output_params[output_key]['loss']})
-        # print(self.loss, self.metrics)
+
         pass
 
     def set_dataset(self, dts_obj: object) -> None:
@@ -203,105 +145,6 @@ class GUINN:
         self.prepare_dataset()
         self.nn_cleaner()
         pass
-
-    # def checking_HOME(self) -> None:
-    #     """
-    #     Checking mounted drive for write access and if it's writable,
-    #     checking HOME directory for self.default_projects_folder
-    #     if its not found, create this folder
-    #     Also set the flag self.mounted_drive_writable
-    #     Printing info and error message about write status
-    #
-    #     """
-    #     if os.access(self.mounted_drive_path, os.W_OK):
-    #         self.mounted_drive_writable = True
-    #         self.Exch.set_mounted_drive_status(True)
-    #         if not os.access(self.HOME, os.F_OK):
-    #             os.mkdir(self.HOME)
-    #             self.Exch.print_2status_bar(
-    #                 (
-    #                     "info",
-    #                     f"Created the Home directory {self.HOME} for keeping projects data",
-    #                 )
-    #             )
-    #         else:
-    #             if self.debug_verbose >= 3:
-    #                 self.Exch.print_2status_bar(
-    #                     (
-    #                         "info",
-    #                         f"The Home directory {self.HOME} for keeping projects data, already "
-    #                         f"exists",
-    #                     )
-    #                 )
-    #     else:
-    #         self.Exch.print_error(
-    #             (
-    #                 "Error",
-    #                 f"The mounted drive {self.mounted_drive_path} is not writable. "
-    #                 f"Check mounted drive for write access",
-    #             )
-    #         )
-    #         os.makedirs(self.mounted_drive_path)
-    #         # sys.exit()
-    #     pass
-    #
-    # def set_project_name(self, project_name: str) -> None:
-    #     """
-    #     Setting project nn_name
-    #
-    #     Args:
-    #         project_name (str):   nn_name of the project, also used as sub directory
-    #     """
-    #     if project_name == "":
-    #         self.project_name = "noname_project"
-    #     else:
-    #         self.project_name = project_name
-    #     self.project_path = os.path.join(self.HOME, self.project_name)
-    #     pass
-
-    # def set_task_type(self) -> None:
-    #     """
-    #     Setting task_type to crete logistic 'pipe' from start to end
-    #     also set the task_name to same string value if it's not changed from default
-    #     """
-    #     self.task_name = self.Exch.task_name
-    #     self.task_type = self.task_name
-    #
-    #     if self.task_type == "":
-    #         self.task_type = None
-    #     else:
-    #         self.task_path = os.path.join(self.project_path, self.task_type)
-    #     pass
-
-    # def set_task_name(self, task_name: str) -> None:
-    #     """
-    #     Setting task nn_name
-    #
-    #     Args:
-    #         task_name (str): setting task_name
-    #     """
-    #     self.task_name = task_name
-    #     self.Exch.set_task_name(self.task_name)
-    #     pass
-
-    # def set_experiment_UUID(self) -> None:
-    #     """
-    #     Setting experiment UUID
-    #     """
-    #
-    #     self.experiment_UUID = self.Exch.experiment_UUID
-    #     self.experiment_path = os.path.join(self.project_path, str(self.experiment_UUID))
-    #     pass
-    #
-    # def set_experiment_name(self, experiment_name: str) -> None:
-    #     """
-    #     Setting experiment nn_name
-    #
-    #     Args:
-    #         experiment_name (str): setting experiment nn_name
-    #     """
-    #     self.experiment_name = experiment_name
-    #     pass
 
     def show_training_params(self) -> None:
         """
@@ -388,6 +231,7 @@ class GUINN:
                 self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
             if self.DTS.Y[output_key]['data'][2] is not None:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
+
         pass
 
     def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
@@ -410,22 +254,12 @@ class GUINN:
                            metrics=self.metrics
                            )
         # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
-        # if self.debug_verbose > 1:
-        #     verbose = 2
-        #     print("self.loss", self.loss)
-        #     print("self.metrics", self.metrics)
-        #     print("self.batch_size", self.batch_size)
-        #     print("self.epochs", self.epochs)
 
         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
                                  batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
                                  model_name=self.nn_name)
         self.callbacks = [clsclbk]
-        # self.chp_monitor = 'loss'
-        # self.chp_mode = 'min'
-        # self.chp_save_best = True
-        # self.chp_save_weights = True
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
             filepath=os.path.join(self.training_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
@@ -460,15 +294,6 @@ class GUINN:
             )
         self.model_is_trained = True
 
-        # for n_out in self.DTS.Y.keys():
-        #     for _ in self.loss[n_out]:
-        #         for metric_out in self.metrics[n_out]:
-        #             if len(self.y_Train) > 1:  # or (len(self.metrics[n_out]) > 1 and 'loss' not in self.metrics[n_out])
-        #                 self.monitor = f'{n_out}_{metric_out}'
-        #                 self.monitor2 = f'{n_out}_loss'
-        #             else:
-        #                 self.monitor = f'{metric_out}'
-        #                 self.monitor2 = f'loss'
         self.monitor = self.chp_monitor
         self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
             history=self.history, monitor=self.monitor, monitor2=self.monitor2)

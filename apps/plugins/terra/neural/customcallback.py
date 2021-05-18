@@ -9,7 +9,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.02
+__version__ = 0.03
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -32,7 +32,7 @@ class CustomCallback(keras.callbacks.Callback):
         """
         Init for Custom callback
         Args:
-            metrics (list):             список используемых метрик: по умолчанию [], что соответсвует 'loss'
+            params (list):              список используемых параметров
             step int():                 шаг вывода хода обучения, по умолчанию step = 1
             show_final (bool):          выводить ли в конце обучения график, по умолчанию True
             dataset (DTS):              экземпляр класса DTS
@@ -69,7 +69,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.batch_size = batch_size
         self.epochs = epochs
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
-        # self.samples_chek()
         self.y_pred = []
         self.epoch = 0
         self.history = {}
@@ -162,28 +161,6 @@ class CustomCallback(keras.callbacks.Callback):
             f"Added callbacks: {self.callbacks_name}"
         )
 
-    # def samples_chek(self):
-    #     """
-    #     Prepare samples x_Val and y_Val for evaluate
-    #     Returns:
-    #         None:
-    #     """
-    #     for input_key in self.x_Val.keys():
-    #
-    #         if self.x_Val is not None:
-    #             self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-    #         else:
-    #             self.Exch.print_error(('Error',
-    #                                    f'No x_Val in {input_key} -> Failed'))
-    #
-    #     for output_key in self.y_true.keys():
-    #
-    #         if self.DTS.Y[output_key]['data'][1] is not None:
-    #             self.y_true.update({output_key: self.DTS.Y[output_key]['data'][1]})
-    #         else:
-    #             self.Exch.print_error(('Error',
-    #                                    f'No y_Val in {output_key} -> Failed'))
-
     def save_lastmodel(self) -> None:
         """
         Saving last model on each epoch end
@@ -194,15 +171,15 @@ class CustomCallback(keras.callbacks.Callback):
         model_name = f"model_{self.nn_name}_on_epoch_end_last"
         file_path_model: str = os.path.join(
             self.save_model_path, f"{model_name}.h5"
-            )
+        )
         self.model.save(file_path_model)
         self.Exch.print_2status_bar(
             ("Info", f"Model last is saved as {file_path_model}")
-            )
+        )
         pass
 
     def prepare_callbacks(
-        self, task_type: str = "", metrics: list = None, num_classes: int = None,
+            self, task_type: str = "", metrics: list = None, num_classes: int = None,
             clbck_options: dict = {}) -> None:
         """
         if terra in raw mode  - setting callback if its set
@@ -318,7 +295,7 @@ class CustomCallback(keras.callbacks.Callback):
                 metrics=self.clbck_params[_key]["metrics"],
                 num_classes=self.clbck_params.setdefault(_key)["num_classes"],
                 clbck_options=self.clbck_params[_key]["callbacks"],
-                )
+            )
 
     def _estimate_step(self, current, start, now):
         if current:
@@ -359,9 +336,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.Exch.show_current_epoch(epoch)
         pass
 
-    # def on_train_batch_begin(self, batch, logs=None):
-    #     self._time_first_step = time.time()
-
     def on_train_batch_end(self, batch, logs=None):
         msg = f'batch {batch}/{self.num_batches}: {self.update_progress(self.num_batches, batch, self._time_first_step)}'
         self.Exch.print_2status_bar(('Progress: ', msg))
@@ -395,29 +369,30 @@ class CustomCallback(keras.callbacks.Callback):
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
                 )
-
+        self.save_lastmodel()
         # print(self.update_progress(self.epochs, epoch, self._start_time))
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
+        self.save_lastmodel()
 
 
 class ClassificationCallback:
     """Callback for classification"""
 
     def __init__(
-        self,
-        metrics=[],
-        step=1,
-        class_metrics=[],
-        num_classes=2,
-        data_tag="images",
-        show_worst=False,
-        show_best=False,
-        show_final=True,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics=[],
+            step=1,
+            class_metrics=[],
+            num_classes=2,
+            data_tag="images",
+            show_worst=False,
+            show_best=False,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -700,13 +675,13 @@ class ClassificationCallback:
     #     pass
 
     def epoch_end(
-        self,
-        epoch,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
     ):
         """
         Returns:
@@ -797,17 +772,17 @@ class SegmentationCallback:
     """Callback for segmentation"""
 
     def __init__(
-        self,
-        metrics=[],
-        step=1,
-        num_classes=2,
-        class_metrics=[],
-        data_tag="images",
-        show_worst=False,
-        show_best=False,
-        show_final=True,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics=[],
+            step=1,
+            num_classes=2,
+            class_metrics=[],
+            data_tag="images",
+            show_worst=False,
+            show_best=False,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -1018,8 +993,8 @@ class SegmentationCallback:
                 truezero = np.abs(truesegments[i] - testsegment)
                 predzero = np.abs(predsegments[i] - testsegment)
                 summ_val += (
-                    testsegment.size - np.count_nonzero(truezero + predzero)
-                ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
+                                    testsegment.size - np.count_nonzero(truezero + predzero)
+                            ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
             acc_val = summ_val / self.y_true.shape[0]
             self.metric_classes.append(acc_val)
 
@@ -1064,13 +1039,13 @@ class SegmentationCallback:
     #     pass
 
     def epoch_end(
-        self,
-        epoch: int = None,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch: int = None,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
     ):
         """
         Returns:
@@ -1294,13 +1269,13 @@ class TimeseriesCallback:
         return correlation_data
 
     def epoch_end(
-        self,
-        epoch: int = None,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch: int = None,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
     ):
         self.epoch = epoch
         self.y_pred = y_pred
@@ -1363,14 +1338,14 @@ class TimeseriesCallback:
 
 class RegressionCallback:
     def __init__(
-        self,
-        metrics,
-        step=1,
-        data_tag="text",
-        show_final=True,
-        plot_scatter=False,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics,
+            step=1,
+            data_tag="text",
+            show_final=True,
+            plot_scatter=False,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for regression callback
