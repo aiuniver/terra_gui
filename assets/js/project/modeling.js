@@ -4,6 +4,44 @@
 (($) => {
 
 
+    function getSVGString( svgNode ) {
+        svgNode.setAttribute('xlink', 'http://www.w3.org/1999/xlink');
+
+        var serializer = new XMLSerializer();
+        var svgString = serializer.serializeToString(svgNode);
+        svgString = svgString.replace(/(\w+)?:?xlink=/g, 'xmlns:xlink='); // Fix root xlink without namespace
+        svgString = svgString.replace(/NS\d+:href/g, 'xlink:href'); // Safari NS namespace fix
+
+        return svgString;
+    }
+    function svgString2Image( svgString, width, height, format, callback ) {
+        var format = format ? format : 'png';
+
+        var imgsrc = 'data:image/svg+xml;base64,'+ btoa( unescape( encodeURIComponent( svgString ) ) ); // Convert SVG string to data URL
+        console.log(imgsrc);
+
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        var image = new Image();
+        image.src = imgsrc;
+        var out = canvas.toDataURL("image/png");
+        image.onload = function() {
+            context.clearRect ( 0, 0, width, height );
+            context.drawImage(image, 0, 0, width, height);
+            canvas.toBlob( function(blob) {
+                var filesize = Math.round( blob.length/1024 ) + ' KB';
+                if ( callback ) callback( blob, filesize );
+            });
+        };
+        console.log(out);
+        // send_data(out)
+    }
+
+
     let terra_toolbar, terra_board, terra_params;
     
 
@@ -133,6 +171,15 @@
                         "get_change_validation",
                         (success, data) => {
                             this.btn.validation.disabled = false;
+                            // let svg = document.getElementsByTagName("svg")[0],
+                            //     svg_string = getSVGString(svg);
+                            // svgString2Image(
+                            //     svg_string,
+                            //     svg.width.baseVal.value,
+                            //     svg.height.baseVal.value,
+                            //     "png"
+                            // );
+                            // console.log(svg_string);
                             if (success) {
                                 window.StatusBar.clear();
                                 let is_error = false;
@@ -595,10 +642,14 @@
                     link = tools.append("rect").attr("class", "btn link").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4),
                     unlink = tools.append("rect").attr("class", "btn unlink").attr("width", 12).attr("height", 12).attr("y", _NODE_HEIGHT/2+4);
 
-                let rect_pointer = node.append("rect").attr("class", "pointer").attr("height", _NODE_HEIGHT).call(d3.drag()
+                let rect_pointer = node.append("rect")
+                    .attr("class", "pointer")
+                    .attr("height", _NODE_HEIGHT)
+                    .call(d3.drag()
                         .on("drag", _node_dragged)
                         .on("end", _node_dragended)
                     );
+
                 $(rect_pointer._groups[0][0]).bind("mouseup", (event) => {
                     if (event.button === 2 && !_new_link) {
                         $(event.currentTarget).closest(".node").find(".tools > .link").trigger("click");
@@ -616,8 +667,7 @@
                 $(remove._groups[0][0]).bind("click", (event) => {
                     let g = $(event.currentTarget).closest(".node"),
                         index = parseInt(g[0].dataset.index),
-                        node = _d3graph.select(`#${g[0].id}`),
-                        info = node.data()[0];
+                        node = _d3graph.select(`#${g[0].id}`);
                     _clear_links(node);
                     g.remove();
                     if (`${index}` === `${$("#field_form-index").val()}`) terra_params.reset();

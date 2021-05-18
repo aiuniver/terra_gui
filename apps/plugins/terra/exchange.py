@@ -212,11 +212,11 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            model_plan = colab_exchange.get_model_plan()
             response = self.__request_post(
-                "get_change_validation", layers=configs, model_plan=model_plan
+                "get_change_validation",
+                layers=configs,
+                # model_plan=colab_exchange.get_model_plan(),
             )
-            print(response)
             if not len(list(filter(None, response.data.get("errors").values()))):
                 self.project.dir.save_modeling()
                 self.project.model_plan = response.data.get("plan")
@@ -228,6 +228,7 @@ class TerraExchange:
         self.project.training = TrainConfig(**kwargs)
         colab_exchange._reset_out_data()
         response_validate = self.call("get_change_validation")
+
         errors = response_validate.data
         if list(filter(None, errors.values())):
             return TerraExchangeResponse(data={"validation_errors": errors})
