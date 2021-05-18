@@ -1,4 +1,5 @@
 import copy
+import os
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
@@ -24,7 +25,9 @@ class CustomCallback(keras.callbacks.Callback):
             samples_x: dict = None,
             samples_y: dict = None,
             batch_size: int = None,
-            epochs: int = None):
+            epochs: int = None,
+            save_model_path: str = "./",
+            model_name: str = "noname"):
 
         """
         Init for Custom callback
@@ -49,7 +52,8 @@ class CustomCallback(keras.callbacks.Callback):
         self.show_final = show_final
         self.Exch = exchange
         self.DTS = dataset
-
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
         self.metrics = []
         self.loss = []
         self.callbacks = []
@@ -179,6 +183,23 @@ class CustomCallback(keras.callbacks.Callback):
     #         else:
     #             self.Exch.print_error(('Error',
     #                                    f'No y_Val in {output_key} -> Failed'))
+
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end_last"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}.h5"
+            )
+        self.model.save(file_path_model)
+        self.Exch.print_2status_bar(
+            ("Info", f"Model last is saved as {file_path_model}")
+            )
+        pass
 
     def prepare_callbacks(
         self, task_type: str = "", metrics: list = None, num_classes: int = None,
