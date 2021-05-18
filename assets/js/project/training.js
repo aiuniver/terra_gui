@@ -4,6 +4,9 @@
 (($) => {
 
 
+    let training_params, training_results;
+
+
     $.fn.extend({
 
 
@@ -205,6 +208,7 @@
                                                 console.log("===============================");
                                                 window.StatusBar.message(data.data.status_string);
                                                 window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                                training_results.charts = data.data.plots;
                                                 if (data.stop_flag) {
                                                     this.validate = false;
                                                     _action_training.removeAttr("disabled");
@@ -226,6 +230,94 @@
                         },
                         data
                     )
+                }
+            });
+
+            return this;
+
+        },
+
+
+        TrainingResults: function() {
+
+            if (!this.length) return this;
+
+            Object.defineProperty(this, "charts", {
+                get: () => {
+                    return this.children(".charts").children(".content");
+                },
+                set: (charts) => {
+                    this.charts.children(".inner").html("");
+                    charts.forEach((item) => {
+                        let div = $('<div class="item"><div></div></div>');
+                        this.charts.children(".inner").append(div);
+                        Plotly.newPlot(
+                            div.children("div")[0],
+                            item.list,
+                            {
+                                autosize:true,
+                                margin:{
+                                    l:70,
+                                    r:20,
+                                    t:60,
+                                    b:20,
+                                    pad:0,
+                                    autoexpand:true,
+                                },
+                                font:{
+                                    color:"#A7BED3"
+                                },
+                                showlegend:true,
+                                legend:{
+                                    orientation:"h",
+                                    font:{
+                                        family:"Open Sans",
+                                        color:"#A7BED3",
+                                    }
+                                },
+                                paper_bgcolor:"transparent",
+                                plot_bgcolor:"transparent",
+                                title:item.title,
+                                xaxis:{
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                                yaxis:{
+                                    title:item.yaxis.title,
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                            },
+                            {
+                                responsive:true,
+                                displayModeBar:false,
+                            }
+                        );
+                    });
+                }
+            });
+
+            Object.defineProperty(this, "images", {
+                get: () => {
+                    return this.children(".images").children(".content");
+                }
+            });
+
+            Object.defineProperty(this, "texts", {
+                get: () => {
+                    return this.children(".texts").children(".content");
+                }
+            });
+
+            Object.defineProperty(this, "scatters", {
+                get: () => {
+                    return this.children(".scatters").children(".content");
                 }
             });
 
@@ -269,7 +361,8 @@
             warning.open();
         }
 
-        $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
+        training_params = $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
+        training_results = $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").TrainingResults();
 
     });
 
