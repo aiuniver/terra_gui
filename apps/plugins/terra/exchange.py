@@ -215,6 +215,7 @@ class TerraExchange:
             return TerraExchangeResponse()
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange._reset_out_data()
         response_validate = self.call("get_change_validation")
         errors = response_validate.data
         if list(filter(None, errors.values())):
@@ -223,7 +224,6 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.training = TrainConfig(**kwargs)
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
