@@ -138,6 +138,7 @@ class ModelPlan(pydantic.BaseModel):
     plan_name: str = ""
     num_classes: int = 10
     input_shape: Dict[str, Optional[Any]] = {"input_1": (28, 28, 1)}
+    output_shape: Dict[str, Optional[Any]] = {"output_1": (28, 28, 1)}
     plan: List[tuple] = []
 
 
