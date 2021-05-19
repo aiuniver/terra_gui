@@ -4,7 +4,7 @@
 (($) => {
 
 
-    const MW_CLASSNAME = ".modal-window-container";
+    const MW_CLASSNAME = "modal-window-container";
 
 
     let ModalWindow = function(mw) {
@@ -28,7 +28,7 @@
         this.close = () => {
             if (this.noclose) return null;
             mw.removeClass("opened");
-            $(MW_CLASSNAME).removeClass("visible");
+            $(`.${MW_CLASSNAME}`).removeClass("visible");
             window.StatusBar.message_clear();
         }
 
@@ -88,7 +88,7 @@
             this.open = (callback) => {
                 if (typeof callback === "function") options.callback = callback;
                 window.ModalWindow.open(options.title, [options.width, options.height], options.noclose);
-                $(MW_CLASSNAME).removeClass("visible");
+                $(`.${MW_CLASSNAME}`).removeClass("visible");
                 if (options.request) {
                     window.ExchangeRequest(
                         options.request[0],

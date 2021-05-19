@@ -29,7 +29,7 @@
             <li data-type="validation">
                 <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
-            <li data-type="keras" disabled="disabled">
+            <li data-type="keras"{% if not request.terra_project.model_validated %} disabled="disabled"{% endif %}>
                 <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
         </ul>
@@ -141,7 +141,7 @@
         <div class="content"></div>
     </div>
     <div class="action">
-        <span></span>
+        <span class="clipboard"></span><div class="result"></div>
     </div>
 </div>
 <div id="modal-window-warning" class="modal-window-container">

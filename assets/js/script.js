@@ -4,13 +4,34 @@
 (($) => {
 
 
+    $.fn.extend({
+
+
+        CustomScrollbar: function() {
+
+            if (!this.length) return this;
+
+            let _init = (item) => {
+                item.mCustomScrollbar({
+                    axis:`y${item.data("horizontal") ? "x" : ""}`,
+                    scrollbarPosition:"outside",
+                    scrollInertia:0,
+                });
+            }
+
+            return this.each((index, item) => {
+                _init($(item));
+            });
+
+        }
+
+
+    })
+
+
     $(() => {
 
-        $(".custom-scrollbar-wrapper").mCustomScrollbar({
-            axis:"y",
-            scrollbarPosition:"outside",
-            scrollInertia:0,
-        });
+        $(".custom-scrollbar-wrapper").CustomScrollbar();
 
         $("select.jquery-ui-menuselect").selectmenu();
 
