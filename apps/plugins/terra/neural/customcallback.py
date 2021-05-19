@@ -408,7 +408,6 @@ class ClassificationCallback:
         Returns:
             None
         """
-        # super().__init__()
         self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
@@ -453,7 +452,7 @@ class ClassificationCallback:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
-                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
@@ -486,7 +485,6 @@ class ClassificationCallback:
                         val_metric_name = f"val_{metric_name}"
                     else:
                         val_metric_name = f"val_{metric_name}"
-                    # if metric_name in self.class_metrics:
                     classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
                     xlabel = "epoch"
                     ylabel = val_metric_name
@@ -671,10 +669,6 @@ class ClassificationCallback:
 
         return metric_classes
 
-    # def epoch_begin(self, epoch: int=0):
-    #     self.epoch = epoch
-    #     pass
-
     def epoch_end(
             self,
             epoch,
@@ -755,7 +749,6 @@ class ClassificationCallback:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.plot_result(output_key)
 
-        # self.Exch.show_text_data(self.predict_cls)
         self.Exch.show_text_data(
             f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
@@ -798,7 +791,6 @@ class SegmentationCallback:
         Returns:
             None
         """
-        # super().__init__()
         self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
@@ -813,6 +805,7 @@ class SegmentationCallback:
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
+        self.max_accuracy_value = 0
         self.idx = 0
         self.num_classes = num_classes  # количество классов
         self.acls_lst = [
@@ -842,7 +835,7 @@ class SegmentationCallback:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
 
-                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
@@ -867,20 +860,21 @@ class SegmentationCallback:
                 ]
 
             # if self.class_metrics:
-            #     for idx, metric_name in enumerate(self.clbck_metrics):
+            #     for metric_name in self.class_metrics:
             #         if not isinstance(metric_name, str):
             #             metric_name = metric_name.__name__
-            #         val_metric_name = f'val_{metric_name}'
-            #         if metric_name in self.class_metrics:
-            #             classes_title = f'{val_metric_name} of {self.num_classes} classes. {msg_epoch}'
-            #             xlabel = 'epoch'
-            #             ylabel = val_metric_name
-            #             labels = (classes_title, xlabel, ylabel)
-            #             plot_data[labels] = [
-            #                 [list(range(len(self.predict_cls[val_metric_name][idx][j]))),
-            #                  self.predict_cls[val_metric_name][idx][j],
-            #                  f"{val_metric_name} class {self.dataset.classes_names[j]}"]
-            #                 for j in range(self.num_classes)]
+            #         if len(self.dataset.Y) > 1:
+            #             metric_name = f'{output_key}_{metric_name}'
+            #             val_metric_name = f"val_{metric_name}"
+            #         else:
+            #             val_metric_name = f"val_{metric_name}"
+            #         classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+            #         xlabel = "epoch"
+            #         ylabel = val_metric_name
+            #         labels = (classes_title, xlabel, ylabel)
+            #         plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
+            #                               self.predict_cls[val_metric_name][j],
+            #                               f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -1034,11 +1028,6 @@ class SegmentationCallback:
             loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
             self.metric_classes.append(loss)
 
-    # def epoch_begin(self, epoch, logs=None):
-    #     self.epoch = epoch
-    #     self.Exch.show_current_epoch(epoch)
-    #     pass
-
     def epoch_end(
             self,
             epoch: int = None,
@@ -1052,7 +1041,6 @@ class SegmentationCallback:
         Returns:
             {}:
         """
-        max_accuracy_value = 0
         self.epoch = epoch
         self.y_pred = y_pred
         self.y_true = y_true
@@ -1072,8 +1060,8 @@ class SegmentationCallback:
                 metric_name = f"{self.clbck_metrics[metric_idx]}"
                 val_metric_name = f"val_{metric_name}"
 
-            if logs[val_metric_name] > max_accuracy_value:
-                max_accuracy_value = logs[val_metric_name]
+            if logs[val_metric_name] > self.max_accuracy_value:
+                self.max_accuracy_value = logs[val_metric_name]
                 self.idx = metric_idx
             # собираем в словарь по метрикам
             self.accuracy_metric[metric_idx].append(logs[metric_name])
@@ -1149,7 +1137,6 @@ class TimeseriesCallback:
         Returns:
             None
         """
-        super().__init__()
         self.__name__ = "Callback for timeseries"
         if metrics is None:
             metrics = ["loss"]
@@ -1359,7 +1346,6 @@ class RegressionCallback:
         Returns:
             None
         """
-        super().__init__()
         self.__name__ = "Callback for regression"
         if metrics is None:
             metrics = ["loss"]
