@@ -177,7 +177,6 @@ class TerraExchange:
             data={
                 "layers": self.project.dict().get("layers"),
                 "schema": schema,
-                "validated": self.project.model_validated,
             }
         )
 
@@ -211,7 +210,7 @@ class TerraExchange:
         else:
             return TerraExchangeResponse(success=success, error=output)
 
-    def _call_get_change_validation(self, svg: str) -> TerraExchangeResponse:
+    def _call_get_change_validation(self) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()
         if self.project.layers:
             configs = dict(
@@ -226,37 +225,27 @@ class TerraExchange:
                 modelling_plan=colab_exchange.get_model_plan(),
             )
             if response.success:
-                if not len(list(filter(None, response.data.get("errors").values()))):
-                    self.project.dir.save_modeling(
-                        svg=svg,
-                        yaml_info=response.data.get("yaml_model"),
-                        keras=response.data.get("keras_code"),
-                    )
+                validated = (
+                    len(list(filter(None, response.data.get("errors").values()))) == 0
+                )
+                if validated:
                     self.project.model_plan = response.data.get("plan")
                 return TerraExchangeResponse(
                     data={
                         "errors": response.data.get("errors"),
-                        "validated": self.project.model_validated,
+                        "validated": validated,
                     }
                 )
             else:
-                response.data.update({"validated": self.project.model_validated})
+                response.data.update({"validated": False})
                 return response
         else:
-            return TerraExchangeResponse(
-                data={"validated": self.project.model_validated}
-            )
+            return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
         self.project.training = TrainConfig(**kwargs)
         colab_exchange._reset_out_data()
-        response_validate = self.call("get_change_validation")
-
-        errors = response_validate.data
-        if list(filter(None, errors.values())):
-            return TerraExchangeResponse(data={"validation_errors": errors})
-
-        return TerraExchangeResponse()
+        return self.call("get_change_validation")
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         model_plan = colab_exchange.get_model_plan(
