@@ -21,6 +21,7 @@
         height:440,
         request:["get_keras_code"],
         callback:(ui, data) => {
+            ui.find(".action > .result").text("");
             let map_replace = {
                 '&': '&amp;',
                 '<': '&lt;',
@@ -28,9 +29,38 @@
                 '"': '&#34;',
                 "'": '&#39;'
             };
-            ui.find(".wrapper .content").html(`<code>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code>`);
+            ui.find(".wrapper .content").html(`<pre>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</pre>`);
         }
     });
+
+
+    let fallbackCopyTextToClipboard = (text) => {
+        let textArea = document.createElement("textarea"),
+            success = false;
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            success = document.execCommand('copy');
+        } catch (err) {
+            success = false;
+        }
+        document.body.removeChild(textArea);
+        return success;
+    }
+
+
+    let clip = (el) => {
+        let range = document.createRange();
+        range.selectNodeContents(el);
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
 
 
     $.fn.extend({
@@ -109,6 +139,7 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
+                                terra_toolbar.btn.save_model.disabled = !data.data.validated;
                                 terra_toolbar.btn.keras.disabled = !data.data.validated;
                                 window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
                                 if (typeof callback === "function") callback(item);
@@ -448,7 +479,10 @@
                 if (_onDrag) {
                     window.ExchangeRequest(
                         "save_layer",
-                        null,
+                        (success, data) => {
+                            terra_toolbar.btn.save_model.disabled = true;
+                            terra_toolbar.btn.keras.disabled = true;
+                        },
                         {
                             "index": parseInt(node.dataset.index),
                             "layer": _node.data()[0]
@@ -1034,6 +1068,16 @@
                     "schema": event.currentTarget.ModelData.front_model_schema,
                 }
             )
+        });
+
+        KerasCode.find(".action > .clipboard").bind("click", (event) => {
+            let result = KerasCode.find(".action > .result"),
+                pre = KerasCode.find("pre");
+            result.text("");
+            if (fallbackCopyTextToClipboard(pre.text())) {
+                result.text("Код скопирован в буфер обмена");
+                clip(pre[0]);
+            }
         });
 
     });

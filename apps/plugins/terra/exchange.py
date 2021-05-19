@@ -159,6 +159,7 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         data.data.update({"layers": output})
+        self.project.dir.clear_modeling()
         self.project.model_name = model_file
         return data
 
@@ -195,6 +196,7 @@ class TerraExchange:
 
     def _call_save_layer(self, index: int, layer: dict) -> TerraExchangeResponse:
         self.project.layers[int(index)] = Layer(**layer)
+        self.project.dir.clear_modeling()
         return TerraExchangeResponse(
             data={
                 "index": int(index),
@@ -203,7 +205,11 @@ class TerraExchange:
         )
 
     def _call_get_keras_code(self) -> TerraExchangeResponse:
-        return TerraExchangeResponse(data={"code": ""})
+        success, output = self.project.dir.keras_code
+        if success:
+            return TerraExchangeResponse(data={"code": output})
+        else:
+            return TerraExchangeResponse(success=success, error=output)
 
     def _call_get_change_validation(self, svg: str) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()

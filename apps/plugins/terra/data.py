@@ -239,6 +239,18 @@ class ProjectPath(pydantic.BaseModel):
             and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
         )
 
+    @property
+    def keras_code(self) -> (bool, str):
+        success = False
+        output = ""
+        try:
+            with open(f"{self.modeling}/{self._modeling_keras}", "r") as keras_file:
+                success = True
+                output = keras_file.read()
+        except Exception as error:
+            output = str(error)
+        return success, output
+
     def save_modeling(self, svg: str, yaml_info: dict, keras: str):
         with open(f"{self.modeling}/{self._modeling_plan}", "w") as yaml_file:
             yaml.dump(yaml_info, yaml_file)
