@@ -193,10 +193,7 @@
                         "before_start_training",
                         (success, output) => {
                             if (success) {
-                                if (output.data.validation_errors) {
-                                    $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
-                                    window.location = window.TerraProject.path.modeling;
-                                } else {
+                                if (output.data.validated) {
                                     window.ExchangeRequest("start_training", null, data);
                                     window.ExchangeRequest(
                                         "get_data",
@@ -218,6 +215,9 @@
                                             }
                                         }
                                     );
+                                } else {
+                                    $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
+                                    window.location = window.TerraProject.path.modeling;
                                 }
                             } else {
                                 this.validate = false;

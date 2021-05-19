@@ -194,14 +194,19 @@
 	display:none;
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > :not(:last-child) {
-	margin-bottom:30px;
+	margin-bottom:20px;
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > :not(:last-child) {
 	margin-bottom:10px;
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
-	line-height:1;
+	line-height:1.25;
 	margin-bottom:10px;
+	font-size:.625rem;
+	white-space:nowrap;
+}
+#modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param > span {
+	color:#fff;
 	font-size:.75rem;
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .model-arch-img {
@@ -212,7 +217,7 @@
 	background-size:contain;
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .model-arch-img > img {
-	width:100%;
+	max-width:100%;
 	max-height:100%;
 }
 #modal-window-keras-code {
@@ -229,7 +234,7 @@
 }
 #modal-window-keras-code > .wrapper .content {
 	height:100%;
-	padding:10px 20px 15px 20px;
+	padding:15px 20px;
 }
 #modal-window-keras-code > .wrapper .content > pre {
 	line-height:1.5;
