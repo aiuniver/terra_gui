@@ -104,12 +104,12 @@
                     });
                     window.StatusBar.clear();
                     terra_toolbar.btn.save_model.disabled = true;
-                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "set_model",
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
+                                terra_toolbar.btn.keras.disabled = !data.data.validated;
                                 window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
                                 if (typeof callback === "function") callback(item);
                             } else {
@@ -136,14 +136,14 @@
                             if (success) {
                                 window.StatusBar.clear();
                                 let is_error = false;
-                                for (let index in data.data) {
-                                    let error = data.data[index];
+                                for (let index in data.data.errors) {
+                                    let error = data.data.errors[index];
                                     if (error) {
                                         terra_board.set_layer_error(index, is_error ? "" : JSON.stringify(error));
                                         is_error = true;
                                     }
                                 }
-                                if (!is_error) {
+                                if (data.data.validated) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                     terra_toolbar.btn.save_model.disabled = false;
                                     terra_toolbar.btn.keras.disabled = false;
@@ -773,6 +773,7 @@
                             this.model = data.data;
                             terra_toolbar.btn.save.disabled = true;
                             terra_toolbar.btn.clear.disabled = true;
+                            terra_toolbar.btn.keras.disabled = true;
                         } else {
                             window.StatusBar.message(data.error, false);
                         }

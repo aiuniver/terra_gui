@@ -24,6 +24,7 @@
         let _tags = options.tags || {};
         let _dataset = options.dataset || "";
         let _model_name = options.model_name || "";
+        let _model_validated = options.model_validated || false;
         let _layers = options.layers || {};
         let _layers_start = options.layers_start || {};
         let _layers_schema = options.layers_schema || [];
@@ -127,6 +128,15 @@
             },
             get: () => {
                 return _model_name;
+            }
+        });
+
+        Object.defineProperty(this, "model_validated", {
+            set: (value) => {
+                _model_validated = value;
+            },
+            get: () => {
+                return _model_validated;
             }
         });
 

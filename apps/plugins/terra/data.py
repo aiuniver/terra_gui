@@ -1,5 +1,6 @@
 import os
 import json
+import yaml
 import cairosvg
 import pydantic
 
@@ -220,22 +221,38 @@ class ProjectPath(pydantic.BaseModel):
     training: str = f"{settings.TERRA_AI_PROJECT_PATH}/training"
     config: str = f"{settings.TERRA_AI_PROJECT_PATH}/project.conf"
 
+    _modeling_plan = "plan.yaml"
+    _modeling_preview = "preview.png"
+    _modeling_keras = "keras.py"
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         os.makedirs(self.datasets, exist_ok=True)
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
 
-    def save_modeling(self, svg: str, yaml: dict):
-        print("Save modeling")
-        print("SVG")
-        print(svg)
-        print("YAML")
-        print(yaml)
-        # cairosvg.svg2png(svg, write_to="asd.png")
+    @property
+    def model_validated(self) -> bool:
+        return (
+            os.path.isfile(f"{self.modeling}/{self._modeling_plan}")
+            and os.path.isfile(f"{self.modeling}/{self._modeling_preview}")
+            and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
+        )
+
+    def save_modeling(self, svg: str, yaml_info: dict, keras: str):
+        with open(f"{self.modeling}/{self._modeling_plan}", "w") as yaml_file:
+            yaml.dump(yaml_info, yaml_file)
+        with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
+            keras_file.write(f"{keras}\n")
+        cairosvg.svg2png(svg, write_to=f"{self.modeling}/{self._modeling_preview}")
 
     def clear_modeling(self):
-        print("Clear modeling")
+        if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
+            os.remove(f"{self.modeling}/{self._modeling_plan}")
+        if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
+            os.remove(f"{self.modeling}/{self._modeling_keras}")
+        if os.path.isfile(f"{self.modeling}/{self._modeling_preview}"):
+            os.remove(f"{self.modeling}/{self._modeling_preview}")
 
 
 class TerraExchangeProject(pydantic.BaseModel):
@@ -284,6 +301,10 @@ class TerraExchangeProject(pydantic.BaseModel):
             "training": str(self.path.get("training", "")),
         }
         return output
+
+    @property
+    def model_validated(self) -> bool:
+        return self.dir.model_validated
 
     def autosave(self):
         with open(self.dir.config, "w") as file:

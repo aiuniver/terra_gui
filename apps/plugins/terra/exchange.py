@@ -176,6 +176,7 @@ class TerraExchange:
             data={
                 "layers": self.project.dict().get("layers"),
                 "schema": schema,
+                "validated": self.project.model_validated,
             }
         )
 
@@ -184,6 +185,7 @@ class TerraExchange:
         for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
+        self.project.dir.clear_modeling()
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -220,14 +222,24 @@ class TerraExchange:
             if response.success:
                 if not len(list(filter(None, response.data.get("errors").values()))):
                     self.project.dir.save_modeling(
-                        svg=svg, yaml=response.data.get("yaml_model")
+                        svg=svg,
+                        yaml_info=response.data.get("yaml_model"),
+                        keras=response.data.get("keras_code"),
                     )
                     self.project.model_plan = response.data.get("plan")
-                return TerraExchangeResponse(data=response.data.get("errors"))
+                return TerraExchangeResponse(
+                    data={
+                        "errors": response.data.get("errors"),
+                        "validated": self.project.model_validated,
+                    }
+                )
             else:
+                response.data.update({"validated": self.project.model_validated})
                 return response
         else:
-            return TerraExchangeResponse()
+            return TerraExchangeResponse(
+                data={"validated": self.project.model_validated}
+            )
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
         self.project.training = TrainConfig(**kwargs)
