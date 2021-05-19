@@ -158,7 +158,7 @@ class StatesData:
                 ],
                 "metrics": [
                     "dice_coef",
-                    "meanIoU",
+                    "mean_io_u",
                     "accuracy",
                     "binary_accuracy",
                     "binary_crossentropy",
@@ -954,12 +954,13 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
+    def reset_training(self):
+        self.nn.nn_cleaner()
+
     def start_training(self, model: bytes, **kwargs) -> None:
         self.process_flag = "train"
         self._reset_out_data()
-        print(self.out_data)
         training = kwargs
-        print(training)
 
         model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
         self.nn.training_path = training.get('pathname', '')
