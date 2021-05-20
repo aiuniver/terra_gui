@@ -37,19 +37,14 @@
     let SaveModel = $("#modal-window-save-model").ModalWindow({
         title:"Сохранение модели",
         width:400,
-        height:212,
-        // request:["get_keras_code"],
-        // callback:(ui, data) => {
-        //     ui.find(".action > .result").text("");
-        //     let map_replace = {
-        //         '&': '&amp;',
-        //         '<': '&lt;',
-        //         '>': '&gt;',
-        //         '"': '&#34;',
-        //         "'": '&#39;'
-        //     };
-        //     ui.find(".wrapper .content").html(`<pre>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</pre>`);
-        // }
+        height:212
+    });
+
+
+    let ClearModel = $("#modal-window-clear-model").ModalWindow({
+        title:"Очистить модель",
+        width:300,
+        height:160
     });
 
 
@@ -806,19 +801,7 @@
 
             this.clear = () => {
                 window.StatusBar.clear();
-                window.ExchangeRequest(
-                    "clear_model",
-                    (success, data) => {
-                        if (success) {
-                            this.model = data.data;
-                            terra_toolbar.btn.save.disabled = true;
-                            terra_toolbar.btn.save_model.disabled = true;
-                            terra_toolbar.btn.keras.disabled = true;
-                        } else {
-                            window.StatusBar.message(data.error, false);
-                        }
-                    },
-                )
+                ClearModel.open();
             }
 
             return this;
@@ -1105,6 +1088,29 @@
                 },
                 data
             );
+        });
+
+        ClearModel.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            window.ExchangeRequest(
+                "clear_model",
+                (success, data) => {
+                    if (success) {
+                        ClearModel.close();
+                        terra_board.model = data.data;
+                        terra_toolbar.btn.save.disabled = true;
+                        terra_toolbar.btn.save_model.disabled = true;
+                        terra_toolbar.btn.keras.disabled = true;
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+            )
+        });
+
+        ClearModel.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            ClearModel.close();
         });
 
     });

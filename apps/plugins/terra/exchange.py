@@ -151,6 +151,7 @@ class TerraExchange:
             model_name=model_file,
             input_shape=colab_exchange.get_dataset_input_shape(),
         )
+        self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():
             layers[int(index)] = Layer(config=layer)
