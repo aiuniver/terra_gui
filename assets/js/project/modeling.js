@@ -100,6 +100,7 @@
                                                 input_shape.push(JSON.stringify(data.data.preview.input_shape[output_name]));
                                             }
                                             block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .input_shape > span").text(input_shape.join(", "));
+                                            terra_toolbar.btn.keras.disabled = false;
                                         } else {
                                             window.StatusBar.message(data.error, false);
                                         }
@@ -111,8 +112,6 @@
                     );
                 },
                 save_model: (item, callback) => {
-                    terra_toolbar.btn.save_model.disabled = true;
-                    terra_toolbar.btn.keras.disabled = false;
                     console.log(item, callback);
                     // let send_data = {};
                     // d3.selectAll("g.node")._groups[0].forEach((item) => {
@@ -147,6 +146,7 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
+                                this.btn.keras.disabled = !data.data.is_keras;
                                 window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
                                 if (typeof callback === "function") callback(item);
                             } else {
@@ -164,7 +164,6 @@
                     window.StatusBar.clear();
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
-                    terra_toolbar.btn.save_model.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -178,8 +177,6 @@
                                         terra_board.set_layer_error(index, is_error ? "" : JSON.stringify(error));
                                         is_error = true;
                                     }
-                                    terra_toolbar.btn.keras.disabled = true;
-                                    terra_toolbar.btn.save_model.disabled = is_error;
                                 }
                                 if (data.data.validated) {
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
@@ -1053,6 +1050,7 @@
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.layers_schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
+                        terra_toolbar.btn.keras.disabled = !data.data.is_keras;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);

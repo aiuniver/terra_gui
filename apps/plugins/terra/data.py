@@ -215,6 +215,13 @@ class Dataset(pydantic.BaseModel):
     tags: dict = {}
 
 
+class GoogleDrivePath(pydantic.BaseModel):
+    datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+    modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
+    training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
+    projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
+
+
 class ProjectPath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_PROJECT_PATH}/datasets"
     modeling: str = f"{settings.TERRA_AI_PROJECT_PATH}/modeling"
@@ -238,6 +245,10 @@ class ProjectPath(pydantic.BaseModel):
             and os.path.isfile(f"{self.modeling}/{self._modeling_preview}")
             and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
         )
+
+    @property
+    def is_keras(self) -> bool:
+        return os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
 
     @property
     def keras_code(self) -> (bool, str):
@@ -290,6 +301,7 @@ class TerraExchangeProject(pydantic.BaseModel):
         "training": reverse_lazy("apps_project:training"),
     }
     dir: ProjectPath = ProjectPath()
+    gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
