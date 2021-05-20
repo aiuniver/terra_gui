@@ -180,6 +180,25 @@ class TerraExchange:
             }
         )
 
+    def _call_save_model(self, **kwargs) -> TerraExchangeResponse:
+        # layers = kwargs.get("layers")
+        # schema = kwargs.get("schema")
+        # self.project.layers = {}
+        # if layers:
+        #     for index, layer in layers.items():
+        #         self.project.layers[int(index)] = Layer(**layer)
+        # else:
+        #     for index, layer in self.project.dict().get("layers_start"):
+        #         self.project.layers[int(index)] = Layer(**layer)
+        # return TerraExchangeResponse(
+        #     data={
+        #         "layers": self.project.dict().get("layers"),
+        #         "schema": schema,
+        #         "validated": self.project.dir.validated,
+        #     }
+        # )
+        return TerraExchangeResponse()
+
     def _call_clear_model(self) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()
         self.project.layers = {}

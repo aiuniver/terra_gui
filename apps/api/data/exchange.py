@@ -55,6 +55,9 @@ class ExchangeData:
     def _execute_set_model(self, **kwargs):
         return terra_exchange.call("set_model", **kwargs)
 
+    def _execute_save_model(self, **kwargs):
+        return terra_exchange.call("save_model", **kwargs)
+
     def _execute_clear_model(self, **kwargs):
         return terra_exchange.call("clear_model", **kwargs)
 

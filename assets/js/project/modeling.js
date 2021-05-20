@@ -112,28 +112,23 @@
                     );
                 },
                 save_model: (item, callback) => {
-                    console.log(item, callback);
-                    // let send_data = {};
-                    // d3.selectAll("g.node")._groups[0].forEach((item) => {
-                    //     send_data[parseInt(item.dataset.index)] = item.__data__;
-                    // });
-                    // window.StatusBar.clear();
-                    // window.ExchangeRequest(
-                    //     "set_model",
-                    //     (success, data) => {
-                    //         if (success) {
-                    //             this.btn.save.disabled = true;
-                    //             window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                    //             if (typeof callback === "function") callback(item);
-                    //         } else {
-                    //             window.StatusBar.message(data.error, false);
-                    //         }
-                    //     },
-                    //     {
-                    //         "layers": send_data,
-                    //         "schema": window.TerraProject.schema,
-                    //     }
-                    // );
+                    window.StatusBar.clear();
+                    terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
+                    window.ExchangeRequest(
+                        "save_model",
+                        (success, data) => {
+                            if (success) {
+                                terra_toolbar.btn.save_model.disabled = false;
+                                terra_toolbar.btn.keras.disabled = false;
+                                // this.btn.save.disabled = true;
+                                // window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                                // if (typeof callback === "function") callback(item);
+                            } else {
+                                window.StatusBar.message(data.error, false);
+                            }
+                        }
+                    );
                 },
                 save: (item, callback) => {
                     let send_data = {};
