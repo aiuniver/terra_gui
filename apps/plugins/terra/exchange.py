@@ -265,5 +265,9 @@ class TerraExchange:
         )
         return TerraExchangeResponse()
 
+    def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.stop_training()
+        return TerraExchangeResponse()
+
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)
