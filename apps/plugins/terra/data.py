@@ -239,14 +239,6 @@ class ProjectPath(pydantic.BaseModel):
         os.makedirs(self.training, exist_ok=True)
 
     @property
-    def model_validated(self) -> bool:
-        return (
-            os.path.isfile(f"{self.modeling}/{self._modeling_plan}")
-            and os.path.isfile(f"{self.modeling}/{self._modeling_preview}")
-            and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
-        )
-
-    @property
     def validated(self) -> bool:
         return os.path.isfile(
             f"{self.modeling}/{self._modeling_plan}"
@@ -343,7 +335,7 @@ class TerraExchangeProject(pydantic.BaseModel):
 
     @property
     def model_validated(self) -> bool:
-        return self.dir.model_validated
+        return self.dir.validated
 
     def autosave(self):
         with open(self.dir.config, "w") as file:
