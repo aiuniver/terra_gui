@@ -247,8 +247,10 @@ class ProjectPath(pydantic.BaseModel):
         )
 
     @property
-    def is_keras(self) -> bool:
-        return os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
+    def validated(self) -> bool:
+        return os.path.isfile(
+            f"{self.modeling}/{self._modeling_plan}"
+        ) and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
 
     @property
     def keras_code(self) -> (bool, str):
@@ -262,20 +264,33 @@ class ProjectPath(pydantic.BaseModel):
             output = str(error)
         return success, output
 
-    def save_modeling(self, svg: str, yaml_info: dict, keras: str):
+    def create_plan(self, plan: dict):
         with open(f"{self.modeling}/{self._modeling_plan}", "w") as yaml_file:
-            yaml.dump(yaml_info, yaml_file)
+            yaml.dump(plan, yaml_file)
+
+    def create_preview(self, preview: str):
+        cairosvg.svg2png(preview, write_to=f"{self.modeling}/{self._modeling_preview}")
+
+    def create_keras(self, keras: str):
         with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
             keras_file.write(f"{keras}\n")
-        cairosvg.svg2png(svg, write_to=f"{self.modeling}/{self._modeling_preview}")
 
-    def clear_modeling(self):
+    def remove_plan(self):
         if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
             os.remove(f"{self.modeling}/{self._modeling_plan}")
-        if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
-            os.remove(f"{self.modeling}/{self._modeling_keras}")
+
+    def remove_preview(self):
         if os.path.isfile(f"{self.modeling}/{self._modeling_preview}"):
             os.remove(f"{self.modeling}/{self._modeling_preview}")
+
+    def remove_keras(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
+            os.remove(f"{self.modeling}/{self._modeling_keras}")
+
+    def clear_modeling(self):
+        self.remove_plan()
+        self.remove_preview()
+        self.remove_keras()
 
 
 class TerraExchangeProject(pydantic.BaseModel):
