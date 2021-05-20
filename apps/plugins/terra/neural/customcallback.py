@@ -331,14 +331,17 @@ class CustomCallback(keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self._time_first_step = time.time()
-        msg = f'Epoch {epoch + 1}/{self.epochs}:'
+        msg = f'Эпоха {epoch + 1}/{self.epochs}:'
         # print(msg)
         # self.Exch.show_current_epoch(epoch)
         pass
 
     def on_train_batch_end(self, batch, logs=None):
-        msg = f'batch {batch}/{self.num_batches}: {self.update_progress(self.num_batches, batch, self._time_first_step)}'
-        self.Exch.print_2status_bar(('Progress: ', msg))
+        msg_batch = f'батч {batch}/{self.num_batches}: ' \
+                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}'
+        msg_epoch = f'эпоха {self.epoch}/{self.epochs}: ' \
+                    f'{self.update_progress(self.epochs, self.epoch, self._start_time)}'
+        self.Exch.print_2status_bar(('Прогресс обучения: ', msg_epoch, msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
@@ -750,7 +753,7 @@ class ClassificationCallback:
                 self.plot_result(output_key)
 
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         # return
 
@@ -1102,7 +1105,7 @@ class SegmentationCallback:
                 self.plot_result(output_key=output_key)
 
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1306,7 +1309,7 @@ class TimeseriesCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1474,7 +1477,7 @@ class RegressionCallback:
                 self.plot_result(output_key=output_key)
 
         self.exchange.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
 
