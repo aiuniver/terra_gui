@@ -34,6 +34,25 @@
     });
 
 
+    let SaveModel = $("#modal-window-save-model").ModalWindow({
+        title:"Сохранение модели",
+        width:400,
+        height:212,
+        // request:["get_keras_code"],
+        // callback:(ui, data) => {
+        //     ui.find(".action > .result").text("");
+        //     let map_replace = {
+        //         '&': '&amp;',
+        //         '<': '&lt;',
+        //         '>': '&gt;',
+        //         '"': '&#34;',
+        //         "'": '&#39;'
+        //     };
+        //     ui.find(".wrapper .content").html(`<pre>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</pre>`);
+        // }
+    });
+
+
     let fallbackCopyTextToClipboard = (text) => {
         let textArea = document.createElement("textarea"),
             success = false;
@@ -113,22 +132,9 @@
                 },
                 save_model: (item, callback) => {
                     window.StatusBar.clear();
-                    terra_toolbar.btn.save_model.disabled = true;
-                    terra_toolbar.btn.keras.disabled = true;
-                    window.ExchangeRequest(
-                        "save_model",
-                        (success, data) => {
-                            if (success) {
-                                terra_toolbar.btn.save_model.disabled = false;
-                                terra_toolbar.btn.keras.disabled = false;
-                                // this.btn.save.disabled = true;
-                                // window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                                // if (typeof callback === "function") callback(item);
-                            } else {
-                                window.StatusBar.message(data.error, false);
-                            }
-                        }
-                    );
+                    SaveModel.open((target) => {
+                        $("#field_form-save_model_name").val(window.TerraProject.model_name).focus();
+                    });
                 },
                 save: (item, callback) => {
                     let send_data = {};
@@ -143,7 +149,6 @@
                                 this.btn.save.disabled = true;
                                 this.btn.save_model.disabled = !data.data.validated;
                                 this.btn.keras.disabled = !data.data.validated;
-                                window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
                                 if (typeof callback === "function") callback(item);
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -188,6 +193,7 @@
                     );
                 },
                 keras: (item, callback) => {
+                    window.StatusBar.clear();
                     KerasCode.open();
                 },
                 input: (item, callback) => {
@@ -1080,6 +1086,25 @@
                 result.text("Код скопирован в буфер обмена");
                 clip(pre[0]);
             }
+        });
+
+        SaveModel.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let data = $(event.currentTarget).serializeObject();
+            data.overwrite = data.overwrite !== undefined;
+            window.ExchangeRequest(
+                "save_model",
+                (success, data) => {
+                    if (success) {
+                        SaveModel.close();
+                        window.TerraProject.model_name = data.data.name;
+                        window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                data
+            );
         });
 
     });

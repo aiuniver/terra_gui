@@ -1,4 +1,6 @@
 import json
+import re
+
 import requests
 
 from django.conf import settings
@@ -181,23 +183,18 @@ class TerraExchange:
         )
 
     def _call_save_model(self, **kwargs) -> TerraExchangeResponse:
-        # layers = kwargs.get("layers")
-        # schema = kwargs.get("schema")
-        # self.project.layers = {}
-        # if layers:
-        #     for index, layer in layers.items():
-        #         self.project.layers[int(index)] = Layer(**layer)
-        # else:
-        #     for index, layer in self.project.dict().get("layers_start"):
-        #         self.project.layers[int(index)] = Layer(**layer)
-        # return TerraExchangeResponse(
-        #     data={
-        #         "layers": self.project.dict().get("layers"),
-        #         "schema": schema,
-        #         "validated": self.project.dir.validated,
-        #     }
-        # )
-        return TerraExchangeResponse()
+        kwargs["name"] = kwargs.get("name", "")
+        if not kwargs.get("name"):
+            return TerraExchangeResponse(success=False, error="Введите название модели")
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", kwargs.get("name"))
+        if not name_match:
+            return TerraExchangeResponse(
+                success=False,
+                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
+            )
+        # response = colab_exchange.save_model(**kwargs)
+        self.project.model_name = kwargs.get("name")
+        return TerraExchangeResponse(data={"name": self.project.model_name})
 
     def _call_clear_model(self) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()
