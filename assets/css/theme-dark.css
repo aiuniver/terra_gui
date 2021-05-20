@@ -355,3 +355,13 @@ input[type=button][disabled=disabled]:hover {
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
 	color:#A7BED3;
 }
+
+.ui-widget.ui-widget-content.slider-range {
+    border: none;
+    width: 140px;
+}
+
+.slider-range > .ui-state-default{
+    background-color: #65B9F4;
+    border: none;
+}

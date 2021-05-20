@@ -55,7 +55,7 @@
             let _dataset = "";
 
             let _onWindowResize = () => {
-                this.css("padding-top", `${filters.innerHeight()+1}px`);
+                // this.css("padding-top", `${filters.innerHeight()+1}px`);
                 this.removeClass("hidden");
             }
 
@@ -95,6 +95,46 @@
         DatasetsParams: function() {
 
             if (!this.length) return this;
+
+            $(".params-menu ul li").bind("click", (event) => {
+
+                let active_menus = $(".active-menu")
+                active_menus.toggleClass("active-menu");
+                $(`.inner[name=${active_menus.attr("name")}]`).slideToggle();
+
+                $(event.target).toggleClass( "active-menu" );
+                $(`.inner[name=${event.target.getAttribute("name")}]`).slideToggle();
+            });
+
+            $( ".slider-range" ).slider({
+              range: true,
+              min: 0,
+              max: 100,
+              values: [ 35, 70 ],
+              slide: function( event, ui ) {
+                $( "#amount1" ).val(ui.values[0]);
+                $( "#amount2" ).val(ui.values[1]);
+              }
+            });
+
+            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
+            $("#amount2").val( $( ".slider-range" ).slider( "values", 1));
+
+             $("#amount1").on("input", ()=>{
+                 $(".slider-range").slider( "values", 0, $("#amount1").val())
+             });
+
+             $("#amount2").on("input", ()=>{
+                 $(".slider-range").slider( "values", 1, $("#amount2").val())
+             });
+
+             $('.colorpicker').farbtastic('#color');
+
+             $('.colorpicker-btn').bind("click", (event)=>{
+                 event.preventDefault();
+                 let field = event.target.parentNode;
+                 $(field).find(".colorpicker").slideToggle();
+             });
 
             this.prepareBtn = this.find(".actions-form > .prepare > button");
 

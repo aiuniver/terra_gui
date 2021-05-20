@@ -303,6 +303,41 @@ main > .container > .properties > .wrapper .mCSB_container {
 .params-container .params-item {
     padding:20px 20px 20px 0;
 }
+
+.params-item > .params-menu{
+    background-color: #0E1621;
+    line-height: 1.25;
+    margin: -20px -20px 10px -20px;
+    padding: 1px;
+    padding-bottom: 0;
+    font-size: .75rem;
+    user-select: none;
+}
+
+.params-menu > ul{
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    justify-content: space-around;
+}
+
+.params-menu > ul > li{
+    width: 50%;
+    text-align: center;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.flex{
+    display: flex;
+}
+
+.active-menu{
+    background-color: #17212B;
+}
+
 .params-container .params-item:first-child {
     padding-top:0;
 }
@@ -346,6 +381,7 @@ main > .container > .properties > .wrapper .mCSB_container {
 .params-container .params-item.collapsable.collapsed > .params-title:after {
     transform:rotate(0);
 }
+
 .field-form > label {
     display:block;
     margin:0 0 10px 0;

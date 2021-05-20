@@ -163,3 +163,129 @@
     margin-left:-12px;
     position:absolute;
 }
+.next-form{
+    margin-top: 40px;
+}
+.dataset-params > .inner > .field-form > input,
+.load-dataset-field > .inner > .field-form > input{
+    max-width: 170px;
+}
+
+#amount1, #amount2{
+    width: 43px;
+    margin-left: 5px;
+}
+
+.dataset-params > .inner > .field-form > label{
+    width: 100px;
+}
+
+.params-container > .input-output-numbers{
+    padding-top: 0px;
+}
+
+.row{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+.layout-item{
+    flex: 0 1 50%;
+    /*width: 50%;*/
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*justify-content: flex-start;*/
+}
+.layout-title{
+    font-size: .75rem;
+}
+.layout-params{
+    padding-top: 10px;
+    padding-right: 5px;
+}
+.layout-params > .field-inline{
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+}
+.layout-params > .field-inline > input{
+    height: 20px;
+    max-width: 75px;
+    font-size: .65rem;
+}
+.layout-params > .field-inline > input[type=text]{
+    height: 20px;
+    max-width: 75px;
+    font-size: .65rem;
+}
+.layout-params > .field-inline > label{
+    width: 95px;
+    font-size: .65rem;
+    margin: 0;
+    text-align: end;
+    padding-right: 5px;
+}
+
+.layout-params > .field-inline > .ui-widget{
+    height: 20px;
+    max-width: 75px;
+}
+
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-icon{
+    height: 20px;
+    width: 20px;
+}
+
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-text{
+    line-height: 20px;
+    font-size: .65rem;
+    padding: 0 20px 0 6px;
+}
+
+.search > .inner{
+    display: flex;
+}
+
+.search > .inner > input{
+    width: 250px;
+    height: 30px;
+}
+
+.search > .inner > button{
+    width: 80px;
+    height: 30px;
+    margin-left: 20px;
+    padding: 0;
+    font-size: 0.8rem;
+}
+
+.filters{
+    position: relative;
+}
+
+.colorpicker-btn{
+    height: 18px;
+    width: 18px;
+    background-color: #65B9F4;
+    padding: 0;
+    margin-left: 2px;
+}
+
+.colorpicker{
+    position: absolute;
+    z-index: 2;
+    margin-bottom: 220px;
+    margin-left: -20px;
+    background-color: #17212B;
+    border: 1px solid #6C7883;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+}
+
+.colorpicker:hover{
+    border-color: #fff;
+}
+
+.layout-params > .color-inline > input[type=text]{
+    max-width: 65px;
+}

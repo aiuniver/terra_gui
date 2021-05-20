@@ -13,6 +13,13 @@
 {% block content_block %}
 <div class="board">
     <div class="wrapper">
+        <div class="project-datasets-block search">
+            <div class="title">Поиск</div>
+            <div class="inner">
+                <input type="text">
+                <button>Найти</button>
+            </div>
+        </div>
         <div class="project-datasets-block filters">
             <div class="title">Теги</div>
             <div class="inner">
@@ -55,6 +62,263 @@
                     <div class="inner">
                         <div class="actions-form">
                             <div class="item prepare"><button disabled="disabled">Подготовить</button></div>
+                            <div class="item delete"><button disabled="disabled">Удалить</button></div>
+                            <div class="item change"><button disabled="disabled">Редактировать</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <form class="params next-form">
+            <div class="params-container">
+                <div class="params-item load-dataset-field">
+                    <div class="params-menu">
+                        <ul>
+                            <li name="gdrive">Google Drive</li>
+                            <li name="outlink">Внешняя ссылка</li>
+                        </ul>
+                    </div>
+                    <div name="gdrive" class="inner form-inline-label" hidden>
+                        <div class="field-form field-inline">
+                            <label for="file">Файл</label>
+                            <input type="text">
+                        </div>
+                        <div class="field-form field-inline">
+                            <label for="file">URL</label>
+                            <input type="text">
+                        </div>
+                    </div>
+                    <div name="outlink" class="inner form-inline-label" hidden>
+                        <div class="field-form field-inline">
+                            <label for="file">Название папки</label>
+                            <input type="text">
+                        </div>
+                        <div class="field-form field-inline">
+                            <label for="file">URL</label>
+                            <input type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="params-item input-output-numbers">
+                    <div class="inner form-inline-label flex">
+                        <div class="field-form field-inline">
+                            <label for="file">Количество входов</label>
+                            <input type="number">
+                        </div>
+                        <div class="field-form field-inline">
+                            <label for="file">Количество выходов</label>
+                            <input type="number">
+                        </div>
+                    </div>
+                </div>
+                <div class="params-item">
+                    <div class="inner">
+                        <div class="actions-form">
+                            <div class="item load"><button disabled="disabled">Загрузить</button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <form class="params next-form">
+            <div class="params-container">
+                <div class="params-item collapsable">
+                    <div class="params-title">Входные слои</div>
+                    <div class="inner row">
+                        <div class="layout-item">
+                            <div class="layout-title">Слой “Input_1”</div>
+                            <div class="layout-params">
+                                <div class="field-form field-inline">
+                                    <label for="layout-name">Название входа</label>
+                                    <input type="text" id="layout-name" value="Input_1">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="data-type">Тип данных</label>
+                                    <select id="data-type" class="jquery-ui-menuselect">
+                                        <option value="Картинки">Картинки</option>
+                                        <option value="Аудио">Аудио</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="folder-name">Folder name</label>
+                                    <input type="text" id="folder-name">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="height">Height</label>
+                                    <input type="text" id="height">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="width">Width</label>
+                                    <input type="text" id="width">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="net">Net</label>
+                                    <select id="net" class="jquery-ui-menuselect">
+                                        <option value="Convolutional">Convolutional</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="scaler">Scaler</label>
+                                    <select id="scaler" class="jquery-ui-menuselect">
+                                        <option value="NoScaler">No Scaler</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layout-item">
+                                <div class="layout-title">Слой “Input_2”</div>
+                                <div class="layout-params">
+                                    <div class="field-form field-inline">
+                                        <label for="layout-name">Название входа</label>
+                                        <input type="text" id="layout-name" value="Input_2">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="data-type">Тип данных</label>
+                                        <select id="data-type" class="jquery-ui-menuselect">
+                                            <option value="Картинки">Картинки</option>
+                                            <option value="Аудио">Аудио</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="folder-name">Folder name</label>
+                                        <input type="text" id="folder-name">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="step">Step</label>
+                                        <input type="text" id="step">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="length">Length</label>
+                                        <input type="text" id="length">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="scaler">Scaler</label>
+                                        <select id="scaler" class="jquery-ui-menuselect">
+                                            <option value="NoScaler">No Scaler</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Chroma_stft</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Mfcc</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Rms</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Spectral_centroid</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Spectral_bandwidth</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Spectral_rolloff</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label>Zero_crossing_rate</label>
+                                        <div class="checkout-switch">
+                                            <input type="checkbox"/>
+                                            <span class="switcher"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <div class="params-item collapsable">
+                    <div class="params-title">Выходные слои</div>
+                    <div class="inner row">
+                        <div class="layout-item">
+                            <div class="layout-title">Слой “Output_1”</div>
+                            <div class="layout-params">
+                                <div class="field-form field-inline">
+                                    <label for="layout-name">Название выхода</label>
+                                    <input type="text" id="layout-name" value="Output_1">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="data-type">Тип задачи</label>
+                                    <select id="data-type" class="jquery-ui-menuselect">
+                                        <option value="Картинки">Классификация</option>
+                                        <option value="Аудио">Регрессия</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label for="data-type">Тип данных</label>
+                                    <select id="data-type" class="jquery-ui-menuselect">
+                                        <option value="Картинки">Сегментация изображений</option>
+                                        <option value="Аудио">Регрессия</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label>folder name</label>
+                                    <input type="text">
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label>Кол-во классов</label>
+                                    <input type="number" min=0 max=10>
+                                </div>
+                                <div class="field-form field-inline">
+                                    <label>класс 1</label>
+                                    <input type="text">
+                                </div>
+                                <div class="field-form field-inline color-inline">
+                                    <label>Цвет</label>
+                                    <input type="text" id="color" value="#123456" />
+                                    <button class="colorpicker-btn"></button>
+                                    <div class="colorpicker" hidden></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="params-item dataset-params">
+                    <div class="params-title">Параметры датасета</div>
+                    <div class="inner form-inline-label">
+                        <div class="field-form field-inline">
+                            <label for="amount">Train</label>
+                            <div class="slider-range"></div>
+                            <input type="text" id="amount1">
+                            <input type="text" id="amount2">
+                        </div>
+                        <div class="field-form field-inline">
+                            <label for="file">Название датасета</label>
+                            <input type="text">
+                        </div>
+                        <div class="field-form field-inline">
+                            <label for="file">Теги</label>
+                            <input type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="params-item">
+                    <div class="inner">
+                        <div class="actions-form">
+                            <div class="item prepare"><button disabled="disabled">Сформировать</button></div>
                         </div>
                     </div>
                 </div>
