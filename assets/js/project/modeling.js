@@ -146,7 +146,8 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
-                                this.btn.keras.disabled = !data.data.is_keras;
+                                this.btn.save_model.disabled = !data.data.validated;
+                                this.btn.keras.disabled = !data.data.validated;
                                 window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
                                 if (typeof callback === "function") callback(item);
                             } else {
@@ -164,6 +165,8 @@
                     window.StatusBar.clear();
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
+                    terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -179,6 +182,8 @@
                                     }
                                 }
                                 if (data.data.validated) {
+                                    terra_toolbar.btn.save_model.disabled = false;
+                                    terra_toolbar.btn.keras.disabled = false;
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                 }
                             } else {
@@ -336,6 +341,8 @@
                     y: null,
                 };
 
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -476,6 +483,8 @@
                 let node = $(rect).parent()[0],
                     _node = d3.select(`#${node.id}`);
                 if (_onDrag) {
+                    terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
                         (success, data) => {
@@ -710,7 +719,6 @@
                 });
 
                 terra_toolbar.btn.save.disabled = false;
-                terra_toolbar.btn.clear.disabled = false;
 
             };
 
@@ -803,7 +811,8 @@
                         if (success) {
                             this.model = data.data;
                             terra_toolbar.btn.save.disabled = true;
-                            terra_toolbar.btn.clear.disabled = true;
+                            terra_toolbar.btn.save_model.disabled = true;
+                            terra_toolbar.btn.keras.disabled = true;
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
@@ -962,6 +971,8 @@
                 layer.down_link = [];
                 layer.x = null;
                 layer.y = null;
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -982,6 +993,8 @@
             this.bind("submit", (event) => {
                 event.preventDefault();
                 window.StatusBar.clear();
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -1050,7 +1063,8 @@
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.layers_schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
-                        terra_toolbar.btn.keras.disabled = !data.data.is_keras;
+                        terra_toolbar.btn.save_model.disabled = !data.data.validated;
+                        terra_toolbar.btn.keras.disabled = !data.data.validated;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);
