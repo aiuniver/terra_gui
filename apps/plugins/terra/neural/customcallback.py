@@ -68,6 +68,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.y_true = samples_y
         self.batch_size = batch_size
         self.epochs = epochs
+        self.batch = 0
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
         self.y_pred = []
         self.epoch = 0
@@ -321,7 +322,7 @@ class CustomCallback(keras.callbacks.Callback):
         else:
             eta_format = '%ds' % eta
 
-        info = ' - ETA: %s' % eta_format
+        info = '- ETA: %s' % eta_format
         return info
 
     def on_train_begin(self, logs=None):
@@ -331,17 +332,23 @@ class CustomCallback(keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self._time_first_step = time.time()
-        msg = f'Эпоха {epoch + 1}/{self.epochs}:'
-        # print(msg)
-        # self.Exch.show_current_epoch(epoch)
-        pass
+
+    def on_batch_begin(self, batch, logs=None):
+        stop = self.Exch.get_stop_training_flag()
+        if stop:
+            self.model.stop_training = True
+            msg = f'эпоха: {self.epoch+1}, модель сохранена'
+            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
 
     def on_train_batch_end(self, batch, logs=None):
-        msg_batch = f'батч {batch}/{self.num_batches}: ' \
-                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}'
-        msg_epoch = f'эпоха {self.epoch}/{self.epochs}: ' \
-                    f'{self.update_progress(self.epochs, self.epoch, self._start_time)}'
-        self.Exch.print_2status_bar(('Прогресс обучения: ', msg_epoch, msg_batch))
+        self.batch += 1
+        self._now_time = time.time()
+        msg_batch = f'Батч {batch+1}/{self.num_batches}'
+        msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
+                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+        msg_progress = f'Время до окончания обучения:' \
+                       f'{self.update_progress(self.num_batches * self.epochs, self.batch, self._start_time)}, '
+        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
@@ -374,7 +381,7 @@ class CustomCallback(keras.callbacks.Callback):
                 )
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
-        # print(self.update_progress(self.epochs, epoch, self._start_time))
+
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
@@ -753,7 +760,7 @@ class ClassificationCallback:
                 self.plot_result(output_key)
 
         self.Exch.show_text_data(
-            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         # return
 
@@ -1105,7 +1112,7 @@ class SegmentationCallback:
                 self.plot_result(output_key=output_key)
 
         self.Exch.show_text_data(
-            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1309,7 +1316,7 @@ class TimeseriesCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
-            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1477,7 +1484,7 @@ class RegressionCallback:
                 self.plot_result(output_key=output_key)
 
         self.exchange.show_text_data(
-            f"Эпоха {epoch+1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
 
