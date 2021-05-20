@@ -159,7 +159,6 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         data.data.update({"layers": output})
-        self.project.dir.clear_modeling()
         self.project.model_name = model_file
         return data
 
@@ -177,6 +176,7 @@ class TerraExchange:
             data={
                 "layers": self.project.dict().get("layers"),
                 "schema": schema,
+                "is_keras": self.project.dir.is_keras,
             }
         )
 
@@ -185,7 +185,6 @@ class TerraExchange:
         for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
-        self.project.dir.clear_modeling()
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -195,7 +194,6 @@ class TerraExchange:
 
     def _call_save_layer(self, index: int, layer: dict) -> TerraExchangeResponse:
         self.project.layers[int(index)] = Layer(**layer)
-        self.project.dir.clear_modeling()
         return TerraExchangeResponse(
             data={
                 "index": int(index),
@@ -211,7 +209,6 @@ class TerraExchange:
             return TerraExchangeResponse(success=success, error=output)
 
     def _call_get_change_validation(self) -> TerraExchangeResponse:
-        self.project.dir.clear_modeling()
         if self.project.layers:
             configs = dict(
                 map(
@@ -266,6 +263,10 @@ class TerraExchange:
             pathname=self.project.dir.training,
             **training_data,
         )
+        return TerraExchangeResponse()
+
+    def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.stop_training()
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:

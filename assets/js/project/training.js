@@ -22,6 +22,7 @@
                 _field_output_loss = $(".field_form-output_loss"),
                 _params_optimizer_extra = $(".params-optimizer-extra"),
                 _action_training = $(".params-container .actions-form > .training > button"),
+                _action_stop = $(".params-container .actions-form > .stop > button"),
                 _action_reset = $(".params-container .actions-form > .reset > button");
 
             let _camelize = (text) => {
@@ -145,10 +146,25 @@
                 }
             }).trigger("change");
 
+            _action_stop.bind("click", (event) => {
+                event.preventDefault();
+                window.ExchangeRequest(
+                    "stop_training",
+                    (success, data) => {
+                        if (success) {
+                            _action_training.removeAttr("disabled");
+                            _action_stop.attr("disabled", "disabled");
+                            _action_reset.removeAttr("disabled");
+                        }
+                    }
+                )
+            });
+
             this.bind("submit", (event) => {
                 event.preventDefault();
                 if (!this.validate) {
                     _action_training.attr("disabled", "disabled");
+                    _action_stop.removeAttr("disabled");
                     _action_reset.attr("disabled", "disabled");
                     this.validate = true;
                     window.StatusBar.clear();
@@ -194,6 +210,7 @@
                         (success, output) => {
                             if (success) {
                                 if (output.data.validated) {
+                                    _action_stop.removeAttr("disabled");
                                     window.ExchangeRequest("start_training", null, data);
                                     window.ExchangeRequest(
                                         "get_data",
@@ -206,11 +223,13 @@
                                                 if (data.stop_flag) {
                                                     this.validate = false;
                                                     _action_training.removeAttr("disabled");
+                                                    _action_stop.attr("disabled", "disabled");
                                                     _action_reset.removeAttr("disabled");
                                                 }
                                             } else {
                                                 this.validate = false;
                                                 _action_training.removeAttr("disabled");
+                                                _action_stop.attr("disabled", "disabled");
                                                 window.StatusBar.message(data.error, false)
                                             }
                                         }
@@ -222,6 +241,7 @@
                             } else {
                                 this.validate = false;
                                 _action_training.removeAttr("disabled");
+                                _action_stop.attr("disabled", "disabled");
                                 window.StatusBar.message(output.error, false);
                             }
                         },
