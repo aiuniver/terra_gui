@@ -29,8 +29,8 @@
             <li data-type="validation">
                 <span title="Валидация"><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
-            <li data-type="keras"{% if not request.terra_project.model_validated %} disabled="disabled"{% endif %}>
-                <span title="Код на Keras"><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="clear">
+                <span title="Очистить"><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section layers">
@@ -45,8 +45,8 @@
             </li>
         </ul>
         <ul class="menu-section others">
-            <li data-type="clear" disabled="disabled">
-                <span title="Очистить"><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
+            <li data-type="keras"{% if not request.terra_project.model_validated %} disabled="disabled"{% endif %}>
+                <span title="Код на Keras"><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -142,6 +142,28 @@
     </div>
     <div class="action">
         <span class="clipboard"></span><div class="result"></div>
+    </div>
+</div>
+<div id="modal-window-save-model" class="modal-window-container">
+    <div class="wrapper">
+        <form>
+            <div class="inner form-inline-label">
+                <div class="field-form">
+                    <label for="field_form-save_model_name">Название модели</label>
+                    <input type="text" id="field_form-save_model_name" name="name" />
+                </div>
+                <div class="field-form field-inline field-reverse">
+                    <label for="field_form-save_model_overwrite">Перезаписать</label>
+                    <div class="checkout-switch">
+                        <input type="checkbox" id="field_form-save_model_overwrite" name="overwrite" />
+                        <span class="switcher"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="actions-form">
+                <div class="save"><button>Сохранить</button></div>
+            </div>
+        </form>
     </div>
 </div>
 <div id="modal-window-warning" class="modal-window-container">

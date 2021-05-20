@@ -1,4 +1,6 @@
 import json
+import re
+
 import requests
 
 from django.conf import settings
@@ -176,11 +178,26 @@ class TerraExchange:
             data={
                 "layers": self.project.dict().get("layers"),
                 "schema": schema,
-                "is_keras": self.project.dir.is_keras,
+                "validated": self.project.dir.validated,
             }
         )
 
+    def _call_save_model(self, **kwargs) -> TerraExchangeResponse:
+        kwargs["name"] = kwargs.get("name", "")
+        if not kwargs.get("name"):
+            return TerraExchangeResponse(success=False, error="Введите название модели")
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", kwargs.get("name"))
+        if not name_match:
+            return TerraExchangeResponse(
+                success=False,
+                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
+            )
+        # response = colab_exchange.save_model(**kwargs)
+        self.project.model_name = kwargs.get("name")
+        return TerraExchangeResponse(data={"name": self.project.model_name})
+
     def _call_clear_model(self) -> TerraExchangeResponse:
+        self.project.dir.clear_modeling()
         self.project.layers = {}
         for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
@@ -209,6 +226,8 @@ class TerraExchange:
             return TerraExchangeResponse(success=success, error=output)
 
     def _call_get_change_validation(self) -> TerraExchangeResponse:
+        self.project.dir.remove_plan()
+        self.project.dir.remove_keras()
         if self.project.layers:
             configs = dict(
                 map(
@@ -219,13 +238,17 @@ class TerraExchange:
             response = self.__request_post(
                 "get_change_validation",
                 layers=configs,
-                modelling_plan=colab_exchange.get_model_plan(),
+                modelling_plan=colab_exchange.get_model_plan(
+                    model_name=self.project.model_name
+                ),
             )
             if response.success:
                 validated = (
                     len(list(filter(None, response.data.get("errors").values()))) == 0
                 )
                 if validated:
+                    self.project.dir.create_plan(response.data.get("yaml_model"))
+                    self.project.dir.create_keras(response.data.get("keras_code"))
                     self.project.model_plan = response.data.get("plan")
                 return TerraExchangeResponse(
                     data={

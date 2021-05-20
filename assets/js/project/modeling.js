@@ -34,6 +34,25 @@
     });
 
 
+    let SaveModel = $("#modal-window-save-model").ModalWindow({
+        title:"Сохранение модели",
+        width:400,
+        height:212,
+        // request:["get_keras_code"],
+        // callback:(ui, data) => {
+        //     ui.find(".action > .result").text("");
+        //     let map_replace = {
+        //         '&': '&amp;',
+        //         '<': '&lt;',
+        //         '>': '&gt;',
+        //         '"': '&#34;',
+        //         "'": '&#39;'
+        //     };
+        //     ui.find(".wrapper .content").html(`<pre>${data.code.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</pre>`);
+        // }
+    });
+
+
     let fallbackCopyTextToClipboard = (text) => {
         let textArea = document.createElement("textarea"),
             success = false;
@@ -112,28 +131,10 @@
                     );
                 },
                 save_model: (item, callback) => {
-                    console.log(item, callback);
-                    // let send_data = {};
-                    // d3.selectAll("g.node")._groups[0].forEach((item) => {
-                    //     send_data[parseInt(item.dataset.index)] = item.__data__;
-                    // });
-                    // window.StatusBar.clear();
-                    // window.ExchangeRequest(
-                    //     "set_model",
-                    //     (success, data) => {
-                    //         if (success) {
-                    //             this.btn.save.disabled = true;
-                    //             window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
-                    //             if (typeof callback === "function") callback(item);
-                    //         } else {
-                    //             window.StatusBar.message(data.error, false);
-                    //         }
-                    //     },
-                    //     {
-                    //         "layers": send_data,
-                    //         "schema": window.TerraProject.schema,
-                    //     }
-                    // );
+                    window.StatusBar.clear();
+                    SaveModel.open((target) => {
+                        $("#field_form-save_model_name").val(window.TerraProject.model_name).focus();
+                    });
                 },
                 save: (item, callback) => {
                     let send_data = {};
@@ -146,8 +147,8 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
-                                this.btn.keras.disabled = !data.data.is_keras;
-                                window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                                this.btn.save_model.disabled = !data.data.validated;
+                                this.btn.keras.disabled = !data.data.validated;
                                 if (typeof callback === "function") callback(item);
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -164,6 +165,8 @@
                     window.StatusBar.clear();
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     terra_board.model.classed("error", false);
+                    terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
@@ -179,6 +182,8 @@
                                     }
                                 }
                                 if (data.data.validated) {
+                                    terra_toolbar.btn.save_model.disabled = false;
+                                    terra_toolbar.btn.keras.disabled = false;
                                     window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_SUCCESS"), true);
                                 }
                             } else {
@@ -188,6 +193,7 @@
                     );
                 },
                 keras: (item, callback) => {
+                    window.StatusBar.clear();
                     KerasCode.open();
                 },
                 input: (item, callback) => {
@@ -336,6 +342,8 @@
                     y: null,
                 };
 
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -476,6 +484,8 @@
                 let node = $(rect).parent()[0],
                     _node = d3.select(`#${node.id}`);
                 if (_onDrag) {
+                    terra_toolbar.btn.save_model.disabled = true;
+                    terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
                         (success, data) => {
@@ -710,7 +720,6 @@
                 });
 
                 terra_toolbar.btn.save.disabled = false;
-                terra_toolbar.btn.clear.disabled = false;
 
             };
 
@@ -803,7 +812,8 @@
                         if (success) {
                             this.model = data.data;
                             terra_toolbar.btn.save.disabled = true;
-                            terra_toolbar.btn.clear.disabled = true;
+                            terra_toolbar.btn.save_model.disabled = true;
+                            terra_toolbar.btn.keras.disabled = true;
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
@@ -962,6 +972,8 @@
                 layer.down_link = [];
                 layer.x = null;
                 layer.y = null;
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -982,6 +994,8 @@
             this.bind("submit", (event) => {
                 event.preventDefault();
                 window.StatusBar.clear();
+                terra_toolbar.btn.save_model.disabled = true;
+                terra_toolbar.btn.keras.disabled = true;
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
@@ -1050,7 +1064,8 @@
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.layers_schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
-                        terra_toolbar.btn.keras.disabled = !data.data.is_keras;
+                        terra_toolbar.btn.save_model.disabled = !data.data.validated;
+                        terra_toolbar.btn.keras.disabled = !data.data.validated;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);
@@ -1071,6 +1086,25 @@
                 result.text("Код скопирован в буфер обмена");
                 clip(pre[0]);
             }
+        });
+
+        SaveModel.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let data = $(event.currentTarget).serializeObject();
+            data.overwrite = data.overwrite !== undefined;
+            window.ExchangeRequest(
+                "save_model",
+                (success, data) => {
+                    if (success) {
+                        SaveModel.close();
+                        window.TerraProject.model_name = data.data.name;
+                        window.StatusBar.message(window.Messages.get("MODEL_SAVED"), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                data
+            );
         });
 
     });
