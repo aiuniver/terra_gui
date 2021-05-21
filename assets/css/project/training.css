@@ -181,8 +181,11 @@
     flex-direction: column;
     flex-wrap: wrap;
 }
-.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > :not(:last-child) {
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > * {
     margin-bottom:20px;
+}
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .hidden {
+    display:none;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > * > .content {
     margin-top:10px;
