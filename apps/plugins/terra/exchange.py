@@ -161,8 +161,10 @@ class TerraExchange:
         output = {}
         for index, layer in layers.items():
             output[index] = layer.dict()
-        data.data.update({"layers": output})
         self.project.model_name = model_file
+        self.project.layers_start = layers
+        self.project.layers_schema = data.data.get("front_model_schema")
+        data.data.update({"layers": output})
         return data
 
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
