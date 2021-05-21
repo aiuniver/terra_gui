@@ -128,13 +128,43 @@
                  $(".slider-range").slider( "values", 1, $("#amount2").val())
              });
 
-             $('.colorpicker').farbtastic('#color');
+            $(".number-classes").on("input", (event)=>{
+                let num_classes = $(event.target).val();
+                let layout = $(event.target).parents('.output-layout')
+                if(num_classes < 0 || num_classes > 16){
+                    $(event.target).val(16);
+                    num_classes = 16;
+                }
+                console.log(num_classes)
 
-             $('.colorpicker-btn').bind("click", (event)=>{
-                 event.preventDefault();
-                 let field = event.target.parentNode;
-                 $(field).find(".colorpicker").slideToggle();
-             });
+                layout.find(".class-inline").remove()
+                layout.find(".color-inline").remove()
+
+                for(let i=0; i<num_classes; i++){
+                    let html = '';
+                    html += '<div class="field-form field-inline class-inline">';
+                    html += `<label>класс ${i+1}</label>`;
+                    html += '<input type="text">';
+                    html += '</div>';
+                    html += '<div class="field-form field-inline color-inline">';
+                    html += '<label>Цвет</label>';
+                    html += `<input type="text" class="color-input" value="#123456" />`;
+                    html += '<button class="colorpicker-btn"></button>';
+                    html += '<div class="colorpicker" hidden></div>';
+                    html += `</div>`;
+                    layout.find(".layout-params").append(html);
+                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+
+                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
+                        console.log(123)
+                        event.preventDefault();
+                        let field = event.target.parentNode;
+                        $(field).find(".colorpicker").last().slideToggle();
+                    });
+                }
+            });
+
+
 
             this.prepareBtn = this.find(".actions-form > .prepare > button");
 
