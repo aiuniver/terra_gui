@@ -40,9 +40,9 @@
             this.items.each((index, item) => {
                 Object.defineProperty(item, "disabled", {
                     set: (value) => {
-                        item.active = false;
                         if (value) {
                             $(item).attr("disabled", "disabled");
+                            item.active = false;
                         } else {
                             $(item).removeAttr("disabled");
                         }
@@ -231,7 +231,9 @@
                     window.StatusBar.message(data.data.status_string);
                     window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                     training_results.charts = data.data.plots;
+                    training_results.images = data.data.images;
                     training_results.texts = data.data.texts;
+                    training_results.scatters = data.data.scatters;
                     if (data.stop_flag) {
                         this.validate = false;
                         _action_training.removeAttr("disabled");
@@ -394,6 +396,14 @@
             Object.defineProperty(this, "images", {
                 get: () => {
                     return this.children(".images").children(".content");
+                },
+                set: (images) => {
+                    if (images.length) {
+                        training_toolbar.btn.images.disabled = false;
+                        training_toolbar.btn.images.active = true;
+                    } else {
+                        training_toolbar.btn.images.disabled = true;
+                    }
                 }
             });
 
@@ -426,6 +436,14 @@
             Object.defineProperty(this, "scatters", {
                 get: () => {
                     return this.children(".scatters").children(".content");
+                },
+                set: (scatters) => {
+                    if (scatters.length) {
+                        training_toolbar.btn.scatters.disabled = false;
+                        training_toolbar.btn.scatters.active = true;
+                    } else {
+                        training_toolbar.btn.scatters.disabled = true;
+                    }
                 }
             });
 
