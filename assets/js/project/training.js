@@ -160,6 +160,29 @@
                 )
             });
 
+            this.get_data_response = (success, data) => {
+                if (success) {
+                    _action_training.attr("disabled", "disabled");
+                    _action_stop.removeAttr("disabled");
+                    _action_reset.attr("disabled", "disabled");
+                    window.StatusBar.message(data.data.status_string);
+                    window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                    training_results.charts = data.data.plots;
+                    training_results.texts = data.data.texts;
+                    if (data.stop_flag) {
+                        this.validate = false;
+                        _action_training.removeAttr("disabled");
+                        _action_stop.attr("disabled", "disabled");
+                        _action_reset.removeAttr("disabled");
+                    }
+                } else {
+                    this.validate = false;
+                    _action_training.removeAttr("disabled");
+                    _action_stop.attr("disabled", "disabled");
+                    window.StatusBar.message(data.error, false)
+                }
+            }
+
             this.bind("submit", (event) => {
                 event.preventDefault();
                 if (!this.validate) {
@@ -212,28 +235,7 @@
                                 if (output.data.validated) {
                                     _action_stop.removeAttr("disabled");
                                     window.ExchangeRequest("start_training", null, data);
-                                    window.ExchangeRequest(
-                                        "get_data",
-                                        (success, data) => {
-                                            if (success) {
-                                                window.StatusBar.message(data.data.status_string);
-                                                window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                                                training_results.charts = data.data.plots;
-                                                training_results.texts = data.data.texts;
-                                                if (data.stop_flag) {
-                                                    this.validate = false;
-                                                    _action_training.removeAttr("disabled");
-                                                    _action_stop.attr("disabled", "disabled");
-                                                    _action_reset.removeAttr("disabled");
-                                                }
-                                            } else {
-                                                this.validate = false;
-                                                _action_training.removeAttr("disabled");
-                                                _action_stop.attr("disabled", "disabled");
-                                                window.StatusBar.message(data.error, false)
-                                            }
-                                        }
-                                    );
+                                    window.ExchangeRequest("get_data", this.get_data_response);
                                 } else {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
@@ -394,6 +396,23 @@
 
         training_params = $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
         training_results = $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").TrainingResults();
+
+        window.ExchangeRequest(
+            "check_training",
+            (success, data) => {
+                if (success && !data.data.stop_flag) {
+                    training_params.validate = true;
+                    window.ExchangeRequest(
+                        "check_training",
+                        (success, data) => {
+                            if (success && !data.data.stop_flag) {
+                                window.ExchangeRequest("get_data", this.get_data_response);
+                            }
+                        }
+                    )
+                }
+            }
+        );
 
     });
 

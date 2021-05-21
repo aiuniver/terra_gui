@@ -291,6 +291,10 @@ class TerraExchange:
         )
         return TerraExchangeResponse()
 
+    def _call_check_training(self, **kwargs) -> TerraExchangeResponse:
+        response = self.call("get_data")
+        return TerraExchangeResponse(data={"stop_flag": response.data.get("stop_flag")})
+
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
         return TerraExchangeResponse()
