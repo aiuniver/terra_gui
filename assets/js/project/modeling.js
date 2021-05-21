@@ -1075,6 +1075,7 @@
             event.preventDefault();
             let data = $(event.currentTarget).serializeObject();
             data.overwrite = data.overwrite !== undefined;
+            data.preview = terra_board.svg;
             window.ExchangeRequest(
                 "save_model",
                 (success, data) => {

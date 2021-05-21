@@ -334,7 +334,7 @@
                     if (charts.length) {
                         let disabled = training_toolbar.btn.charts.disabled;
                         training_toolbar.btn.charts.disabled = false;
-                        if (!disabled) training_toolbar.btn.charts.active = true;
+                        if (disabled) training_toolbar.btn.charts.active = true;
                     } else {
                         training_toolbar.btn.charts.disabled = true;
                     }
@@ -402,7 +402,7 @@
                     if (images.length) {
                         let disabled = training_toolbar.btn.images.disabled;
                         training_toolbar.btn.images.disabled = false;
-                        if (!disabled) training_toolbar.btn.images.active = true;
+                        if (disabled) training_toolbar.btn.images.active = true;
                     } else {
                         training_toolbar.btn.images.disabled = true;
                     }
@@ -417,7 +417,7 @@
                     if (texts.length) {
                         let disabled = training_toolbar.btn.texts.disabled;
                         training_toolbar.btn.texts.disabled = false;
-                        if (!disabled) training_toolbar.btn.texts.active = true;
+                        if (disabled) training_toolbar.btn.texts.active = true;
                     } else {
                         training_toolbar.btn.texts.disabled = true;
                     }
@@ -444,7 +444,7 @@
                     if (scatters.length) {
                         let disabled = training_toolbar.btn.scatters.disabled;
                         training_toolbar.btn.scatters.disabled = false;
-                        if (!disabled) training_toolbar.btn.scatters.active = true;
+                        if (disabled) training_toolbar.btn.scatters.active = true;
                     } else {
                         training_toolbar.btn.scatters.disabled = true;
                     }
