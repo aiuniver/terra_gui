@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
 from setuptools import setup, find_packages
-from . import __version__
 
 
 setup(
     name="terra_ai",
-    version=__version__,
+    version="0.1",
     packages=find_packages(),
 )
