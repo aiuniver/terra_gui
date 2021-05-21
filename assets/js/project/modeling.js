@@ -712,6 +712,7 @@
 
                 $(node._groups[0][0]).bind("mouseenter", (event) => {
                     _onNode = $(event.currentTarget);
+                    _d3graph.select(`#${_onNode[0].id}`).raise();
                 }).bind("mouseleave", (event) => {
                     if (_new_link) {
                         let node = _d3graph.select(`#${event.currentTarget.id}`),
