@@ -223,6 +223,11 @@
                 )
             });
 
+            _action_reset.bind("click", (event) => {
+                event.preventDefault();
+                window.ExchangeRequest("reset_training");
+            });
+
             this.get_data_response = (success, data) => {
                 if (success) {
                     _action_training.attr("disabled", "disabled");

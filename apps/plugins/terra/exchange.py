@@ -163,7 +163,7 @@ class TerraExchange:
             output[index] = layer.dict()
         self.project.model_name = model_file
         self.project.layers_start = layers
-        self.project.layers_schema = data.data.get("front_model_schema")
+        self.project.layers_schema = data.data.get("front_model_schema", [])
         data.data.update({"layers": output})
         return data
 
@@ -298,6 +298,10 @@ class TerraExchange:
 
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
+        return TerraExchangeResponse()
+
+    def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.reset_training()
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:

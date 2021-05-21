@@ -303,7 +303,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     model_plan: Optional[list] = []
     layers: Dict[int, Layer] = {}
     layers_start: Dict[int, Layer] = {}
-    layers_schema: List[List[int]] = []
+    layers_schema: List[List[Any]] = []
     layers_types: Dict[str, LayerConfigParam] = {}
     optimizers: Dict[str, OptimizerParams] = {}
     callbacks: dict = {}
