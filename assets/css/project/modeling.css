@@ -363,21 +363,14 @@
 	display:block;
 }
 #canvas-nodes > .node > .tools > .bg {
-	fill:#2B5278;
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
 	rx:4;
 	ry:4;
 }
 #canvas-nodes > .node > .tools > .btn {
+	fill:transparent;
 	cursor:pointer;
-}
-#canvas-nodes > .node > .tools > .btn.remove {
-	fill:#f00;
-}
-#canvas-nodes > .node > .tools > .btn.link {
-	fill:#0f0;
-}
-#canvas-nodes > .node > .tools > .btn.unlink {
-	fill:#ff0;
 }
 #canvas-nodes > .node > rect {
 	stroke-width:2;
