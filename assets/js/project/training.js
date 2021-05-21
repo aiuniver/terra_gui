@@ -20,6 +20,17 @@
                 }
             });
 
+            Object.defineProperty(this, "btn", {
+                get: () => {
+                    return {
+                        "charts":this.find(".menu-section > li[data-type=charts]")[0],
+                        "images":this.find(".menu-section > li[data-type=images]")[0],
+                        "texts":this.find(".menu-section > li[data-type=texts]")[0],
+                        "scatters":this.find(".menu-section > li[data-type=scatters]")[0],
+                    };
+                }
+            });
+
             this.items.children("span").bind("click", (event) => {
                 event.preventDefault();
                 let item = $(event.currentTarget).parent()[0];
@@ -318,6 +329,12 @@
                     return this.children(".charts").children(".content");
                 },
                 set: (charts) => {
+                    if (charts.length) {
+                        training_toolbar.btn.charts.disabled = false;
+                        training_toolbar.btn.charts.active = true;
+                    } else {
+                        training_toolbar.btn.charts.disabled = true;
+                    }
                     this.charts.children(".inner").html(charts.length ? '<div class="wrapper"></div>' : '');
                     charts.forEach((item) => {
                         let div = $('<div class="item"><div></div></div>');
@@ -385,6 +402,12 @@
                     return this.children(".texts").children(".content");
                 },
                 set: (texts) => {
+                    if (texts.length) {
+                        training_toolbar.btn.texts.disabled = false;
+                        training_toolbar.btn.texts.active = true;
+                    } else {
+                        training_toolbar.btn.texts.disabled = true;
+                    }
                     let map_replace = {
                         '&': '&amp;',
                         '<': '&lt;',
