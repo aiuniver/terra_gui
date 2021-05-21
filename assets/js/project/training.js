@@ -4,10 +4,62 @@
 (($) => {
 
 
-    let training_params, training_results;
+    let training_toolbar, training_params, training_results;
 
 
     $.fn.extend({
+
+
+        TrainingToolbar: function() {
+
+            if (!this.length) return this;
+
+            Object.defineProperty(this, "items", {
+                get: () => {
+                    return this.find(".menu-section > li");
+                }
+            });
+
+            this.items.children("span").bind("click", (event) => {
+                event.preventDefault();
+                let item = $(event.currentTarget).parent()[0];
+                if (!item.disabled) item.active = !item.active;
+            });
+
+            this.items.each((index, item) => {
+                Object.defineProperty(item, "disabled", {
+                    set: (value) => {
+                        item.active = false;
+                        if (value) {
+                            $(item).attr("disabled", "disabled");
+                        } else {
+                            $(item).removeAttr("disabled");
+                        }
+                    },
+                    get: () => {
+                        return item.hasAttribute("disabled");
+                    }
+                });
+                Object.defineProperty(item, "active", {
+                    set: (value) => {
+                        if (value) {
+                            $(item).addClass("active");
+                            training_results.children(`.${$(item).data("type")}`).removeClass("hidden");
+                        } else {
+                            $(item).removeClass("active");
+                            training_results.children(`.${$(item).data("type")}`).addClass("hidden");
+                        }
+                        $(item).find("img").attr("src", `/assets/imgs/training-${$(item).data("type")}${value ? "-active" : ""}.svg`);
+                    },
+                    get: () => {
+                        return $(item).hasClass("active");
+                    }
+                });
+            });
+
+            return this;
+
+        },
 
 
         TrainingParams: function() {
@@ -394,25 +446,11 @@
             warning.open();
         }
 
+        training_toolbar = $(".project-training-toolbar > .wrapper").TrainingToolbar();
         training_params = $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
         training_results = $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").TrainingResults();
 
-        window.ExchangeRequest(
-            "check_training",
-            (success, data) => {
-                if (success && !data.data.stop_flag) {
-                    training_params.validate = true;
-                    window.ExchangeRequest(
-                        "check_training",
-                        (success, data) => {
-                            if (success && !data.data.stop_flag) {
-                                window.ExchangeRequest("get_data", training_params.get_data_response);
-                            }
-                        }
-                    )
-                }
-            }
-        );
+        window.ExchangeRequest("get_data", training_params.get_data_response);
 
     });
 

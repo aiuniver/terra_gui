@@ -16,17 +16,17 @@
 <div class="toolbar project-training-toolbar">
     <div class="wrapper">
         <ul class="menu-section">
-            <li data-type="charts">
-                <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+            <li data-type="charts" disabled="disabled">
+                <span title="Графики"><img src="{% static 'imgs/training-charts.svg' %}" alt="" /></span>
             </li>
-            <li data-type="images">
-                <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            <li data-type="images" disabled="disabled">
+                <span title="Изображения"><img src="{% static 'imgs/training-images.svg' %}" alt="" /></span>
             </li>
-            <li data-type="texts">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="texts" disabled="disabled">
+                <span title="Текст"><img src="{% static 'imgs/training-texts.svg' %}" alt="" /></span>
             </li>
-            <li data-type="scatters">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="scatters" disabled="disabled">
+                <span title="Скаттеры"><img src="{% static 'imgs/training-scatters.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -39,25 +39,25 @@
                 <div class="inner">
                     <div class="tabs-item graphics custom-scrollbar-wrapper">
                         <div class="tab-container">
-                            <div class="charts">
+                            <div class="charts hidden">
                                 <div class="category-title">Графики</div>
                                 <div class="content">
                                     <div class="inner"></div>
                                 </div>
                             </div>
-                            <div class="images">
-                                <div class="category-title">Картинки</div>
+                            <div class="images hidden">
+                                <div class="category-title">Изображения</div>
                                 <div class="content">
                                     <div class="inner"></div>
                                 </div>
                             </div>
-                            <div class="texts">
+                            <div class="texts hidden">
                                 <div class="category-title">Текст</div>
                                 <div class="content">
                                     <div class="inner"></div>
                                 </div>
                             </div>
-                            <div class="scatters">
+                            <div class="scatters hidden">
                                 <div class="category-title">Скаттеры</div>
                                 <div class="content">
                                     <div class="inner"></div>
