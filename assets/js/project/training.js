@@ -332,8 +332,9 @@
                 },
                 set: (charts) => {
                     if (charts.length) {
+                        let disabled = training_toolbar.btn.charts.disabled;
                         training_toolbar.btn.charts.disabled = false;
-                        training_toolbar.btn.charts.active = true;
+                        if (!disabled) training_toolbar.btn.charts.active = true;
                     } else {
                         training_toolbar.btn.charts.disabled = true;
                     }
@@ -399,8 +400,9 @@
                 },
                 set: (images) => {
                     if (images.length) {
+                        let disabled = training_toolbar.btn.images.disabled;
                         training_toolbar.btn.images.disabled = false;
-                        training_toolbar.btn.images.active = true;
+                        if (!disabled) training_toolbar.btn.images.active = true;
                     } else {
                         training_toolbar.btn.images.disabled = true;
                     }
@@ -413,8 +415,9 @@
                 },
                 set: (texts) => {
                     if (texts.length) {
+                        let disabled = training_toolbar.btn.texts.disabled;
                         training_toolbar.btn.texts.disabled = false;
-                        training_toolbar.btn.texts.active = true;
+                        if (!disabled) training_toolbar.btn.texts.active = true;
                     } else {
                         training_toolbar.btn.texts.disabled = true;
                     }
@@ -439,8 +442,9 @@
                 },
                 set: (scatters) => {
                     if (scatters.length) {
+                        let disabled = training_toolbar.btn.scatters.disabled;
                         training_toolbar.btn.scatters.disabled = false;
-                        training_toolbar.btn.scatters.active = true;
+                        if (!disabled) training_toolbar.btn.scatters.active = true;
                     } else {
                         training_toolbar.btn.scatters.disabled = true;
                     }
