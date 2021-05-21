@@ -79,5 +79,8 @@ class ExchangeData:
     def _execute_stop_training(self, **kwargs):
         return terra_exchange.call("stop_training", **kwargs)
 
+    def _execute_reset_training(self, **kwargs):
+        return terra_exchange.call("reset_training", **kwargs)
+
     def _execute_start_evaluate(self, **kwargs):
         return terra_exchange.call("start_evaluate", **kwargs)
