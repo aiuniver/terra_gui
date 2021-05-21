@@ -782,6 +782,15 @@ class Exchange(StatesData, GuiExch):
         except Exception as e:
             return e.__str__()
 
+    def _load_unzip(self, load_path, file_name):
+        try:
+            zip_model = zipfile.ZipFile(load_path, 'r')
+            file_path = os.path.join(self.dir_paths.modeling, file_name)
+            zip_model.write(file_path)
+            return ''
+        except Exception as e:
+            return e.__str__()
+
     @staticmethod
     def _set_layers_list() -> list:
         """
@@ -942,51 +951,50 @@ class Exchange(StatesData, GuiExch):
             output.append(arch_files[:-6])
         return output
 
-    # def get_custom_model(self):
-    #     model_name = kwargs.get('name')
-    #     is_overwrite = kwargs.get('overwrite')
-    #     write_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
-    #     files_for_zipping = os.listdir(self.dir_paths.modeling)
-    #     is_write = True
-    #     message = ''
-    #     if is_overwrite or not os.path.exists(write_model_path):
-    #         message = self._write_zip(write_model_path, files_for_zipping)
-    #         if message:
-    #             is_write = False
-    #     else:
-    #         if os.path.exists(write_model_path):
-    #             message = 'This model is exists'
-    #             is_write = False
-    #     return is_write, message
-    #
-    # def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
-    #     preview = {}
-    #     yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
-    #     with open(yaml_file) as f:
-    #         templates = yaml.full_load(f)
-    #     if input_shape:
-    #         model_input_shape = input_shape
-    #     else:
-    #         model_input_shape = templates.get("input_shape")
-    #     if output_shape:
-    #         model_output_shape = output_shape
-    #     else:
-    #         model_output_shape = templates.get("output_shape", None)
-    #     plan_name = templates.get('plan_name', 'No info')
-    #     datatype_name = templates.get('input_datatype', 'No info')
-    #     shape_data = templates.get("input_shape", '')
-    #     preview.update({
-    #         'name': plan_name,
-    #         'input_shape': shape_data,
-    #         'datatype': datatype_name,
-    #         'preview_image': 'some_image'
-    #     })
-    #
-    #     self.model_plan = templates.get("plan")
-    #     output = self.get_validated_plan(self.model_plan, model_input_shape, output_shape=model_output_shape,
-    #                                      method='load')
-    #     output.update({'preview': preview})
-    #     return output
+    def get_custom_model(self, model_name, input_shape, output_shape=None):
+        load_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
+        if os.path.exists(load_model_path):
+            files_for_zipping = os.listdir(self.dir_paths.modeling)
+        is_write = True
+        message = ''
+        # if is_overwrite or not os.path.exists(write_model_path):
+        #     message = self._write_zip(write_model_path, files_for_zipping)
+        #     if message:
+        #         is_write = False
+        # else:
+        #     if os.path.exists(write_model_path):
+        #         message = 'This model is exists'
+        #         is_write = False
+        return is_write, message
+
+    def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
+        preview = {}
+        yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
+        with open(yaml_file) as f:
+            templates = yaml.full_load(f)
+        if input_shape:
+            model_input_shape = input_shape
+        else:
+            model_input_shape = templates.get("input_shape")
+        if output_shape:
+            model_output_shape = output_shape
+        else:
+            model_output_shape = templates.get("output_shape", None)
+        plan_name = templates.get('plan_name', 'No info')
+        datatype_name = templates.get('input_datatype', 'No info')
+        shape_data = templates.get("input_shape", '')
+        preview.update({
+            'name': plan_name,
+            'input_shape': shape_data,
+            'datatype': datatype_name,
+            'preview_image': 'some_image'
+        })
+
+        self.model_plan = templates.get("plan")
+        output = self.get_validated_plan(self.model_plan, model_input_shape, output_shape=model_output_shape,
+                                         method='load')
+        output.update({'preview': preview})
+        return output
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
