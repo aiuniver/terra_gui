@@ -331,6 +331,9 @@
     -ms-flex-item-align:auto;
     align-self:auto;
 }
+#modal-window-save-model form > .inner > .field-form {
+	margin-bottom:0 !important;
+}
 #modal-window-save-model form > .inner > .field-inline {
 	padding-left:20px;
 	margin-bottom:14px !important;
