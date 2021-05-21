@@ -2,9 +2,13 @@ import base64
 import gc
 import os
 import re
+import signal
 import tempfile
 import threading
+import time
+import zipfile
 from threading import Thread
+from multiprocessing import Process
 
 import dill as dill
 from IPython import get_ipython
@@ -21,7 +25,25 @@ from .data import (
     LayerType,
     OptimizerParams,
     ModelPlan,
+    TerraExchangeProject,
 )
+
+
+# Dense
+# Conv2D
+# Maxpooling2D
+# Conv1D
+# Maxpooling1D
+# LSTM
+# Flatten
+# Dropout
+# Batchnormalization
+# Concatenate
+# Embedding
+# Conv2DTranspose
+# Conv1DTranspose
+# Upsampling2D
+# Upsampling1D
 
 
 class StatesData:
@@ -338,6 +360,8 @@ class StatesData:
             },
         }
 
+        self.paths_obj = TerraExchangeProject()
+
 
 class Exchange(StatesData, GuiExch):
     """
@@ -352,12 +376,12 @@ class Exchange(StatesData, GuiExch):
         GuiExch.__init__(self)
         # data for output current state of model training process
         self.out_data = {
-            "stop_flag": False,
+            "stop_flag": True,
             "status_string": "",
             "progress_status": {
-                "percents": 100,
+                "percents": 0,
                 "progress_text": "",
-                "iter_count": 5,
+                "iter_count": 0,
             },
             "errors": "",
             "prints": [],
@@ -375,7 +399,7 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
-        self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+        self.custom_datasets_path = self.paths_obj.gd.datasets
         self.dts_name = None
         self.task_name = ""
         self.mounted_drive_path = ''
@@ -390,6 +414,9 @@ class Exchange(StatesData, GuiExch):
         self.shuffle = True
         self.epoch = 1
         self.optimizers = self._set_optimizers()
+        self.dir_paths = self.paths_obj.dir
+        self.gd_paths = self.paths_obj.gd
+        print(self.dir_paths, self.gd_paths)
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -724,13 +751,13 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.out_data = {
             "stop_flag": False,
-            "status_string": "status_string",
+            "status_string": "",
             "progress_status": {
                 "percents": 0,
-                "progress_text": "No some progress",
-                "iter_count": None,
+                "progress_text": "",
+                "iter_count": 0,
             },
-            "errors": "error_string",
+            "errors": "",
             "prints": [],
             "plots": [],
             "scatters": [],
@@ -743,6 +770,17 @@ class Exchange(StatesData, GuiExch):
 
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
+
+    @staticmethod
+    def _write_zip(write_path, file_list):
+        try:
+            zip_model = zipfile.ZipFile(write_path, 'w')
+            for any_file in file_list:
+                zip_model.write(any_file)
+            return ''
+        except Exception as e:
+            return e.__str__()
+
 
     @staticmethod
     def _set_layers_list() -> list:
@@ -767,15 +805,13 @@ class Exchange(StatesData, GuiExch):
         self.process_flag = "dataset"
         return self._prepare_dataset(dataset_name=dataset_name, source=source)
 
-    def set_stop_training_flag(self):
-        """
-        Set stop_training_flag in True if STOP button in interface is clicked
-        """
-        self.stop_training_flag = True
-
     def set_callbacks_switches(self, task: str, switches: dict):
         for switch, value in switches.items():
             self.callback_show_options_switches_front[task][switch]["value"] = value
+
+    def set_paths(self, **kwargs):
+        paths = kwargs
+        print(paths)
 
     def print_progress_bar(self, data: tuple, stop_flag=False) -> None:
         """
@@ -891,7 +927,6 @@ class Exchange(StatesData, GuiExch):
 
     def show_current_epoch(self, epoch: int):
         self.epoch = epoch + 1
-        print(self.epoch)
         pass
 
     def get_stop_training_flag(self):
@@ -952,12 +987,15 @@ class Exchange(StatesData, GuiExch):
                 self.epoch / self.epochs
             ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
+            print(self.is_trained)
         return self.out_data
 
     def reset_training(self):
         self.nn.nn_cleaner()
 
     def start_training(self, model: bytes, **kwargs) -> None:
+        if self.stop_training_flag:
+            self.stop_training_flag = False
         self.process_flag = "train"
         self._reset_out_data()
         training = kwargs
@@ -998,14 +1036,38 @@ class Exchange(StatesData, GuiExch):
         self.out_data["stop_flag"] = True
 
     # def start_training(self, model: bytes, **kwargs) -> dict:
-    #     training = Thread(target=self._start_training, args=(model,), kwargs=kwargs)
+    #     training = Thread(target=self._start_training, name='TRAIN_PROCESS', daemon=False, args=(model,), kwargs=kwargs)
     #     training.start()
-    #     threading.enumerate()
-    #     training.join()
     #     self.is_trained = True
-    #     threading.enumerate()
-    #     print('TRAIN START')
+    #     time.sleep(30)
+    #     self.stop_training()
+    #     # training.join()
+    #     self.is_trained = False
     #     return {}
+
+    def stop_training(self):
+        self.stop_training_flag = True
+        self.out_data["stop_flag"] = True
+
+    def save_model(self, **kwargs):
+        model_name = kwargs.get('name')
+        is_overwrite = kwargs.get('overwrite')
+        write_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
+        files_for_zipping = os.listdir(self.dir_paths.modeling)
+        is_write = True
+        message = ''
+        if is_overwrite or not os.path.exists(write_model_path):
+            message = self._write_zip(write_model_path, files_for_zipping)
+            if message:
+                is_write = False
+        else:
+            if os.path.exists(write_model_path):
+                message = 'This model is exists'
+                is_write = False
+        return is_write, message
+
+
+
 
     #
     # def start_evaluate(self):

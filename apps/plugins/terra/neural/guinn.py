@@ -5,6 +5,7 @@ import gc
 import operator
 from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
+from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
 __version__ = 0.3
 
@@ -33,14 +34,6 @@ class GUINN:
         self.chp_save_best = True
         self.chp_save_weights = True
 
-        # """
-        # For testing in different setups and environment
-        # """
-        # self.debug_mode: bool = True
-        # self.debug_verbose = 0
-        # self.default_projects_folder = "TerraProjects"
-        # self.default_user_model_plans_folder = "ModelPlans"
-
         """
         For samples from dataset
         """
@@ -66,6 +59,7 @@ class GUINN:
         self.optimizer = keras.optimizers.Adam()
         self.loss: dict = {}
         self.metrics: dict = {}
+        self.custom_losses_dict: dict = {"dice_coef": DiceCoefficient, "mean_io_u": keras.metrics.MeanIoU}
         self.batch_size = 32
         self.epochs = 20
         self.shuffle: bool = True
@@ -93,6 +87,18 @@ class GUINN:
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
         pass
+
+    def set_custom_metrics(self):
+        # print('___nn___NN___set_custom_metrics___')
+        for i_key in self.metrics.keys():
+            for idx, metric in enumerate(self.metrics[i_key]):
+                if metric in self.custom_losses_dict.keys():
+                    if metric == "mean_io_u":
+                        self.metrics[i_key][idx] = self.custom_losses_dict[metric](
+                            num_classes=self.output_params[i_key]['num_classes'])
+                    else:
+                        self.metrics[i_key][idx] = self.custom_losses_dict[metric]()
+                pass
 
     def set_chp_monitor(self) -> None:
         if len(self.x_Train) > 1:
@@ -249,6 +255,7 @@ class GUINN:
 
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
+        self.set_custom_metrics()
         self.model.compile(loss=self.loss,
                            optimizer=self.optimizer,
                            metrics=self.metrics
@@ -332,7 +339,16 @@ class GUINN:
             best_epoch_num + 1 (int):   best epoch number
             stop_epoch (int):           stop epoch
         """
-        max_monitors = ["accuracy", "dice_coef"]
+        max_monitors = ["accuracy",
+                        "dice_coef",
+                        "mean_io_u",
+                        "accuracy",
+                        "binary_accuracy",
+                        "categorical_accuracy",
+                        "sparse_categorical_accuracy",
+                        "top_k_categorical_accuracy",
+                        "sparse_top_k_categorical_accuracy",
+                        ]
         min_monitors = ["loss", "mae", "mape", "mse", "msle"]
 
         if not isinstance(monitor, str):
