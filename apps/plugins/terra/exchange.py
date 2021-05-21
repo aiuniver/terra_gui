@@ -195,9 +195,14 @@ class TerraExchange:
                 success=False,
                 error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
             )
-        # response = colab_exchange.save_model(**kwargs)
+        self.project.dir.create_preview(kwargs.get("preview"))
+        success, error = colab_exchange.save_model(
+            name=kwargs.get("name"), overwrite=kwargs.get("overwrite")
+        )
         self.project.model_name = kwargs.get("name")
-        return TerraExchangeResponse(data={"name": self.project.model_name})
+        return TerraExchangeResponse(
+            success=success, error=error, data={"name": self.project.model_name}
+        )
 
     def _call_clear_model(self) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()
