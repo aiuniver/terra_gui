@@ -406,7 +406,7 @@
                         "check_training",
                         (success, data) => {
                             if (success && !data.data.stop_flag) {
-                                window.ExchangeRequest("get_data", this.get_data_response);
+                                window.ExchangeRequest("get_data", training_params.get_data_response);
                             }
                         }
                     )
