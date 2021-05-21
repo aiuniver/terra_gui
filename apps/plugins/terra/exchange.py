@@ -143,7 +143,10 @@ class TerraExchange:
         )
 
     def _call_get_models(self) -> TerraExchangeResponse:
-        return self.__request_post("get_models")
+        response = self.__request_post("get_models")
+        if response.success:
+            response.data = list(response.data) + list(colab_exchange.get_models())
+        return response
 
     def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
         data = self.__request_post(
