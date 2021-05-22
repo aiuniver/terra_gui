@@ -1,3 +1,4 @@
+import threading
 from threading import Thread
 from typing import Tuple
 import numpy as np
@@ -278,8 +279,10 @@ class GUINN:
 
         self.show_training_params()
         if self.x_Val['input_1'] is not None:
+            print(threading.enumerate())
             training = Thread(target=self.tr_thread)
             training.start()
+            print(threading.enumerate())
             training.join()
             del training
             # self.history = self.model.fit(
