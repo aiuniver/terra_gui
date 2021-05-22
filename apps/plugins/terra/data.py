@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from django.conf import settings
 from django.urls import reverse_lazy
 
+from . import utils as terra_utils
+
 
 class Color(str, Enum):
     red = "\033[0;31m"
@@ -268,7 +270,9 @@ class ProjectPath(pydantic.BaseModel):
             yaml.dump(plan, yaml_file)
 
     def create_preview(self, preview: str):
-        cairosvg.svg2png(preview, write_to=f"{self.modeling}/{self._modeling_preview}")
+        filepath = f"{self.modeling}/{self._modeling_preview}"
+        cairosvg.svg2png(preview, write_to=filepath)
+        terra_utils.autocrop_image_square(filepath)
 
     def create_keras(self, keras: str):
         with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:

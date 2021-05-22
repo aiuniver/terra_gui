@@ -225,7 +225,21 @@
 
             _action_reset.bind("click", (event) => {
                 event.preventDefault();
-                window.ExchangeRequest("reset_training");
+                window.StatusBar.clear();
+                window.ExchangeRequest(
+                    "reset_training",
+                    (success, data) => {
+                        if (success) {
+                            training_results.charts = [];
+                            training_results.images = [];
+                            training_results.texts = [];
+                            training_results.scatters = [];
+                            window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    }
+                );
             });
 
             this.get_data_response = (success, data) => {
