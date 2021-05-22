@@ -281,6 +281,7 @@ class GUINN:
             training = Thread(target=self.tr_thread)
             training.start()
             training.join()
+            del training
             # self.history = self.model.fit(
             #     self.x_Train,
             #     self.y_Train,
