@@ -1,6 +1,12 @@
+import base64
 import copy
 import os
+import tempfile
+
+import png
 import tensorflow as tf
+
+from PIL import Image
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
@@ -527,6 +533,18 @@ class ClassificationCallback:
             indices = sorted_args[:count]
         return indices
 
+    @staticmethod
+    def _image_to_base64(image_as_array):
+        print(image_as_array.shape)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        image_as_array = image_as_array.reshape((28, 28))
+        Image.fromarray((image_as_array * 255 / np.max(image_as_array)).astype('uint8')).save(temp_image.name)
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        temp_image.close()
+        os.remove(temp_image.name)
+        return output_image
+
     def plot_images(self, output_key: str = None):
         """
         Plot images based on indices in dataset
@@ -552,11 +570,12 @@ class ClassificationCallback:
         for idx in img_indices:
             # TODO нужно как то определять тип входа по тэгу (images)
             image = self.x_Val['input_1'][idx]
+            image_as_64 = self._image_to_base64(image)
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
-            data.append((image, title))
+            data.append((image_as_64, title))
         self.Exch.show_image_data(data)
 
     # # Распознаём тестовую выборку и выводим результаты
@@ -934,6 +953,16 @@ class SegmentationCallback:
         )
         self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
+    @staticmethod
+    def _image_to_base64(image_as_array):
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        Image.fromarray((image_as_array * 255 / np.max(image_as_array)).astype('uint8')).save(temp_image.name)
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        temp_image.close()
+        os.remove(temp_image.name)
+        return output_image
+
     def plot_images(self, input_key: str = None):
         """
         Returns:
@@ -958,19 +987,19 @@ class SegmentationCallback:
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
             title = "Image"
-            image_data.append((image, title))
+            image_data.append((self._image_to_base64(image), title))
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
             title = "Ground truth mask"
-            true_mask_data.append((image, title))
+            true_mask_data.append((self._image_to_base64(image), title))
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
             title = "Predicted mask"
-            pred_mask_data.append((image, title))
+            pred_mask_data.append((self._image_to_base64(image), title))
 
         data = image_data + true_mask_data + pred_mask_data
         self.Exch.show_image_data(data)

@@ -2,13 +2,8 @@ import base64
 import gc
 import os
 import re
-import signal
 import tempfile
-import threading
-import time
 import zipfile
-from threading import Thread
-from multiprocessing import Process
 
 import dill as dill
 import yaml
@@ -575,6 +570,11 @@ class Exchange(StatesData, GuiExch):
             self.out_data["prints"].append(data)
         elif key_name == "texts":
             self.out_data["texts"].append(data)
+        elif key_name == 'images':
+            output = []
+            for image_data in data:
+                output.append({'image': image_data[0], 'title': image_data[1]})
+            self.out_data['images'] = output
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
