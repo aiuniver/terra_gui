@@ -375,65 +375,30 @@
 	fill:transparent;
 	cursor:pointer;
 }
-#canvas-nodes > .node > rect {
-	stroke-width:2;
-	rx:4;
-	ry:4;
-}
-#canvas-nodes > .node.error > rect {
+#canvas-nodes > .node.error > rect.node-bg {
 	stroke:#f00 !important;
 }
 #canvas-nodes > .node > rect.pointer {
 	opacity:0;
 	cursor:pointer;
 }
-#canvas-nodes > .node-type-input > rect {
-	fill:#FFB054;
-	stroke:#FFB054;
-}
-#canvas-nodes > .node-type-middle > rect {
-	fill:#89D764;
-	stroke:#89D764;
-}
-#canvas-nodes > .node-type-output > rect {
-	fill:#8E51F2;
-	stroke:#8E51F2;
-}
-#canvas-nodes > .node:hover > rect,
-#canvas-nodes > .node.active > rect {
+#canvas-nodes > .node:hover > rect.node-bg ,
+#canvas-nodes > .node.active > rect.node-bg  {
 	fill:#17212B;
 }
 #canvas-nodes > .node > text {
-	fill:#17212B;
-	font-size:.75rem;
+	font-family:"Open Sans", sans-serif;
 }
 #canvas-nodes > .node:hover > text,
 #canvas-nodes > .node.active > text,
 #canvas-nodes > .node.hover > text {
 	fill:#fff;
 }
-#canvas-lines > .line > line {
-	stroke:#65B9F4;
-	stroke-width:1;
-}
-#canvas-lines > .line > circle {
-	r:2;
-	fill:#65B9F4;
-}
-
-.node > circle{
-	r:2;
-	fill:#65B9F4;
-}
-
-.line{
-	stroke:#65B9F4;
-	stroke-width:2;
+#canvas-lines > line {
 	cursor:pointer;
 }
-
-.line.active {
-	stroke: #EB5757;
+#canvas-lines > line.active {
+	stroke:#EB5757;
 }
 
 .canvas-container > .canvas-save{
