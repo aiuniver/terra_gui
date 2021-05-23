@@ -554,6 +554,8 @@ class Exchange(StatesData, GuiExch):
             data: formatting recieved data from terra, Any
             stop_flag: flag to stop JS monitor
         """
+        if key_name == 'images':
+            print(data)
         if key_name == "plots":
             self.out_data["plots"] = self._reformatting_graphics_data(
                 mode="lines", data=data
@@ -570,11 +572,11 @@ class Exchange(StatesData, GuiExch):
             self.out_data["prints"].append(data)
         elif key_name == "texts":
             self.out_data["texts"].append(data)
-        elif key_name == 'images':
-            output = []
-            for image_data in data:
-                output.append({'image': image_data[0], 'title': image_data[1]})
-            self.out_data['images'] = output
+        # elif key_name == 'images':
+        #     output = []
+        #     for image_data in data:
+        #         output.append({'image': image_data[0], 'title': image_data[1]})
+        #     self.out_data['images'] = output
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)

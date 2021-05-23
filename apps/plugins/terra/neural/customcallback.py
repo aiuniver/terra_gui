@@ -5,7 +5,7 @@ import tempfile
 
 import tensorflow as tf
 
-from PIL import Image
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
@@ -342,13 +342,13 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'эпоха: {self.epoch+1}, модель сохранена'
+            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
             self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
 
     def on_train_batch_end(self, batch, logs=None):
         self.batch += 1
         self._now_time = time.time()
-        msg_batch = f'Батч {batch+1}/{self.num_batches}'
+        msg_batch = f'Батч {batch + 1}/{self.num_batches}'
         msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
                     f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
         msg_progress = f'Время до окончания обучения:' \
@@ -386,7 +386,6 @@ class CustomCallback(keras.callbacks.Callback):
                 )
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
-
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
@@ -532,18 +531,6 @@ class ClassificationCallback:
             indices = sorted_args[:count]
         return indices
 
-    @staticmethod
-    def _image_to_base64(image_as_array):
-        print(image_as_array.shape)
-        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
-        image_as_array = image_as_array.reshape((28, 28))
-        Image.fromarray((image_as_array * 255 / np.max(image_as_array)).astype('uint8')).save(temp_image.name)
-        with open(temp_image.name, 'rb') as img:
-            output_image = base64.b64encode(img.read())
-        temp_image.close()
-        os.remove(temp_image.name)
-        return output_image
-
     def plot_images(self, output_key: str = None):
         """
         Plot images based on indices in dataset
@@ -569,13 +556,14 @@ class ClassificationCallback:
         for idx in img_indices:
             # TODO нужно как то определять тип входа по тэгу (images)
             image = self.x_Val['input_1'][idx]
-            image_as_64 = self._image_to_base64(image)
+            # image_as_64 = self._image_to_base64(image)
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
-            data.append((image_as_64, title))
-        self.Exch.show_image_data(data)
+            data.append((image, title))
+        out_data = {'images': image_to_base64(data)}
+        self.Exch.show_image_data(out_data)
 
     # # Распознаём тестовую выборку и выводим результаты
     # def recognize_classes(self):
@@ -952,16 +940,6 @@ class SegmentationCallback:
         )
         self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
-    @staticmethod
-    def _image_to_base64(image_as_array):
-        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
-        Image.fromarray((image_as_array * 255 / np.max(image_as_array)).astype('uint8')).save(temp_image.name)
-        with open(temp_image.name, 'rb') as img:
-            output_image = base64.b64encode(img.read())
-        temp_image.close()
-        os.remove(temp_image.name)
-        return output_image
-
     def plot_images(self, input_key: str = None):
         """
         Returns:
@@ -986,21 +964,25 @@ class SegmentationCallback:
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
             title = "Image"
-            image_data.append((self._image_to_base64(image), title))
+            image_data.append((image, title))
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
             title = "Ground truth mask"
-            true_mask_data.append((self._image_to_base64(image), title))
+            true_mask_data.append((image, title))
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
             title = "Predicted mask"
-            pred_mask_data.append((self._image_to_base64(image), title))
+            pred_mask_data.append((image, title))
 
-        data = image_data + true_mask_data + pred_mask_data
+        data = {
+            'images': image_to_base64(image_data),
+            'ground_truth_masks': image_to_base64(true_mask_data),
+            'predicted_mask': image_to_base64(pred_mask_data)
+        }
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
@@ -1523,3 +1505,22 @@ class RegressionCallback:
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
+
+
+def image_to_base64(image_as_array):
+    output = []
+    length = len(image_as_array)
+    rows = 3
+    columns = length // rows if length % 3 == 0 else length // rows + 1
+
+    fig = plt.figure(figsize=(5 * columns, 5 * rows))
+    for i, (image, title) in enumerate(image_as_array):
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        ax = fig.add_subplot(rows, columns, i + 1)
+        fig.savefig(temp_image.name)
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        output.append({'image': output_image, 'title': title})
+        temp_image.close()
+        os.remove(temp_image.name)
+    return output
