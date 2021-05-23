@@ -3,7 +3,6 @@ import copy
 import os
 import tempfile
 
-import png
 import tensorflow as tf
 
 from PIL import Image
