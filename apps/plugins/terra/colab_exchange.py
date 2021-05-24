@@ -1033,6 +1033,7 @@ class Exchange(StatesData, GuiExch):
         model_plan.output_shape = {}
         model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
+        print(model_plan.plan)
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
