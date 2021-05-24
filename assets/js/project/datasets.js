@@ -4,7 +4,7 @@
 (($) => {
 
 
-    let filters, datasets, params;
+    let filters, datasets, params, dataset_load, dataset_prepare;
 
 
     $.fn.extend({
@@ -96,73 +96,7 @@
 
             if (!this.length) return this;
 
-            $(".params-menu ul li").bind("click", (event) => {
 
-                let active_menus = $(".active-menu")
-                active_menus.toggleClass("active-menu");
-                $(`.inner[name=${active_menus.attr("name")}]`).slideToggle();
-
-                $(event.target).toggleClass( "active-menu" );
-                $(`.inner[name=${event.target.getAttribute("name")}]`).slideToggle();
-            });
-
-            $( ".slider-range" ).slider({
-              range: true,
-              min: 0,
-              max: 100,
-              values: [ 35, 70 ],
-              slide: function( event, ui ) {
-                $( "#amount1" ).val(ui.values[0]);
-                $( "#amount2" ).val(ui.values[1]);
-              }
-            });
-
-            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
-            $("#amount2").val( $( ".slider-range" ).slider( "values", 1));
-
-             $("#amount1").on("input", ()=>{
-                 $(".slider-range").slider( "values", 0, $("#amount1").val())
-             });
-
-             $("#amount2").on("input", ()=>{
-                 $(".slider-range").slider( "values", 1, $("#amount2").val())
-             });
-
-            $(".number-classes").on("input", (event)=>{
-                let num_classes = $(event.target).val();
-                let layout = $(event.target).parents('.output-layout')
-                if(num_classes < 0 || num_classes > 16){
-                    $(event.target).val(16);
-                    num_classes = 16;
-                }
-                console.log(num_classes)
-
-                layout.find(".class-inline").remove()
-                layout.find(".color-inline").remove()
-
-                for(let i=0; i<num_classes; i++){
-                    let html = '';
-                    html += '<div class="field-form field-inline class-inline">';
-                    html += `<label>класс ${i+1}</label>`;
-                    html += '<input type="text">';
-                    html += '</div>';
-                    html += '<div class="field-form field-inline color-inline">';
-                    html += '<label>Цвет</label>';
-                    html += `<input type="text" class="color-input" value="#123456" />`;
-                    html += '<button class="colorpicker-btn"></button>';
-                    html += '<div class="colorpicker" hidden></div>';
-                    html += `</div>`;
-                    layout.find(".layout-params").append(html);
-                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
-
-                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
-                        console.log(123)
-                        event.preventDefault();
-                        let field = event.target.parentNode;
-                        $(field).find(".colorpicker").last().slideToggle();
-                    });
-                }
-            });
 
 
 
@@ -224,6 +158,103 @@
 
             return this;
 
+        },
+
+        DatasetLoad: function (){
+
+            if (!this.length) return this;
+
+
+            $(".params-menu ul li").bind("click", (event) => {
+                let active_menus = $(".active-menu")
+                active_menus.toggleClass("active-menu");
+
+                let closed_inner = $(`.inner#${active_menus.attr("name")}`),
+                    active_inner = $(`.inner#${event.target.getAttribute("name")}`);
+
+                active_inner.slideToggle();
+                active_inner.removeAttr("disabled");
+
+                $(event.target).toggleClass( "active-menu" );
+                closed_inner.slideToggle();
+                closed_inner.attr("disabled", "disabled");
+            });
+
+            this.bind("submit", (event)=>{
+                event.preventDefault();
+                console.log(this.serializeObject());
+            });
+
+            return this;
+        },
+
+        DatasetPrepare: function (){
+
+            if (!this.length) return this;
+
+            $( ".slider-range" ).slider({
+              range: true,
+              min: 0,
+              max: 100,
+              values: [ 35, 70 ],
+              slide: function( event, ui ) {
+                $( "#amount1" ).val(ui.values[0]);
+                $( "#amount2" ).val(ui.values[1]);
+              }
+            });
+
+            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
+            $("#amount2").val( $( ".slider-range" ).slider( "values", 1));
+
+             $("#amount1").on("input", ()=>{
+                 $(".slider-range").slider( "values", 0, $("#amount1").val())
+             });
+
+             $("#amount2").on("input", ()=>{
+                 $(".slider-range").slider( "values", 1, $("#amount2").val())
+             });
+
+            $(".number-classes").on("input", (event)=>{
+                let num_classes = $(event.target).val();
+                let layout = $(event.target).parents('.output-layout')
+                if(num_classes < 0 || num_classes > 16){
+                    $(event.target).val(16);
+                    num_classes = 16;
+                }
+
+                layout.find(".class-inline").remove()
+                layout.find(".color-inline").remove()
+
+                for(let i=0; i<num_classes; i++){
+                    let html = '';
+                    html += '<div class="field-form field-inline class-inline">';
+                    html += `<label>класс ${i+1}</label>`;
+                    html += '<input type="text">';
+                    html += '</div>';
+                    html += '<div class="field-form field-inline color-inline">';
+                    html += '<label>Цвет</label>';
+                    html += `<input type="text" class="color-input" value="#123456" />`;
+                    html += '<button class="colorpicker-btn"></button>';
+                    html += '<div class="colorpicker" hidden></div>';
+                    html += `</div>`;
+                    layout.find(".layout-params").append(html);
+                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+
+                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
+                        event.preventDefault();
+                        let field = event.target.parentNode;
+                        $(field).find(".colorpicker").last().slideToggle();
+                    });
+                }
+            });
+
+            this.bind("submit", (event)=>{
+                event.preventDefault();
+                console.log(this.serializeObject());
+            });
+
+
+            return this;
         }
 
 
@@ -234,7 +265,9 @@
 
         filters = $(".project-datasets-block.filters").DatasetsFilters();
         datasets = $(".project-datasets-block.datasets").DatasetsItems();
-        params = $(".properties form.params").DatasetsParams();
+        params = $(".properties form.params.dataset-change").DatasetsParams();
+        dataset_load = $(".dataset-load").DatasetLoad();
+        dataset_prepare = $(".dataset-prepare").DatasetPrepare();
 
         datasets.dataset = window.TerraProject.dataset;
 
