@@ -1096,7 +1096,6 @@ class Exchange(StatesData, GuiExch):
             self.nn.terra_fit(nn_model)
             # training.start()
         except Exception as e:
-            print(e.__doc__)
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True

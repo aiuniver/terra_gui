@@ -919,7 +919,7 @@ class SegmentationCallback:
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
             )
-        colored_mask = np.array(colored_mask)
+        colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
     def _dice_coef(self, smooth=1.0):
@@ -1513,11 +1513,19 @@ def image_to_base64(image_as_array):
     rows = 3
     columns = length // rows if length % 3 == 0 else length // rows + 1
 
-    fig = plt.figure(figsize=(5 * columns, 5 * rows))
+    # fig = plt.figure(figsize=(5 * columns, 5 * rows))
     for i, (image, title) in enumerate(image_as_array):
+        if image.dtype == 'int32':
+            image = image.astype(np.uint8)
         temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
-        ax = fig.add_subplot(rows, columns, i + 1)
-        fig.savefig(temp_image.name)
+        # ax = fig.add_subplot(rows, columns, i + 1)
+        # ax.imshow(image)
+        # fig.savefig(temp_image.name)
+        try:
+            plt.imsave(temp_image.name, image, cmap='Greys')
+        except Exception as e:
+            print(e.__str__())
+            plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='Greys')
         with open(temp_image.name, 'rb') as img:
             output_image = base64.b64encode(img.read())
         output.append({'image': output_image, 'title': title})
