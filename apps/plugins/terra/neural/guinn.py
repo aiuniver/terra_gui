@@ -7,7 +7,7 @@ from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
-__version__ = 0.3
+__version__ = 0.04
 
 
 class GUINN:
