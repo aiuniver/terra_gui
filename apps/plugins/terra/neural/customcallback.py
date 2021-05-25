@@ -398,9 +398,9 @@ class CustomCallback(keras.callbacks.Callback):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
-        self.Exch.print_2status_bar(
-            ('Затрачено времени на обучение: ',
-             self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)))
+        self.Exch.show_text_data(
+            f'Затрачено времени на обучение: '
+            f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
 
 
 class ClassificationCallback:
@@ -412,7 +412,6 @@ class ClassificationCallback:
             step=1,
             class_metrics=[],
             num_classes=2,
-            data_tag="images",
             show_worst=False,
             show_best=False,
             show_final=True,
@@ -435,13 +434,13 @@ class ClassificationCallback:
         self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
-        self.data_tag = data_tag
         self.class_metrics = class_metrics
         self.show_worst = show_worst
         self.show_best = show_best
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
+        self.data_tag = self.dataset.tags['input_1']
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -783,8 +782,9 @@ class ClassificationCallback:
         self.x_Val = x_val
         if self.show_final:
             self.plot_result(output_key)
-            if self.show_best or self.show_worst:
-                self.plot_images(output_key=output_key)
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    self.plot_images(output_key=output_key)
 
 
 class SegmentationCallback:
@@ -796,7 +796,6 @@ class SegmentationCallback:
             step=1,
             num_classes=2,
             class_metrics=[],
-            data_tag="images",
             show_worst=False,
             show_best=False,
             show_final=True,
@@ -819,13 +818,13 @@ class SegmentationCallback:
         self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
-        self.data_tag = data_tag
         self.class_metrics = class_metrics
         self.show_worst = show_worst
         self.show_best = show_best
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
+        self.data_tag = self.dataset.tags['input_1']
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -1135,8 +1134,9 @@ class SegmentationCallback:
         self.x_Val = x_val
         if self.show_final:
             self.plot_result(output_key=output_key)
-            if self.show_best or self.show_worst:
-                self.plot_images(input_key="input_1")
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    self.plot_images(input_key="input_1")
         pass
 
 
@@ -1171,9 +1171,9 @@ class TimeseriesCallback:
         self.show_final = show_final
         self.plot_pred_and_true = plot_pred_and_true
         self.dataset = dataset
-        self.corr_step = corr_step
         self.Exch = exchange
-
+        self.data_tag = self.dataset.tags['input_1']
+        self.corr_step = corr_step
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
@@ -1356,7 +1356,6 @@ class RegressionCallback:
             self,
             metrics,
             step=1,
-            data_tag="text",
             show_final=True,
             plot_scatter=False,
             dataset=DTS(),
@@ -1380,10 +1379,9 @@ class RegressionCallback:
         self.metrics = metrics
         self.show_final = show_final
         self.plot_scatter = plot_scatter
-        self.data_tag = data_tag
         self.dataset = dataset
         self.exchange = exchange
-
+        self.data_tag = self.dataset.tags['input_1']
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
