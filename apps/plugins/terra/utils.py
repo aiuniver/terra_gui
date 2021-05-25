@@ -1,4 +1,9 @@
+import os
 import math
+import shutil
+import zipfile
+import tempfile
+
 from PIL import Image
 
 
@@ -44,3 +49,21 @@ def get_traceback_text(tb) -> list:
     if tb.tb_next:
         output += get_traceback_text(tb.tb_next)
     return output
+
+
+def unpack_model(filepath: str) -> dict:
+    tmp_dir = tempfile.mkdtemp()
+    model_tmp = os.path.join(tmp_dir, "model.zip")
+    shutil.copy2(filepath, model_tmp)
+
+    with zipfile.ZipFile(model_tmp, "r") as zip_ref:
+        zip_ref.extractall(tmp_dir)
+
+    os.remove(model_tmp)
+
+    return {
+        "path": tmp_dir,
+        "plan": os.path.join(tmp_dir, "plan.yaml"),
+        "preview": os.path.join(tmp_dir, "preview.png"),
+        "keras": os.path.join(tmp_dir, "keras.py"),
+    }
