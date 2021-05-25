@@ -1,5 +1,7 @@
-import json
+import base64
+import os
 import re
+import json
 
 import requests
 
@@ -165,10 +167,16 @@ class TerraExchange:
                 input_shape=colab_exchange.get_dataset_input_shape(),
             )
         else:
-            data = colab_exchange.get_model_from_list(
-                model_name=model_file,
-                input_shape=colab_exchange.get_dataset_input_shape(),
-            )
+            with open(
+                os.path.join(self.project.gd.modeling, f"{model_file}.model"), "rb"
+            ) as model_ref:
+                model_bin = model_ref.read()
+                data = self.__request_post(
+                    "get_model_from_list",
+                    model_name=model_file,
+                    model_file=base64.b64encode(model_bin).decode("UTF-8"),
+                    input_shape=colab_exchange.get_dataset_input_shape(),
+                )
         self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():
