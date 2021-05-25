@@ -171,9 +171,9 @@
     max-width: 170px;
 }
 
-#amount1, #amount2{
+#amount1, #amount2, #amount3{
     width: 43px;
-    margin-left: 5px;
+    margin-left: 3px;
 }
 
 .dataset-params > .inner > .field-form > label{

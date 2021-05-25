@@ -164,22 +164,6 @@
 
             if (!this.length) return this;
 
-
-            $(".params-menu ul li").bind("click", (event) => {
-                let active_menus = $(".active-menu")
-                active_menus.toggleClass("active-menu");
-
-                let closed_inner = $(`.inner#${active_menus.attr("name")}`),
-                    active_inner = $(`.inner#${event.target.getAttribute("name")}`);
-
-                active_inner.slideToggle();
-                active_inner.removeAttr("disabled");
-
-                $(event.target).toggleClass( "active-menu" );
-                closed_inner.slideToggle();
-                closed_inner.attr("disabled", "disabled");
-            });
-
             this.bind("submit", (event)=>{
                 event.preventDefault();
                 console.log(this.serializeObject());
@@ -193,26 +177,37 @@
             if (!this.length) return this;
 
             $( ".slider-range" ).slider({
-              range: true,
-              min: 0,
-              max: 100,
-              values: [ 35, 70 ],
-              slide: function( event, ui ) {
-                $( "#amount1" ).val(ui.values[0]);
-                $( "#amount2" ).val(ui.values[1]);
-              }
+                range: true,
+                min: 0,
+                max: 100,
+                values: [ 35, 70 ],
+                slide: function( event, ui ) {
+                    if(ui.values[0] > 90){
+                        ui.values[0] = 90;
+                        $(".slider-range").slider( "values", 0, 90);
+                    }
+                    if(ui.values[1] > 95){
+                        ui.values[1] = 95;
+                        $(".slider-range").slider( "values", 1, 95);
+                    };
+
+                    $( "#amount1" ).val(ui.values[0]);
+                    $( "#amount2" ).val(ui.values[1] - ui.values[0]);
+                    $( "#amount3" ).val(100 - ui.values[1]);
+                }
             });
 
-            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
-            $("#amount2").val( $( ".slider-range" ).slider( "values", 1));
+            // $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
+            // $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
+            // $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
 
-             $("#amount1").on("input", ()=>{
-                 $(".slider-range").slider( "values", 0, $("#amount1").val())
-             });
-
-             $("#amount2").on("input", ()=>{
-                 $(".slider-range").slider( "values", 1, $("#amount2").val())
-             });
+             // $("#amount1").on("input", ()=>{
+             //     $(".slider-range").slider( "values", 0, $("#amount1").val())
+             // });
+             //
+             // $("#amount2").on("input", ()=>{
+             //     $(".slider-range").slider( "values", 1, $("#amount2").val())
+             // });
 
             $(".number-classes").on("input", (event)=>{
                 let num_classes = $(event.target).val();

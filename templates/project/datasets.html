@@ -71,48 +71,27 @@
         </form>
         <form class="params next-form dataset-load">
             <div class="params-container">
-                <div class="params-item load-dataset-field">
-                    <div class="params-menu">
-                        <ul>
-                            <li name="gdrive">Google Drive</li>
-                            <li name="outlink">Внешняя ссылка</li>
-                        </ul>
-                    </div>
-                    <div id="gdrive" class="inner form-inline-label" hidden disabled="disabled">
+                <div class="params-item load-dataset-field collapsable">
+                    <div class="params-title">Загрузка архива</div>
+                    <div class="inner form-inline-label">
                         <div class="field-form field-inline">
-                            <label for="gdrive[filename]">Файл</label>
-                            <input type="text" name="gdrive[file]">
+                            <label for="name">Файл</label>
+                            <input type="text" name="name">
                         </div>
                         <div class="field-form field-inline">
-                            <label for="gdrive[url]">URL</label>
-                            <input type="text" name="gdrive[url]">
+                            <label for="link">URL</label>
+                            <input type="text" name="link">
                         </div>
-                    </div>
-                    <div id="outlink" class="inner form-inline-label" hidden disabled="disabled">
-                        <div class="field-form field-inline">
-                            <label for="outlink[filename]" >Название папки</label>
-                            <input type="text" name="outlink[filename]">
+                        <div class="form-inline-label flex">
+                            <div class="field-form field-inline">
+                                <label for="num_links[inputs]">Количество входов</label>
+                                <input type="number" name="num_links[inputs]">
+                            </div>
+                            <div class="field-form field-inline">
+                                <label for="num_links[outputs]">Количество выходов</label>
+                                <input type="number" name="num_links[outputs]">
+                            </div>
                         </div>
-                        <div class="field-form field-inline">
-                            <label for="outlink[url]">URL</label>
-                            <input type="text" name="outlink[url]">
-                        </div>
-                    </div>
-                </div>
-                <div class="params-item input-output-numbers">
-                    <div class="inner form-inline-label flex">
-                        <div class="field-form field-inline">
-                            <label for="num_links[inputs]">Количество входов</label>
-                            <input type="number" name="num_links[inputs]">
-                        </div>
-                        <div class="field-form field-inline">
-                            <label for="num_links[outputs]">Количество выходов</label>
-                            <input type="number" name="num_links[outputs]">
-                        </div>
-                    </div>
-                </div>
-                <div class="params-item">
-                    <div class="inner">
                         <div class="actions-form">
                             <div class="item load"><button>Загрузить</button></div>
                         </div>
@@ -129,37 +108,37 @@
                             <div class="layout-title">Слой “Input_1”</div>
                             <div class="layout-params">
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][layout_name]">Название входа</label>
-                                    <input type="text" name="input_layout[input_1][layout_name]" value="Input_1">
+                                    <label for="inputs[input_1][name]">Название входа</label>
+                                    <input type="text" name="inputs[input_1][name]" value="Input_1">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for=input_layout[input_1][data_type]">Тип данных</label>
-                                    <select name="input_layout[input_1][data_type]" class="jquery-ui-menuselect">
+                                    <label for=inputs[input_1][tag]">Тип данных</label>
+                                    <select name="inputs[input_1][tag]" class="jquery-ui-menuselect">
                                         <option value="Картинки">Картинки</option>
                                         <option value="Аудио">Аудио</option>
                                     </select>
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][folder_name]">Folder name</label>
-                                    <input type="text" name="input_layout[input_1][folder_name]">
+                                    <label for="inputs[input_1][parameters][folder_name]">Folder name</label>
+                                    <input type="text" name="inputs[input_1][parameters][folder_name]">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][height]">Height</label>
-                                    <input type="text" name="input_layout[input_1][height]">
+                                    <label for="inputs[input_1][parameters][height]">Height</label>
+                                    <input type="text" name="inputs[input_1][parameters][height]">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][width]">Width</label>
-                                    <input type="text" name="input_layout[input_1][width]">
+                                    <label for="inputs[input_1][parameters][width]">Width</label>
+                                    <input type="text" name="inputs[input_1][parameters][width]">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][net]">Net</label>
-                                    <select name="input_layout[input_1][net]" class="jquery-ui-menuselect">
+                                    <label for="inputs[input_1][parameters][net]">Net</label>
+                                    <select name="inputs[input_1][parameters][net]" class="jquery-ui-menuselect">
                                         <option value="Convolutional">Convolutional</option>
                                     </select>
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="input_layout[input_1][scaler]">Scaler</label>
-                                    <select name="input_layout[input_1][scaler]" class="jquery-ui-menuselect">
+                                    <label for="inputs[input_1][parameters][scaler]">Scaler</label>
+                                    <select name="inputs[input_1][parameters][scaler]" class="jquery-ui-menuselect">
                                         <option value="NoScaler">No Scaler</option>
                                     </select>
                                 </div>
@@ -174,38 +153,38 @@
                             <div class="layout-title">Слой “Output_1”</div>
                             <div class="layout-params">
                                 <div class="field-form field-inline">
-                                    <label for="output_layout[output_1][layout_name]">Название выхода</label>
-                                    <input type="text" name="output_layout[output_1][layout_name]" value="Output_1">
+                                    <label for="outputs[output_1][name]">Название выхода</label>
+                                    <input type="text" name="outputs[output_1][name]" value="Output_1">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="output_layout[output_1][task_type]">Тип задачи</label>
-                                    <select name="output_layout[output_1][task_type]" class="jquery-ui-menuselect">
+                                    <label for="outputs[output_1][tag]">Тип задачи</label>
+                                    <select name="outputs[output_1][tag]" class="jquery-ui-menuselect">
                                         <option value="Картинки">Классификация</option>
                                         <option value="Аудио">Регрессия</option>
                                     </select>
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="output_layout[output_1][data_type]">Тип данных</label>
-                                    <select name="output_layout[output_1][data_type]" class="jquery-ui-menuselect">
+                                    <label for="outputs[output_1][task_type]">Тип данных</label>
+                                    <select name="outputs[output_1][task_type]" class="jquery-ui-menuselect">
                                         <option value="Картинки">Сегментация изображений</option>
                                         <option value="Аудио">Регрессия</option>
                                     </select>
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="output_layout[output_1][folder_name]">folder name</label>
-                                    <input type="text" name="output_layout[output_1][folder_name]">
+                                    <label for="outputs[output_1][parameters][folder_name]">folder name</label>
+                                    <input type="text" name="outputs[output_1][parameters][folder_name]">
                                 </div>
                                 <div class="field-form field-inline">
-                                    <label for="output_layout[output_1][number_classes]">Кол-во классов</label>
-                                    <input type="number" class="number-classes" name="output_layout[output_1][number_classes]">
+                                    <label for="outputs[output_1][parameters][number_classes]">Кол-во классов</label>
+                                    <input type="number" class="number-classes" name="outputs[output_1][parameters][number_classes]">
                                 </div>
                                 <div class="field-form field-inline class-inline">
-                                    <label for="output_layout[output_1][class_1]">класс 1</label>
-                                    <input type="text" name="output_layout[output_1][class_1]">
+                                    <label for="outputs[output_1][parameters][class_1]">класс 1</label>
+                                    <input type="text" name="outputs[output_1][parameters][class_1]">
                                 </div>
                                 <div class="field-form field-inline color-inline">
-                                    <label for="output_layout[output_1][color_1]">Цвет</label>
-                                    <input type="text" value="#123456" name="output_layout[output_1][color_1]"/>
+                                    <label for="outputs[output_1][parameters][color_1]">Цвет</label>
+                                    <input type="text" value="#123456" name="outputs[output_1][parameters][color_1]"/>
                                     <button class="colorpicker-btn"></button>
                                     <div class="colorpicker" hidden></div>
                                 </div>
@@ -217,18 +196,19 @@
                     <div class="params-title">Параметры датасета</div>
                     <div class="inner form-inline-label">
                         <div class="field-form field-inline">
-                            <label for="save_options[amount]">Train + val + test</label>
+                            <label for="parameters[amount]">Train + val + test</label>
                             <div class="slider-range"></div>
-                            <input type="text" id="amount1" name="save_options[amount_1]">
-                            <input type="text" id="amount2" name="save_options[amount_2]">
+                            <input type="text" id="amount1" name="parameters[train_part]">
+                            <input type="text" id="amount2" name="parameters[val_part]">
+                            <input type="text" id="amount3" name="parameters[test_part]">
                         </div>
                         <div class="field-form field-inline">
-                            <label for="save_options[dataset_name]">Название датасета</label>
-                            <input type="text" name="save_options[dataset_name]">
+                            <label for="parameters[name]">Название датасета</label>
+                            <input type="text" name="parameters[name]">
                         </div>
                         <div class="field-form field-inline">
-                            <label for="save_options[dataset_tags]">Теги</label>
-                            <input type="text" name="save_options[dataset_tags]">
+                            <label for="parameters[user_tags]">Теги</label>
+                            <input type="text" name="parameters[user_tags]">
                         </div>
                     </div>
                 </div>
