@@ -299,7 +299,7 @@ class CustomCallback(keras.callbacks.Callback):
                 metrics=self.clbck_params[_key]["metrics"],
                 num_classes=self.clbck_params.setdefault(_key)["num_classes"],
                 clbck_options=self.clbck_params[_key]["callbacks"],
-                tags=self.dataset.tags,
+                tags=self.DTS.tags,
             )
 
     def _estimate_step(self, current, start, now):
