@@ -145,15 +145,30 @@ class TerraExchange:
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
         if response.success:
-            response.data = list(response.data) + list(colab_exchange.get_models())
+            response.data = list(
+                map(lambda item: {"is_terra": True, "name": item}, response.data)
+            ) + list(
+                map(
+                    lambda item: {"is_terra": False, "name": item},
+                    colab_exchange.get_models(),
+                )
+            )
         return response
 
-    def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
-        data = self.__request_post(
-            "get_model_from_list",
-            model_name=model_file,
-            input_shape=colab_exchange.get_dataset_input_shape(),
-        )
+    def _call_get_model_from_list(
+        self, model_file: str, is_terra: bool
+    ) -> TerraExchangeResponse:
+        if is_terra:
+            data = self.__request_post(
+                "get_model_from_list",
+                model_name=model_file,
+                input_shape=colab_exchange.get_dataset_input_shape(),
+            )
+        else:
+            data = colab_exchange.get_model_from_list(
+                model_name=model_file,
+                input_shape=colab_exchange.get_dataset_input_shape(),
+            )
         self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():

@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 import zipfile
+import shutil
 
 import dill as dill
 import yaml
@@ -15,6 +16,7 @@ from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
 
+from .utils import unpack_model
 from .layers_dataclasses import LayersDef, GUILayersDef
 from .data import (
     LayerLocation,
@@ -571,11 +573,6 @@ class Exchange(StatesData, GuiExch):
             self.out_data["prints"].append(data)
         elif key_name == "texts":
             self.out_data["texts"].append(data)
-        # elif key_name == 'images':
-        #     output = []
-        #     for image_data in data:
-        #         output.append({'image': image_data[0], 'title': image_data[1]})
-        #     self.out_data['images'] = output
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -970,27 +967,18 @@ class Exchange(StatesData, GuiExch):
             output.append(arch_files[:-6])
         return output
 
-    def get_custom_model(self, model_name, input_shape, output_shape=None):
-        load_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
-        if os.path.exists(load_model_path):
-            files_for_unzipping = os.listdir(self.gd_paths.modeling)
-        is_write = True
-        message = ''
-        # if is_overwrite or not os.path.exists(write_model_path):
-        #     message = self._write_zip(write_model_path, files_for_zipping)
-        #     if message:
-        #         is_write = False
-        # else:
-        #     if os.path.exists(write_model_path):
-        #         message = 'This model is exists'
-        #         is_write = False
-        return is_write, message
+    def get_model_from_list(self, model_name, input_shape, output_shape=None):
+        model_files = unpack_model(
+            os.path.join(self.gd_paths.modeling, f"{model_name}.model")
+        )
 
-    def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
-        preview = {}
-        yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
+        with open(model_files.get("preview"), "rb") as preview_ref:
+            preview_image = base64.b64encode(preview_ref.read())
+
+        yaml_file = model_files.get("plan")
         with open(yaml_file) as f:
             templates = yaml.full_load(f)
+
         if input_shape:
             model_input_shape = input_shape
         else:
@@ -999,21 +987,73 @@ class Exchange(StatesData, GuiExch):
             model_output_shape = output_shape
         else:
             model_output_shape = templates.get("output_shape", None)
-        plan_name = templates.get('plan_name', 'No info')
-        datatype_name = templates.get('input_datatype', 'No info')
-        shape_data = templates.get("input_shape", '')
-        preview.update({
-            'name': plan_name,
-            'input_shape': shape_data,
-            'datatype': datatype_name,
-            'preview_image': 'some_image'
-        })
-
+        plan_name = templates.get("plan_name", "No info")
+        datatype_name = templates.get("input_datatype", "No info")
+        shape_data = templates.get("input_shape", "")
+        preview = {
+            "name": plan_name,
+            "input_shape": shape_data,
+            "datatype": datatype_name,
+            "preview_image": preview_image,
+        }
+        self.current_state["model"] = model_name
+        self.current_state["model_name"] = templates.get("plan_name")
         self.model_plan = templates.get("plan")
-        output = self.get_validated_plan(self.model_plan, model_input_shape, output_shape=model_output_shape,
-                                         method='load')
-        output.update({'preview': preview})
+        output = self.get_validated_plan(
+            self.model_plan,
+            model_input_shape,
+            output_shape=model_output_shape,
+            method="load",
+        )
+        output.update({"preview": preview})
+        shutil.rmtree(model_files.get("path"))
         return output
+
+    # def get_custom_model(self):
+    #     model_name = kwargs.get('name')
+    #     is_overwrite = kwargs.get('overwrite')
+    #     write_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
+    #     files_for_zipping = os.listdir(self.dir_paths.modeling)
+    #     is_write = True
+    #     message = ''
+    #     if is_overwrite or not os.path.exists(write_model_path):
+    #         message = self._write_zip(write_model_path, files_for_zipping)
+    #         if message:
+    #             is_write = False
+    #     else:
+    #         if os.path.exists(write_model_path):
+    #             message = 'This model is exists'
+    #             is_write = False
+    #     return is_write, message
+    #
+    # def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
+    #     preview = {}
+    #     yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
+    #     with open(yaml_file) as f:
+    #         templates = yaml.full_load(f)
+    #     if input_shape:
+    #         model_input_shape = input_shape
+    #     else:
+    #         model_input_shape = templates.get("input_shape")
+    #     if output_shape:
+    #         model_output_shape = output_shape
+    #     else:
+    #         model_output_shape = templates.get("output_shape", None)
+    #     plan_name = templates.get('plan_name', 'No info')
+    #     datatype_name = templates.get('input_datatype', 'No info')
+    #     shape_data = templates.get("input_shape", '')
+    #     preview.update({
+    #         'name': plan_name,
+    #         'input_shape': shape_data,
+    #         'datatype': datatype_name,
+    #         'preview_image': 'some_image'
+    #     })
+    #
+    #     self.model_plan = templates.get("plan")
+    #     output = self.get_validated_plan(self.model_plan, model_input_shape, output_shape=model_output_shape,
+    #                                      method='load')
+    #     output.update({'preview': preview})
+    #     return output
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
@@ -1038,13 +1078,12 @@ class Exchange(StatesData, GuiExch):
         return data
 
     def get_layers_type_list(self):
-        print(self.layers_params)
         return self.layers_params
 
     def get_optimizers(self):
         return self.optimizers
 
-    def get_model_plan(self, plan=None, model_name=''):
+    def get_model_plan(self, plan=None, model_name=""):
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
@@ -1081,38 +1120,38 @@ class Exchange(StatesData, GuiExch):
         self._reset_out_data()
         training = kwargs
 
-        model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
-        self.nn.training_path = training.get('pathname', '')
+        model_file = tempfile.NamedTemporaryFile(
+            prefix="model_", suffix="tmp.h5", delete=False
+        )
+        self.nn.training_path = training.get("pathname", "")
 
-        with open(model_file.name, 'wb') as f:
+        with open(model_file.name, "wb") as f:
             f.write(base64.b64decode(model))
 
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_file.name)
         model_file.close()
 
-        output_optimizer_params = {'op_name': "", 'op_kwargs': {}}
+        output_optimizer_params = {"op_name": "", "op_kwargs": {}}
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
         self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
-        optimizer_params = training.get('optimizer', {})
-        output_optimizer_params['op_name'] = optimizer_params.get('name')
-        for key, val in optimizer_params.get('params', {}).items():
-            output_optimizer_params['op_kwargs'].update(val)
+        optimizer_params = training.get("optimizer", {})
+        output_optimizer_params["op_name"] = optimizer_params.get("name")
+        for key, val in optimizer_params.get("params", {}).items():
+            output_optimizer_params["op_kwargs"].update(val)
 
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
             epochs=self.epochs,
             batch_size=batch_size,
-            optimizer_params=output_optimizer_params
+            optimizer_params=output_optimizer_params,
         )
         try:
-            # training = Process(target=self.nn.terra_fit, name='TRAIN_PROCESS', args=(nn_model,))
             self.nn.terra_fit(nn_model)
-            # training.start()
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
@@ -1133,19 +1172,19 @@ class Exchange(StatesData, GuiExch):
         self.out_data["stop_flag"] = True
 
     def save_model(self, **kwargs):
-        model_name = kwargs.get('name')
-        is_overwrite = kwargs.get('overwrite')
-        write_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
+        model_name = kwargs.get("name")
+        is_overwrite = kwargs.get("overwrite")
+        write_model_path = os.path.join(self.gd_paths.modeling, f"{model_name}.model")
         files_for_zipping = os.listdir(self.dir_paths.modeling)
         is_write = True
-        message = ''
+        message = ""
         if is_overwrite or not os.path.exists(write_model_path):
             message = self._write_zip(write_model_path, files_for_zipping)
             if message:
                 is_write = False
         else:
             if os.path.exists(write_model_path):
-                message = 'This model is exists'
+                message = "This model is exists"
                 is_write = False
         return is_write, message
 

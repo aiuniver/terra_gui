@@ -91,7 +91,7 @@
                             block.find(".models-data > .models-list .loaded-list").html("");
                             block.find(".models-data > .model-arch > .wrapper").addClass("hidden");
                             for (let index in data) {
-                                block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index]}"><span>${data[index]}</span></li>`))
+                                block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index].name}" data-is_terra="${data[index].is_terra}"><span>${data[index].name}</span></li>`))
                             }
                             block.find(".models-data > .models-list .loaded-list > li > span").bind("click", (event) => {
                                 let item = $(event.currentTarget).parent();
@@ -119,7 +119,7 @@
                                             window.StatusBar.message(data.error, false);
                                         }
                                     },
-                                    {"model_file":item.data("name")}
+                                    {"model_file":item.data("name"),"is_terra":item.data("is_terra")}
                                 );
                             });
                         }
@@ -544,7 +544,13 @@
                     let _d3_svg = d3.select(svg.clone()[0]);
                     _d3_svg.attr("width", svg.width())
                         .attr("height", svg.height());
-                    let _svg = _d3_svg._groups[0][0];
+                    _d3_svg.selectAll("g.tools").remove();
+                    _d3_svg.selectAll("rect.pointer").remove();
+                    _d3_svg.selectAll("text").attr("font-size", "11px");
+                    let _svg_o = $(_d3_svg._groups[0][0]);
+                    _svg_o.find("circle[visibility=hidden]").remove();
+                    _svg_o.find("g, line, rect, circle").removeAttr("id").removeAttr("class").removeAttr("data-index").removeAttr("visibility")
+                    let _svg = _svg_o[0];
                     _svg.setAttribute("xlink", "http://www.w3.org/1999/xlink");
                     let _serializer = new XMLSerializer(),
                         _svg_string = _serializer.serializeToString(_svg);
@@ -574,7 +580,9 @@
                     .attr("id", `line_${sourceID}_${targetID}`)
                     .attr("class", "line")
                     .attr("x1", sourcePosition[0])
-                    .attr("y1", sourcePosition[1]);
+                    .attr("y1", sourcePosition[1])
+                    .attr("stroke", "#65B9F4")
+                    .attr("stroke-width", 2);
 
                 if (targetPosition) {
                     line.attr("x2", targetPosition[0])
@@ -616,7 +624,8 @@
 
             let _create_node = (index, layer) => {
                 let w = _d3graph._groups[0][0].width.baseVal.value,
-                    h = _d3graph._groups[0][0].height.baseVal.value;
+                    h = _d3graph._groups[0][0].height.baseVal.value,
+                    layer_color = {input:"#FFB054",middle:"#89D764",output:"#8E51F2"};
 
                 let node = _cnodes.append("g")
                     .attr("id", `node-${index}`)
@@ -627,18 +636,22 @@
                     .attr("class", "dot dot-target")
                     .attr("visibility", "hidden")
                     .attr("cx", 0)
-                    .attr("cy", -_NODE_HEIGHT/2-4);
+                    .attr("cy", -_NODE_HEIGHT/2-4)
+                    .attr("r", 2)
+                    .attr("fill", "#65B9F4");
 
                 node.append("circle")
                     .attr("class", "dot dot-source")
                     .attr("visibility", "hidden")
                     .attr("cx", 0)
-                    .attr("cy", _NODE_HEIGHT/2+4);
+                    .attr("cy", _NODE_HEIGHT/2+4)
+                    .attr("r", 2)
+                    .attr("fill", "#65B9F4");
 
                 let tools = node.append("g").attr("class", "tools"),
                     tools_rect = tools.append("rect").attr("class", "bg").attr("width", 92).attr("height", 28).attr("y", -_NODE_HEIGHT/2-1),
-                    rect = node.append("rect").attr("height", _NODE_HEIGHT),
-                    text = node.append("text").text(`${layer.config.name}: ${layer.config.type}`),
+                    rect = node.append("rect").attr("class", "node-bg").attr("height", _NODE_HEIGHT).attr("stroke-width", 2).attr("rx", 4).attr("ry", 4).attr("fill", layer_color[layer.config.location_type]).attr("stroke", layer_color[layer.config.location_type]),
+                    text = node.append("text").text(`${layer.config.name}: ${layer.config.type}`).attr("fill", "#17212B").attr("font-size", "12px"),
                     text_box = text._groups[0][0].getBBox(),
                     width = text_box.width + 20;
 
@@ -655,7 +668,9 @@
 
                 let rect_pointer = node.append("rect")
                     .attr("class", "pointer")
-                    .attr("height", _NODE_HEIGHT)
+                    .attr("height", _NODE_HEIGHT+2)
+                    .attr("rx", 4)
+                    .attr("ry", 4)
                     .call(d3.drag()
                         .on("drag", _node_dragged)
                         .on("end", _node_dragended)
@@ -669,7 +684,7 @@
 
                 text.attr("x", -text_box.width/2).attr("y", 12-text_box.height/2);
                 rect.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
-                rect_pointer.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
+                rect_pointer.attr("width", width+5).attr("x", -(text_box.width+20)/2-1).attr("y", -rect._groups[0][0].height.baseVal.value/2-1);
                 tools_rect.attr("x", (text_box.width+20)/2+3);
                 link_group.attr("transform", `translate(${(text_box.width+20)/2+13}, -9)`);
                 unlink_group.attr("transform", `translate(${(text_box.width+20)/2+41}, -9)`);
