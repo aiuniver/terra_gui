@@ -296,9 +296,35 @@
 
             _d3graph.call(zoom);
 
+            let _separate_to_multiline = (text, max_length=20) => {
+                let output = [],
+                    words = text.split(/\s/);
+                if (words.length) {
+                    while (words.length) {
+                        let line = "";
+                        while (line.length < max_length && words.length) {
+                            line += `${words.shift()} `;
+                        }
+                        output.push(line);
+                    }
+                }
+                return output;
+            }
+
             this.set_layer_error = (index, message) => {
-                _cnodes.select(`#node-${index}`).classed("error", true);
-                if (message) window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
+                let _errors_list = _separate_to_multiline(message);
+                if (!_errors_list.length) return;
+
+                let _node = _cnodes.select(`#node-${index}`);
+                _node.classed("error", true);
+                let _error_group = _node.append("g").attr("class", "errors"),
+                    _error_text = _error_group.append("text");
+                if (_errors_list.length) {
+                    _errors_list.forEach((item, index) => {
+                        _error_text.append("tspan").text(item).attr("x", 0).attr("y", index*16+18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
+                    });
+                }
+                // if (message) window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
             }
 
             this.load_layer = (class_name) => {
@@ -549,6 +575,7 @@
                     _d3_svg.attr("width", svg.width())
                         .attr("height", svg.height());
                     _d3_svg.selectAll("g.tools").remove();
+                    _d3_svg.selectAll("g.params").remove();
                     _d3_svg.selectAll("rect.pointer").remove();
                     _d3_svg.selectAll("text").attr("font-size", "11px");
                     let _svg_o = $(_d3_svg._groups[0][0]);
