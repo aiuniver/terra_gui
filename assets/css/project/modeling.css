@@ -374,6 +374,16 @@
 #canvas-nodes > .node.active > .params {
 	display:block;
 }
+#canvas-nodes > .node > .errors {
+	display:none;
+}
+.canvas-container.onlink .node > .errors {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .errors,
+#canvas-nodes > .node.active > .errors {
+	display:block;
+}
 #canvas-nodes > .node > .tools > .bg {
 	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
 	fill:rgba(43,82,120,.9);
@@ -390,6 +400,14 @@
 	rx:4;
 	ry:4;
 }
+#canvas-nodes > .node > .errors > .error-bg {
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
+	rx:4;
+	ry:4;
+	stroke-width:2;
+	stroke:#f00;
+}
 #canvas-nodes > .node.error > rect.node-bg {
 	stroke:#f00 !important;
 }
@@ -403,6 +421,9 @@
 }
 #canvas-nodes > .node > text {
 	font-family:"Open Sans", sans-serif;
+}
+#canvas-nodes > .node.error > text {
+	fill:#f00 !important;
 }
 #canvas-nodes > .node:hover > text,
 #canvas-nodes > .node.active > text,
