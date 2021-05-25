@@ -364,6 +364,16 @@
 #canvas-nodes > .node.active > .tools {
 	display:block;
 }
+#canvas-nodes > .node > .params {
+	display:none;
+}
+.canvas-container.onlink .node > .params {
+	display:none !important;
+}
+#canvas-nodes > .node:hover > .params,
+#canvas-nodes > .node.active > .params {
+	display:block;
+}
 #canvas-nodes > .node > .tools > .bg {
 	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
 	fill:rgba(43,82,120,.9);
@@ -373,6 +383,12 @@
 #canvas-nodes > .node > .tools > .btn {
 	fill:transparent;
 	cursor:pointer;
+}
+#canvas-nodes > .node > .params > rect {
+	filter:drop-shadow(0px 2px 5px rgba(0,0,0,.25));
+	fill:rgba(43,82,120,.9);
+	rx:4;
+	ry:4;
 }
 #canvas-nodes > .node.error > rect.node-bg {
 	stroke:#f00 !important;
