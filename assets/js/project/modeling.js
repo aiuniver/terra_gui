@@ -166,19 +166,16 @@
                     terra_board.model.classed("error", false);
                     terra_toolbar.btn.save_model.disabled = true;
                     terra_toolbar.btn.keras.disabled = true;
+                    terra_board.model.selectAll("g.errors").remove();
                     window.ExchangeRequest(
                         "get_change_validation",
                         (success, data) => {
                             this.btn.validation.disabled = false;
                             if (success) {
                                 window.StatusBar.clear();
-                                let is_error = false;
                                 for (let index in data.data.errors) {
                                     let error = data.data.errors[index];
-                                    if (error) {
-                                        terra_board.set_layer_error(index, is_error ? "" : JSON.stringify(error));
-                                        is_error = true;
-                                    }
+                                    terra_board.set_layer_error(index, error);
                                 }
                                 if (data.data.validated) {
                                     terra_toolbar.btn.save_model.disabled = false;
@@ -312,19 +309,24 @@
             }
 
             this.set_layer_error = (index, message) => {
-                let _errors_list = _separate_to_multiline(message);
+                let _node = _cnodes.select(`#node-${index}`),
+                    _errors_list = _separate_to_multiline(message);
+                _node.selectAll("g.errors").remove();
                 if (!_errors_list.length) return;
 
-                let _node = _cnodes.select(`#node-${index}`);
+                let _node_size = _node.select("rect.node-bg")._groups[0][0].getBBox();
                 _node.classed("error", true);
                 let _error_group = _node.append("g").attr("class", "errors"),
+                    _error_rect = _error_group.append("rect").attr("class", "error-bg").attr("height", _NODE_HEIGHT),
                     _error_text = _error_group.append("text");
                 if (_errors_list.length) {
                     _errors_list.forEach((item, index) => {
-                        _error_text.append("tspan").text(item).attr("x", 0).attr("y", index*16+18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
+                        _error_text.append("tspan").text(item).attr("x", 10).attr("y", index*16+18-_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
                     });
                 }
-                // if (message) window.StatusBar.message(`[${window.TerraProject.layers[index].config.name}: ${window.TerraProject.layers[index].config.type}] - ${message}`, false);
+                let _errors_box = _error_text._groups[0][0].getBBox();
+                _error_rect.attr("width", _errors_box.width+20).attr("height", _errors_box.height+14).attr("x", -(_errors_box.width+24)-_node_size.width/2).attr("y", -_NODE_HEIGHT/2);
+                _error_text.selectAll("tspan").attr("x", -(_errors_box.width+14)-_node_size.width/2);
             }
 
             this.load_layer = (class_name) => {
