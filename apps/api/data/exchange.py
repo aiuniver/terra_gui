@@ -29,7 +29,7 @@ class ExchangeData:
                 self.data = response.data
                 self.error = response.error
                 self.tb = response.tb
-                if name != "get_data":
+                if name not in ["get_data"]:
                     terra_exchange.call("autosave_project")
             except Exception as error:
                 self.tb = get_traceback_text(error.__traceback__)
@@ -89,3 +89,9 @@ class ExchangeData:
 
     def _execute_start_evaluate(self, **kwargs):
         return terra_exchange.call("start_evaluate", **kwargs)
+
+    def _execute_project_new(self, **kwargs):
+        return terra_exchange.call("project_new", **kwargs)
+
+    def _execute_project_save(self, **kwargs):
+        return terra_exchange.call("project_save", **kwargs)

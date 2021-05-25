@@ -627,3 +627,88 @@ footer > .state > .wrapper:before {
     transition:color .3s ease-in-out, background-color .3s ease-in-out;
 	user-select:none;
 }
+
+#modal-window-project-save form,
+#modal-window-project-new form {
+	padding:20px;
+}
+#modal-window-project-save form .field-inline.field-reverse > .checkout-switch {
+	margin-left:0;
+}
+#modal-window-project-save form > .inner,
+#modal-window-project-new form > .inner {
+	margin-bottom:0;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:flex-end;
+    -ms-flex-line-pack:end;
+    align-content:flex-end;
+    -webkit-box-align:end;
+    -moz-box-align:end;
+    -webkit-align-items:flex-end;
+    -ms-flex-align:end;
+    align-items:flex-end;
+}
+#modal-window-project-save form > .inner > *
+#modal-window-project-new form > .inner > * {
+	margin-bottom:0 !important;
+}
+#modal-window-project-new form > .inner > .field-form > label {
+	margin:0;
+}
+#modal-window-project-save form > .inner > .field-form:first-child {
+    -webkit-box-ordinal-group:1;
+    -moz-box-ordinal-group:1;
+    -webkit-order:0;
+    -ms-flex-order:0;
+    order:0;
+    -webkit-box-flex:1;
+    -moz-box-flex:1;
+    -webkit-flex:1 1 auto;
+    -ms-flex:1 1 auto;
+    flex:1 1 auto;
+    -webkit-align-self:auto;
+    -ms-flex-item-align:auto;
+    align-self:auto;
+}
+#modal-window-project-save form > .inner > .field-form {
+	margin-bottom:0 !important;
+}
+#modal-window-project-save form > .inner > .field-inline {
+	padding-left:20px;
+	margin-bottom:14px !important;
+}
+#modal-window-project-save form > .inner > .field-inline.field-reverse > label {
+	padding-right:0;
+}
+#modal-window-project-save form > .actions-form {
+	margin-top:20px;
+}
+#modal-window-project-new form > .actions-form {
+	margin:20px -2px 0 -2px;
+}
+#modal-window-project-new form > .actions-form > * {
+	display:inline-block;
+	width:50%;
+	margin:0;
+	padding:0 2px;
+	vertical-align:top;
+}

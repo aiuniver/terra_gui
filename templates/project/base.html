@@ -84,6 +84,42 @@
 {% endblock content %}
 
 {% block modal_window %}
+    <div id="modal-window-project-new" class="modal-window-container">
+        <div class="wrapper">
+            <form>
+                <div class="inner">
+                    <div class="field-form">
+                        <label>Вы действительно хотите создать новый проект? Все несохраненные данные пропадут.</label>
+                    </div>
+                </div>
+                <div class="actions-form">
+                    <div class="clear"><button>Да</button></div><div class="cancel"><button>Нет</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="modal-window-project-save" class="modal-window-container">
+        <div class="wrapper">
+            <form>
+                <div class="inner form-inline-label">
+                    <div class="field-form">
+                        <label for="field_form-project_save_name">Название проекта</label>
+                        <input type="text" id="field_form-project_save_name" name="name" />
+                    </div>
+                    <div class="field-form field-inline field-reverse">
+                        <label for="field_form-project_save_overwrite">Перезаписать</label>
+                        <div class="checkout-switch">
+                            <input type="checkbox" id="field_form-project_save_overwrite" name="overwrite" />
+                            <span class="switcher"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions-form">
+                    <div class="save"><button>Сохранить</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
     {% if request.terra_project == None %}
         <div id="modal-window-no-terra-project" class="modal-window-container">
             <div class="wrapper"></div>

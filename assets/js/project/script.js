@@ -4,6 +4,20 @@
 (($) => {
 
 
+    let ProjectNew = $("#modal-window-project-new").ModalWindow({
+        title:"Создать новый проект",
+        width:300,
+        height:190
+    });
+
+
+    let ProjectSave = $("#modal-window-project-save").ModalWindow({
+        title:"Сохранить проект",
+        width:400,
+        height:212
+    });
+
+
     let TerraProject = function(hash) {
 
         const DEFAULT_NAME = "NoName",
@@ -44,8 +58,18 @@
             return this.datasets[dataset_name] !== undefined;
         }
 
-        this.exec = (action) => {
-            console.log(action);
+        this.exec = {
+            project_new: () => {
+                ProjectNew.open();
+            },
+            project_save: () => {
+                ProjectSave.open((target) => {
+                    $("#field_form-project_save_name").val(window.TerraProject.name).focus();
+                });
+            },
+            project_load: () => {
+
+            }
         }
 
         Object.defineProperty(this, "error", {
@@ -283,7 +307,7 @@
             let all = $("header > .user > .item").not(item);
             all.removeClass("active");
             if (item.hasClass("project")) {
-                window.TerraProject.exec(item.data("type"));
+                window.TerraProject.exec[item.data("type")]();
             } else {
                 item.toggleClass("active");
             }
@@ -300,6 +324,44 @@
          */
         $(window).bind("beforeunload", (event) => {
             window.ExchangeRequest("autosave_project", null, null, true);
+        });
+
+        ProjectNew.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            window.ExchangeRequest(
+                "project_new",
+                (success, data) => {
+                    if (success) {
+                        window.location.href = window.TerraProject.path.datasets;
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+            )
+        });
+
+        ProjectNew.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            ProjectNew.close();
+        });
+
+        ProjectSave.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let data = $(event.currentTarget).serializeObject();
+            data.overwrite = data.overwrite !== undefined;
+            window.ExchangeRequest(
+                "project_save",
+                (success, data) => {
+                    if (success) {
+                        ProjectSave.close();
+                        window.TerraProject.name = data.data.name;
+                        window.StatusBar.message(window.Messages.get("PROJECT_SAVED"), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                data
+            );
         });
 
     });

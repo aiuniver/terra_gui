@@ -2,6 +2,7 @@ import base64
 import os
 import re
 import json
+import shutil
 
 import requests
 
@@ -332,3 +333,41 @@ class TerraExchange:
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)
+
+    def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
+        self.project.clear()
+        self.__project = TerraExchangeProject()
+
+        response = self.call("get_state")
+
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+
+        self.project = data
+        return response
+
+    def _call_project_save(
+        self, name: str, overwrite: bool = False
+    ) -> TerraExchangeResponse:
+        if not name:
+            return TerraExchangeResponse(
+                success=False, error="Введите название проекта"
+            )
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
+        if not name_match:
+            return TerraExchangeResponse(
+                success=False,
+                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
+            )
+        fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
+        if os.path.isfile(fullpath) and not overwrite:
+            return TerraExchangeResponse(
+                success=False,
+                error="Проект с таким названием уже существует",
+            )
+        filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
+        shutil.move(filepath, fullpath)
+        return TerraExchangeResponse(data={"name": name})
