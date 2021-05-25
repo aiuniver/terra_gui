@@ -2,6 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 
 from apps.plugins.terra import terra_exchange
+from apps.plugins.terra.utils import get_traceback_text
 
 
 @dataclass
@@ -10,12 +11,14 @@ class ExchangeData:
     stop_flag: bool
     data: dict
     error: str
+    tb: list
 
     def __init__(self, name: str, data: [Any]):
         self.success = True
         self.stop_flag = True
         self.data = {}
         self.error = ""
+        self.tb = []
 
         method = getattr(self, f"_execute_{name}", None)
         if method:
@@ -25,9 +28,11 @@ class ExchangeData:
                 self.stop_flag = response.stop_flag
                 self.data = response.data
                 self.error = response.error
+                self.tb = response.tb
                 if name != "get_data":
                     terra_exchange.call("autosave_project")
             except Exception as error:
+                self.tb = get_traceback_text(error.__traceback__)
                 self.success = False
                 self.error = f"[{error.__class__.__name__}] {error}"
         else:

@@ -37,3 +37,10 @@ def autocrop_image_square(filepath: str, border: int = 0, min_size: int = 300):
 
     # Done!
     cropped_image.save(filepath)
+
+
+def get_traceback_text(tb) -> list:
+    output = [str(tb.tb_frame.f_code)]
+    if tb.tb_next:
+        output += get_traceback_text(tb.tb_next)
+    return output
