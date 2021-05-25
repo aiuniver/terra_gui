@@ -1,3 +1,4 @@
+from threading import Thread
 from typing import Tuple
 import numpy as np
 import os
@@ -7,7 +8,7 @@ from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
-__version__ = 0.3
+__version__ = 0.04
 
 
 class GUINN:
@@ -89,7 +90,6 @@ class GUINN:
         pass
 
     def set_custom_metrics(self):
-        # print('___nn___NN___set_custom_metrics___')
         for i_key in self.metrics.keys():
             for idx, metric in enumerate(self.metrics[i_key]):
                 if metric in self.custom_losses_dict.keys():
@@ -123,7 +123,8 @@ class GUINN:
                         optimizer_params: dict = None) -> None:
         self.output_params = output_params
         self.chp_indicator = clbck_chp['indicator'].value  # 'train' или 'val'
-        self.chp_monitors = clbck_chp['monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
+        self.chp_monitors = clbck_chp[
+            'monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
         self.chp_mode = clbck_chp['mode'].value  # 'min' или 'max'
         self.chp_save_best = clbck_chp['save_best']  # bool
         self.chp_save_weights = clbck_chp['save_weights']  # bool
@@ -165,10 +166,10 @@ class GUINN:
             v_shape.append([i_key, self.DTS.X[i_key]['data'][1].shape])
             t_shape.append([i_key, self.DTS.X[i_key]['data'][2].shape])
 
-        msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n'\
-        f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
-        f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
-        f'loss = {self.loss}, metrics = {self.metrics} \n'
+        msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n' \
+              f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
+              f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
+              f'loss = {self.loss}, metrics = {self.metrics} \n'
 
         # TODO: change to print_2status_bar then remove debug_mode
         self.Exch.show_text_data(msg)
@@ -188,10 +189,10 @@ class GUINN:
             )
             self.model.save(file_path_model)
             self.Exch.print_2status_bar(
-                ("Info", f"Model is saved as {file_path_model}")
+                ("Info", f"Модель сохранена как: {file_path_model}")
             )
         else:
-            self.Exch.print_error(("Error", "Cannot save. The model is not trained"))
+            self.Exch.print_error(("Ошибка", "Сохранение не возможно. Модель не обучена."))
 
         pass
 
@@ -207,10 +208,10 @@ class GUINN:
             model_weights_name = \
                 f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
             file_path_weights: str = os.path.join(self.training_path, f'{model_weights_name}.h5')
-            self.model.save_weights(file_path_weights)
+            self.model.save_weights(filepath=file_path_weights)
             self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
         else:
-            self.Exch.print_error(('Error', 'Cannot save. The model is not trained'))
+            self.Exch.print_error(("Ошибка", "Сохранение не возможно. Модель не обучена."))
 
         pass
 
@@ -221,7 +222,7 @@ class GUINN:
         Returns:
             None
         """
-
+        self.Exch.print_2status_bar(('Поготовка датасета', '...'))
         for input_key in self.DTS.X.keys():
 
             self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
@@ -237,7 +238,7 @@ class GUINN:
                 self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
             if self.DTS.Y[output_key]['data'][2] is not None:
                 self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
-
+        self.Exch.print_2status_bar(('Поготовка датасета', 'выполнена'))
         pass
 
     def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
@@ -256,12 +257,14 @@ class GUINN:
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
         self.set_custom_metrics()
+        self.Exch.print_2status_bar(('Компиляция модели', '...'))
         self.model.compile(loss=self.loss,
                            optimizer=self.optimizer,
                            metrics=self.metrics
                            )
+        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
         # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
-
+        self.Exch.print_2status_bar(('Добавление колбэков', '...'))
         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
                                  batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
@@ -271,23 +274,24 @@ class GUINN:
             filepath=os.path.join(self.training_path, f'{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
             monitor=self.chp_monitor, mode=self.chp_mode))
-        #
-        # if self.debug_verbose > 1:
-        #     print("self.callbacks", self.callbacks)
-
-        self.show_training_params()
+        self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        # self.show_training_params()
         if self.x_Val['input_1'] is not None:
-
-            self.history = self.model.fit(
-                self.x_Train,
-                self.y_Train,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle,
-                validation_data=(self.x_Val, self.y_Val),
-                epochs=self.epochs,
-                verbose=verbose,
-                callbacks=self.callbacks
-            )
+            training = Thread(target=self.tr_thread)
+            training.start()
+            training.join()
+            del training
+            # self.history = self.model.fit(
+            #     self.x_Train,
+            #     self.y_Train,
+            #     batch_size=self.batch_size,
+            #     shuffle=self.shuffle,
+            #     validation_data=(self.x_Val, self.y_Val),
+            #     epochs=self.epochs,
+            #     verbose=verbose,
+            #     callbacks=self.callbacks
+            # )
         else:
             self.history = self.model.fit(
                 self.x_Train,
@@ -309,10 +313,22 @@ class GUINN:
         try:
             self.save_nnmodel()
         except RuntimeError:
-            self.Exch.print_2status_bar(('Warning', 'Save model failed'))
+            self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
         self.save_model_weights()
 
         pass
+
+    def tr_thread(self, verbose: int = 0):
+        self.history = self.model.fit(
+            self.x_Train,
+            self.y_Train,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            validation_data=(self.x_Val, self.y_Val),
+            epochs=self.epochs,
+            verbose=verbose,
+            callbacks=self.callbacks
+        )
 
     def nn_cleaner(self) -> None:
         keras.backend.clear_session()
@@ -325,7 +341,7 @@ class GUINN:
     @staticmethod
     def _search_best_epoch_data(
             history, monitor="accuracy", monitor2="loss"
-            ) -> Tuple[dict, int, int]:
+    ) -> Tuple[dict, int, int]:
         """
         Searching in history for best epoch with metrics from 'monitor' kwargs
 
