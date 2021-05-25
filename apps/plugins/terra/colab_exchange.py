@@ -4,10 +4,8 @@ import os
 import re
 import tempfile
 import zipfile
-import shutil
 
 import dill as dill
-import yaml
 from IPython import get_ipython
 from django.conf import settings
 from tensorflow.keras.models import load_model
@@ -15,8 +13,6 @@ from tensorflow.keras.models import load_model
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
-
-from .utils import unpack_model
 from .layers_dataclasses import LayersDef, GUILayersDef
 from .data import (
     LayerLocation,
@@ -555,8 +551,6 @@ class Exchange(StatesData, GuiExch):
             data: formatting recieved data from terra, Any
             stop_flag: flag to stop JS monitor
         """
-        if key_name == 'images':
-            print(data)
         if key_name == "plots":
             self.out_data["plots"] = self._reformatting_graphics_data(
                 mode="lines", data=data
@@ -684,7 +678,6 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        self._reset_out_data()
         if source == "custom":
             self.dts = self._read_trds(dataset_name)
         else:
@@ -824,6 +817,7 @@ class Exchange(StatesData, GuiExch):
 
 
     def prepare_dataset(self, dataset_name: str, source: str = ""):
+        self._reset_out_data()
         self.process_flag = "dataset"
         return self._prepare_dataset(dataset_name=dataset_name, source=source)
 
@@ -966,94 +960,6 @@ class Exchange(StatesData, GuiExch):
         for arch_files in files_for_unzipping:
             output.append(arch_files[:-6])
         return output
-
-    def get_model_from_list(self, model_name, input_shape, output_shape=None):
-        model_files = unpack_model(
-            os.path.join(self.gd_paths.modeling, f"{model_name}.model")
-        )
-
-        with open(model_files.get("preview"), "rb") as preview_ref:
-            preview_image = base64.b64encode(preview_ref.read())
-
-        yaml_file = model_files.get("plan")
-        with open(yaml_file) as f:
-            templates = yaml.full_load(f)
-
-        if input_shape:
-            model_input_shape = input_shape
-        else:
-            model_input_shape = templates.get("input_shape")
-        if output_shape:
-            model_output_shape = output_shape
-        else:
-            model_output_shape = templates.get("output_shape", None)
-        plan_name = templates.get("plan_name", "No info")
-        datatype_name = templates.get("input_datatype", "No info")
-        shape_data = templates.get("input_shape", "")
-        preview = {
-            "name": plan_name,
-            "input_shape": shape_data,
-            "datatype": datatype_name,
-            "preview_image": preview_image,
-        }
-        self.current_state["model"] = model_name
-        self.current_state["model_name"] = templates.get("plan_name")
-        self.model_plan = templates.get("plan")
-        output = self.get_validated_plan(
-            self.model_plan,
-            model_input_shape,
-            output_shape=model_output_shape,
-            method="load",
-        )
-        output.update({"preview": preview})
-        shutil.rmtree(model_files.get("path"))
-        return output
-
-    # def get_custom_model(self):
-    #     model_name = kwargs.get('name')
-    #     is_overwrite = kwargs.get('overwrite')
-    #     write_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
-    #     files_for_zipping = os.listdir(self.dir_paths.modeling)
-    #     is_write = True
-    #     message = ''
-    #     if is_overwrite or not os.path.exists(write_model_path):
-    #         message = self._write_zip(write_model_path, files_for_zipping)
-    #         if message:
-    #             is_write = False
-    #     else:
-    #         if os.path.exists(write_model_path):
-    #             message = 'This model is exists'
-    #             is_write = False
-    #     return is_write, message
-    #
-    # def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
-    #     preview = {}
-    #     yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
-    #     with open(yaml_file) as f:
-    #         templates = yaml.full_load(f)
-    #     if input_shape:
-    #         model_input_shape = input_shape
-    #     else:
-    #         model_input_shape = templates.get("input_shape")
-    #     if output_shape:
-    #         model_output_shape = output_shape
-    #     else:
-    #         model_output_shape = templates.get("output_shape", None)
-    #     plan_name = templates.get('plan_name', 'No info')
-    #     datatype_name = templates.get('input_datatype', 'No info')
-    #     shape_data = templates.get("input_shape", '')
-    #     preview.update({
-    #         'name': plan_name,
-    #         'input_shape': shape_data,
-    #         'datatype': datatype_name,
-    #         'preview_image': 'some_image'
-    #     })
-    #
-    #     self.model_plan = templates.get("plan")
-    #     output = self.get_validated_plan(self.model_plan, model_input_shape, output_shape=model_output_shape,
-    #                                      method='load')
-    #     output.update({'preview': preview})
-    #     return output
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
