@@ -104,7 +104,7 @@ header > .name-experiment {
 
 /* user */
 header > .user > * {
-    margin:0 20px 0 0;
+    margin:0 10px 0 0;
 }
 header > .user > :last-child {
     margin-right:10px;
@@ -121,7 +121,9 @@ header > .user > .item > .icon > i {
     background-size:contain;
     cursor:pointer;
     user-select:none;
-    border-radius:50%;
+}
+header > .user > .item.project > .icon > i {
+    background-size:24px 24px;
 }
 header > .user > .item > .menu {
     display:none;

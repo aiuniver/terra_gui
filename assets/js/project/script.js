@@ -44,6 +44,10 @@
             return this.datasets[dataset_name] !== undefined;
         }
 
+        this.exec = (action) => {
+            console.log(action);
+        }
+
         Object.defineProperty(this, "error", {
             set: (value) => {
                 _error = value;
@@ -278,7 +282,11 @@
             let item = $(event.currentTarget).closest(".item");
             let all = $("header > .user > .item").not(item);
             all.removeClass("active");
-            item.toggleClass("active");
+            if (item.hasClass("project")) {
+                window.TerraProject.exec(item.data("type"));
+            } else {
+                item.toggleClass("active");
+            }
         });
         $(document).bind("click", (event) => {
             let item = $(event.target);

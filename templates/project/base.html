@@ -34,24 +34,14 @@
         Название задачи / Название эксперимента
     </div>
     <div class="user flexbox-right-nowrap">
-        <div class="item project">
-            <div class="icon"><i></i></div>
-            <div class="menu">
-                <div class="group">
-                    <div class="title">Проект</div>
-                    <ul>
-                        <li><span>Создать новый проект</span></li>
-                        <li><span>Загрузить проект</span></li>
-                    </ul>
-                </div>
-                <div class="group">
-                    <div class="title">Задача</div>
-                    <ul>
-                        <li><span>Загрузить лучший эксперимент</span></li>
-                        <li><span>Загрузить последний эксперимент</span></li>
-                    </ul>
-                </div>
-            </div>
+        <div class="item project project-new" data-type="project_new">
+            <div class="icon" title="Создать новый проект"><i style="background-image:url('{% static 'imgs/project-new.svg' %}')"></i></div>
+        </div>
+        <div class="item project project-save" data-type="project_save">
+            <div class="icon" title="Сохранить проект"><i style="background-image:url('{% static 'imgs/project-save.svg' %}')"></i></div>
+        </div>
+        <div class="item project project-load" data-type="project_load">
+            <div class="icon" data-type="project_new" title="Загрузить проект"><i style="background-image:url('{% static 'imgs/project-load.svg' %}')"></i></div>
         </div>
         <div class="item profile">
             <div class="icon"><i style="background-image:url('{% static 'imgs/user.png' %}')"></i></div>
