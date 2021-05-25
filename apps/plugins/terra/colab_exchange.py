@@ -412,7 +412,6 @@ class Exchange(StatesData, GuiExch):
         self.optimizers = self._set_optimizers()
         self.dir_paths = self.paths_obj.dir
         self.gd_paths = self.paths_obj.gd
-        print(self.dir_paths, self.gd_paths)
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -812,9 +811,27 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
+    def load_dataset(self, **kwargs):
+        self._reset_out_data()
+        dataset_name = kwargs.get('dataset_name', '')
+        dataset_link = kwargs.get('dataset_link', '')
+        inputs_count = kwargs.get('inputs_count', None)
+        outputs_count = kwargs.get('outputs_count', None)
+        if dataset_name:
+            self.dts.load_data(name=dataset_name, link=dataset_link)
+            self._set_dts_name(self.dts.name)
+            return self.dts.get_parameters_dict()
+        else:
+            self.out_data["errors"] = 'Не указано наименование датасета'
+        self.out_data["stop_flag"] = True
+
+
     def prepare_dataset(self, dataset_name: str, source: str = ""):
         self.process_flag = "dataset"
         return self._prepare_dataset(dataset_name=dataset_name, source=source)
+
+    def get_default_datasets_params(self):
+        return self.dts.get_parameters_dict()
 
     def set_callbacks_switches(self, task: str, switches: dict):
         for switch, value in switches.items():
@@ -956,7 +973,7 @@ class Exchange(StatesData, GuiExch):
     def get_custom_model(self, model_name, input_shape, output_shape=None):
         load_model_path = os.path.join(self.gd_paths.modeling, f'{model_name}.model')
         if os.path.exists(load_model_path):
-            files_for_zipping = os.listdir(self.dir_paths.modeling)
+            files_for_unzipping = os.listdir(self.gd_paths.modeling)
         is_write = True
         message = ''
         # if is_overwrite or not os.path.exists(write_model_path):
@@ -1021,6 +1038,7 @@ class Exchange(StatesData, GuiExch):
         return data
 
     def get_layers_type_list(self):
+        print(self.layers_params)
         return self.layers_params
 
     def get_optimizers(self):
@@ -1033,7 +1051,6 @@ class Exchange(StatesData, GuiExch):
         model_plan.output_shape = {}
         model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
-        print(model_plan.plan)
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
