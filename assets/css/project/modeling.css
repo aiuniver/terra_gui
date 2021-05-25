@@ -308,7 +308,7 @@
     -ms-flex-align:end;
     align-items:flex-end;
 }
-#modal-window-save-model form > .inner > *
+#modal-window-save-model form > .inner > *,
 #modal-window-clear-model form > .inner > * {
 	margin-bottom:0 !important;
 }

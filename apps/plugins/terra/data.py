@@ -1,5 +1,7 @@
 import os
 import json
+import shutil
+
 import yaml
 import cairosvg
 import pydantic
@@ -325,7 +327,10 @@ class TerraExchangeProject(pydantic.BaseModel):
         super().__init__(**kwargs)
 
         if not os.path.isfile(self.dir.config):
-            open(self.dir.config, "a").close()
+            os.makedirs(settings.TERRA_AI_PROJECT_PATH, exist_ok=True)
+            with open(self.dir.config, "w") as config_ref:
+                config_ref.write("{}")
+                config_ref.close()
 
         with open(self.dir.config, "r") as file:
             try:
@@ -351,6 +356,9 @@ class TerraExchangeProject(pydantic.BaseModel):
     def autosave(self):
         with open(self.dir.config, "w") as file:
             json.dump(self.dict(), file)
+
+    def clear(self):
+        shutil.rmtree(settings.TERRA_AI_PROJECT_PATH)
 
 
 @dataclass

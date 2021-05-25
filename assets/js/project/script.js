@@ -4,6 +4,28 @@
 (($) => {
 
 
+    let ProjectNew = $("#modal-window-project-new").ModalWindow({
+        title:"Создать новый проект",
+        width:300,
+        height:190
+    });
+
+
+    let ProjectSave = $("#modal-window-project-save").ModalWindow({
+        title:"Сохранить проект",
+        width:400,
+        height:212
+    });
+
+
+    let ProjectLoad = $("#modal-window-project-load").ModalWindow({
+        title:"Загрузить проект",
+        width:400,
+        height:440,
+        request:["project_load"]
+    });
+
+
     let TerraProject = function(hash) {
 
         const DEFAULT_NAME = "NoName",
@@ -42,6 +64,44 @@
 
         this.dataset_exists = (dataset_name) => {
             return this.datasets[dataset_name] !== undefined;
+        }
+
+        this.exec = {
+            project_new: () => {
+                ProjectNew.open();
+            },
+            project_save: () => {
+                ProjectSave.open((target) => {
+                    $("#field_form-project_save_name").val(window.TerraProject.name).focus();
+                });
+            },
+            project_load: () => {
+                window.StatusBar.clear();
+                ProjectLoad.open(
+                    (block, data) => {
+                        block.find(".models-data > .models-list .loaded-list").html("");
+                        for (let index in data) {
+                            block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index]}"><span>${data[index]}</span></li>`));
+                        }
+                        block.find(".models-data > .models-list .loaded-list > li > span").bind("click", (event) => {
+                            let item = $(event.currentTarget).parent();
+                            item.parent().children("li").removeClass("active");
+                            item.addClass("active");
+                            window.ExchangeRequest(
+                                "get_project",
+                                (success, data) => {
+                                    if (success) {
+                                        window.location.reload();
+                                    } else {
+                                        window.StatusBar.message(data.error, false);
+                                    }
+                                },
+                                {"name":item.data("name")}
+                            );
+                        });
+                    }
+                );
+            }
         }
 
         Object.defineProperty(this, "error", {
@@ -278,7 +338,11 @@
             let item = $(event.currentTarget).closest(".item");
             let all = $("header > .user > .item").not(item);
             all.removeClass("active");
-            item.toggleClass("active");
+            if (item.hasClass("project")) {
+                window.TerraProject.exec[item.data("type")]();
+            } else {
+                item.toggleClass("active");
+            }
         });
         $(document).bind("click", (event) => {
             let item = $(event.target);
@@ -292,6 +356,44 @@
          */
         $(window).bind("beforeunload", (event) => {
             window.ExchangeRequest("autosave_project", null, null, true);
+        });
+
+        ProjectNew.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            window.ExchangeRequest(
+                "project_new",
+                (success, data) => {
+                    if (success) {
+                        window.location.href = window.TerraProject.path.datasets;
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+            )
+        });
+
+        ProjectNew.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            ProjectNew.close();
+        });
+
+        ProjectSave.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let data = $(event.currentTarget).serializeObject();
+            data.overwrite = data.overwrite !== undefined;
+            window.ExchangeRequest(
+                "project_save",
+                (success, data) => {
+                    if (success) {
+                        ProjectSave.close();
+                        window.TerraProject.name = data.data.name;
+                        window.StatusBar.message(window.Messages.get("PROJECT_SAVED"), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                data
+            );
         });
 
     });
