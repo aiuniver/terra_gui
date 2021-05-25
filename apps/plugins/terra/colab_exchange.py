@@ -4,8 +4,12 @@ import os
 import re
 import tempfile
 import zipfile
+import shutil
+from threading import Thread
+from multiprocessing import Process
 
 import dill as dill
+import yaml
 from IPython import get_ipython
 from django.conf import settings
 from tensorflow.keras.models import load_model
@@ -13,6 +17,8 @@ from tensorflow.keras.models import load_model
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
+
+from .utils import unpack_model
 from .layers_dataclasses import LayersDef, GUILayersDef
 from .data import (
     LayerLocation,
@@ -396,7 +402,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets_path = self.paths_obj.gd.datasets
         self.dts_name = None
         self.task_name = ""
-        self.mounted_drive_path = ''
+        self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -410,6 +416,7 @@ class Exchange(StatesData, GuiExch):
         self.optimizers = self._set_optimizers()
         self.dir_paths = self.paths_obj.dir
         self.gd_paths = self.paths_obj.gd
+        print(self.dir_paths, self.gd_paths)
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -551,6 +558,8 @@ class Exchange(StatesData, GuiExch):
             data: formatting recieved data from terra, Any
             stop_flag: flag to stop JS monitor
         """
+        if key_name == "images":
+            print(data)
         if key_name == "plots":
             self.out_data["plots"] = self._reformatting_graphics_data(
                 mode="lines", data=data
@@ -567,6 +576,11 @@ class Exchange(StatesData, GuiExch):
             self.out_data["prints"].append(data)
         elif key_name == "texts":
             self.out_data["texts"].append(data)
+        # elif key_name == 'images':
+        #     output = []
+        #     for image_data in data:
+        #         output.append({'image': image_data[0], 'title': image_data[1]})
+        #     self.out_data['images'] = output
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -678,6 +692,7 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
+        self._reset_out_data()
         if source == "custom":
             self.dts = self._read_trds(dataset_name)
         else:
@@ -765,20 +780,20 @@ class Exchange(StatesData, GuiExch):
 
     def _write_zip(self, write_path, file_list):
         try:
-            zip_model = zipfile.ZipFile(write_path, 'w')
+            zip_model = zipfile.ZipFile(write_path, "w")
             for any_file in file_list:
                 file_path = os.path.join(self.dir_paths.modeling, any_file)
                 zip_model.write(file_path)
-            return ''
+            return ""
         except Exception as e:
             return e.__str__()
 
     def _load_unzip(self, load_path, file_name):
         try:
-            zip_model = zipfile.ZipFile(load_path, 'r')
+            zip_model = zipfile.ZipFile(load_path, "r")
             file_path = os.path.join(self.dir_paths.modeling, file_name)
             zip_model.write(file_path)
-            return ''
+            return ""
         except Exception as e:
             return e.__str__()
 
@@ -801,28 +816,9 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
-    def load_dataset(self, **kwargs):
-        self._reset_out_data()
-        dataset_name = kwargs.get('dataset_name', '')
-        dataset_link = kwargs.get('dataset_link', '')
-        inputs_count = kwargs.get('inputs_count', None)
-        outputs_count = kwargs.get('outputs_count', None)
-        if dataset_name:
-            self.dts.load_data(name=dataset_name, link=dataset_link)
-            self._set_dts_name(self.dts.name)
-            return self.dts.get_parameters_dict()
-        else:
-            self.out_data["errors"] = 'Не указано наименование датасета'
-        self.out_data["stop_flag"] = True
-
-
     def prepare_dataset(self, dataset_name: str, source: str = ""):
-        self._reset_out_data()
         self.process_flag = "dataset"
         return self._prepare_dataset(dataset_name=dataset_name, source=source)
-
-    def get_default_datasets_params(self):
-        return self.dts.get_parameters_dict()
 
     def set_callbacks_switches(self, task: str, switches: dict):
         for switch, value in switches.items():
@@ -961,6 +957,57 @@ class Exchange(StatesData, GuiExch):
             output.append(arch_files[:-6])
         return output
 
+    def get_custom_model(self, model_name, input_shape, output_shape=None):
+        load_model_path = os.path.join(self.gd_paths.modeling, f"{model_name}.model")
+        if os.path.exists(load_model_path):
+            files_for_zipping = os.listdir(self.dir_paths.modeling)
+        is_write = True
+        message = ""
+        # if is_overwrite or not os.path.exists(write_model_path):
+        #     message = self._write_zip(write_model_path, files_for_zipping)
+        #     if message:
+        #         is_write = False
+        # else:
+        #     if os.path.exists(write_model_path):
+        #         message = 'This model is exists'
+        #         is_write = False
+        return is_write, message
+
+    def _prepare_custom_model(self, model_name, input_shape, output_shape=None):
+        preview = {}
+        yaml_file = os.path.join(self.models_plans_path, f"{model_name}")
+        with open(yaml_file) as f:
+            templates = yaml.full_load(f)
+        if input_shape:
+            model_input_shape = input_shape
+        else:
+            model_input_shape = templates.get("input_shape")
+        if output_shape:
+            model_output_shape = output_shape
+        else:
+            model_output_shape = templates.get("output_shape", None)
+        plan_name = templates.get("plan_name", "No info")
+        datatype_name = templates.get("input_datatype", "No info")
+        shape_data = templates.get("input_shape", "")
+        preview.update(
+            {
+                "name": plan_name,
+                "input_shape": shape_data,
+                "datatype": datatype_name,
+                "preview_image": "some_image",
+            }
+        )
+
+        self.model_plan = templates.get("plan")
+        output = self.get_validated_plan(
+            self.model_plan,
+            model_input_shape,
+            output_shape=model_output_shape,
+            method="load",
+        )
+        output.update({"preview": preview})
+        return output
+
     def get_dataset_input_shape(self):
         return self.dts.input_shape
 
@@ -996,6 +1043,7 @@ class Exchange(StatesData, GuiExch):
         model_plan.output_shape = {}
         model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
+        print(model_plan.plan)
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
@@ -1057,7 +1105,9 @@ class Exchange(StatesData, GuiExch):
             optimizer_params=output_optimizer_params,
         )
         try:
+            # training = Process(target=self.nn.terra_fit, name='TRAIN_PROCESS', args=(nn_model,))
             self.nn.terra_fit(nn_model)
+            # training.start()
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
@@ -1093,9 +1143,6 @@ class Exchange(StatesData, GuiExch):
                 message = "This model is exists"
                 is_write = False
         return is_write, message
-
-
-
 
     #
     # def start_evaluate(self):
