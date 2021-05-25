@@ -1,6 +1,11 @@
+import base64
 import copy
 import os
+import tempfile
+
 import tensorflow as tf
+
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
@@ -9,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.03
+__version__ = 0.04
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -70,6 +75,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.epochs = epochs
         self.batch = 0
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+        self.msg_epoch = ""
         self.y_pred = []
         self.epoch = 0
         self.history = {}
@@ -245,11 +251,11 @@ class CustomCallback(keras.callbacks.Callback):
                         callback_kwargs["show_worst"] = True
                     else:
                         callback_kwargs["show_worst"] = False
-                    # elif option_name == 'show_best_images':
-                    #     if option_value:
-                    #         self.callback_kwargs['show_best'] = True
-                    #     else:
-                    #         self.callback_kwargs['show_best'] = False
+                elif option_name == 'show_best_images':
+                    if option_value:
+                        callback_kwargs['show_best'] = True
+                    else:
+                        callback_kwargs['show_best'] = False
 
         if task_type == 'regression':
             for option_name, option_value in clbck_options.items():
@@ -305,24 +311,29 @@ class CustomCallback(keras.callbacks.Callback):
             _time_per_unit = (now - start)
         return _time_per_unit
 
-    def update_progress(self, target, current, start_time, finalize=None):
+    def update_progress(self, target, current, start_time, finalize=False):
         """
         Updates the progress bar.
         """
-        _now_time = time.time()
+        if finalize:
+            _now_time = time.time()
+            eta = _now_time - start_time
+        else:
+            _now_time = time.time()
 
-        time_per_unit = self._estimate_step(current, start_time, _now_time)
+            time_per_unit = self._estimate_step(current, start_time, _now_time)
 
-        eta = time_per_unit * (target - current)
+            eta = time_per_unit * (target - current)
+
         if eta > 3600:
-            eta_format = '%d:%02d:%02d' % (eta // 3600,
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
                                            (eta % 3600) // 60, eta % 60)
         elif eta > 60:
-            eta_format = '%d:%02d' % (eta // 60, eta % 60)
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
         else:
-            eta_format = '%ds' % eta
+            eta_format = '%d сек' % eta
 
-        info = '- ETA: %s' % eta_format
+        info = ' %s' % eta_format
         return info
 
     def on_train_begin(self, logs=None):
@@ -337,24 +348,27 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'эпоха: {self.epoch+1}, модель сохранена'
+            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
             self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
 
     def on_train_batch_end(self, batch, logs=None):
-        self.batch += 1
-        self._now_time = time.time()
-        msg_batch = f'Батч {batch+1}/{self.num_batches}'
+        msg_batch = f'Батч {batch}/{self.num_batches}'
         msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
                     f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
-        msg_progress = f'Время до окончания обучения:' \
-                       f'{self.update_progress(self.num_batches * self.epochs, self.batch, self._start_time)}, '
-        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress + msg_epoch + msg_batch))
+        msg_progress_end = f'Расчетное время окончания:' \
+                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time)}, '
+        msg_progress_start = f'Время выполнения:' \
+                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time, finalize=True)}, '
+        self.batch += 1
+        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
+                                     msg_progress_end + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
+        self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
         if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
@@ -368,6 +382,7 @@ class CustomCallback(keras.callbacks.Callback):
                     y_pred=self.y_pred[i],
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
                 )
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
@@ -378,6 +393,7 @@ class CustomCallback(keras.callbacks.Callback):
                     y_pred=self.y_pred,
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
                 )
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
@@ -387,6 +403,9 @@ class CustomCallback(keras.callbacks.Callback):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
+        self.Exch.print_2status_bar(
+            ('Затрачено времени на обучение: ',
+             self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)))
 
 
 class ClassificationCallback:
@@ -557,7 +576,8 @@ class ClassificationCallback:
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
             data.append((image, title))
-        self.Exch.show_image_data(data)
+        out_data = {'images': image_to_base64(data)}
+        self.Exch.show_image_data(out_data)
 
     # # Распознаём тестовую выборку и выводим результаты
     # def recognize_classes(self):
@@ -687,6 +707,7 @@ class ClassificationCallback:
             y_pred: list = None,
             y_true: dict = None,
             loss: str = None,
+            msg_epoch: str = None,
     ):
         """
         Returns:
@@ -760,7 +781,7 @@ class ClassificationCallback:
                 self.plot_result(output_key)
 
         self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
         # return
 
@@ -913,7 +934,7 @@ class SegmentationCallback:
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
             )
-        colored_mask = np.array(colored_mask)
+        colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
     def _dice_coef(self, smooth=1.0):
@@ -972,7 +993,11 @@ class SegmentationCallback:
             title = "Predicted mask"
             pred_mask_data.append((image, title))
 
-        data = image_data + true_mask_data + pred_mask_data
+        data = {
+            'images': image_to_base64(image_data),
+            'ground_truth_masks': image_to_base64(true_mask_data),
+            'predicted_mask': image_to_base64(pred_mask_data)
+        }
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
@@ -1046,6 +1071,7 @@ class SegmentationCallback:
             y_pred: list = None,
             y_true: dict = None,
             loss: str = None,
+            msg_epoch: str = None,
     ):
         """
         Returns:
@@ -1112,7 +1138,7 @@ class SegmentationCallback:
                 self.plot_result(output_key=output_key)
 
         self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1274,6 +1300,7 @@ class TimeseriesCallback:
             y_pred: list = None,
             y_true: dict = None,
             loss: str = None,
+            msg_epoch: str = None,
     ):
         self.epoch = epoch
         self.y_pred = y_pred
@@ -1316,7 +1343,7 @@ class TimeseriesCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1441,7 +1468,8 @@ class RegressionCallback:
             output_key: str = None,
             y_pred: list = None,
             y_true: dict = None,
-            loss: str = None
+            loss: str = None,
+            msg_epoch: str = None,
     ):
 
         self.epoch = epoch
@@ -1484,7 +1512,7 @@ class RegressionCallback:
                 self.plot_result(output_key=output_key)
 
         self.exchange.show_text_data(
-            f"Эпоха {epoch + 1:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
 
@@ -1495,3 +1523,30 @@ class RegressionCallback:
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
+
+
+def image_to_base64(image_as_array):
+    output = []
+    length = len(image_as_array)
+    rows = 3
+    columns = length // rows if length % 3 == 0 else length // rows + 1
+
+    # fig = plt.figure(figsize=(5 * columns, 5 * rows))
+    for i, (image, title) in enumerate(image_as_array):
+        if image.dtype == 'int32':
+            image = image.astype(np.uint8)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        # ax = fig.add_subplot(rows, columns, i + 1)
+        # ax.imshow(image)
+        # fig.savefig(temp_image.name)
+        try:
+            plt.imsave(temp_image.name, image, cmap='Greys')
+        except Exception as e:
+            print(e.__str__())
+            plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='Greys')
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        output.append({'image': output_image, 'title': title})
+        temp_image.close()
+        os.remove(temp_image.name)
+    return output
