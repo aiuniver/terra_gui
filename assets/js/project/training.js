@@ -431,8 +431,9 @@
                         let group = images[name],
                             item_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
                         group.forEach((item) => {
-                            item_block.children(".inner").append(`<div class="item"><img src="data:image/png;base64,${item.image}" alt="${item.name}" /></div>`);
+                            item_block.children(".inner").append(`<div class="item"><img src="data:image/png;base64,${item.image}" alt="" /><div class="name">${item.title}</div></div>`);
                         });
+                        this.images.append(item_block);
                     }
                 }
             });
