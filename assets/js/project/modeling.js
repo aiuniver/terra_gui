@@ -91,7 +91,7 @@
                             block.find(".models-data > .models-list .loaded-list").html("");
                             block.find(".models-data > .model-arch > .wrapper").addClass("hidden");
                             for (let index in data) {
-                                block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index]}"><span>${data[index]}</span></li>`))
+                                block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index].name}" data-is_terra="${data[index].is_terra}"><span>${data[index].name}</span></li>`))
                             }
                             block.find(".models-data > .models-list .loaded-list > li > span").bind("click", (event) => {
                                 let item = $(event.currentTarget).parent();
@@ -119,7 +119,7 @@
                                             window.StatusBar.message(data.error, false);
                                         }
                                     },
-                                    {"model_file":item.data("name")}
+                                    {"model_file":item.data("name"),"is_terra":item.data("is_terra")}
                                 );
                             });
                         }

@@ -164,7 +164,6 @@
 	text-overflow:ellipsis;
 	border-radius:4px;
 	cursor:pointer;
-	white-space:nowrap;
 	user-select:none;
 	overflow:hidden;
 	transition:background-color .3s ease-in-out, color .3s ease-in-out;
