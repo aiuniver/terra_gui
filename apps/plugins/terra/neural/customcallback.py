@@ -182,7 +182,7 @@ class CustomCallback(keras.callbacks.Callback):
 
     def prepare_callbacks(
             self, task_type: str = "", metrics: list = None, num_classes: int = None,
-            clbck_options: dict = {}) -> None:
+            clbck_options: dict = {}, tags: dict = {}) -> None:
         """
         if terra in raw mode  - setting callback if its set
         if terra with django - checking switches and set callback options from switches
@@ -197,6 +197,8 @@ class CustomCallback(keras.callbacks.Callback):
             callback_kwargs["metrics"] = copy.copy(metrics)
         if task_type == "classification" or task_type == "segmentation":
             callback_kwargs["num_classes"] = num_classes
+            if tags["input_1"]:
+                callback_kwargs["data_tag"] = tags["input_1"]
 
         for option_name, option_value in clbck_options.items():
 
@@ -297,6 +299,7 @@ class CustomCallback(keras.callbacks.Callback):
                 metrics=self.clbck_params[_key]["metrics"],
                 num_classes=self.clbck_params.setdefault(_key)["num_classes"],
                 clbck_options=self.clbck_params[_key]["callbacks"],
+                tags=self.dataset.tags,
             )
 
     def _estimate_step(self, current, start, now):
@@ -411,6 +414,7 @@ class ClassificationCallback:
             metrics=[],
             step=1,
             class_metrics=[],
+            data_tag=None,
             num_classes=2,
             show_worst=False,
             show_best=False,
@@ -440,7 +444,7 @@ class ClassificationCallback:
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
-        self.data_tag = self.dataset.tags['input_1']
+        self.data_tag = data_tag
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -796,6 +800,7 @@ class SegmentationCallback:
             step=1,
             num_classes=2,
             class_metrics=[],
+            data_tag=None,
             show_worst=False,
             show_best=False,
             show_final=True,
@@ -824,7 +829,7 @@ class SegmentationCallback:
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
-        self.data_tag = self.dataset.tags['input_1']
+        self.data_tag = data_tag
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -1172,7 +1177,6 @@ class TimeseriesCallback:
         self.plot_pred_and_true = plot_pred_and_true
         self.dataset = dataset
         self.Exch = exchange
-        self.data_tag = self.dataset.tags['input_1']
         self.corr_step = corr_step
         self.epoch = 0
         self.x_Val = {}
@@ -1381,7 +1385,6 @@ class RegressionCallback:
         self.plot_scatter = plot_scatter
         self.dataset = dataset
         self.exchange = exchange
-        self.data_tag = self.dataset.tags['input_1']
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
