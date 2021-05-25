@@ -3,6 +3,7 @@ import os
 import re
 import json
 import shutil
+import zipfile
 
 import requests
 
@@ -371,3 +372,30 @@ class TerraExchange:
         filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
         shutil.move(filepath, fullpath)
         return TerraExchangeResponse(data={"name": name})
+
+    def _call_project_load(self) -> TerraExchangeResponse:
+        output = []
+        for filename in os.listdir(self.project.gd.projects):
+            if filename.endswith(".project"):
+                output.append(filename[:-8])
+        return TerraExchangeResponse(data=output)
+
+    def _call_get_project(self, name: str) -> TerraExchangeResponse:
+        self.project.clear()
+
+        fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
+        project = zipfile.ZipFile(fullpath)
+        project.extractall(settings.TERRA_AI_PROJECT_PATH)
+
+        self.__project = TerraExchangeProject()
+
+        response = self.call("get_state")
+
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+
+        self.project = data
+        return response

@@ -95,3 +95,9 @@ class ExchangeData:
 
     def _execute_project_save(self, **kwargs):
         return terra_exchange.call("project_save", **kwargs)
+
+    def _execute_project_load(self, **kwargs):
+        return terra_exchange.call("project_load", **kwargs)
+
+    def _execute_get_project(self, **kwargs):
+        return terra_exchange.call("get_project", **kwargs)

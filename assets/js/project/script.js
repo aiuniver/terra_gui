@@ -18,6 +18,14 @@
     });
 
 
+    let ProjectLoad = $("#modal-window-project-load").ModalWindow({
+        title:"Загрузить проект",
+        width:400,
+        height:440,
+        request:["project_load"]
+    });
+
+
     let TerraProject = function(hash) {
 
         const DEFAULT_NAME = "NoName",
@@ -68,7 +76,31 @@
                 });
             },
             project_load: () => {
-
+                window.StatusBar.clear();
+                ProjectLoad.open(
+                    (block, data) => {
+                        block.find(".models-data > .models-list .loaded-list").html("");
+                        for (let index in data) {
+                            block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index]}"><span>${data[index]}</span></li>`));
+                        }
+                        block.find(".models-data > .models-list .loaded-list > li > span").bind("click", (event) => {
+                            let item = $(event.currentTarget).parent();
+                            item.parent().children("li").removeClass("active");
+                            item.addClass("active");
+                            window.ExchangeRequest(
+                                "get_project",
+                                (success, data) => {
+                                    if (success) {
+                                        window.location.reload();
+                                    } else {
+                                        window.StatusBar.message(data.error, false);
+                                    }
+                                },
+                                {"name":item.data("name")}
+                            );
+                        });
+                    }
+                );
             }
         }
 
