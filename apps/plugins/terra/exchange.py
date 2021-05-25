@@ -292,12 +292,12 @@ class TerraExchange:
             return response
 
         model = response.data.get("model", "")
-        colab_exchange.start_training(
+        response = colab_exchange.start_training(
             model=model,
             pathname=self.project.dir.training,
             **training_data,
         )
-        return TerraExchangeResponse()
+        return TerraExchangeResponse(data={"data": response})
 
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
