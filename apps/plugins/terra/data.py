@@ -359,9 +359,11 @@ class TerraExchangeResponse:
     error: str
     data: dict
     stop_flag: bool
+    tb: list
 
     def __init__(self, **kwargs):
         self.success = kwargs.get("success", True)
         self.error = kwargs.get("error", "")
         self.data = kwargs.get("data", {})
         self.stop_flag = kwargs.get("stop_flag", True)
+        self.tb = kwargs.get("tb", [])
