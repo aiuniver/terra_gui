@@ -946,7 +946,7 @@ class Exchange(StatesData, GuiExch):
 
     def get_model_from_list(self, model_name, input_shape, output_shape=None):
         model_files = unpack_model(
-            os.path.join(self.models_plans_path, f"{model_name}.model")
+            os.path.join(self.gd_paths.modeling, f"{model_name}.model")
         )
 
         with open(model_files.get("preview"), "rb") as preview_ref:
