@@ -193,7 +193,8 @@
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > * > .content {
     margin-top:10px;
 }
-.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper {
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper,
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .scatters > .content > .inner > .wrapper {
     margin:0 -10px -20px -10px;
     display:-webkit-box;
     display:-moz-box;
@@ -224,11 +225,13 @@
     -ms-flex-align:start;
     align-items:flex-start;
 }
-.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper > .item {
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper > .item,
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .scatters > .content > .inner > .wrapper > .item {
     width:50%;
     padding:0 10px 20px 10px;
 }
-.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper > .item > div {
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .charts > .content > .inner > .wrapper > .item > div,
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .scatters > .content > .inner > .wrapper > .item > div {
     width:100%;
     height:100%;
     background:#242F3D;

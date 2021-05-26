@@ -481,6 +481,59 @@
                     } else {
                         training_toolbar.btn.scatters.disabled = true;
                     }
+                    this.scatters.children(".inner").html(scatters.length ? '<div class="wrapper"></div>' : '');
+                    scatters.forEach((item) => {
+                        let div = $('<div class="item"><div></div></div>');
+                        this.scatters.children(".inner").children(".wrapper").append(div);
+                        Plotly.newPlot(
+                            div.children("div")[0],
+                            item.list,
+                            {
+                                autosize:true,
+                                margin:{
+                                    l:70,
+                                    r:20,
+                                    t:60,
+                                    b:20,
+                                    pad:0,
+                                    autoexpand:true,
+                                },
+                                font:{
+                                    color:"#A7BED3"
+                                },
+                                showlegend:true,
+                                legend:{
+                                    orientation:"h",
+                                    font:{
+                                        family:"Open Sans",
+                                        color:"#A7BED3",
+                                    }
+                                },
+                                paper_bgcolor:"transparent",
+                                plot_bgcolor:"transparent",
+                                title:item.title,
+                                xaxis:{
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                                yaxis:{
+                                    title:item.yaxis.title,
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                            },
+                            {
+                                responsive:true,
+                                displayModeBar:false,
+                            }
+                        );
+                    });
                 }
             });
 
