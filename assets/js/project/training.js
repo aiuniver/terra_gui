@@ -200,9 +200,9 @@
                         value = false;
                     try {
                         value = window.TerraProject.training.outputs[output_name].callbacks[name];
-                    } catch {}
-                    if (!value) value = false;
-                    callback.default = value;
+                    } catch {
+                        value = callback.default;
+                    }
                     let widget = window.FormWidget(`outputs[${output_name}][callbacks][${name}]`, callback);
                     widget.addClass("field-inline field-reverse");
                     inner.append(widget);

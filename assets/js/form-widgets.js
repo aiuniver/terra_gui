@@ -39,7 +39,7 @@
                 } else {
                     widget = $(`
                         <label for="field_form-${name}">${label}</label>
-                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default || ''}"${options.disabled ? ' disabled="disabled"' : ""}${options.readonly ? ' readonly="readonly"' : ""} />
+                        <input type="${type}" id="field_form-${name}" name="${name}" value="${options.default === undefined || options.default === null ? '' : options.default}"${options.disabled ? ' disabled="disabled"' : ""}${options.readonly ? ' readonly="readonly"' : ""} />
                     `);
                 }
                 return widget_wrapper.append(widget);
