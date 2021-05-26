@@ -396,7 +396,7 @@ class Exchange(StatesData, GuiExch):
         self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
         self.dts_name = None
         self.task_name = ""
-        self.mounted_drive_path = ''
+        self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -765,20 +765,20 @@ class Exchange(StatesData, GuiExch):
 
     def _write_zip(self, write_path, file_list):
         try:
-            zip_model = zipfile.ZipFile(write_path, 'w')
+            zip_model = zipfile.ZipFile(write_path, "w")
             for any_file in file_list:
                 file_path = os.path.join(self.dir_paths.modeling, any_file)
                 zip_model.write(file_path)
-            return ''
+            return ""
         except Exception as e:
             return e.__str__()
 
     def _load_unzip(self, load_path, file_name):
         try:
-            zip_model = zipfile.ZipFile(load_path, 'r')
+            zip_model = zipfile.ZipFile(load_path, "r")
             file_path = os.path.join(self.dir_paths.modeling, file_name)
             zip_model.write(file_path)
-            return ''
+            return ""
         except Exception as e:
             return e.__str__()
 
@@ -961,7 +961,8 @@ class Exchange(StatesData, GuiExch):
         output = []
         files_for_unzipping = os.listdir(self.gd_paths.modeling)
         for arch_files in files_for_unzipping:
-            output.append(arch_files[:-6])
+            if arch_files.endswith(".model"):
+                output.append(arch_files[:-6])
         return output
 
     def get_dataset_input_shape(self):

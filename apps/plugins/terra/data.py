@@ -1,5 +1,7 @@
 import os
 import json
+import shutil
+
 import yaml
 import cairosvg
 import pydantic
@@ -240,6 +242,7 @@ class ProjectPath(pydantic.BaseModel):
     _modeling_plan = "plan.yaml"
     _modeling_preview = "preview.png"
     _modeling_keras = "keras.py"
+    _modeling_layers = "layers.json"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -278,6 +281,10 @@ class ProjectPath(pydantic.BaseModel):
         with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
             keras_file.write(f"{keras}\n")
 
+    def create_layers(self, layers: dict):
+        with open(f"{self.modeling}/{self._modeling_layers}", "w") as layers_file:
+            json.dump(layers, layers_file)
+
     def remove_plan(self):
         if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
             os.remove(f"{self.modeling}/{self._modeling_plan}")
@@ -290,10 +297,15 @@ class ProjectPath(pydantic.BaseModel):
         if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
             os.remove(f"{self.modeling}/{self._modeling_keras}")
 
+    def remove_layers(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_layers}"):
+            os.remove(f"{self.modeling}/{self._modeling_layers}")
+
     def clear_modeling(self):
         self.remove_plan()
         self.remove_preview()
         self.remove_keras()
+        self.remove_layers()
 
 
 class TerraExchangeProject(pydantic.BaseModel):
@@ -325,7 +337,10 @@ class TerraExchangeProject(pydantic.BaseModel):
         super().__init__(**kwargs)
 
         if not os.path.isfile(self.dir.config):
-            open(self.dir.config, "a").close()
+            os.makedirs(settings.TERRA_AI_PROJECT_PATH, exist_ok=True)
+            with open(self.dir.config, "w") as config_ref:
+                config_ref.write("{}")
+                config_ref.close()
 
         with open(self.dir.config, "r") as file:
             try:
@@ -351,6 +366,9 @@ class TerraExchangeProject(pydantic.BaseModel):
     def autosave(self):
         with open(self.dir.config, "w") as file:
             json.dump(self.dict(), file)
+
+    def clear(self):
+        shutil.rmtree(settings.TERRA_AI_PROJECT_PATH)
 
 
 @dataclass

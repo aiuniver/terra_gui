@@ -418,12 +418,22 @@
                     return this.children(".images").children(".content");
                 },
                 set: (images) => {
-                    if (images.length) {
+                    if (Object.keys(images).length) {
                         let disabled = training_toolbar.btn.images.disabled;
                         training_toolbar.btn.images.disabled = false;
                         if (disabled) training_toolbar.btn.images.active = true;
                     } else {
                         training_toolbar.btn.images.disabled = true;
+                    }
+
+                    this.images.html("");
+                    for (let name in images) {
+                        let group = images[name],
+                            item_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
+                        group.forEach((item) => {
+                            item_block.children(".inner").append(`<div class="item"><img src="data:image/png;base64,${item.image}" alt="" /><div class="name">${item.title}</div></div>`);
+                        });
+                        this.images.append(item_block);
                     }
                 }
             });

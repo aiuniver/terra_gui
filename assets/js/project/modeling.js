@@ -146,8 +146,8 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
-                                this.btn.save_model.disabled = !data.data.validated;
-                                this.btn.keras.disabled = !data.data.validated;
+                                this.btn.save_model.disabled = true;
+                                this.btn.keras.disabled = true;
                                 if (typeof callback === "function") callback(item);
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -176,6 +176,7 @@
                                 for (let index in data.data.errors) {
                                     let error = data.data.errors[index];
                                     terra_board.set_layer_error(index, error);
+                                    if (error) window.StatusBar.message(window.Messages.get("VALIDATION_MODEL_ERROR"), false);
                                 }
                                 if (data.data.validated) {
                                     terra_toolbar.btn.save_model.disabled = false;
@@ -294,6 +295,7 @@
             _d3graph.call(zoom);
 
             let _separate_to_multiline = (text, max_length=20) => {
+                if (!text) return [];
                 let output = [],
                     words = text.split(/\s/);
                 if (words.length) {
@@ -310,7 +312,7 @@
 
             this.set_layer_error = (index, message) => {
                 let _node = _cnodes.select(`#node-${index}`),
-                    _errors_list = _separate_to_multiline(message);
+                    _errors_list = _separate_to_multiline(message || "");
                 _node.selectAll("g.errors").remove();
                 if (!_errors_list.length) return;
 
@@ -1132,8 +1134,8 @@
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.layers_schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
-                        terra_toolbar.btn.save_model.disabled = !data.data.validated;
-                        terra_toolbar.btn.keras.disabled = !data.data.validated;
+                        terra_toolbar.btn.save_model.disabled = true;
+                        terra_toolbar.btn.keras.disabled = true;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);
