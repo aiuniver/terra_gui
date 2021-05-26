@@ -134,7 +134,7 @@ class Checkpoint(pydantic.BaseModel):
         "out_monitor": "accuracy",
     }  # need to reformat
     mode: CheckpointModeType = CheckpointModeType.max
-    save_best: bool = False
+    save_best: bool = True
     save_weights: bool = False
 
 
