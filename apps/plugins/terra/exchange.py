@@ -182,7 +182,10 @@ class TerraExchange:
         self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():
-            layers[int(index)] = Layer(config=layer)
+            if "config" not in layer.keys():
+                layers[int(index)] = Layer(config=layer)
+            else:
+                layers[int(index)] = Layer(**layer)
         for index, layer in layers.items():
             for _index in layer.config.up_link:
                 layers[int(_index)].down_link.append(int(index))
@@ -191,7 +194,7 @@ class TerraExchange:
             output[index] = layer.dict()
         self.project.model_name = model_file
         self.project.layers_start = layers
-        self.project.layers_schema = data.data.get("front_model_schema", [])
+        self.project.layers_schema = data.data.get("schema", [])
         data.data.update({"layers": output})
         return data
 
@@ -371,6 +374,8 @@ class TerraExchange:
                 success=False,
                 error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
             )
+        self.project.name = name
+        self.project.autosave()
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
         if os.path.isfile(fullpath) and not overwrite:
             return TerraExchangeResponse(

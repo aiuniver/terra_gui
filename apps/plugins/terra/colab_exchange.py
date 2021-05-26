@@ -954,7 +954,8 @@ class Exchange(StatesData, GuiExch):
         output = []
         files_for_unzipping = os.listdir(self.gd_paths.modeling)
         for arch_files in files_for_unzipping:
-            output.append(arch_files[:-6])
+            if arch_files.endswith(".model"):
+                output.append(arch_files[:-6])
         return output
 
     def get_custom_model(self, model_name, input_shape, output_shape=None):
