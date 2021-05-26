@@ -242,6 +242,7 @@ class ProjectPath(pydantic.BaseModel):
     _modeling_plan = "plan.yaml"
     _modeling_preview = "preview.png"
     _modeling_keras = "keras.py"
+    _modeling_layers = "layers.json"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -280,6 +281,10 @@ class ProjectPath(pydantic.BaseModel):
         with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
             keras_file.write(f"{keras}\n")
 
+    def create_layers(self, layers: dict):
+        with open(f"{self.modeling}/{self._modeling_layers}", "w") as layers_file:
+            json.dump(layers, layers_file)
+
     def remove_plan(self):
         if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
             os.remove(f"{self.modeling}/{self._modeling_plan}")
@@ -292,10 +297,15 @@ class ProjectPath(pydantic.BaseModel):
         if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
             os.remove(f"{self.modeling}/{self._modeling_keras}")
 
+    def remove_layers(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_layers}"):
+            os.remove(f"{self.modeling}/{self._modeling_layers}")
+
     def clear_modeling(self):
         self.remove_plan()
         self.remove_preview()
         self.remove_keras()
+        self.remove_layers()
 
 
 class TerraExchangeProject(pydantic.BaseModel):

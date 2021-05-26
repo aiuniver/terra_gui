@@ -213,24 +213,29 @@ class TerraExchange:
             }
         )
 
-    def _call_save_model(self, **kwargs) -> TerraExchangeResponse:
-        kwargs["name"] = kwargs.get("name", "")
-        if not kwargs.get("name"):
+    def _call_save_model(
+        self, name: str, preview: str, overwrite: bool = False
+    ) -> TerraExchangeResponse:
+        if not name:
             return TerraExchangeResponse(success=False, error="Введите название модели")
-        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", kwargs.get("name"))
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
         if not name_match:
             return TerraExchangeResponse(
                 success=False,
                 error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
             )
-        self.project.dir.create_preview(kwargs.get("preview"))
-        success, error = colab_exchange.save_model(
-            name=kwargs.get("name"), overwrite=kwargs.get("overwrite")
-        )
-        self.project.model_name = kwargs.get("name")
-        return TerraExchangeResponse(
-            success=success, error=error, data={"name": self.project.model_name}
-        )
+        fullpath = os.path.join(self.project.gd.modeling, f"{name}.model")
+        if os.path.isfile(fullpath) and not overwrite:
+            return TerraExchangeResponse(
+                success=False,
+                error="Модель с таким названием уже существует",
+            )
+        self.project.dir.create_preview(preview)
+        self.project.dir.create_layers(self.project.dict().get("layers"))
+        filepath = shutil.make_archive(name, "zip", self.project.dir.modeling)
+        shutil.move(filepath, fullpath)
+        self.project.model_name = name
+        return TerraExchangeResponse(data={"name": self.project.model_name})
 
     def _call_clear_model(self) -> TerraExchangeResponse:
         self.project.dir.clear_modeling()
