@@ -5,6 +5,7 @@ import shutil
 import yaml
 import cairosvg
 import pydantic
+import tensorflow
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
@@ -309,6 +310,7 @@ class ProjectPath(pydantic.BaseModel):
 
 
 class TerraExchangeProject(pydantic.BaseModel):
+    tensorflow: str = ""
     error: str = ""
     name: str = "NoName"
     hardware: Hardware = Hardware.CPU
@@ -335,6 +337,8 @@ class TerraExchangeProject(pydantic.BaseModel):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+        self.tensorflow = tensorflow.__version__
 
         if not os.path.isfile(self.dir.config):
             os.makedirs(settings.TERRA_AI_PROJECT_PATH, exist_ok=True)
