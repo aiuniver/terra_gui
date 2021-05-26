@@ -803,18 +803,21 @@ class Exchange(StatesData, GuiExch):
 
     def load_dataset(self, **kwargs):
         self._reset_out_data()
-        dataset_name = kwargs.get('dataset_name', '')
-        dataset_link = kwargs.get('dataset_link', '')
-        inputs_count = kwargs.get('inputs_count', None)
-        outputs_count = kwargs.get('outputs_count', None)
+        dataset_name = kwargs.get('name', '')
+        dataset_link = kwargs.get('link', '')
+        dts_layer_count = kwargs.get('num_links', {})
+        if dts_layer_count:
+            inputs_count = dts_layer_count.get('inputs', 1)
+            outputs_count = dts_layer_count.get('outputs', 1)
         if dataset_name:
             self.dts.load_data(name=dataset_name, link=dataset_link)
             self._set_dts_name(self.dts.name)
-            return self.dts.get_parameters_dict()
+            output = self.dts.get_parameters_dict()
         else:
             self.out_data["errors"] = 'Не указано наименование датасета'
+            output = {}
         self.out_data["stop_flag"] = True
-
+        return output
 
     def prepare_dataset(self, dataset_name: str, source: str = ""):
         self._reset_out_data()
