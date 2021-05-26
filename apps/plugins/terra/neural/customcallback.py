@@ -1442,8 +1442,8 @@ class RegressionCallback:
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
             value = [
-                (range(loss_len), self.history[showmet], showmet),
-                (range(loss_len), self.history[vshowmet], vshowmet),
+                (list(range(loss_len)), self.history[showmet], showmet),
+                (list(range(loss_len)), self.history[vshowmet], vshowmet),
             ]
             data.update({key: value})
             self.exchange.show_plot_data(data)
