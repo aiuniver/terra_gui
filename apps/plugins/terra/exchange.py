@@ -1,4 +1,10 @@
+import base64
+import os
+import re
 import json
+import shutil
+import zipfile
+
 import requests
 
 from django.conf import settings
@@ -141,25 +147,55 @@ class TerraExchange:
         )
 
     def _call_get_models(self) -> TerraExchangeResponse:
-        return self.__request_post("get_models")
+        response = self.__request_post("get_models")
+        if response.success:
+            response.data = list(
+                map(lambda item: {"is_terra": True, "name": item}, response.data)
+            ) + list(
+                map(
+                    lambda item: {"is_terra": False, "name": item},
+                    colab_exchange.get_models(),
+                )
+            )
+        return response
 
-    def _call_get_model_from_list(self, model_file: str) -> TerraExchangeResponse:
-        data = self.__request_post(
-            "get_model_from_list",
-            model_name=model_file,
-            input_shape=colab_exchange.get_dataset_input_shape(),
-        )
+    def _call_get_model_from_list(
+        self, model_file: str, is_terra: bool
+    ) -> TerraExchangeResponse:
+        if is_terra:
+            data = self.__request_post(
+                "get_model_from_list",
+                model_name=model_file,
+                input_shape=colab_exchange.get_dataset_input_shape(),
+            )
+        else:
+            with open(
+                os.path.join(self.project.gd.modeling, f"{model_file}.model"), "rb"
+            ) as model_ref:
+                model_bin = model_ref.read()
+                data = self.__request_post(
+                    "get_model_from_list",
+                    model_name=model_file,
+                    model_file=base64.b64encode(model_bin).decode("UTF-8"),
+                    input_shape=colab_exchange.get_dataset_input_shape(),
+                )
+        self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():
-            layers[int(index)] = Layer(config=layer)
+            if "config" not in layer.keys():
+                layers[int(index)] = Layer(config=layer)
+            else:
+                layers[int(index)] = Layer(**layer)
         for index, layer in layers.items():
             for _index in layer.config.up_link:
                 layers[int(_index)].down_link.append(int(index))
         output = {}
         for index, layer in layers.items():
             output[index] = layer.dict()
-        data.data.update({"layers": output})
         self.project.model_name = model_file
+        self.project.layers_start = layers
+        self.project.layers_schema = data.data.get("schema", [])
+        data.data.update({"layers": output})
         return data
 
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
@@ -176,12 +212,38 @@ class TerraExchange:
             data={
                 "layers": self.project.dict().get("layers"),
                 "schema": schema,
+                "validated": self.project.dir.validated,
             }
         )
 
+    def _call_save_model(
+        self, name: str, preview: str, overwrite: bool = False
+    ) -> TerraExchangeResponse:
+        if not name:
+            return TerraExchangeResponse(success=False, error="Введите название модели")
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
+        if not name_match:
+            return TerraExchangeResponse(
+                success=False,
+                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
+            )
+        fullpath = os.path.join(self.project.gd.modeling, f"{name}.model")
+        if os.path.isfile(fullpath) and not overwrite:
+            return TerraExchangeResponse(
+                success=False,
+                error="Модель с таким названием уже существует",
+            )
+        self.project.dir.create_preview(preview)
+        self.project.dir.create_layers(self.project.dict().get("layers"))
+        filepath = shutil.make_archive(name, "zip", self.project.dir.modeling)
+        shutil.move(filepath, fullpath)
+        self.project.model_name = name
+        return TerraExchangeResponse(data={"name": self.project.model_name})
+
     def _call_clear_model(self) -> TerraExchangeResponse:
+        self.project.dir.clear_modeling()
         self.project.layers = {}
-        for index, layer in self.project.dict().get("layers_start"):
+        for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
         return TerraExchangeResponse(
@@ -200,7 +262,16 @@ class TerraExchange:
             }
         )
 
+    def _call_get_keras_code(self) -> TerraExchangeResponse:
+        success, output = self.project.dir.keras_code
+        if success:
+            return TerraExchangeResponse(data={"code": output})
+        else:
+            return TerraExchangeResponse(success=success, error=output)
+
     def _call_get_change_validation(self) -> TerraExchangeResponse:
+        self.project.dir.remove_plan()
+        self.project.dir.remove_keras()
         if self.project.layers:
             configs = dict(
                 map(
@@ -208,26 +279,48 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
-            model_plan = colab_exchange.get_model_plan(
-                self.project.model_plan, self.project.model_name
+            response = self.__request_post(
+                "get_change_validation",
+                layers=configs,
+                modelling_plan=colab_exchange.get_model_plan(
+                    model_name=self.project.model_name
+                ),
             )
-            response = self.__request_post("get_change_validation", layers=configs, modelling_plan=model_plan)
-            self.project.model_plan = response.data.get("plan")
-            return TerraExchangeResponse(data=response.data.get("errors"))
+            if response.success:
+                validated = (
+                    len(list(filter(None, response.data.get("errors").values()))) == 0
+                )
+                if validated:
+                    self.project.dir.create_plan(response.data.get("yaml_model"))
+                    self.project.dir.create_keras(response.data.get("keras_code"))
+                    self.project.model_plan = response.data.get("plan")
+                return TerraExchangeResponse(
+                    data={
+                        "errors": response.data.get("errors"),
+                        "validated": validated,
+                    }
+                )
+            else:
+                response.data.update({"validated": False})
+                return response
         else:
-            return TerraExchangeResponse()
+            return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange._reset_out_data()
-        response_validate = self.call("get_change_validation")
-        errors = response_validate.data
-        if list(filter(None, errors.values())):
-            return TerraExchangeResponse(data={"validation_errors": errors})
-
-        return TerraExchangeResponse()
+        output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
+        out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
+        kwargs["checkpoint"]["monitor"]["out_monitor"] = (
+            kwargs.get("outputs", {}).get(output, {}).get(out_type)
+        )
+        if out_type == "metrics":
+            kwargs["checkpoint"]["monitor"]["out_monitor"] = kwargs["checkpoint"][
+                "monitor"
+            ]["out_monitor"][0]
+        self.project.training = TrainConfig(**kwargs)
+        return self.call("get_change_validation")
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
-        self.project.training = TrainConfig(**kwargs)
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
@@ -248,5 +341,83 @@ class TerraExchange:
         )
         return TerraExchangeResponse()
 
+    def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.stop_training()
+        return TerraExchangeResponse()
+
+    def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange._reset_out_data()
+        colab_exchange.reset_training()
+        return TerraExchangeResponse()
+
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)
+
+    def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange._reset_out_data()
+        self.project.clear()
+        self.__project = TerraExchangeProject()
+
+        response = self.call("get_state")
+
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+
+        self.project = data
+        return response
+
+    def _call_project_save(
+        self, name: str, overwrite: bool = False
+    ) -> TerraExchangeResponse:
+        if not name:
+            return TerraExchangeResponse(
+                success=False, error="Введите название проекта"
+            )
+        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
+        if not name_match:
+            return TerraExchangeResponse(
+                success=False,
+                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
+            )
+        self.project.name = name
+        self.project.autosave()
+        fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
+        if os.path.isfile(fullpath) and not overwrite:
+            return TerraExchangeResponse(
+                success=False,
+                error="Проект с таким названием уже существует",
+            )
+        filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
+        shutil.move(filepath, fullpath)
+        return TerraExchangeResponse(data={"name": name})
+
+    def _call_project_load(self) -> TerraExchangeResponse:
+        output = []
+        for filename in os.listdir(self.project.gd.projects):
+            if filename.endswith(".project"):
+                output.append(filename[:-8])
+        return TerraExchangeResponse(data=output)
+
+    def _call_get_project(self, name: str) -> TerraExchangeResponse:
+        colab_exchange._reset_out_data()
+        self.project.clear()
+
+        fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
+        project = zipfile.ZipFile(fullpath)
+        project.extractall(settings.TERRA_AI_PROJECT_PATH)
+
+        self.__project = TerraExchangeProject()
+
+        response = self.call("get_state")
+
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+
+        self.project = data
+        return response

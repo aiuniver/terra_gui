@@ -3,12 +3,12 @@
 {% load static core_utils %}
 
 {% block css_block %}
-<link rel="stylesheet" href="{% static 'css/project/training.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/project/training.css' %}?rnd=4w598totrf"/>
 {% endblock css_block %}
 
 {% block js_block %}
 <script type="text/javascript" src="{% static 'js/project/plotly-latest.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/project/training.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/project/training.js' %}?rnd=4w598totrf"></script>
 {% endblock js_block %}
 
 {% block content_block %}
@@ -16,17 +16,17 @@
 <div class="toolbar project-training-toolbar">
     <div class="wrapper">
         <ul class="menu-section">
-            <li data-type="charts">
-                <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+            <li data-type="charts" disabled="disabled">
+                <span title="Графики"><img src="{% static 'imgs/training-charts.svg' %}" alt="" /></span>
             </li>
-            <li data-type="images">
-                <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            <li data-type="images" disabled="disabled">
+                <span title="Изображения"><img src="{% static 'imgs/training-images.svg' %}" alt="" /></span>
             </li>
-            <li data-type="texts">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="texts" disabled="disabled">
+                <span title="Текст"><img src="{% static 'imgs/training-texts.svg' %}" alt="" /></span>
             </li>
-            <li data-type="scatters">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            <li data-type="scatters" disabled="disabled">
+                <span title="Скаттеры"><img src="{% static 'imgs/training-scatters.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -39,32 +39,35 @@
                 <div class="inner">
                     <div class="tabs-item graphics custom-scrollbar-wrapper">
                         <div class="tab-container">
-                            <div class="charts">
+                            <div class="charts hidden">
                                 <div class="category-title">Графики</div>
                                 <div class="content">
                                     <div class="inner"></div>
                                 </div>
                             </div>
-                            <div class="images">
-                                <div class="category-title">Картинки</div>
-                                <div class="content"></div>
+                            <div class="images hidden">
+                                <div class="category-title">Изображения</div>
+                                <div class="content">
+                                    <div class="inner"></div>
+                                </div>
                             </div>
-                            <div class="texts">
+                            <div class="texts hidden">
                                 <div class="category-title">Текст</div>
-                                <div class="content"></div>
+                                <div class="content">
+                                    <div class="inner"></div>
+                                </div>
                             </div>
-                            <div class="scatters">
+                            <div class="scatters hidden">
                                 <div class="category-title">Скаттеры</div>
-                                <div class="content"></div>
+                                <div class="content">
+                                    <div class="inner"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="training-progress custom-scrollbar-wrapper">
-        <div class="info"></div>
     </div>
 </div>
 
@@ -140,35 +143,52 @@
                             {% endfor %}
                         </div>
 
-                        <div class="params-item checkpoint-block collapsable hidden">
-                            <div class="params-title">Checkpoint</div>
-                            <div class="checkpoint-item inner form-inline-label">
-                                 <div class="field-form field-inline output-block">
-                                     <label for="display">Монитор:</label>
-                                     <select id="display" class="jquery-ui-menuselect">
-                                         <option value="none">none</option>
-                                     </select>
-                                 </div>
-                                <div class="field-form field-inline output-block">
-                                     <label for="mode">Режим:</label>
-                                     <select id="mode" class="jquery-ui-menuselect">
-                                         <option value="none">none</option>
-                                     </select>
-                                 </div>
-                                <div class="switchers">
-                                    <div class="field-form field-inline">
-                                        <label for="save-best">Сохранить лучшее:</label>
-                                        <div class="checkout-switch">
-                                            <input type="checkbox" id="save-best" name="save-best"/>
-                                            <span class="switcher"></span>
-                                        </div>
+                        <div class="params-item params-checkpoint collapsable">
+                            <div class="params-title">Чекпоинты</div>
+                            <div class="inner form-inline-label">
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[monitor][output]">Монитор</label>
+                                    <select name="checkpoint[monitor][output]" id="checkpoint[monitor][output]" class="jquery-ui-menuselect">
+                                        {% for layer in request.terra_project.layers.values %}
+                                            {% if layer.config.location_type == "output" %}
+                                                <option value="{{ layer.config.dts_layer_name }}"{% if request.terra_project.training.checkpoint.monitor.output == layer.config.dts_layer_name %} selected="selected"{% endif %}>Слой «{{ layer.config.name }}»</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[indicator]">Indicator</label>
+                                    <select name="checkpoint[indicator]" id="checkpoint[indicator]" class="jquery-ui-menuselect">
+                                        <option value="train"{% if request.terra_project.training.checkpoint.indicator.value == 'train' %} selected="selected"{% endif %}>train</option>
+                                        <option value="val"{% if request.terra_project.training.checkpoint.indicator.value == 'val' %} selected="selected"{% endif %}>val</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[monitor][out_type]">Тип</label>
+                                    <select name="checkpoint[monitor][out_type]" id="checkpoint[monitor][out_type]" class="jquery-ui-menuselect">
+                                        <option value="metrics"{% if request.terra_project.training.checkpoint.monitor.out_type == 'metrics' %} selected="selected"{% endif %}>Метрика</option>
+                                        <option value="loss"{% if request.terra_project.training.checkpoint.monitor.out_type == 'loss' %} selected="selected"{% endif %}>Loss</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[mode]">Режим</label>
+                                    <select name="checkpoint[mode]" id="checkpoint[mode]" class="jquery-ui-menuselect">
+                                        <option value="min"{% if request.terra_project.training.checkpoint.mode.value == 'min' %} selected="selected"{% endif %}>min</option>
+                                        <option value="max"{% if request.terra_project.training.checkpoint.mode.value == 'max' %} selected="selected"{% endif %}>max</option>
+                                    </select>
+                                </div>
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[save_best]">Сохранить лучшее</label>
+                                    <div class="checkout-switch">
+                                        <input type="checkbox" id="checkpoint[save_best]" name="checkpoint[save_best]"{% if request.terra_project.training.checkpoint.save_best %} checked="checked"{% endif %} />
+                                        <span class="switcher"></span>
                                     </div>
-                                     <div class="field-form field-inline">
-                                        <label for="save-weight">Сохранить веса:</label>
-                                        <div class="checkout-switch">
-                                            <input type="checkbox" id="save-weight" name="save-weight"/>
-                                            <span class="switcher"></span>
-                                        </div>
+                                </div>
+                                <div class="field-form field-inline field-reverse">
+                                    <label for="checkpoint[save_weights]">Сохранить веса</label>
+                                    <div class="checkout-switch">
+                                        <input type="checkbox" id="checkpoint[save_weights]" name="checkpoint[save_weights]"{% if request.terra_project.training.checkpoint.save_weights %} checked="checked"{% endif %} />
+                                        <span class="switcher"></span>
                                     </div>
                                 </div>
                             </div>
@@ -193,6 +213,9 @@
                         <div class="actions-form">
                             <div class="item training">
                                 <button>Обучить</button>
+                            </div>
+                            <div class="item stop">
+                                <button disabled="disabled">Остановить</button>
                             </div>
                             <div class="item reset">
                                 <button disabled="disabled">Сбросить</button>

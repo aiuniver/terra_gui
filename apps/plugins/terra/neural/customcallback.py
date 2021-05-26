@@ -1,6 +1,11 @@
+import base64
 import copy
 import os
+import tempfile
+
 import tensorflow as tf
+
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
@@ -346,7 +351,7 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'эпоха: {self.epoch+1}, модель сохранена'
+            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
             self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
 
     def on_train_batch_end(self, batch, logs=None):
@@ -574,7 +579,8 @@ class ClassificationCallback:
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
             data.append((image, title))
-        self.Exch.show_image_data(data)
+        out_data = {'images': image_to_base64(data)}
+        self.Exch.show_image_data(out_data)
 
     # # Распознаём тестовую выборку и выводим результаты
     # def recognize_classes(self):
@@ -932,7 +938,7 @@ class SegmentationCallback:
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
             )
-        colored_mask = np.array(colored_mask)
+        colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
     def _dice_coef(self, smooth=1.0):
@@ -991,7 +997,11 @@ class SegmentationCallback:
             title = "Predicted mask"
             pred_mask_data.append((image, title))
 
-        data = image_data + true_mask_data + pred_mask_data
+        data = {
+            'images': image_to_base64(image_data),
+            'ground_truth_masks': image_to_base64(true_mask_data),
+            'predicted_mask': image_to_base64(pred_mask_data)
+        }
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
@@ -1433,8 +1443,8 @@ class RegressionCallback:
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
             value = [
-                (range(loss_len), self.history[showmet], showmet),
-                (range(loss_len), self.history[vshowmet], vshowmet),
+                (list(range(loss_len)), self.history[showmet], showmet),
+                (list(range(loss_len)), self.history[vshowmet], vshowmet),
             ]
             data.update({key: value})
             self.exchange.show_plot_data(data)
@@ -1514,3 +1524,23 @@ class RegressionCallback:
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
+
+
+def image_to_base64(image_as_array):
+    output = []
+
+    for i, (image, title) in enumerate(image_as_array):
+        if image.dtype == 'int32':
+            image = image.astype(np.uint8)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        try:
+            plt.imsave(temp_image.name, image, cmap='Greys')
+        except Exception as e:
+            print(e.__str__())
+            plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='gray')
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        output.append({'image': output_image, 'title': title})
+        temp_image.close()
+        os.remove(temp_image.name)
+    return output
