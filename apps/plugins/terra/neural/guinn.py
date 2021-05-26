@@ -301,16 +301,16 @@ class GUINN:
             )
         self.model_is_trained = True
 
-        self.monitor = self.chp_monitor
-        self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
-            history=self.history, monitor=self.monitor, monitor2=self.monitor2)
-        self.best_metric_result = self.best_epoch[self.monitor]
-
-        try:
-            self.save_nnmodel()
-        except RuntimeError:
-            self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
-        self.save_model_weights()
+        # self.monitor = self.chp_monitor
+        # self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
+        #     history=self.history, monitor=self.monitor, monitor2=self.monitor2)
+        # self.best_metric_result = self.best_epoch[self.monitor]
+        #
+        # try:
+        #     self.save_nnmodel()
+        # except RuntimeError:
+        #     self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
+        # self.save_model_weights()
 
         pass
 

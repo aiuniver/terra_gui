@@ -5,7 +5,7 @@ import tensorflow.keras.metrics
 __version__ = 0.07
 
 
-class DiceCoefficient(tensorflow.keras.metrics.Metric):
+class DiceCoefficient(tf.keras.metrics.Metric):
 
     def __init__(self, name='dice_coef', **kwargs):
         super(DiceCoefficient, self).__init__(name=name, **kwargs)
