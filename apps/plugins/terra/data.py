@@ -336,9 +336,8 @@ class TerraExchangeProject(pydantic.BaseModel):
     gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
+        kwargs["tensorflow"] = tensorflow.__version__
         super().__init__(**kwargs)
-
-        self.tensorflow = tensorflow.__version__
 
         if not os.path.isfile(self.dir.config):
             os.makedirs(settings.TERRA_AI_PROJECT_PATH, exist_ok=True)
