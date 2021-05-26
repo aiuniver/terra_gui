@@ -391,9 +391,9 @@ class Exchange(StatesData, GuiExch):
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
         self.start_layers = {}
-        self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
         self.custom_datasets_path = self.paths_obj.gd.datasets
+        self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
         self.dts_name = None
         self.task_name = ""
         self.mounted_drive_path = ''
