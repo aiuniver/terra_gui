@@ -146,8 +146,8 @@
                         (success, data) => {
                             if (success) {
                                 this.btn.save.disabled = true;
-                                this.btn.save_model.disabled = !data.data.validated;
-                                this.btn.keras.disabled = !data.data.validated;
+                                this.btn.save_model.disabled = true;
+                                this.btn.keras.disabled = true;
                                 if (typeof callback === "function") callback(item);
                             } else {
                                 window.StatusBar.message(data.error, false);
@@ -1134,8 +1134,8 @@
                         window.TerraProject.layers = data.data.layers;
                         window.TerraProject.layers_schema = data.data.schema;
                         terra_board.model = window.TerraProject.model_info;
-                        terra_toolbar.btn.save_model.disabled = !data.data.validated;
-                        terra_toolbar.btn.keras.disabled = !data.data.validated;
+                        terra_toolbar.btn.save_model.disabled = true;
+                        terra_toolbar.btn.keras.disabled = true;
                         LoadModel.close();
                     } else {
                         window.StatusBar.message(data.error, false);

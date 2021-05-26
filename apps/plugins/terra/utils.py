@@ -66,4 +66,5 @@ def unpack_model(filepath: str) -> dict:
         "plan": os.path.join(tmp_dir, "plan.yaml"),
         "preview": os.path.join(tmp_dir, "preview.png"),
         "keras": os.path.join(tmp_dir, "keras.py"),
+        "layers": os.path.join(tmp_dir, "layers.json"),
     }
