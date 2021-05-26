@@ -108,11 +108,7 @@
                                             block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                             block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
                                             block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .name > span").text(data.data.preview.name);
-                                            let datatype = [];
-                                            for (let output_name in data.data.preview.datatype) {
-                                                datatype.push(data.data.preview.datatype[output_name]);
-                                            }
-                                            block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .datatype > span").text(datatype.join(", "));
+                                            block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .datatype > span").text(data.data.preview.datatype);
                                             let input_shape = [];
                                             for (let output_name in data.data.preview.input_shape) {
                                                 input_shape.push(JSON.stringify(data.data.preview.input_shape[output_name]));
@@ -713,15 +709,21 @@
 
                 let params_list = [];
                 for (let param_name in layer.config.params.main) {
-                    params_list.push(`${_camelize(param_name)}: ${layer.config.params.main[param_name]}`);
+                    let value = `${layer.config.params.main[param_name]}`;
+                    if (value !== '') {
+                        if (value.indexOf(",") !== -1) value = `[${value}]`;
+                        // params_list.push(`${_camelize(param_name)}: ${layer.config.params.main[param_name]}`);
+                        params_list.push(value);
+                    }
                 }
                 if (params_list.length) {
                     let params = node.append("g").attr("class", "params"),
                         params_rect = params.append("rect").attr("x", -width/2-1).attr("y", _NODE_HEIGHT/2+3),
                         params_text = params.append("text");
-                    params_list.forEach((item, index) => {
-                        params_text.append("tspan").text(item).attr("x", -width/2-1+10).attr("y", index*16+18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
-                    });
+                    params_text.append("tspan").text(params_list.join(", ")).attr("x", -width/2-1+10).attr("y", 18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
+                    // params_list.forEach((item, index) => {
+                    //     params_text.append("tspan").text(item).attr("x", -width/2-1+10).attr("y", index*16+18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
+                    // });
                     let params_box = params_text._groups[0][0].getBBox(),
                         params_width = params_box.width+20;
                     params_rect.attr("width", params_width < width+2 ? width+2 : params_width).attr("height", params_box.height+10);
@@ -1143,7 +1145,7 @@
                 },
                 {
                     "layers": event.currentTarget.ModelData.layers,
-                    "schema": event.currentTarget.ModelData.front_model_schema,
+                    "schema": event.currentTarget.ModelData.schema,
                 }
             )
         });

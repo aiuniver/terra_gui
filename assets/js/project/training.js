@@ -215,6 +215,7 @@
                     "stop_training",
                     (success, data) => {
                         if (success) {
+                            this.validate = false;
                             _action_training.removeAttr("disabled");
                             _action_stop.attr("disabled", "disabled");
                             _action_reset.removeAttr("disabled");
@@ -230,6 +231,7 @@
                     "reset_training",
                     (success, data) => {
                         if (success) {
+                            this.validate = false;
                             training_results.charts = [];
                             training_results.images = [];
                             training_results.texts = [];
@@ -312,13 +314,15 @@
                         }
                         data.outputs[output_name].callbacks = callbacks;
                     }
+                    data.checkpoint.save_best = data.checkpoint.save_best !== undefined;
+                    data.checkpoint.save_weights = data.checkpoint.save_weights !== undefined;
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
                             if (success) {
                                 if (output.data.validated) {
                                     _action_stop.removeAttr("disabled");
-                                    window.ExchangeRequest("start_training", null, data);
+                                    window.ExchangeRequest("start_training");
                                     window.ExchangeRequest("get_data", this.get_data_response);
                                 } else {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
