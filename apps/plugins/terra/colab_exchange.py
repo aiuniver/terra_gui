@@ -669,7 +669,7 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
-    def _prepare_dataset(self, dataset_name: str, source: str) -> tuple:
+    def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
         Args:
@@ -680,6 +680,8 @@ class Exchange(StatesData, GuiExch):
         """
         if source == "custom":
             self.dts = self._read_trds(dataset_name)
+        if source == "load":
+            self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self)
             gc.collect()
@@ -819,10 +821,10 @@ class Exchange(StatesData, GuiExch):
         self.out_data["stop_flag"] = True
         return output
 
-    def prepare_dataset(self, dataset_name: str, source: str = ""):
+    def prepare_dataset(self, dataset_name: str = "", source: str = "", **kwargs):
         self._reset_out_data()
         self.process_flag = "dataset"
-        return self._prepare_dataset(dataset_name=dataset_name, source=source)
+        return self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
 
     def get_default_datasets_params(self):
         return self.dts.get_parameters_dict()
