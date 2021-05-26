@@ -232,123 +232,123 @@ class StatesData:
             "classification": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_loss_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "лучшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "segmentation": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_loss_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "лучшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "regression": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
-                "plot_scatter": {"type": "bool", "default": False, "label": "скаттер"},
+                "plot_scatter": {"type": "bool", "default": True, "label": "скаттер"},
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "timeseries": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_autocorrelation": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "график автокорреляции",
                 },
                 "plot_pred_and_true": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики предсказания и истинного ряда",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
@@ -1008,6 +1008,7 @@ class Exchange(StatesData, GuiExch):
             for _param_name, values in params.items():
                 optimizer_params[name][_param_name] = values.get("default")
         optimizer_kwargs = OptimizerParams(**optimizer_params)
+        print(optimizer_kwargs)
         return optimizer_kwargs.dict()
 
     def get_data(self):
