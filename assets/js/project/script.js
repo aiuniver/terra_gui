@@ -40,6 +40,7 @@
         }
 
         let _error = options.error || "";
+        let _tensorflow = options.tensorflow;
         let _name = options.name || DEFAULT_NAME;
         let _hardware = options.hardware || DEFAULT_HARDWARE;
         let _datasets = options.datasets || {};
@@ -110,6 +111,12 @@
             },
             get: () => {
                 return _error;
+            }
+        });
+
+        Object.defineProperty(this, "tensorflow", {
+            get: () => {
+                return _tensorflow;
             }
         });
 
