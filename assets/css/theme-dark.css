@@ -124,7 +124,7 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 .project-datasets-block.datasets .card-tag::before {
     content:url('../imgs/Vector.png');
 }
-.project-modeling-toolbar > .wrapper {
+.toolbar > .wrapper {
     border-color:#0E1621;
 }
 .project-modeling-properties > .wrapper > .params-navbar {
@@ -332,24 +332,31 @@ input[type=button][disabled=disabled]:hover {
 .modal-window-container > .wrapper a:hover {
     color:#fff;
 }
-#modal-window-load-model > .models-data > .models-list {
+#modal-window-load-model > .models-data > .models-list,
+#modal-window-project-load > .models-data > .models-list {
 	border-color:#0E1621;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span {
 	color:#fff;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:hover {
 	color:#65B9F4;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li.active > span {
     color:#65B9F4;
 	background-color:#2B5278;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:before {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:before,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:before {
     background-image:url('../imgs/file.svg');
 }
 #modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span:before,
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover:before {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover:before,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li.active > span:before,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:hover:before {
     background-image:url('../imgs/file-active.svg');
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {

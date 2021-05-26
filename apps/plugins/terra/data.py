@@ -1,13 +1,19 @@
 import os
 import json
+import shutil
+
+import yaml
+import cairosvg
 import pydantic
-import tempfile
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
+from django.conf import settings
 from django.urls import reverse_lazy
+
+from . import utils as terra_utils
 
 
 class Color(str, Enum):
@@ -128,7 +134,7 @@ class Checkpoint(pydantic.BaseModel):
         "out_monitor": "accuracy",
     }  # need to reformat
     mode: CheckpointModeType = CheckpointModeType.max
-    save_best: bool = False
+    save_best: bool = True
     save_weights: bool = False
 
 
@@ -138,6 +144,7 @@ class ModelPlan(pydantic.BaseModel):
     plan_name: str = ""
     num_classes: int = 10
     input_shape: Dict[str, Optional[Any]] = {"input_1": (28, 28, 1)}
+    output_shape: Dict[str, Optional[Any]] = {"output_1": (28, 28, 1)}
     plan: List[tuple] = []
 
 
@@ -212,6 +219,95 @@ class Dataset(pydantic.BaseModel):
     tags: dict = {}
 
 
+class GoogleDrivePath(pydantic.BaseModel):
+    datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+    modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
+    training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
+    projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        os.makedirs(self.datasets, exist_ok=True)
+        os.makedirs(self.modeling, exist_ok=True)
+        os.makedirs(self.training, exist_ok=True)
+        os.makedirs(self.projects, exist_ok=True)
+
+
+class ProjectPath(pydantic.BaseModel):
+    datasets: str = f"{settings.TERRA_AI_PROJECT_PATH}/datasets"
+    modeling: str = f"{settings.TERRA_AI_PROJECT_PATH}/modeling"
+    training: str = f"{settings.TERRA_AI_PROJECT_PATH}/training"
+    config: str = f"{settings.TERRA_AI_PROJECT_PATH}/project.conf"
+
+    _modeling_plan = "plan.yaml"
+    _modeling_preview = "preview.png"
+    _modeling_keras = "keras.py"
+    _modeling_layers = "layers.json"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        os.makedirs(self.datasets, exist_ok=True)
+        os.makedirs(self.modeling, exist_ok=True)
+        os.makedirs(self.training, exist_ok=True)
+
+    @property
+    def validated(self) -> bool:
+        return os.path.isfile(
+            f"{self.modeling}/{self._modeling_plan}"
+        ) and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
+
+    @property
+    def keras_code(self) -> (bool, str):
+        success = False
+        output = ""
+        try:
+            with open(f"{self.modeling}/{self._modeling_keras}", "r") as keras_file:
+                success = True
+                output = keras_file.read()
+        except Exception as error:
+            output = str(error)
+        return success, output
+
+    def create_plan(self, plan: dict):
+        with open(f"{self.modeling}/{self._modeling_plan}", "w") as yaml_file:
+            yaml.dump(plan, yaml_file)
+
+    def create_preview(self, preview: str):
+        filepath = f"{self.modeling}/{self._modeling_preview}"
+        cairosvg.svg2png(preview, write_to=filepath)
+        terra_utils.autocrop_image_square(filepath)
+
+    def create_keras(self, keras: str):
+        with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
+            keras_file.write(f"{keras}\n")
+
+    def create_layers(self, layers: dict):
+        with open(f"{self.modeling}/{self._modeling_layers}", "w") as layers_file:
+            json.dump(layers, layers_file)
+
+    def remove_plan(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
+            os.remove(f"{self.modeling}/{self._modeling_plan}")
+
+    def remove_preview(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_preview}"):
+            os.remove(f"{self.modeling}/{self._modeling_preview}")
+
+    def remove_keras(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
+            os.remove(f"{self.modeling}/{self._modeling_keras}")
+
+    def remove_layers(self):
+        if os.path.isfile(f"{self.modeling}/{self._modeling_layers}"):
+            os.remove(f"{self.modeling}/{self._modeling_layers}")
+
+    def clear_modeling(self):
+        self.remove_plan()
+        self.remove_preview()
+        self.remove_keras()
+        self.remove_layers()
+
+
 class TerraExchangeProject(pydantic.BaseModel):
     error: str = ""
     name: str = "NoName"
@@ -223,7 +319,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     model_plan: Optional[list] = []
     layers: Dict[int, Layer] = {}
     layers_start: Dict[int, Layer] = {}
-    layers_schema: List[List[int]] = []
+    layers_schema: List[List[Any]] = []
     layers_types: Dict[str, LayerConfigParam] = {}
     optimizers: Dict[str, OptimizerParams] = {}
     callbacks: dict = {}
@@ -234,14 +330,19 @@ class TerraExchangeProject(pydantic.BaseModel):
         "modeling": reverse_lazy("apps_project:modeling"),
         "training": reverse_lazy("apps_project:training"),
     }
-
-    _autosave_filepath: str = f"{tempfile.gettempdir()}/terra-gui-autosave.tai-project"
+    dir: ProjectPath = ProjectPath()
+    gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
-        if not os.path.isfile(self._autosave_filepath):
-            open(self._autosave_filepath, "a").close()
+        super().__init__(**kwargs)
 
-        with open(self._autosave_filepath, "r") as file:
+        if not os.path.isfile(self.dir.config):
+            os.makedirs(settings.TERRA_AI_PROJECT_PATH, exist_ok=True)
+            with open(self.dir.config, "w") as config_ref:
+                config_ref.write("{}")
+                config_ref.close()
+
+        with open(self.dir.config, "r") as file:
             try:
                 kwargs.update(**json.load(file))
             except Exception:
@@ -258,12 +359,16 @@ class TerraExchangeProject(pydantic.BaseModel):
         }
         return output
 
-    def save(self, path: str):
-        with open(path, "w") as file:
-            json.dump(self.dict(), file)
+    @property
+    def model_validated(self) -> bool:
+        return self.dir.validated
 
     def autosave(self):
-        self.save(self._autosave_filepath)
+        with open(self.dir.config, "w") as file:
+            json.dump(self.dict(), file)
+
+    def clear(self):
+        shutil.rmtree(settings.TERRA_AI_PROJECT_PATH)
 
 
 @dataclass
@@ -272,9 +377,11 @@ class TerraExchangeResponse:
     error: str
     data: dict
     stop_flag: bool
+    tb: list
 
     def __init__(self, **kwargs):
         self.success = kwargs.get("success", True)
         self.error = kwargs.get("error", "")
         self.data = kwargs.get("data", {})
         self.stop_flag = kwargs.get("stop_flag", True)
+        self.tb = kwargs.get("tb", [])

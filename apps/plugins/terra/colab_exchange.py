@@ -3,6 +3,7 @@ import gc
 import os
 import re
 import tempfile
+import zipfile
 
 import dill as dill
 from IPython import get_ipython
@@ -18,7 +19,25 @@ from .data import (
     LayerType,
     OptimizerParams,
     ModelPlan,
+    TerraExchangeProject,
 )
+
+
+# Dense
+# Conv2D
+# Maxpooling2D
+# Conv1D
+# Maxpooling1D
+# LSTM
+# Flatten
+# Dropout
+# Batchnormalization
+# Concatenate
+# Embedding
+# Conv2DTranspose
+# Conv1DTranspose
+# Upsampling2D
+# Upsampling1D
 
 
 class StatesData:
@@ -155,7 +174,7 @@ class StatesData:
                 ],
                 "metrics": [
                     "dice_coef",
-                    "meanIoU",
+                    "mean_io_u",
                     "accuracy",
                     "binary_accuracy",
                     "binary_crossentropy",
@@ -213,127 +232,129 @@ class StatesData:
             "classification": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_loss_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "лучшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "segmentation": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_loss_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "loss по каждому классу",
                 },
                 "plot_metric_for_classes": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики по каждому классу",
                 },
                 "show_worst_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "худшие изображения по метрике",
                 },
                 "show_best_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "лучшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "regression": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
-                "plot_scatter": {"type": "bool", "default": False, "label": "скаттер"},
+                "plot_scatter": {"type": "bool", "default": True, "label": "скаттер"},
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
             "timeseries": {
                 "show_every_epoch": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "каждую эпоху",
                 },
-                "plot_loss_metric": {"type": "bool", "default": False, "label": "loss"},
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
                 "plot_metric": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "данные метрики",
                 },
                 "plot_autocorrelation": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "график автокорреляции",
                 },
                 "plot_pred_and_true": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики предсказания и истинного ряда",
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },
         }
+
+        self.paths_obj = TerraExchangeProject()
 
 
 class Exchange(StatesData, GuiExch):
@@ -349,12 +370,12 @@ class Exchange(StatesData, GuiExch):
         GuiExch.__init__(self)
         # data for output current state of model training process
         self.out_data = {
-            "stop_flag": False,
+            "stop_flag": True,
             "status_string": "",
             "progress_status": {
-                "percents": 100,
+                "percents": 0,
                 "progress_text": "",
-                "iter_count": 5,
+                "iter_count": 0,
             },
             "errors": "",
             "prints": [],
@@ -370,11 +391,12 @@ class Exchange(StatesData, GuiExch):
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
         self.start_layers = {}
-        self.dts = DTS(exch_obj=self)  # dataset init
         self.custom_datasets = []
-        self.custom_datasets_path = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+        self.custom_datasets_path = self.paths_obj.gd.datasets
+        self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
         self.dts_name = None
         self.task_name = ""
+        self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
         self.is_trained = False
         self.debug_verbose = 0
@@ -386,6 +408,8 @@ class Exchange(StatesData, GuiExch):
         self.shuffle = True
         self.epoch = 1
         self.optimizers = self._set_optimizers()
+        self.dir_paths = self.paths_obj.dir
+        self.gd_paths = self.paths_obj.gd
 
     @staticmethod
     def is_it_colab() -> bool:
@@ -546,6 +570,7 @@ class Exchange(StatesData, GuiExch):
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
+        # print(self.out_data)
 
     @staticmethod
     def _reformatting_graphics_data(mode: str, data: dict) -> list:
@@ -644,7 +669,7 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
-    def _prepare_dataset(self, dataset_name: str, source: str) -> tuple:
+    def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
         Args:
@@ -653,9 +678,10 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        self._reset_out_data()
         if source == "custom":
             self.dts = self._read_trds(dataset_name)
+        if source == "load":
+            self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self)
             gc.collect()
@@ -719,13 +745,13 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.out_data = {
             "stop_flag": False,
-            "status_string": "status_string",
+            "status_string": "",
             "progress_status": {
                 "percents": 0,
-                "progress_text": "No some progress",
-                "iter_count": None,
+                "progress_text": "",
+                "iter_count": 0,
             },
-            "errors": "error_string",
+            "errors": "",
             "prints": [],
             "plots": [],
             "scatters": [],
@@ -738,6 +764,25 @@ class Exchange(StatesData, GuiExch):
 
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
+
+    def _write_zip(self, write_path, file_list):
+        try:
+            zip_model = zipfile.ZipFile(write_path, "w")
+            for any_file in file_list:
+                file_path = os.path.join(self.dir_paths.modeling, any_file)
+                zip_model.write(file_path)
+            return ""
+        except Exception as e:
+            return e.__str__()
+
+    def _load_unzip(self, load_path, file_name):
+        try:
+            zip_model = zipfile.ZipFile(load_path, "r")
+            file_path = os.path.join(self.dir_paths.modeling, file_name)
+            zip_model.write(file_path)
+            return ""
+        except Exception as e:
+            return e.__str__()
 
     @staticmethod
     def _set_layers_list() -> list:
@@ -758,19 +803,39 @@ class Exchange(StatesData, GuiExch):
     def _set_current_task(self, task):
         self.task_name = task
 
-    def prepare_dataset(self, dataset_name: str, source: str = ""):
-        self.process_flag = "dataset"
-        return self._prepare_dataset(dataset_name=dataset_name, source=source)
+    def load_dataset(self, **kwargs):
+        self._reset_out_data()
+        dataset_name = kwargs.get('name', '')
+        dataset_link = kwargs.get('link', '')
+        dts_layer_count = kwargs.get('num_links', {})
+        if dts_layer_count:
+            inputs_count = dts_layer_count.get('inputs', 1)
+            outputs_count = dts_layer_count.get('outputs', 1)
+        if dataset_name:
+            self.dts.load_data(name=dataset_name, link=dataset_link)
+            self._set_dts_name(self.dts.name)
+            output = self.dts.get_parameters_dict()
+        else:
+            self.out_data["errors"] = 'Не указано наименование датасета'
+            output = {}
+        self.out_data["stop_flag"] = True
+        return output
 
-    def set_stop_training_flag(self):
-        """
-        Set stop_training_flag in True if STOP button in interface is clicked
-        """
-        self.stop_training_flag = True
+    def prepare_dataset(self, dataset_name: str = "", source: str = "", **kwargs):
+        self._reset_out_data()
+        self.process_flag = "dataset"
+        return self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+
+    def get_default_datasets_params(self):
+        return self.dts.get_parameters_dict()
 
     def set_callbacks_switches(self, task: str, switches: dict):
         for switch, value in switches.items():
             self.callback_show_options_switches_front[task][switch]["value"] = value
+
+    def set_paths(self, **kwargs):
+        paths = kwargs
+        print(paths)
 
     def print_progress_bar(self, data: tuple, stop_flag=False) -> None:
         """
@@ -884,11 +949,23 @@ class Exchange(StatesData, GuiExch):
         self._set_data("texts", data, stop_flag)
         pass
 
+    def show_current_epoch(self, epoch: int):
+        self.epoch = epoch + 1
+        pass
+
     def get_stop_training_flag(self):
         return self.stop_training_flag
 
     def get_datasets_data(self):
         return self._create_datasets_data()
+
+    def get_models(self):
+        output = []
+        files_for_unzipping = os.listdir(self.gd_paths.modeling)
+        for arch_files in files_for_unzipping:
+            if arch_files.endswith(".model"):
+                output.append(arch_files[:-6])
+        return output
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
@@ -918,11 +995,12 @@ class Exchange(StatesData, GuiExch):
     def get_optimizers(self):
         return self.optimizers
 
-    def get_model_plan(self, plan, model_name):
+    def get_model_plan(self, plan=None, model_name=""):
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
-        model_plan.plan = plan
+        model_plan.output_shape = {}
+        model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
         return model_plan.dict()
 
@@ -932,6 +1010,7 @@ class Exchange(StatesData, GuiExch):
             for _param_name, values in params.items():
                 optimizer_params[name][_param_name] = values.get("default")
         optimizer_kwargs = OptimizerParams(**optimizer_params)
+        print(optimizer_kwargs)
         return optimizer_kwargs.dict()
 
     def get_data(self):
@@ -941,39 +1020,89 @@ class Exchange(StatesData, GuiExch):
                 self.epoch / self.epochs
             ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
+            print(self.is_trained)
         return self.out_data
 
-    def start_training(self, model: bytes, **kwargs) -> None:
-        training = kwargs
-        model_file = tempfile.NamedTemporaryFile(prefix='model_', suffix='tmp.h5', delete=False)
+    def reset_training(self):
+        self.nn.nn_cleaner()
 
-        with open(model_file.name, 'wb') as f:
+    def start_training(self, model: bytes, **kwargs) -> None:
+        if self.stop_training_flag:
+            self.stop_training_flag = False
+        self.process_flag = "train"
+        self._reset_out_data()
+        training = kwargs
+
+        model_file = tempfile.NamedTemporaryFile(
+            prefix="model_", suffix="tmp.h5", delete=False
+        )
+        self.nn.training_path = training.get("pathname", "")
+
+        with open(model_file.name, "wb") as f:
             f.write(base64.b64decode(model))
 
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_file.name)
         model_file.close()
 
-        output_optimizer_params = {'op_name': "", 'op_kwargs': {}}
+        output_optimizer_params = {"op_name": "", "op_kwargs": {}}
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        epochs = training.get("epochs_count", 10)
+        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
-        optimizer_params = training.get('optimizer', {})
-        output_optimizer_params['op_name'] = optimizer_params.get('name')
-        for key, val in optimizer_params.get('params', {}).items():
-            output_optimizer_params['op_kwargs'].update(val)
+        optimizer_params = training.get("optimizer", {})
+        output_optimizer_params["op_name"] = optimizer_params.get("name")
+        for key, val in optimizer_params.get("params", {}).items():
+            output_optimizer_params["op_kwargs"].update(val)
 
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=epochs,
+            epochs=self.epochs,
             batch_size=batch_size,
-            optimizer_params=output_optimizer_params
+            optimizer_params=output_optimizer_params,
         )
-        self.nn.terra_fit(nn_model)
+        try:
+            self.nn.terra_fit(nn_model)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
+
+    # def start_training(self, model: bytes, **kwargs) -> dict:
+    #     training = Thread(target=self._start_training, name='TRAIN_PROCESS', daemon=False, args=(model,), kwargs=kwargs)
+    #     training.start()
+    #     self.is_trained = True
+    #     time.sleep(30)
+    #     self.stop_training()
+    #     # training.join()
+    #     self.is_trained = False
+    #     return {}
+
+    def stop_training(self):
+        self.stop_training_flag = True
+        self.out_data["stop_flag"] = True
+
+    def save_model(self, **kwargs):
+        model_name = kwargs.get("name")
+        is_overwrite = kwargs.get("overwrite")
+        write_model_path = os.path.join(self.gd_paths.modeling, f"{model_name}.model")
+        files_for_zipping = os.listdir(self.dir_paths.modeling)
+        is_write = True
+        message = ""
+        if is_overwrite or not os.path.exists(write_model_path):
+            message = self._write_zip(write_model_path, files_for_zipping)
+            if message:
+                is_write = False
+        else:
+            if os.path.exists(write_model_path):
+                message = "This model is exists"
+                is_write = False
+        return is_write, message
+
+
+
 
     #
     # def start_evaluate(self):

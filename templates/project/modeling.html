@@ -3,14 +3,14 @@
 {% load static %}
 
 {% block css_block %}
-<link rel="stylesheet" href="{% static 'css/project/modeling.css' %}"/>
+<link rel="stylesheet" href="{% static 'css/project/modeling.css' %}?rnd=4w598totrf"/>
 {% endblock css_block %}
 
 {% block js_block %}
 <script type="text/javascript" src="{% static 'js/project/d3/d3.v5.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/project/d3/index.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/project/d3/d3-graphviz.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/project/modeling.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/project/modeling.js' %}?rnd=4w598totrf"></script>
 {% endblock js_block %}
 
 {% block content_block %}
@@ -18,29 +18,35 @@
     <div class="wrapper">
         <ul class="menu-section models">
             <li data-type="load">
-                <span><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+                <span title="Загрузить модель"><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
             </li>
-            <li data-type="save" disabled="disabled">
+            <li data-type="save_model" disabled="disabled">
+                <span title="Сохранить модель"><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="save" disabled="disabled" class="hidden">
                 <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
             </li>
             <li data-type="validation">
-                <span><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+                <span title="Валидация"><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+            </li>
+            <li data-type="clear">
+                <span title="Очистить"><img src="{% static 'imgs/clear-model.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section layers">
             <li data-type="input" disabled="disabled">
-                <span><img src="{% static 'imgs/model-menu-3.svg' %}" alt="" /></span>
+                <span title="Входящий слой"><img src="{% static 'imgs/model-menu-3.svg' %}" alt="" /></span>
             </li>
             <li data-type="middle">
-                <span><img src="{% static 'imgs/model-menu-4.svg' %}" alt="" /></span>
+                <span title="Промежуточный слой"><img src="{% static 'imgs/model-menu-4.svg' %}" alt="" /></span>
             </li>
             <li data-type="output" disabled="disabled">
-                <span><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
+                <span title="Исходящий слой"><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
             </li>
         </ul>
         <ul class="menu-section others">
-            <li data-type="clear" disabled="disabled">
-                <span><img src="{% static 'imgs/close.svg' %}" alt="" /></span>
+            <li data-type="keras"{% if not request.terra_project.model_validated %} disabled="disabled"{% endif %}>
+                <span title="Код на Keras"><img src="{% static 'imgs/code.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -50,12 +56,7 @@
     <div class="wrapper">
         <div class="canvas-container">
             <div class="canvas">
-                <svg>
-                    <g id="canvas-container">
-                        <g id="canvas-lines"></g>
-                        <g id="canvas-nodes"></g>
-                    </g>
-                </svg>
+                <svg><g id="canvas-container"><g id="canvas-lines"></g><g id="canvas-nodes"></g></g></svg>
             </div>
             <ul class="zoom">
                 <li class="inc" id="zoom-inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
@@ -125,14 +126,58 @@
         <div class="model-arch">
             <div class="wrapper hidden">
                 <div class="modal-arch-info">
-                    <div class="model-arch-info-param">Name: <span></span></div>
-                    <div class="model-arch-info-param">input_shape: <span></span></div>
-                    <div class="model-arch-info-param">datatype: <span></span></div>
+                    <div class="model-arch-info-param name">Name: <span></span></div>
+                    <div class="model-arch-info-param input_shape">Input shape: <span></span></div>
+                    <div class="model-arch-info-param datatype">Datatype: <span></span></div>
                 </div>
                 <div class="model-arch-img"><img src="" alt="" /></div>
                 <div class="model-save-arch-btn"><button>Загрузить</button></div>
             </div>
         </div>
+    </div>
+</div>
+<div id="modal-window-keras-code" class="modal-window-container">
+    <div class="wrapper custom-scrollbar-wrapper">
+        <div class="content"></div>
+    </div>
+    <div class="action">
+        <span class="clipboard" title="Скопировать код в буфер обмена"><img src="{% static 'imgs/clipboard.svg' %}" alt="" /></span><div class="result"></div>
+    </div>
+</div>
+<div id="modal-window-save-model" class="modal-window-container">
+    <div class="wrapper">
+        <form>
+            <div class="inner form-inline-label">
+                <div class="field-form">
+                    <label for="field_form-save_model_name">Название модели</label>
+                    <input type="text" id="field_form-save_model_name" name="name" />
+                </div>
+                <div class="field-form field-inline field-reverse">
+                    <label for="field_form-save_model_overwrite">Перезаписать</label>
+                    <div class="checkout-switch">
+                        <input type="checkbox" id="field_form-save_model_overwrite" name="overwrite" />
+                        <span class="switcher"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="actions-form">
+                <div class="save"><button>Сохранить</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+<div id="modal-window-clear-model" class="modal-window-container">
+    <div class="wrapper">
+        <form>
+            <div class="inner">
+                <div class="field-form">
+                    <label>Вы действительно хотите очистить модель?</label>
+                </div>
+            </div>
+            <div class="actions-form">
+                <div class="clear"><button>Да</button></div><div class="cancel"><button>Нет</button></div>
+            </div>
+        </form>
     </div>
 </div>
 <div id="modal-window-warning" class="modal-window-container">

@@ -1,5 +1,11 @@
+import base64
 import copy
+import os
+import tempfile
+
 import tensorflow as tf
+
+import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
 import numpy as np
@@ -8,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.01
+__version__ = 0.04
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -24,12 +30,14 @@ class CustomCallback(keras.callbacks.Callback):
             samples_x: dict = None,
             samples_y: dict = None,
             batch_size: int = None,
-            epochs: int = None):
+            epochs: int = None,
+            save_model_path: str = "./",
+            model_name: str = "noname"):
 
         """
         Init for Custom callback
         Args:
-            metrics (list):             список используемых метрик: по умолчанию [], что соответсвует 'loss'
+            params (list):              список используемых параметров
             step int():                 шаг вывода хода обучения, по умолчанию step = 1
             show_final (bool):          выводить ли в конце обучения график, по умолчанию True
             dataset (DTS):              экземпляр класса DTS
@@ -49,10 +57,12 @@ class CustomCallback(keras.callbacks.Callback):
         self.show_final = show_final
         self.Exch = exchange
         self.DTS = dataset
-
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
         self.metrics = []
         self.loss = []
         self.callbacks = []
+        self.callbacks_name = []
         self.task_name = []
         self.num_classes = []
         self.y_Scaler = []
@@ -63,8 +73,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.y_true = samples_y
         self.batch_size = batch_size
         self.epochs = epochs
+        self.batch = 0
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
-        # self.samples_chek()
+        self.msg_epoch = ""
         self.y_pred = []
         self.epoch = 0
         self.history = {}
@@ -153,33 +164,30 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        print("self.callbacks in Customcallbacks", self.callbacks)
+        self.Exch.show_text_data(
+            f"Added callbacks: {self.callbacks_name}"
+        )
 
-    # def samples_chek(self):
-    #     """
-    #     Prepare samples x_Val and y_Val for evaluate
-    #     Returns:
-    #         None:
-    #     """
-    #     for input_key in self.x_Val.keys():
-    #
-    #         if self.x_Val is not None:
-    #             self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-    #         else:
-    #             self.Exch.print_error(('Error',
-    #                                    f'No x_Val in {input_key} -> Failed'))
-    #
-    #     for output_key in self.y_true.keys():
-    #
-    #         if self.DTS.Y[output_key]['data'][1] is not None:
-    #             self.y_true.update({output_key: self.DTS.Y[output_key]['data'][1]})
-    #         else:
-    #             self.Exch.print_error(('Error',
-    #                                    f'No y_Val in {output_key} -> Failed'))
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end_last"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}.h5"
+        )
+        self.model.save(file_path_model)
+        self.Exch.print_2status_bar(
+            ("Info", f"Model last is saved as {file_path_model}")
+        )
+        pass
 
     def prepare_callbacks(
-        self, task_type: str = "", metrics: list = None, num_classes: int = None
-    ) -> None:
+            self, task_type: str = "", metrics: list = None, num_classes: int = None,
+            clbck_options: dict = {}) -> None:
         """
         if terra in raw mode  - setting callback if its set
         if terra with django - checking switches and set callback options from switches
@@ -194,8 +202,6 @@ class CustomCallback(keras.callbacks.Callback):
             callback_kwargs["metrics"] = copy.copy(metrics)
         if task_type == "classification" or task_type == "segmentation":
             callback_kwargs["num_classes"] = num_classes
-
-        clbck_options = self.Exch.get_callback_show_options_from_django(task_type)
 
         for option_name, option_value in clbck_options.items():
 
@@ -245,11 +251,11 @@ class CustomCallback(keras.callbacks.Callback):
                         callback_kwargs["show_worst"] = True
                     else:
                         callback_kwargs["show_worst"] = False
-                    # elif option_name == 'show_best_images':
-                    #     if option_value:
-                    #         self.callback_kwargs['show_best'] = True
-                    #     else:
-                    #         self.callback_kwargs['show_best'] = False
+                elif option_name == 'show_best_images':
+                    if option_value:
+                        callback_kwargs['show_best'] = True
+                    else:
+                        callback_kwargs['show_best'] = False
 
         if task_type == 'regression':
             for option_name, option_value in clbck_options.items():
@@ -277,6 +283,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.clbck_object.append(clbck_object)
         initialized_callback = clbck_object(**callback_kwargs)
         self.callbacks.append(initialized_callback)
+        self.callbacks_name.append(initialized_callback.__name__)
 
         pass
 
@@ -293,8 +300,9 @@ class CustomCallback(keras.callbacks.Callback):
             self.prepare_callbacks(
                 task_type=self.clbck_params[_key]["task"].value,
                 metrics=self.clbck_params[_key]["metrics"],
-                num_classes=self.clbck_params.setdefault(_key)["num_classes"]
-                )
+                num_classes=self.clbck_params.setdefault(_key)["num_classes"],
+                clbck_options=self.clbck_params[_key]["callbacks"],
+            )
 
     def _estimate_step(self, current, start, now):
         if current:
@@ -303,24 +311,29 @@ class CustomCallback(keras.callbacks.Callback):
             _time_per_unit = (now - start)
         return _time_per_unit
 
-    def update_progress(self, target, current, start_time, finalize=None):
+    def update_progress(self, target, current, start_time, finalize=False):
         """
         Updates the progress bar.
         """
-        _now_time = time.time()
+        if finalize:
+            _now_time = time.time()
+            eta = _now_time - start_time
+        else:
+            _now_time = time.time()
 
-        time_per_unit = self._estimate_step(current, start_time, _now_time)
+            time_per_unit = self._estimate_step(current, start_time, _now_time)
 
-        eta = time_per_unit * (target - current)
+            eta = time_per_unit * (target - current)
+
         if eta > 3600:
-            eta_format = '%d:%02d:%02d' % (eta // 3600,
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
                                            (eta % 3600) // 60, eta % 60)
         elif eta > 60:
-            eta_format = '%d:%02d' % (eta // 60, eta % 60)
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
         else:
-            eta_format = '%ds' % eta
+            eta_format = '%d сек' % eta
 
-        info = ' - ETA: %s' % eta_format
+        info = ' %s' % eta_format
         return info
 
     def on_train_begin(self, logs=None):
@@ -330,23 +343,32 @@ class CustomCallback(keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self._time_first_step = time.time()
-        msg = f'Epoch {epoch + 1}/{self.epochs}:'
-        # print(msg)
-        self.Exch.show_current_epoch(epoch)
-        pass
 
-    # def on_train_batch_begin(self, batch, logs=None):
-    #     self._time_first_step = time.time()
+    def on_batch_begin(self, batch, logs=None):
+        stop = self.Exch.get_stop_training_flag()
+        if stop:
+            self.model.stop_training = True
+            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
+            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
 
     def on_train_batch_end(self, batch, logs=None):
-        msg = f'batch {batch}/{self.num_batches}: {self.update_progress(self.num_batches, batch, self._time_first_step)}'
-        self.Exch.print_2status_bar(('Progress: ', msg))
+        msg_batch = f'Батч {batch}/{self.num_batches}'
+        msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
+                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+        msg_progress_end = f'Расчетное время окончания:' \
+                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time)}, '
+        msg_progress_start = f'Время выполнения:' \
+                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time, finalize=True)}, '
+        self.batch += 1
+        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
+                                     msg_progress_end + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
+        self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
         if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
@@ -360,6 +382,7 @@ class CustomCallback(keras.callbacks.Callback):
                     y_pred=self.y_pred[i],
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
                 )
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
@@ -370,30 +393,36 @@ class CustomCallback(keras.callbacks.Callback):
                     y_pred=self.y_pred,
                     y_true=self.y_true[output_key],
                     loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
                 )
+        self.Exch.show_current_epoch(epoch)
+        self.save_lastmodel()
 
-        # print(self.update_progress(self.epochs, epoch, self._start_time))
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
+        self.save_lastmodel()
+        self.Exch.print_2status_bar(
+            ('Затрачено времени на обучение: ',
+             self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)))
 
 
 class ClassificationCallback:
     """Callback for classification"""
 
     def __init__(
-        self,
-        metrics=[],
-        step=1,
-        class_metrics=[],
-        num_classes=2,
-        data_tag="images",
-        show_worst=False,
-        show_best=False,
-        show_final=True,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics=[],
+            step=1,
+            class_metrics=[],
+            num_classes=2,
+            data_tag="images",
+            show_worst=False,
+            show_best=False,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -408,7 +437,7 @@ class ClassificationCallback:
         Returns:
             None
         """
-        # super().__init__()
+        self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
         self.data_tag = data_tag
@@ -452,7 +481,7 @@ class ClassificationCallback:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
-                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
@@ -485,7 +514,6 @@ class ClassificationCallback:
                         val_metric_name = f"val_{metric_name}"
                     else:
                         val_metric_name = f"val_{metric_name}"
-                    # if metric_name in self.class_metrics:
                     classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
                     xlabel = "epoch"
                     ylabel = val_metric_name
@@ -548,7 +576,8 @@ class ClassificationCallback:
             title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
                     f" Actual: {classes_labels[true_idx]}"
             data.append((image, title))
-        self.Exch.show_image_data(data)
+        out_data = {'images': image_to_base64(data)}
+        self.Exch.show_image_data(out_data)
 
     # # Распознаём тестовую выборку и выводим результаты
     # def recognize_classes(self):
@@ -670,18 +699,15 @@ class ClassificationCallback:
 
         return metric_classes
 
-    # def epoch_begin(self, epoch: int=0):
-    #     self.epoch = epoch
-    #     pass
-
     def epoch_end(
-        self,
-        epoch,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
+            msg_epoch: str = None,
     ):
         """
         Returns:
@@ -754,9 +780,8 @@ class ClassificationCallback:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.plot_result(output_key)
 
-        # self.Exch.show_text_data(self.predict_cls)
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
         # return
 
@@ -772,17 +797,17 @@ class SegmentationCallback:
     """Callback for segmentation"""
 
     def __init__(
-        self,
-        metrics=[],
-        step=1,
-        num_classes=2,
-        class_metrics=[],
-        data_tag="images",
-        show_worst=False,
-        show_best=False,
-        show_final=True,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics=[],
+            step=1,
+            num_classes=2,
+            class_metrics=[],
+            data_tag="images",
+            show_worst=False,
+            show_best=False,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for classification callback
@@ -797,7 +822,7 @@ class SegmentationCallback:
         Returns:
             None
         """
-        # super().__init__()
+        self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
         self.data_tag = data_tag
@@ -811,6 +836,7 @@ class SegmentationCallback:
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
+        self.max_accuracy_value = 0
         self.idx = 0
         self.num_classes = num_classes  # количество классов
         self.acls_lst = [
@@ -840,7 +866,7 @@ class SegmentationCallback:
                 if not isinstance(metric_name, str):
                     metric_name = metric_name.__name__
 
-                if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+                if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f"{output_key}_{metric_name}"
                     val_metric_name = f"val_{metric_name}"
@@ -865,20 +891,21 @@ class SegmentationCallback:
                 ]
 
             # if self.class_metrics:
-            #     for idx, metric_name in enumerate(self.clbck_metrics):
+            #     for metric_name in self.class_metrics:
             #         if not isinstance(metric_name, str):
             #             metric_name = metric_name.__name__
-            #         val_metric_name = f'val_{metric_name}'
-            #         if metric_name in self.class_metrics:
-            #             classes_title = f'{val_metric_name} of {self.num_classes} classes. {msg_epoch}'
-            #             xlabel = 'epoch'
-            #             ylabel = val_metric_name
-            #             labels = (classes_title, xlabel, ylabel)
-            #             plot_data[labels] = [
-            #                 [list(range(len(self.predict_cls[val_metric_name][idx][j]))),
-            #                  self.predict_cls[val_metric_name][idx][j],
-            #                  f"{val_metric_name} class {self.dataset.classes_names[j]}"]
-            #                 for j in range(self.num_classes)]
+            #         if len(self.dataset.Y) > 1:
+            #             metric_name = f'{output_key}_{metric_name}'
+            #             val_metric_name = f"val_{metric_name}"
+            #         else:
+            #             val_metric_name = f"val_{metric_name}"
+            #         classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+            #         xlabel = "epoch"
+            #         ylabel = val_metric_name
+            #         labels = (classes_title, xlabel, ylabel)
+            #         plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
+            #                               self.predict_cls[val_metric_name][j],
+            #                               f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -907,7 +934,7 @@ class SegmentationCallback:
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
             )
-        colored_mask = np.array(colored_mask)
+        colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
     def _dice_coef(self, smooth=1.0):
@@ -966,7 +993,11 @@ class SegmentationCallback:
             title = "Predicted mask"
             pred_mask_data.append((image, title))
 
-        data = image_data + true_mask_data + pred_mask_data
+        data = {
+            'images': image_to_base64(image_data),
+            'ground_truth_masks': image_to_base64(true_mask_data),
+            'predicted_mask': image_to_base64(pred_mask_data)
+        }
         self.Exch.show_image_data(data)
 
     # Распознаём тестовую выборку и выводим результаты
@@ -992,8 +1023,8 @@ class SegmentationCallback:
                 truezero = np.abs(truesegments[i] - testsegment)
                 predzero = np.abs(predsegments[i] - testsegment)
                 summ_val += (
-                    testsegment.size - np.count_nonzero(truezero + predzero)
-                ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
+                                    testsegment.size - np.count_nonzero(truezero + predzero)
+                            ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
             acc_val = summ_val / self.y_true.shape[0]
             self.metric_classes.append(acc_val)
 
@@ -1032,25 +1063,20 @@ class SegmentationCallback:
             loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
             self.metric_classes.append(loss)
 
-    # def epoch_begin(self, epoch, logs=None):
-    #     self.epoch = epoch
-    #     self.Exch.show_current_epoch(epoch)
-    #     pass
-
     def epoch_end(
-        self,
-        epoch: int = None,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch: int = None,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
+            msg_epoch: str = None,
     ):
         """
         Returns:
             {}:
         """
-        max_accuracy_value = 0
         self.epoch = epoch
         self.y_pred = y_pred
         self.y_true = y_true
@@ -1070,8 +1096,8 @@ class SegmentationCallback:
                 metric_name = f"{self.clbck_metrics[metric_idx]}"
                 val_metric_name = f"val_{metric_name}"
 
-            if logs[val_metric_name] > max_accuracy_value:
-                max_accuracy_value = logs[val_metric_name]
+            if logs[val_metric_name] > self.max_accuracy_value:
+                self.max_accuracy_value = logs[val_metric_name]
                 self.idx = metric_idx
             # собираем в словарь по метрикам
             self.accuracy_metric[metric_idx].append(logs[metric_name])
@@ -1112,7 +1138,7 @@ class SegmentationCallback:
                 self.plot_result(output_key=output_key)
 
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1147,7 +1173,7 @@ class TimeseriesCallback:
         Returns:
             None
         """
-        super().__init__()
+        self.__name__ = "Callback for timeseries"
         if metrics is None:
             metrics = ["loss"]
         self.metrics = metrics
@@ -1267,13 +1293,14 @@ class TimeseriesCallback:
         return correlation_data
 
     def epoch_end(
-        self,
-        epoch: int = None,
-        logs: dict = None,
-        output_key: str = None,
-        y_pred: list = None,
-        y_true: dict = None,
-        loss: str = None,
+            self,
+            epoch: int = None,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
+            msg_epoch: str = None,
     ):
         self.epoch = epoch
         self.y_pred = y_pred
@@ -1316,7 +1343,7 @@ class TimeseriesCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1336,14 +1363,14 @@ class TimeseriesCallback:
 
 class RegressionCallback:
     def __init__(
-        self,
-        metrics,
-        step=1,
-        data_tag="text",
-        show_final=True,
-        plot_scatter=False,
-        dataset=DTS(),
-        exchange=Exchange(),
+            self,
+            metrics,
+            step=1,
+            data_tag="text",
+            show_final=True,
+            plot_scatter=False,
+            dataset=DTS(),
+            exchange=Exchange(),
     ):
         """
         Init for regression callback
@@ -1356,7 +1383,7 @@ class RegressionCallback:
         Returns:
             None
         """
-        super().__init__()
+        self.__name__ = "Callback for regression"
         if metrics is None:
             metrics = ["loss"]
         self.step = step
@@ -1415,8 +1442,8 @@ class RegressionCallback:
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
             value = [
-                (range(loss_len), self.history[showmet], showmet),
-                (range(loss_len), self.history[vshowmet], vshowmet),
+                (list(range(loss_len)), self.history[showmet], showmet),
+                (list(range(loss_len)), self.history[vshowmet], vshowmet),
             ]
             data.update({key: value})
             self.exchange.show_plot_data(data)
@@ -1441,7 +1468,8 @@ class RegressionCallback:
             output_key: str = None,
             y_pred: list = None,
             y_true: dict = None,
-            loss: str = None
+            loss: str = None,
+            msg_epoch: str = None,
     ):
 
         self.epoch = epoch
@@ -1484,7 +1512,7 @@ class RegressionCallback:
                 self.plot_result(output_key=output_key)
 
         self.exchange.show_text_data(
-            f"Epoch {epoch:03d}{epoch_metric_data}{epoch_val_metric_data}"
+            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         )
         pass
 
@@ -1495,3 +1523,23 @@ class RegressionCallback:
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
+
+
+def image_to_base64(image_as_array):
+    output = []
+
+    for i, (image, title) in enumerate(image_as_array):
+        if image.dtype == 'int32':
+            image = image.astype(np.uint8)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        try:
+            plt.imsave(temp_image.name, image, cmap='Greys')
+        except Exception as e:
+            print(e.__str__())
+            plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='gray')
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read())
+        output.append({'image': output_image, 'title': title})
+        temp_image.close()
+        os.remove(temp_image.name)
+    return output

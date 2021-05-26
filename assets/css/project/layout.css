@@ -104,7 +104,7 @@ header > .name-experiment {
 
 /* user */
 header > .user > * {
-    margin:0 20px 0 0;
+    margin:0 10px 0 0;
 }
 header > .user > :last-child {
     margin-right:10px;
@@ -121,7 +121,9 @@ header > .user > .item > .icon > i {
     background-size:contain;
     cursor:pointer;
     user-select:none;
-    border-radius:50%;
+}
+header > .user > .item.project > .icon > i {
+    background-size:24px 24px;
 }
 header > .user > .item > .menu {
     display:none;
@@ -303,41 +305,6 @@ main > .container > .properties > .wrapper .mCSB_container {
 .params-container .params-item {
     padding:20px 20px 20px 0;
 }
-
-.params-item > .params-menu{
-    background-color: #0E1621;
-    line-height: 1.25;
-    margin: -20px -20px 10px -20px;
-    padding: 1px;
-    padding-bottom: 0;
-    font-size: .75rem;
-    user-select: none;
-}
-
-.params-menu > ul{
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    display: flex;
-    justify-content: space-around;
-}
-
-.params-menu > ul > li{
-    width: 50%;
-    text-align: center;
-    padding: 5px;
-    border-radius: 4px;
-}
-
-.flex{
-    display: flex;
-}
-
-.active-menu{
-    background-color: #17212B;
-}
-
 .params-container .params-item:first-child {
     padding-top:0;
 }
@@ -381,7 +348,6 @@ main > .container > .properties > .wrapper .mCSB_container {
 .params-container .params-item.collapsable.collapsed > .params-title:after {
     transform:rotate(0);
 }
-
 .field-form > label {
     display:block;
     margin:0 0 10px 0;
@@ -617,6 +583,9 @@ footer > .state > .wrapper:before {
 .toolbar > .wrapper > .menu-section > li {
 	position:relative;
 }
+.toolbar > .wrapper > .menu-section > li.hidden {
+    display:none;
+}
 .toolbar > .wrapper > .menu-section > li > span {
     display:block;
 	padding:8px;
@@ -624,7 +593,7 @@ footer > .state > .wrapper:before {
 	cursor:pointer;
 }
 .toolbar > .wrapper > .menu-section > li[disabled=disabled] > span {
-	opacity:.5;
+	opacity:.1;
 	cursor:default;
 }
 .toolbar > .wrapper > .menu-section > li > span > img {
@@ -657,4 +626,131 @@ footer > .state > .wrapper:before {
     cursor:pointer;
     transition:color .3s ease-in-out, background-color .3s ease-in-out;
 	user-select:none;
+}
+
+#modal-window-project-save form,
+#modal-window-project-new form {
+	padding:20px;
+}
+#modal-window-project-save form .field-inline.field-reverse > .checkout-switch {
+	margin-left:0;
+}
+#modal-window-project-save form > .inner,
+#modal-window-project-new form > .inner {
+	margin-bottom:0;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:flex-end;
+    -ms-flex-line-pack:end;
+    align-content:flex-end;
+    -webkit-box-align:end;
+    -moz-box-align:end;
+    -webkit-align-items:flex-end;
+    -ms-flex-align:end;
+    align-items:flex-end;
+}
+#modal-window-project-save form > .inner > *,
+#modal-window-project-new form > .inner > * {
+	margin-bottom:0 !important;
+}
+#modal-window-project-new form > .inner > .field-form > label {
+	margin:0;
+}
+#modal-window-project-save form > .inner > .field-form:first-child {
+    -webkit-box-ordinal-group:1;
+    -moz-box-ordinal-group:1;
+    -webkit-order:0;
+    -ms-flex-order:0;
+    order:0;
+    -webkit-box-flex:1;
+    -moz-box-flex:1;
+    -webkit-flex:1 1 auto;
+    -ms-flex:1 1 auto;
+    flex:1 1 auto;
+    -webkit-align-self:auto;
+    -ms-flex-item-align:auto;
+    align-self:auto;
+}
+#modal-window-project-save form > .inner > .field-form {
+	margin-bottom:0 !important;
+}
+#modal-window-project-save form > .inner > .field-inline {
+	padding-left:20px;
+	margin-bottom:14px !important;
+}
+#modal-window-project-save form > .inner > .field-inline.field-reverse > label {
+	padding-right:0;
+}
+#modal-window-project-save form > .actions-form {
+	margin-top:20px;
+}
+#modal-window-project-new form > .actions-form {
+	margin:20px -2px 0 -2px;
+}
+#modal-window-project-new form > .actions-form > * {
+	display:inline-block;
+	width:50%;
+	margin:0;
+	padding:0 2px;
+	vertical-align:top;
+}
+#modal-window-project-load > .models-data {
+    height:100%;
+}
+#modal-window-project-load > .models-data > .models-list {
+    height:100%;
+    padding:20px 0;
+}
+#modal-window-project-load > .models-data > .models-list > div {
+    height:100%;
+}
+#modal-window-project-load > .models-data > .models-list .loaded-list {
+	list-style:none;
+	padding:0 20px 0 0;
+}
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span {
+	display:block;
+	line-height:1;
+	padding:10px 20px 10px 48px;
+	position:relative;
+	color:#fff;
+	font-size:.875rem;
+	text-overflow:ellipsis;
+	border-radius:4px;
+	cursor:pointer;
+	user-select:none;
+	overflow:hidden;
+	transition:background-color .3s ease-in-out, color .3s ease-in-out;
+}
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:before {
+	display:block;
+	content:'';
+	width:18px;
+	height:18px;
+	margin:-10px 0 0 0;
+	position:absolute;
+	left:20px;
+	top:50%;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
+	transition:background-image .3s ease-in-out;
 }

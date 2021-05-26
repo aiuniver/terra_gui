@@ -3,4 +3,7 @@ django-environ==0.4.5
 djangorestframework==3.12.4
 pymorphy2==0.9.1
 dill==0.3.3
-pydantic==1.8.1
+pydantic>=1.8.2
+cairosvg==2.5.2
+PyYAML==5.4.1
+zipfile37==0.1.3

@@ -4,7 +4,73 @@
 (($) => {
 
 
+    let training_toolbar, training_params, training_results;
+
+
     $.fn.extend({
+
+
+        TrainingToolbar: function() {
+
+            if (!this.length) return this;
+
+            Object.defineProperty(this, "items", {
+                get: () => {
+                    return this.find(".menu-section > li");
+                }
+            });
+
+            Object.defineProperty(this, "btn", {
+                get: () => {
+                    return {
+                        "charts":this.find(".menu-section > li[data-type=charts]")[0],
+                        "images":this.find(".menu-section > li[data-type=images]")[0],
+                        "texts":this.find(".menu-section > li[data-type=texts]")[0],
+                        "scatters":this.find(".menu-section > li[data-type=scatters]")[0],
+                    };
+                }
+            });
+
+            this.items.children("span").bind("click", (event) => {
+                event.preventDefault();
+                let item = $(event.currentTarget).parent()[0];
+                if (!item.disabled) item.active = !item.active;
+            });
+
+            this.items.each((index, item) => {
+                Object.defineProperty(item, "disabled", {
+                    set: (value) => {
+                        if (value) {
+                            $(item).attr("disabled", "disabled");
+                            item.active = false;
+                        } else {
+                            $(item).removeAttr("disabled");
+                        }
+                    },
+                    get: () => {
+                        return item.hasAttribute("disabled");
+                    }
+                });
+                Object.defineProperty(item, "active", {
+                    set: (value) => {
+                        if (value) {
+                            $(item).addClass("active");
+                            training_results.children(`.${$(item).data("type")}`).removeClass("hidden");
+                        } else {
+                            $(item).removeClass("active");
+                            training_results.children(`.${$(item).data("type")}`).addClass("hidden");
+                        }
+                        $(item).find("img").attr("src", `/assets/imgs/training-${$(item).data("type")}${value ? "-active" : ""}.svg`);
+                    },
+                    get: () => {
+                        return $(item).hasClass("active");
+                    }
+                });
+            });
+
+            return this;
+
+        },
 
 
         TrainingParams: function() {
@@ -19,7 +85,8 @@
                 _field_output_loss = $(".field_form-output_loss"),
                 _params_optimizer_extra = $(".params-optimizer-extra"),
                 _action_training = $(".params-container .actions-form > .training > button"),
-                _action_evaluate = $(".params-container .actions-form > .evaluate > button");
+                _action_stop = $(".params-container .actions-form > .stop > button"),
+                _action_reset = $(".params-container .actions-form > .reset > button");
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -34,11 +101,6 @@
             Object.defineProperty(this, "validate", {
                 set: (value) => {
                     _validate = value;
-                    if (value) {
-                        _action_training.attr("disabled", "disabled");
-                    } else {
-                        _action_training.removeAttr("disabled");
-                    }
                 },
                 get: () => {
                     return _validate;
@@ -147,9 +209,72 @@
                 }
             }).trigger("change");
 
+            _action_stop.bind("click", (event) => {
+                event.preventDefault();
+                window.ExchangeRequest(
+                    "stop_training",
+                    (success, data) => {
+                        if (success) {
+                            this.validate = false;
+                            _action_training.removeAttr("disabled");
+                            _action_stop.attr("disabled", "disabled");
+                            _action_reset.removeAttr("disabled");
+                        }
+                    }
+                )
+            });
+
+            _action_reset.bind("click", (event) => {
+                event.preventDefault();
+                window.StatusBar.clear();
+                window.ExchangeRequest(
+                    "reset_training",
+                    (success, data) => {
+                        if (success) {
+                            this.validate = false;
+                            training_results.charts = [];
+                            training_results.images = [];
+                            training_results.texts = [];
+                            training_results.scatters = [];
+                            window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                        }
+                    }
+                );
+            });
+
+            this.get_data_response = (success, data) => {
+                if (success) {
+                    _action_training.attr("disabled", "disabled");
+                    _action_stop.removeAttr("disabled");
+                    _action_reset.attr("disabled", "disabled");
+                    window.StatusBar.message(data.data.status_string);
+                    window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                    training_results.charts = data.data.plots;
+                    training_results.images = data.data.images;
+                    training_results.texts = data.data.texts;
+                    training_results.scatters = data.data.scatters;
+                    if (data.stop_flag) {
+                        this.validate = false;
+                        _action_training.removeAttr("disabled");
+                        _action_stop.attr("disabled", "disabled");
+                        _action_reset.removeAttr("disabled");
+                    }
+                } else {
+                    this.validate = false;
+                    _action_training.removeAttr("disabled");
+                    _action_stop.attr("disabled", "disabled");
+                    window.StatusBar.message(data.error, false)
+                }
+            }
+
             this.bind("submit", (event) => {
                 event.preventDefault();
                 if (!this.validate) {
+                    _action_training.attr("disabled", "disabled");
+                    _action_stop.removeAttr("disabled");
+                    _action_reset.attr("disabled", "disabled");
                     this.validate = true;
                     window.StatusBar.clear();
                     let data = $(event.currentTarget).serializeObject();
@@ -189,24 +314,173 @@
                         }
                         data.outputs[output_name].callbacks = callbacks;
                     }
+                    data.checkpoint.save_best = data.checkpoint.save_best !== undefined;
+                    data.checkpoint.save_weights = data.checkpoint.save_weights !== undefined;
                     window.ExchangeRequest(
-                        "start_training",
-                        (success, data) => {
-                            this.validate = false;
+                        "before_start_training",
+                        (success, output) => {
                             if (success) {
-                                if (data.data.validation_errors) {
+                                if (output.data.validated) {
+                                    _action_stop.removeAttr("disabled");
+                                    window.ExchangeRequest("start_training");
+                                    window.ExchangeRequest("get_data", this.get_data_response);
+                                } else {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
-                                } else {
-                                    console.log("SUCCESS:", success);
-                                    console.log("DATA:", data);
                                 }
                             } else {
-                                window.StatusBar.message(data.error, false);
+                                this.validate = false;
+                                _action_training.removeAttr("disabled");
+                                _action_stop.attr("disabled", "disabled");
+                                window.StatusBar.message(output.error, false);
                             }
                         },
                         data
                     )
+                }
+            });
+
+            return this;
+
+        },
+
+
+        TrainingResults: function() {
+
+            if (!this.length) return this;
+
+            Object.defineProperty(this, "charts", {
+                get: () => {
+                    return this.children(".charts").children(".content");
+                },
+                set: (charts) => {
+                    if (charts.length) {
+                        let disabled = training_toolbar.btn.charts.disabled;
+                        training_toolbar.btn.charts.disabled = false;
+                        if (disabled) training_toolbar.btn.charts.active = true;
+                    } else {
+                        training_toolbar.btn.charts.disabled = true;
+                    }
+                    this.charts.children(".inner").html(charts.length ? '<div class="wrapper"></div>' : '');
+                    charts.forEach((item) => {
+                        let div = $('<div class="item"><div></div></div>');
+                        this.charts.children(".inner").children(".wrapper").append(div);
+                        Plotly.newPlot(
+                            div.children("div")[0],
+                            item.list,
+                            {
+                                autosize:true,
+                                margin:{
+                                    l:70,
+                                    r:20,
+                                    t:60,
+                                    b:20,
+                                    pad:0,
+                                    autoexpand:true,
+                                },
+                                font:{
+                                    color:"#A7BED3"
+                                },
+                                showlegend:true,
+                                legend:{
+                                    orientation:"h",
+                                    font:{
+                                        family:"Open Sans",
+                                        color:"#A7BED3",
+                                    }
+                                },
+                                paper_bgcolor:"transparent",
+                                plot_bgcolor:"transparent",
+                                title:item.title,
+                                xaxis:{
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                                yaxis:{
+                                    title:item.yaxis.title,
+                                    showgrid:true,
+                                    zeroline:false,
+                                    linecolor:"#A7BED3",
+                                    gridcolor:"#0E1621",
+                                    gridwidth:1,
+                                },
+                            },
+                            {
+                                responsive:true,
+                                displayModeBar:false,
+                            }
+                        );
+                    });
+                }
+            });
+
+            Object.defineProperty(this, "images", {
+                get: () => {
+                    return this.children(".images").children(".content");
+                },
+                set: (images) => {
+                    if (Object.keys(images).length) {
+                        let disabled = training_toolbar.btn.images.disabled;
+                        training_toolbar.btn.images.disabled = false;
+                        if (disabled) training_toolbar.btn.images.active = true;
+                    } else {
+                        training_toolbar.btn.images.disabled = true;
+                    }
+
+                    this.images.html("");
+                    for (let name in images) {
+                        let group = images[name],
+                            item_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
+                        group.forEach((item) => {
+                            item_block.children(".inner").append(`<div class="item"><img src="data:image/png;base64,${item.image}" alt="" /><div class="name">${item.title}</div></div>`);
+                        });
+                        this.images.append(item_block);
+                    }
+                }
+            });
+
+            Object.defineProperty(this, "texts", {
+                get: () => {
+                    return this.children(".texts").children(".content");
+                },
+                set: (texts) => {
+                    if (texts.length) {
+                        let disabled = training_toolbar.btn.texts.disabled;
+                        training_toolbar.btn.texts.disabled = false;
+                        if (disabled) training_toolbar.btn.texts.active = true;
+                    } else {
+                        training_toolbar.btn.texts.disabled = true;
+                    }
+                    let map_replace = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&#34;',
+                        "'": '&#39;'
+                    };
+                    this.texts.children(".inner").html(
+                        texts.map((item) => {
+                            return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
+                        }).join("")
+                    );
+                }
+            });
+
+            Object.defineProperty(this, "scatters", {
+                get: () => {
+                    return this.children(".scatters").children(".content");
+                },
+                set: (scatters) => {
+                    if (scatters.length) {
+                        let disabled = training_toolbar.btn.scatters.disabled;
+                        training_toolbar.btn.scatters.disabled = false;
+                        if (disabled) training_toolbar.btn.scatters.active = true;
+                    } else {
+                        training_toolbar.btn.scatters.disabled = true;
+                    }
                 }
             });
 
@@ -250,7 +524,11 @@
             warning.open();
         }
 
-        $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
+        training_toolbar = $(".project-training-toolbar > .wrapper").TrainingToolbar();
+        training_params = $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
+        training_results = $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").TrainingResults();
+
+        window.ExchangeRequest("get_data", training_params.get_data_response);
 
     });
 
