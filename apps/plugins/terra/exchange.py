@@ -317,6 +317,10 @@ class TerraExchange:
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
             kwargs.get("outputs", {}).get(output, {}).get(out_type)
         )
+        if out_type == "metrics":
+            kwargs["checkpoint"]["monitor"]["out_monitor"] = kwargs["checkpoint"][
+                "monitor"
+            ]["out_monitor"][0]
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
