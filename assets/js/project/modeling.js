@@ -108,11 +108,7 @@
                                             block.find(".models-data > .model-arch > .wrapper").removeClass("hidden");
                                             block.find(".models-data > .model-arch > .wrapper > .model-save-arch-btn > button")[0].ModelData = data.data;
                                             block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .name > span").text(data.data.preview.name);
-                                            let datatype = [];
-                                            for (let output_name in data.data.preview.datatype) {
-                                                datatype.push(data.data.preview.datatype[output_name]);
-                                            }
-                                            block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .datatype > span").text(datatype.join(", "));
+                                            block.find(".models-data > .model-arch > .wrapper > .modal-arch-info > .datatype > span").text(data.data.preview.datatype);
                                             let input_shape = [];
                                             for (let output_name in data.data.preview.input_shape) {
                                                 input_shape.push(JSON.stringify(data.data.preview.input_shape[output_name]));
@@ -1143,7 +1139,7 @@
                 },
                 {
                     "layers": event.currentTarget.ModelData.layers,
-                    "schema": event.currentTarget.ModelData.front_model_schema,
+                    "schema": event.currentTarget.ModelData.schema,
                 }
             )
         });
