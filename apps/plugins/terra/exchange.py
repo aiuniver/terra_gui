@@ -146,6 +146,10 @@ class TerraExchange:
             success=response.get("success", True),
         )
 
+    def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
+        response = colab_exchange.load_dataset(**kwargs)
+        return TerraExchangeResponse(data=response)
+
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
         if response.success:
