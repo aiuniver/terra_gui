@@ -103,8 +103,8 @@
             <div class="params-container">
                 <div class="params-item collapsable">
                     <div class="params-title">Входные слои</div>
-                    <div class="inner row">
-                        <div class="layout-item" name="input_1">
+                    <div class="inner row inputs-layers">
+                        <div class="layout-item input-layout" name="input_1">
                             <div class="layout-title">Слой “Input_1”</div>
                             <div class="layout-params">
                                 <div class="field-form field-inline">
@@ -118,29 +118,31 @@
                                         <option value="Аудио">Аудио</option>
                                     </select>
                                 </div>
-                                <div class="field-form field-inline">
-                                    <label for="inputs[input_1][parameters][folder_name]">Folder name</label>
-                                    <input type="text" name="inputs[input_1][parameters][folder_name]">
-                                </div>
-                                <div class="field-form field-inline">
-                                    <label for="inputs[input_1][parameters][height]">Height</label>
-                                    <input type="text" name="inputs[input_1][parameters][height]">
-                                </div>
-                                <div class="field-form field-inline">
-                                    <label for="inputs[input_1][parameters][width]">Width</label>
-                                    <input type="text" name="inputs[input_1][parameters][width]">
-                                </div>
-                                <div class="field-form field-inline">
-                                    <label for="inputs[input_1][parameters][net]">Net</label>
-                                    <select name="inputs[input_1][parameters][net]" class="jquery-ui-menuselect">
-                                        <option value="Convolutional">Convolutional</option>
-                                    </select>
-                                </div>
-                                <div class="field-form field-inline">
-                                    <label for="inputs[input_1][parameters][scaler]">Scaler</label>
-                                    <select name="inputs[input_1][parameters][scaler]" class="jquery-ui-menuselect">
-                                        <option value="NoScaler">No Scaler</option>
-                                    </select>
+                                <div class="layout-parameters">
+                                    <div class="field-form field-inline">
+                                        <label for="inputs[input_1][parameters][folder_name]">Folder name</label>
+                                        <input type="text" name="inputs[input_1][parameters][folder_name]">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="inputs[input_1][parameters][height]">Height</label>
+                                        <input type="text" name="inputs[input_1][parameters][height]">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="inputs[input_1][parameters][width]">Width</label>
+                                        <input type="text" name="inputs[input_1][parameters][width]">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="inputs[input_1][parameters][net]">Net</label>
+                                        <select name="inputs[input_1][parameters][net]" class="jquery-ui-menuselect">
+                                            <option value="Convolutional">Convolutional</option>
+                                        </select>
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="inputs[input_1][parameters][scaler]">Scaler</label>
+                                        <select name="inputs[input_1][parameters][scaler]" class="jquery-ui-menuselect">
+                                            <option value="NoScaler">No Scaler</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -148,7 +150,7 @@
                     </div>
                 <div class="params-item collapsable">
                     <div class="params-title">Выходные слои</div>
-                    <div class="inner row">
+                    <div class="inner row outputs-layers">
                         <div class="layout-item output-layout" name="output_1">
                             <div class="layout-title">Слой “Output_1”</div>
                             <div class="layout-params">
@@ -170,23 +172,25 @@
                                         <option value="Аудио">Регрессия</option>
                                     </select>
                                 </div>
-                                <div class="field-form field-inline">
-                                    <label for="outputs[output_1][parameters][folder_name]">folder name</label>
-                                    <input type="text" name="outputs[output_1][parameters][folder_name]">
-                                </div>
-                                <div class="field-form field-inline">
-                                    <label for="outputs[output_1][parameters][number_classes]">Кол-во классов</label>
-                                    <input type="number" class="number-classes" name="outputs[output_1][parameters][number_classes]">
-                                </div>
-                                <div class="field-form field-inline class-inline">
-                                    <label for="outputs[output_1][parameters][class_1]">класс 1</label>
-                                    <input type="text" name="outputs[output_1][parameters][class_1]">
-                                </div>
-                                <div class="field-form field-inline color-inline">
-                                    <label for="outputs[output_1][parameters][color_1]">Цвет</label>
-                                    <input type="text" value="#123456" name="outputs[output_1][parameters][color_1]"/>
-                                    <button class="colorpicker-btn"></button>
-                                    <div class="colorpicker" hidden></div>
+                                <div class="layout-parameters">
+                                    <div class="field-form field-inline">
+                                        <label for="outputs[output_1][parameters][folder_name]">folder name</label>
+                                        <input type="text" name="outputs[output_1][parameters][folder_name]">
+                                    </div>
+                                    <div class="field-form field-inline">
+                                        <label for="outputs[output_1][parameters][number_classes]">Кол-во классов</label>
+                                        <input type="number" class="number-classes" name="outputs[output_1][parameters][number_classes]">
+                                    </div>
+                                    <div class="field-form field-inline class-inline">
+                                        <label for="outputs[output_1][parameters][class_1]">класс 1</label>
+                                        <input type="text" name="outputs[output_1][parameters][class_1]">
+                                    </div>
+                                    <div class="field-form field-inline color-inline">
+                                        <label for="outputs[output_1][parameters][color_1]">Цвет</label>
+                                        <input type="text" value="#123456" name="outputs[output_1][parameters][color_1]"/>
+                                        <button class="colorpicker-btn"></button>
+                                        <div class="colorpicker" hidden></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

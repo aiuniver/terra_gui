@@ -203,22 +203,21 @@
     padding-top: 10px;
     padding-right: 5px;
 }
-.layout-params > .field-inline{
+.layout-params > .field-inline,
+.layout-parameters > .field-inline{
     display: flex;
     align-items: center;
     padding: 5px 0;
 }
-.layout-params > .field-inline > input{
+.layout-params > .field-inline > input,
+.layout-parameters > .field-inline > input{
     height: 20px;
     max-width: 75px;
     font-size: .65rem;
 }
-.layout-params > .field-inline > input[type=text]{
-    height: 20px;
-    max-width: 75px;
-    font-size: .65rem;
-}
-.layout-params > .field-inline > label{
+
+.layout-params > .field-inline > label,
+.layout-parameters > .field-inline > label{
     width: 95px;
     font-size: .65rem;
     margin: 0;
@@ -226,17 +225,20 @@
     padding-right: 5px;
 }
 
-.layout-params > .field-inline > .ui-widget{
+.layout-params > .field-inline > .ui-widget,
+.layout-parameters > .field-inline > .ui-widget{
     height: 20px;
     max-width: 75px;
 }
 
-.layout-params > .field-inline > .ui-widget > .ui-selectmenu-icon{
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-icon,
+.layout-parameters > .field-inline > .ui-widget > .ui-selectmenu-icon{
     height: 20px;
     width: 20px;
 }
 
-.layout-params > .field-inline > .ui-widget > .ui-selectmenu-text{
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-text,
+.layout-parameters > .field-inline > .ui-widget > .ui-selectmenu-text{
     line-height: 20px;
     font-size: .65rem;
     padding: 0 20px 0 6px;
