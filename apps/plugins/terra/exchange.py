@@ -308,10 +308,6 @@ class TerraExchange:
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange._reset_out_data()
-        self.project.training = TrainConfig(**kwargs)
-        return self.call("get_change_validation")
-
-    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
         out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
@@ -321,6 +317,10 @@ class TerraExchange:
             kwargs["checkpoint"]["monitor"]["out_monitor"] = kwargs["checkpoint"][
                 "monitor"
             ]["out_monitor"][0]
+        self.project.training = TrainConfig(**kwargs)
+        return self.call("get_change_validation")
+
+    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )

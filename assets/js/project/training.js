@@ -322,7 +322,7 @@
                             if (success) {
                                 if (output.data.validated) {
                                     _action_stop.removeAttr("disabled");
-                                    window.ExchangeRequest("start_training", null, data);
+                                    window.ExchangeRequest("start_training");
                                     window.ExchangeRequest("get_data", this.get_data_response);
                                 } else {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
