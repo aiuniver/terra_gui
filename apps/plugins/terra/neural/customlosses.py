@@ -10,7 +10,6 @@ class DiceCoefficient(tf.keras.metrics.Metric):
     def __init__(self, name='dice_coef', **kwargs):
         super(DiceCoefficient, self).__init__(name=name, **kwargs)
         self.dice: float = 0
-        self.short_name = name
         pass
 
     def update_state(self, y_true, y_pred, smooth=1, sample_weight=None):
@@ -29,10 +28,8 @@ class DiceCoefficient(tf.keras.metrics.Metric):
     def result(self):
         return self.dice
 
-    def __str__(self):
-        return self.short_name
-
     def reset_states(self):
         self.dice: float = 0
         pass
+
 

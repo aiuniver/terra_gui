@@ -8,7 +8,7 @@ from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
-__version__ = 0.04
+__version__ = 0.05
 
 
 class GUINN:
@@ -95,9 +95,9 @@ class GUINN:
                 if metric in self.custom_losses_dict.keys():
                     if metric == "mean_io_u":
                         self.metrics[i_key][idx] = self.custom_losses_dict[metric](
-                            num_classes=self.output_params[i_key]['num_classes'])
+                            num_classes=self.output_params[i_key]['num_classes'], name=metric)
                     else:
-                        self.metrics[i_key][idx] = self.custom_losses_dict[metric]()
+                        self.metrics[i_key][idx] = self.custom_losses_dict[metric](name=metric)
                 pass
 
     def set_chp_monitor(self) -> None:
