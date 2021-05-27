@@ -1456,7 +1456,7 @@ class RegressionCallback:
             ylabel = "Predictions"
             y_true, y_pred = self.predicts[vshowmet]
             key = (scatter_title, xlabel, ylabel)
-            value = [(y_true.reshape((y_true.shape[0])), y_pred.reshape((y_pred.shape[0])), "Regression")]
+            value = [(y_true.reshape(-1), y_pred.reshape(-1), "Regression")]
             data.update({key: value})
             self.exchange.show_scatter_data(data)
 
