@@ -501,7 +501,7 @@ class GUILayersDef:
     padding_lh = ("same", "valid")
     activation_lh = (None, "relu", "sigmoid", "softmax",
                      "softplus", "softsign", "tanh",
-                     "selu", "elu", "exponential")
+                     "selu", "elu", "exponential", "leaner")
     initializer_lh = ("random_normal", "random_uniform", "truncated_normal",
                       "zeros", "ones", "glorot_normal", "glorot_uniform", "uniform",
                       "identity", "orthogonal", "constant", "variance_scaling")
