@@ -12,7 +12,8 @@ if terra_exchange.project.dataset:
     terra_exchange.call(
         "prepare_dataset",
         dataset=terra_exchange.project.dataset,
-        is_custom=is_custom,
-        not_load_layers=True,
+        source="",
+        not_load_layers=False,
+        dataset_dict={}
     )
     terra_exchange.call("autosave_project")

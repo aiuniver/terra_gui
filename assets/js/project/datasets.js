@@ -140,7 +140,8 @@
                     },
                     {
                         dataset:datasets.dataset,
-                        is_custom:window.TerraProject.datasets[datasets.dataset].tags.custom !== undefined
+                        source: "",
+                        not_load_layers: false,
                     }
                 );
                 window.ExchangeRequest(
@@ -170,6 +171,17 @@
 
             let dataset_params;
 
+            let load_layout_params = (elem, params, layer)=>{
+                for(let name in params){
+                    let param = $.extend(true, {}, params[name]);
+                    param.label = name;
+                    param.default = params[name].default;
+                    let widget = window.FormWidget(`${layer}s[${elem.attr('id')}][parameters][${name}]`, param);
+                    widget.addClass("field-inline");
+                    elem.find(".layout-parameters").append(widget);
+                }
+            };
+
             this.bind("submit", (event)=>{
                 event.preventDefault();
                 let serialize_data = this.serializeObject()
@@ -186,104 +198,60 @@
 
                             let params = data.data.audio
 
-                            for(let i=0; i<serialize_data.num_links.inputs; i++){
+                            for(let i=1; i<=serialize_data.num_links.inputs; i++){
 
                                 $(".inputs-layers").append($("<div></div>").addClass("layout-item").addClass("input-layout").attr('name', 'input_' + i).attr('id', 'input_' + i));
-                                $("#input_"+i).append($("<div></div>").addClass("layout-title").text("Слой \"input_"+i+"\""));
-                                $("#input_"+i).append($("<div></div>").addClass("layout-params"));
-                                //
-                                //
-                                //
+                                let input_item = $("#input_"+i)
+                                input_item.append($("<div></div>").addClass("layout-title").text("Слой \"input_"+i+"\""));
+                                input_item.append($("<div></div>").addClass("layout-params"));
+
                                 let widget = window.FormWidget("inputs[input_" + i + "][name]", {label: "Название входа", type: "str", default: "input_" + i}).addClass("field-inline");
-                                $("#input_"+i).find(".layout-params").append(widget)
+                                input_item.find(".layout-params").append(widget)
 
                                 widget = window.FormWidget("inputs[input_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: Object.keys(data.data), default: "audio"}).addClass("field-inline");
-                                $("#input_"+i).find(".layout-params").append(widget)
+                                input_item.find(".layout-params").append(widget)
 
                                 widget.find("select").selectmenu({
                                     change:(event) => {
                                         $(event.target).trigger("change");
                                     }
                                 }).bind("change", (event) => {
-                                    $("#input_"+i).find(".layout-parameters").empty();
-
+                                    input_item.find(".layout-parameters").empty();
                                     let params = dataset_params[$(event.currentTarget).val()];
-
-                                    for(let name in params){
-                                        let param = $.extend(true, {}, params[name]);
-                                        param.label = name;
-                                        param.default = params[name].default;
-                                        let widget = window.FormWidget("inputs[input_" + i + "][parameters]["+name+"]", param);
-                                        widget.addClass("field-inline");
-                                        $("#input_"+i).find(".layout-parameters").append(widget);
-                                    }
-
+                                    load_layout_params(input_item, params, "input")
                                 })
-
-                                $("#input_"+i).append($("<div></div>").addClass("layout-parameters"));
-
-                                for(let name in params){
-                                    let param = $.extend(true, {}, params[name]);
-                                    param.label = name;
-                                    param.default = params[name].default;
-                                    let widget = window.FormWidget("inputs[input_" + i + "][parameters]["+name+"]", param);
-                                    widget.addClass("field-inline");
-                                    $("#input_"+i).find(".layout-parameters").append(widget);
-                                }
-
+                                input_item.append($("<div></div>").addClass("layout-parameters"));
+                                load_layout_params(input_item, params, "input");
                             }
 
 
-                            for(let i=0; i<serialize_data.num_links.outputs; i++){
+                            for(let i=1; i<=serialize_data.num_links.outputs; i++){
 
                                 $(".outputs-layers").append($("<div></div>").addClass("layout-item").addClass("output-layout").attr('name', 'output' + i).attr('id', 'output_' + i));
-                                $("#output_"+i).append($("<div></div>").addClass("layout-title").text("Слой \"output_"+i+"\""));
-                                $("#output_"+i).append($("<div></div>").addClass("layout-params"));
-                                //
-                                //
-                                //
+                                let output_item = $("#output_"+i);
+                                output_item.append($("<div></div>").addClass("layout-title").text("Слой \"output_"+i+"\""));
+                                output_item.append($("<div></div>").addClass("layout-params"));
+
                                 let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название входа", type: "str", default: "output_" + i}).addClass("field-inline");
-                                $("#output_"+i).find(".layout-params").append(widget)
+                                output_item.find(".layout-params").append(widget)
 
                                 widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: Object.keys(data.data), default: "audio"}).addClass("field-inline");
-                                $("#output_"+i).find(".layout-params").append(widget)
+                                output_item.find(".layout-params").append(widget)
 
                                 widget.find("select").selectmenu({
                                     change:(event) => {
                                         $(event.target).trigger("change");
                                     }
                                 }).bind("change", (event) => {
-                                    $("#output_"+i).find(".layout-parameters").empty();
-
+                                    output_item.find(".layout-parameters").empty();
                                     let params = dataset_params[$(event.currentTarget).val()];
-
-                                    for(let name in params){
-                                        let param = $.extend(true, {}, params[name]);
-                                        param.label = name;
-                                        param.default = params[name].default;
-                                        let widget = window.FormWidget("outputs[output_" + i + "][parameters]["+name+"]", param);
-                                        widget.addClass("field-inline");
-                                        $("#output_"+i).find(".layout-parameters").append(widget);
-                                    }
-
+                                    load_layout_params(output_item, params, "output");
                                 })
 
-
-
                                 widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type}).addClass("field-inline");
-                                $("#output_"+i).find(".layout-params").append(widget)
-
-                                $("#output_"+i).append($("<div></div>").addClass("layout-parameters"))
-
-                                for(let name in params){
-                                    let param = $.extend(true, {}, params[name]);
-                                    param.label = name;
-                                    param.default = params[name].default;
-                                    let widget = window.FormWidget("outputs[output_" + i + "][parameters]["+name+"]", param);
-                                    widget.addClass("field-inline");
-                                    $("#output_"+i).find(".layout-parameters").append(widget);
-                                }
-
+                                output_item.find(".layout-params").append(widget)
+                                output_item.append($("<div></div>").addClass("layout-parameters"))
+                                load_layout_params(output_item, params, "output")
                             }
 
 
@@ -378,19 +346,18 @@
                 let serialize_data = this.serializeObject();
                 console.log(this.serializeObject());
                 window.ExchangeRequest(
-                    "prepare_dataset",
+                    "create_dataset",
                     (success, data) => {
                         if (success) {
-                            console.log(data)
                             window.StatusBar.message(window.Messages.get("PRERAPE_DATASET_SUCCESS"), true);
+
+                            console.log(data)
+
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
                     {
-                        dataset: serialize_data.parameters.name,
-                        is_custom: false,
-                        not_load_layers: false,
                         dataset_dict: serialize_data
                     }
                 );

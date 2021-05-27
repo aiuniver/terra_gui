@@ -101,11 +101,12 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_prepare_dataset(
-        self, dataset: str, is_custom: bool = False, not_load_layers: bool = False
+        self, dataset: str, source: str, not_load_layers: bool = False, dataset_dict: dict={}
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
-            source="custom" if is_custom else "",
+            source=source,
+            dataset_dict=dataset_dict
         )
         schema = [[], []]
         for index, layer in start_layers.items():
@@ -148,6 +149,10 @@ class TerraExchange:
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)
+
+    def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.create_dataset(**kwargs)
+        return TerraExchangeResponse()
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")

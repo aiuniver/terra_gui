@@ -670,6 +670,10 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
+    def create_dataset(self, **kwargs):
+        self.dts.prepare_user_dataset(**kwargs)
+
+
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
@@ -681,8 +685,6 @@ class Exchange(StatesData, GuiExch):
         """
         if source == "custom":
             self.dts = self._read_trds(dataset_name)
-        if source == "load":
-            self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self)
             gc.collect()
