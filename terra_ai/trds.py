@@ -30,10 +30,9 @@ import numpy as np
 import pandas as pd
 import pathlib
 import gdown
-import zipfile
 import re
 import pymorphy2
-from shutil import rmtree
+import shutil
 from gensim.models import word2vec
 from tqdm.notebook import tqdm
 import threading
@@ -49,13 +48,13 @@ from ast import literal_eval
 
 # import cv2
 
-__version__ = 0.308
+__version__ = 0.310
 
 tr2dj_obj = Exchange()
 
 
 class DTS(object):
-    def __init__(self, path="dataset/sources", exch_obj=tr2dj_obj):
+    def __init__(self, path=os.getcwd(), exch_obj=tr2dj_obj):
 
         if "custom" in globals().keys():
             for key, value in custom.__dict__.items():
@@ -68,7 +67,6 @@ class DTS(object):
 
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ""
-        self.file_path: str = ""
         self.save_path: str = path
         self.name: str = ""
         self.source: str = ""
@@ -769,7 +767,6 @@ class DTS(object):
                 directory = os.path.join(
                     os.getcwd(), "drive", "MyDrive", "TerraAI", "datasets"
                 )
-                self.file_path = f"{os.path.join(directory, self.name)}.trds"
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
@@ -1231,8 +1228,7 @@ class DTS(object):
             "изображения https://storage.googleapis.com/terra_ai/DataSets/segmentation.zip",
         }
 
-        default_path = pathlib.Path().absolute()
-        working_path = default_path.joinpath(pathlib.Path(*self.save_path.split("/")))
+        default_path = self.save_path
         if link:
             if "drive.google" in link:
                 filename = name
@@ -1243,13 +1239,12 @@ class DTS(object):
                 if "." in filename:
                     idx = filename.rfind(".")
                     name = filename[:idx]
-            main_folder = working_path
-            file_folder = pathlib.Path(os.path.join(main_folder, name))
+            file_folder = pathlib.Path(os.path.join(default_path, name))
             if not file_folder.exists():
                 os.makedirs(file_folder)
             if "zip" in filename or "zip" in link:
                 file_path = pathlib.Path(
-                    os.path.join(main_folder, name, "tmp", filename)
+                    os.path.join(default_path, name, "tmp", filename)
                 )
                 temp_folder = os.path.join(file_folder, "tmp")
                 os.mkdir(temp_folder)
@@ -1262,10 +1257,9 @@ class DTS(object):
                     )
                 else:
                     gdown.download(link, filename, quiet=self.django_flag)
-                with zipfile.ZipFile(file_path, "r") as zip_ref:
-                    zip_ref.extractall(file_folder)
-                    os.chdir(str(default_path))
-                rmtree(temp_folder, ignore_errors=True)
+                shutil.unpack_archive(file_path, file_folder)
+                os.chdir(default_path)
+                shutil.rmtree(temp_folder, ignore_errors=True)
             else:
                 os.chdir(file_folder)
                 if "drive.google" in link:
@@ -1276,13 +1270,12 @@ class DTS(object):
                     )
                 else:
                     gdown.download(link, filename, quiet=self.django_flag)
-                os.chdir(str(default_path))
+                os.chdir(default_path)
         else:
             if name in data.keys():
                 self.language = self._set_language(self.name)
                 for base in data[name]:
-                    main_folder = working_path
-                    file_folder = main_folder.joinpath(name)
+                    file_folder = pathlib.Path(default_path).joinpath(name)
                     if not file_folder.exists():
                         os.makedirs(file_folder)
                     url = (
@@ -1290,17 +1283,16 @@ class DTS(object):
                     )
                     if "zip" in base:
                         file_path = pathlib.Path(
-                            os.path.join(main_folder, name, "tmp", base)
+                            os.path.join(default_path, name, "tmp", base)
                         )
                         temp_folder = file_folder.joinpath("tmp")
                         os.mkdir(temp_folder)
                         os.chdir(temp_folder)
                         gdown.download(url, base, quiet=self.django_flag)
                         os.chdir(str(default_path))
-                        with zipfile.ZipFile(file_path, "r") as zip_ref:
-                            zip_ref.extractall(file_folder)
-                            os.chdir(str(default_path))
-                        rmtree(temp_folder, ignore_errors=True)
+                        shutil.unpack_archive(file_path, file_folder)
+                        os.chdir(str(default_path))
+                        shutil.rmtree(temp_folder, ignore_errors=True)
                     else:
                         os.chdir(file_folder)
                         gdown.download(url, base, quiet=self.django_flag)
@@ -3020,7 +3012,6 @@ class DTS(object):
             directory = os.path.join(
                 os.getcwd(), "drive", "MyDrive", "TerraAI", "datasets"
             )
-            self.file_path = f"{directory}/{self.name}.trds"
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
