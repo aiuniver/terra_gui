@@ -3,7 +3,6 @@ import os
 import re
 import json
 import shutil
-import zipfile
 
 import requests
 
@@ -145,6 +144,10 @@ class TerraExchange:
             stop_flag=response.get("stop_flag", True),
             success=response.get("success", True),
         )
+
+    def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
+        response = colab_exchange.load_dataset(**kwargs)
+        return TerraExchangeResponse(data=response)
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
@@ -406,8 +409,7 @@ class TerraExchange:
         self.project.clear()
 
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
-        project = zipfile.ZipFile(fullpath)
-        project.extractall(settings.TERRA_AI_PROJECT_PATH)
+        shutil.unpack_archive(fullpath, settings.TERRA_AI_PROJECT_PATH, "zip")
 
         self.__project = TerraExchangeProject()
 

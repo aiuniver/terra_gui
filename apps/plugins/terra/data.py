@@ -5,6 +5,7 @@ import shutil
 import yaml
 import cairosvg
 import pydantic
+import tensorflow
 
 from enum import Enum
 from typing import List, Dict, Optional, Any, Union
@@ -309,6 +310,7 @@ class ProjectPath(pydantic.BaseModel):
 
 
 class TerraExchangeProject(pydantic.BaseModel):
+    tensorflow: str = ""
     error: str = ""
     name: str = "NoName"
     hardware: Hardware = Hardware.CPU
@@ -334,6 +336,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
+        kwargs["tensorflow"] = tensorflow.__version__
         super().__init__(**kwargs)
 
         if not os.path.isfile(self.dir.config):
