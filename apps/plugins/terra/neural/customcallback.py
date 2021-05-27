@@ -1424,7 +1424,7 @@ class RegressionCallback:
                 vshowmet = f"val_{showmet}"
             # showmet = self.losses[self.idx]
             # vshowmet = f"val_{showmet}"
-            epochcomment = f" epoch {self.epoch + 1}"
+            epochcomment = f" эпоха {self.epoch + 1}"
             loss_len = len(self.history[showmet])
             data = {}
 
@@ -1438,8 +1438,8 @@ class RegressionCallback:
             # ]
             # data.update({key: value})
 
-            metric_title = f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}"
-            xlabel = "epoch"
+            metric_title = f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}"
+            xlabel = "эпох"
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
             value = [
@@ -1452,11 +1452,11 @@ class RegressionCallback:
         if self.plot_scatter:
             data = {}
             scatter_title = "Scatter"
-            xlabel = "True values"
-            ylabel = "Predictions"
+            xlabel = "Истинные значения"
+            ylabel = "Предикт"
             y_true, y_pred = self.predicts[vshowmet]
             key = (scatter_title, xlabel, ylabel)
-            value = [(y_true.reshape(-1), y_pred.reshape(-1), "Regression")]
+            value = [(y_true.reshape(-1), y_pred.reshape(-1), "Регрессия")]
             data.update({key: value})
             self.exchange.show_scatter_data(data)
 
@@ -1508,7 +1508,7 @@ class RegressionCallback:
 
         if self.step > 0:
             if self.epoch % self.step == 0:
-                self.comment = f" epoch {epoch + 1}"
+                self.comment = f" эпоха {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
 
