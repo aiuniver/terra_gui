@@ -252,7 +252,7 @@
 
             if (!this.length) return this;
 
-            const _NODE_HEIGHT = 26,
+            const _NODE_HEIGHT = 40,
                 _LINE_HEIGHT = 30,
                 _SCALE_FACTOR = .2,
                 _TRANSITION_DURATION = 300;
@@ -452,7 +452,7 @@
                     if (_onNode && `${_new_link._groups[0][0].sourceID}` !== `${_onNode[0].dataset.index}` && _onNode[0].__data__.config.up_link.indexOf(_new_link._groups[0][0].sourceID) === -1) {
                         let matrix = _onNode[0].transform.baseVal[0].matrix;
                         x2 = matrix.e;
-                        y2 = matrix.f - _LINE_HEIGHT / 2 - 2;
+                        y2 = matrix.f - _LINE_HEIGHT / 2 - 9;
                         _onNode.children(".dot-target").attr("visibility", "visible");
                     } else {
                         let transform = _get_transform();
@@ -498,10 +498,10 @@
                     x = matrix.e, y = matrix.f;
 
                 info.down_link.forEach((index) => {
-                    _clines.select(`#line_${node.dataset.index}_${index}`).attr("x1", x).attr("y1", y+_LINE_HEIGHT/2+2);
+                    _clines.select(`#line_${node.dataset.index}_${index}`).attr("x1", x).attr("y1", y+_LINE_HEIGHT/2+9);
                 });
                 info.config.up_link.forEach((index) => {
-                    _clines.select(`#line_${index}_${node.dataset.index}`).attr("x2", x).attr("y2", y-_LINE_HEIGHT/2-2);
+                    _clines.select(`#line_${index}_${node.dataset.index}`).attr("x2", x).attr("y2", y-_LINE_HEIGHT/2-9);
                 });
             }
 
@@ -533,7 +533,7 @@
                             this.removeClass("onlink");
                             _new_link.attr("id", `line_${sourceID}_${targetID}`)
                                 .attr("x2", matrix.e)
-                                .attr("y2", matrix.f - _LINE_HEIGHT / 2 - 2);
+                                .attr("y2", matrix.f - _LINE_HEIGHT / 2 - 9);
                             _new_link = undefined;
                             sourceData.down_link.push(targetID);
                             sourceNode.data([sourceData]);
@@ -577,7 +577,8 @@
                     _d3_svg.selectAll("g.tools").remove();
                     _d3_svg.selectAll("g.params").remove();
                     _d3_svg.selectAll("rect.pointer").remove();
-                    _d3_svg.selectAll("text").attr("font-size", "11px");
+                    _d3_svg.selectAll("tspan.name").attr("font-size", "13px");
+                    _d3_svg.selectAll("tspan.params").attr("font-size", "10px");
                     let _svg_o = $(_d3_svg._groups[0][0]);
                     _svg_o.find("circle[visibility=hidden]").remove();
                     _svg_o.find("g, line, rect, circle").removeAttr("id").removeAttr("class").removeAttr("data-index").removeAttr("visibility")
@@ -600,12 +601,12 @@
                 let sourceNode = d3.select(dotSource.closest(".node")[0]),
                     sourceID = parseInt(dotSource.closest(".node")[0].dataset.index),
                     sourceMatrix = sourceNode._groups[0][0].transform.baseVal[0].matrix,
-                    sourcePosition = [sourceMatrix.e, sourceMatrix.f+_LINE_HEIGHT/2+2];
+                    sourcePosition = [sourceMatrix.e, sourceMatrix.f+_LINE_HEIGHT/2+9];
 
                 let targetNode = dotTarget ? d3.select(dotTarget.closest(".node")[0]) : undefined,
                     targetID = targetNode ? dotTarget.closest(".node")[0].dataset.index : "",
                     targetMatrix = targetNode ? targetNode._groups[0][0].transform.baseVal[0].matrix : undefined,
-                    targetPosition = targetMatrix ? [targetMatrix.e, targetMatrix.f-_LINE_HEIGHT/2-2] : undefined;
+                    targetPosition = targetMatrix ? [targetMatrix.e, targetMatrix.f-_LINE_HEIGHT/2-9] : undefined;
 
                 let line = _clines.append("line")
                     .attr("id", `line_${sourceID}_${targetID}`)
@@ -653,16 +654,6 @@
                 });
             }
 
-            let _camelize = (text) => {
-                let _capitalize = (word) => {
-                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
-                }
-                let words = text.split("_"),
-                    result = [_capitalize(words[0])];
-                words.slice(1).forEach((word) => result.push(word))
-                return result.join(" ")
-            }
-
             let _create_node = (index, layer) => {
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value,
@@ -690,10 +681,28 @@
                     .attr("fill", "#65B9F4");
 
                 let tools = node.append("g").attr("class", "tools"),
-                    tools_rect = tools.append("rect").attr("class", "bg").attr("width", 92).attr("height", 28).attr("y", -_NODE_HEIGHT/2-1),
+                    tools_rect = tools.append("rect").attr("class", "bg").attr("width", 92).attr("height", _NODE_HEIGHT+2).attr("y", -_NODE_HEIGHT/2-1),
                     rect = node.append("rect").attr("class", "node-bg").attr("height", _NODE_HEIGHT).attr("stroke-width", 2).attr("rx", 4).attr("ry", 4).attr("fill", layer_color[layer.config.location_type]).attr("stroke", layer_color[layer.config.location_type]),
-                    text = node.append("text").text(`${layer.config.name}: ${layer.config.type}`).attr("fill", "#17212B").attr("font-size", "12px"),
-                    text_box = text._groups[0][0].getBBox(),
+                    text = node.append("text"),
+                    text_name = text.append("tspan").text(`${layer.config.name}: ${layer.config.type}`).attr("class", "name").attr("y", -2).attr("fill", "#17212B").attr("font-size", "14px");
+                text_name.attr("x", -text_name._groups[0][0].getBBox().width/2);
+
+                let params_list = [];
+                for (let param_name in layer.config.params.main) {
+                    let value = `${layer.config.params.main[param_name]}`;
+                    if (value !== '') {
+                        if (value.indexOf(",") !== -1) value = `[${value}]`;
+                        params_list.push(value);
+                    }
+                }
+                if (params_list.length) {
+                    let text_params = text.append("tspan").text(params_list.join(", ")).attr("class", "params").attr("y", 12).attr("fill", "#2B5278").attr("font-size", "11px");
+                    text_params.attr("x", -text_params._groups[0][0].getBBox().width/2);
+                } else {
+
+                }
+
+                let text_box = text._groups[0][0].getBBox(),
                     width = text_box.width + 20;
 
                 let link_group = tools.append("g").attr("class", "btn link"),
@@ -706,28 +715,6 @@
                     remove_group = tools.append("g").attr("class", "btn remove"),
                     remove_icon = remove_group.append("path").attr("width", 18).attr("height", 18).attr("fill", "#fff").attr("d", "M15.1528 3.2H1.05717C0.776794 3.2 0.507897 3.30536 0.309639 3.49289C0.11138 3.68043 0 3.93478 0 4.2C0 4.46522 0.11138 4.71957 0.309639 4.90711C0.507897 5.09464 0.776794 5.2 1.05717 5.2H1.40957V14.5867C1.41143 15.4914 1.7922 16.3586 2.46852 16.9983C3.14484 17.6381 4.06159 17.9982 5.01805 18H11.1919C12.1484 17.9982 13.0652 17.6381 13.7415 16.9983C14.4178 16.3586 14.7986 15.4914 14.8004 14.5867V5.2H15.1528C15.4332 5.2 15.7021 5.09464 15.9004 4.90711C16.0986 4.71957 16.21 4.46522 16.21 4.2C16.21 3.93478 16.0986 3.68043 15.9004 3.49289C15.7021 3.30536 15.4332 3.2 15.1528 3.2V3.2ZM12.6861 14.5867C12.6861 14.7723 12.6474 14.9561 12.5724 15.1275C12.4973 15.299 12.3872 15.4548 12.2485 15.586C12.1097 15.7173 11.945 15.8214 11.7637 15.8924C11.5825 15.9634 11.3882 16 11.1919 16H5.01805C4.62178 16 4.24174 15.8511 3.96154 15.586C3.68133 15.321 3.52391 14.9615 3.52391 14.5867V5.2H12.6861V14.5867ZM4.08774 1C4.08774 0.734784 4.19912 0.48043 4.39738 0.292893C4.59564 0.105357 4.86453 0 5.14491 0H11.0651C11.3455 0 11.6144 0.105357 11.8126 0.292893C12.0109 0.48043 12.1223 0.734784 12.1223 1C12.1223 1.26522 12.0109 1.51957 11.8126 1.70711C11.6144 1.89464 11.3455 2 11.0651 2H5.14491C4.86453 2 4.59564 1.89464 4.39738 1.70711C4.19912 1.51957 4.08774 1.26522 4.08774 1ZM5.00396 13.2667V7.93333C5.00396 7.66812 5.11534 7.41376 5.3136 7.22623C5.51185 7.03869 5.78075 6.93333 6.06113 6.93333C6.34151 6.93333 6.61041 7.03869 6.80866 7.22623C7.00692 7.41376 7.1183 7.66812 7.1183 7.93333V13.2667C7.1183 13.5319 7.00692 13.7862 6.80866 13.9738C6.61041 14.1613 6.34151 14.2667 6.06113 14.2667C5.78075 14.2667 5.51185 14.1613 5.3136 13.9738C5.11534 13.7862 5.00396 13.5319 5.00396 13.2667ZM9.09169 13.2667V7.93333C9.09169 7.66812 9.20308 7.41376 9.40133 7.22623C9.59959 7.03869 9.86849 6.93333 10.1489 6.93333C10.4292 6.93333 10.6981 7.03869 10.8964 7.22623C11.0947 7.41376 11.206 7.66812 11.206 7.93333V13.2667C11.206 13.5319 11.0947 13.7862 10.8964 13.9738C10.6981 14.1613 10.4292 14.2667 10.1489 14.2667C9.86849 14.2667 9.59959 14.1613 9.40133 13.9738C9.20308 13.7862 9.09169 13.5319 9.09169 13.2667Z"),
                     remove = remove_group.append("rect").attr("width", 18).attr("height", 18);
-
-                let params_list = [];
-                for (let param_name in layer.config.params.main) {
-                    let value = `${layer.config.params.main[param_name]}`;
-                    if (value !== '') {
-                        if (value.indexOf(",") !== -1) value = `[${value}]`;
-                        // params_list.push(`${_camelize(param_name)}: ${layer.config.params.main[param_name]}`);
-                        params_list.push(value);
-                    }
-                }
-                if (params_list.length) {
-                    let params = node.append("g").attr("class", "params"),
-                        params_rect = params.append("rect").attr("x", -width/2-1).attr("y", _NODE_HEIGHT/2+3),
-                        params_text = params.append("text");
-                    params_text.append("tspan").text(params_list.join(", ")).attr("x", -width/2-1+10).attr("y", 18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
-                    // params_list.forEach((item, index) => {
-                    //     params_text.append("tspan").text(item).attr("x", -width/2-1+10).attr("y", index*16+18+_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
-                    // });
-                    let params_box = params_text._groups[0][0].getBBox(),
-                        params_width = params_box.width+20;
-                    params_rect.attr("width", params_width < width+2 ? width+2 : params_width).attr("height", params_box.height+10);
-                }
 
                 let rect_pointer = node.append("rect")
                     .attr("class", "pointer")
@@ -745,7 +732,6 @@
                     }
                 });
 
-                text.attr("x", -text_box.width/2).attr("y", 12-text_box.height/2);
                 rect.attr("width", width).attr("x", -(text_box.width+20)/2).attr("y", -rect._groups[0][0].height.baseVal.value/2);
                 rect_pointer.attr("width", width+5).attr("x", -(text_box.width+20)/2-1).attr("y", -rect._groups[0][0].height.baseVal.value/2-1);
                 tools_rect.attr("x", (text_box.width+20)/2+3);
@@ -1000,6 +986,7 @@
                 _config.config.name = _form.name;
                 _config.config.type = _layer_type_field.val();
                 _config.config.data_name = _form.data_name || "";
+                _config.config.params = {"main":{},"extra":{}};
 
                 for (let group in _params) {
                     for (let name in _params[group]) {
