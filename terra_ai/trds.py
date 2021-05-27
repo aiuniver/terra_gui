@@ -37,14 +37,17 @@ import dill
 import concurrent.futures
 import configparser
 import joblib
+from ast import literal_eval
+import cv2
 
-__version__ = 0.307
+__version__ = 0.308
 
 tr2dj_obj = Exchange()
 
+
 class DTS(object):
 
-    def __init__(self, path='', exch_obj=tr2dj_obj):
+    def __init__(self, path='dataset/sources', exch_obj=tr2dj_obj):
 
         if 'custom' in globals().keys():
             for key, value in custom.__dict__.items():
@@ -64,7 +67,7 @@ class DTS(object):
         self.tags: dict = {}
         self.source_datatype: dict = {}
         self.source_shape: dict = {}
-        self.input_datatype: dict = {}
+        self.input_datatype: str = ''
         self.input_shape: dict = {}
         self.one_hot_encoding = {}
         self.num_classes: int = 0
@@ -74,7 +77,7 @@ class DTS(object):
         self.dts_prepared: bool = False
         self.task_type: dict = {}
         self.user_parameters: dict = {}
-        self.user_hashtags: list = []
+        self.user_tags: list = []
 
         self.X: dict = {}
         self.Y: dict = {}
@@ -142,8 +145,6 @@ class DTS(object):
             if load_tab.selected_index == 0:
                 self.load_data(file_name.value, url_google.value)
             elif load_tab.selected_index == 1:
-                self.load_data(folder_name.value, url.value)
-            elif load_tab.selected_index == 2:
                 self.prepare_dataset(dataset_name=terra_dataset.value)
 
             pass
@@ -152,12 +153,8 @@ class DTS(object):
                                 icon='check')
 
         file_name = widgets.Text(value='', placeholder='Название файла', description='Файл:', disabled=False)
-        url_google = widgets.Text(value='', placeholder='https://drive.google.com/', description='URL:', disabled=False)
-        vbox_google_disk = widgets.VBox([file_name, url_google, button])
-
-        folder_name = widgets.Text(value='', placeholder='Название папки', description='Папка:', disabled=False)
-        url = widgets.Text(value='', placeholder='https://', description='URL:', disabled=False)
-        vbox_link = widgets.VBox([folder_name, url, button])
+        url_google = widgets.Text(value='', placeholder='https://', description='URL:', disabled=False)
+        vbox_download = widgets.VBox([file_name, url_google, button])
 
         datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
          'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом', 'трейдинг',
@@ -168,11 +165,10 @@ class DTS(object):
         vbox_terra_dataset = widgets.VBox([terra_dataset, button])
 
         load_tab = widgets.Tab()
-        load_tab.children = [vbox_google_disk, vbox_link, vbox_terra_dataset]
+        load_tab.children = [vbox_download, vbox_terra_dataset]
 
         load_tab.set_title(title='Google disk', index=0)
-        load_tab.set_title(title='Внешняя ссылка', index=1)
-        load_tab.set_title(title='Terra-ai', index=2)
+        load_tab.set_title(title='Terra-ai', index=1)
 
         button.on_click(on_button_clicked)
 
@@ -321,7 +317,7 @@ class DTS(object):
 
             parameters = {}
             parameters['name'] = dataset_name.value
-            parameters['user_hashtags'] = dataset_hashtags.value.split(' ')
+            parameters['user_tags'] = dataset_hashtags.value.split(' ')
             parameters['train_part'] = slider.value / 100
             parameters['val_part'] = slider2.value / 200
             parameters['test_part'] = slider2.value / 200
@@ -379,7 +375,7 @@ class DTS(object):
             title = widgets.HTML(value=f"<b>{f'input_{i}':-^67}</b>", placeholder='', description='')
             name = widgets.Text(value='', placeholder='Название входа', description=f'input_{i}', disabled=False)
             data_type = widgets.Dropdown(
-                options=[('Картинки', 'images'), ('Текст', 'text'), ('Аудио', 'audio'),
+                options=[('Картинки', 'images'), ('Видео', 'video'), ('Текст', 'text'), ('Аудио', 'audio'),
                          ('Датафрейм', 'dataframe')], value='images', description='Тип данных')
             data = widgets.interactive(build_widget, x=data_type)
 
@@ -445,7 +441,7 @@ class DTS(object):
 
             print('Начало формирования массивов.')
             self.name = dataset_name.value
-            self.user_hashtags = dataset_hashtags.value.split(' ')
+            self.user_tags = dataset_hashtags.value.split(' ')
             tags = {}
             task = {}
             for i in range(inputs):
@@ -887,6 +883,9 @@ class DTS(object):
                 file_id = max(link.split('/'), key=len)
             else:
                 filename = link.split('/')[-1]
+                if '.' in filename:
+                    idx = filename.rfind('.')
+                    name = filename[:idx]
             main_folder = working_path
             file_folder = pathlib.Path(os.path.join(main_folder, name))
             if not file_folder.exists():
@@ -953,29 +952,21 @@ class DTS(object):
 
     def prepare_dataset(self, **options):
 
-        def get_dict(st):
-            dic = {}
-            if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
-                dic['output_1'] = 'segmentation'
-            else:
-                for elem in st[1:-1].replace("'", "").split(','):
-                    key, value = elem.split(': ')
-                    dic[key] = value
-            return dic
-
         def load_arrays():
 
+            inp_datatype = []
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
                 if arr[0] == 'X':
                     self.X[arr[2:-3]] = {'data_name': f'Вход_{arr[-4]}',
                                          'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
                     self.input_shape[arr[2:-3]] = self.X[arr[2:-3]]['data'][0].shape[1:]
-                    self.input_datatype[arr[2:-3]] = self._set_datatype(shape=self.X[arr[2:-3]]['data'][0].shape)
+                    inp_datatype.append(self._set_datatype(shape=self.X[arr[2:-3]]['data'][0].shape))
                     self.tags[arr[2:-3]] = tag_list[0]
                 elif arr[0] == 'Y':
                     self.Y[arr[2:-3]] = {'data_name': f'Выход_{arr[-4]}',
                                          'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
                     self.tags[arr[2:-3]] = tag_list[1]
+            self.input_datatype = ' '.join(inp_datatype)
 
         def load_scalers():
 
@@ -1051,25 +1042,18 @@ class DTS(object):
 
             config = configparser.ConfigParser()
             config.read(os.path.join(self.file_folder, 'config.ini'))
-
             self.name = config.get('ATTRIBUTES', 'name')
-            # self.source_datatype = get_dict(config.get('ATTRIBUTES', 'source_datatype'))
-            # source_shape = {}
-            # shapes = config.get('ATTRIBUTES', 'source_shape')[1:-1].replace("'", '').split(', ')
-            # for elem in shapes:
-            #     key, value = elem.split(': ')
-            #     source_shape[key] = value
-            # self.source_shape = source_shape
-            self.classes_names = config.get('ATTRIBUTES', 'classes_names')[1:-1].replace("'", "").split(', ')
-            self.classes_colors = config.get('ATTRIBUTES', 'classes_colors')[1:-1].replace("'", "").split(', ')
+            self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
+            self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
+            self.classes_names = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
+            self.classes_colors = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
             self.num_classes = int(config.get('ATTRIBUTES', 'num_classes'))
+            self.task_type = literal_eval(config.get('ATTRIBUTES', 'task_type'))
+            self.one_hot_encoding = literal_eval(config.get('ATTRIBUTES', 'one_hot_encoding'))
             if self.name == 'квартиры': # TODO - ЗАПЛАТКА!!!!!!
                 self.num_classes = 1
-            self.task_type = get_dict(config.get('ATTRIBUTES', 'task_type'))
-            one_hot_encoding = {}
-            key, value = config.get('ATTRIBUTES', 'one_hot_encoding')[1:-1].replace("'", '').split(': ')
-            one_hot_encoding[key] = bool(int(value) for value in tuple(value[1:-1].split(', ')))
-            self.one_hot_encoding = one_hot_encoding
+            if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
+                dic['output_1'] = 'segmentation'
             tag_list = self._set_tag(self.name)
 
             # folder_list = sorted([X for X in os.listdir(self.file_folder) if os.path.isdir(os.path.join(self.file_folder, X))])
@@ -1120,6 +1104,7 @@ class DTS(object):
                                        Data[1][out]['data'][0][test_mask])
 
         self.source = 'custom'
+        inp_datatype = []
 
         for inp in inputs:
 
@@ -1167,7 +1152,7 @@ class DTS(object):
                     del list_of_arrays
 
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            self.input_datatype[inp] = self._set_datatype(shape=self.X[inp]['data'][0].shape)
+            inp_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
 
         for out in outputs:
             if options['y_scaler'][out] in ['StandardScaler', 'MinMaxScaler']:
@@ -1224,6 +1209,7 @@ class DTS(object):
             else:
                 self.one_hot_encoding[out] = False
 
+        self.input_datatype = ' '.join(inp_datatype)
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено.')
@@ -1337,7 +1323,7 @@ class DTS(object):
                     x_Val = x_Val[..., None]
 
         self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
-        self.input_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.input_datatype = self._set_datatype(shape=x_Train.shape)
 
         if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
                 'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
@@ -1492,10 +1478,6 @@ class DTS(object):
         X = np.array(X)
         Y_cls = np.array(Y_cls)
         self.source_datatype[f'input_{self.iter}'] = self._set_datatype(shape=X.shape)
-        if self.name == 'автомобили':
-            self.classes_names = ['Ferrari', 'Mercedes']
-        elif self.name == 'автомобили_3':
-            self.classes_names = ['Ferrari', 'Mercedes', 'Renault']
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
 
@@ -1514,8 +1496,78 @@ class DTS(object):
 
         if net == 'Linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
-        self.input_shape[f'input_{self.iter}'] = X.shape[1:]
-        self.input_datatype[f'input_{self.iter}'] = self._set_datatype(shape=X.shape)
+
+        if 'classification' in self.task_type.values():
+            self.y_Cls = Y_cls.astype('int')
+            del Y_cls
+
+        return X
+
+    def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+
+        if folder_name == None:
+            folder_name = self.file_folder
+        else:
+            folder_name = os.path.join(self.file_folder, folder_name)
+
+        X = []
+        Y_cls = []
+
+        for _, dirnames, filename in sorted(os.walk(folder_name)):
+
+            folders = sorted(dirnames)
+            folders_num = len(dirnames) if len(dirnames) != 0 else 1
+            for i in range(folders_num):
+                temp_path = folder_name
+                try:
+                    temp_path = os.path.join(folder_name, folders[i])
+                except:
+                    IndexError
+
+                files = sorted(os.listdir(temp_path))
+                progress_bar = tqdm(files, ncols=800)
+                if folders_num == 1:
+                    description = f'Сохранение видеофайлов'
+                else:
+                    description = f'Сохранение видеофайлов из папки {folders[i]}'
+                progress_bar.set_description(description)
+                idx = 1
+                for file in progress_bar:
+                    vc = cv2.VideoCapture(os.path.join(temp_path, file))
+                    while True:
+                        success, frame = vc.read()
+                        if not success:
+                            break
+                        resized_frame = cv2.resize(frame, (height, width))
+                        X.append(resized_frame)
+                        Y_cls.append(i)
+                    if self.django_flag:
+                        idx += 1
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                        if idx == progress_bar.total and i+1 == folders_num:
+                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        else:
+                            self.Exch.print_progress_bar(progress_bar_status)
+            break
+
+        X = np.array(X)
+        Y_cls = np.array(Y_cls)
+
+        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
+
+            shape_x = X.shape
+            X = X.reshape(-1, 1)
+
+            if scaler == 'MinMaxScaler':
+                self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
+
+            elif scaler == 'StandardScaler':
+                self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
+
+            self.x_Scaler[f'input_{self.iter}'].fit(X)
+            X = self.x_Scaler[f'input_{self.iter}'].transform(X)
+            X = X.reshape(shape_x)
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y_cls.astype('int')
@@ -2172,7 +2224,7 @@ class DTS(object):
 
         cur_time = time()
         self.name = dataset_dict['parameters']['name']
-        self.user_hashtags = dataset_dict['parameters']['user_hashtags']
+        self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
 
         self.user_parameters['inp'] = dataset_dict['inputs']
@@ -2213,10 +2265,12 @@ class DTS(object):
             self.Y[out]['data'] = (self.Y[out]['data'][train_mask], self.Y[out]['data'][val_mask],
                                    self.Y[out]['data'][test_mask])
 
+        inp_datatype = []
         for inp in self.X.keys():
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            self.input_datatype[inp] = self._set_datatype(shape=self.input_shape[inp])
+            inp_datatype.append(self._set_datatype(shape=self.input_shape[inp]))
 
+        self.input_datatype = ' '.join(inp_datatype)
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
             x = ['x_train', 'x_val', 'x_test']
