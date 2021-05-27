@@ -2,6 +2,7 @@ import base64
 import gc
 import os
 import re
+import shutil
 import tempfile
 import zipfile
 
@@ -765,25 +766,6 @@ class Exchange(StatesData, GuiExch):
     def _set_dts_name(self, dts_name):
         self.dts_name = dts_name
 
-    def _write_zip(self, write_path, file_list):
-        try:
-            zip_model = zipfile.ZipFile(write_path, "w")
-            for any_file in file_list:
-                file_path = os.path.join(self.dir_paths.modeling, any_file)
-                zip_model.write(file_path)
-            return ""
-        except Exception as e:
-            return e.__str__()
-
-    def _load_unzip(self, load_path, file_name):
-        try:
-            zip_model = zipfile.ZipFile(load_path, "r")
-            file_path = os.path.join(self.dir_paths.modeling, file_name)
-            zip_model.write(file_path)
-            return ""
-        except Exception as e:
-            return e.__str__()
-
     @staticmethod
     def _set_layers_list() -> list:
         """
@@ -1070,82 +1052,9 @@ class Exchange(StatesData, GuiExch):
             self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
 
-    # def start_training(self, model: bytes, **kwargs) -> dict:
-    #     training = Thread(target=self._start_training, name='TRAIN_PROCESS', daemon=False, args=(model,), kwargs=kwargs)
-    #     training.start()
-    #     self.is_trained = True
-    #     time.sleep(30)
-    #     self.stop_training()
-    #     # training.join()
-    #     self.is_trained = False
-    #     return {}
-
     def stop_training(self):
         self.stop_training_flag = True
         self.out_data["stop_flag"] = True
-
-    def save_model(self, **kwargs):
-        model_name = kwargs.get("name")
-        is_overwrite = kwargs.get("overwrite")
-        write_model_path = os.path.join(self.gd_paths.modeling, f"{model_name}.model")
-        files_for_zipping = os.listdir(self.dir_paths.modeling)
-        is_write = True
-        message = ""
-        if is_overwrite or not os.path.exists(write_model_path):
-            message = self._write_zip(write_model_path, files_for_zipping)
-            if message:
-                is_write = False
-        else:
-            if os.path.exists(write_model_path):
-                message = "This model is exists"
-                is_write = False
-        return is_write, message
-
-
-
-
-    #
-    # def start_evaluate(self):
-    #     self.nn.evaluate()
-    #     return self.out_data
-    #
-    # def start_nn_train(self, batch=32, epoch=20):
-    #     if self.is_trained:
-    #         self.nn.nn_cleaner()
-    #         gc.collect()
-    #         self.nn = NN(exch_obj=self)
-    #     self.process_flag = "train"
-    #     self._reset_out_data()
-    #     self.nn.load_dataset(self.dts, task_type=self.current_state["task"])
-    # TEST SETTINGS DELETE FOR PROD
-    # if self.nn.env_setup == 'raw' and self.dts.name == 'mnist':
-    #     self.dts.x_Train = self.dts.x_Train[:1000, :, :]
-    #     self.dts.y_Train = self.dts.y_Train[:1000, :]
-    #     self.dts.x_Val = self.dts.x_Val[:1000, :, :]
-    #     self.dts.y_Val = self.dts.y_Val[:1000, :]
-
-    # @dataclass
-    # class MyPlan(LayersDef):
-    #     framework = "keras"
-    #     input_datatype = self.dts.input_datatype  # Type of data
-    #     plan_name = self.current_state.get("model")
-    #     num_classes = self.dts.num_classes
-    #     input_shape = self.dts.input_shape
-    #     plan = self.model_plan
-    #
-    # self.epochs = int(epoch)
-    # self.batch_size = int(batch)
-
-    # TEST PARAMS DELETE FOR PROD
-    # if self.nn.env_setup == 'raw':
-    #     self.epochs = 1
-    #     self.batch_size = 64
-
-    # training = Thread(target=self.start_training, args=(MyPlan,))
-    # training.start()
-    # training.join()
-    # self.is_trained = True
-    # return self.out_data
 
 
 if __name__ == "__main__":
