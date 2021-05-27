@@ -1041,7 +1041,7 @@ class DTS(object):
             self.load_data(options['dataset_name'])
 
             config = configparser.ConfigParser()
-            config.read(os.path.join(self.file_folder, 'config.ini'))
+            config.read(os.path.join(self.file_folder, 'config.ini'), encoding="utf-8")
             self.name = config.get('ATTRIBUTES', 'name')
             self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
             self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
