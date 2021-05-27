@@ -116,7 +116,8 @@ class LayersDef:
             # 14: "AdditiveAttention"
         },
         # Recurrent layers
-        7: {1: "Embedding",
+        7: {
+            1: "Embedding",
             2: "LSTM",
             3: "GRU",
             # 4: "SimpleRNN",
@@ -124,7 +125,7 @@ class LayersDef:
             # 6: "Bidirectional",
             # 7: "ConvLSTM2D",
             # 8: "RNN"
-            },
+        },
         # Shape-shifters
         8: {
             1: "Flatten",
@@ -499,14 +500,42 @@ class GUILayersDef:
     pool_size_lh = (2, 4, 6)
     strides_lh = (2, 4, 6)
     padding_lh = ("same", "valid")
-    activation_lh = (None, "relu", "sigmoid", "softmax",
-                     "softplus", "softsign", "tanh",
-                     "selu", "elu", "exponential", "leaner")
-    initializer_lh = ("random_normal", "random_uniform", "truncated_normal",
-                      "zeros", "ones", "glorot_normal", "glorot_uniform", "uniform",
-                      "identity", "orthogonal", "constant", "variance_scaling")
+    activation_lh = (
+        None,
+        "relu",
+        "sigmoid",
+        "softmax",
+        "softplus",
+        "softsign",
+        "tanh",
+        "selu",
+        "elu",
+        "exponential",
+        "leaner",
+    )
+    initializer_lh = (
+        "random_normal",
+        "random_uniform",
+        "truncated_normal",
+        "zeros",
+        "ones",
+        "glorot_normal",
+        "glorot_uniform",
+        "uniform",
+        "identity",
+        "orthogonal",
+        "constant",
+        "variance_scaling",
+    )
     regularizer_lh = (None, "l1", "l2", "l1_l2")
-    constraint_lh = (None, "max_norm", "min_max_norm", "non_neg", "unit_norm", "radial_constraint")
+    constraint_lh = (
+        None,
+        "max_norm",
+        "min_max_norm",
+        "non_neg",
+        "unit_norm",
+        "radial_constraint",
+    )
     data_format_lh = ("channels_last", "channels_first")
     size_lh = (2, 2)
     rate_lh = (0.1, 0.5)
@@ -519,42 +548,42 @@ class GUILayersDef:
     constraints = {}
 
     layers_params = {
-        "Input": {"main": {},
-                  "extra": {
-                      # "shape": {"type": "tuple", "default": None},
-                      # "batch_size": {"type": "int", "default": None},
-                      # "name": {"type": "str", "default": None},
-                      # "dtype": {"type": "str", "default": None},
-                      # "sparse": {
-                      #     "type": "bool",
-                      #     "default": False,
-                      # },
-                      # "tensor": {"type": "tensor", "default": None},
-                      # "ragged": {
-                      #     "type": "bool",
-                      #     "default": False,
-                  }
-                  },
+        "Input": {
+            "main": {},
+            "extra": {
+                # "shape": {"type": "tuple", "default": None},
+                # "batch_size": {"type": "int", "default": None},
+                # "name": {"type": "str", "default": None},
+                # "dtype": {"type": "str", "default": None},
+                # "sparse": {
+                #     "type": "bool",
+                #     "default": False,
+                # },
+                # "tensor": {"type": "tensor", "default": None},
+                # "ragged": {
+                #     "type": "bool",
+                #     "default": False,
+            },
+        },
         "Conv1D": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "int", "default": 2},
-                    "strides": {"type": "int", "default": 1},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "int", "default": 2},
+                "strides": {"type": "int", "default": 1},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -608,8 +637,8 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "Conv2D": {
             "main": {
@@ -624,12 +653,12 @@ class GUILayersDef:
                 },
                 "activation": {
                     "type": "str",
-                    "default": 'relu',
+                    "default": "relu",
                     "list": True,
                     "available": activation_lh,
                 },
             },
-            'extra': {
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -683,36 +712,38 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "Conv3D": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "tuple", "default": (1, 1, 1)},
-                    "strides": {"type": "tuple", "default": (1, 1, 1)},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "tuple", "default": (1, 1, 1)},
+                "strides": {"type": "tuple", "default": (1, 1, 1)},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 },
-                "dilation_rate": {"type": "tuple", "default": (1, 1, 1)},  # has exceptions
+                "dilation_rate": {
+                    "type": "tuple",
+                    "default": (1, 1, 1),
+                },  # has exceptions
                 "groups": {"type": "int", "default": 1},  # has exceptions,
                 "use_bias": {
                     "type": "bool",
@@ -759,29 +790,28 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "Conv1DTranspose": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "int", "default": 1},
-                    "strides": {"type": "int", "default": 1},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "int", "default": 1},
+                "strides": {"type": "int", "default": 1},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "output_padding": {"type": "int", "default": None},
                 "data_format": {
                     "type": "str",
@@ -835,29 +865,28 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "Conv2DTranspose": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "tuple", "default": (1, 1)},
-                    "strides": {"type": "tuple", "default": (1, 1)},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "tuple", "default": (1, 1)},
+                "strides": {"type": "tuple", "default": (1, 1)},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "output_padding": {"type": "tuple", "default": None},
                 "data_format": {
                     "type": "str",
@@ -911,29 +940,28 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "SeparableConv1D": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "int", "default": 1},
-                    "strides": {"type": "int", "default": 1},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "int", "default": 1},
+                "strides": {"type": "int", "default": 1},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -1005,29 +1033,28 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "SeparableConv2D": {
-            "main":
-                {
-                    "filters": {"type": "int", "default": 32},
-                    "kernel_size": {"type": "tuple", "default": (1, 1)},
-                    "strides": {"type": "tuple", "default": (1, 1)},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {"type": "int", "default": 32},
+                "kernel_size": {"type": "tuple", "default": (1, 1)},
+                "strides": {"type": "tuple", "default": (1, 1)},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -1099,28 +1126,27 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "DepthwiseConv2D": {
-            "main":
-                {
-                    "kernel_size": {"type": "tuple", "default": (1, 1)},
-                    "strides": {"type": "tuple", "default": (1, 1)},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "kernel_size": {"type": "tuple", "default": (1, 1)},
+                "strides": {"type": "tuple", "default": (1, 1)},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -1174,102 +1200,93 @@ class GUILayersDef:
                     "default": None,
                     "list": True,
                     "available": constraint_lh,
-                }
-            }
+                },
+            },
         },
         "MaxPooling1D": {
-            "main":
-                {
-                    "pool_size": {"type": "int", "default": 2},
-                    "strides": {"type": "int", "default": None},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {"type": "int", "default": 2},
+                "strides": {"type": "int", "default": None},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 }
-            }
+            },
         },
         "MaxPooling2D": {
-            "main":
-                {
-                    "pool_size": {"type": "tuple", "default": (2, 2)},
-                    "strides": {"type": "tuple", "default": None},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {"type": "tuple", "default": (2, 2)},
+                "strides": {"type": "tuple", "default": None},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 }
-            }
+            },
         },
         "AveragePooling1D": {
-            "main":
-                {
-                    "pool_size": {"type": "int", "default": 2},
-                    "strides": {"type": "int", "default": None},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {"type": "int", "default": 2},
+                "strides": {"type": "int", "default": None},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 }
-            }
+            },
         },
         "AveragePooling2D": {
-            "main":
-                {
-                    "pool_size": {"type": "tuple", "default": (2, 2)},
-                    "strides": {"type": "tuple", "default": None},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {"type": "tuple", "default": (2, 2)},
+                "strides": {"type": "tuple", "default": None},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
                 },
-            'extra': {
+            },
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 }
-            }
+            },
         },
-        "UpSampling1D": {
-            "main":
-                {"size": {"type": "int", "default": 2}},
-            'extra': {}
-        },
+        "UpSampling1D": {"main": {"size": {"type": "int", "default": 2}}, "extra": {}},
         "UpSampling2D": {
-            "main":
-                {"size": {"type": "tuple", "default": (2, 2)}},
-            'extra': {
+            "main": {"size": {"type": "tuple", "default": (2, 2)}},
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
@@ -1281,34 +1298,31 @@ class GUILayersDef:
                     "default": "nearest",
                     "list": True,
                     "available": ["nearest", "bilinear"],
-                }
-            }
+                },
+            },
         },
         "LeakyReLU": {
-            "main":
-                {"alpha": {"type": "float", "default": 0.3}},
-            'extra': {}
+            "main": {"alpha": {"type": "float", "default": 0.3}},
+            "extra": {},
         },
         "Dropout": {
-            "main":
-                {"rate": {"type": "float", "default": 0.1}},
-            'extra': {
+            "main": {"rate": {"type": "float", "default": 0.1}},
+            "extra": {
                 "noise_shape": {"type": "tensor", "default": None},
-                "seed": {"type": "int", "default": None}
-            }
+                "seed": {"type": "int", "default": None},
+            },
         },
         "Dense": {
-            "main":
-                {
-                    "units": {"type": "int", "default": 32},
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "units": {"type": "int", "default": 32},
+                "activation": {
+                    "type": "str",
+                    "default": "relu",
+                    "list": True,
+                    "available": activation_lh,
                 },
-            'extra': {
+            },
+            "extra": {
                 "use_bias": {
                     "type": "bool",
                     "default": True,
@@ -1356,42 +1370,35 @@ class GUILayersDef:
                     "available": constraint_lh,
                 },
                 # "name": {"type": "str", "default": None},
-            }
+            },
         },
-        "Add": {'main': {}, 'extra': {}},
-        "Multiply": {'main': {}, 'extra': {}},
+        "Add": {"main": {}, "extra": {}},
+        "Multiply": {"main": {}, "extra": {}},
         "Flatten": {
-            'main': {},
-            'extra': {
+            "main": {},
+            "extra": {
                 "data_format": {
                     "type": "str",
                     "default": "channels_last",
                     "list": True,
                     "available": data_format_lh,
                 }
-            }
-        },
-        "Concatenate": {
-            'main': {
-                "axis": {"type": "int", "default": -1}
             },
-            'extra': {}
         },
+        "Concatenate": {"main": {}, "extra": {"axis": {"type": "int", "default": -1}}},
         "Reshape": {
-            'main': {
-                "target_shape": {"type": "tuple", "default": None}
-            },
-            'extra': {}
+            "main": {"target_shape": {"type": "tuple", "default": None}},
+            "extra": {},
         },
-        "sigmoid": {'main': {}, 'extra': {}},
-        "softmax": {'main': {}, 'extra': {}},
-        "tanh": {'main': {}, 'extra': {}},
-        "relu": {'main': {}, 'extra': {}},
-        "elu": {'main': {}, 'extra': {}},
-        "selu": {'main': {}, 'extra': {}},
+        "sigmoid": {"main": {}, "extra": {}},
+        "softmax": {"main": {}, "extra": {}},
+        "tanh": {"main": {}, "extra": {}},
+        "relu": {"main": {}, "extra": {}},
+        "elu": {"main": {}, "extra": {}},
+        "selu": {"main": {}, "extra": {}},
         "PReLU": {
-            'main': {},
-            'extra': {
+            "main": {},
+            "extra": {
                 "alpha_initializer": {
                     "type": "str",
                     "default": "zeros",
@@ -1410,55 +1417,66 @@ class GUILayersDef:
                     "list": True,
                     "available": constraint_lh,
                 },
-                "shared_axes": {"type": "list", "default": None}
-            }
+                "shared_axes": {"type": "list", "default": None},
+            },
         },
-        "GlobalMaxPooling1D": {'main': {},
-                               'extra': {
-                                   "data_format": {
-                                       "type": "str",
-                                       "default": "channels_last",
-                                       "list": True,
-                                       "available": data_format_lh,
-                                   }}},
-        "GlobalMaxPooling2D": {'main': {},
-                               'extra': {
-                                   "data_format": {
-                                       "type": "str",
-                                       "default": "channels_last",
-                                       "list": True,
-                                       "available": data_format_lh,
-                                   }}},
-        "GlobalAveragePooling1D": {'main': {},
-                                   'extra': {
-                                       "data_format": {
-                                           "type": "str",
-                                           "default": "channels_last",
-                                           "list": True,
-                                           "available": data_format_lh,
-                                       }}},
-        "GlobalAveragePooling2D": {'main': {},
-                                   'extra': {
-                                       "data_format": {
-                                           "type": "str",
-                                           "default": "channels_last",
-                                           "list": True,
-                                           "available": data_format_lh,
-                                       }}},
+        "GlobalMaxPooling1D": {
+            "main": {},
+            "extra": {
+                "data_format": {
+                    "type": "str",
+                    "default": "channels_last",
+                    "list": True,
+                    "available": data_format_lh,
+                }
+            },
+        },
+        "GlobalMaxPooling2D": {
+            "main": {},
+            "extra": {
+                "data_format": {
+                    "type": "str",
+                    "default": "channels_last",
+                    "list": True,
+                    "available": data_format_lh,
+                }
+            },
+        },
+        "GlobalAveragePooling1D": {
+            "main": {},
+            "extra": {
+                "data_format": {
+                    "type": "str",
+                    "default": "channels_last",
+                    "list": True,
+                    "available": data_format_lh,
+                }
+            },
+        },
+        "GlobalAveragePooling2D": {
+            "main": {},
+            "extra": {
+                "data_format": {
+                    "type": "str",
+                    "default": "channels_last",
+                    "list": True,
+                    "available": data_format_lh,
+                }
+            },
+        },
         "GRU": {
-            "main":
-                {
-                    "units": {"type": "int", "default": 32},
-                    "return_sequences": {
-                        "type": "bool",
-                        "default": False,
-                    },
-                    "return_state": {
-                        "type": "bool",
-                        "default": False,
-                    },
+            "main": {
+                "units": {"type": "int", "default": 32},
+                "return_sequences": {
+                    "type": "bool",
+                    "default": False,
                 },
-            'extra': {
+                "return_state": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
+            "extra": {
                 "activation": {
                     "type": "str",
                     "default": "tanh",
@@ -1556,23 +1574,22 @@ class GUILayersDef:
                 "reset_after": {
                     "type": "bool",
                     "default": True,
-                }
-            }
+                },
+            },
         },
         "LSTM": {
-            "main":
-                {
-                    "units": {"type": "int", "default": 32},
-                    "return_sequences": {
-                        "type": "bool",
-                        "default": False,
-                    },
-                    "return_state": {
-                        "type": "bool",
-                        "default": False,
-                    },
+            "main": {
+                "units": {"type": "int", "default": 32},
+                "return_sequences": {
+                    "type": "bool",
+                    "default": False,
                 },
-            'extra': {
+                "return_state": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
+            "extra": {
                 "activation": {
                     "type": "str",
                     "default": "tanh",
@@ -1670,17 +1687,16 @@ class GUILayersDef:
                 "unroll": {
                     "type": "bool",
                     "default": False,
-                }
-            }
+                },
+            },
         },
         "Embedding": {
-            "main":
-                {
-                    "input_dim": {"type": "int", "default": None},
-                    "output_dim": {"type": "int", "default": None},
-                    "input_length": {"type": "int", "default": None},
-                },
-            'extra': {
+            "main": {
+                "output_dim": {"type": "int", "default": None},
+                "input_length": {"type": "int", "default": None},
+            },
+            "extra": {
+                "input_dim": {"type": "int", "default": None},
                 "embeddings_initializer": {
                     "type": "str",
                     "default": "uniform",
@@ -1706,16 +1722,12 @@ class GUILayersDef:
                     "available": constraint_lh,
                 },
                 "mask_zero": {"type": "bool", "default": False},
-            }
+            },
         },
-        "RepeatVector": {
-            "main":
-                {"n": {"type": "int", "default": 8}},
-            'extra': {}
-        },
+        "RepeatVector": {"main": {}, "extra": {"n": {"type": "int", "default": 8}}},
         "BatchNormalization ": {
-            'main': {},
-            'extra': {
+            "main": {},
+            "extra": {
                 "axis": {"type": "int", "default": -1},
                 "momentum": {"type": "float", "default": 0.99},
                 "epsilon": {"type": "float", "default": 0.001},
@@ -1791,8 +1803,8 @@ class GUILayersDef:
                 },
                 "virtual_batch_size": {"type": "int", "default": None},
                 "adjustment": {"type": "func", "default": None},
-                "name": {"type": "str", "default": None}
-            }
-        }
+                "name": {"type": "str", "default": None},
+            },
+        },
     }
     pass
