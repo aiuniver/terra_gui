@@ -3,7 +3,6 @@ import os
 import re
 import json
 import shutil
-import zipfile
 
 import requests
 
@@ -410,8 +409,7 @@ class TerraExchange:
         self.project.clear()
 
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
-        project = zipfile.ZipFile(fullpath)
-        project.extractall(settings.TERRA_AI_PROJECT_PATH)
+        shutil.unpack_archive(fullpath, settings.TERRA_AI_PROJECT_PATH, "zip")
 
         self.__project = TerraExchangeProject()
 

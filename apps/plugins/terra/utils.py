@@ -1,7 +1,6 @@
 import os
 import math
 import shutil
-import zipfile
 import tempfile
 
 from PIL import Image
@@ -55,9 +54,7 @@ def unpack_model(filepath: str) -> dict:
     tmp_dir = tempfile.mkdtemp()
     model_tmp = os.path.join(tmp_dir, "model.zip")
     shutil.copy2(filepath, model_tmp)
-
-    with zipfile.ZipFile(model_tmp, "r") as zip_ref:
-        zip_ref.extractall(tmp_dir)
+    shutil.unpack_archive(model_tmp, tmp_dir, "zip")
 
     os.remove(model_tmp)
 
