@@ -107,7 +107,7 @@ class StatesData:
                         "type": "float",
                         "default": 0.0,
                     },
-                    "beta": {"type": "float", "default": 0.0},
+                    # "beta": {"type": "float", "default": 0.0}, for TF versions > 2.3.0
                 },
             },
         }
