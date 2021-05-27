@@ -391,7 +391,7 @@
                         dataset: serialize_data.parameters.name,
                         is_custom: false,
                         not_load_layers: false,
-                        dataset_dict: serialize_data,
+                        dataset_dict: serialize_data
                     }
                 );
             });
