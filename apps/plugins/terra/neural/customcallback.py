@@ -1449,16 +1449,16 @@ class RegressionCallback:
             data.update({key: value})
             self.exchange.show_plot_data(data)
 
-            if self.plot_scatter:
-                data = {}
-                scatter_title = "Scatter"
-                xlabel = "True values"
-                ylabel = "Predictions"
-                y_true, y_pred = self.predicts[vshowmet]
-                key = (scatter_title, xlabel, ylabel)
-                value = [(y_true, y_pred, "Regression")]
-                data.update({key: value})
-                self.exchange.show_scatter_data(data)
+        if self.plot_scatter:
+            data = {}
+            scatter_title = "Scatter"
+            xlabel = "True values"
+            ylabel = "Predictions"
+            y_true, y_pred = self.predicts[vshowmet]
+            key = (scatter_title, xlabel, ylabel)
+            value = [(y_true.reshape((y_true.shape[0])), y_pred.reshape((y_pred.shape[0])), "Regression")]
+            data.update({key: value})
+            self.exchange.show_scatter_data(data)
 
         pass
 
