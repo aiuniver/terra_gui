@@ -1231,8 +1231,8 @@ class TimeseriesCallback:
             # )
 
             metric_title = (
-                f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}",
-                "epochs",
+                f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}",
+                "эпохи",
                 f"{showmet}",
             )
             data.update(
@@ -1246,12 +1246,12 @@ class TimeseriesCallback:
 
             if self.plot_pred_and_true:
                 y_true, y_pred = self.predicts[vshowmet]
-                pred_title = ("Predictions", "steps", f"{showmet}")
+                pred_title = ("Предикт", "шаги", f"{showmet}")
                 data.update(
                     {
                         pred_title: [
-                            [list(range(len(y_true))), y_true, "Actual"],
-                            [list(range(len(y_pred))), y_pred, "Prediction"],
+                            [list(range(len(y_true))), y_true, "Истина"],
+                            [list(range(len(y_pred))), y_pred, "Предикт"],
                         ]
                     }
                 )
@@ -1343,7 +1343,7 @@ class TimeseriesCallback:
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
-                self.comment = f" epoch {epoch + 1}"
+                self.comment = f" эпоха {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
@@ -1353,7 +1353,7 @@ class TimeseriesCallback:
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
         if self.show_final:
-            self.comment = f"on {self.epoch + 1} epochs"
+            self.comment = f"на {self.epoch + 1} эпохе"
             self.idx = 0
             self.plot_result(output_key=output_key)
         if self.corr_step > 0:
@@ -1520,7 +1520,7 @@ class RegressionCallback:
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
         if self.show_final:
-            self.comment = f"on {self.epoch + 1} epochs"
+            self.comment = f"на {self.epoch + 1} эпохе"
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
