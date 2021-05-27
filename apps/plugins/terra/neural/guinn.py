@@ -278,20 +278,20 @@ class GUINN:
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         # self.show_training_params()
         if self.x_Val['input_1'] is not None:
-            training = Thread(target=self.tr_thread)
-            training.start()
-            training.join()
-            del training
-            # self.history = self.model.fit(
-            #     self.x_Train,
-            #     self.y_Train,
-            #     batch_size=self.batch_size,
-            #     shuffle=self.shuffle,
-            #     validation_data=(self.x_Val, self.y_Val),
-            #     epochs=self.epochs,
-            #     verbose=verbose,
-            #     callbacks=self.callbacks
-            # )
+            # training = Thread(target=self.tr_thread)
+            # training.start()
+            # training.join()
+            # del training
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=(self.x_Val, self.y_Val),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
         else:
             self.history = self.model.fit(
                 self.x_Train,

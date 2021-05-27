@@ -165,7 +165,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.clbck_object = []
         self.prepare_params()
         self.Exch.show_text_data(
-            f"Added callbacks: {self.callbacks_name}"
+            f"Добавлены колбэки: {self.callbacks_name}"
         )
 
     def save_lastmodel(self) -> None:
@@ -181,7 +181,7 @@ class CustomCallback(keras.callbacks.Callback):
         )
         self.model.save(file_path_model)
         self.Exch.print_2status_bar(
-            ("Info", f"Model last is saved as {file_path_model}")
+            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
         )
         pass
 
@@ -479,7 +479,7 @@ class ClassificationCallback:
             None:
         """
         plot_data = {}
-        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
+        msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
@@ -491,8 +491,8 @@ class ClassificationCallback:
                 else:
                     val_metric_name = f"val_{metric_name}"
 
-                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
-                xlabel = "epoch"
+                metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+                xlabel = "эпоха"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
                 plot_data[labels] = [
@@ -517,13 +517,13 @@ class ClassificationCallback:
                         val_metric_name = f"val_{metric_name}"
                     else:
                         val_metric_name = f"val_{metric_name}"
-                    classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-                    xlabel = "epoch"
+                    classes_title = f"{val_metric_name} из {self.num_classes} классов. {msg_epoch}"
+                    xlabel = "эпоха"
                     ylabel = val_metric_name
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
                                           self.predict_cls[val_metric_name][j],
-                                          f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
+                                          f"{val_metric_name} класс {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -576,8 +576,8 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
-                    f" Actual: {classes_labels[true_idx]}"
+            title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
+                    f" Истина: {classes_labels[true_idx]}"
             data.append((image, title))
         out_data = {'images': image_to_base64(data)}
         self.Exch.show_image_data(out_data)
@@ -864,7 +864,7 @@ class SegmentationCallback:
             None:
         """
         plot_data = {}
-        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
+        msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
@@ -877,8 +877,8 @@ class SegmentationCallback:
                 else:
                     val_metric_name = f"val_{metric_name}"
                 # определяем, что демонстрируем во 2м и 3м окне
-                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
-                xlabel = "epoch"
+                metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+                xlabel = "эпох"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
                 plot_data[labels] = [
@@ -982,19 +982,19 @@ class SegmentationCallback:
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
-            title = "Image"
+            title = "Изображение"
             image_data.append((image, title))
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
-            title = "Ground truth mask"
+            title = "Истинная маска"
             true_mask_data.append((image, title))
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
-            title = "Predicted mask"
+            title = "Маска предикта"
             pred_mask_data.append((image, title))
 
         data = {
@@ -1128,7 +1128,7 @@ class SegmentationCallback:
                 elif metric_name.endswith("loss"):
                     self.evaluate_loss()
                 else:
-                    print("Metric name is not supported")
+                    print(f"Выбранная метрика {metric_name} не поддерживается для вычислений")
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
                 for j in range(self.num_classes):
@@ -1238,8 +1238,8 @@ class TimeseriesCallback:
             data.update(
                 {
                     metric_title: [
-                        [range(loss_len), self.history[showmet], showmet],
-                        [range(loss_len), self.history[vshowmet], vshowmet],
+                        [list(range(loss_len)), self.history[showmet], showmet],
+                        [list(range(loss_len)), self.history[vshowmet], vshowmet],
                     ]
                 }
             )
@@ -1250,8 +1250,8 @@ class TimeseriesCallback:
                 data.update(
                     {
                         pred_title: [
-                            [range(len(y_true)), y_true, "Actual"],
-                            [range(len(y_pred)), y_pred, "Prediction"],
+                            [list(range(len(y_true))), y_true, "Actual"],
+                            [list(range(len(y_pred))), y_pred, "Prediction"],
                         ]
                     }
                 )
@@ -1290,8 +1290,8 @@ class TimeseriesCallback:
         title = ("Автокорреляция", '', '')
         correlation_data = {
             title: [
-                [range(corr_steps), corr_list, corr_label],
-                [range(corr_steps), autocorr_list, autocorr_label],
+                [list(range(corr_steps)), corr_list, corr_label],
+                [list(range(corr_steps)), autocorr_list, autocorr_label],
             ]
         }
         return correlation_data
@@ -1416,7 +1416,7 @@ class RegressionCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:
                 showmet = f'{output_key}_{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
             else:
