@@ -278,20 +278,20 @@ class GUINN:
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         # self.show_training_params()
         if self.x_Val['input_1'] is not None:
-            training = Thread(target=self.tr_thread)
-            training.start()
-            training.join()
-            del training
-            # self.history = self.model.fit(
-            #     self.x_Train,
-            #     self.y_Train,
-            #     batch_size=self.batch_size,
-            #     shuffle=self.shuffle,
-            #     validation_data=(self.x_Val, self.y_Val),
-            #     epochs=self.epochs,
-            #     verbose=verbose,
-            #     callbacks=self.callbacks
-            # )
+            # training = Thread(target=self.tr_thread)
+            # training.start()
+            # training.join()
+            # del training
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=(self.x_Val, self.y_Val),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
         else:
             self.history = self.model.fit(
                 self.x_Train,
@@ -305,16 +305,16 @@ class GUINN:
             )
         self.model_is_trained = True
 
-        self.monitor = self.chp_monitor
-        self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
-            history=self.history, monitor=self.monitor, monitor2=self.monitor2)
-        self.best_metric_result = self.best_epoch[self.monitor]
-
-        try:
-            self.save_nnmodel()
-        except RuntimeError:
-            self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
-        self.save_model_weights()
+        # self.monitor = self.chp_monitor
+        # self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
+        #     history=self.history, monitor=self.monitor, monitor2=self.monitor2)
+        # self.best_metric_result = self.best_epoch[self.monitor]
+        #
+        # try:
+        #     self.save_nnmodel()
+        # except RuntimeError:
+        #     self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
+        # self.save_model_weights()
 
         pass
 

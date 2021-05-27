@@ -165,7 +165,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.clbck_object = []
         self.prepare_params()
         self.Exch.show_text_data(
-            f"Added callbacks: {self.callbacks_name}"
+            f"Добавлены колбэки: {self.callbacks_name}"
         )
 
     def save_lastmodel(self) -> None:
@@ -181,13 +181,13 @@ class CustomCallback(keras.callbacks.Callback):
         )
         self.model.save(file_path_model)
         self.Exch.print_2status_bar(
-            ("Info", f"Model last is saved as {file_path_model}")
+            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
         )
         pass
 
     def prepare_callbacks(
             self, task_type: str = "", metrics: list = None, num_classes: int = None,
-            clbck_options: dict = {}) -> None:
+            clbck_options: dict = {}, tags: dict = {}) -> None:
         """
         if terra in raw mode  - setting callback if its set
         if terra with django - checking switches and set callback options from switches
@@ -202,6 +202,8 @@ class CustomCallback(keras.callbacks.Callback):
             callback_kwargs["metrics"] = copy.copy(metrics)
         if task_type == "classification" or task_type == "segmentation":
             callback_kwargs["num_classes"] = num_classes
+            if tags["input_1"]:
+                callback_kwargs["data_tag"] = tags["input_1"]
 
         for option_name, option_value in clbck_options.items():
 
@@ -302,6 +304,7 @@ class CustomCallback(keras.callbacks.Callback):
                 metrics=self.clbck_params[_key]["metrics"],
                 num_classes=self.clbck_params.setdefault(_key)["num_classes"],
                 clbck_options=self.clbck_params[_key]["callbacks"],
+                tags=self.DTS.tags,
             )
 
     def _estimate_step(self, current, start, now):
@@ -403,9 +406,9 @@ class CustomCallback(keras.callbacks.Callback):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
-        self.Exch.print_2status_bar(
-            ('Затрачено времени на обучение: ',
-             self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)))
+        self.Exch.show_text_data(
+            f'Затрачено времени на обучение: '
+            f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
 
 
 class ClassificationCallback:
@@ -416,8 +419,8 @@ class ClassificationCallback:
             metrics=[],
             step=1,
             class_metrics=[],
+            data_tag=None,
             num_classes=2,
-            data_tag="images",
             show_worst=False,
             show_best=False,
             show_final=True,
@@ -440,13 +443,13 @@ class ClassificationCallback:
         self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
-        self.data_tag = data_tag
         self.class_metrics = class_metrics
         self.show_worst = show_worst
         self.show_best = show_best
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
+        self.data_tag = data_tag
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -476,7 +479,7 @@ class ClassificationCallback:
             None:
         """
         plot_data = {}
-        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
+        msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
@@ -488,8 +491,8 @@ class ClassificationCallback:
                 else:
                     val_metric_name = f"val_{metric_name}"
 
-                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
-                xlabel = "epoch"
+                metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+                xlabel = "эпоха"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
                 plot_data[labels] = [
@@ -514,13 +517,13 @@ class ClassificationCallback:
                         val_metric_name = f"val_{metric_name}"
                     else:
                         val_metric_name = f"val_{metric_name}"
-                    classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-                    xlabel = "epoch"
+                    classes_title = f"{val_metric_name} из {self.num_classes} классов. {msg_epoch}"
+                    xlabel = "эпоха"
                     ylabel = val_metric_name
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
                                           self.predict_cls[val_metric_name][j],
-                                          f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
+                                          f"{val_metric_name} класс {j}", ] for j in range(self.num_classes)]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -573,8 +576,8 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            title = f"Output: {output_key} \n Predicted: {classes_labels[pred_idx]} \n" \
-                    f" Actual: {classes_labels[true_idx]}"
+            title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
+                    f" Истина: {classes_labels[true_idx]}"
             data.append((image, title))
         out_data = {'images': image_to_base64(data)}
         self.Exch.show_image_data(out_data)
@@ -789,8 +792,9 @@ class ClassificationCallback:
         self.x_Val = x_val
         if self.show_final:
             self.plot_result(output_key)
-            if self.show_best or self.show_worst:
-                self.plot_images(output_key=output_key)
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    self.plot_images(output_key=output_key)
 
 
 class SegmentationCallback:
@@ -802,7 +806,7 @@ class SegmentationCallback:
             step=1,
             num_classes=2,
             class_metrics=[],
-            data_tag="images",
+            data_tag=None,
             show_worst=False,
             show_best=False,
             show_final=True,
@@ -825,13 +829,13 @@ class SegmentationCallback:
         self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
-        self.data_tag = data_tag
         self.class_metrics = class_metrics
         self.show_worst = show_worst
         self.show_best = show_best
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
+        self.data_tag = data_tag
         self.epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -860,7 +864,7 @@ class SegmentationCallback:
             None:
         """
         plot_data = {}
-        msg_epoch = f"Epoch №{self.epoch + 1:03d}"
+        msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
@@ -873,8 +877,8 @@ class SegmentationCallback:
                 else:
                     val_metric_name = f"val_{metric_name}"
                 # определяем, что демонстрируем во 2м и 3м окне
-                metric_title = f"{metric_name} and {val_metric_name} {msg_epoch}"
-                xlabel = "epoch"
+                metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+                xlabel = "эпох"
                 ylabel = f"{metric_name}"
                 labels = (metric_title, xlabel, ylabel)
                 plot_data[labels] = [
@@ -978,19 +982,19 @@ class SegmentationCallback:
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
-            title = "Image"
+            title = "Изображение"
             image_data.append((image, title))
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
-            title = "Ground truth mask"
+            title = "Истинная маска"
             true_mask_data.append((image, title))
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
             image = np.squeeze(self.colored_mask)
-            title = "Predicted mask"
+            title = "Маска предикта"
             pred_mask_data.append((image, title))
 
         data = {
@@ -1124,7 +1128,7 @@ class SegmentationCallback:
                 elif metric_name.endswith("loss"):
                     self.evaluate_loss()
                 else:
-                    print("Metric name is not supported")
+                    print(f"Выбранная метрика {metric_name} не поддерживается для вычислений")
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
                 for j in range(self.num_classes):
@@ -1145,8 +1149,9 @@ class SegmentationCallback:
         self.x_Val = x_val
         if self.show_final:
             self.plot_result(output_key=output_key)
-            if self.show_best or self.show_worst:
-                self.plot_images(input_key="input_1")
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    self.plot_images(input_key="input_1")
         pass
 
 
@@ -1181,9 +1186,8 @@ class TimeseriesCallback:
         self.show_final = show_final
         self.plot_pred_and_true = plot_pred_and_true
         self.dataset = dataset
-        self.corr_step = corr_step
         self.Exch = exchange
-
+        self.corr_step = corr_step
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
@@ -1227,27 +1231,27 @@ class TimeseriesCallback:
             # )
 
             metric_title = (
-                f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}",
-                "epochs",
+                f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}",
+                "эпохи",
                 f"{showmet}",
             )
             data.update(
                 {
                     metric_title: [
-                        [range(loss_len), self.history[showmet], showmet],
-                        [range(loss_len), self.history[vshowmet], vshowmet],
+                        [list(range(loss_len)), self.history[showmet], showmet],
+                        [list(range(loss_len)), self.history[vshowmet], vshowmet],
                     ]
                 }
             )
 
             if self.plot_pred_and_true:
                 y_true, y_pred = self.predicts[vshowmet]
-                pred_title = ("Predictions", "steps", f"{showmet}")
+                pred_title = ("Предикт", "шаги", f"{showmet}")
                 data.update(
                     {
                         pred_title: [
-                            [range(len(y_true)), y_true, "Actual"],
-                            [range(len(y_pred)), y_pred, "Prediction"],
+                            [list(range(len(y_true))), y_true, "Истина"],
+                            [list(range(len(y_pred))), y_pred, "Предикт"],
                         ]
                     }
                 )
@@ -1286,8 +1290,8 @@ class TimeseriesCallback:
         title = ("Автокорреляция", '', '')
         correlation_data = {
             title: [
-                [range(corr_steps), corr_list, corr_label],
-                [range(corr_steps), autocorr_list, autocorr_label],
+                [list(range(corr_steps)), corr_list, corr_label],
+                [list(range(corr_steps)), autocorr_list, autocorr_label],
             ]
         }
         return correlation_data
@@ -1339,7 +1343,7 @@ class TimeseriesCallback:
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
-                self.comment = f" epoch {epoch + 1}"
+                self.comment = f" эпоха {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
         self.Exch.show_text_data(
@@ -1349,7 +1353,7 @@ class TimeseriesCallback:
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
         if self.show_final:
-            self.comment = f"on {self.epoch + 1} epochs"
+            self.comment = f"на {self.epoch + 1} эпохе"
             self.idx = 0
             self.plot_result(output_key=output_key)
         if self.corr_step > 0:
@@ -1366,7 +1370,6 @@ class RegressionCallback:
             self,
             metrics,
             step=1,
-            data_tag="text",
             show_final=True,
             plot_scatter=False,
             dataset=DTS(),
@@ -1390,10 +1393,8 @@ class RegressionCallback:
         self.metrics = metrics
         self.show_final = show_final
         self.plot_scatter = plot_scatter
-        self.data_tag = data_tag
         self.dataset = dataset
         self.exchange = exchange
-
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
@@ -1415,7 +1416,7 @@ class RegressionCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].__name__
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:
                 showmet = f'{output_key}_{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
             else:
@@ -1423,7 +1424,7 @@ class RegressionCallback:
                 vshowmet = f"val_{showmet}"
             # showmet = self.losses[self.idx]
             # vshowmet = f"val_{showmet}"
-            epochcomment = f" epoch {self.epoch + 1}"
+            epochcomment = f" эпоха {self.epoch + 1}"
             loss_len = len(self.history[showmet])
             data = {}
 
@@ -1437,8 +1438,8 @@ class RegressionCallback:
             # ]
             # data.update({key: value})
 
-            metric_title = f"{showmet} metric = {showmet} and {vshowmet}{epochcomment}"
-            xlabel = "epoch"
+            metric_title = f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}"
+            xlabel = "эпох"
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
             value = [
@@ -1448,16 +1449,16 @@ class RegressionCallback:
             data.update({key: value})
             self.exchange.show_plot_data(data)
 
-            if self.plot_scatter:
-                data = {}
-                scatter_title = "Scatter"
-                xlabel = "True values"
-                ylabel = "Predictions"
-                y_true, y_pred = self.predicts[vshowmet]
-                key = (scatter_title, xlabel, ylabel)
-                value = [(y_true, y_pred, "Regression")]
-                data.update({key: value})
-                self.exchange.show_scatter_data(data)
+        if self.plot_scatter:
+            data = {}
+            scatter_title = "Scatter"
+            xlabel = "Истинные значения"
+            ylabel = "Предикт"
+            y_true, y_pred = self.predicts[vshowmet]
+            key = (scatter_title, xlabel, ylabel)
+            value = [(y_true.reshape(-1), y_pred.reshape(-1), "Регрессия")]
+            data.update({key: value})
+            self.exchange.show_scatter_data(data)
 
         pass
 
@@ -1507,7 +1508,7 @@ class RegressionCallback:
 
         if self.step > 0:
             if self.epoch % self.step == 0:
-                self.comment = f" epoch {epoch + 1}"
+                self.comment = f" эпоха {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
 
@@ -1519,7 +1520,7 @@ class RegressionCallback:
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
         if self.show_final:
-            self.comment = f"on {self.epoch + 1} epochs"
+            self.comment = f"на {self.epoch + 1} эпохе"
             self.idx = 0
             self.plot_result(output_key=output_key)
         pass
