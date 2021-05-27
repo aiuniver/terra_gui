@@ -654,16 +654,6 @@
                 });
             }
 
-            let _camelize = (text) => {
-                let _capitalize = (word) => {
-                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
-                }
-                let words = text.split("_"),
-                    result = [_capitalize(words[0])];
-                words.slice(1).forEach((word) => result.push(word))
-                return result.join(" ")
-            }
-
             let _create_node = (index, layer) => {
                 let w = _d3graph._groups[0][0].width.baseVal.value,
                     h = _d3graph._groups[0][0].height.baseVal.value,
@@ -996,6 +986,7 @@
                 _config.config.name = _form.name;
                 _config.config.type = _layer_type_field.val();
                 _config.config.data_name = _form.data_name || "";
+                _config.config.params = {"main":{},"extra":{}};
 
                 for (let group in _params) {
                     for (let name in _params[group]) {

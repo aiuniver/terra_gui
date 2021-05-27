@@ -2,13 +2,10 @@ import base64
 import gc
 import os
 import re
-import shutil
 import tempfile
-import zipfile
 
 import dill as dill
 from IPython import get_ipython
-from django.conf import settings
 from tensorflow.keras.models import load_model
 
 from terra_ai.trds import DTS
@@ -787,18 +784,18 @@ class Exchange(StatesData, GuiExch):
 
     def load_dataset(self, **kwargs):
         self._reset_out_data()
-        dataset_name = kwargs.get('name', '')
-        dataset_link = kwargs.get('link', '')
-        dts_layer_count = kwargs.get('num_links', {})
+        dataset_name = kwargs.get("name", "")
+        dataset_link = kwargs.get("link", "")
+        dts_layer_count = kwargs.get("num_links", {})
         if dts_layer_count:
-            inputs_count = dts_layer_count.get('inputs', 1)
-            outputs_count = dts_layer_count.get('outputs', 1)
+            inputs_count = dts_layer_count.get("inputs", 1)
+            outputs_count = dts_layer_count.get("outputs", 1)
         if dataset_name:
             self.dts.load_data(name=dataset_name, link=dataset_link)
             self._set_dts_name(self.dts.name)
             output = self.dts.get_parameters_dict()
         else:
-            self.out_data["errors"] = 'Не указано наименование датасета'
+            self.out_data["errors"] = "Не указано наименование датасета"
             output = {}
         self.out_data["stop_flag"] = True
         return output
