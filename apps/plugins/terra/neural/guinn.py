@@ -148,9 +148,10 @@ class GUINN:
         Args:
             dts_obj (object): setting task_name
         """
+        self.nn_cleaner()
         self.DTS = dts_obj
         self.prepare_dataset()
-        self.nn_cleaner()
+
         pass
 
     def show_training_params(self) -> None:
@@ -333,9 +334,28 @@ class GUINN:
     def nn_cleaner(self) -> None:
         keras.backend.clear_session()
         del self.model
+        del self.DTS
+        del self.x_Train
+        del self.x_Val
+        del self.y_Train
+        del self.y_Val
+        del self.x_Test
+        del self.y_Test
         gc.collect()
-        self.model = keras.Model()
+        self.model_is_trained = False
+        self.DTS = None
+        self.model = keras.Model
+        self.optimizer = keras.optimizers.Adam()
+        self.loss = {}
+        self.metrics = {}
         self.callbacks = []
+        self.history = {}
+        self.x_Train = {}
+        self.x_Val = {}
+        self.y_Train = {}
+        self.y_Val = {}
+        self.x_Test = {}
+        self.y_Test = {}
         pass
 
     @staticmethod
