@@ -509,6 +509,9 @@ footer > .message > .wrapper {
     overflow: hidden;
     text-overflow:ellipsis;
 }
+footer > .message > .wrapper > .error {
+    cursor:pointer;
+}
 
 /* progress */
 footer > .progress > .wrapper {
@@ -753,4 +756,55 @@ footer > .state > .wrapper:before {
 	background-repeat:no-repeat;
 	background-size:contain;
 	transition:background-image .3s ease-in-out;
+}
+#modal-window-status-bar-error {
+	padding:20px 20px 60px 20px;
+}
+#modal-window-status-bar-error > .wrapper {
+	height:100%;
+	background:#0E1621;
+	border-radius:4px;
+    box-shadow:inset 0 2px 10px 0 rgba(0,0,0,.25);
+}
+#modal-window-status-bar-error > .wrapper .mCSB_outside+.mCSB_scrollTools {
+	width:4px;
+}
+#modal-window-status-bar-error > .wrapper .content {
+	height:100%;
+	padding:15px 20px;
+}
+#modal-window-status-bar-error > .wrapper .content > pre {
+	line-height:1.5;
+    color:#A7BED3;
+    font-size:.75rem;
+}
+#modal-window-status-bar-error > .action {
+	width:100%;
+	height:50px;
+	padding:0 20px;
+	position:absolute;
+	left:0;
+	bottom:0;
+}
+#modal-window-status-bar-error > .action > * {
+	vertical-align:top;
+	user-select:none;
+}
+#modal-window-status-bar-error > .action > span {
+	display:inline-block;
+	width:40px;
+	height:40px;
+	padding:8px;
+	cursor:pointer;
+}
+#modal-window-status-bar-error > .action > span > img {
+	width:24px;
+	height:24px;
+}
+#modal-window-status-bar-error > .action > div {
+	display:inline-block;
+	line-height:40px;
+	margin:0 0 0 10px;
+	color:#0f0;
+	font-size:.75rem;
 }
