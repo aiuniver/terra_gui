@@ -253,8 +253,6 @@ class GUINN:
         Return:
             None
         """
-        self.nn_cleaner()
-
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
         self.set_custom_metrics()
@@ -264,7 +262,6 @@ class GUINN:
                            metrics=self.metrics
                            )
         self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-        # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
         self.Exch.print_2status_bar(('Добавление колбэков', '...'))
         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
