@@ -1725,7 +1725,7 @@ class GUILayersDef:
             },
         },
         "RepeatVector": {"main": {}, "extra": {"n": {"type": "int", "default": 8}}},
-        "BatchNormalization ": {
+        "BatchNormalization": {
             "main": {},
             "extra": {
                 "axis": {"type": "int", "default": -1},
