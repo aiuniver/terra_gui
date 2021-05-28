@@ -483,7 +483,7 @@ class ClassificationCallback:
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
-                    metric_name = metric_name.__name__
+                    metric_name = metric_name.name
                 if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
                     metric_name = f"{output_key}_{metric_name}"
@@ -511,7 +511,7 @@ class ClassificationCallback:
             if self.class_metrics:
                 for metric_name in self.class_metrics:
                     if not isinstance(metric_name, str):
-                        metric_name = metric_name.__name__
+                        metric_name = metric_name.name
                     if len(self.dataset.Y) > 1:
                         metric_name = f'{output_key}_{metric_name}'
                         val_metric_name = f"val_{metric_name}"
@@ -726,7 +726,7 @@ class ClassificationCallback:
         for metric_idx in range(len(self.clbck_metrics)):
             # # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
-                metric_name = self.clbck_metrics[metric_idx].__name__
+                metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
 
             if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and
@@ -868,7 +868,7 @@ class SegmentationCallback:
         if len(self.clbck_metrics) >= 1:
             for metric_name in self.clbck_metrics:
                 if not isinstance(metric_name, str):
-                    metric_name = metric_name.__name__
+                    metric_name = metric_name.name
 
                 if len(self.dataset.Y) > 1:
                     # определяем, что демонстрируем во 2м и 3м окне
@@ -1091,7 +1091,7 @@ class SegmentationCallback:
         for metric_idx in range(len(self.clbck_metrics)):
             # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
-                metric_name = self.clbck_metrics[metric_idx].__name__
+                metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
             if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
@@ -1206,7 +1206,7 @@ class TimeseriesCallback:
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
-                metric_name = self.losses[i].__name__
+                metric_name = self.losses[i].name
                 self.losses[i] = metric_name
             if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 showmet = f'{output_key}_{self.losses[i]}'
@@ -1315,7 +1315,7 @@ class TimeseriesCallback:
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
-                metric_name = self.losses[i].__name__
+                metric_name = self.losses[i].name
                 self.losses[i] = metric_name
             if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 metric_name = f'{output_key}_{self.losses[i]}'
@@ -1414,7 +1414,7 @@ class RegressionCallback:
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
-                metric_name = self.losses[i].__name__
+                metric_name = self.losses[i].name
                 self.losses[i] = metric_name
             if len(self.dataset.Y) > 1:
                 showmet = f'{output_key}_{self.losses[i]}'
@@ -1482,7 +1482,7 @@ class RegressionCallback:
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
-                metric_name = self.losses[i].__name__
+                metric_name = self.losses[i].name
                 self.losses[i] = metric_name
             if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
                 metric_name = f'{output_key}_{self.losses[i]}'
