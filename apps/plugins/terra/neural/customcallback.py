@@ -1209,14 +1209,12 @@ class TimeseriesCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].name
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:
                 showmet = f'{output_key}_{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
             else:
                 showmet = f'{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
-            # showmet = self.losses[self.idx]
-            # vshowmet = f"val_{showmet}"
             epochcomment = f" epoch {self.epoch + 1}"
             loss_len = len(self.history[showmet])
             data = {}
@@ -1232,7 +1230,7 @@ class TimeseriesCallback:
             # )
 
             metric_title = (
-                f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}",
+                f"метрика: {showmet} и {vshowmet}{epochcomment}",
                 "эпохи",
                 f"{showmet}",
             )
@@ -1286,7 +1284,7 @@ class TimeseriesCallback:
                     y_true[: yLen - i, channel], y_true[i:, channel]
                 )
             )
-        corr_label = f"Предсказание на {corr_steps + 1} шаг"
+        corr_label = f"Предсказание на {corr_steps} шаг"
         autocorr_label = "Эталон"
         title = ("Автокорреляция", '', '')
         correlation_data = {
@@ -1412,6 +1410,7 @@ class RegressionCallback:
         self.predicts = {}
 
     def plot_result(self, output_key=None):
+        data = {}
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
@@ -1423,11 +1422,8 @@ class RegressionCallback:
             else:
                 showmet = f'{self.losses[i]}'
                 vshowmet = f"val_{showmet}"
-            # showmet = self.losses[self.idx]
-            # vshowmet = f"val_{showmet}"
             epochcomment = f" эпоха {self.epoch + 1}"
             loss_len = len(self.history[showmet])
-            data = {}
 
             # loss_title = f"loss and val_loss{epochcomment}"
             # xlabel = "epoch"
@@ -1439,7 +1435,7 @@ class RegressionCallback:
             # ]
             # data.update({key: value})
 
-            metric_title = f"{showmet} метрика = {showmet} и {vshowmet}{epochcomment}"
+            metric_title = f"метрика: {showmet} и {vshowmet}{epochcomment}"
             xlabel = "эпох"
             ylabel = f"{showmet}"
             key = (metric_title, xlabel, ylabel)
@@ -1448,7 +1444,7 @@ class RegressionCallback:
                 (list(range(loss_len)), self.history[vshowmet], vshowmet),
             ]
             data.update({key: value})
-            self.exchange.show_plot_data(data)
+        self.exchange.show_plot_data(data)
 
         if self.plot_scatter:
             data = {}
@@ -1485,7 +1481,7 @@ class RegressionCallback:
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].name
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:
                 metric_name = f'{output_key}_{self.losses[i]}'
                 val_metric_name = f"val_{metric_name}"
             else:
