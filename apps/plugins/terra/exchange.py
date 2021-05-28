@@ -323,7 +323,7 @@ class TerraExchange:
         self.project.training = TrainConfig(**kwargs)
         response = self.call("get_change_validation")
         response.data["logging"] = json.dumps(
-            self.project.dict().get("training"), indent=4, separators=(". ", " = ")
+            self.project.dict().get("training"), indent=4
         )
         return response
 
