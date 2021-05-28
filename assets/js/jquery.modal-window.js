@@ -11,14 +11,16 @@
 
         let _size = [0, 0],
             _title = "",
-            _noclose = false;
+            _noclose = false,
+            no_clear_status_bar = false;
 
-        this.open = (title, size, noclose) => {
+        this.open = (title, size, noclose, no_clear_status_bar) => {
             this.title = title;
             this.size = size;
             mw.addClass("opened");
             mw.find(".inner > .container").addClass("loading");
             this.noclose = noclose === true;
+            this.no_clear_status_bar = no_clear_status_bar === true;
         }
 
         this.opened = () => {
@@ -29,7 +31,7 @@
             if (this.noclose) return null;
             mw.removeClass("opened");
             $(`.${MW_CLASSNAME}`).removeClass("visible");
-            window.StatusBar.message_clear();
+            if (!this.no_clear_status_bar) window.StatusBar.message_clear();
         }
 
         Object.defineProperty(this, "noclose", {
@@ -87,7 +89,7 @@
 
             this.open = (callback) => {
                 if (typeof callback === "function") options.callback = callback;
-                window.ModalWindow.open(options.title, [options.width, options.height], options.noclose);
+                window.ModalWindow.open(options.title, [options.width, options.height], options.noclose, options.no_clear_status_bar);
                 $(`.${MW_CLASSNAME}`).removeClass("visible");
                 if (options.request) {
                     window.ExchangeRequest(

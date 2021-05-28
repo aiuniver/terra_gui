@@ -348,7 +348,7 @@
                 let _max_id = Math.max.apply(Math, indexes)+1;
 
                 let layer_config = {
-                    name: `l${_max_id}_${type}`,
+                    name: `L${_max_id}`,
                     type: type,
                     location_type: class_name,
                     params: $.extend(true, {}, window.TerraProject.layers_types[type]),
@@ -1026,7 +1026,7 @@
                 if (!indexes.length) indexes = [0];
                 let _max_id = Math.max.apply(Math, indexes)+1,
                     layer = _prepare_data($(event.currentTarget).closest("form").serializeObject());
-                layer.config.name = `l${_max_id}_${layer.config.type}`;
+                layer.config.name = `L${_max_id}`;
                 layer.config.up_link = [];
                 layer.down_link = [];
                 layer.x = null;

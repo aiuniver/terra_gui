@@ -250,6 +250,7 @@
 }
 #modal-window-keras-code > .action > * {
 	vertical-align:top;
+	user-select:none;
 }
 #modal-window-keras-code > .action > span {
 	display:inline-block;
@@ -264,7 +265,7 @@
 }
 #modal-window-keras-code > .action > div {
 	display:inline-block;
-	line-height:30px;
+	line-height:40px;
 	margin:0 0 0 10px;
 	color:#0f0;
 	font-size:.75rem;
