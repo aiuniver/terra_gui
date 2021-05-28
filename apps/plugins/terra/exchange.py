@@ -321,7 +321,11 @@ class TerraExchange:
                 "monitor"
             ]["out_monitor"][0]
         self.project.training = TrainConfig(**kwargs)
-        return self.call("get_change_validation")
+        response = self.call("get_change_validation")
+        response.data["logging"] = json.dumps(
+            self.project.dict().get("training"), indent=4, separators=(". ", " = ")
+        )
+        return response
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
         model_plan = colab_exchange.get_model_plan(

@@ -332,6 +332,7 @@
                         "before_start_training",
                         (success, output) => {
                             if (success) {
+                                window.TerraProject.logging = output.data.logging;
                                 if (output.data.validated) {
                                     _action_stop.removeAttr("disabled");
                                     window.ExchangeRequest("start_training");

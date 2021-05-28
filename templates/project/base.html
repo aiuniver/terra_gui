@@ -134,7 +134,15 @@
             <div class="content"></div>
         </div>
         <div class="action">
-            <span class="clipboard" title="Скопировать в буфер обмена"><img src="{% static 'imgs/clipboard.svg' %}" alt="" /></span><div class="result"></div>
+            <span class="clipboard" title="Скопировать код в буфер обмена"><img src="{% static 'imgs/clipboard.svg' %}" alt="" /></span><div class="result"></div>
+        </div>
+    </div>
+    <div id="modal-window-logging" class="modal-window-container">
+        <div class="wrapper custom-scrollbar-wrapper">
+            <div class="content"></div>
+        </div>
+        <div class="action">
+            <span class="clipboard" title="Скопировать код в буфер обмена"><img src="{% static 'imgs/clipboard.svg' %}" alt="" /></span><div class="result"></div>
         </div>
     </div>
     {% if request.terra_project == None %}
