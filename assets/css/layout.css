@@ -211,6 +211,9 @@ input[type=number] {
 .checkout-switch > input:checked + .switcher:before {
     transform:translateX(12px);
 }
+.field-form.hidden {
+    display:none !important;
+}
 
 
 /* jquery-ui */
