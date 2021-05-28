@@ -1130,12 +1130,13 @@ class SegmentationCallback:
                 else:
                     print(f"Выбранная метрика {metric_name} не поддерживается для вычислений")
                 # собираем в словарь по метрикам и классам
-                dclsup = {}
-                for j in range(self.num_classes):
-                    self.acls_lst[metric_idx][j].append(self.metric_classes[j])
-                dcls = {val_metric_name: self.acls_lst}
-                dclsup.update(dcls)
-                self.predict_cls.update(dclsup)
+                if self.metric_classes:
+                    dclsup = {}
+                    for j in range(self.num_classes):
+                        self.acls_lst[metric_idx][j].append(self.metric_classes[j])
+                    dcls = {val_metric_name: self.acls_lst}
+                    dclsup.update(dcls)
+                    self.predict_cls.update(dclsup)
 
         if self.step > 0:
             if self.epoch % self.step == 0:
