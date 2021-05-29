@@ -182,13 +182,18 @@ class TerraExchange:
                     model_file=base64.b64encode(model_bin).decode("UTF-8"),
                     input_shape=colab_exchange.get_dataset_input_shape(),
                 )
+        num_classes = colab_exchange.get_dataset_num_classes()
         self.project.dir.clear_modeling()
         layers = {}
         for index, layer in data.data.get("layers").items():
             if "config" not in layer.keys():
-                layers[int(index)] = Layer(config=layer)
-            else:
-                layers[int(index)] = Layer(**layer)
+                layer = {"config": layer}
+            layer = Layer(**layer)
+            if layer.config.location_type == LayerLocation.output:
+                layer.config.num_classes = num_classes.get(
+                    layer.config.dts_layer_name, 0
+                )
+            layers[int(index)] = layer
         for index, layer in layers.items():
             for _index in layer.config.up_link:
                 layers[int(_index)].down_link.append(int(index))
