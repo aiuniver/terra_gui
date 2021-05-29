@@ -250,15 +250,15 @@ class StatesData:
                     "default": True,
                     "label": "данные метрики по каждому классу",
                 },
-                "show_worst_images": {
-                    "type": "bool",
-                    "default": True,
-                    "label": "худшие изображения по метрике",
-                },
                 "show_best_images": {
                     "type": "bool",
                     "default": True,
                     "label": "лучшие изображения по метрике",
+                },
+                "show_worst_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "худшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
@@ -288,15 +288,15 @@ class StatesData:
                     "default": True,
                     "label": "данные метрики по каждому классу",
                 },
-                "show_worst_images": {
-                    "type": "bool",
-                    "default": True,
-                    "label": "худшие изображения по метрике",
-                },
                 "show_best_images": {
                     "type": "bool",
                     "default": True,
                     "label": "лучшие изображения по метрике",
+                },
+                "show_worst_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "худшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
@@ -957,6 +957,9 @@ class Exchange(StatesData, GuiExch):
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
+
+    def get_dataset_num_classes(self):
+        return self.dts.num_classes
 
     def get_hardware_env(self):
         return self.hardware_accelerator_type
