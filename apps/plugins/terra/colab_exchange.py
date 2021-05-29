@@ -99,7 +99,7 @@ class StatesData:
             "Ftrl": {
                 "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "lr_power": {"type": "float", "default": -0.5},
+                    "learning_rate_power": {"type": "float", "default": -0.5},
                     "initial_accumulator_value": {"type": "float", "default": 0.1},
                     "l1_regularization_strength": {"type": "float", "default": 0.0},
                     "l2_regularization_strength": {"type": "float", "default": 0.0},
@@ -115,6 +115,7 @@ class StatesData:
         # list of values for activation attribute of layer
         self.activation_values = [
             None,
+            "linear",
             "sigmoid",
             "softmax",
             "tanh",
@@ -133,12 +134,13 @@ class StatesData:
         self.states_for_outputs = {
             "classification": {
                 "losses": [
+                    "categorical_crossentropy",
+                    "binary_crossentropy",
+                    "mse",
                     "squared_hinge",
                     "hinge",
                     "categorical_hinge",
-                    "categorical_crossentropy",
                     "sparse_categorical_crossentropy",
-                    "binary_crossentropy",
                     "kl_divergence",
                     "poisson",
                 ],
@@ -153,20 +155,18 @@ class StatesData:
                     "top_k_categorical_accuracy",
                     "sparse_top_k_categorical_accuracy",
                     "hinge",
-                    "kl_divergence",
-                    "binary_crossentropy",
+                    "kullback_leibler_divergence",
                     "poisson",
                 ],
             },
             "segmentation": {
                 "losses": [
-                    "dice_coef",
+                    "categorical_crossentropy",
+                    "binary_crossentropy",
                     "squared_hinge",
                     "hinge",
                     "categorical_hinge",
-                    "categorical_crossentropy",
                     "sparse_categorical_crossentropy",
-                    "binary_crossentropy",
                     "kl_divergence",
                     "poisson",
                 ],
@@ -183,8 +183,7 @@ class StatesData:
                     "top_k_categorical_accuracy",
                     "sparse_top_k_categorical_accuracy",
                     "hinge",
-                    "kl_divergence",
-                    "binary_crossentropy",
+                    "kullback_leibler_divergence",
                     "poisson",
                 ],
             },
@@ -203,7 +202,8 @@ class StatesData:
                     "mse",
                     "mape",
                     "msle",
-                    "log_cosh",
+                    "logcosh",
+                    "cosine_similarity",
                 ],
             },
             "timeseries": {
@@ -221,7 +221,8 @@ class StatesData:
                     "mae",
                     "mape",
                     "msle",
-                    "log_cosh",
+                    "logcosh",
+                    "cosine_similarity",
                 ],
             },
         }
