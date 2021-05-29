@@ -2222,6 +2222,50 @@ class DTS(object):
 
     def prepare_user_dataset(self, dataset_dict, is_save=True):
 
+        for key, value in dataset_dict["inputs"].items():
+
+            for param_key, param_value in value["parameters"].items():
+                try:
+                    if (param_key == "folder_name"):
+                        continue
+                    if (param_value == 'true' or param_value == 'on'):
+                        dataset_dict["inputs"][key]["parameters"][param_key] = True
+                    elif (param_value == 'false'):
+                        dataset_dict["inputs"][key]["parameters"][param_key] = False
+                    else:
+                        dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
+                except ValueError:
+                    continue
+
+        for key, value in dataset_dict["outputs"].items():
+
+            for param_key, param_value in value["parameters"].items():
+                try:
+                    if (param_key == "folder_name"):
+                        continue
+                    if (param_value == 'true' or param_value == 'on'):
+                        dataset_dict["outputs"][key]["parameters"][param_key] = True
+                    elif (param_value == 'false'):
+                        dataset_dict["outputs"][key]["parameters"][param_key] = False
+                    else:
+                        dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
+                except ValueError:
+                    continue
+
+        for key, value in dataset_dict["parameters"].items():
+
+            try:
+                if (param_key == "folder_name"):
+                    continue
+                if (value == 'true' or value == 'on'):
+                    dataset_dict["parameters"][key] = True
+                elif (value == 'false'):
+                    dataset_dict["parameters"][key] = False
+                else:
+                    dataset_dict["parameters"][key] = int(value)
+            except ValueError:
+                continue
+
         cur_time = time()
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']

@@ -641,6 +641,7 @@ class Exchange(StatesData, GuiExch):
         """
         output = {"datasets": [], "tags": {}}
 
+
         datasets_dict = self.dts.get_datasets_dict()
         datasets_dict.update(self._get_custom_datasets_from_google_drive())
 
@@ -678,6 +679,7 @@ class Exchange(StatesData, GuiExch):
 
     def create_dataset(self, **kwargs):
         self.dts.prepare_user_dataset(**kwargs)
+        print(self._create_datasets_data())
 
 
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
@@ -689,7 +691,7 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        if source == "custom":
+        if source == "custom_dataset":
             self.dts = self._read_trds(dataset_name)
         else:
             self.dts = DTS(exch_obj=self)
