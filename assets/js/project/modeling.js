@@ -167,6 +167,7 @@
                         "get_change_validation",
                         (success, data) => {
                             this.btn.validation.disabled = false;
+                            window.TerraProject.logging = data.data.logging;
                             if (success) {
                                 window.StatusBar.clear();
                                 for (let index in data.data.errors) {
