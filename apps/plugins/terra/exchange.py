@@ -282,12 +282,13 @@ class TerraExchange:
                     self.project.layers.items(),
                 )
             )
+            modelling_plan = colab_exchange.get_model_plan(
+                model_name=self.project.model_name
+            )
             response = self.__request_post(
                 "get_change_validation",
                 layers=configs,
-                modelling_plan=colab_exchange.get_model_plan(
-                    model_name=self.project.model_name
-                ),
+                modelling_plan=modelling_plan,
             )
             if response.success:
                 validated = (
@@ -301,10 +302,22 @@ class TerraExchange:
                     data={
                         "errors": response.data.get("errors"),
                         "validated": validated,
+                        "logging": json.dumps(
+                            {"layers": configs, "modelling_plan": modelling_plan},
+                            indent=4,
+                        ),
                     }
                 )
             else:
-                response.data.update({"validated": False})
+                response.data.update(
+                    {
+                        "validated": False,
+                        "logging": json.dumps(
+                            {"layers": configs, "modelling_plan": modelling_plan},
+                            indent=4,
+                        ),
+                    }
+                )
                 return response
         else:
             return TerraExchangeResponse(data={"validated": False})
