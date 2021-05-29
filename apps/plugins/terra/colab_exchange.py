@@ -250,15 +250,15 @@ class StatesData:
                     "default": True,
                     "label": "данные метрики по каждому классу",
                 },
-                "show_worst_images": {
-                    "type": "bool",
-                    "default": True,
-                    "label": "худшие изображения по метрике",
-                },
                 "show_best_images": {
                     "type": "bool",
                     "default": True,
                     "label": "лучшие изображения по метрике",
+                },
+                "show_worst_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "худшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",
@@ -288,15 +288,15 @@ class StatesData:
                     "default": True,
                     "label": "данные метрики по каждому классу",
                 },
-                "show_worst_images": {
-                    "type": "bool",
-                    "default": True,
-                    "label": "худшие изображения по метрике",
-                },
                 "show_best_images": {
                     "type": "bool",
                     "default": True,
                     "label": "лучшие изображения по метрике",
+                },
+                "show_worst_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "худшие изображения по метрике",
                 },
                 "plot_final": {
                     "type": "bool",

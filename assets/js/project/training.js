@@ -189,10 +189,9 @@
                 field_metrics.selectmenu("refresh");
                 if (["classification", "segmentation"].indexOf(task) > -1) {
                     field_num_classes.val(window.TerraProject.training.outputs[output_name].num_classes);
-                    field_num_classes.removeAttr("disabled");
                     field_num_classes.closest(".field-form").removeClass("hidden");
                 } else {
-                    field_num_classes.attr("disabled", "disabled").val(2);
+                    field_num_classes.val(2);
                     field_num_classes.closest(".field-form").addClass("hidden");
                 }
                 let inner = $(`.params-callbacks > .callback-${output_name} > .form-inline-label`);
@@ -207,6 +206,18 @@
                     }
                     let widget = window.FormWidget(`outputs[${output_name}][callbacks][${name}]`, callback);
                     widget.addClass("field-inline field-reverse");
+                    widget.find("input").addClass(`_callback_${name}`).bind("change", (event) => {
+                        let input = $(event.currentTarget);
+                        if (input.hasClass("_callback_show_best_images") || input.hasClass("_callback_show_worst_images")) {
+                            let best = this.find("._callback_show_best_images"),
+                                worst = this.find("._callback_show_worst_images");
+                            if (input.hasClass("_callback_show_best_images")) {
+                                if (best[0].checked) worst[0].checked = false;
+                            } else {
+                                if (worst[0].checked) best[0].checked = false;
+                            }
+                        }
+                    });
                     inner.append(widget);
                 }
             }).trigger("change");
