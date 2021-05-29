@@ -950,6 +950,9 @@ class Exchange(StatesData, GuiExch):
     def get_dataset_input_shape(self):
         return self.dts.input_shape
 
+    def get_dataset_num_classes(self):
+        return self.dts.num_classes
+
     def get_hardware_env(self):
         return self.hardware_accelerator_type
 
