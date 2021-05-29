@@ -612,14 +612,22 @@ class Exchange(StatesData, GuiExch):
         if os.path.exists(self.custom_datasets_path):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
+                if not dataset.endswith(".trds"):
+                    continue
+
                 dataset_path = os.path.join(self.custom_datasets_path, dataset)
+                if not os.path.isfile(dataset_path):
+                    continue
+
                 with open(dataset_path, "rb") as f:
                     custom_dts = dill.load(f)
+
                 tags = list(custom_dts.tags.values())
                 name = custom_dts.name
                 source = custom_dts.source
                 custom_datasets_dict[name] = [tags, None, source]
                 del custom_dts
+
         return custom_datasets_dict
 
     def _create_datasets_data(self) -> dict:
