@@ -1803,7 +1803,6 @@ class GUILayersDef:
                 },
                 "virtual_batch_size": {"type": "int", "default": None},
                 "adjustment": {"type": "func", "default": None},
-                "name": {"type": "str", "default": None},
             },
         },
     }
