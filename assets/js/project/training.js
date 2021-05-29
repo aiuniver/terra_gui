@@ -190,8 +190,10 @@
                 if (["classification", "segmentation"].indexOf(task) > -1) {
                     field_num_classes.val(window.TerraProject.training.outputs[output_name].num_classes);
                     field_num_classes.removeAttr("disabled");
+                    field_num_classes.closest(".field-form").removeClass("hidden");
                 } else {
                     field_num_classes.attr("disabled", "disabled").val(2);
+                    field_num_classes.closest(".field-form").addClass("hidden");
                 }
                 let inner = $(`.params-callbacks > .callback-${output_name} > .form-inline-label`);
                 inner.html("");
@@ -246,26 +248,35 @@
 
             this.get_data_response = (success, data) => {
                 if (success) {
-                    _action_training.attr("disabled", "disabled");
-                    _action_stop.removeAttr("disabled");
-                    _action_reset.attr("disabled", "disabled");
-                    window.StatusBar.message(data.data.status_string);
-                    window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                    training_results.charts = data.data.plots;
-                    training_results.images = data.data.images;
-                    training_results.texts = data.data.texts;
-                    training_results.scatters = data.data.scatters;
-                    if (data.stop_flag) {
+                    if (data.data.errors) {
                         this.validate = false;
                         _action_training.removeAttr("disabled");
                         _action_stop.attr("disabled", "disabled");
                         _action_reset.removeAttr("disabled");
+                        window.StatusBar.message(data.data.errors, false);
+                    } else {
+                        _action_training.attr("disabled", "disabled");
+                        _action_stop.removeAttr("disabled");
+                        _action_reset.attr("disabled", "disabled");
+                        window.StatusBar.message(data.data.status_string);
+                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                        training_results.charts = data.data.plots;
+                        training_results.images = data.data.images;
+                        training_results.texts = data.data.texts;
+                        training_results.scatters = data.data.scatters;
+                        if (data.stop_flag) {
+                            this.validate = false;
+                            _action_training.removeAttr("disabled");
+                            _action_stop.attr("disabled", "disabled");
+                            _action_reset.removeAttr("disabled");
+                        }
                     }
                 } else {
                     this.validate = false;
                     _action_training.removeAttr("disabled");
                     _action_stop.attr("disabled", "disabled");
-                    window.StatusBar.message(data.error, false)
+                    _action_reset.removeAttr("disabled");
+                    window.StatusBar.message(data.error, false);
                 }
             }
 
@@ -316,10 +327,12 @@
                     }
                     data.checkpoint.save_best = data.checkpoint.save_best !== undefined;
                     data.checkpoint.save_weights = data.checkpoint.save_weights !== undefined;
+                    window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
                             if (success) {
+                                window.TerraProject.logging = output.data.logging;
                                 if (output.data.validated) {
                                     _action_stop.removeAttr("disabled");
                                     window.ExchangeRequest("start_training");

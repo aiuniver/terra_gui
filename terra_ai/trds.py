@@ -893,16 +893,12 @@ class DTS(object):
             if 'zip' in filename or 'zip' in link:
                 file_path = pathlib.Path(os.path.join(main_folder, name, 'tmp', filename))
                 temp_folder = os.path.join(file_folder, 'tmp')
-                os.makedirs(temp_folder, exist_ok=True)
+                os.mkdir(temp_folder)
                 os.chdir(temp_folder)
                 if 'drive.google' in link:
                     gdown.download('https://drive.google.com/uc?id=' + file_id, filename, quiet=self.django_flag)
                 else:
-                    print(1, link)
-                    print(2, filename)
-                    print(3, self.django_flag)
                     gdown.download(link, filename, quiet=self.django_flag)
-                    print(4)
                 with zipfile.ZipFile(file_path, 'r') as zip_ref:
                     zip_ref.extractall(file_folder)
                     os.chdir(str(default_path))
@@ -2226,54 +2222,6 @@ class DTS(object):
 
     def prepare_user_dataset(self, dataset_dict, is_save=True):
 
-        print(dataset_dict)
-        print(dataset_dict.keys())
-
-        for key, value in dataset_dict["inputs"].items():
-
-            for param_key, param_value in value["parameters"].items():
-                try:
-                    if(param_key == "folder_name"):
-                        continue
-                    if (param_value == 'true' or param_value == 'on'):
-                        dataset_dict["inputs"][key]["parameters"][param_key] = True
-                    elif (param_value == 'false'):
-                        dataset_dict["inputs"][key]["parameters"][param_key] = False
-                    else:
-                        dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
-                except ValueError:
-                    continue
-
-
-        for key, value in dataset_dict["outputs"].items():
-
-            for param_key, param_value in value["parameters"].items():
-                try:
-                    if (param_key == "folder_name"):
-                        continue
-                    if(param_value == 'true' or param_value == 'on'):
-                        dataset_dict["outputs"][key]["parameters"][param_key] = True
-                    elif(param_value == 'false'):
-                        dataset_dict["outputs"][key]["parameters"][param_key] = False
-                    else:
-                        dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
-                except ValueError:
-                    continue
-
-        for key, value in dataset_dict["parameters"].items():
-
-            try:
-                if (param_key == "folder_name"):
-                    continue
-                if(value == 'true' or value == 'on'):
-                    dataset_dict["parameters"][key] = True
-                elif(value == 'false'):
-                    dataset_dict["parameters"][key] = False
-                else:
-                    dataset_dict["parameters"][key] = int(value)
-            except ValueError:
-                continue
-
         cur_time = time()
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
@@ -2303,7 +2251,6 @@ class DTS(object):
             else:
                 self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
         # Train/Val/Test split
-        print(np.random.permutation(self.X['input_1']['data'].shape[0]))
         indices = np.random.permutation(self.X['input_1']['data'].shape[0])
         train_len = int(self.divide_ratio[1][0] * len(indices))
         val_len = int((len(indices) - train_len) / 2)

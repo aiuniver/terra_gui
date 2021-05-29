@@ -8,7 +8,7 @@ from tensorflow import keras
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
-__version__ = 0.04
+__version__ = 0.05
 
 
 class GUINN:
@@ -95,9 +95,9 @@ class GUINN:
                 if metric in self.custom_losses_dict.keys():
                     if metric == "mean_io_u":
                         self.metrics[i_key][idx] = self.custom_losses_dict[metric](
-                            num_classes=self.output_params[i_key]['num_classes'])
+                            num_classes=self.output_params[i_key]['num_classes'], name=metric)
                     else:
-                        self.metrics[i_key][idx] = self.custom_losses_dict[metric]()
+                        self.metrics[i_key][idx] = self.custom_losses_dict[metric](name=metric)
                 pass
 
     def set_chp_monitor(self) -> None:
@@ -148,9 +148,10 @@ class GUINN:
         Args:
             dts_obj (object): setting task_name
         """
+        self.nn_cleaner()
         self.DTS = dts_obj
         self.prepare_dataset()
-        self.nn_cleaner()
+
         pass
 
     def show_training_params(self) -> None:
@@ -252,8 +253,6 @@ class GUINN:
         Return:
             None
         """
-        self.nn_cleaner()
-
         self.model = nnmodel
         self.nn_name = f"{self.model.name}"
         self.set_custom_metrics()
@@ -263,7 +262,6 @@ class GUINN:
                            metrics=self.metrics
                            )
         self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-        # self.model.compile(optimizer='adam', loss={'output_1': 'categorical_crossentropy'}, metrics={'output_1': ['accuracy']})
         self.Exch.print_2status_bar(('Добавление колбэков', '...'))
         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
@@ -278,20 +276,20 @@ class GUINN:
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         # self.show_training_params()
         if self.x_Val['input_1'] is not None:
-            training = Thread(target=self.tr_thread)
-            training.start()
-            training.join()
-            del training
-            # self.history = self.model.fit(
-            #     self.x_Train,
-            #     self.y_Train,
-            #     batch_size=self.batch_size,
-            #     shuffle=self.shuffle,
-            #     validation_data=(self.x_Val, self.y_Val),
-            #     epochs=self.epochs,
-            #     verbose=verbose,
-            #     callbacks=self.callbacks
-            # )
+            # training = Thread(target=self.tr_thread)
+            # training.start()
+            # training.join()
+            # del training
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=(self.x_Val, self.y_Val),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
         else:
             self.history = self.model.fit(
                 self.x_Train,
@@ -305,16 +303,16 @@ class GUINN:
             )
         self.model_is_trained = True
 
-        self.monitor = self.chp_monitor
-        self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
-            history=self.history, monitor=self.monitor, monitor2=self.monitor2)
-        self.best_metric_result = self.best_epoch[self.monitor]
-
-        try:
-            self.save_nnmodel()
-        except RuntimeError:
-            self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
-        self.save_model_weights()
+        # self.monitor = self.chp_monitor
+        # self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
+        #     history=self.history, monitor=self.monitor, monitor2=self.monitor2)
+        # self.best_metric_result = self.best_epoch[self.monitor]
+        #
+        # try:
+        #     self.save_nnmodel()
+        # except RuntimeError:
+        #     self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
+        # self.save_model_weights()
 
         pass
 
@@ -333,9 +331,28 @@ class GUINN:
     def nn_cleaner(self) -> None:
         keras.backend.clear_session()
         del self.model
+        del self.DTS
+        del self.x_Train
+        del self.x_Val
+        del self.y_Train
+        del self.y_Val
+        del self.x_Test
+        del self.y_Test
         gc.collect()
-        self.model = keras.Model()
+        self.model_is_trained = False
+        self.DTS = None
+        self.model = keras.Model
+        self.optimizer = keras.optimizers.Adam()
+        self.loss = {}
+        self.metrics = {}
         self.callbacks = []
+        self.history = {}
+        self.x_Train = {}
+        self.x_Val = {}
+        self.y_Train = {}
+        self.y_Val = {}
+        self.x_Test = {}
+        self.y_Test = {}
         pass
 
     @staticmethod

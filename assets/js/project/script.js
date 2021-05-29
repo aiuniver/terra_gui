@@ -4,6 +4,14 @@
 (($) => {
 
 
+    window.Logging = $("#modal-window-logging").ModalWindow({
+        title:"Logging",
+        width:900,
+        height:600,
+        no_clear_status_bar:true,
+    });
+
+
     let ProjectNew = $("#modal-window-project-new").ModalWindow({
         title:"Создать новый проект",
         width:300,
@@ -24,6 +32,35 @@
         height:440,
         request:["project_load"]
     });
+
+
+    let fallbackCopyTextToClipboard = (text) => {
+        let textArea = document.createElement("textarea"),
+            success = false;
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            success = document.execCommand('copy');
+        } catch (err) {
+            success = false;
+        }
+        document.body.removeChild(textArea);
+        return success;
+    }
+
+
+    let clip = (el) => {
+        let range = document.createRange();
+        range.selectNodeContents(el);
+        let sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }
 
 
     let TerraProject = function(hash) {
@@ -57,6 +94,7 @@
         let _compile = options.compile || {};
         let _training = options.training || {};
         let _path = options.path || {};
+        let _logging = options.logging || "No log";
 
         this.model_clear = () => {
             _layers = {};
@@ -298,6 +336,15 @@
             }
         });
 
+        Object.defineProperty(this, "logging", {
+            set: (value) => {
+                _logging = value;
+            },
+            get: () => {
+                return _logging;
+            }
+        });
+
     }
 
 
@@ -363,6 +410,33 @@
          */
         $(window).bind("beforeunload", (event) => {
             window.ExchangeRequest("autosave_project", null, null, true);
+        });
+
+        $(document).bind("keyup", (event) => {
+            if (event.keyCode === 76 && event.altKey && event.ctrlKey && event.shiftKey) {
+                let text = window.TerraProject.logging ? window.TerraProject.logging : "No log";
+                window.Logging.open((ui) => {
+                    ui.find(".action > .result").text("");
+                    let map_replace = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&#34;',
+                        "'": '&#39;'
+                    };
+                    ui.find(".wrapper .content").html(`<pre>${text.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</pre>`);
+                });
+            }
+        });
+
+        window.Logging.find(".action > .clipboard").bind("click", (event) => {
+            let result = window.Logging.find(".action > .result"),
+                pre = window.Logging.find("pre");
+            result.text("");
+            if (fallbackCopyTextToClipboard(pre.text())) {
+                result.text("Код скопирован в буфер обмена");
+                clip(pre[0]);
+            }
         });
 
         ProjectNew.find("form").bind("submit", (event) => {

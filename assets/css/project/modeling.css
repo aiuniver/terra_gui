@@ -250,6 +250,7 @@
 }
 #modal-window-keras-code > .action > * {
 	vertical-align:top;
+	user-select:none;
 }
 #modal-window-keras-code > .action > span {
 	display:inline-block;
@@ -264,7 +265,7 @@
 }
 #modal-window-keras-code > .action > div {
 	display:inline-block;
-	line-height:30px;
+	line-height:40px;
 	margin:0 0 0 10px;
 	color:#0f0;
 	font-size:.75rem;
@@ -425,10 +426,15 @@
 #canvas-nodes > .node.error > text {
 	fill:#f00 !important;
 }
-#canvas-nodes > .node:hover > text,
-#canvas-nodes > .node.active > text,
-#canvas-nodes > .node.hover > text {
+#canvas-nodes > .node:hover > text > tspan.name,
+#canvas-nodes > .node.active > text > tspan.name,
+#canvas-nodes > .node.hover > text > tspan.name {
 	fill:#fff;
+}
+#canvas-nodes > .node:hover > text > tspan.params,
+#canvas-nodes > .node.active > text > tspan.params,
+#canvas-nodes > .node.hover > text > tspan.params {
+	fill:#65B9F4;
 }
 #canvas-lines > line {
 	cursor:pointer;

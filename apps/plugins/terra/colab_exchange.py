@@ -2,13 +2,10 @@ import base64
 import gc
 import os
 import re
-import shutil
 import tempfile
-import zipfile
 
 import dill as dill
 from IPython import get_ipython
-from django.conf import settings
 from tensorflow.keras.models import load_model
 
 from terra_ai.trds import DTS
@@ -102,7 +99,7 @@ class StatesData:
             "Ftrl": {
                 "main": {"learning_rate": {"type": "float", "default": 0.001}},
                 "extra": {
-                    "lr_power": {"type": "float", "default": -0.5},
+                    "learning_rate_power": {"type": "float", "default": -0.5},
                     "initial_accumulator_value": {"type": "float", "default": 0.1},
                     "l1_regularization_strength": {"type": "float", "default": 0.0},
                     "l2_regularization_strength": {"type": "float", "default": 0.0},
@@ -110,7 +107,7 @@ class StatesData:
                         "type": "float",
                         "default": 0.0,
                     },
-                    "beta": {"type": "float", "default": 0.0},
+                    # "beta": {"type": "float", "default": 0.0}, for TF versions > 2.3.0
                 },
             },
         }
@@ -118,6 +115,7 @@ class StatesData:
         # list of values for activation attribute of layer
         self.activation_values = [
             None,
+            "linear",
             "sigmoid",
             "softmax",
             "tanh",
@@ -136,12 +134,13 @@ class StatesData:
         self.states_for_outputs = {
             "classification": {
                 "losses": [
+                    "categorical_crossentropy",
+                    "binary_crossentropy",
+                    "mse",
                     "squared_hinge",
                     "hinge",
                     "categorical_hinge",
-                    "categorical_crossentropy",
                     "sparse_categorical_crossentropy",
-                    "binary_crossentropy",
                     "kl_divergence",
                     "poisson",
                 ],
@@ -156,20 +155,18 @@ class StatesData:
                     "top_k_categorical_accuracy",
                     "sparse_top_k_categorical_accuracy",
                     "hinge",
-                    "kl_divergence",
-                    "binary_crossentropy",
+                    "kullback_leibler_divergence",
                     "poisson",
                 ],
             },
             "segmentation": {
                 "losses": [
-                    "dice_coef",
+                    "categorical_crossentropy",
+                    "binary_crossentropy",
                     "squared_hinge",
                     "hinge",
                     "categorical_hinge",
-                    "categorical_crossentropy",
                     "sparse_categorical_crossentropy",
-                    "binary_crossentropy",
                     "kl_divergence",
                     "poisson",
                 ],
@@ -186,8 +183,7 @@ class StatesData:
                     "top_k_categorical_accuracy",
                     "sparse_top_k_categorical_accuracy",
                     "hinge",
-                    "kl_divergence",
-                    "binary_crossentropy",
+                    "kullback_leibler_divergence",
                     "poisson",
                 ],
             },
@@ -206,7 +202,8 @@ class StatesData:
                     "mse",
                     "mape",
                     "msle",
-                    "log_cosh",
+                    "logcosh",
+                    "cosine_similarity",
                 ],
             },
             "timeseries": {
@@ -224,7 +221,8 @@ class StatesData:
                     "mae",
                     "mape",
                     "msle",
-                    "log_cosh",
+                    "logcosh",
+                    "cosine_similarity",
                 ],
             },
         }
@@ -789,18 +787,18 @@ class Exchange(StatesData, GuiExch):
 
     def load_dataset(self, **kwargs):
         self._reset_out_data()
-        dataset_name = kwargs.get('name', '')
-        dataset_link = kwargs.get('link', '')
-        dts_layer_count = kwargs.get('num_links', {})
+        dataset_name = kwargs.get("name", "")
+        dataset_link = kwargs.get("link", "")
+        dts_layer_count = kwargs.get("num_links", {})
         if dts_layer_count:
-            inputs_count = dts_layer_count.get('inputs', 1)
-            outputs_count = dts_layer_count.get('outputs', 1)
+            inputs_count = dts_layer_count.get("inputs", 1)
+            outputs_count = dts_layer_count.get("outputs", 1)
         if dataset_name:
             self.dts.load_data(name=dataset_name, link=dataset_link)
             self._set_dts_name(self.dts.name)
             output = self.dts.get_parameters_dict()
         else:
-            self.out_data["errors"] = 'Не указано наименование датасета'
+            self.out_data["errors"] = "Не указано наименование датасета"
             output = {}
         self.out_data["stop_flag"] = True
         return output
