@@ -993,6 +993,12 @@
                     for (let name in _params[group]) {
                         let value = _form.params[group][name];
                         switch (_params[group][name].type) {
+                            case "int":
+                                value = parseInt(value);
+                                break;
+                            case "float":
+                                value = parseFloat(value);
+                                break;
                             case "bool":
                                 value = value !== undefined;
                                 break;
