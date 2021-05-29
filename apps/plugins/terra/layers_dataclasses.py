@@ -1387,8 +1387,8 @@ class GUILayersDef:
         },
         "Concatenate": {"main": {}, "extra": {"axis": {"type": "int", "default": -1}}},
         "Reshape": {
-            "main": {"target_shape": {"type": "tuple", "default": None}},
-            "extra": {},
+            "main": {},
+            "extra": {"target_shape": {"type": "tuple", "default": None}},
         },
         "sigmoid": {"main": {}, "extra": {}},
         "softmax": {"main": {}, "extra": {}},
