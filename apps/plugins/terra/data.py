@@ -222,6 +222,7 @@ class Dataset(pydantic.BaseModel):
 
 class GoogleDrivePath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+    datasets_sources: str = f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"
     modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
     training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
     projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
@@ -229,6 +230,7 @@ class GoogleDrivePath(pydantic.BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         os.makedirs(self.datasets, exist_ok=True)
+        os.makedirs(self.datasets_sources, exist_ok=True)
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
         os.makedirs(self.projects, exist_ok=True)
