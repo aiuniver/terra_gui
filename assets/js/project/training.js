@@ -188,10 +188,8 @@
                 }
                 field_metrics.selectmenu("refresh");
                 if (["classification", "segmentation"].indexOf(task) > -1) {
-                    field_num_classes.val(window.TerraProject.training.outputs[output_name].num_classes);
                     field_num_classes.closest(".field-form").removeClass("hidden");
                 } else {
-                    field_num_classes.val(2);
                     field_num_classes.closest(".field-form").addClass("hidden");
                 }
                 let inner = $(`.params-callbacks > .callback-${output_name} > .form-inline-label`);
