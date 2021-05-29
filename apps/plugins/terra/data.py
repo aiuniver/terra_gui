@@ -153,7 +153,7 @@ class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""
     metrics: List[str] = []
-    num_classes: int = 2
+    num_classes: int = 0
     callbacks: Dict[str, bool] = {}
 
 
@@ -194,6 +194,7 @@ class LayerConfig(pydantic.BaseModel):
     data_name: str = ""
     data_available: List[str] = []
     params: LayerConfigParam = LayerConfigParam()
+    num_classes: int = 0
 
     @pydantic.validator("up_link", allow_reuse=True)
     def correct_list_natural_number(cls, value):
