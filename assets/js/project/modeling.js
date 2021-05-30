@@ -386,11 +386,11 @@
                 );
             };
 
-            this.activeNode = (g) => {
+            this.activeNode = (g, no_reload) => {
                 let node = _cnodes.select(`#${g.id}`);
                 _cnodes.selectAll(".node").classed("active", false);
                 node.classed("active", true);
-                terra_params.load(parseInt(g.dataset.index), node.data()[0]);
+                if (!no_reload) terra_params.load(parseInt(g.dataset.index), node.data()[0]);
             }
 
             this.bind("contextmenu", (event) => {
@@ -563,7 +563,7 @@
             Object.defineProperty(this, "model", {
                 set: (model_info) => {
                     _create_model(model_info.layers, model_info.schema);
-                    terra_params.reset();
+                    if (!model_info.no_close) terra_params.reset();
                 },
                 get: () => {
                     return _cnodes.selectAll("g.node");
@@ -890,12 +890,13 @@
             if (!this.length) return this;
 
             let _layer_index_field = $("#field_form-index"),
-            _layer_name_field = $("#field_form-name"),
-            _layer_type_field = $("#field_form-type"),
-            _layer_params_main = this.find(".params-main"),
-            _layer_params_extra = this.find(".params-extra"),
-            _action_save = this.find(".actions-form > .item.save > button"),
-            _action_clone = this.find(".actions-form > .item.clone > button");
+                _layer_name_field = $("#field_form-name"),
+                _layer_type_field = $("#field_form-type"),
+                _layer_params_main = this.find(".params-main"),
+                _layer_params_extra = this.find(".params-extra"),
+                _action_save = this.find(".actions-form > .item.save > button"),
+                _action_clone = this.find(".actions-form > .item.clone > button"),
+                _on_change_param_timer;
 
             let _camelize = (text) => {
                 let _capitalize = (word) => {
@@ -905,6 +906,13 @@
                     result = [_capitalize(words[0])];
                 words.slice(1).forEach((word) => result.push(word))
                 return result.join(" ")
+            }
+
+            let _on_change_params = () => {
+                if (_on_change_param_timer) clearTimeout(_on_change_param_timer);
+                _on_change_param_timer = setTimeout(() => {
+                    this.trigger("submit", {"no_close":true});
+                }, 500);
             }
 
             let _render_params = (config) => {
@@ -923,6 +931,12 @@
                         if (data[name] !== undefined) param.default = data[name];
                         param.label = _camelize(name);
                         let widget = window.FormWidget(`params[${group}][${name}]`, param);
+                        widget.find("input").bind("input change", _on_change_params);
+                        widget.find("select").selectmenu({
+                            change:(event, ui) => {
+                                $(event.target).trigger("change");
+                            }
+                        }).bind("change", _on_change_params);
                         widget.addClass("field-inline");
                         inner.append(widget);
                     }
@@ -940,6 +954,7 @@
                         "available":config.data_available,
                         "disabled":true,
                     });
+                    WidgetData.find("input").bind("input", _on_change_params);
                     this.find(".params-config > .inner").append(WidgetData);
                 }
                 if (config.location_type === "input") {
@@ -950,6 +965,7 @@
                         "default":config.input_shape,
                         "disabled":true,
                     });
+                    WidgetInputShape.find("input").bind("input", _on_change_params);
                     this.find(".params-config > .inner").append(WidgetInputShape);
                 }
             }
@@ -1010,6 +1026,8 @@
                 return _config;
             };
 
+            _layer_name_field.bind("input", _on_change_params);
+
             _layer_type_field.bind("change", (event) => {
                 let _config = $.extend(true, {}, terra_board.find(`#node-${_layer_index_field.val()}`)[0].__data__);
                 _render_params({
@@ -1018,6 +1036,7 @@
                     "data_available":_config.config.data_available,
                     "params":{"main":{},"extra":{}},
                 });
+                _on_change_params();
             }).selectmenu({
                 change:(event, ui) => {
                     $(event.target).trigger("change");
@@ -1057,7 +1076,9 @@
                 );
             });
 
-            this.bind("submit", (event) => {
+            this.bind("submit", (event, data) => {
+                let _no_close = data !== undefined && data.no_close,
+                    _layer_index = parseInt(_layer_index_field.val());
                 event.preventDefault();
                 window.StatusBar.clear();
                 terra_toolbar.btn.save_model.disabled = true;
@@ -1066,14 +1087,15 @@
                     "save_layer",
                     (success, data) => {
                         if (success) {
-                            terra_board.model = {"layers":data.data.layers,"schema":[]};
+                            terra_board.model = {"layers":data.data.layers,"schema":[],"no_close":_no_close};
+                            if (_no_close) terra_board.activeNode($(`#node-${_layer_index}`)[0], _no_close);
                             window.StatusBar.message(window.Messages.get("LAYER_SAVED"), true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
                     },
                     {
-                        "index": parseInt(_layer_index_field.val()),
+                        "index": _layer_index,
                         "layer": _prepare_data($(event.currentTarget).serializeObject()),
                     }
                 );
