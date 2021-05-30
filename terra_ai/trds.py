@@ -764,8 +764,8 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self):
-        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-        return os.listdir(os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources'))
+        return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+        # return os.listdir(os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources'))
 
     def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
 
