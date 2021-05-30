@@ -891,8 +891,7 @@ class DTS(object):
 
         default_path = self.save_path
         if mode == 'google_drive':
-            filepath = os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources', name)
-            print(filepath)
+            filepath = os.path.join("/content/drive/MyDrive/TerraAI/datasets/sources", name)
             name = name[:name.rfind('.')]
             file_folder = os.path.join(default_path, name)
             shutil.unpack_archive(filepath, file_folder)
@@ -2388,8 +2387,8 @@ class DTS(object):
         self.dts_prepared = True
         if is_save:
             print('Идёт сохранение датасета.')
-            # directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
-            directory = os.path.join(os.getcwd(), 'TerraAI', 'datasets')
+            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            # directory = os.path.join(os.getcwd(), 'TerraAI', 'datasets')
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
