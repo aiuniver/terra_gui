@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.04
+__version__ = 0.05
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -403,6 +403,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
         if self.model.stop_training:
+            self.Exch.show_text_data(
+                f'Затрачено времени на обучение: '
+                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
             msg = f'Модель сохранена.'
             self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
