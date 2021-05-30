@@ -354,6 +354,7 @@ class CustomCallback(keras.callbacks.Callback):
             self.model.stop_training = True
             msg = f'ожидайте окончания эпохи {self.epoch + 1}:' \
                   f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+            self.batch += 1
             self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
@@ -373,6 +374,33 @@ class CustomCallback(keras.callbacks.Callback):
             {}:
         """
         if self.model.stop_training:
+            self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
+            if self.x_Val["input_1"] is not None:
+                self.y_pred = self.model.predict(self.x_Val)
+            else:
+                self.y_pred = self.y_true
+            if isinstance(self.y_pred, list):
+                for i, output_key in enumerate(self.clbck_params.keys()):
+                    self.callbacks[i].epoch_end(
+                        epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred[i],
+                        y_true=self.y_true[output_key],
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
+            else:
+                for i, output_key in enumerate(self.clbck_params.keys()):
+                    self.callbacks[i].epoch_end(
+                        epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true[output_key],
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
             self.Exch.show_current_epoch(epoch)
             self.save_lastmodel()
             msg = f'Модель сохранена.'
@@ -1102,7 +1130,7 @@ class SegmentationCallback:
             if not isinstance(self.clbck_metrics[metric_idx], str):
                 metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1:
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
