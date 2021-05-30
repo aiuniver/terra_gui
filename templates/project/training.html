@@ -47,9 +47,7 @@
                             </div>
                             <div class="images hidden">
                                 <div class="category-title">Изображения</div>
-                                <div class="content">
-                                    <div class="inner"></div>
-                                </div>
+                                <div class="content"></div>
                             </div>
                             <div class="texts hidden">
                                 <div class="category-title">Текст</div>
@@ -135,7 +133,7 @@
                                             </div>
                                             <div class="field-form field-inline field-reverse">
                                                 <label for="output-{{ layer.config.dts_layer_name }}-num_classes">Количество классов</label>
-                                                <input id="output-{{ layer.config.dts_layer_name }}-num_classes" name="outputs[{{ layer.config.dts_layer_name }}][num_classes]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_num_classes field_form-{{ layer.config.dts_layer_name }}-output_num_classes" type="number" value="" />
+                                                <input id="output-{{ layer.config.dts_layer_name }}-num_classes" name="outputs[{{ layer.config.dts_layer_name }}][num_classes]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_num_classes field_form-{{ layer.config.dts_layer_name }}-output_num_classes" type="number" value="{{ layer.config.num_classes }}" disabled="disabled" />
                                             </div>
                                         </div>
                                     </div>

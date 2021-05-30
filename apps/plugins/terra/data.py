@@ -153,7 +153,7 @@ class OutputConfig(pydantic.BaseModel):
     task: TaskType = TaskType.classification
     loss: str = ""
     metrics: List[str] = []
-    num_classes: int = 2
+    num_classes: int = 0
     callbacks: Dict[str, bool] = {}
 
 
@@ -194,6 +194,7 @@ class LayerConfig(pydantic.BaseModel):
     data_name: str = ""
     data_available: List[str] = []
     params: LayerConfigParam = LayerConfigParam()
+    num_classes: int = 0
 
     @pydantic.validator("up_link", allow_reuse=True)
     def correct_list_natural_number(cls, value):
@@ -222,6 +223,7 @@ class Dataset(pydantic.BaseModel):
 
 class GoogleDrivePath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
+    datasets_sources: str = f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"
     modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
     training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
     projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
@@ -229,6 +231,7 @@ class GoogleDrivePath(pydantic.BaseModel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         os.makedirs(self.datasets, exist_ok=True)
+        os.makedirs(self.datasets_sources, exist_ok=True)
         os.makedirs(self.modeling, exist_ok=True)
         os.makedirs(self.training, exist_ok=True)
         os.makedirs(self.projects, exist_ok=True)

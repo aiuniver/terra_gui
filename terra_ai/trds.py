@@ -22,10 +22,9 @@ import numpy as np
 import pandas as pd
 import pathlib
 import gdown
-import zipfile
 import re
 import pymorphy2
-from shutil import rmtree
+import shutil
 from gensim.models import word2vec
 from tqdm.notebook import tqdm
 import threading
@@ -38,16 +37,18 @@ import concurrent.futures
 import configparser
 import joblib
 from ast import literal_eval
-import cv2
+from urllib import request
 
-__version__ = 0.308
+# import cv2
+
+__version__ = 0.3106
 
 tr2dj_obj = Exchange()
 
 
 class DTS(object):
 
-    def __init__(self, path='dataset/sources', exch_obj=tr2dj_obj):
+    def __init__(self, path=os.getcwd(), exch_obj=tr2dj_obj):
 
         if 'custom' in globals().keys():
             for key, value in custom.__dict__.items():
@@ -60,7 +61,6 @@ class DTS(object):
 
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ''
-        self.file_path: str = ''
         self.save_path: str = path
         self.name: str = ''
         self.source: str = ''
@@ -70,9 +70,9 @@ class DTS(object):
         self.input_datatype: str = ''
         self.input_shape: dict = {}
         self.one_hot_encoding = {}
-        self.num_classes: int = 0
-        self.classes_names: list = []
-        self.classes_colors: list = []
+        self.num_classes: dict = {}
+        self.classes_names: dict = {}
+        self.classes_colors: dict = {}
         self.language: str = ''
         self.dts_prepared: bool = False
         self.task_type: dict = {}
@@ -143,8 +143,10 @@ class DTS(object):
         def on_button_clicked(b):
 
             if load_tab.selected_index == 0:
-                self.load_data(file_name.value, url_google.value)
+                self.load_data(name=zip_name.value, link=None, mode='google_drive')
             elif load_tab.selected_index == 1:
+                self.load_data(name=None, link=url_google.value, mode='url')
+            elif load_tab.selected_index == 2:
                 self.prepare_dataset(dataset_name=terra_dataset.value)
 
             pass
@@ -152,23 +154,32 @@ class DTS(object):
         button = widgets.Button(description='Загрузить', disabled=False, button_style='', tooltip='Загрузить датасет',
                                 icon='check')
 
-        file_name = widgets.Text(value='', placeholder='Название файла', description='Файл:', disabled=False)
-        url_google = widgets.Text(value='', placeholder='https://', description='URL:', disabled=False)
-        vbox_download = widgets.VBox([file_name, url_google, button])
+        #Первая вкладка
+        if os.getcwd() == '/content':
+            filelist = os.listdir('/content/drive/MyDrive/TerraAI/rawdatasets')
+        else: # Для тестирования на локалке
+            filelist = ['Гугл диск недоступен.']
+        zip_name = widgets.Dropdown(options=filelist, value=filelist[0], description='Файл', disabled=False)
+        google_drive = widgets.VBox([zip_name, button])
 
+        #Вторая вкладка
+        url_google = widgets.Text(value='', placeholder='https://', description='URL:', disabled=False)
+        vbox_download = widgets.VBox([url_google, button])
+
+        # Третья вкладка
         datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
          'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом', 'трейдинг',
          'квартиры']
-
-        terra_dataset = widgets.RadioButtons(options=datasets, value=datasets[0], description='Список баз:',
-                                             disabled=False)
+        terra_dataset = widgets.RadioButtons(options=datasets, value=datasets[0], description='Список баз:', disabled=False)
         vbox_terra_dataset = widgets.VBox([terra_dataset, button])
 
         load_tab = widgets.Tab()
-        load_tab.children = [vbox_download, vbox_terra_dataset]
+        load_tab.children = [google_drive, vbox_download, vbox_terra_dataset]
 
-        load_tab.set_title(title='Google disk', index=0)
-        load_tab.set_title(title='Terra-ai', index=1)
+        load_tab.set_title(title='Google Drive', index=0)
+        load_tab.set_title(title='URL-ссылка', index=1)
+        load_tab.set_title(title='Terra-ai', index=2)
+
 
         button.on_click(on_button_clicked)
 
@@ -527,7 +538,6 @@ class DTS(object):
 
             if checkbox_google.value:
                 directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
-                self.file_path = f'{os.path.join(directory, self.name)}.trds'
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
@@ -751,6 +761,10 @@ class DTS(object):
         elif 'text' in kwargs.keys() and kwargs['text'] == True:
             return 'Text'
 
+    def _get_zipfiles(self):
+
+        return os.listdir('/content/drive/MyDrive/TerraAI/rawdatasets')
+
     def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
 
         if txt_file:
@@ -792,7 +806,7 @@ class DTS(object):
 
         return color_list
 
-    def load_data(self, name, link=None) -> None:
+    def load_data(self, name, mode, link=None) -> None:
 
         """
         Create folder and download base in it. Does not change the files original format.
@@ -808,7 +822,6 @@ class DTS(object):
             link (str): url where base is located
         """
 
-        self.name = name
         data = {
             # 'трафик': ['traff.csv'],
             'трейдинг': ['trading.zip'],
@@ -874,66 +887,49 @@ class DTS(object):
                        'изображения https://storage.googleapis.com/terra_ai/DataSets/segmentation.zip'
         }
 
-        default_path = pathlib.Path().absolute()
-        working_path = default_path.joinpath(pathlib.Path(*self.save_path.split('/')))
-        if link:
-            if 'drive.google' in link:
-                filename = name
-                name = name.split('.')[0]
-                file_id = max(link.split('/'), key=len)
-            else:
-                filename = link.split('/')[-1]
-                if '.' in filename:
-                    idx = filename.rfind('.')
-                    name = filename[:idx]
-            main_folder = working_path
-            file_folder = pathlib.Path(os.path.join(main_folder, name))
+        default_path = self.save_path
+        if mode == 'google_drive':
+            filepath = os.path.join('/content/drive/MyDrive/TerraAI/rawdatasets', name)
+            name = name[:name.rfind('.')]
+            file_folder = os.path.join('/content', name)
+            shutil.unpack_archive(filepath, file_folder)
+        elif mode == 'url':
+            filename = link.split('/')[-1]
+            file_folder = pathlib.Path(os.path.join(default_path, filename))
+            if '.' in filename:
+                name = filename[:filename.rfind('.')]
+                file_folder = pathlib.Path(os.path.join(default_path, name))
             if not file_folder.exists():
                 os.makedirs(file_folder)
+            if not file_folder.joinpath('tmp').exists():
+                os.makedirs(os.path.join(file_folder, 'tmp'))
+            with request.urlopen(link) as dl_file:
+                with open(os.path.join(file_folder, 'tmp', filename), 'wb') as out_file:
+                    out_file.write(dl_file.read())
             if 'zip' in filename or 'zip' in link:
-                file_path = pathlib.Path(os.path.join(main_folder, name, 'tmp', filename))
+                file_path = pathlib.Path(os.path.join(file_folder, 'tmp', filename))
                 temp_folder = os.path.join(file_folder, 'tmp')
-                os.mkdir(temp_folder)
-                os.chdir(temp_folder)
-                if 'drive.google' in link:
-                    gdown.download('https://drive.google.com/uc?id=' + file_id, filename, quiet=self.django_flag)
-                else:
-                    gdown.download(link, filename, quiet=self.django_flag)
-                with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                    zip_ref.extractall(file_folder)
-                    os.chdir(str(default_path))
-                rmtree(temp_folder, ignore_errors=True)
-            else:
-                os.chdir(file_folder)
-                if 'drive.google' in link:
-                    gdown.download('https://drive.google.com/uc?id=' + file_id, filename, quiet=self.django_flag)
-                else:
-                    gdown.download(link, filename, quiet=self.django_flag)
-                os.chdir(str(default_path))
-        else:
+                shutil.unpack_archive(file_path, file_folder)
+                shutil.rmtree(temp_folder, ignore_errors=True)
+        elif mode == 'terra':
             if name in data.keys():
-                self.language = self._set_language(self.name)
+                self.language = self._set_language(name)
                 for base in data[name]:
-                    main_folder = working_path
-                    file_folder = main_folder.joinpath(name)
+                    file_folder = pathlib.Path(default_path).joinpath(name)
                     if not file_folder.exists():
                         os.makedirs(file_folder)
-                    url = 'https://storage.googleapis.com/terra_ai/DataSets/Numpy/' + base
+                        os.makedirs(os.path.join(file_folder, 'tmp'))
+                    link = 'https://storage.googleapis.com/terra_ai/DataSets/Numpy/' + base
+                    with request.urlopen(link) as dl_file:
+                        with open(os.path.join(default_path, name, 'tmp', base), 'wb') as out_file:
+                            out_file.write(dl_file.read())
                     if 'zip' in base:
-                        file_path = pathlib.Path(os.path.join(main_folder, name, 'tmp', base))
+                        file_path = pathlib.Path(os.path.join(default_path, name, 'tmp', base))
                         temp_folder = file_folder.joinpath('tmp')
-                        os.mkdir(temp_folder)
-                        os.chdir(temp_folder)
-                        gdown.download(url, base, quiet=self.django_flag)
-                        os.chdir(str(default_path))
-                        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-                            zip_ref.extractall(file_folder)
-                            os.chdir(str(default_path))
-                        rmtree(temp_folder, ignore_errors=True)
-                    else:
-                        os.chdir(file_folder)
-                        gdown.download(url, base, quiet=self.django_flag)
-                        os.chdir(str(default_path))
+                        if not temp_folder.exists:
+                            os.mkdir(temp_folder)
+                        shutil.unpack_archive(file_path, file_folder)
+                        shutil.rmtree(temp_folder, ignore_errors=True)
                 if not self.django_flag:
                     if name in reference.keys():
                         print(reference[name])
@@ -943,6 +939,7 @@ class DTS(object):
                         self.Exch.print_error(('Error', 'Данной базы нет в списке готовых баз.'))
                     else:
                         assert name in data.keys(), 'Данной базы нет в списке готовых баз.'
+        self.name = name
         self.file_folder = str(file_folder)
         self.source = self._set_source(name)
         if not self.django_flag:
@@ -1038,20 +1035,20 @@ class DTS(object):
 
         else:
 
-            self.load_data(options['dataset_name'])
+            self.load_data(options['dataset_name'], mode='terra')
 
             config = configparser.ConfigParser()
             config.read(os.path.join(self.file_folder, 'config.ini'), encoding="utf-8")
             self.name = config.get('ATTRIBUTES', 'name')
             self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
             self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
-            self.classes_names = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
-            self.classes_colors = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
-            self.num_classes = int(config.get('ATTRIBUTES', 'num_classes'))
+            self.classes_names['input_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
+            self.classes_colors['input_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
+            self.num_classes['output_1'] = int(config.get('ATTRIBUTES', 'num_classes'))
             self.task_type = literal_eval(config.get('ATTRIBUTES', 'task_type'))
             self.one_hot_encoding = literal_eval(config.get('ATTRIBUTES', 'one_hot_encoding'))
             if self.name == 'квартиры': # TODO - ЗАПЛАТКА!!!!!!
-                self.num_classes = 1
+                self.num_classes['output_1'] = 1
             if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
                 dic['output_1'] = 'segmentation'
             tag_list = self._set_tag(self.name)
@@ -1250,11 +1247,11 @@ class DTS(object):
                     if name in ['mnist', 'fashion_mnist']:
                         axs[i].imshow(Image.fromarray(img), cmap='gray')
                         axs[i].axis('off')
-                        axs[i].set_title(f'{i}: {self.classes_names[title]}')
+                        axs[i].set_title(f'{i}: {self.classes_names["input_1"][title]}')
                     else:
                         axs[i].imshow(Image.fromarray(img))
                         axs[i].axis('off')
-                        axs[i].set_title(f'{i}: {self.classes_names[title[0]]}')
+                        axs[i].set_title(f'{i}: {self.classes_names["input_1"][title[0]]}')
 
             if name in text:
                 if name in ['imdb', 'reuters']:
@@ -1300,15 +1297,15 @@ class DTS(object):
         self.language = self._set_language(self.name)
         self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
         if 'classification' in self.tags['output_1']:
-            self.num_classes = len(np.unique(y_Train, axis=0))
+            self.num_classes['output_1'] = len(np.unique(y_Train, axis=0))
             if self.name == 'fashion_mnist':
-                self.classes_names = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
+                self.classes_names['input_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
                                       'Sneaker', 'Bag', 'Ankle boot']
             elif self.name == 'cifar10':
-                self.classes_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
+                self.classes_names['input_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
                                       'truck']
             else:
-                self.classes_names = [str(i) for i in range(self.num_classes)]
+                self.classes_names['input_1'] = [str(i) for i in range(len(np.unique(y_Train, axis=0)))]
 
         if not self.django_flag:
             print_data(self.name, x_Train, y_Train)
@@ -1503,77 +1500,77 @@ class DTS(object):
 
         return X
 
-    def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
-
-        if folder_name == None:
-            folder_name = self.file_folder
-        else:
-            folder_name = os.path.join(self.file_folder, folder_name)
-
-        X = []
-        Y_cls = []
-
-        for _, dirnames, filename in sorted(os.walk(folder_name)):
-
-            folders = sorted(dirnames)
-            folders_num = len(dirnames) if len(dirnames) != 0 else 1
-            for i in range(folders_num):
-                temp_path = folder_name
-                try:
-                    temp_path = os.path.join(folder_name, folders[i])
-                except:
-                    IndexError
-
-                files = sorted(os.listdir(temp_path))
-                progress_bar = tqdm(files, ncols=800)
-                if folders_num == 1:
-                    description = f'Сохранение видеофайлов'
-                else:
-                    description = f'Сохранение видеофайлов из папки {folders[i]}'
-                progress_bar.set_description(description)
-                idx = 1
-                for file in progress_bar:
-                    vc = cv2.VideoCapture(os.path.join(temp_path, file))
-                    while True:
-                        success, frame = vc.read()
-                        if not success:
-                            break
-                        resized_frame = cv2.resize(frame, (height, width))
-                        X.append(resized_frame)
-                        Y_cls.append(i)
-                    if self.django_flag:
-                        idx += 1
-                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
-                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
-            break
-
-        X = np.array(X)
-        Y_cls = np.array(Y_cls)
-
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
-            shape_x = X.shape
-            X = X.reshape(-1, 1)
-
-            if scaler == 'MinMaxScaler':
-                self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
-            elif scaler == 'StandardScaler':
-                self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-
-            self.x_Scaler[f'input_{self.iter}'].fit(X)
-            X = self.x_Scaler[f'input_{self.iter}'].transform(X)
-            X = X.reshape(shape_x)
-
-        if 'classification' in self.task_type.values():
-            self.y_Cls = Y_cls.astype('int')
-            del Y_cls
-
-        return X
+    # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    #
+    #     if folder_name == None:
+    #         folder_name = self.file_folder
+    #     else:
+    #         folder_name = os.path.join(self.file_folder, folder_name)
+    #
+    #     X = []
+    #     Y_cls = []
+    #
+    #     for _, dirnames, filename in sorted(os.walk(folder_name)):
+    #
+    #         folders = sorted(dirnames)
+    #         folders_num = len(dirnames) if len(dirnames) != 0 else 1
+    #         for i in range(folders_num):
+    #             temp_path = folder_name
+    #             try:
+    #                 temp_path = os.path.join(folder_name, folders[i])
+    #             except:
+    #                 IndexError
+    #
+    #             files = sorted(os.listdir(temp_path))
+    #             progress_bar = tqdm(files, ncols=800)
+    #             if folders_num == 1:
+    #                 description = f'Сохранение видеофайлов'
+    #             else:
+    #                 description = f'Сохранение видеофайлов из папки {folders[i]}'
+    #             progress_bar.set_description(description)
+    #             idx = 1
+    #             for file in progress_bar:
+    #                 vc = cv2.VideoCapture(os.path.join(temp_path, file))
+    #                 while True:
+    #                     success, frame = vc.read()
+    #                     if not success:
+    #                         break
+    #                     resized_frame = cv2.resize(frame, (height, width))
+    #                     X.append(resized_frame)
+    #                     Y_cls.append(i)
+    #                 if self.django_flag:
+    #                     idx += 1
+    #                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+    #                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+    #                     if idx == progress_bar.total and i+1 == folders_num:
+    #                         self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+    #                     else:
+    #                         self.Exch.print_progress_bar(progress_bar_status)
+    #         break
+    #
+    #     X = np.array(X)
+    #     Y_cls = np.array(Y_cls)
+    #
+    #     if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
+    #
+    #         shape_x = X.shape
+    #         X = X.reshape(-1, 1)
+    #
+    #         if scaler == 'MinMaxScaler':
+    #             self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
+    #
+    #         elif scaler == 'StandardScaler':
+    #             self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
+    #
+    #         self.x_Scaler[f'input_{self.iter}'].fit(X)
+    #         X = self.x_Scaler[f'input_{self.iter}'].transform(X)
+    #         X = X.reshape(shape_x)
+    #
+    #     if 'classification' in self.task_type.values():
+    #         self.y_Cls = Y_cls.astype('int')
+    #         del Y_cls
+    #
+    #     return X
 
     def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, embedding=False, embedding_size=200):
 
@@ -1725,7 +1722,7 @@ class DTS(object):
 
     def dataframe(self, file_name=[''], separator='', encoding='utf-8', x_cols='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
 
-        self.classes_names = x_cols.split(' ')
+        self.classes_names[f'input_{self.iter}'] = x_cols.split(' ')
         if separator:
             X = pd.read_csv(os.path.join(self.file_folder, file_name), sep=separator, encoding=encoding)
         else:
@@ -1754,7 +1751,7 @@ class DTS(object):
     def regression(self, y_col='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
 
 
-        self.num_classes = len(y_col)
+        self.num_classes[f'output_{self.iter}'] = len(y_col)
 
         Y = self.df[y_col]
         Y = np.array(Y)
@@ -1780,8 +1777,8 @@ class DTS(object):
     def timeseries(self, col_name='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'],
                    x_len=20, train_len=2000, batch_size=10):
 
-        self.classes_names = col_name
-        self.num_classes = len(col_name)
+        self.classes_names[f'output_{self.iter}'] = col_name
+        self.num_classes[f'output_{self.iter}'] = len(col_name)
 
         x_Train = np.array([self.df.loc[:train_len, col_name]])
         x_Val = np.array([self.df.loc[train_len + x_len:, col_name]])
@@ -1855,8 +1852,7 @@ class DTS(object):
         else:
             folder_name = os.path.join(self.file_folder, folder_name)
 
-        self.classes_names = [folder for folder in sorted(os.listdir(folder_name))] if len(os.listdir(folder_name)) > 1 else folder_name
-        self.num_classes = len(self.classes_names)
+        self.classes_names[f'input_{self.iter}'] = [folder for folder in sorted(os.listdir(folder_name))] if len(os.listdir(folder_name)) > 1 else folder_name
         Y = np.array([])
 
         for _, dirnames, filename in sorted(os.walk(folder_name)):
@@ -1934,7 +1930,7 @@ class DTS(object):
     def classification(self, one_hot_encoding=[True, False]):
 
         Y = self.y_Cls
-        self.num_classes = len(np.unique(Y, axis=0))
+        self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
 
         if one_hot_encoding:
             Y = utils.to_categorical(Y, len(np.unique(Y))) # Убрал AXIS
@@ -1998,6 +1994,7 @@ class DTS(object):
 
             return np.array(x_vector), np.array(y)
 
+        self.num_classes[f'output_{self.iter}'] = len(open_tags)
         tags = open_tags.split(' ') + close_tags.split(' ')
 
         for i in range(len(self.user_parameters['inp'])):
@@ -2040,7 +2037,7 @@ class DTS(object):
         def cluster_to_ohe(image):
 
             image = image.reshape(-1, 3)
-            km = KMeans(n_clusters=self.num_classes)
+            km = KMeans(n_clusters=num_classes)
             km.fit(image)
             labels = km.labels_
             cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
@@ -2064,9 +2061,10 @@ class DTS(object):
 
             return mask_ohe
 
-        self.classes_names = list(classes_dict.keys())
-        self.classes_colors = list(classes_dict.values())
-        self.num_classes = len(self.classes_names)
+        self.classes_names[f'output_{self.iter}'] = list(classes_dict.keys())
+        self.classes_colors[f'output_{self.iter}'] = list(classes_dict.values())
+        num_classes = len(list(classes_dict.keys()))
+        self.num_classes[f'output_{self.iter}'] = num_classes
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'images':
@@ -2174,6 +2172,7 @@ class DTS(object):
                 elem = elem.split(' = ')
                 data[elem[0]] = elem[1]
         num_classes = int(data['classes'])
+        self.num_classes[f'output_{self.iter}'] = num_classes
 
         # obj.names
         with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
@@ -2221,50 +2220,6 @@ class DTS(object):
         return input_1, input_2, input_3
 
     def prepare_user_dataset(self, dataset_dict, is_save=True):
-
-        for key, value in dataset_dict["inputs"].items():
-
-            for param_key, param_value in value["parameters"].items():
-                try:
-                    if (param_key == "folder_name"):
-                        continue
-                    if (param_value == 'true' or param_value == 'on'):
-                        dataset_dict["inputs"][key]["parameters"][param_key] = True
-                    elif (param_value == 'false'):
-                        dataset_dict["inputs"][key]["parameters"][param_key] = False
-                    else:
-                        dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
-                except ValueError:
-                    continue
-
-        for key, value in dataset_dict["outputs"].items():
-
-            for param_key, param_value in value["parameters"].items():
-                try:
-                    if (param_key == "folder_name"):
-                        continue
-                    if (param_value == 'true' or param_value == 'on'):
-                        dataset_dict["outputs"][key]["parameters"][param_key] = True
-                    elif (param_value == 'false'):
-                        dataset_dict["outputs"][key]["parameters"][param_key] = False
-                    else:
-                        dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
-                except ValueError:
-                    continue
-
-        for key, value in dataset_dict["parameters"].items():
-
-            try:
-                if (param_key == "folder_name"):
-                    continue
-                if (value == 'true' or value == 'on'):
-                    dataset_dict["parameters"][key] = True
-                elif (value == 'false'):
-                    dataset_dict["parameters"][key] = False
-                else:
-                    dataset_dict["parameters"][key] = int(value)
-            except ValueError:
-                continue
 
         cur_time = time()
         self.name = dataset_dict['parameters']['name']
@@ -2337,7 +2292,6 @@ class DTS(object):
         if is_save:
             print('Идёт сохранение датасета.')
             directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
-            self.file_path = f'{directory}/{self.name}.trds'
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
