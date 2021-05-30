@@ -331,7 +331,7 @@ class CustomCallback(keras.callbacks.Callback):
 
         if eta > 3600:
             eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                           (eta % 3600) // 60, eta % 60)
+                                                     (eta % 3600) // 60, eta % 60)
         elif eta > 60:
             eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
         else:
@@ -348,60 +348,66 @@ class CustomCallback(keras.callbacks.Callback):
         self.epoch = epoch
         self._time_first_step = time.time()
 
-    def on_batch_begin(self, batch, logs=None):
+    def on_train_batch_end(self, batch, logs=None):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
+            msg = f'ожидайте оканчания эпохи {self.epoch + 1}:' \
+                  f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
             self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
-
-    def on_train_batch_end(self, batch, logs=None):
-        msg_batch = f'Батч {batch}/{self.num_batches}'
-        msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
-                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
-        msg_progress_end = f'Расчетное время окончания:' \
-                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time)}, '
-        msg_progress_start = f'Время выполнения:' \
-                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time, finalize=True)}, '
-        self.batch += 1
-        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
-                                     msg_progress_end + msg_epoch + msg_batch))
+        else:
+            msg_batch = f'Батч {batch}/{self.num_batches}'
+            msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
+                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+            msg_progress_end = f'Расчетное время окончания:' \
+                               f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)}, '
+            msg_progress_start = f'Время выполнения:' \
+                                 f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}, '
+            self.batch += 1
+            self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
+                                         msg_progress_end + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
-        self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
-        if self.x_Val["input_1"] is not None:
-            self.y_pred = self.model.predict(self.x_Val)
-        else:
-            self.y_pred = self.y_true
-        if isinstance(self.y_pred, list):
-            for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(
-                    epoch,
-                    logs=logs,
-                    output_key=output_key,
-                    y_pred=self.y_pred[i],
-                    y_true=self.y_true[output_key],
-                    loss=self.loss[i],
-                    msg_epoch=self.msg_epoch
-                )
-        else:
-            for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(
-                    epoch,
-                    logs=logs,
-                    output_key=output_key,
-                    y_pred=self.y_pred,
-                    y_true=self.y_true[output_key],
-                    loss=self.loss[i],
-                    msg_epoch=self.msg_epoch
-                )
-        self.Exch.show_current_epoch(epoch)
-        self.save_lastmodel()
+        if self.model.stop_training:
+            self.Exch.show_current_epoch(epoch)
+            self.save_lastmodel()
+            msg = f'Модель сохранена.'
+            self.Exch.print_2status_bar(('Обучение завершено!', msg))
 
+        else:
+            self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
+            if self.x_Val["input_1"] is not None:
+                self.y_pred = self.model.predict(self.x_Val)
+            else:
+                self.y_pred = self.y_true
+            if isinstance(self.y_pred, list):
+                for i, output_key in enumerate(self.clbck_params.keys()):
+                    self.callbacks[i].epoch_end(
+                        epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred[i],
+                        y_true=self.y_true[output_key],
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
+            else:
+                for i, output_key in enumerate(self.clbck_params.keys()):
+                    self.callbacks[i].epoch_end(
+                        epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true[output_key],
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
+            self.Exch.show_current_epoch(epoch)
+            self.save_lastmodel()
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
@@ -914,7 +920,7 @@ class SegmentationCallback:
             self.Exch.show_plot_data(plot_data)
         pass
 
-    def _get_colored_mask(self, mask, input_key: str = None):
+    def _get_colored_mask(self, mask, input_key: str = None, output_key: str = None):
         """
         Transforms prediction mask to colored mask
 
@@ -937,7 +943,7 @@ class SegmentationCallback:
         mask = mask.reshape(-1, self.num_classes)
         for pix in range(len(mask)):
             colored_mask.append(
-                index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
+                index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
             )
         colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
@@ -960,7 +966,7 @@ class SegmentationCallback:
         )
         self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
-    def plot_images(self, input_key: str = None):
+    def plot_images(self, input_key: str = None, output_key: str = None):
         """
         Returns:
             None:
@@ -987,13 +993,13 @@ class SegmentationCallback:
             image_data.append((image, title))
 
             # истинная маска
-            self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
+            self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
             title = "Истинная маска"
             true_mask_data.append((image, title))
 
             # предсказанная маска
-            self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
+            self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
             title = "Маска предикта"
             pred_mask_data.append((image, title))
@@ -1153,7 +1159,7 @@ class SegmentationCallback:
             self.plot_result(output_key=output_key)
             if self.data_tag == 'images':
                 if self.show_best or self.show_worst:
-                    self.plot_images(input_key="input_1")
+                    self.plot_images(input_key="input_1", output_key=output_key)
         pass
 
 
