@@ -38,17 +38,17 @@ import configparser
 import joblib
 from ast import literal_eval
 from urllib import request
+from tempfile import mkdtemp
 
 # import cv2
 
-__version__ = 0.3106
+__version__ = 0.3107
 
 tr2dj_obj = Exchange()
 
-
 class DTS(object):
 
-    def __init__(self, path=os.getcwd(), exch_obj=tr2dj_obj):
+    def __init__(self, path=mkdtemp(), exch_obj=tr2dj_obj):
 
         if 'custom' in globals().keys():
             for key, value in custom.__dict__.items():
@@ -156,7 +156,9 @@ class DTS(object):
 
         #Первая вкладка
         if os.getcwd() == '/content':
-            filelist = os.listdir('/content/drive/MyDrive/TerraAI/rawdatasets')
+            filelist = os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+            if not filelist:
+                filelist = ['Нет файлов']
         else: # Для тестирования на локалке
             filelist = ['Гугл диск недоступен.']
         zip_name = widgets.Dropdown(options=filelist, value=filelist[0], description='Файл', disabled=False)
@@ -762,8 +764,8 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self):
-
-        return os.listdir('/content/drive/MyDrive/TerraAI/rawdatasets')
+        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+        return os.listdir(os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources'))
 
     def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
 
@@ -889,9 +891,10 @@ class DTS(object):
 
         default_path = self.save_path
         if mode == 'google_drive':
-            filepath = os.path.join('/content/drive/MyDrive/TerraAI/rawdatasets', name)
+            filepath = os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources', name)
+            print(filepath)
             name = name[:name.rfind('.')]
-            file_folder = os.path.join('/content', name)
+            file_folder = os.path.join(default_path, name)
             shutil.unpack_archive(filepath, file_folder)
         elif mode == 'url':
             filename = link.split('/')[-1]
@@ -1498,6 +1501,7 @@ class DTS(object):
             self.y_Cls = Y_cls.astype('int')
             del Y_cls
 
+        print("IMAGES ======= ", self.num_classes)
         return X
 
     # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
@@ -1673,8 +1677,45 @@ class DTS(object):
             folder_name = os.path.join(self.file_folder, folder_name)
 
         txt_list = []
-        for filename in os.listdir(folder_name):
-            txt_list.append(read_text(os.path.join(folder_name, filename)))
+        for _, dirnames, filename in sorted(os.walk(folder_name)):
+
+            folders = sorted(dirnames)
+            folders_num = len(dirnames) if len(dirnames) != 0 else 1
+            for i in range(folders_num):
+                temp_path = folder_name
+                try:
+                    temp_path = os.path.join(folder_name, folders[i])
+                except:
+                    IndexError
+
+                files = sorted(os.listdir(temp_path))
+                progress_bar = tqdm(files, ncols=800)
+                if folders_num == 1:
+                    description = f'Сохранение текстов'
+                else:
+                    description = f'Сохранение текстов из папки {folders[i]}'
+                progress_bar.set_description(description)
+                idx = 1
+                several_files = False
+                for file in progress_bar:
+                    if progress_bar.total > 1:
+                        if not several_files:
+                            txt_list.append(read_text(os.path.join(temp_path, file)))
+                            several_files = True
+                        else:
+                            txt_list[-1] + read_text(os.path.join(temp_path, file))
+                    else:
+                        txt_list.append(read_text(os.path.join(temp_path, file)))
+                    if self.django_flag:
+                        idx += 1
+                        progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                               f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                        if idx == progress_bar.total and i+1 == folders_num:
+                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        else:
+                            self.Exch.print_progress_bar(progress_bar_status)
+
+            break
 
         if pymorphy:
             for i in range(len(txt_list)):
@@ -1930,11 +1971,14 @@ class DTS(object):
     def classification(self, one_hot_encoding=[True, False]):
 
         Y = self.y_Cls
+        print("CLASSIC_START ======= ", self.num_classes)
+
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
 
         if one_hot_encoding:
             Y = utils.to_categorical(Y, len(np.unique(Y))) # Убрал AXIS
 
+        print("CLASSIC ======= ", self.num_classes)
         return Y
 
     def text_segmentation(self, open_tags='', close_tags=''):
@@ -2222,6 +2266,52 @@ class DTS(object):
     def prepare_user_dataset(self, dataset_dict, is_save=True):
 
         cur_time = time()
+        if self.django_flag:
+            for key, value in dataset_dict["inputs"].items():
+
+                for param_key, param_value in value["parameters"].items():
+                    try:
+                        if (param_key == "folder_name"):
+                            continue
+                        if (param_value == 'true' or param_value == 'on'):
+                            dataset_dict["inputs"][key]["parameters"][param_key] = True
+                        elif (param_value == 'false'):
+                            dataset_dict["inputs"][key]["parameters"][param_key] = False
+                        elif param_value.isdigit():
+                            dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
+                    except ValueError:
+                        continue
+
+            for key, value in dataset_dict["outputs"].items():
+
+                for param_key, param_value in value["parameters"].items():
+                    try:
+                        if (param_key == "folder_name"):
+                            continue
+                        if (param_value == 'true' or param_value == 'on'):
+                            dataset_dict["outputs"][key]["parameters"][param_key] = True
+                        elif (param_value == 'false'):
+                            dataset_dict["outputs"][key]["parameters"][param_key] = False
+                        else:
+                            dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
+                    except ValueError:
+                        continue
+
+            for key, value in dataset_dict["parameters"].items():
+
+                try:
+                    if (param_key == "folder_name"):
+                        continue
+                    if (value == 'true' or value == 'on'):
+                        dataset_dict["parameters"][key] = True
+                    elif (value == 'false'):
+                        dataset_dict["parameters"][key] = False
+                    else:
+                        dataset_dict["parameters"][key] = int(value)
+                except ValueError:
+                    continue
+
+
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
@@ -2239,6 +2329,7 @@ class DTS(object):
             self.iter = i + 1
             self.X[f'input_{i+1}'] = {'data_name': self.user_parameters['inp'][f'input_{i+1}']['name'], 'data': getattr(self, self.user_parameters['inp'][f'input_{i+1}']['tag'])(**self.user_parameters['inp'][f'input_{i+1}']['parameters'])}
 
+        print("----asdasdasdasdas----", self.num_classes)
         for i in range(len(self.user_parameters['out'])):
             self.iter = i + 1
             if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'object_detection':
@@ -2250,12 +2341,15 @@ class DTS(object):
             else:
                 self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
         # Train/Val/Test split
+        print(4)
         indices = np.random.permutation(self.X['input_1']['data'].shape[0])
         train_len = int(self.divide_ratio[1][0] * len(indices))
         val_len = int((len(indices) - train_len) / 2)
         train_mask = indices[:train_len]
         val_mask = indices[train_len:train_len + val_len]
         test_mask = indices[train_len + val_len:]
+
+        print(5)
 
         for inp in self.X.keys():
             self.X[inp]['data'] = (self.X[inp]['data'][train_mask], self.X[inp]['data'][val_mask],
@@ -2265,9 +2359,12 @@ class DTS(object):
                                    self.Y[out]['data'][test_mask])
 
         inp_datatype = []
+        print(6)
         for inp in self.X.keys():
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
             inp_datatype.append(self._set_datatype(shape=self.input_shape[inp]))
+
+        print(7)
 
         self.input_datatype = ' '.join(inp_datatype)
         if not self.django_flag:
@@ -2291,7 +2388,8 @@ class DTS(object):
         self.dts_prepared = True
         if is_save:
             print('Идёт сохранение датасета.')
-            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            # directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            directory = os.path.join(os.getcwd(), 'TerraAI', 'datasets')
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:

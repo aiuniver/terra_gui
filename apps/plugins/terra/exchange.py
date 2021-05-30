@@ -32,6 +32,7 @@ class TerraExchange:
 
     @project.setter
     def project(self, props: dict):
+        # print(props)
         project = self.project.dict()
         project.update(props)
         self.__project = TerraExchangeProject(**project)
@@ -373,6 +374,10 @@ class TerraExchange:
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
         return TerraExchangeResponse()
+
+    def _call_get_zipfiles(self) -> TerraExchangeResponse:
+        response = colab_exchange.get_zipfiles()
+        return TerraExchangeResponse(data=response)
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange._reset_out_data()

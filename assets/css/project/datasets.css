@@ -291,3 +291,61 @@
 .layout-params > .color-inline > input[type=text]{
     max-width: 65px;
 }
+
+.load-dataset-field > ul{
+    list-style-type: none;
+    overflow: hidden;
+    justify-content: space-around;
+    background-color: #0E1621;
+    margin: -20px -20px 10px -20px;
+    padding: 0 2px;
+    padding-top: 2px;
+}
+
+.load-dataset-field > ul > li {
+    float: left;
+    padding: 8px 30px;
+    font-size: .80rem;
+}
+
+.active{
+    background-color: #17212B;
+    border-radius: 4px 4px 0 0;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > .hidden{
+    display: none;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 40px;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline{
+    display: flex;
+    align-items: center;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > input,
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button{
+    max-width: 170px;
+    height: 22px;
+    font-size: .75rem;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > label{
+    padding-right: 7px;
+    margin: 0;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button > .ui-selectmenu-icon{
+    height: 20px;
+    width: 30px;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button > .ui-selectmenu-text{
+    height: 20px;
+    line-height: 20px;
+}

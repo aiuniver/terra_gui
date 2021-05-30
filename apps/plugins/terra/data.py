@@ -224,6 +224,7 @@ class Dataset(pydantic.BaseModel):
 class GoogleDrivePath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
     datasets_sources: str = f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"
+    print(f"{settings.TERRA_AI_DATA_PATH}/datasets/sources")
     modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
     training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
     projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
@@ -348,11 +349,12 @@ class TerraExchangeProject(pydantic.BaseModel):
                 config_ref.write("{}")
                 config_ref.close()
 
-        with open(self.dir.config, "r") as file:
-            try:
-                kwargs.update(**json.load(file))
-            except Exception:
-                pass
+        # with open(self.dir.config, "r") as file:
+        #     try:
+        #         # kwargs.update(**json.load(file))
+        #         # print(json.load(file))
+        #     except Exception:
+        #         pass
 
         super().__init__(**kwargs)
 

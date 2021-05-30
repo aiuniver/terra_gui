@@ -14,6 +14,4 @@ class TerraProjectMiddleware(MiddlewareMixin):
             data = {"error": "No connection to TerraAI project"}
 
         terra_exchange.project = data
-        for dts in data["datasets"]:
-            print(dts)
         request.terra_project = terra_exchange.project

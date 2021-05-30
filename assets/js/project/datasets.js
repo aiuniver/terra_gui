@@ -140,8 +140,7 @@
                     },
                     {
                         dataset:datasets.dataset,
-                        source: "",
-                        not_load_layers: false,
+                        is_custom:window.TerraProject.datasets[datasets.dataset].tags.custom_dataset !== undefined
                     }
                 );
                 window.ExchangeRequest(
@@ -169,6 +168,30 @@
                 "classification", "segmentation", "text_segmentation", "regression", "object_detection", "autoencoder", "gan", "timeseries"
             ];
 
+            window.ExchangeRequest(
+                "get_zipfiles",
+                (success, data)=> {
+                    if (success) {
+                        console.log(data.data)
+                        for(let i in data.data){
+                            let option = $(`<option value="${data.data[i]}">${data.data[i]}</option>`);
+                            $("#gdrive-select").append(option);
+                        }
+                         $("#gdrive-select").selectmenu("refresh");
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                }
+            );
+
+            $(".load-dataset-field > ul > li").bind("click", (event)=>{
+                let target = $(event.target);
+                target.parent().children("li").removeClass("active");
+                $(".load-dataset-field > .inner > .tab-load-dataset > div").addClass("hidden");
+                target.toggleClass("active");
+                $("#"+target.attr("data-type")).removeClass("hidden");
+            });
+
             let dataset_params;
 
             let load_layout_params = (elem, params, layer)=>{
@@ -184,7 +207,14 @@
 
             this.bind("submit", (event)=>{
                 event.preventDefault();
-                let serialize_data = this.serializeObject()
+                let serialize_data = this.serializeObject(),
+                    mode;
+                if(serialize_data.name == ""){
+                    mode = "url"
+                    serialize_data.name = "name"
+                }else{
+                    mode = "google_drive"
+                }
                 window.ExchangeRequest(
                     "load_dataset",
                     (success, data) => {
@@ -259,7 +289,13 @@
                             window.StatusBar.message(data.error, false);
                         }
                     },
-                    serialize_data
+                    {
+                        name: serialize_data.name,
+                        mode: mode,
+                        link: serialize_data.link,
+                        num_links: serialize_data.num_links
+                    }
+
                 );
             });
 
@@ -350,8 +386,7 @@
                     (success, data) => {
                         if (success) {
                             window.StatusBar.message(window.Messages.get("PRERAPE_DATASET_SUCCESS"), true);
-
-                            console.log(data)
+                            alert("Dataset created");
 
                         } else {
                             window.StatusBar.message(data.error, false);
