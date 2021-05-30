@@ -1079,6 +1079,7 @@
             this.bind("submit", (event, data) => {
                 let _no_close = data !== undefined && data.no_close,
                     _layer_index = parseInt(_layer_index_field.val());
+                if (_on_change_param_timer) clearTimeout(_on_change_param_timer);
                 event.preventDefault();
                 window.StatusBar.clear();
                 terra_toolbar.btn.save_model.disabled = true;
