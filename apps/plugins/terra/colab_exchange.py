@@ -1001,7 +1001,6 @@ class Exchange(StatesData, GuiExch):
             for _param_name, values in params.items():
                 optimizer_params[name][_param_name] = values.get("default")
         optimizer_kwargs = OptimizerParams(**optimizer_params)
-        print(optimizer_kwargs)
         return optimizer_kwargs.dict()
 
     def get_data(self):
@@ -1011,7 +1010,6 @@ class Exchange(StatesData, GuiExch):
                 self.epoch / self.epochs
             ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
-            print(self.is_trained)
         return self.out_data
 
     def reset_training(self):
@@ -1063,7 +1061,6 @@ class Exchange(StatesData, GuiExch):
 
     def stop_training(self):
         self.stop_training_flag = True
-        self.out_data["stop_flag"] = True
 
 
 if __name__ == "__main__":
