@@ -944,6 +944,14 @@ class SegmentationCallback:
         colored_mask = []
         mask = mask.reshape(-1, self.num_classes)
 
+        self.Exch.show_text_data(
+            f'_get_colored_mask: output_key: '
+            f'{output_key}')
+
+        self.Exch.show_text_data(
+            f'_get_colored_mask:  self.dataset.classes_colors: '
+            f'{ self.dataset.classes_colors}')
+
         for pix in range(len(mask)):
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
@@ -989,9 +997,6 @@ class SegmentationCallback:
         for idx in indexes:
             # исходное изобаржение
 
-            self.Exch.show_text_data(
-                f'def plot_images: indexes: '
-                f'{indexes}')
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
