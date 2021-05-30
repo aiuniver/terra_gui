@@ -119,6 +119,7 @@ class CustomCallback(keras.callbacks.Callback):
                     "class_metrics": [],
                     "num_classes": 2,
                     "data_tag": "images",
+                    "show_best": True,
                     "show_worst": False,
                     "show_final": True,
                     "dataset": self.DTS,
@@ -248,7 +249,7 @@ class CustomCallback(keras.callbacks.Callback):
                     else:
                         if metrics[0] in callback_kwargs["class_metrics"]:
                             callback_kwargs["class_metrics"].remove(metrics[0])
-                elif option_name == "show_worst_images" and option_value:
+                elif option_name == "show_worst_images":
                     if option_value:
                         callback_kwargs["show_worst"] = True
                     else:
@@ -527,7 +528,7 @@ class ClassificationCallback:
             self.Exch.show_plot_data(plot_data)
         pass
 
-    def image_indices(self, count=6) -> np.ndarray:
+    def image_indices(self, count=5) -> np.ndarray:
         """
         Computes indices of images based on instance mode ('worst', 'best')
         Returns: array of best or worst predictions indices
