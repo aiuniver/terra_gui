@@ -944,6 +944,7 @@ class SegmentationCallback:
         colored_mask = []
         mask = mask.reshape(-1, self.num_classes)
 
+        self.Exch.print_2status_bar(('_get_colored_mask: self.dataset.classes_colors[output_key]', f'{self.dataset.classes_colors[output_key]}'))
         self.Exch.show_text_data(
             f'_get_colored_mask: output_key: '
             f'{output_key}')
@@ -981,6 +982,10 @@ class SegmentationCallback:
         Returns:
             None:
         """
+        self.Exch.show_text_data(
+            f'def plot_images: output_key: '
+            f'{output_key}')
+        self.Exch.print_2status_bar(('def plot_images: output_key', f'{output_key}'))
 
         image_data = []
         true_mask_data = []
@@ -996,9 +1001,7 @@ class SegmentationCallback:
 
         for idx in indexes:
             # исходное изобаржение
-            self.Exch.show_text_data(
-                f'def plot_images: output_key: '
-                f'{output_key}')
+
             self.Exch.show_text_data(
                 f'def plot_images: indexes: '
                 f'{indexes}')
@@ -1170,6 +1173,9 @@ class SegmentationCallback:
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
+        self.Exch.show_text_data(
+            f'def train_end: self.dataset.classes_colors[output_key]: '
+            f'{self.dataset.classes_colors[output_key]}')
         self.x_Val = x_val
         if self.show_final:
             self.plot_result(output_key=output_key)
