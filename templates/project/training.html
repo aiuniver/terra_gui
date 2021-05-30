@@ -102,12 +102,12 @@
                             </div>
                         </div>
 
-                        <div class="params-item params-optimizer-extra collapsable hidden collapsed">
+                        <div class="params-item params-optimizer-extra collapsable hidden">
                             <div class="params-title">Параметры оптимизатора</div>
                             <div class="inner form-inline-label"></div>
                         </div>
 
-                        <div class="params-item params-output collapsable collapsed">
+                        <div class="params-item params-output collapsable">
                             <div class="params-title">Параметры outputs слоев</div>
                             {% for layer in request.terra_project.layers.values %}
                                 {% if layer.config.location_type == "output" %}
@@ -133,7 +133,7 @@
                                             </div>
                                             <div class="field-form field-inline field-reverse">
                                                 <label for="output-{{ layer.config.dts_layer_name }}-num_classes">Количество классов</label>
-                                                <input id="output-{{ layer.config.dts_layer_name }}-num_classes" name="outputs[{{ layer.config.dts_layer_name }}][num_classes]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_num_classes field_form-{{ layer.config.dts_layer_name }}-output_num_classes" type="number" value="" disabled="disabled" />
+                                                <input id="output-{{ layer.config.dts_layer_name }}-num_classes" name="outputs[{{ layer.config.dts_layer_name }}][num_classes]" data-output="{{ layer.config.dts_layer_name }}" class="field_form-output_num_classes field_form-{{ layer.config.dts_layer_name }}-output_num_classes" type="number" value="{{ layer.config.num_classes }}" disabled="disabled" />
                                             </div>
                                         </div>
                                     </div>
@@ -141,7 +141,7 @@
                             {% endfor %}
                         </div>
 
-                        <div class="params-item params-checkpoint collapsable collapsed">
+                        <div class="params-item params-checkpoint collapsable">
                             <div class="params-title">Чекпоинты</div>
                             <div class="inner form-inline-label">
                                 <div class="field-form field-inline field-reverse">
