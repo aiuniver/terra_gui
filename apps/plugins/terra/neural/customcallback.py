@@ -943,15 +943,6 @@ class SegmentationCallback:
 
         colored_mask = []
         mask = mask.reshape(-1, self.num_classes)
-
-        self.Exch.show_text_data(
-            f'_get_colored_mask: output_key: '
-            f'{output_key}')
-
-        self.Exch.show_text_data(
-            f'_get_colored_mask:  self.dataset.classes_colors: '
-            f'{ self.dataset.classes_colors}')
-
         for pix in range(len(mask)):
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
@@ -1165,17 +1156,12 @@ class SegmentationCallback:
         )
 
     def train_end(self, output_key: str = None, x_val: dict = None):
-        try:
-            self.x_Val = x_val
-            if self.show_final:
-                self.plot_result(output_key=output_key)
-                if self.data_tag == 'images':
-                    if self.show_best or self.show_worst:
-                        self.plot_images(input_key="input_1", output_key=output_key)
-        except Exception:
-            self.Exch.show_text_data(
-                f'def train_end: self.dataset.classes_colors[output_key]:  {output_key}'
-                f'{self.dataset.classes_colors[output_key]}')
+        self.x_Val = x_val
+        if self.show_final:
+            self.plot_result(output_key=output_key)
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    self.plot_images(input_key="input_1", output_key=output_key)
         pass
 
 
