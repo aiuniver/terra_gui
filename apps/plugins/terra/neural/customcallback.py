@@ -373,71 +373,39 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+        self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
+        if self.x_Val["input_1"] is not None:
+            self.y_pred = self.model.predict(self.x_Val)
+        else:
+            self.y_pred = self.y_true
+        if isinstance(self.y_pred, list):
+            for i, output_key in enumerate(self.clbck_params.keys()):
+                self.callbacks[i].epoch_end(
+                    epoch,
+                    logs=logs,
+                    output_key=output_key,
+                    y_pred=self.y_pred[i],
+                    y_true=self.y_true[output_key],
+                    loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
+                )
+        else:
+            for i, output_key in enumerate(self.clbck_params.keys()):
+                self.callbacks[i].epoch_end(
+                    epoch,
+                    logs=logs,
+                    output_key=output_key,
+                    y_pred=self.y_pred,
+                    y_true=self.y_true[output_key],
+                    loss=self.loss[i],
+                    msg_epoch=self.msg_epoch
+                )
+        self.Exch.show_current_epoch(epoch)
+        self.save_lastmodel()
         if self.model.stop_training:
-            self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
-            if self.x_Val["input_1"] is not None:
-                self.y_pred = self.model.predict(self.x_Val)
-            else:
-                self.y_pred = self.y_true
-            if isinstance(self.y_pred, list):
-                for i, output_key in enumerate(self.clbck_params.keys()):
-                    self.callbacks[i].epoch_end(
-                        epoch,
-                        logs=logs,
-                        output_key=output_key,
-                        y_pred=self.y_pred[i],
-                        y_true=self.y_true[output_key],
-                        loss=self.loss[i],
-                        msg_epoch=self.msg_epoch
-                    )
-            else:
-                for i, output_key in enumerate(self.clbck_params.keys()):
-                    self.callbacks[i].epoch_end(
-                        epoch,
-                        logs=logs,
-                        output_key=output_key,
-                        y_pred=self.y_pred,
-                        y_true=self.y_true[output_key],
-                        loss=self.loss[i],
-                        msg_epoch=self.msg_epoch
-                    )
-            self.Exch.show_current_epoch(epoch)
-            self.save_lastmodel()
             msg = f'Модель сохранена.'
             self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
-
-        else:
-            self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
-            if self.x_Val["input_1"] is not None:
-                self.y_pred = self.model.predict(self.x_Val)
-            else:
-                self.y_pred = self.y_true
-            if isinstance(self.y_pred, list):
-                for i, output_key in enumerate(self.clbck_params.keys()):
-                    self.callbacks[i].epoch_end(
-                        epoch,
-                        logs=logs,
-                        output_key=output_key,
-                        y_pred=self.y_pred[i],
-                        y_true=self.y_true[output_key],
-                        loss=self.loss[i],
-                        msg_epoch=self.msg_epoch
-                    )
-            else:
-                for i, output_key in enumerate(self.clbck_params.keys()):
-                    self.callbacks[i].epoch_end(
-                        epoch,
-                        logs=logs,
-                        output_key=output_key,
-                        y_pred=self.y_pred,
-                        y_true=self.y_true[output_key],
-                        loss=self.loss[i],
-                        msg_epoch=self.msg_epoch
-                    )
-
-            self.Exch.show_current_epoch(epoch)
-            self.save_lastmodel()
 
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
