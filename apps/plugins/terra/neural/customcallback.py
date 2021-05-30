@@ -352,9 +352,9 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'ожидайте оканчания эпохи {self.epoch + 1}:' \
+            msg = f'ожидайте окончания эпохи {self.epoch + 1}:' \
                   f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
+            self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
@@ -376,7 +376,8 @@ class CustomCallback(keras.callbacks.Callback):
             self.Exch.show_current_epoch(epoch)
             self.save_lastmodel()
             msg = f'Модель сохранена.'
-            self.Exch.print_2status_bar(('Обучение завершено!', msg))
+            self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
+            self.Exch.out_data['stop_flag'] = True
 
         else:
             self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
@@ -406,6 +407,7 @@ class CustomCallback(keras.callbacks.Callback):
                         loss=self.loss[i],
                         msg_epoch=self.msg_epoch
                     )
+
             self.Exch.show_current_epoch(epoch)
             self.save_lastmodel()
 
@@ -941,6 +943,14 @@ class SegmentationCallback:
 
         colored_mask = []
         mask = mask.reshape(-1, self.num_classes)
+
+        self.Exch.show_text_data(
+            f'_get_colored_mask: output_key: '
+            f'{output_key}')
+        self.Exch.show_text_data(
+            f'_get_colored_mask: self.dataset.classes_colors[output_key]: '
+            f'{self.dataset.classes_colors[output_key]}')
+
         for pix in range(len(mask)):
             colored_mask.append(
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
@@ -986,6 +996,12 @@ class SegmentationCallback:
 
         for idx in indexes:
             # исходное изобаржение
+            self.Exch.show_text_data(
+                f'def plot_images: output_key: '
+                f'{output_key}')
+            self.Exch.show_text_data(
+                f'def plot_images: indexes: '
+                f'{indexes}')
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
