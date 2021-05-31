@@ -154,6 +154,7 @@ class TerraExchange:
         )
 
     def _call_get_data(self) -> TerraExchangeResponse:
+        self._update_in_training_flag()
         response = colab_exchange.get_data()
         response["in_training"] = self.project.in_training
         return TerraExchangeResponse(
