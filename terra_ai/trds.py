@@ -764,8 +764,9 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self):
-        return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-        # return os.listdir(os.path.join(os.getcwd(), 'TerraAI', 'datasets', 'sources'))
+        from django.conf import settings
+        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+        return os.listdir(os.path.join(f"{settings.TERRA_AI_DATA_PATH}/datasets", 'sources')),
 
     def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
 
@@ -2386,8 +2387,9 @@ class DTS(object):
 
         self.dts_prepared = True
         if is_save:
+            from django.conf import settings
             print('Идёт сохранение датасета.')
-            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            directory = os.path.join(f"{settings.TERRA_AI_DATA_PATH}/datasets")
             # directory = os.path.join(os.getcwd(), 'TerraAI', 'datasets')
             if not os.path.exists(directory):
                 os.makedirs(directory)
