@@ -91,8 +91,8 @@ class TerraExchange:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
     def _update_in_training_flag(self):
-        self.project.in_training = colab_exchange.get_training_flags().get(
-            "user_stop_train", False
+        self.project.in_training = not colab_exchange.get_training_flags().get(
+            "is_trained", True
         )
 
     def _call_autosave_project(self):
@@ -100,8 +100,6 @@ class TerraExchange:
 
     def _call_get_state(self) -> TerraExchangeResponse:
         state = colab_exchange.get_state()
-        flags = colab_exchange.get_training_flags()
-        state.update({"in_training": not flags.get("is_trained", True)})
         return TerraExchangeResponse(data=state)
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
@@ -157,6 +155,9 @@ class TerraExchange:
         self._update_in_training_flag()
         response = colab_exchange.get_data()
         response["in_training"] = self.project.in_training
+        response["user_stop_train"] = colab_exchange.get_training_flags().get(
+            "user_stop_train", True
+        )
         return TerraExchangeResponse(
             data=response,
             stop_flag=response.get("stop_flag", True),
