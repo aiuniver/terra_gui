@@ -363,6 +363,7 @@ class TerraExchange:
             self.project.dict().get("training"), indent=4
         )
         self._update_in_training_flag()
+        self.project.autosave()
         response.data["in_training"] = self.project.in_training
         return response
 
@@ -387,16 +388,19 @@ class TerraExchange:
             **training_data,
         )
         self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
         self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
         self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
