@@ -713,6 +713,17 @@ class Exchange(StatesData, GuiExch):
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
+                if location == LayerLocation.output:
+                    default_layers_params = self.layers_params.get(LayerType.Dense)
+                    out_param_dict = {
+                        x: {y: default_layers_params[x].get(y).get('default')
+                            for y in default_layers_params[x].keys()}
+                        for x in default_layers_params.keys()
+                    }
+                    out_param_dict['main']['units'] = 10
+                    out_param_dict['main']['activation'] = 'softmax'
+                else:
+                    out_param_dict = {}
                 self.start_layers[index] = {
                     "config": {
                         "name": f"l{index}_{data_name}",
@@ -726,7 +737,7 @@ class Exchange(StatesData, GuiExch):
                         "output_shape": [],
                         "data_name": data_name,
                         "data_available": available,
-                        "params": {},
+                        "params": out_param_dict,
                     }
                 }
 
