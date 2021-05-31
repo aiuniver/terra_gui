@@ -209,8 +209,6 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         self.project.model_name = model_file
-        self.project.layers_start = layers
-        self.project.layers_schema = data.data.get("schema", [])
         data.data.update({"layers": output})
         return data
 
