@@ -269,7 +269,7 @@ class GUINN:
                                  model_name=self.nn_name)
         self.callbacks = [clsclbk]
         self.callbacks.append(keras.callbacks.ModelCheckpoint(
-            filepath=os.path.join(self.training_path, f'{self.nn_name}_best.h5'),
+            filepath=os.path.join(self.training_path, f'model_{self.nn_name}_best.h5'),
             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
             monitor=self.chp_monitor, mode=self.chp_mode))
         self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
