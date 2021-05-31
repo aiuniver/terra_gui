@@ -385,7 +385,7 @@ class Exchange(StatesData, GuiExch):
         }
 
         self.property_of = "DJANGO"
-        self.stop_training_flag = False
+        self.stop_training_flag = True
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
@@ -397,7 +397,7 @@ class Exchange(StatesData, GuiExch):
         self.task_name = ""
         self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
-        self.is_trained = False
+        self.is_trained = True
         self.debug_verbose = 0
         self.model = None
         self.loss = "categorical_crossentropy"
@@ -1012,12 +1012,19 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
+    def get_training_flags(self):
+        return {
+            'is_trained': self.is_trained,
+            'user_stop_train': self.stop_training_flag
+        }
+
     def reset_training(self):
         self.nn.nn_cleaner()
 
     def start_training(self, model: bytes, **kwargs) -> None:
         if self.stop_training_flag:
             self.stop_training_flag = False
+            self.is_trained = False
         self.process_flag = "train"
         self._reset_out_data()
         training = kwargs
@@ -1054,10 +1061,12 @@ class Exchange(StatesData, GuiExch):
         )
         try:
             self.nn.terra_fit(nn_model)
+            self.is_trained = True
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
+        self.stop_training_flag = True
 
     def stop_training(self):
         self.stop_training_flag = True
