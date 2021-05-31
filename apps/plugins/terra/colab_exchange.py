@@ -1073,7 +1073,8 @@ class Exchange(StatesData, GuiExch):
         )
         try:
             self.nn.terra_fit(nn_model)
-            self.is_trained = True
+            if self.epoch == self.epochs:
+                self.is_trained = True
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
