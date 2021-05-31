@@ -1036,7 +1036,7 @@ class Exchange(StatesData, GuiExch):
     def start_training(self, model: bytes, **kwargs) -> None:
         if self.stop_training_flag:
             self.stop_training_flag = False
-            self.is_trained = False
+        self.is_trained = False
         self.process_flag = "train"
         self._reset_out_data()
         training = kwargs
