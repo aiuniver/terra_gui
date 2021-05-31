@@ -385,7 +385,7 @@ class Exchange(StatesData, GuiExch):
         }
 
         self.property_of = "DJANGO"
-        self.stop_training_flag = False
+        self.stop_training_flag = True
         self.process_flag = "dataset"
         self.hardware_accelerator_type = self.get_hardware_accelerator_type()
         self.layers_list = self._set_layers_list()
@@ -397,7 +397,7 @@ class Exchange(StatesData, GuiExch):
         self.task_name = ""
         self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
-        self.is_trained = False
+        self.is_trained = True
         self.debug_verbose = 0
         self.model = None
         self.loss = "categorical_crossentropy"
@@ -713,6 +713,17 @@ class Exchange(StatesData, GuiExch):
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
+                if location == LayerLocation.output:
+                    default_layers_params = self.layers_params.get(LayerType.Dense)
+                    out_param_dict = {
+                        x: {y: default_layers_params[x].get(y).get('default')
+                            for y in default_layers_params[x].keys()}
+                        for x in default_layers_params.keys()
+                    }
+                    out_param_dict['main']['units'] = 10
+                    out_param_dict['main']['activation'] = 'softmax'
+                else:
+                    out_param_dict = {}
                 self.start_layers[index] = {
                     "config": {
                         "name": f"l{index}_{data_name}",
@@ -726,7 +737,7 @@ class Exchange(StatesData, GuiExch):
                         "output_shape": [],
                         "data_name": data_name,
                         "data_available": available,
-                        "params": {},
+                        "params": out_param_dict,
                     }
                 }
 
@@ -1012,12 +1023,19 @@ class Exchange(StatesData, GuiExch):
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
+    def get_training_flags(self):
+        return {
+            'is_trained': self.is_trained,
+            'user_stop_train': self.stop_training_flag
+        }
+
     def reset_training(self):
         self.nn.nn_cleaner()
 
     def start_training(self, model: bytes, **kwargs) -> None:
         if self.stop_training_flag:
             self.stop_training_flag = False
+            self.is_trained = False
         self.process_flag = "train"
         self._reset_out_data()
         training = kwargs
@@ -1054,10 +1072,12 @@ class Exchange(StatesData, GuiExch):
         )
         try:
             self.nn.terra_fit(nn_model)
+            self.is_trained = True
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
         self.out_data["stop_flag"] = True
+        self.stop_training_flag = True
 
     def stop_training(self):
         self.stop_training_flag = True
