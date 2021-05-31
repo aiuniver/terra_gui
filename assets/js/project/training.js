@@ -340,6 +340,8 @@
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
+
+                            console.log(output.data);
                             if (success) {
                                 window.TerraProject.logging = output.data.logging;
                                 if (output.data.validated) {

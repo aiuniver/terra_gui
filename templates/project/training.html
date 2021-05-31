@@ -210,7 +210,7 @@
                     <div class="inner actions">
                         <div class="actions-form">
                             <div class="item training">
-                                <button>Обучить</button>
+                                <button>{% if request.terra_project.in_training %}Возобновить{% else %}Обучить{% endif %}</button>
                             </div>
                             <div class="item stop">
                                 <button disabled="disabled">Остановить</button>

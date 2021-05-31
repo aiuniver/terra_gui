@@ -90,11 +90,19 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
+    def _update_in_training_flag(self):
+        self.project.in_training = colab_exchange.get_training_flags().get(
+            "user_stop_train", False
+        )
+
     def _call_autosave_project(self):
         self.project.autosave()
 
     def _call_get_state(self) -> TerraExchangeResponse:
-        return TerraExchangeResponse(data=colab_exchange.get_state())
+        state = colab_exchange.get_state()
+        flags = colab_exchange.get_training_flags()
+        state.update({"in_training": not flags.get("is_trained", True)})
+        return TerraExchangeResponse(data=state)
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
         self.project.name = name
@@ -147,6 +155,7 @@ class TerraExchange:
 
     def _call_get_data(self) -> TerraExchangeResponse:
         response = colab_exchange.get_data()
+        response["in_training"] = self.project.in_training
         return TerraExchangeResponse(
             data=response,
             stop_flag=response.get("stop_flag", True),
@@ -351,9 +360,12 @@ class TerraExchange:
         response.data["logging"] = json.dumps(
             self.project.dict().get("training"), indent=4
         )
+        self._update_in_training_flag()
+        response.data["in_training"] = self.project.in_training
         return response
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+        self._update_in_training_flag()
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
@@ -372,14 +384,17 @@ class TerraExchange:
             pathname=self.project.dir.training,
             **training_data,
         )
+        self._update_in_training_flag()
         return TerraExchangeResponse()
 
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
+        self._update_in_training_flag()
         return TerraExchangeResponse()
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
+        self._update_in_training_flag()
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
