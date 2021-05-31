@@ -256,6 +256,7 @@
             });
 
             this.get_data_response = (success, data) => {
+                _action_training.text(data.data.in_training ? "Возобновить" : "Обучить");
                 if (success) {
                     if (data.data.errors) {
                         this.validate = false;
