@@ -720,8 +720,9 @@ class Exchange(StatesData, GuiExch):
                             for y in default_layers_params[x].keys()}
                         for x in default_layers_params.keys()
                     }
-                    out_param_dict['main']['units'] = 10
-                    out_param_dict['main']['activation'] = 'softmax'
+                    out_param_dict['main']['units'] = self.dts.num_classes[name]
+                    if self.dts.name == 'mnist':
+                        out_param_dict['main']['activation'] = 'softmax'
                 else:
                     out_param_dict = {}
                 self.start_layers[index] = {
