@@ -257,6 +257,7 @@
 
             this.get_data_response = (success, data) => {
                 _action_training.text(data.data.in_training ? "Возобновить" : "Обучить");
+                if (data.data.user_stop_train) _action_stop.attr("disabled", "disabled");
                 if (success) {
                     if (data.data.errors) {
                         this.validate = false;
