@@ -227,9 +227,9 @@
                     (success, data) => {
                         if (success) {
                             this.validate = false;
-                            _action_training.removeAttr("disabled");
+                            _action_training.attr("disabled", "disabled");
                             _action_stop.attr("disabled", "disabled");
-                            _action_reset.removeAttr("disabled");
+                            _action_reset.attr("disabled", "disabled");
                         }
                     }
                 )

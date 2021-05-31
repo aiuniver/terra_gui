@@ -751,7 +751,7 @@ class Exchange(StatesData, GuiExch):
     def _reset_out_data(self):
         self.start_layers = {}
         self.out_data = {
-            "stop_flag": False,
+            "stop_flag": True,
             "status_string": "",
             "progress_status": {
                 "percents": 0,
