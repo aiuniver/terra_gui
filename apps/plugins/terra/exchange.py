@@ -336,7 +336,6 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
         out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
@@ -348,6 +347,8 @@ class TerraExchange:
             ]["out_monitor"][0]
         self.project.training = TrainConfig(**kwargs)
         response = self.call("get_change_validation")
+        if not response.data.get("validated"):
+            colab_exchange.out_data["stop_flag"] = True
         response.data["logging"] = json.dumps(
             self.project.dict().get("training"), indent=4
         )
