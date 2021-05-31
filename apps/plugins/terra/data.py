@@ -330,6 +330,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     callbacks: dict = {}
     compile: dict = {}
     training: TrainConfig = TrainConfig()
+    in_training: bool = False
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),
         "modeling": reverse_lazy("apps_project:modeling"),

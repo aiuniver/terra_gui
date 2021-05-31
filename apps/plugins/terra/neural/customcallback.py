@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.04
+__version__ = 0.05
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -119,6 +119,7 @@ class CustomCallback(keras.callbacks.Callback):
                     "class_metrics": [],
                     "num_classes": 2,
                     "data_tag": "images",
+                    "show_best": True,
                     "show_worst": False,
                     "show_final": True,
                     "dataset": self.DTS,
@@ -164,9 +165,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        self.Exch.show_text_data(
-            f"Добавлены колбэки: {self.callbacks_name}"
-        )
+        # self.Exch.show_text_data(
+        #     f"Добавлены колбэки: {self.callbacks_name}"
+        # )
 
     def save_lastmodel(self) -> None:
         """
@@ -248,7 +249,7 @@ class CustomCallback(keras.callbacks.Callback):
                     else:
                         if metrics[0] in callback_kwargs["class_metrics"]:
                             callback_kwargs["class_metrics"].remove(metrics[0])
-                elif option_name == "show_worst_images" and option_value:
+                elif option_name == "show_worst_images":
                     if option_value:
                         callback_kwargs["show_worst"] = True
                     else:
@@ -330,7 +331,7 @@ class CustomCallback(keras.callbacks.Callback):
 
         if eta > 3600:
             eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                           (eta % 3600) // 60, eta % 60)
+                                                     (eta % 3600) // 60, eta % 60)
         elif eta > 60:
             eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
         else:
@@ -347,24 +348,25 @@ class CustomCallback(keras.callbacks.Callback):
         self.epoch = epoch
         self._time_first_step = time.time()
 
-    def on_batch_begin(self, batch, logs=None):
+    def on_train_batch_end(self, batch, logs=None):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'эпоха: {self.epoch + 1}, модель сохранена'
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
-
-    def on_train_batch_end(self, batch, logs=None):
-        msg_batch = f'Батч {batch}/{self.num_batches}'
-        msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
-                    f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
-        msg_progress_end = f'Расчетное время окончания:' \
-                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time)}, '
-        msg_progress_start = f'Время выполнения:' \
-                       f'{self.update_progress(self.num_batches * self.epochs+1, self.batch, self._start_time, finalize=True)}, '
-        self.batch += 1
-        self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
-                                     msg_progress_end + msg_epoch + msg_batch))
+            msg = f'ожидайте окончания эпохи {self.epoch + 1}:' \
+                  f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+            self.batch += 1
+            self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
+        else:
+            msg_batch = f'Батч {batch}/{self.num_batches}'
+            msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
+                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+            msg_progress_end = f'Расчетное время окончания:' \
+                               f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)}, '
+            msg_progress_start = f'Время выполнения:' \
+                                 f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}, '
+            self.batch += 1
+            self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
+                                         msg_progress_end + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
         """
@@ -401,14 +403,21 @@ class CustomCallback(keras.callbacks.Callback):
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
 
-
     def on_train_end(self, logs=None):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
-        self.Exch.show_text_data(
-            f'Затрачено времени на обучение: '
-            f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+        if self.model.stop_training:
+            self.Exch.show_text_data(
+                f'Затрачено времени на обучение: '
+                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+            msg = f'Модель сохранена.'
+            self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
+            self.Exch.out_data['stop_flag'] = True
+        else:
+            self.Exch.show_text_data(
+                f'Затрачено времени на обучение: '
+                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
 
 
 class ClassificationCallback:
@@ -422,7 +431,7 @@ class ClassificationCallback:
             data_tag=None,
             num_classes=2,
             show_worst=False,
-            show_best=False,
+            show_best=True,
             show_final=True,
             dataset=DTS(),
             exchange=Exchange(),
@@ -527,7 +536,7 @@ class ClassificationCallback:
             self.Exch.show_plot_data(plot_data)
         pass
 
-    def image_indices(self, count=6) -> np.ndarray:
+    def image_indices(self, count=5) -> np.ndarray:
         """
         Computes indices of images based on instance mode ('worst', 'best')
         Returns: array of best or worst predictions indices
@@ -808,7 +817,7 @@ class SegmentationCallback:
             class_metrics=[],
             data_tag=None,
             show_worst=False,
-            show_best=False,
+            show_best=True,
             show_final=True,
             dataset=DTS(),
             exchange=Exchange(),
@@ -913,7 +922,7 @@ class SegmentationCallback:
             self.Exch.show_plot_data(plot_data)
         pass
 
-    def _get_colored_mask(self, mask, input_key: str = None):
+    def _get_colored_mask(self, mask, input_key: str = None, output_key: str = None):
         """
         Transforms prediction mask to colored mask
 
@@ -936,7 +945,7 @@ class SegmentationCallback:
         mask = mask.reshape(-1, self.num_classes)
         for pix in range(len(mask)):
             colored_mask.append(
-                index2color(mask[pix], self.num_classes, self.dataset.classes_colors)
+                index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
             )
         colored_mask = np.array(colored_mask).astype(np.uint8)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
@@ -959,12 +968,11 @@ class SegmentationCallback:
         )
         self.dice = (2.0 * intersection + smooth) / (union + smooth)
 
-    def plot_images(self, input_key: str = None):
+    def plot_images(self, input_key: str = None, output_key: str = None):
         """
         Returns:
             None:
         """
-
         image_data = []
         true_mask_data = []
         pred_mask_data = []
@@ -979,6 +987,7 @@ class SegmentationCallback:
 
         for idx in indexes:
             # исходное изобаржение
+
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
@@ -986,13 +995,13 @@ class SegmentationCallback:
             image_data.append((image, title))
 
             # истинная маска
-            self._get_colored_mask(mask=self.y_true[idx], input_key=input_key)
+            self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
             title = "Истинная маска"
             true_mask_data.append((image, title))
 
             # предсказанная маска
-            self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key)
+            self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
             title = "Маска предикта"
             pred_mask_data.append((image, title))
@@ -1093,7 +1102,7 @@ class SegmentationCallback:
             if not isinstance(self.clbck_metrics[metric_idx], str):
                 metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1:
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -1152,7 +1161,7 @@ class SegmentationCallback:
             self.plot_result(output_key=output_key)
             if self.data_tag == 'images':
                 if self.show_best or self.show_worst:
-                    self.plot_images(input_key="input_1")
+                    self.plot_images(input_key="input_1", output_key=output_key)
         pass
 
 
