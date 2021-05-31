@@ -116,10 +116,18 @@ class TerraExchange:
         if not not_load_layers:
             layers = {}
             outputs = {}
+            num_classes = colab_exchange.get_dataset_num_classes()
             for index, layer in start_layers.items():
-                layers[int(index)] = Layer(**layer)
-                if layers[int(index)].config.location_type == LayerLocation.output:
-                    outputs[layers[int(index)].config.dts_layer_name] = OutputConfig()
+                layer = Layer(**layer)
+                if layer.config.location_type == LayerLocation.output:
+                    layer.config.num_classes = num_classes.get(
+                        layer.config.dts_layer_name, 0
+                    )
+                    outputs[layer.config.dts_layer_name] = OutputConfig(
+                        num_classes=layer.config.num_classes
+                    )
+                layers[int(index)] = layer
+
             self.project.training.outputs = outputs
 
             self.project.layers = layers
@@ -201,8 +209,6 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         self.project.model_name = model_file
-        self.project.layers_start = layers
-        self.project.layers_schema = data.data.get("schema", [])
         data.data.update({"layers": output})
         return data
 
@@ -340,6 +346,8 @@ class TerraExchange:
             ]["out_monitor"][0]
         self.project.training = TrainConfig(**kwargs)
         response = self.call("get_change_validation")
+        if not response.data.get("validated"):
+            colab_exchange.out_data["stop_flag"] = True
         response.data["logging"] = json.dumps(
             self.project.dict().get("training"), indent=4
         )
@@ -371,7 +379,6 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         colab_exchange.reset_training()
         return TerraExchangeResponse()
 
@@ -379,7 +386,6 @@ class TerraExchange:
         return self.__request_post("start_evaluate", **kwargs)
 
     def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
         self.__project = TerraExchangeProject()
 
@@ -427,7 +433,6 @@ class TerraExchange:
         return TerraExchangeResponse(data=output)
 
     def _call_get_project(self, name: str) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
 
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")

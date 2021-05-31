@@ -438,6 +438,7 @@
 .params-optimizer > .inner > .form-inline-label > .field-inline > label {
     width:auto;
     min-width:90px;
+    text-align:left;
 }
 #field_form-learning_rate {
     max-width:90px;

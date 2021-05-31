@@ -222,7 +222,7 @@ nav.menu > ul > .item > a {
 
 main {
     height:100%;
-    padding:94px 0 31px 0;
+    padding:94px 0 61px 0;
 }
 main > .container {
     height:100%;
@@ -444,7 +444,7 @@ footer {
     line-height:30px;
     position:fixed;
     left:0;
-    bottom:0;
+    bottom:30px;
     z-index:900;
     font-size:.75rem;
     white-space:nowrap;
@@ -564,6 +564,23 @@ footer > .state > .wrapper:before {
     margin:0 5px 0 0;
     border-radius:50%;
     vertical-align:middle;
+}
+
+/* copyright */
+#copyright {
+    position:fixed;
+    width:100%;
+    left:0;
+    bottom:0;
+    z-index:901;
+    user-select:none;
+}
+#copyright > .container {
+    line-height:30px;
+    padding:0 10px;
+    color:#A7BED3;
+    font-size:.6875rem;
+    text-align:right;
 }
 
 /* toolbar */
