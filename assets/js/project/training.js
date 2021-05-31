@@ -222,6 +222,7 @@
 
             _action_stop.bind("click", (event) => {
                 event.preventDefault();
+                _action_stop.attr("disabled", "disabled");
                 window.ExchangeRequest(
                     "stop_training",
                     (success, data) => {
@@ -257,7 +258,6 @@
 
             this.get_data_response = (success, data) => {
                 _action_training.text(data.data.in_training ? "Возобновить" : "Обучить");
-                if (data.data.user_stop_train) _action_stop.attr("disabled", "disabled");
                 if (success) {
                     if (data.data.errors) {
                         this.validate = false;
@@ -267,7 +267,8 @@
                         window.StatusBar.message(data.data.errors, false);
                     } else {
                         _action_training.attr("disabled", "disabled");
-                        _action_stop.removeAttr("disabled");
+                        if (data.data.user_stop_train) _action_stop.attr("disabled", "disabled");
+                        else _action_stop.removeAttr("disabled");
                         _action_reset.attr("disabled", "disabled");
                         window.StatusBar.message(data.data.status_string);
                         window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
@@ -342,8 +343,6 @@
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
-
-                            console.log(output.data);
                             if (success) {
                                 window.TerraProject.logging = output.data.logging;
                                 if (output.data.validated) {
