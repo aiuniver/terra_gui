@@ -116,10 +116,18 @@ class TerraExchange:
         if not not_load_layers:
             layers = {}
             outputs = {}
+            num_classes = colab_exchange.get_dataset_num_classes()
             for index, layer in start_layers.items():
-                layers[int(index)] = Layer(**layer)
-                if layers[int(index)].config.location_type == LayerLocation.output:
-                    outputs[layers[int(index)].config.dts_layer_name] = OutputConfig()
+                layer = Layer(**layer)
+                if layer.config.location_type == LayerLocation.output:
+                    layer.config.num_classes = num_classes.get(
+                        layer.config.dts_layer_name, 0
+                    )
+                    outputs[layer.config.dts_layer_name] = OutputConfig(
+                        num_classes=layer.config.num_classes
+                    )
+                layers[int(index)] = layer
+
             self.project.training.outputs = outputs
 
             self.project.layers = layers
