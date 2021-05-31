@@ -336,7 +336,6 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
         out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
@@ -379,7 +378,6 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         colab_exchange.reset_training()
         return TerraExchangeResponse()
 
@@ -387,7 +385,6 @@ class TerraExchange:
         return self.__request_post("start_evaluate", **kwargs)
 
     def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
         self.__project = TerraExchangeProject()
 
@@ -435,7 +432,6 @@ class TerraExchange:
         return TerraExchangeResponse(data=output)
 
     def _call_get_project(self, name: str) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
 
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
