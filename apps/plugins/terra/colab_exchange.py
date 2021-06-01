@@ -1032,6 +1032,7 @@ class Exchange(StatesData, GuiExch):
 
     def reset_training(self):
         self.nn.nn_cleaner()
+        self.is_trained = False
 
     def start_training(self, model: bytes, **kwargs) -> None:
         if self.stop_training_flag:
