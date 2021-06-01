@@ -339,10 +339,10 @@ class GUINN:
                 )
             self.model_is_trained = True
 
-        if self.model.stop_training:
-            msg = f'Модель сохранена на последней эпохе.'
-            self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
-            self.Exch.out_data['stop_flag'] = True
+        # if self.model.stop_training:
+        #     msg = f'Модель сохранена на последней эпохе.'
+        #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
+        #     self.Exch.out_data['stop_flag'] = True
 
         # self.monitor = self.chp_monitor
         # self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
