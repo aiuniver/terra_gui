@@ -73,8 +73,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.y_true = samples_y
         self.batch_size = batch_size
         self.epochs = epochs
+        self.last_epoch = 0
         self.batch = 0
-        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+        self.num_batches = 0
         self.msg_epoch = ""
         self.y_pred = []
         self.epoch = 0
@@ -342,6 +343,8 @@ class CustomCallback(keras.callbacks.Callback):
 
     def on_train_begin(self, logs=None):
         self._start_time = time.time()
+        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+        self.batch = 0
         self.Exch.show_current_epoch(self.epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
@@ -381,7 +384,7 @@ class CustomCallback(keras.callbacks.Callback):
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(
-                    epoch,
+                    self.last_epoch,
                     logs=logs,
                     output_key=output_key,
                     y_pred=self.y_pred[i],
@@ -392,7 +395,7 @@ class CustomCallback(keras.callbacks.Callback):
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(
-                    epoch,
+                    self.last_epoch,
                     logs=logs,
                     output_key=output_key,
                     y_pred=self.y_pred,
@@ -400,6 +403,7 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
+        self.last_epoch += 1
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
 
@@ -460,6 +464,7 @@ class ClassificationCallback:
         self.Exch = exchange
         self.data_tag = data_tag
         self.epoch = 0
+        self.last_epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -593,9 +598,20 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
-                    f" Истина: {classes_labels[true_idx]}"
-            data.append((image, title))
+            # title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
+            #         f" Истина: {classes_labels[true_idx]}"
+            title = [
+                {
+                    "label": "Выход",
+                    "value": output_key},
+                {
+                    "label": "Предикт",
+                    "value": classes_labels[pred_idx]},
+                {
+                    "label": "Истина",
+                    "value": classes_labels[true_idx]},
+            ]
+            data.append((image, f"{title}"))
         out_data = {'images': image_to_base64(data)}
         self.Exch.show_image_data(out_data)
 
@@ -738,8 +754,8 @@ class ClassificationCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+        # epoch_metric_data = ""
+        # epoch_val_metric_data = ""
         epoch_table_data = {
             "time": msg_epoch,
             "outputs": {
@@ -825,7 +841,7 @@ class ClassificationCallback:
         # self.Exch.show_text_data(
         #     f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         # )
-        self.Exch.show_text_data(out_table_data)
+        self.Exch.show_text_data(f'{out_table_data}')
 
         # return
 
