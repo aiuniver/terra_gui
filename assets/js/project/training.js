@@ -248,6 +248,7 @@
                             training_results.images = [];
                             training_results.texts = [];
                             training_results.scatters = [];
+                            _action_training.text("Обучить");
                             window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
                         } else {
                             window.StatusBar.message(data.error, false);
@@ -265,6 +266,7 @@
                         _action_stop.attr("disabled", "disabled");
                         _action_reset.removeAttr("disabled");
                         window.StatusBar.message(data.data.errors, false);
+                        training_params.children(".params-config").removeClass("disabled");
                     } else {
                         _action_training.attr("disabled", "disabled");
                         if (data.data.user_stop_train) _action_stop.attr("disabled", "disabled");
@@ -281,6 +283,7 @@
                             _action_training.removeAttr("disabled");
                             _action_stop.attr("disabled", "disabled");
                             _action_reset.removeAttr("disabled");
+                            training_params.children(".params-config").removeClass("disabled");
                         }
                     }
                 } else {
@@ -289,6 +292,7 @@
                     _action_stop.attr("disabled", "disabled");
                     _action_reset.removeAttr("disabled");
                     window.StatusBar.message(data.error, false);
+                    training_params.children(".params-config").removeClass("disabled");
                 }
             }
 
@@ -340,6 +344,7 @@
                     data.checkpoint.save_best = data.checkpoint.save_best !== undefined;
                     data.checkpoint.save_weights = data.checkpoint.save_weights !== undefined;
                     window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
+                    training_params.children(".params-config").addClass("disabled");
                     window.ExchangeRequest(
                         "before_start_training",
                         (success, output) => {
@@ -357,6 +362,7 @@
                                 this.validate = false;
                                 _action_training.removeAttr("disabled");
                                 _action_stop.attr("disabled", "disabled");
+                                training_params.children(".params-config").removeClass("disabled");
                                 window.StatusBar.message(output.error, false);
                             }
                         },
