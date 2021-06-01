@@ -275,6 +275,15 @@ class ProjectPath(pydantic.BaseModel):
             output = str(error)
         return success, output
 
+    @property
+    def training_output(self) -> dict:
+        filepath = os.path.join(self.training, self._training_output)
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as training_file:
+                return json.load(training_file)
+        else:
+            return {}
+
     def save_training_output(self, training: dict):
         filepath = os.path.join(self.training, self._training_output)
         with open(filepath, "w") as training_file:
