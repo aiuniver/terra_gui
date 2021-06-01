@@ -451,6 +451,7 @@ class TerraExchange:
                 success=False,
                 error="Проект с таким названием уже существует",
             )
+        os.makedirs(os.path.join(self.project.gd.projects, name), exist_ok=True)
         filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
         shutil.move(filepath, fullpath)
         return TerraExchangeResponse(data={"name": name})
