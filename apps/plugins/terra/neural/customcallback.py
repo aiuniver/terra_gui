@@ -407,17 +407,17 @@ class CustomCallback(keras.callbacks.Callback):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
-        if self.model.stop_training:
-            self.Exch.show_text_data(
-                f'Затрачено времени на обучение: '
-                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
-            msg = f'Модель сохранена.'
-            self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
-            self.Exch.out_data['stop_flag'] = True
-        else:
-            self.Exch.show_text_data(
-                f'Затрачено времени на обучение: '
-                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+        # if self.model.stop_training:
+        #     self.Exch.show_text_data(
+        #         f'Затрачено времени на обучение: '
+        #         f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+        #     msg = f'Модель сохранена.'
+        #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
+        #     self.Exch.out_data['stop_flag'] = True
+        # else:
+        self.Exch.show_text_data(
+            f'Затрачено времени на обучение: '
+            f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
 
 
 class ClassificationCallback:
