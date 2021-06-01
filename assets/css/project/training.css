@@ -382,6 +382,19 @@
     padding:20px;
     border-top:1px solid #0E1621;
 }
+.project-training-properties > .wrapper > .params > .params-container > .params-item.params-config {
+    position:relative;
+}
+.project-training-properties > .wrapper > .params > .params-container > .params-item.params-config.disabled:before {
+    display:block;
+    content:'';
+    width:100%;
+    height:100%;
+    position:absolute;
+    left:0;
+    top:0;
+    z-index:500;
+}
 .project-training-properties > .wrapper > .params > .params-container > .params-item > .inner.settings {
     height:100%;
 }
