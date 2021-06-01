@@ -411,9 +411,9 @@ class TerraExchangeProject(pydantic.BaseModel):
         shutil.rmtree(dir_path, ignore_errors=True)
         os.makedirs(dir_path, exist_ok=True)
 
-        keras_path = os.path.join(self.dir.modeling, self.dir._modeling_layers)
+        keras_path = os.path.join(self.dir.modeling, self.dir._modeling_keras)
         if os.path.isfile(keras_path):
-            shutil.copy2(keras_path, os.path.join(dir_path, self.dir._modeling_layers))
+            shutil.copy2(keras_path, os.path.join(dir_path, self.dir._modeling_keras))
 
         if os.path.isfile(self.dir.config):
             shutil.copy2(self.dir.config, os.path.join(dir_path, "project.conf"))
