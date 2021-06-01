@@ -158,6 +158,14 @@ class TerraExchange:
         response["user_stop_train"] = colab_exchange.get_training_flags().get(
             "user_stop_train", True
         )
+        self.project.dir.save_training_output(
+            {
+                "plots": response.get("plots", []),
+                "scatters": response.get("scatters", []),
+                "images": response.get("images", []),
+                "texts": response.get("texts", []),
+            }
+        )
         return TerraExchangeResponse(
             data=response,
             stop_flag=response.get("stop_flag", True),
@@ -399,6 +407,7 @@ class TerraExchange:
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
+        self.project.dir.remove_training()
         self._update_in_training_flag()
         self.project.autosave()
         return TerraExchangeResponse()

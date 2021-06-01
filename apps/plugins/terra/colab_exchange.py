@@ -590,8 +590,8 @@ class Exchange(StatesData, GuiExch):
             for graph in graph_data:
                 current_graph.append(
                     {
-                        "x": graph[0],
-                        "y": graph[1],
+                        "x": [float(x) for x in graph[0]],
+                        "y": [float(y) for y in graph[1]],
                         "name": graph[2],
                         "mode": mode,
                     }
@@ -1032,7 +1032,7 @@ class Exchange(StatesData, GuiExch):
 
     def reset_training(self):
         self.nn.nn_cleaner()
-        self.is_trained = False
+        self.is_trained = True
 
     def start_training(self, model: bytes, **kwargs) -> None:
         if self.stop_training_flag:

@@ -247,6 +247,7 @@ class ProjectPath(pydantic.BaseModel):
     _modeling_preview = "preview.png"
     _modeling_keras = "keras.py"
     _modeling_layers = "layers.json"
+    _training_output = "output.json"
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -257,53 +258,72 @@ class ProjectPath(pydantic.BaseModel):
     @property
     def validated(self) -> bool:
         return os.path.isfile(
-            f"{self.modeling}/{self._modeling_plan}"
-        ) and os.path.isfile(f"{self.modeling}/{self._modeling_keras}")
+            os.path.join(self.modeling, self._modeling_plan)
+        ) and os.path.isfile(os.path.join(self.modeling, self._modeling_keras))
 
     @property
     def keras_code(self) -> (bool, str):
         success = False
         output = ""
         try:
-            with open(f"{self.modeling}/{self._modeling_keras}", "r") as keras_file:
+            with open(
+                os.path.join(self.modeling, self._modeling_keras), "r"
+            ) as keras_file:
                 success = True
                 output = keras_file.read()
         except Exception as error:
             output = str(error)
         return success, output
 
+    def save_training_output(self, training: dict):
+        filepath = os.path.join(self.training, self._training_output)
+        with open(filepath, "w") as training_file:
+            json.dump(training, training_file)
+
     def create_plan(self, plan: dict):
-        with open(f"{self.modeling}/{self._modeling_plan}", "w") as yaml_file:
+        filepath = os.path.join(self.modeling, self._modeling_plan)
+        with open(filepath, "w") as yaml_file:
             yaml.dump(plan, yaml_file)
 
     def create_preview(self, preview: str):
-        filepath = f"{self.modeling}/{self._modeling_preview}"
+        filepath = os.path.join(self.modeling, self._modeling_preview)
         cairosvg.svg2png(preview, write_to=filepath)
         terra_utils.autocrop_image_square(filepath)
 
     def create_keras(self, keras: str):
-        with open(f"{self.modeling}/{self._modeling_keras}", "w") as keras_file:
+        filepath = os.path.join(self.modeling, self._modeling_keras)
+        with open(filepath, "w") as keras_file:
             keras_file.write(f"{keras}\n")
 
     def create_layers(self, layers: dict):
-        with open(f"{self.modeling}/{self._modeling_layers}", "w") as layers_file:
+        filepath = os.path.join(self.modeling, self._modeling_layers)
+        with open(filepath, "w") as layers_file:
             json.dump(layers, layers_file)
 
     def remove_plan(self):
-        if os.path.isfile(f"{self.modeling}/{self._modeling_plan}"):
-            os.remove(f"{self.modeling}/{self._modeling_plan}")
+        filepath = os.path.join(self.modeling, self._modeling_plan)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
     def remove_preview(self):
-        if os.path.isfile(f"{self.modeling}/{self._modeling_preview}"):
-            os.remove(f"{self.modeling}/{self._modeling_preview}")
+        filepath = os.path.join(self.modeling, self._modeling_preview)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
     def remove_keras(self):
-        if os.path.isfile(f"{self.modeling}/{self._modeling_keras}"):
-            os.remove(f"{self.modeling}/{self._modeling_keras}")
+        filepath = os.path.join(self.modeling, self._modeling_keras)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
     def remove_layers(self):
-        if os.path.isfile(f"{self.modeling}/{self._modeling_layers}"):
-            os.remove(f"{self.modeling}/{self._modeling_layers}")
+        filepath = os.path.join(self.modeling, self._modeling_layers)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
+
+    def remove_training(self):
+        filepath = os.path.join(self.training, self._training_output)
+        if os.path.isfile(filepath):
+            os.remove(filepath)
 
     def clear_modeling(self):
         self.remove_plan()
