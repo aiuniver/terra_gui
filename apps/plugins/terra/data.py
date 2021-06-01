@@ -275,6 +275,15 @@ class ProjectPath(pydantic.BaseModel):
             output = str(error)
         return success, output
 
+    @property
+    def training_output(self) -> dict:
+        filepath = os.path.join(self.training, self._training_output)
+        if os.path.isfile(filepath):
+            with open(filepath, "r") as training_file:
+                return json.load(training_file)
+        else:
+            return {}
+
     def save_training_output(self, training: dict):
         filepath = os.path.join(self.training, self._training_output)
         with open(filepath, "w") as training_file:
@@ -396,6 +405,23 @@ class TerraExchangeProject(pydantic.BaseModel):
 
     def clear(self):
         shutil.rmtree(settings.TERRA_AI_PROJECT_PATH)
+
+    def save_training_files(self, name: str):
+        dir_path = os.path.join(self.gd.projects, name)
+        shutil.rmtree(dir_path, ignore_errors=True)
+        os.makedirs(dir_path, exist_ok=True)
+
+        keras_path = os.path.join(self.dir.modeling, self.dir._modeling_keras)
+        if os.path.isfile(keras_path):
+            shutil.copy2(keras_path, os.path.join(dir_path, self.dir._modeling_keras))
+
+        if os.path.isfile(self.dir.config):
+            shutil.copy2(self.dir.config, os.path.join(dir_path, "project.conf"))
+
+        for item in os.listdir(self.dir.training):
+            h5_path = os.path.join(self.dir.training, item)
+            if os.path.isfile(h5_path) and item.endswith(".h5"):
+                shutil.copy2(h5_path, os.path.join(dir_path, item))
 
 
 @dataclass

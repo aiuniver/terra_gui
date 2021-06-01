@@ -1596,10 +1596,9 @@ def image_to_base64(image_as_array):
         try:
             plt.imsave(temp_image.name, image, cmap='Greys')
         except Exception as e:
-            print(e.__str__())
             plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='gray')
         with open(temp_image.name, 'rb') as img:
-            output_image = base64.b64encode(img.read())
+            output_image = base64.b64encode(img.read()).decode('utf-8')
         output.append({'image': output_image, 'title': title})
         temp_image.close()
         os.remove(temp_image.name)
