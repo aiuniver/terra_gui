@@ -148,9 +148,10 @@ class GUINN:
         Args:
             dts_obj (object): setting task_name
         """
-        self.nn_cleaner()
-        self.DTS = dts_obj
-        self.prepare_dataset()
+        if not self.model_is_trained:
+            self.nn_cleaner()
+            self.DTS = dts_obj
+            self.prepare_dataset()
 
         pass
 
@@ -253,55 +254,90 @@ class GUINN:
         Return:
             None
         """
-        self.model = nnmodel
-        self.nn_name = f"{self.model.name}"
-        self.set_custom_metrics()
-        self.Exch.print_2status_bar(('Компиляция модели', '...'))
-        self.model.compile(loss=self.loss,
-                           optimizer=self.optimizer,
-                           metrics=self.metrics
-                           )
-        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-        self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-        clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                 exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
-                                 batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-                                 model_name=self.nn_name)
-        self.callbacks = [clsclbk]
-        self.callbacks.append(keras.callbacks.ModelCheckpoint(
-            filepath=os.path.join(self.training_path, f'model_{self.nn_name}_best.h5'),
-            verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
-            monitor=self.chp_monitor, mode=self.chp_mode))
-        self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
-        self.Exch.print_2status_bar(('Начало обучения', '...'))
-        # self.show_training_params()
-        if self.x_Val['input_1'] is not None:
-            # training = Thread(target=self.tr_thread)
-            # training.start()
-            # training.join()
-            # del training
-            self.history = self.model.fit(
-                self.x_Train,
-                self.y_Train,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle,
-                validation_data=(self.x_Val, self.y_Val),
-                epochs=self.epochs,
-                verbose=verbose,
-                callbacks=self.callbacks
-            )
+        if self.model_is_trained:
+            self.Exch.print_2status_bar(('Компиляция модели', '...'))
+            self.model.compile(loss=self.loss,
+                               optimizer=self.optimizer,
+                               metrics=self.metrics
+                               )
+            self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
+            self.Exch.print_2status_bar(('Начало обучения', '...'))
+            if self.x_Val['input_1'] is not None:
+                # training = Thread(target=self.tr_thread)
+                # training.start()
+                # training.join()
+                # del training
+                self.history = self.model.fit(
+                    self.x_Train,
+                    self.y_Train,
+                    batch_size=self.batch_size,
+                    shuffle=self.shuffle,
+                    validation_data=(self.x_Val, self.y_Val),
+                    epochs=self.epochs,
+                    verbose=verbose,
+                    callbacks=self.callbacks
+                )
+            else:
+                self.history = self.model.fit(
+                    self.x_Train,
+                    self.y_Train,
+                    batch_size=self.batch_size,
+                    shuffle=self.shuffle,
+                    validation_split=0.2,
+                    epochs=self.epochs,
+                    verbose=verbose,
+                    callbacks=self.callbacks
+                )
         else:
-            self.history = self.model.fit(
-                self.x_Train,
-                self.y_Train,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle,
-                validation_split=0.2,
-                epochs=self.epochs,
-                verbose=verbose,
-                callbacks=self.callbacks
-            )
-        self.model_is_trained = True
+            self.model = nnmodel
+            self.nn_name = f"{self.model.name}"
+            self.set_custom_metrics()
+            self.Exch.print_2status_bar(('Компиляция модели', '...'))
+            self.model.compile(loss=self.loss,
+                               optimizer=self.optimizer,
+                               metrics=self.metrics
+                               )
+            self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
+            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
+            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
+                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
+                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
+                                     model_name=self.nn_name)
+            self.callbacks = [clsclbk]
+            self.callbacks.append(keras.callbacks.ModelCheckpoint(
+                filepath=os.path.join(self.training_path, f'model_{self.nn_name}_best.h5'),
+                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
+                monitor=self.chp_monitor, mode=self.chp_mode))
+            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+            self.Exch.print_2status_bar(('Начало обучения', '...'))
+            # self.show_training_params()
+            if self.x_Val['input_1'] is not None:
+                # training = Thread(target=self.tr_thread)
+                # training.start()
+                # training.join()
+                # del training
+                self.history = self.model.fit(
+                    self.x_Train,
+                    self.y_Train,
+                    batch_size=self.batch_size,
+                    shuffle=self.shuffle,
+                    validation_data=(self.x_Val, self.y_Val),
+                    epochs=self.epochs,
+                    verbose=verbose,
+                    callbacks=self.callbacks
+                )
+            else:
+                self.history = self.model.fit(
+                    self.x_Train,
+                    self.y_Train,
+                    batch_size=self.batch_size,
+                    shuffle=self.shuffle,
+                    validation_split=0.2,
+                    epochs=self.epochs,
+                    verbose=verbose,
+                    callbacks=self.callbacks
+                )
+            self.model_is_trained = True
 
         if self.model.stop_training:
             msg = f'Модель сохранена на последней эпохе.'
