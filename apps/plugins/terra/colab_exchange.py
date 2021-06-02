@@ -381,7 +381,7 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
 
         self.property_of = "DJANGO"
@@ -566,7 +566,10 @@ class Exchange(StatesData, GuiExch):
         elif key_name == "prints":
             self.out_data["prints"].append(data)
         elif key_name == "texts":
-            self.out_data["texts"].append(data)
+            if not self.out_data["texts"]:
+                self.out_data["texts"] = {"epochs": [], "summary": ""}
+            self.out_data["texts"]["epochs"].append(data.get("epoch", {}))
+            self.out_data["texts"]["summary"] = data.get("summary", "")
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -784,7 +787,7 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
 
     def _set_optimizers(self):
