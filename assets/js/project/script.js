@@ -93,6 +93,7 @@
         let _callbacks = options.callbacks || {};
         let _compile = options.compile || {};
         let _training = options.training || {};
+        let _in_training = options.in_training || false;
         let _path = options.path || {};
         let _logging = options.logging || "No log";
 
@@ -324,6 +325,15 @@
             },
             get: () => {
                 return _training;
+            }
+        });
+
+        Object.defineProperty(this, "in_training", {
+            set: (value) => {
+                _in_training = value;
+            },
+            get: () => {
+                return _in_training;
             }
         });
 

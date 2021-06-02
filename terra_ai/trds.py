@@ -42,9 +42,10 @@ from tempfile import mkdtemp
 
 # import cv2
 
-__version__ = 0.3107
+__version__ = 0.312
 
 tr2dj_obj = Exchange()
+
 
 class DTS(object):
 
@@ -69,6 +70,8 @@ class DTS(object):
         self.source_shape: dict = {}
         self.input_datatype: str = ''
         self.input_shape: dict = {}
+        self.output_datatype: str = ''
+        self.output_shape: dict = {}
         self.one_hot_encoding = {}
         self.num_classes: dict = {}
         self.classes_names: dict = {}
@@ -87,10 +90,11 @@ class DTS(object):
         self.word2vec = {}
 
         self.y_Cls: np.array
+        self.peg: list = []
 
         pass
 
-    def call_method(self, name):
+    def call_method(self, name: list) -> dict:
 
         func_params = {}
         for tupl in getmembers(self):
@@ -102,7 +106,7 @@ class DTS(object):
 
         return func_params
 
-    def get_datasets_dict(self):
+    def get_datasets_dict(self) -> dict:
         # ['болезни', 'жанры_музыки', 'трафик', 'диалоги']
 
         datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
@@ -115,11 +119,11 @@ class DTS(object):
 
         return datasets_dict
 
-    def get_parameters_dict(self):
+    def get_parameters_dict(self) -> dict:
 
         parameters = {}
-        list_of_params = ['images', 'text', 'audio', 'dataframe'] + ['classification', 'regression', 'segmentation',
-                          'text_segmentation']
+        list_of_params = ['images', 'text', 'audio', 'dataframe'] + ['classification', 'segmentation', 'text_segmentation',
+                                                                     'regression', 'timeseries']
 
         for elem in list_of_params:
             temp = {}
@@ -138,7 +142,7 @@ class DTS(object):
 
         return parameters
 
-    def load_dataset(self):
+    def load_dataset(self) -> None:
 
         def on_button_clicked(b):
 
@@ -189,7 +193,7 @@ class DTS(object):
 
         pass
 
-    def create_dataset(self, inputs, outputs):
+    def create_dataset(self, inputs: int, outputs: int) -> None:
 
         def build_widget(x):
 
@@ -331,6 +335,7 @@ class DTS(object):
             parameters = {}
             parameters['name'] = dataset_name.value
             parameters['user_tags'] = dataset_hashtags.value.split(' ')
+            parameters['preserve_sequence'] = sequence.value
             parameters['train_part'] = slider.value / 100
             parameters['val_part'] = slider2.value / 200
             parameters['test_part'] = slider2.value / 200
@@ -434,14 +439,15 @@ class DTS(object):
         button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
         button.on_click(create_dataset)
         first_row = widgets.HBox([slider, slider2])
-        second_row = widgets.HBox([dataset_name, dataset_hashtags, button])
+        sequence = widgets.Checkbox(value=False, description='Сохранить последовательность', disabled=False)
+        third_row = widgets.HBox([dataset_name, dataset_hashtags, button])
 
         display(widgets.HBox(list_of_inputs + list_of_outputs))
-        display(widgets.VBox([first_row, second_row]))
+        display(widgets.VBox([first_row, sequence, third_row]))
 
         pass
 
-    def create_custom_dataset(self, inputs, outputs, globals):
+    def create_custom_dataset(self, inputs: int, outputs: int, globals: dict) -> None:
 
         def send_arrays(b):
 
@@ -681,7 +687,7 @@ class DTS(object):
 
         pass
 
-    def _set_tag(self, name):
+    def _set_tag(self, name: str) -> list:
 
         tags = {'mnist': ['images', 'classification'],
                 'fashion_mnist': ['images', 'classification'],
@@ -705,7 +711,7 @@ class DTS(object):
                 }
         return tags[name]
 
-    def _set_language(self, name):
+    def _set_language(self, name: str):
 
         language = {'imdb': 'English',
                     'boston_housing': 'English',
@@ -721,7 +727,7 @@ class DTS(object):
         else:
             return None
 
-    def _set_source(self, name):
+    def _set_source(self, name: str):
 
         source = {'mnist': 'tensorflow.keras',
                   'fashion_mnist': 'tensorflow.keras',
@@ -749,7 +755,7 @@ class DTS(object):
         else:
             return 'custom_dataset'
 
-    def _set_datatype(self, **kwargs):
+    def _set_datatype(self, **kwargs) -> str:
 
         dtype = {1: 'DIM',
                  2: 'DIM',
@@ -763,10 +769,9 @@ class DTS(object):
         elif 'text' in kwargs.keys() and kwargs['text'] == True:
             return 'Text'
 
-    def _get_zipfiles(self):
-        from django.conf import settings
-        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-        return os.listdir(os.path.join(f"{settings.TERRA_AI_DATA_PATH}/datasets", 'sources')),
+    def _get_zipfiles(self) -> list:
+
+        return sorted(os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources'))
 
     def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
 
@@ -892,7 +897,7 @@ class DTS(object):
 
         default_path = self.save_path
         if mode == 'google_drive':
-            filepath = os.path.join("/content/drive/MyDrive/TerraAI/datasets/sources", name)
+            filepath = os.path.join('/content/drive/MyDrive/TerraAI/datasets/sources', name)
             name = name[:name.rfind('.')]
             file_folder = os.path.join(default_path, name)
             shutil.unpack_archive(filepath, file_folder)
@@ -921,6 +926,7 @@ class DTS(object):
                     file_folder = pathlib.Path(default_path).joinpath(name)
                     if not file_folder.exists():
                         os.makedirs(file_folder)
+                    if not file_folder.joinpath('tmp').exists():
                         os.makedirs(os.path.join(file_folder, 'tmp'))
                     link = 'https://storage.googleapis.com/terra_ai/DataSets/Numpy/' + base
                     with request.urlopen(link) as dl_file:
@@ -955,6 +961,7 @@ class DTS(object):
         def load_arrays():
 
             inp_datatype = []
+            out_datatype = []
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
                 if arr[0] == 'X':
                     self.X[arr[2:-3]] = {'data_name': f'Вход_{arr[-4]}',
@@ -965,8 +972,11 @@ class DTS(object):
                 elif arr[0] == 'Y':
                     self.Y[arr[2:-3]] = {'data_name': f'Выход_{arr[-4]}',
                                          'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
+                    self.output_shape[arr[2:-3]] = self.Y[arr[2:-3]]['data'][0].shape[1:]
+                    out_datatype.append(self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape))
                     self.tags[arr[2:-3]] = tag_list[1]
             self.input_datatype = ' '.join(inp_datatype)
+            self.output_datatype = ' '.join(out_datatype)
 
         def load_scalers():
 
@@ -1045,15 +1055,15 @@ class DTS(object):
             self.name = config.get('ATTRIBUTES', 'name')
             self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
             self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
-            self.classes_names['input_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
-            self.classes_colors['input_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
+            self.classes_names['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
+            self.classes_colors['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
             self.num_classes['output_1'] = int(config.get('ATTRIBUTES', 'num_classes'))
             self.task_type = literal_eval(config.get('ATTRIBUTES', 'task_type'))
             self.one_hot_encoding = literal_eval(config.get('ATTRIBUTES', 'one_hot_encoding'))
             if self.name == 'квартиры': # TODO - ЗАПЛАТКА!!!!!!
                 self.num_classes['output_1'] = 1
             if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
-                dic['output_1'] = 'segmentation'
+                self.task_type['output_1'] = 'segmentation'
             tag_list = self._set_tag(self.name)
 
             # folder_list = sorted([X for X in os.listdir(self.file_folder) if os.path.isdir(os.path.join(self.file_folder, X))])
@@ -1105,6 +1115,7 @@ class DTS(object):
 
         self.source = 'custom'
         inp_datatype = []
+        out_datatype = []
 
         for inp in inputs:
 
@@ -1208,8 +1219,11 @@ class DTS(object):
                 del list_of_arrays
             else:
                 self.one_hot_encoding[out] = False
+            self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
+            out_datatype.append(self._set_datatype(shape=self.Y[out]['data'][0].shape))
 
         self.input_datatype = ' '.join(inp_datatype)
+        self.output_datatype = ' '.join(out_datatype)
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено.')
@@ -1250,11 +1264,11 @@ class DTS(object):
                     if name in ['mnist', 'fashion_mnist']:
                         axs[i].imshow(Image.fromarray(img), cmap='gray')
                         axs[i].axis('off')
-                        axs[i].set_title(f'{i}: {self.classes_names["input_1"][title]}')
+                        axs[i].set_title(f'{i}: {self.classes_names["output_1"][title]}')
                     else:
                         axs[i].imshow(Image.fromarray(img))
                         axs[i].axis('off')
-                        axs[i].set_title(f'{i}: {self.classes_names["input_1"][title[0]]}')
+                        axs[i].set_title(f'{i}: {self.classes_names["output_1"][title[0]]}')
 
             if name in text:
                 if name in ['imdb', 'reuters']:
@@ -1302,13 +1316,13 @@ class DTS(object):
         if 'classification' in self.tags['output_1']:
             self.num_classes['output_1'] = len(np.unique(y_Train, axis=0))
             if self.name == 'fashion_mnist':
-                self.classes_names['input_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
+                self.classes_names['output_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
                                       'Sneaker', 'Bag', 'Ankle boot']
             elif self.name == 'cifar10':
-                self.classes_names['input_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
+                self.classes_names['output_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
                                       'truck']
             else:
-                self.classes_names['input_1'] = [str(i) for i in range(len(np.unique(y_Train, axis=0)))]
+                self.classes_names['output_1'] = [str(i) for i in range(len(np.unique(y_Train, axis=0)))]
 
         if not self.django_flag:
             print_data(self.name, x_Train, y_Train)
@@ -1321,9 +1335,6 @@ class DTS(object):
                 if len(x_Train.shape) == 3:
                     x_Train = x_Train[..., None]
                     x_Val = x_Val[..., None]
-
-        self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
-        self.input_datatype = self._set_datatype(shape=x_Train.shape)
 
         if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
                 'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
@@ -1377,6 +1388,11 @@ class DTS(object):
                     print(f'One-Hot encoding only available for classification which {self.name} was not meant for. '
                           f'One-Hot encoding was not implemented.')
 
+        self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
+        self.input_datatype = self._set_datatype(shape=x_Train.shape)
+        self.output_shape['output_1'] = y_Train.shape[1:]
+        self.output_datatype = self._set_datatype(shape=y_Train.shape)
+
         self.X = {'input_1': {'data_name': 'Вход',
                               'data': (x_Train, x_Val, None)}}
         self.Y = {'output_1': {'data_name': 'Выход',
@@ -1414,21 +1430,22 @@ class DTS(object):
             return array.astype('uint8')
 
         if folder_name == None:
-            folder_name = self.file_folder
+            working_folder = self.file_folder
         else:
-            folder_name = os.path.join(self.file_folder, folder_name)
+            working_folder = os.path.join(self.file_folder, folder_name)
+        self.peg = [0]
         shape = (height, width)
         X = []
         Y_cls = []
 
-        for _, dirnames, filename in sorted(os.walk(folder_name)):
+        for _, dirnames, filename in sorted(os.walk(working_folder)):
 
             folders = sorted(dirnames)
             folders_num = len(dirnames) if len(dirnames) != 0 else 1
             for i in range(folders_num):
-                temp_path = folder_name
+                temp_path = working_folder
                 try:
-                    temp_path = os.path.join(folder_name, folders[i])
+                    temp_path = os.path.join(working_folder, folders[i])
                 except:
                     IndexError
 
@@ -1461,18 +1478,20 @@ class DTS(object):
                 if len(self.source_shape) < 3:
                     source_shape = Image.open(os.path.join(temp_path, os.listdir(temp_path)[0])).size
                     self.source_shape[f'input_{self.iter}'] = (source_shape[1], source_shape[0], 3)
-                idx = 1
+                idx = 0
                 for file in progress_bar:
                     X.append(load_image(os.path.join(temp_path, file), shape))
                     Y_cls.append(i)
+                    idx += 1
                     if self.django_flag:
-                        idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         if idx == progress_bar.total and i+1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
+                self.peg.append(idx+self.peg[-1])
+
             break
 
         X = np.array(X)
@@ -1501,7 +1520,6 @@ class DTS(object):
             self.y_Cls = Y_cls.astype('int')
             del Y_cls
 
-        print("IMAGES ======= ", self.num_classes)
         return X
 
     # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
@@ -1611,9 +1629,13 @@ class DTS(object):
             words_len = len(word_indexes)
 
             index = 0
+            peg_idx = 0
             while index + x_len <= words_len:
                 sample.append(word_indexes[index:index + x_len])
                 index += step
+                peg_idx += 1
+            if not embedding:
+                self.peg.append(peg_idx + self.peg[-1])
 
             return sample
 
@@ -1633,8 +1655,7 @@ class DTS(object):
                 x_t = classes_x_samples[t]
                 for i in range(len(x_t)):
                     x_samples.append(x_t[i])
-                    for _ in range(len(x_t)):
-                        y_samples.append(t)
+                    y_samples.append(t)
                 if self.django_flag:
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
@@ -1643,7 +1664,6 @@ class DTS(object):
                         self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
-
             x_samples = np.array(x_samples)
             y_samples = np.array(y_samples)
 
@@ -1655,11 +1675,19 @@ class DTS(object):
             progress_bar = tqdm(x, ncols=800)
             progress_bar.set_description('Формирование массивов')
             idx = 0
-            for text in progress_bar:
+            peg_idx = 0
+            cls_idx = 0
+            for i, text in enumerate(progress_bar):
                 tmp = []
                 for word in text:
                     tmp.append(model[word])
                 x_vector.append(tmp)
+                peg_idx += 1
+                if cls_idx == round(sum(y[i]) / len(y[i]), 0):
+                    self.peg.append(peg_idx-1)
+                    cls_idx += 1
+                if peg_idx == len(y):
+                    self.peg.append(peg_idx - 1)
                 if self.django_flag:
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
@@ -1672,19 +1700,20 @@ class DTS(object):
             return np.array(x_vector), np.array(y)
 
         if folder_name == None:
-            folder_name = self.file_folder
+            working_folder = self.file_folder
         else:
-            folder_name = os.path.join(self.file_folder, folder_name)
+            working_folder = os.path.join(self.file_folder, folder_name)
+        self.peg = [0]
 
         txt_list = []
-        for _, dirnames, filename in sorted(os.walk(folder_name)):
+        for _, dirnames, filename in sorted(os.walk(working_folder)):
 
             folders = sorted(dirnames)
             folders_num = len(dirnames) if len(dirnames) != 0 else 1
             for i in range(folders_num):
-                temp_path = folder_name
+                temp_path = working_folder
                 try:
-                    temp_path = os.path.join(folder_name, folders[i])
+                    temp_path = os.path.join(working_folder, folders[i])
                 except:
                     IndexError
 
@@ -1695,7 +1724,7 @@ class DTS(object):
                 else:
                     description = f'Сохранение текстов из папки {folders[i]}'
                 progress_bar.set_description(description)
-                idx = 1
+                idx = 0
                 several_files = False
                 for file in progress_bar:
                     if progress_bar.total > 1:
@@ -1739,6 +1768,7 @@ class DTS(object):
         self.tokenizer[f'input_{self.iter}'] = tokenizer
 
         if embedding:
+            self.peg = []
             X = []
             Y = []
             for i, txt in enumerate(txt_list):
@@ -1816,7 +1846,7 @@ class DTS(object):
         return Y
 
     def timeseries(self, col_name='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'],
-                   x_len=20, train_len=2000, batch_size=10):
+                   x_len=1, train_len=2000, batch_size=1):
 
         self.classes_names[f'output_{self.iter}'] = col_name
         self.num_classes[f'output_{self.iter}'] = len(col_name)
@@ -1850,7 +1880,7 @@ class DTS(object):
         return time_Train, time_Val
 
     def audio(self, folder_name=[''], length=11025, step=2205,
-              scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=False, chroma_stft=False, mfcc=False, rms=False,
+              scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=True, chroma_stft=False, mfcc=False, rms=False,
               spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False):
 
         def call_librosa(feature, section, sr):
@@ -1889,21 +1919,20 @@ class DTS(object):
                 list_features.append(features_str[i])
 
         if folder_name == None:
-            folder_name = self.file_folder
+            working_folder = self.file_folder
         else:
-            folder_name = os.path.join(self.file_folder, folder_name)
-
-        self.classes_names[f'input_{self.iter}'] = [folder for folder in sorted(os.listdir(folder_name))] if len(os.listdir(folder_name)) > 1 else folder_name
+            working_folder = os.path.join(self.file_folder, folder_name)
+        self.peg = [0]
         Y = np.array([])
 
-        for _, dirnames, filename in sorted(os.walk(folder_name)):
+        for _, dirnames, filename in sorted(os.walk(working_folder)):
 
             folders = sorted(dirnames)
             folders_num = len(dirnames) if len(dirnames) != 0 else 1
             for i in range(folders_num):
-                temp_path = folder_name
+                temp_path = working_folder
                 try:
-                    temp_path = os.path.join(folder_name, folders[i])
+                    temp_path = os.path.join(working_folder, folders[i])
                 except:
                     IndexError
 
@@ -1919,21 +1948,23 @@ class DTS(object):
                 progress_bar.set_description(description)
                 out_vectors = []
                 idx = 0
-                for files in progress_bar:
-                    y, sr = librosaload(files)
+                peg_idx = 0
+                for file in progress_bar:
+                    y, sr = librosaload(file)
                     while (len(y) >= length):
                         section = y[:length]
                         section = np.array(section)
                         out = wav_to_features(section)
                         out_vectors.append(out)
                         y = y[step:]
-
+                        peg_idx += 1
+                    idx += 1
                     if self.django_flag:
-                        idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         if idx == progress_bar.total and i+1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                            print('S T O P  F L A G')
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
                 out_vectors = np.array(out_vectors)
@@ -1942,6 +1973,7 @@ class DTS(object):
                 except NameError:
                     X = out_vectors
                 Y = np.append(Y, np.full(out_vectors.shape[0], fill_value=(i)))
+                self.peg.append(peg_idx + self.peg[-1])
             break
 
         self.source_shape = X.shape[1:]
@@ -1971,14 +2003,12 @@ class DTS(object):
     def classification(self, one_hot_encoding=[True, False]):
 
         Y = self.y_Cls
-        print("CLASSIC_START ======= ", self.num_classes)
-
+        self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
 
         if one_hot_encoding:
             Y = utils.to_categorical(Y, len(np.unique(Y))) # Убрал AXIS
 
-        print("CLASSIC ======= ", self.num_classes)
         return Y
 
     def text_segmentation(self, open_tags='', close_tags=''):
@@ -2311,7 +2341,6 @@ class DTS(object):
                 except ValueError:
                     continue
 
-
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
@@ -2329,7 +2358,6 @@ class DTS(object):
             self.iter = i + 1
             self.X[f'input_{i+1}'] = {'data_name': self.user_parameters['inp'][f'input_{i+1}']['name'], 'data': getattr(self, self.user_parameters['inp'][f'input_{i+1}']['tag'])(**self.user_parameters['inp'][f'input_{i+1}']['parameters'])}
 
-        print("----asdasdasdasdas----", self.num_classes)
         for i in range(len(self.user_parameters['out'])):
             self.iter = i + 1
             if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'object_detection':
@@ -2340,16 +2368,25 @@ class DTS(object):
                     self.task_type[f'output_{i+k+1}'] = dataset_dict['outputs'][f'output_{i+1}']['task_type']
             else:
                 self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
-        # Train/Val/Test split
-        print(4)
-        indices = np.random.permutation(self.X['input_1']['data'].shape[0])
-        train_len = int(self.divide_ratio[1][0] * len(indices))
-        val_len = int((len(indices) - train_len) / 2)
-        train_mask = indices[:train_len]
-        val_mask = indices[train_len:train_len + val_len]
-        test_mask = indices[train_len + val_len:]
 
-        print(5)
+        # Train/Val/Test split
+        train_mask = []
+        val_mask = []
+        test_mask = []
+
+        for i in range(len(self.peg) - 1):
+            indices = np.arange(self.peg[i], self.peg[i + 1]).tolist()
+            train_len = int(self.divide_ratio[1][0] * len(indices))
+            val_len = int(self.divide_ratio[1][1] * len(indices))
+            train_mask.extend(indices[:train_len])
+            val_mask.extend(indices[train_len:train_len + val_len])
+            test_mask.extend(indices[train_len + val_len:])
+
+        if not dataset_dict['parameters']['preserve_sequence']:
+            random.shuffle(train_mask)
+            random.shuffle(val_mask)
+            random.shuffle(test_mask)
+        print(len(train_mask), len(val_mask), len(test_mask))
 
         for inp in self.X.keys():
             self.X[inp]['data'] = (self.X[inp]['data'][train_mask], self.X[inp]['data'][val_mask],
@@ -2359,14 +2396,18 @@ class DTS(object):
                                    self.Y[out]['data'][test_mask])
 
         inp_datatype = []
-        print(6)
         for inp in self.X.keys():
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
             inp_datatype.append(self._set_datatype(shape=self.input_shape[inp]))
 
-        print(7)
+        out_datatype = []
+        for out in self.Y.keys():
+            self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
+            out_datatype.append(self._set_datatype(shape=self.output_shape[out]))
 
         self.input_datatype = ' '.join(inp_datatype)
+        self.output_datatype = ' '.join(out_datatype)
+
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
             x = ['x_train', 'x_val', 'x_test']
@@ -2380,17 +2421,15 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['y_Cls', 'iteration', 'df', 'sequences', 'model_gensim']
+        temp_attributes = ['iter', 'df', 'model_gensim'] # 'y_Cls' 'sequences' 'peg'
         for item in temp_attributes:
             if hasattr(self, item):
                 delattr(self, item)
 
         self.dts_prepared = True
         if is_save:
-            from django.conf import settings
             print('Идёт сохранение датасета.')
-            directory = os.path.join(f"{settings.TERRA_AI_DATA_PATH}/datasets")
-            # directory = os.path.join(os.getcwd(), 'TerraAI', 'datasets')
+            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:

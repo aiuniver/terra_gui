@@ -1,3 +1,4 @@
+from django.utils.timezone import datetime
 from django import template
 from django.urls import resolve
 
@@ -12,6 +13,11 @@ register = template.Library()
 def menu_active(value: str, request) -> str:
     resolver = resolve(request.path)
     return " active" if f"{resolver.namespace}:{resolver.url_name}" == value else ""
+
+
+@register.simple_tag
+def current_year() -> int:
+    return datetime.now().year
 
 
 @register.filter

@@ -19,14 +19,14 @@
             <li data-type="charts" disabled="disabled">
                 <span title="Графики"><img src="{% static 'imgs/training-charts.svg' %}" alt="" /></span>
             </li>
+            <li data-type="scatters" disabled="disabled">
+                <span title="Скаттеры"><img src="{% static 'imgs/training-scatters.svg' %}" alt="" /></span>
+            </li>
             <li data-type="images" disabled="disabled">
                 <span title="Изображения"><img src="{% static 'imgs/training-images.svg' %}" alt="" /></span>
             </li>
             <li data-type="texts" disabled="disabled">
                 <span title="Текст"><img src="{% static 'imgs/training-texts.svg' %}" alt="" /></span>
-            </li>
-            <li data-type="scatters" disabled="disabled">
-                <span title="Скаттеры"><img src="{% static 'imgs/training-scatters.svg' %}" alt="" /></span>
             </li>
         </ul>
     </div>
@@ -45,18 +45,18 @@
                                     <div class="inner"></div>
                                 </div>
                             </div>
+                            <div class="scatters hidden">
+                                <div class="category-title">Скаттеры</div>
+                                <div class="content">
+                                    <div class="inner"></div>
+                                </div>
+                            </div>
                             <div class="images hidden">
                                 <div class="category-title">Изображения</div>
                                 <div class="content"></div>
                             </div>
                             <div class="texts hidden">
                                 <div class="category-title">Текст</div>
-                                <div class="content">
-                                    <div class="inner"></div>
-                                </div>
-                            </div>
-                            <div class="scatters hidden">
-                                <div class="category-title">Скаттеры</div>
                                 <div class="content">
                                     <div class="inner"></div>
                                 </div>
@@ -73,7 +73,7 @@
     <div class="wrapper">
         <div class="params">
             <form class="params-container" novalidate="novalidate" autocomplete="off">
-                <div class="params-item">
+                <div class="params-item params-config">
                     <div class="inner settings custom-scrollbar-wrapper">
                         <div class="params-item params-optimizer">
                             <div class="inner">
@@ -102,7 +102,7 @@
                             </div>
                         </div>
 
-                        <div class="params-item params-optimizer-extra collapsable hidden">
+                        <div class="params-item params-optimizer-extra collapsable collapsed hidden">
                             <div class="params-title">Параметры оптимизатора</div>
                             <div class="inner form-inline-label"></div>
                         </div>
@@ -206,11 +206,11 @@
                     </div>
                 </div>
 
-                <div class="params-item">
+                <div class="params-item params-actions">
                     <div class="inner actions">
                         <div class="actions-form">
                             <div class="item training">
-                                <button>Обучить</button>
+                                <button>{% if request.terra_project.in_training %}Возобновить{% else %}Обучить{% endif %}</button>
                             </div>
                             <div class="item stop">
                                 <button disabled="disabled">Остановить</button>

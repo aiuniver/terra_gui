@@ -91,11 +91,17 @@ class TerraExchange:
         else:
             raise TerraExchangeException(f"You call undefined method «{name}»")
 
+    def _update_in_training_flag(self):
+        self.project.in_training = not colab_exchange.get_training_flags().get(
+            "is_trained", True
+        )
+
     def _call_autosave_project(self):
         self.project.autosave()
 
     def _call_get_state(self) -> TerraExchangeResponse:
-        return TerraExchangeResponse(data=colab_exchange.get_state())
+        state = colab_exchange.get_state()
+        return TerraExchangeResponse(data=state)
 
     def _call_set_project_name(self, name: str) -> TerraExchangeResponse:
         self.project.name = name
@@ -117,10 +123,18 @@ class TerraExchange:
         if not not_load_layers:
             layers = {}
             outputs = {}
+            num_classes = colab_exchange.get_dataset_num_classes()
             for index, layer in start_layers.items():
-                layers[int(index)] = Layer(**layer)
-                if layers[int(index)].config.location_type == LayerLocation.output:
-                    outputs[layers[int(index)].config.dts_layer_name] = OutputConfig()
+                layer = Layer(**layer)
+                if layer.config.location_type == LayerLocation.output:
+                    layer.config.num_classes = num_classes.get(
+                        layer.config.dts_layer_name, 0
+                    )
+                    outputs[layer.config.dts_layer_name] = OutputConfig(
+                        num_classes=layer.config.num_classes
+                    )
+                layers[int(index)] = layer
+
             self.project.training.outputs = outputs
 
             self.project.layers = layers
@@ -139,7 +153,20 @@ class TerraExchange:
         )
 
     def _call_get_data(self) -> TerraExchangeResponse:
+        self._update_in_training_flag()
         response = colab_exchange.get_data()
+        response["in_training"] = self.project.in_training
+        response["user_stop_train"] = colab_exchange.get_training_flags().get(
+            "user_stop_train", True
+        )
+        self.project.dir.save_training_output(
+            {
+                "plots": response.get("plots", []),
+                "scatters": response.get("scatters", []),
+                "images": response.get("images", []),
+                "texts": response.get("texts", []),
+            }
+        )
         return TerraExchangeResponse(
             data=response,
             stop_flag=response.get("stop_flag", True),
@@ -206,8 +233,6 @@ class TerraExchange:
         for index, layer in layers.items():
             output[index] = layer.dict()
         self.project.model_name = model_file
-        self.project.layers_start = layers
-        self.project.layers_schema = data.data.get("schema", [])
         data.data.update({"layers": output})
         return data
 
@@ -345,12 +370,18 @@ class TerraExchange:
             ]["out_monitor"][0]
         self.project.training = TrainConfig(**kwargs)
         response = self.call("get_change_validation")
+        if not response.data.get("validated"):
+            colab_exchange.out_data["stop_flag"] = True
         response.data["logging"] = json.dumps(
             self.project.dict().get("training"), indent=4
         )
+        self._update_in_training_flag()
+        self.project.autosave()
+        response.data["in_training"] = self.project.in_training
         return response
 
     def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+        self._update_in_training_flag()
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
@@ -369,10 +400,14 @@ class TerraExchange:
             pathname=self.project.dir.training,
             **training_data,
         )
+        self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.stop_training()
+        self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_get_zipfiles(self) -> TerraExchangeResponse:
@@ -380,15 +415,16 @@ class TerraExchange:
         return TerraExchangeResponse(data=response)
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         colab_exchange.reset_training()
+        self.project.dir.remove_training()
+        self._update_in_training_flag()
+        self.project.autosave()
         return TerraExchangeResponse()
 
     def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
         return self.__request_post("start_evaluate", **kwargs)
 
     def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
         self.__project = TerraExchangeProject()
 
@@ -424,6 +460,7 @@ class TerraExchange:
                 success=False,
                 error="Проект с таким названием уже существует",
             )
+        self.project.save_training_files(name=name)
         filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
         shutil.move(filepath, fullpath)
         return TerraExchangeResponse(data={"name": name})
@@ -436,7 +473,6 @@ class TerraExchange:
         return TerraExchangeResponse(data=output)
 
     def _call_get_project(self, name: str) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
         self.project.clear()
 
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
