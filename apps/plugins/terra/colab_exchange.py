@@ -381,7 +381,7 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
 
         self.property_of = "DJANGO"
@@ -394,6 +394,7 @@ class Exchange(StatesData, GuiExch):
         self.custom_datasets_path = self.paths_obj.gd.datasets
         self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
         self.dts_name = None
+        self.output_shape = None
         self.task_name = ""
         self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
@@ -565,7 +566,10 @@ class Exchange(StatesData, GuiExch):
         elif key_name == "prints":
             self.out_data["prints"].append(data)
         elif key_name == "texts":
-            self.out_data["texts"].append(data)
+            if not self.out_data["texts"]:
+                self.out_data["texts"] = {"epochs": [], "summary": ""}
+            self.out_data["texts"]["epochs"].append(data.get("epoch", {}))
+            self.out_data["texts"]["summary"] = data.get("summary", "")
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -705,15 +709,22 @@ class Exchange(StatesData, GuiExch):
             dts = dill.load(f)
         return dts
 
+    def _change_output_layer(self, dts_layer_name):
+        task_type = self.dts.task_type.get(dts_layer_name)
+        dimension = self.dts.output_datatype.get(dts_layer_name)
+        print(dimension)
+
     def _set_start_layers(self):
         self.start_layers = {}
 
         def _create(dts_data: dict, location: LayerLocation):
+            self.output_shape = {}
             available = [data["data_name"] for name, data in dts_data.items()]
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
                 if location == LayerLocation.output:
+                    self._change_output_layer(name)
                     default_layers_params = self.layers_params.get(LayerType.Dense)
                     out_param_dict = {
                         x: {y: default_layers_params[x].get(y).get('default')
@@ -725,6 +736,7 @@ class Exchange(StatesData, GuiExch):
                         out_param_dict['main']['activation'] = 'softmax'
                 else:
                     out_param_dict = {}
+                self.output_shape.setdefault(name, list(self.dts.output_shape.get(name, [])))
                 self.start_layers[index] = {
                     "config": {
                         "name": f"l{index}_{data_name}",
@@ -735,7 +747,7 @@ class Exchange(StatesData, GuiExch):
                         "location_type": location,
                         "up_link": [],
                         "input_shape": list(self.dts.input_shape.get(name, [])),
-                        "output_shape": [],
+                        "output_shape": list(self.dts.output_shape.get(name, [])),
                         "data_name": data_name,
                         "data_available": available,
                         "params": out_param_dict,
@@ -775,7 +787,7 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
 
     def _set_optimizers(self):
@@ -1002,7 +1014,7 @@ class Exchange(StatesData, GuiExch):
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
-        model_plan.output_shape = {}
+        model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
         model_plan.plan_name = model_name
         return model_plan.dict()

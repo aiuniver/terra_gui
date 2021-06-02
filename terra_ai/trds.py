@@ -42,7 +42,7 @@ from tempfile import mkdtemp
 
 # import cv2
 
-__version__ = 0.312
+__version__ = 0.314
 
 tr2dj_obj = Exchange()
 
@@ -66,11 +66,11 @@ class DTS(object):
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
-        self.source_datatype: dict = {}
+        self.source_datatype: str = ''
         self.source_shape: dict = {}
         self.input_datatype: str = ''
         self.input_shape: dict = {}
-        self.output_datatype: str = ''
+        self.output_datatype: dict = {}
         self.output_shape: dict = {}
         self.one_hot_encoding = {}
         self.num_classes: dict = {}
@@ -84,10 +84,12 @@ class DTS(object):
 
         self.X: dict = {}
         self.Y: dict = {}
-        self.x_Scaler = {}
-        self.y_Scaler = {}
-        self.tokenizer = {}
-        self.word2vec = {}
+        self.x_Scaler: dict = {}
+        self.y_Scaler: dict = {}
+        self.tokenizer: dict = {}
+        self.word2vec: dict = {}
+        self.df: dict = {}
+        self.tsgenerator: dict = {}
 
         self.y_Cls: np.array
         self.peg: list = []
@@ -727,7 +729,7 @@ class DTS(object):
         else:
             return None
 
-    def _set_source(self, name: str):
+    def _set_source(self, name: str) -> str:
 
         source = {'mnist': 'tensorflow.keras',
                   'fashion_mnist': 'tensorflow.keras',
@@ -757,7 +759,8 @@ class DTS(object):
 
     def _set_datatype(self, **kwargs) -> str:
 
-        dtype = {1: 'DIM',
+        dtype = {0: 'DIM',
+                 1: 'DIM',
                  2: 'DIM',
                  3: '1D',
                  4: '2D',
@@ -770,10 +773,11 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self) -> list:
+        from django.conf import settings
+        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+        return os.listdir(os.path.join(settings.TERRA_AI_DATA_PATH, 'datasets', 'sources'))
 
-        return sorted(os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources'))
-
-    def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
+    def _find_colors(self, name: str, num_classes=None, mask_range=None, txt_file=False) -> list:
 
         if txt_file:
             txt = pd.read_csv(os.path.join(self.file_folder, name), sep=':')
@@ -814,7 +818,7 @@ class DTS(object):
 
         return color_list
 
-    def load_data(self, name, mode, link=None) -> None:
+    def load_data(self, name: str, mode: str, link=None):
 
         """
         Create folder and download base in it. Does not change the files original format.
@@ -961,7 +965,6 @@ class DTS(object):
         def load_arrays():
 
             inp_datatype = []
-            out_datatype = []
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
                 if arr[0] == 'X':
                     self.X[arr[2:-3]] = {'data_name': f'Вход_{arr[-4]}',
@@ -973,10 +976,9 @@ class DTS(object):
                     self.Y[arr[2:-3]] = {'data_name': f'Выход_{arr[-4]}',
                                          'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
                     self.output_shape[arr[2:-3]] = self.Y[arr[2:-3]]['data'][0].shape[1:]
-                    out_datatype.append(self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape))
+                    self.output_datatype[arr[2:-3]] = self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape)
                     self.tags[arr[2:-3]] = tag_list[1]
             self.input_datatype = ' '.join(inp_datatype)
-            self.output_datatype = ' '.join(out_datatype)
 
         def load_scalers():
 
@@ -1053,7 +1055,7 @@ class DTS(object):
             config = configparser.ConfigParser()
             config.read(os.path.join(self.file_folder, 'config.ini'), encoding="utf-8")
             self.name = config.get('ATTRIBUTES', 'name')
-            self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
+            self.source_datatype = list(literal_eval(config.get('ATTRIBUTES', 'source_datatype')).values())[0]
             self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
             self.classes_names['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
             self.classes_colors['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
@@ -1093,7 +1095,7 @@ class DTS(object):
 
         return self
 
-    def prepare_custom_dataset(self, *Data, **options):
+    def prepare_custom_dataset(self, *Data: list, **options):
 
         inputs = list(Data[0].keys())
         outputs = list(Data[1].keys())
@@ -1114,14 +1116,14 @@ class DTS(object):
                                        Data[1][out]['data'][0][test_mask])
 
         self.source = 'custom'
+        source_datatype = []
         inp_datatype = []
         out_datatype = []
 
         for inp in inputs:
 
             self.source_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            self.source_datatype[inp] = self._set_datatype(shape=self.X[inp]['data'][0].shape)
-
+            source_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
             if options['x_scaler'][inp] in ['StandardScaler', 'MinMaxScaler']:
                 if options['x_scaler'][inp] == 'MinMaxScaler':
                     self.x_Scaler[inp] = MinMaxScaler()
@@ -1220,10 +1222,10 @@ class DTS(object):
             else:
                 self.one_hot_encoding[out] = False
             self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
-            out_datatype.append(self._set_datatype(shape=self.Y[out]['data'][0].shape))
+            self.output_datatype[out] = self._set_datatype(shape=self.Y[out]['data'][0].shape)
 
+        self.source_datatype = ' '.join(source_datatype)
         self.input_datatype = ' '.join(inp_datatype)
-        self.output_datatype = ' '.join(out_datatype)
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено.')
@@ -1242,12 +1244,13 @@ class DTS(object):
 
     def inverse_data(self, array=None, scaler=None):
 
+        #Не доделано
         if scaler:
             array = self.__dict__[scaler].inverse_transform(array)
 
         return array
 
-    def keras_datasets(self, dataset, **options):
+    def keras_datasets(self, dataset: str, **options):
 
         def print_data(name, x_train, y_train):
 
@@ -1312,7 +1315,7 @@ class DTS(object):
 
         self.source_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
         self.language = self._set_language(self.name)
-        self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.source_datatype += f' {self._set_datatype(shape=x_Train.shape)}'
         if 'classification' in self.tags['output_1']:
             self.num_classes['output_1'] = len(np.unique(y_Train, axis=0))
             if self.name == 'fashion_mnist':
@@ -1391,7 +1394,7 @@ class DTS(object):
         self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
         self.input_datatype = self._set_datatype(shape=x_Train.shape)
         self.output_shape['output_1'] = y_Train.shape[1:]
-        self.output_datatype = self._set_datatype(shape=y_Train.shape)
+        self.output_datatype['output_1'] = self._set_datatype(shape=y_Train.shape)
 
         self.X = {'input_1': {'data_name': 'Вход',
                               'data': (x_Train, x_Val, None)}}
@@ -1420,7 +1423,7 @@ class DTS(object):
         return self
 
     def images(self, folder_name=[''], height=176, width=220, net=['Convolutional', 'Linear'],
-               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -1496,22 +1499,20 @@ class DTS(object):
 
         X = np.array(X)
         Y_cls = np.array(Y_cls)
-        self.source_datatype[f'input_{self.iter}'] = self._set_datatype(shape=X.shape)
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-
             self.x_Scaler[f'input_{self.iter}'].fit(X)
             X = self.x_Scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = False
 
         if net == 'Linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
@@ -1522,7 +1523,7 @@ class DTS(object):
 
         return X
 
-    # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
     #
     #     if folder_name == None:
     #         folder_name = self.file_folder
@@ -1594,7 +1595,7 @@ class DTS(object):
     #
     #     return X
 
-    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, embedding=False, embedding_size=200):
+    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, embedding=False, embedding_size=200) -> np.ndarray:
 
         def read_text(file_path):
 
@@ -1785,103 +1786,112 @@ class DTS(object):
             if bag_of_words:
                 X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
 
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
+        self.x_Scaler[f'input_{self.iter}'] = None
+
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
             del Y
 
         return X
 
-    def dataframe(self, file_name=[''], separator='', encoding='utf-8', x_cols='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    def dataframe(self, file_name=[''], separator='', encoding='utf-8', x_cols='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
 
         self.classes_names[f'input_{self.iter}'] = x_cols.split(' ')
         if separator:
             X = pd.read_csv(os.path.join(self.file_folder, file_name), sep=separator, encoding=encoding)
         else:
             X = pd.read_csv(os.path.join(self.file_folder, file_name), encoding=encoding)
-        self.df = X
-        X = np.array(X[x_cols.split(' ')])
+        self.df[f'input_{self.iter}'] = X
+
+        X = X[x_cols.split(' ')].to_numpy()
+
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-
             self.x_Scaler[f'input_{self.iter}'].fit(X)
-
             X = self.x_Scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = None
+
+        #Если надо работать с временными рядами
+        for i in range(len(self.user_parameters['out'])):
+            if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'timeseries':
+                length = self.user_parameters['out'][f'output_{i+1}']['parameters']['length']
+                batch_size = self.user_parameters['out'][f'output_{i + 1}']['parameters']['batch_size']
+                generator = TimeseriesGenerator(X, X, length=length, stride=1, batch_size=batch_size)
+                X = []
+                for i in range(len(generator)):
+                    X.append(generator[i][0])
+                X = np.array(X)
+                self.tsgenerator[f'input_{self.iter}'] = generator
+            break
 
         return X
 
-    def regression(self, y_col='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    def regression(self, y_col='') -> np.ndarray:
 
-
+        y_col = y_col.split(' ')
+        self.classes_names[f'output_{self.iter}'] = y_col
         self.num_classes[f'output_{self.iter}'] = len(y_col)
 
-        Y = self.df[y_col]
-        Y = np.array(Y)
+        for i in range(len(self.user_parameters['inp'])):
+            if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'dataframe':
+                Y = self.df[f'input_{i+1}'][y_col].to_numpy()
+                if self.user_parameters['inp'][f'input_{i + 1}']['parameters']['scaler'] in ['MinMaxScaler', 'StandardScaler']:
+                    y_shape = Y.shape
+                    Y = Y.reshape(-1, 1)
+                    Y = self.x_Scaler[f'input_{i+1}'].transform(Y)
+                    Y = Y.reshape(y_shape)
 
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
-            shape_y = Y.shape
-            Y = Y.reshape(-1, 1)
-
-            if scaler == 'MinMaxScaler':
-                self.y_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
-            elif scaler == 'StandardScaler':
-                self.y_Scaler[f'input_{self.iter}'] = StandardScaler()
-
-            self.y_Scaler[f'input_{self.iter}'].fit(Y)
-
-            Y = self.y_Scaler[f'input_{self.iter}'].transform(Y)
-            Y = Y.reshape(shape_y)
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.peg = [0]
+        for ratio in self.divide_ratio[1][:-1]:
+            self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
+        self.peg.append(len(Y))
 
         return Y
 
-    def timeseries(self, col_name='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'],
-                   x_len=1, train_len=2000, batch_size=1):
+    def timeseries(self, length=1, batch_size=1) -> np.ndarray:
 
-        self.classes_names[f'output_{self.iter}'] = col_name
-        self.num_classes[f'output_{self.iter}'] = len(col_name)
+        for i in range(len(self.user_parameters['inp'])):
+            if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'dataframe':
+                columns = self.user_parameters['inp'][f'input_{i+1}']['parameters']['x_cols']
 
-        x_Train = np.array([self.df.loc[:train_len, col_name]])
-        x_Val = np.array([self.df.loc[train_len + x_len:, col_name]])
+                self.classes_names[f'output_{self.iter}'] = columns.split(' ')
+                self.num_classes[f'output_{self.iter}'] = len(columns.split(' '))
 
-        self.source_shape = self.x_Train.shape[1:]
-        self.source_datatype = self._set_datatype(shape=self.x_Train.shape)
+                Y = []
+                for j in range(len(self.tsgenerator[f'input_{i+1}'])):
+                    Y.append(self.tsgenerator[f'input_{i+1}'][j][1])
+                Y = np.array(Y)
+                if self.user_parameters['inp'][f'input_{i+1}']['parameters']['scaler'] in ['MinMaxScaler', 'StandardScaler']:
+                    y_shape = Y.shape
+                    Y = Y.reshape(-1, 1)
+                    Y = self.x_Scaler[f'input_{i+1}'].transform(Y)
+                    Y = Y.reshape(y_shape)
 
-        x_Train = np.reshape(x_Train, (-1, 1))
-        x_Val = np.reshape(x_Val, (-1, 1))
+        self.y_Scaler[f'output_{self.iter}'] = None
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.peg = [0]
+        for ratio in self.divide_ratio[1][:-1]:
+            self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
+        self.peg.append(len(Y))
 
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
-            if scaler == 'MinMaxScaler':
-                self.x_Scaler = MinMaxScaler()
-
-            elif scaler == 'StandardScaler':
-                self.x_Scaler = StandardScaler()
-
-            self.x_Scaler.fit(x_Train)
-
-            x_Train = self.x_Scaler.transform(x_Train)
-            x_Val = self.x_Scaler.transform(x_Val)
-
-
-        time_Train = TimeseriesGenerator(x_Train, x_Train, length=x_len, stride=1, batch_size=batch_size)
-        time_Val = TimeseriesGenerator(x_Val, x_Val, length=x_len, stride=1, batch_size=batch_size)
-
-        return time_Train, time_Val
+        return Y
 
     def audio(self, folder_name=[''], length=11025, step=2205,
               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=True, chroma_stft=False, mfcc=False, rms=False,
-              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False):
+              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False) -> np.ndarray:
 
         def call_librosa(feature, section, sr):
 
@@ -1964,7 +1974,6 @@ class DTS(object):
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
                         if idx == progress_bar.total and i+1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                            print('S T O P  F L A G')
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
                 out_vectors = np.array(out_vectors)
@@ -1976,23 +1985,21 @@ class DTS(object):
                 self.peg.append(peg_idx + self.peg[-1])
             break
 
-        self.source_shape = X.shape[1:]
-        self.source_datatype = self._set_datatype(shape=X.shape)
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler = StandardScaler()
-
             self.x_Scaler.fit(X)
             X = self.x_Scaler.transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = None
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
@@ -2000,18 +2007,22 @@ class DTS(object):
 
         return X
 
-    def classification(self, one_hot_encoding=[True, False]):
+    def classification(self, one_hot_encoding=[True, False]) -> np.ndarray:
 
         Y = self.y_Cls
         self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
+        self.y_Scaler[f'output_{self.iter}'] = None
 
         if one_hot_encoding:
-            Y = utils.to_categorical(Y, len(np.unique(Y))) # Убрал AXIS
+            Y = utils.to_categorical(Y, len(np.unique(Y)))
+            self.one_hot_encoding[f'output_{self.iter}'] = True
+        else:
+            self.one_hot_encoding[f'output_{self.iter}'] = False
 
         return Y
 
-    def text_segmentation(self, open_tags='', close_tags=''):
+    def text_segmentation(self, open_tags='', close_tags='') -> np.ndarray:
 
         def get01XSamples(tok_agreem, tags_index):
             tags01 = []
@@ -2069,6 +2080,8 @@ class DTS(object):
             return np.array(x_vector), np.array(y)
 
         self.num_classes[f'output_{self.iter}'] = len(open_tags)
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.y_Scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
 
         for i in range(len(self.user_parameters['inp'])):
@@ -2099,7 +2112,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}):
+    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2139,6 +2152,8 @@ class DTS(object):
         self.classes_colors[f'output_{self.iter}'] = list(classes_dict.values())
         num_classes = len(list(classes_dict.keys()))
         self.num_classes[f'output_{self.iter}'] = num_classes
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.y_Scaler[f'output_{self.iter}'] = None
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'images':
@@ -2187,7 +2202,7 @@ class DTS(object):
 
         return Y
 
-    def object_detection(self):
+    def object_detection(self) -> np.ndarray:
 
         def make_y(real_boxes, num_classes):
 
@@ -2293,7 +2308,7 @@ class DTS(object):
 
         return input_1, input_2, input_3
 
-    def prepare_user_dataset(self, dataset_dict, is_save=True):
+    def prepare_user_dataset(self, dataset_dict: dict, is_save=True):
 
         cur_time = time()
         if self.django_flag:
@@ -2382,11 +2397,16 @@ class DTS(object):
             val_mask.extend(indices[train_len:train_len + val_len])
             test_mask.extend(indices[train_len + val_len:])
 
+        for i in range(len(self.user_parameters['out'])):
+            if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'timeseries':
+                length = self.user_parameters['out'][f'output_{i+1}']['parameters']['length']
+                train_mask = train_mask[:-length]
+                val_mask = val_mask[:-length]
+
         if not dataset_dict['parameters']['preserve_sequence']:
             random.shuffle(train_mask)
             random.shuffle(val_mask)
             random.shuffle(test_mask)
-        print(len(train_mask), len(val_mask), len(test_mask))
 
         for inp in self.X.keys():
             self.X[inp]['data'] = (self.X[inp]['data'][train_mask], self.X[inp]['data'][val_mask],
@@ -2398,15 +2418,13 @@ class DTS(object):
         inp_datatype = []
         for inp in self.X.keys():
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            inp_datatype.append(self._set_datatype(shape=self.input_shape[inp]))
+            inp_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
 
-        out_datatype = []
         for out in self.Y.keys():
             self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
-            out_datatype.append(self._set_datatype(shape=self.output_shape[out]))
+            self.output_datatype[out] = self._set_datatype(shape=self.Y[out]['data'][0].shape)
 
         self.input_datatype = ' '.join(inp_datatype)
-        self.output_datatype = ' '.join(out_datatype)
 
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
@@ -2421,7 +2439,7 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['iter', 'df', 'model_gensim'] # 'y_Cls' 'sequences' 'peg'
+        temp_attributes = ['iter', 'model_gensim'] # 'y_Cls' 'sequences' 'peg', 'df'
         for item in temp_attributes:
             if hasattr(self, item):
                 delattr(self, item)
