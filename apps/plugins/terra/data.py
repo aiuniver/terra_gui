@@ -379,11 +379,11 @@ class TerraExchangeProject(pydantic.BaseModel):
                 config_ref.write("{}")
                 config_ref.close()
 
-        # with open(self.dir.config, "r") as file:
-        #     try:
-        #         kwargs.update(**json.load(file))
-        #     except Exception:
-        #         pass
+        with open(self.dir.config, "r") as file:
+            try:
+                kwargs.update(**json.load(file))
+            except Exception:
+                pass
 
         super().__init__(**kwargs)
 
