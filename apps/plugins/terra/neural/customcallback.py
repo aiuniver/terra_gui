@@ -757,7 +757,6 @@ class ClassificationCallback:
         # epoch_metric_data = ""
         # epoch_val_metric_data = ""
         epoch_table_data = {
-            "time": msg_epoch,
             "outputs": {
                 "label": output_key,
                 "metric": [],
@@ -767,6 +766,7 @@ class ClassificationCallback:
         out_table_data = {
             "epoch": {
                 "number": epoch+1,
+                "time": msg_epoch,
                 "data": [],
             },
             "summary": "",
