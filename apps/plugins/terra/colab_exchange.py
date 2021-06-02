@@ -353,6 +353,45 @@ class StatesData:
             },
         }
 
+        self.output_layers = {
+            "classification": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "softmax"
+                }
+            },
+            "segmentation": {
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "softmax"
+                },
+                "2D": {
+                    "layer_type": LayerType.Conv2D,
+                    "activation": "softmax"
+                },
+                "3D": {
+                    "layer_type": LayerType.Conv3D,
+                    "activation": "softmax"
+                }
+            },
+            "regression": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "linear"
+                }
+            },
+            "timeseries": {
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "linear"
+                },
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "linear"
+                }
+            }
+        }
+
         self.paths_obj = TerraExchangeProject()
 
 
@@ -712,38 +751,47 @@ class Exchange(StatesData, GuiExch):
     def _change_output_layer(self, dts_layer_name):
         task_type = self.dts.task_type.get(dts_layer_name)
         dimension = self.dts.output_datatype.get(dts_layer_name)
-        print(dimension)
+        layer_type = self.output_layers.get(task_type, {}).get(dimension, {}).get("layer_type", "")
+        activation = self.output_layers.get(task_type, {}).get(dimension, {}).get("activation", "")
+        return layer_type, activation
 
     def _set_start_layers(self):
         self.start_layers = {}
 
         def _create(dts_data: dict, location: LayerLocation):
             self.output_shape = {}
+            layer_type = LayerType.Dense
+            activation = "softmax"
             available = [data["data_name"] for name, data in dts_data.items()]
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
                 if location == LayerLocation.output:
-                    self._change_output_layer(name)
-                    default_layers_params = self.layers_params.get(LayerType.Dense)
+                    layer_type, activation = self._change_output_layer(name)
+                    default_layers_params = self.layers_params.get(layer_type)
                     out_param_dict = {
                         x: {y: default_layers_params[x].get(y).get('default')
                             for y in default_layers_params[x].keys()}
                         for x in default_layers_params.keys()
                     }
-                    out_param_dict['main']['units'] = self.dts.num_classes[name]
-                    if self.dts.name == 'mnist':
-                        out_param_dict['main']['activation'] = 'softmax'
+                    units = self.dts.num_classes.get(name,
+                                                     self.dts.output_shape.get(name)[-1] if
+                                                     self.dts.output_shape.get(name) else 1)
+                    if out_param_dict.get('main', {}).get('units', None):
+                        out_param_dict['main']['units'] = units
+                    else:
+                        out_param_dict['main']['filters'] = units
+                    out_param_dict['main']['activation'] = activation
+                    self.output_shape.setdefault(name, list(self.dts.output_shape.get(name, [])))
                 else:
                     out_param_dict = {}
-                self.output_shape.setdefault(name, list(self.dts.output_shape.get(name, [])))
                 self.start_layers[index] = {
                     "config": {
                         "name": f"l{index}_{data_name}",
                         "dts_layer_name": name,
                         "type": LayerType.Input
                         if location == LayerLocation.input
-                        else LayerType.Dense,
+                        else layer_type,
                         "location_type": location,
                         "up_link": [],
                         "input_shape": list(self.dts.input_shape.get(name, [])),
@@ -1031,8 +1079,8 @@ class Exchange(StatesData, GuiExch):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
             self.out_data["progress_status"]["percents"] = (
-                self.epoch / self.epochs
-            ) * 100
+                                                                   self.epoch / self.epochs
+                                                           ) * 100
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
