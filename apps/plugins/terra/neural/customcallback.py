@@ -14,8 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.05
-
+__version__ = 0.07
 
 class CustomCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
@@ -166,9 +165,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        # self.Exch.show_text_data(
-        #     f"Добавлены колбэки: {self.callbacks_name}"
-        # )
 
     def save_lastmodel(self) -> None:
         """
@@ -339,7 +335,7 @@ class CustomCallback(keras.callbacks.Callback):
             eta_format = '%d сек' % eta
 
         info = ' %s' % eta_format
-        return info
+        return [info, int(eta)]
 
     def on_train_begin(self, logs=None):
         self._start_time = time.time()
@@ -356,17 +352,17 @@ class CustomCallback(keras.callbacks.Callback):
         if stop:
             self.model.stop_training = True
             msg = f'ожидайте окончания эпохи {self.epoch + 1}:' \
-                  f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+                  f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             self.batch += 1
             self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.epoch + 1}/{self.epochs}:' \
-                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)}, '
+                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             msg_progress_end = f'Расчетное время окончания:' \
-                               f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)}, '
+                               f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
             msg_progress_start = f'Время выполнения:' \
-                                 f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}, '
+                                 f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]}, '
             self.batch += 1
             self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
                                          msg_progress_end + msg_epoch + msg_batch))
@@ -376,11 +372,10 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
         self.out_table_data = {
             "epoch": {
-                "number": epoch+1,
-                "time": self.msg_epoch,
+                "number": self.last_epoch+1,
+                "time": self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)[1],
                 "data": {},
             },
             "summary": "",
@@ -401,7 +396,7 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
-                self.out_table_data["data"].update({output_key: callback_table_data[output_key]})
+                self.out_table_data["epoch"]["data"].update({output_key: callback_table_data[output_key]})
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
                 callback_table_data = self.callbacks[i].epoch_end(
@@ -413,27 +408,35 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
-                self.out_table_data["data"].update({output_key: callback_table_data[output_key]})
+                self.out_table_data["epoch"]["data"].update({output_key: callback_table_data[output_key]})
         self.last_epoch += 1
         self.Exch.show_current_epoch(epoch)
-        self.Exch.show_text_data(f"{self.out_table_data}")
+        self.Exch.show_text_data(f'{self.out_table_data}')
         self.save_lastmodel()
 
     def on_train_end(self, logs=None):
+        self.out_table_data = {
+            "epoch": {
+                "number": None,
+                "time": None,
+                "data": {},
+            },
+            "summary": "",
+            }
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
         if self.model.stop_training:
-            self.Exch.show_text_data(
-                f'Затрачено времени на обучение: '
-                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+            self.out_table_data["summary"] = f'Затрачено времени на обучение: '\
+                                             f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
+            self.Exch.show_text_data(f'{self.out_table_data}')
             msg = f'Модель сохранена.'
             self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
         else:
-            self.Exch.show_text_data(
-                f'Затрачено времени на обучение: '
-                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+            self.out_table_data["summary"] = f'Затрачено времени на обучение: ' \
+                                             f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
+            self.Exch.show_text_data(f'{self.out_table_data}')
 
 
 class ClassificationCallback:
@@ -498,13 +501,7 @@ class ClassificationCallback:
         self.y_pred = []
         self.loss = ""
         self.out_table_data = {}
-        # self.out_table_data = {
-        #     "epoch": {
-        #         "number": 0,
-        #         "data": [],
-        #         },
-        #     "summary": "",
-        #     }
+
         pass
 
     def plot_result(self, output_key: str = None):
@@ -610,8 +607,6 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            # title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
-            #         f" Истина: {classes_labels[true_idx]}"
             title = [
                 {
                     "label": "Выход",
@@ -766,19 +761,9 @@ class ClassificationCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        # epoch_metric_data = ""
-        # epoch_val_metric_data = ""
         epoch_table_data = {
             output_key: {}
             }
-        # out_table_data = {
-        #     "epoch": {
-        #         "number": epoch+1,
-        #         "time": msg_epoch,
-        #         "data": [],
-        #     },
-        #     "summary": "",
-        #     }
         for metric_idx in range(len(self.clbck_metrics)):
             # # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
@@ -808,27 +793,8 @@ class ClassificationCallback:
             epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
             epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
 
-
-            # epoch_metric_data = {"label": metric_name,
-            #                      "value": self.history[metric_name][-1]}
-            # epoch_val_metric_data = {"label": val_metric_name,
-            #                          "value": self.history[val_metric_name][-1]}
-            # epoch_table_data["outputs"]["metric"].append(epoch_metric_data)
-            # epoch_table_data["outputs"]["val_metric"].append(epoch_val_metric_data)
-            # out_table_data["epoch"]["data"].append(epoch_table_data)
-
-            # epoch_metric_data += (
-            #     f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
-            # )
-            # epoch_val_metric_data += (
-            #     f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
-            # )
-
             if self.y_pred is not None:
-                # try:
-                # # распознаем и выводим результат по классам
-                # classes_accuracy = self.recognize_classes(self.y_pred[output_num], self.y_true[output_key])
-                # распознаем и выводим результат по классам
+               # распознаем и выводим результат по классам
                 # TODO считаем каждую метрику на каждом выходе
                 if metric_name.endswith("accuracy"):
                     metric_classes = self.evaluate_accuracy()
@@ -844,17 +810,10 @@ class ClassificationCallback:
                 dcls = {str(val_metric_name): self.acls_lst[metric_idx]}
                 dclsup.update(dcls)
                 self.predict_cls.update(dclsup)
-                # except Exception:
-                #     pass
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.plot_result(output_key)
-
-        # self.Exch.show_text_data(
-        #     f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
-        # )
-        # self.Exch.show_text_data(out_table_data)
 
         return epoch_table_data
 
@@ -926,6 +885,7 @@ class SegmentationCallback:
         self.y_pred = []
         self.loss = ""
         self.metric_classes = []
+        self.out_table_data = {}
         pass
 
     def plot_result(self, output_key: str = None) -> None:
@@ -1052,19 +1012,41 @@ class SegmentationCallback:
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
-            title = "Изображение"
+            title = [
+                {
+                    "label": "Выход",
+                    "value": output_key},
+                {
+                    "label": "Изображение",
+                    "value": None},
+            ]
+
             image_data.append((image, title))
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            title = "Истинная маска"
+            title = [
+                {
+                    "label": "Выход",
+                    "value": output_key},
+                {
+                    "label": "Истинная маска",
+                    "value": None},
+            ]
             true_mask_data.append((image, title))
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            title = "Маска предикта"
+            title = [
+                {
+                    "label": "Выход",
+                    "value": output_key},
+                {
+                    "label": "Маска предикта",
+                    "value": None},
+            ]
             pred_mask_data.append((image, title))
 
         data = {
@@ -1123,26 +1105,26 @@ class SegmentationCallback:
         dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         self.metric_classes = dice
 
-        def evaluate_mean_io_u(self, input_key: str = "input_1", smooth=1.0):
-            """
-            Compute dice coefficient for classes
-
-            Parameters:
-            smooth : float     to avoid division by zero
-
-            Returns:
-            -------
-            None
-            """
-            # TODO сделать для нескольких входов
-            if self.dataset.tags[input_key] == "images":
-                axis = (1, 2)
-            elif self.dataset.tags[input_key] == "text":
-                axis = 1
-            intersection = np.sum(self.y_true * self.y_pred, axis=axis)
-            union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
-            dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
-            self.metric_classes = dice
+        # def evaluate_mean_io_u(self, input_key: str = "input_1", smooth=1.0):
+        #     """
+        #     Compute dice coefficient for classes
+        #
+        #     Parameters:
+        #     smooth : float     to avoid division by zero
+        #
+        #     Returns:
+        #     -------
+        #     None
+        #     """
+        #     # TODO сделать для нескольких входов
+        #     if self.dataset.tags[input_key] == "images":
+        #         axis = (1, 2)
+        #     elif self.dataset.tags[input_key] == "text":
+        #         axis = 1
+        #     intersection = np.sum(self.y_true * self.y_pred, axis=axis)
+        #     union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
+        #     dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
+        #     self.metric_classes = dice
 
 
     def evaluate_loss(self):
@@ -1177,8 +1159,9 @@ class SegmentationCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+        epoch_table_data = {
+            output_key: {}
+            }
         self.idx = 0
         for metric_idx in range(len(self.clbck_metrics)):
             # проверяем есть ли метрика заданная функцией
@@ -1203,12 +1186,8 @@ class SegmentationCallback:
             dv = {str(val_metric_name): self.accuracy_val_metric[metric_idx]}
             self.history.update(dv)
 
-            epoch_metric_data += (
-                f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
-            )
-            epoch_val_metric_data += (
-                f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
-            )
+            epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
+            epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
 
             if self.y_pred is not None:
                 # TODO Добавить другие варианты по используемым метрикам
@@ -1220,7 +1199,8 @@ class SegmentationCallback:
                 elif metric_name.endswith("loss"):
                     self.evaluate_loss()
                 else:
-                    print(f"Выбранная метрика {metric_name} не поддерживается для вычислений")
+                    self.Exch.print_2status_bar((f"Выбранная метрика {metric_name}",
+                                                 "не поддерживается для вычислений"))
                 # собираем в словарь по метрикам и классам
                 if len(self.metric_classes):
                     dclsup = {}
@@ -1234,9 +1214,7 @@ class SegmentationCallback:
             if self.epoch % self.step == 0:
                 self.plot_result(output_key=output_key)
 
-        self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
-        )
+        return epoch_table_data
 
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
@@ -1245,7 +1223,6 @@ class SegmentationCallback:
             if self.data_tag == 'images':
                 if self.show_best or self.show_worst:
                     self.plot_images(input_key="input_1", output_key=output_key)
-        pass
 
 
 class TimeseriesCallback:
@@ -1401,14 +1378,15 @@ class TimeseriesCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+        epoch_table_data = {
+            output_key: {}
+            }
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
                 metric_name = self.losses[i].name
                 self.losses[i] = metric_name
-            if len(self.dataset.Y) > 1:  # or (len(self.losses) > 1 and 'loss' not in self.losses):
+            if len(self.dataset.Y) > 1:
                 metric_name = f'{output_key}_{self.losses[i]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -1425,21 +1403,16 @@ class TimeseriesCallback:
                 self.predicts[val_metric_name] = (y_true, y_pred)
                 self.vmet_name = val_metric_name
 
-            epoch_metric_data += (
-                f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
-            )
-            epoch_val_metric_data += (
-                f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
-            )
+            epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
+            epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.comment = f" эпоха {epoch + 1}"
                 self.idx = 0
                 self.plot_result(output_key=output_key)
-        self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
-        )
+
+        return epoch_table_data
 
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
@@ -1485,7 +1458,7 @@ class RegressionCallback:
         self.show_final = show_final
         self.plot_scatter = plot_scatter
         self.dataset = dataset
-        self.exchange = exchange
+        self.Exch = exchange
         self.epoch = 0
         self.x_Val = {}
         self.y_true = []
@@ -1536,7 +1509,7 @@ class RegressionCallback:
                 (list(range(loss_len)), self.history[vshowmet], vshowmet),
             ]
             data.update({key: value})
-        self.exchange.show_plot_data(data)
+        self.Exch.show_plot_data(data)
 
         if self.plot_scatter:
             data = {}
@@ -1547,7 +1520,7 @@ class RegressionCallback:
             key = (scatter_title, xlabel, ylabel)
             value = [(y_true.reshape(-1), y_pred.reshape(-1), "Регрессия")]
             data.update({key: value})
-            self.exchange.show_scatter_data(data)
+            self.Exch.show_scatter_data(data)
 
         pass
 
@@ -1566,8 +1539,9 @@ class RegressionCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+        epoch_table_data = {
+            output_key: {}
+            }
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
@@ -1588,12 +1562,8 @@ class RegressionCallback:
             if self.y_pred is not None:
                 self.predicts[val_metric_name] = (y_true, y_pred)
 
-            epoch_metric_data += (
-                f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
-            )
-            epoch_val_metric_data += (
-                f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
-            )
+            epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
+            epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
 
         if self.step > 0:
             if self.epoch % self.step == 0:
@@ -1601,10 +1571,7 @@ class RegressionCallback:
                 self.idx = 0
                 self.plot_result(output_key=output_key)
 
-        self.exchange.show_text_data(
-            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
-        )
-        pass
+        return epoch_table_data
 
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
@@ -1612,7 +1579,6 @@ class RegressionCallback:
             self.comment = f"на {self.epoch + 1} эпохе"
             self.idx = 0
             self.plot_result(output_key=output_key)
-        pass
 
 
 def image_to_base64(image_as_array):
