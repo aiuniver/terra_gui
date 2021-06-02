@@ -55,7 +55,7 @@
             let _dataset = "";
 
             let _onWindowResize = () => {
-                // this.css("padding-top", `${filters.innerHeight()+1}px`);
+                this.css("padding-top", `${filters.innerHeight()+1}px`);
                 this.removeClass("hidden");
             }
 
