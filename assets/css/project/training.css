@@ -315,11 +315,20 @@
     height:auto !important;
     vertical-align:top;
 }
-.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .name {
-    line-height:1.25;
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .info {
+    line-height:1;
     margin:5px 0 0 0;
+}
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .info > .param > * {
+    line-height:1.25;
+}
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .info > .param > label {
     color:#A7BED3;
     font-size:.75rem;
+}
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .info > .param > span {
+    font-size:.875rem;
+    font-weight:600;
 }
 
 /* project-training-properties */

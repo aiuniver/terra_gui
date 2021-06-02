@@ -246,7 +246,7 @@
                             this.validate = false;
                             training_results.charts = [];
                             training_results.images = [];
-                            training_results.texts = [];
+                            training_results.texts = {};
                             training_results.scatters = [];
                             _action_training.text("Обучить");
                             window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
@@ -464,11 +464,15 @@
                     this.images.html("");
                     for (let name in images) {
                         let group = images[name],
-                            item_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
+                            group_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
                         group.forEach((item) => {
-                            item_block.children(".inner").append(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /><div class="name">${item.title}</div></div></div>`);
+                            let item_block = $(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /><div class="info"></div></div></div>`);
+                            item.title.forEach((info) => {
+                                item_block.find(".info").append($(`<div class="param"><label>${info.label}: </label><span>${info.value}</span></div>`));
+                            });
+                            group_block.children(".inner").append(item_block);
                         });
-                        this.images.append(item_block);
+                        this.images.append(group_block);
                     }
                 }
             });
@@ -492,11 +496,12 @@
                         '"': '&#34;',
                         "'": '&#39;'
                     };
-                    this.texts.children(".inner").html(
-                        texts.map((item) => {
-                            return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
-                        }).join("")
-                    );
+                    console.log(texts);
+                    // this.texts.children(".inner").html(
+                    //     texts.map((item) => {
+                    //         // return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
+                    //     }).join("")
+                    // );
                 }
             });
 
