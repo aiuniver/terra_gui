@@ -1,18 +1,15 @@
 from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from tensorflow.keras.preprocessing.text import Tokenizer, text_to_word_sequence
-from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator, pad_sequences
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from tensorflow.keras import utils
 from sklearn.model_selection import train_test_split
-from sklearn.utils import shuffle
 from sklearn.cluster import KMeans
 from time import time
-from time import sleep
 from PIL import Image, ImageColor
+from IPython import display
 from inspect import getmembers, signature
-import subprocess
-from subprocess import STDOUT, check_call
 from librosa import load as librosaload
 import librosa.feature as librosafeature
 import os
@@ -21,19 +18,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pathlib
-import gdown
 import re
 import pymorphy2
 import shutil
 from gensim.models import word2vec
 from tqdm.notebook import tqdm
-import threading
 from io import open as ioopen
-from IPython.display import clear_output
 from terra_ai.guiexchange import Exchange
 import ipywidgets as widgets
 import dill
-import concurrent.futures
 import configparser
 import joblib
 from ast import literal_eval
@@ -42,7 +35,7 @@ from tempfile import mkdtemp
 
 # import cv2
 
-__version__ = 0.312
+__version__ = 0.315
 
 tr2dj_obj = Exchange()
 
@@ -50,10 +43,6 @@ tr2dj_obj = Exchange()
 class DTS(object):
 
     def __init__(self, path=mkdtemp(), exch_obj=tr2dj_obj):
-
-        if 'custom' in globals().keys():
-            for key, value in custom.__dict__.items():
-                self.__dict__[key] = value
 
         self.Exch = exch_obj
         self.django_flag = False
@@ -66,11 +55,11 @@ class DTS(object):
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
-        self.source_datatype: dict = {}
+        self.source_datatype: str = ''
         self.source_shape: dict = {}
         self.input_datatype: str = ''
         self.input_shape: dict = {}
-        self.output_datatype: str = ''
+        self.output_datatype: dict = {}
         self.output_shape: dict = {}
         self.one_hot_encoding = {}
         self.num_classes: dict = {}
@@ -84,10 +73,12 @@ class DTS(object):
 
         self.X: dict = {}
         self.Y: dict = {}
-        self.x_Scaler = {}
-        self.y_Scaler = {}
-        self.tokenizer = {}
-        self.word2vec = {}
+        self.x_Scaler: dict = {}
+        self.y_Scaler: dict = {}
+        self.tokenizer: dict = {}
+        self.word2vec: dict = {}
+        self.df: dict = {}
+        self.tsgenerator: dict = {}
 
         self.y_Cls: np.array
         self.peg: list = []
@@ -110,7 +101,8 @@ class DTS(object):
         # ['болезни', 'жанры_музыки', 'трафик', 'диалоги']
 
         datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
-                    'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом', 'трейдинг',
+                    'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом',
+                    'трейдинг',
                     'квартиры']
 
         datasets_dict = {}
@@ -122,7 +114,8 @@ class DTS(object):
     def get_parameters_dict(self) -> dict:
 
         parameters = {}
-        list_of_params = ['images', 'text', 'audio', 'dataframe'] + ['classification', 'segmentation', 'text_segmentation',
+        list_of_params = ['images', 'text', 'audio', 'dataframe'] + ['classification', 'segmentation',
+                                                                     'text_segmentation',
                                                                      'regression', 'timeseries']
 
         for elem in list_of_params:
@@ -158,25 +151,27 @@ class DTS(object):
         button = widgets.Button(description='Загрузить', disabled=False, button_style='', tooltip='Загрузить датасет',
                                 icon='check')
 
-        #Первая вкладка
+        # Первая вкладка
         if os.getcwd() == '/content':
             filelist = os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
             if not filelist:
                 filelist = ['Нет файлов']
-        else: # Для тестирования на локалке
+        else:  # Для тестирования на локалке
             filelist = ['Гугл диск недоступен.']
         zip_name = widgets.Dropdown(options=filelist, value=filelist[0], description='Файл', disabled=False)
         google_drive = widgets.VBox([zip_name, button])
 
-        #Вторая вкладка
+        # Вторая вкладка
         url_google = widgets.Text(value='', placeholder='https://', description='URL:', disabled=False)
         vbox_download = widgets.VBox([url_google, button])
 
         # Третья вкладка
         datasets = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters', 'sber',
-         'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом', 'трейдинг',
-         'квартиры']
-        terra_dataset = widgets.RadioButtons(options=datasets, value=datasets[0], description='Список баз:', disabled=False)
+                    'автомобили', 'автомобили_3', 'самолеты', 'губы', 'заболевания', 'договоры', 'умный_дом',
+                    'трейдинг',
+                    'квартиры']
+        terra_dataset = widgets.RadioButtons(options=datasets, value=datasets[0], description='Список баз:',
+                                             disabled=False)
         vbox_terra_dataset = widgets.VBox([terra_dataset, button])
 
         load_tab = widgets.Tab()
@@ -185,7 +180,6 @@ class DTS(object):
         load_tab.set_title(title='Google Drive', index=0)
         load_tab.set_title(title='URL-ссылка', index=1)
         load_tab.set_title(title='Terra-ai', index=2)
-
 
         button.on_click(on_button_clicked)
 
@@ -370,12 +364,13 @@ class DTS(object):
                                 list_of_outputs[0].children[3].result.children[2].result.result.children[j].children[
                                     1].value, 'RGB'))
                     elif list_of_outputs[i].children[3].result.children[2].kwargs['x'] == 'Файл аннотаций':
-                        classes_dict = self._find_colors(list_of_outputs[i].children[3].result.children[2].result.value, txt_file=True)
+                        classes_dict = self._find_colors(list_of_outputs[i].children[3].result.children[2].result.value,
+                                                         txt_file=True)
                     params['classes_dict'] = classes_dict
                 else:
                     for j in range(len(list_of_outputs[i].children[3].result.children)):
                         params[list_of_outputs[i].children[3].result.children[j].description] = \
-                        list_of_outputs[i].children[3].result.children[j].value
+                            list_of_outputs[i].children[3].result.children[j].value
                 dic['parameters'] = params
                 output_dicts[f'output_{i + 1}'] = dic
 
@@ -412,12 +407,12 @@ class DTS(object):
                                                   ('Временные ряды', 'timeseries')], value='classification',
                                          description='Тип задачи')
             data_type_out = widgets.Dropdown(options=[('Картинки', 'images'), ('Текст', 'text'), ('Аудио', 'audio'),
-                                                  ('Классификация', 'classification'), ('Регргессия', 'regression'),
-                                                  ('Обнаружение объектов', 'object_detection'),
-                                                  ('Сегментация изображений', 'segmentation'),
-                                                  ('Сегментация текстов', 'text_segmentation'),
-                                                  ('Временные ряды', 'timeseries')], value='classification',
-                                         description='Тип данных')
+                                                      ('Классификация', 'classification'), ('Регргессия', 'regression'),
+                                                      ('Обнаружение объектов', 'object_detection'),
+                                                      ('Сегментация изображений', 'segmentation'),
+                                                      ('Сегментация текстов', 'text_segmentation'),
+                                                      ('Временные ряды', 'timeseries')], value='classification',
+                                             description='Тип данных')
             data = widgets.interactive(build_widget, x=data_type_out)
 
             wid = widgets.VBox([title, name, task_type, data])
@@ -435,7 +430,8 @@ class DTS(object):
         slider2.observe(value_changed_2, 'value')
 
         dataset_name = widgets.Text(value='', description='Датасет', placeholder='Название датасета', disabled=False)
-        dataset_hashtags = widgets.Text(value='', description='Пользовательские теги', placeholder='Теги через пробел', disabled=False)
+        dataset_hashtags = widgets.Text(value='', description='Пользовательские теги', placeholder='Теги через пробел',
+                                        disabled=False)
         button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
         button.on_click(create_dataset)
         first_row = widgets.HBox([slider, slider2])
@@ -451,8 +447,12 @@ class DTS(object):
 
         def send_arrays(b):
 
-            full_val = len(set([bool(globals[f'xval_{i}'].value) for i in range(inputs)] + [bool(globals[f'yval_{i}'].value) for i in range(outputs)]))
-            full_test = len(set([bool(globals[f'xtest_{i}'].value) for i in range(inputs)] + [bool(globals[f'ytest_{i}'].value) for i in range(outputs)]))
+            full_val = len(set(
+                [bool(globals[f'xval_{i}'].value) for i in range(inputs)] + [bool(globals[f'yval_{i}'].value) for i in
+                                                                             range(outputs)]))
+            full_test = len(set(
+                [bool(globals[f'xtest_{i}'].value) for i in range(inputs)] + [bool(globals[f'ytest_{i}'].value) for i in
+                                                                              range(outputs)]))
             if full_val != 1:
                 assert full_val == 1, 'Колонка валидационной выборки заполнена не полностью.'
             if full_test != 1:
@@ -464,10 +464,10 @@ class DTS(object):
             tags = {}
             task = {}
             for i in range(inputs):
-                tags[f'input_{i+1}'] = globals[f'x_tag_{i}'].value
+                tags[f'input_{i + 1}'] = globals[f'x_tag_{i}'].value
             for i in range(outputs):
-                tags[f'output_{i+1}'] = globals[f'y_tag_{i}'].value
-                task[f'output_{i+1}'] = globals[f'y_task_{i}'].value
+                tags[f'output_{i + 1}'] = globals[f'y_tag_{i}'].value
+                task[f'output_{i + 1}'] = globals[f'y_task_{i}'].value
             self.tags = tags
             self.task_type = task
 
@@ -542,7 +542,7 @@ class DTS(object):
                 split_size = None
 
             self.prepare_custom_dataset(dic_of_X, dic_of_Y, x_scaler=x_scaler, y_scaler=y_scaler, x_shape=x_shape,
-                                y_shape=y_shape, one_hot=ohe, split=split_size)
+                                        y_shape=y_shape, one_hot=ohe, split=split_size)
 
             if checkbox_google.value:
                 directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
@@ -564,7 +564,9 @@ class DTS(object):
                                                   description=f'input_{i + 1}:', disabled=False)
             list_of_widgets.append(globals[f'x_name_{i}'])
             globals[f'x_tag_{i}'] = widgets.Dropdown(
-                options=[('Картинки', 'images'), ('Видео', 'video'), ('Текст', 'text'), ('Аудио', 'audio'), ('Временной ряд', 'timeseries'), ('Датафрейм', 'regression'), ('Другое', 'other')], value='other',
+                options=[('Картинки', 'images'), ('Видео', 'video'), ('Текст', 'text'), ('Аудио', 'audio'),
+                         ('Временной ряд', 'timeseries'), ('Датафрейм', 'regression'), ('Другое', 'other')],
+                value='other',
                 description=f'Тип данных:', disabled=False)
             list_of_widgets.append(globals[f'x_tag_{i}'])
             globals[f'xtrain_{i}'] = widgets.Text(value='x_train', description='X/Train:',
@@ -619,7 +621,8 @@ class DTS(object):
         checkbox_split = widgets.Checkbox(value=False, description='Train/Val/Test split', disabled=False)
 
         dataset_name = widgets.Text(value='', description='Датасет:', placeholder='Название датасета', disabled=False)
-        dataset_hashtags = widgets.Text(value='', description='Пользовательские теги', placeholder='Теги через пробел', disabled=False)
+        dataset_hashtags = widgets.Text(value='', description='Пользовательские теги', placeholder='Теги через пробел',
+                                        disabled=False)
         button = widgets.Button(description='Сформировать', disabled=False, button_style='', icon='check')
         button.on_click(send_arrays)
         dump_button = widgets.HBox([dataset_name, dataset_hashtags, button])
@@ -727,7 +730,7 @@ class DTS(object):
         else:
             return None
 
-    def _set_source(self, name: str):
+    def _set_source(self, name: str) -> str:
 
         source = {'mnist': 'tensorflow.keras',
                   'fashion_mnist': 'tensorflow.keras',
@@ -757,7 +760,8 @@ class DTS(object):
 
     def _set_datatype(self, **kwargs) -> str:
 
-        dtype = {1: 'DIM',
+        dtype = {0: 'DIM',
+                 1: 'DIM',
                  2: 'DIM',
                  3: '1D',
                  4: '2D',
@@ -771,9 +775,10 @@ class DTS(object):
 
     def _get_zipfiles(self) -> list:
         from django.conf import settings
-        return sorted(os.listdir(f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"))
+        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
+        return os.listdir(os.path.join(settings.TERRA_AI_DATA_PATH, 'datasets', 'sources'))
 
-    def _find_colors(self, name, num_classes=None, mask_range=None, txt_file=False):
+    def _find_colors(self, name: str, num_classes=None, mask_range=None, txt_file=False) -> list:
 
         if txt_file:
             txt = pd.read_csv(os.path.join(self.file_folder, name), sep=':')
@@ -799,8 +804,9 @@ class DTS(object):
                         if color not in color_list:
                             for in_color in color_list:
                                 if color[0] in range(in_color[0] - mask_range, in_color[0] + mask_range) and color[
-                                    1] in range(in_color[1] - mask_range, in_color[1] + mask_range) and color[2] in range(
-                                        in_color[2] - mask_range, in_color[2] + mask_range):
+                                    1] in range(in_color[1] - mask_range, in_color[1] + mask_range) and color[
+                                    2] in range(
+                                    in_color[2] - mask_range, in_color[2] + mask_range):
                                     add_condition = False
                                     break
                                 else:
@@ -814,7 +820,7 @@ class DTS(object):
 
         return color_list
 
-    def load_data(self, name, mode, link=None) -> None:
+    def load_data(self, name: str, mode: str, link=None):
 
         """
         Create folder and download base in it. Does not change the files original format.
@@ -961,7 +967,6 @@ class DTS(object):
         def load_arrays():
 
             inp_datatype = []
-            out_datatype = []
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
                 if arr[0] == 'X':
                     self.X[arr[2:-3]] = {'data_name': f'Вход_{arr[-4]}',
@@ -973,16 +978,17 @@ class DTS(object):
                     self.Y[arr[2:-3]] = {'data_name': f'Выход_{arr[-4]}',
                                          'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
                     self.output_shape[arr[2:-3]] = self.Y[arr[2:-3]]['data'][0].shape[1:]
-                    out_datatype.append(self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape))
+                    self.output_datatype[arr[2:-3]] = self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape)
                     self.tags[arr[2:-3]] = tag_list[1]
             self.input_datatype = ' '.join(inp_datatype)
-            self.output_datatype = ' '.join(out_datatype)
 
         def load_scalers():
 
             if 'scalers' in os.listdir(self.file_folder):
-                X_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if 'X' in sclr]
-                Y_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if 'Y' in sclr]
+                X_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if
+                             'X' in sclr]
+                Y_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if
+                             'Y' in sclr]
             else:
                 X_scalers = []
                 Y_scalers = []
@@ -1031,10 +1037,12 @@ class DTS(object):
 
             pass
 
-        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:
+        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing',
+                                       'reuters']:
 
             if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv', test=True)
+                self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv',
+                                    test=True)
                 self.task_type['output_1'] = 'classification'
             elif options['dataset_name'] == 'imdb':
                 self.keras_datasets(options['dataset_name'], one_hot_encoding=True, test=True)
@@ -1052,17 +1060,23 @@ class DTS(object):
 
             config = configparser.ConfigParser()
             config.read(os.path.join(self.file_folder, 'config.ini'), encoding="utf-8")
-            self.name = config.get('ATTRIBUTES', 'name')
-            self.source_datatype = literal_eval(config.get('ATTRIBUTES', 'source_datatype'))
+            name = config.get('ATTRIBUTES', 'name')
+            if name == 'Акции сбербанка':
+                name = 'sber'
+            elif name == 'Акции газпрома':
+                name = 'трейдинг'
+            num_classes = literal_eval(config.get('ATTRIBUTES', 'num_classes'))
+            if isinstance(num_classes, dict):  # ЗАПЛАТКА из за базы "трейдинг" и "сбер"
+                num_classes = num_classes['output_1']
+            self.name = name
+            self.source_datatype = list(literal_eval(config.get('ATTRIBUTES', 'source_datatype')).values())[0]
             self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
             self.classes_names['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
             self.classes_colors['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
-            self.num_classes['output_1'] = int(config.get('ATTRIBUTES', 'num_classes'))
+            self.num_classes['output_1'] = num_classes
             self.task_type = literal_eval(config.get('ATTRIBUTES', 'task_type'))
             self.one_hot_encoding = literal_eval(config.get('ATTRIBUTES', 'one_hot_encoding'))
-            if self.name == 'квартиры': # TODO - ЗАПЛАТКА!!!!!!
-                self.num_classes['output_1'] = 1
-            if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
+            if self.name == 'договоры':  # TODO - ЗАПЛАТКА!!!!!!
                 self.task_type['output_1'] = 'segmentation'
             tag_list = self._set_tag(self.name)
 
@@ -1090,6 +1104,7 @@ class DTS(object):
                         self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                     else:
                         self.Exch.print_progress_bar(progress_bar_status)
+            self.dts_prepared = True
 
         return self
 
@@ -1114,14 +1129,13 @@ class DTS(object):
                                        Data[1][out]['data'][0][test_mask])
 
         self.source = 'custom'
+        source_datatype = []
         inp_datatype = []
-        out_datatype = []
 
         for inp in inputs:
 
             self.source_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            self.source_datatype[inp] = self._set_datatype(shape=self.X[inp]['data'][0].shape)
-
+            source_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
             if options['x_scaler'][inp] in ['StandardScaler', 'MinMaxScaler']:
                 if options['x_scaler'][inp] == 'MinMaxScaler':
                     self.x_Scaler[inp] = MinMaxScaler()
@@ -1220,10 +1234,10 @@ class DTS(object):
             else:
                 self.one_hot_encoding[out] = False
             self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
-            out_datatype.append(self._set_datatype(shape=self.Y[out]['data'][0].shape))
+            self.output_datatype[out] = self._set_datatype(shape=self.Y[out]['data'][0].shape)
 
+        self.source_datatype = ' '.join(source_datatype)
         self.input_datatype = ' '.join(inp_datatype)
-        self.output_datatype = ' '.join(out_datatype)
         self.dts_prepared = True
         if not self.django_flag:
             print(f'Формирование массивов завершено.')
@@ -1242,12 +1256,13 @@ class DTS(object):
 
     def inverse_data(self, array=None, scaler=None):
 
+        # Не доделано
         if scaler:
             array = self.__dict__[scaler].inverse_transform(array)
 
         return array
 
-    def keras_datasets(self, dataset, **options):
+    def keras_datasets(self, dataset: str, **options):
 
         def print_data(name, x_train, y_train):
 
@@ -1312,17 +1327,21 @@ class DTS(object):
 
         self.source_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
         self.language = self._set_language(self.name)
-        self.source_datatype['input_1'] = self._set_datatype(shape=x_Train.shape)
+        self.source_datatype += f' {self._set_datatype(shape=x_Train.shape)}'
         if 'classification' in self.tags['output_1']:
             self.num_classes['output_1'] = len(np.unique(y_Train, axis=0))
             if self.name == 'fashion_mnist':
-                self.classes_names['output_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt',
-                                      'Sneaker', 'Bag', 'Ankle boot']
+                self.classes_names['output_1'] = ['T - shirt / top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal',
+                                                  'Shirt',
+                                                  'Sneaker', 'Bag', 'Ankle boot']
             elif self.name == 'cifar10':
-                self.classes_names['output_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship',
-                                      'truck']
+                self.classes_names['output_1'] = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog',
+                                                  'horse', 'ship',
+                                                  'truck']
             else:
                 self.classes_names['output_1'] = [str(i) for i in range(len(np.unique(y_Train, axis=0)))]
+        else:
+            self.num_classes['output_1'] = 1
 
         if not self.django_flag:
             print_data(self.name, x_Train, y_Train)
@@ -1341,7 +1360,8 @@ class DTS(object):
 
             if self.name == 'imdb' or self.name == 'reuters':
                 if not self.django_flag:
-                    print(f'Scaling required dataset is currently unavaliable. {options["scaler"]} was not implemented.')
+                    print(
+                        f'Scaling required dataset is currently unavaliable. {options["scaler"]} was not implemented.')
             else:
                 shape_xt = x_Train.shape
                 shape_xv = x_Val.shape
@@ -1391,7 +1411,7 @@ class DTS(object):
         self.input_shape['input_1'] = x_Train.shape if len(x_Train.shape) < 2 else x_Train.shape[1:]
         self.input_datatype = self._set_datatype(shape=x_Train.shape)
         self.output_shape['output_1'] = y_Train.shape[1:]
-        self.output_datatype = self._set_datatype(shape=y_Train.shape)
+        self.output_datatype['output_1'] = self._set_datatype(shape=y_Train.shape)
 
         self.X = {'input_1': {'data_name': 'Вход',
                               'data': (x_Train, x_Val, None)}}
@@ -1420,7 +1440,7 @@ class DTS(object):
         return self
 
     def images(self, folder_name=[''], height=176, width=220, net=['Convolutional', 'Linear'],
-               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -1451,7 +1471,7 @@ class DTS(object):
 
                 files = sorted(os.listdir(temp_path))
                 for j in range(len(self.user_parameters['out'])):
-                    if self.user_parameters['out'][f'output_{j+1}']['tag'] == 'object_detection':
+                    if self.user_parameters['out'][f'output_{j + 1}']['tag'] == 'object_detection':
 
                         data = {}
                         with open(os.path.join(self.file_folder, 'obj.data'), 'r') as dt:
@@ -1486,32 +1506,30 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
+                        if idx == progress_bar.total and i + 1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
-                self.peg.append(idx+self.peg[-1])
+                self.peg.append(idx + self.peg[-1])
 
             break
 
         X = np.array(X)
         Y_cls = np.array(Y_cls)
-        self.source_datatype[f'input_{self.iter}'] = self._set_datatype(shape=X.shape)
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-
             self.x_Scaler[f'input_{self.iter}'].fit(X)
             X = self.x_Scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = False
 
         if net == 'Linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
@@ -1522,7 +1540,7 @@ class DTS(object):
 
         return X
 
-    # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    # def video(self, folder_name=[''], height=64, width=64, max_frames_per_class=10000, scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
     #
     #     if folder_name == None:
     #         folder_name = self.file_folder
@@ -1594,7 +1612,8 @@ class DTS(object):
     #
     #     return X
 
-    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, embedding=False, embedding_size=200):
+    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False,
+             bag_of_words=False, embedding=False, embedding_size=200) -> np.ndarray:
 
         def read_text(file_path):
 
@@ -1606,9 +1625,11 @@ class DTS(object):
                 for del_symb in del_symbols:
                     text = text.replace(del_symb, ' ')
             for i in range(len(self.user_parameters['out'])):
-                if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'text_segmentation':
-                    open_symb = self.user_parameters['out'][f'output_{i+1}']['parameters']['open_tags'].split(' ')[0][0]
-                    close_symb = self.user_parameters['out'][f'output_{i+1}']['parameters']['open_tags'].split(' ')[0][-1]
+                if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
+                    open_symb = self.user_parameters['out'][f'output_{i + 1}']['parameters']['open_tags'].split(' ')[0][
+                        0]
+                    close_symb = \
+                    self.user_parameters['out'][f'output_{i + 1}']['parameters']['open_tags'].split(' ')[0][-1]
                     text = re.sub(open_symb, f" {open_symb}", text)
                     text = re.sub(close_symb, f"{close_symb} ", text)
                     break
@@ -1684,7 +1705,7 @@ class DTS(object):
                 x_vector.append(tmp)
                 peg_idx += 1
                 if cls_idx == round(sum(y[i]) / len(y[i]), 0):
-                    self.peg.append(peg_idx-1)
+                    self.peg.append(peg_idx - 1)
                     cls_idx += 1
                 if peg_idx == len(y):
                     self.peg.append(peg_idx - 1)
@@ -1739,7 +1760,7 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
+                        if idx == progress_bar.total and i + 1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
@@ -1777,7 +1798,8 @@ class DTS(object):
                     Y.append(i)
             x = get_set_from_indexes(X, x_len, step)
             y = get_set_from_indexes(Y, x_len, step)
-            self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10, min_count=1, workers=10, iter=10)
+            self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10, min_count=1,
+                                                                    workers=10, iter=10)
             X, Y = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
         else:
             X, Y = create_sets_multi_classes(text_seq, x_len, step)
@@ -1785,107 +1807,121 @@ class DTS(object):
             if bag_of_words:
                 X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
 
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
+        self.x_Scaler[f'input_{self.iter}'] = None
+
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
             del Y
 
         return X
 
-    def dataframe(self, file_name=[''], separator='', encoding='utf-8', x_cols='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    def dataframe(self, file_name=[''], separator='', encoding='utf-8', x_cols='',
+                  scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
 
         self.classes_names[f'input_{self.iter}'] = x_cols.split(' ')
         if separator:
             X = pd.read_csv(os.path.join(self.file_folder, file_name), sep=separator, encoding=encoding)
         else:
             X = pd.read_csv(os.path.join(self.file_folder, file_name), encoding=encoding)
-        self.df = X
-        X = np.array(X[x_cols.split(' ')])
+        self.df[f'input_{self.iter}'] = X
+
+        X = X[x_cols.split(' ')].to_numpy()
+
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-
             self.x_Scaler[f'input_{self.iter}'].fit(X)
-
             X = self.x_Scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = None
+
+        # Если надо работать с временными рядами
+        for i in range(len(self.user_parameters['out'])):
+            if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'timeseries':
+                length = self.user_parameters['out'][f'output_{i + 1}']['parameters']['length']
+                batch_size = self.user_parameters['out'][f'output_{i + 1}']['parameters']['batch_size']
+                generator = TimeseriesGenerator(X, X, length=length, stride=1, batch_size=batch_size)
+                X = []
+                for i in range(len(generator)):
+                    X.append(generator[i][0])
+                X = np.array(X)
+                self.tsgenerator[f'input_{self.iter}'] = generator
+            break
 
         return X
 
-    def regression(self, y_col='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']):
+    def regression(self, y_col='') -> np.ndarray:
 
-
+        y_col = y_col.split(' ')
+        self.classes_names[f'output_{self.iter}'] = y_col
         self.num_classes[f'output_{self.iter}'] = len(y_col)
 
-        Y = self.df[y_col]
-        Y = np.array(Y)
+        for i in range(len(self.user_parameters['inp'])):
+            if self.user_parameters['inp'][f'input_{i + 1}']['tag'] == 'dataframe':
+                Y = self.df[f'input_{i + 1}'][y_col].to_numpy()
+                if self.user_parameters['inp'][f'input_{i + 1}']['parameters']['scaler'] in ['MinMaxScaler',
+                                                                                             'StandardScaler']:
+                    y_shape = Y.shape
+                    Y = Y.reshape(-1, 1)
+                    Y = self.x_Scaler[f'input_{i + 1}'].transform(Y)
+                    Y = Y.reshape(y_shape)
 
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
-            shape_y = Y.shape
-            Y = Y.reshape(-1, 1)
-
-            if scaler == 'MinMaxScaler':
-                self.y_Scaler[f'input_{self.iter}'] = MinMaxScaler()
-
-            elif scaler == 'StandardScaler':
-                self.y_Scaler[f'input_{self.iter}'] = StandardScaler()
-
-            self.y_Scaler[f'input_{self.iter}'].fit(Y)
-
-            Y = self.y_Scaler[f'input_{self.iter}'].transform(Y)
-            Y = Y.reshape(shape_y)
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.peg = [0]
+        for ratio in self.divide_ratio[1][:-1]:
+            self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
+        self.peg.append(len(Y))
 
         return Y
 
-    def timeseries(self, col_name='', scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'],
-                   x_len=1, train_len=2000, batch_size=1):
+    def timeseries(self, length=1, batch_size=1) -> np.ndarray:
 
-        self.classes_names[f'output_{self.iter}'] = col_name
-        self.num_classes[f'output_{self.iter}'] = len(col_name)
+        for i in range(len(self.user_parameters['inp'])):
+            if self.user_parameters['inp'][f'input_{i + 1}']['tag'] == 'dataframe':
+                columns = self.user_parameters['inp'][f'input_{i + 1}']['parameters']['x_cols']
 
-        x_Train = np.array([self.df.loc[:train_len, col_name]])
-        x_Val = np.array([self.df.loc[train_len + x_len:, col_name]])
+                self.classes_names[f'output_{self.iter}'] = columns.split(' ')
+                self.num_classes[f'output_{self.iter}'] = len(columns.split(' '))
 
-        self.source_shape = self.x_Train.shape[1:]
-        self.source_datatype = self._set_datatype(shape=self.x_Train.shape)
+                Y = []
+                for j in range(len(self.tsgenerator[f'input_{i + 1}'])):
+                    Y.append(self.tsgenerator[f'input_{i + 1}'][j][1])
+                Y = np.array(Y)
+                if self.user_parameters['inp'][f'input_{i + 1}']['parameters']['scaler'] in ['MinMaxScaler',
+                                                                                             'StandardScaler']:
+                    y_shape = Y.shape
+                    Y = Y.reshape(-1, 1)
+                    Y = self.x_Scaler[f'input_{i + 1}'].transform(Y)
+                    Y = Y.reshape(y_shape)
 
-        x_Train = np.reshape(x_Train, (-1, 1))
-        x_Val = np.reshape(x_Val, (-1, 1))
+        self.y_Scaler[f'output_{self.iter}'] = None
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.peg = [0]
+        for ratio in self.divide_ratio[1][:-1]:
+            self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
+        self.peg.append(len(Y))
 
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
-            if scaler == 'MinMaxScaler':
-                self.x_Scaler = MinMaxScaler()
-
-            elif scaler == 'StandardScaler':
-                self.x_Scaler = StandardScaler()
-
-            self.x_Scaler.fit(x_Train)
-
-            x_Train = self.x_Scaler.transform(x_Train)
-            x_Val = self.x_Scaler.transform(x_Val)
-
-
-        time_Train = TimeseriesGenerator(x_Train, x_Train, length=x_len, stride=1, batch_size=batch_size)
-        time_Val = TimeseriesGenerator(x_Val, x_Val, length=x_len, stride=1, batch_size=batch_size)
-
-        return time_Train, time_Val
+        return Y
 
     def audio(self, folder_name=[''], length=11025, step=2205,
-              scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=True, chroma_stft=False, mfcc=False, rms=False,
-              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False):
+              scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=True, chroma_stft=False, mfcc=False,
+              rms=False,
+              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False,
+              zero_crossing_rate=False) -> np.ndarray:
 
         def call_librosa(feature, section, sr):
 
-            if feature in ['chroma_stft','mfcc','spectral_centroid','spectral_bandwidth','spectral_rolloff']:
+            if feature in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
                 array = getattr(librosafeature, feature)(y=section, sr=sr)
             elif feature == 'rms':
                 array = getattr(librosafeature, feature)(y=section)[0]
@@ -1912,7 +1948,8 @@ class DTS(object):
             return out
 
         list_features = []
-        features_str = ['chroma_stft', 'mfcc', 'rms', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff', 'zero_crossing_rate']
+        features_str = ['chroma_stft', 'mfcc', 'rms', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff',
+                        'zero_crossing_rate']
         features = [chroma_stft, mfcc, rms, spectral_centroid, spectral_bandwidth, spectral_rolloff, zero_crossing_rate]
         for i, feature in enumerate(features):
             if feature is True:
@@ -1937,7 +1974,7 @@ class DTS(object):
                     IndexError
 
                 files = [os.path.join(temp_path, wavfile) for wavfile in
-                            sorted(os.listdir(temp_path))]
+                         sorted(os.listdir(temp_path))]
 
                 if folders_num == 1:
                     description = f'Сохранение аудиофайлов'
@@ -1962,9 +1999,8 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
+                        if idx == progress_bar.total and i + 1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                            print('S T O P  F L A G')
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
                 out_vectors = np.array(out_vectors)
@@ -1976,23 +2012,21 @@ class DTS(object):
                 self.peg.append(peg_idx + self.peg[-1])
             break
 
-        self.source_shape = X.shape[1:]
-        self.source_datatype = self._set_datatype(shape=X.shape)
+        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
+        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
         if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-
             shape_x = X.shape
             X = X.reshape(-1, 1)
-
             if scaler == 'MinMaxScaler':
                 self.x_Scaler = MinMaxScaler()
-
             elif scaler == 'StandardScaler':
                 self.x_Scaler = StandardScaler()
-
             self.x_Scaler.fit(X)
             X = self.x_Scaler.transform(X)
             X = X.reshape(shape_x)
+        else:
+            self.x_Scaler[f'input_{self.iter}'] = None
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
@@ -2000,18 +2034,23 @@ class DTS(object):
 
         return X
 
-    def classification(self, one_hot_encoding=[True, False]):
+    def classification(self, one_hot_encoding=[True, False]) -> np.ndarray:
 
         Y = self.y_Cls
-        self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
+        self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(
+            self.file_folder))]  # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
+        self.y_Scaler[f'output_{self.iter}'] = None
 
         if one_hot_encoding:
-            Y = utils.to_categorical(Y, len(np.unique(Y))) # Убрал AXIS
+            Y = utils.to_categorical(Y, len(np.unique(Y)))
+            self.one_hot_encoding[f'output_{self.iter}'] = True
+        else:
+            self.one_hot_encoding[f'output_{self.iter}'] = False
 
         return Y
 
-    def text_segmentation(self, open_tags='', close_tags=''):
+    def text_segmentation(self, open_tags='', close_tags='') -> np.ndarray:
 
         def get01XSamples(tok_agreem, tags_index):
             tags01 = []
@@ -2069,18 +2108,19 @@ class DTS(object):
             return np.array(x_vector), np.array(y)
 
         self.num_classes[f'output_{self.iter}'] = len(open_tags)
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.y_Scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
 
         for i in range(len(self.user_parameters['inp'])):
-            if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'text':
-                x_len = self.user_parameters['inp'][f'input_{i+1}']['parameters']['x_len']
-                step = self.user_parameters['inp'][f'input_{i+1}']['parameters']['step']
-                tags_indexes = np.array([self.tokenizer[f'input_{i+1}'].word_index[k] for k in tags])
+            if self.user_parameters['inp'][f'input_{i + 1}']['tag'] == 'text':
+                x_len = self.user_parameters['inp'][f'input_{i + 1}']['parameters']['x_len']
+                step = self.user_parameters['inp'][f'input_{i + 1}']['parameters']['step']
+                tags_indexes = np.array([self.tokenizer[f'input_{i + 1}'].word_index[k] for k in tags])
                 break
 
         _, y_data = get01XSamples(self.sequences, tags_indexes)
 
-        # X = get_set_from_indexes(x_data, x_len, step)
         Y = get_set_from_indexes(y_data, x_len, step)
 
         for i in range(len(self.user_parameters['inp'])):
@@ -2093,13 +2133,13 @@ class DTS(object):
                     for lst in self.sequences:
                         tmp = [reversed_tok.get(letter) for letter in lst]
                         text.append(tmp)
-                    _, Y = get_sets(self.word2vec[f'input_{i+1}'], text, Y)
+                    _, Y = get_sets(self.word2vec[f'input_{i + 1}'], text, Y)
                     break
         Y = np.array(Y)
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}):
+    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2139,11 +2179,13 @@ class DTS(object):
         self.classes_colors[f'output_{self.iter}'] = list(classes_dict.values())
         num_classes = len(list(classes_dict.keys()))
         self.num_classes[f'output_{self.iter}'] = num_classes
+        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.y_Scaler[f'output_{self.iter}'] = None
 
         for i in range(len(self.user_parameters['inp'])):
-            if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'images':
-                height = self.user_parameters['inp'][f'input_{i+1}']['parameters']['height']
-                width = self.user_parameters['inp'][f'input_{i+1}']['parameters']['width']
+            if self.user_parameters['inp'][f'input_{i + 1}']['tag'] == 'images':
+                height = self.user_parameters['inp'][f'input_{i + 1}']['parameters']['height']
+                width = self.user_parameters['inp'][f'input_{i + 1}']['parameters']['width']
                 shape = (height, width)
                 break
 
@@ -2178,7 +2220,7 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
+                        if idx == progress_bar.total and i + 1 == folders_num:
                             self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
                         else:
                             self.Exch.print_progress_bar(progress_bar_status)
@@ -2187,7 +2229,7 @@ class DTS(object):
 
         return Y
 
-    def object_detection(self):
+    def object_detection(self) -> np.ndarray:
 
         def make_y(real_boxes, num_classes):
 
@@ -2293,7 +2335,7 @@ class DTS(object):
 
         return input_1, input_2, input_3
 
-    def prepare_user_dataset(self, dataset_dict, is_save=True):
+    def prepare_user_dataset(self, dataset_dict: dict, is_save=True):
 
         cur_time = time()
         if self.django_flag:
@@ -2305,7 +2347,7 @@ class DTS(object):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false' or param_value == 'off'):
+                        elif (param_value == 'false'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = False
                         elif param_value.isdigit():
                             dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
@@ -2320,7 +2362,7 @@ class DTS(object):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false' or param_value == 'off'):
+                        elif (param_value == 'false'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = False
                         else:
                             dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
@@ -2334,19 +2376,17 @@ class DTS(object):
                         continue
                     if (value == 'true' or value == 'on'):
                         dataset_dict["parameters"][key] = True
-                    elif (value == 'false' or value == 'off'):
+                    elif (value == 'false'):
                         dataset_dict["parameters"][key] = False
                     else:
                         dataset_dict["parameters"][key] = int(value)
                 except ValueError:
                     continue
 
-
-        print(dataset_dict)
-
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
-        self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
+        self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'],
+                                dataset_dict['parameters']['test_part'])
 
         self.user_parameters['inp'] = dataset_dict['inputs']
         self.user_parameters['out'] = dataset_dict['outputs']
@@ -2359,18 +2399,25 @@ class DTS(object):
 
         for i in range(len(self.user_parameters['inp'])):
             self.iter = i + 1
-            self.X[f'input_{i+1}'] = {'data_name': self.user_parameters['inp'][f'input_{i+1}']['name'], 'data': getattr(self, self.user_parameters['inp'][f'input_{i+1}']['tag'])(**self.user_parameters['inp'][f'input_{i+1}']['parameters'])}
+            self.X[f'input_{i + 1}'] = {'data_name': self.user_parameters['inp'][f'input_{i + 1}']['name'],
+                                        'data': getattr(self, self.user_parameters['inp'][f'input_{i + 1}']['tag'])(
+                                            **self.user_parameters['inp'][f'input_{i + 1}']['parameters'])}
 
         for i in range(len(self.user_parameters['out'])):
             self.iter = i + 1
-            if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'object_detection':
-                outputs = getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])
+            if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'object_detection':
+                outputs = getattr(self, self.user_parameters['out'][f'output_{i + 1}']['tag'])(
+                    **self.user_parameters['out'][f'output_{i + 1}']['parameters'])
                 for k in range(3):
-                    self.Y[f'output_{i+k+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': outputs[k]}
-                    self.tags[f'output_{i+k+1}'] = dataset_dict['outputs'][f'output_{i+1}']['tag']
-                    self.task_type[f'output_{i+k+1}'] = dataset_dict['outputs'][f'output_{i+1}']['task_type']
+                    self.Y[f'output_{i + k + 1}'] = {
+                        'data_name': self.user_parameters['out'][f'output_{i + 1}']['name'], 'data': outputs[k]}
+                    self.tags[f'output_{i + k + 1}'] = dataset_dict['outputs'][f'output_{i + 1}']['tag']
+                    self.task_type[f'output_{i + k + 1}'] = dataset_dict['outputs'][f'output_{i + 1}']['task_type']
             else:
-                self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
+                self.Y[f'output_{i + 1}'] = {'data_name': self.user_parameters['out'][f'output_{i + 1}']['name'],
+                                             'data': getattr(self,
+                                                             self.user_parameters['out'][f'output_{i + 1}']['tag'])(
+                                                 **self.user_parameters['out'][f'output_{i + 1}']['parameters'])}
 
         # Train/Val/Test split
         train_mask = []
@@ -2385,11 +2432,16 @@ class DTS(object):
             val_mask.extend(indices[train_len:train_len + val_len])
             test_mask.extend(indices[train_len + val_len:])
 
+        for i in range(len(self.user_parameters['out'])):
+            if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'timeseries':
+                length = self.user_parameters['out'][f'output_{i + 1}']['parameters']['length']
+                train_mask = train_mask[:-length]
+                val_mask = val_mask[:-length]
+
         if not dataset_dict['parameters']['preserve_sequence']:
             random.shuffle(train_mask)
             random.shuffle(val_mask)
             random.shuffle(test_mask)
-        print(len(train_mask), len(val_mask), len(test_mask))
 
         for inp in self.X.keys():
             self.X[inp]['data'] = (self.X[inp]['data'][train_mask], self.X[inp]['data'][val_mask],
@@ -2401,15 +2453,13 @@ class DTS(object):
         inp_datatype = []
         for inp in self.X.keys():
             self.input_shape[inp] = self.X[inp]['data'][0].shape[1:]
-            inp_datatype.append(self._set_datatype(shape=self.input_shape[inp]))
+            inp_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
 
-        out_datatype = []
         for out in self.Y.keys():
             self.output_shape[out] = self.Y[out]['data'][0].shape[1:]
-            out_datatype.append(self._set_datatype(shape=self.output_shape[out]))
+            self.output_datatype[out] = self._set_datatype(shape=self.Y[out]['data'][0].shape)
 
         self.input_datatype = ' '.join(inp_datatype)
-        self.output_datatype = ' '.join(out_datatype)
 
         if not self.django_flag:
             print(f'Формирование массивов завершено. Времени затрачено: {round(time() - cur_time, 2)} сек.')
@@ -2424,16 +2474,15 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['iter', 'df', 'model_gensim'] # 'y_Cls' 'sequences' 'peg'
+        temp_attributes = ['iter', 'model_gensim']  # 'y_Cls' 'sequences' 'peg', 'df'
         for item in temp_attributes:
             if hasattr(self, item):
                 delattr(self, item)
 
         self.dts_prepared = True
         if is_save:
-            from django.conf import settings
             print('Идёт сохранение датасета.')
-            directory = os.path.join(f"{settings.TERRA_AI_DATA_PATH}/datasets")
+            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
