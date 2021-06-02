@@ -275,6 +275,7 @@
                                 }).bind("change", (event) => {
                                     output_item.find(".layout-parameters").empty();
                                     let params = dataset_params[$(event.currentTarget).val()];
+                                    console.log(params)
                                     load_layout_params(output_item, params, "output");
                                 })
 
