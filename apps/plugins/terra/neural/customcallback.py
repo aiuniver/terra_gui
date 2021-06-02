@@ -611,7 +611,7 @@ class ClassificationCallback:
                     "label": "Истина",
                     "value": classes_labels[true_idx]},
             ]
-            data.append((image, f"{title}"))
+            data.append((image, title))
         out_data = {'images': image_to_base64(data)}
         self.Exch.show_image_data(out_data)
 
@@ -841,7 +841,7 @@ class ClassificationCallback:
         # self.Exch.show_text_data(
         #     f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         # )
-        self.Exch.show_text_data(f'{out_table_data}')
+        self.Exch.show_text_data(out_table_data)
 
         # return
 
