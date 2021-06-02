@@ -83,7 +83,7 @@ class CustomCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         self._now_time = time.time()
         self._time_first_step = time.time()
-
+        self.out_table_data ={}
         self.task_type_defaults_dict = {
             "classification": {
                 "optimizer_name": "Adam",
@@ -377,13 +377,22 @@ class CustomCallback(keras.callbacks.Callback):
             {}:
         """
         self.msg_epoch = self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)
+        self.out_table_data = {
+            "epoch": {
+                "number": epoch+1,
+                "time": self.msg_epoch,
+                "data": {},
+            },
+            "summary": "",
+            }
+
         if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
             self.y_pred = self.y_true
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(
+                callback_table_data = self.callbacks[i].epoch_end(
                     self.last_epoch,
                     logs=logs,
                     output_key=output_key,
@@ -392,9 +401,10 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
+                self.out_table_data["data"].update({output_key: callback_table_data[output_key]})
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
-                self.callbacks[i].epoch_end(
+                callback_table_data = self.callbacks[i].epoch_end(
                     self.last_epoch,
                     logs=logs,
                     output_key=output_key,
@@ -403,8 +413,10 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
+                self.out_table_data["data"].update({output_key: callback_table_data[output_key]})
         self.last_epoch += 1
         self.Exch.show_current_epoch(epoch)
+        self.Exch.show_text_data(f"{self.out_table_data}")
         self.save_lastmodel()
 
     def on_train_end(self, logs=None):
@@ -757,20 +769,16 @@ class ClassificationCallback:
         # epoch_metric_data = ""
         # epoch_val_metric_data = ""
         epoch_table_data = {
-            "outputs": {
-                "label": output_key,
-                "metric": [],
-                "val_metric": [],
-            },
-        }
-        out_table_data = {
-            "epoch": {
-                "number": epoch+1,
-                "time": msg_epoch,
-                "data": [],
-            },
-            "summary": "",
+            output_key: {}
             }
+        # out_table_data = {
+        #     "epoch": {
+        #         "number": epoch+1,
+        #         "time": msg_epoch,
+        #         "data": [],
+        #     },
+        #     "summary": "",
+        #     }
         for metric_idx in range(len(self.clbck_metrics)):
             # # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
@@ -796,13 +804,18 @@ class ClassificationCallback:
             self.history.update(dm)
             dv = {str(val_metric_name): self.accuracy_val_metric[metric_idx]}
             self.history.update(dv)
-            epoch_metric_data = {"label": metric_name,
-                                 "value": self.history[metric_name][-1]}
-            epoch_val_metric_data = {"label": val_metric_name,
-                                     "value": self.history[val_metric_name][-1]}
-            epoch_table_data["outputs"]["metric"].append(epoch_metric_data)
-            epoch_table_data["outputs"]["val_metric"].append(epoch_val_metric_data)
-            out_table_data["epoch"]["data"].append(epoch_table_data)
+
+            epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
+            epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
+
+
+            # epoch_metric_data = {"label": metric_name,
+            #                      "value": self.history[metric_name][-1]}
+            # epoch_val_metric_data = {"label": val_metric_name,
+            #                          "value": self.history[val_metric_name][-1]}
+            # epoch_table_data["outputs"]["metric"].append(epoch_metric_data)
+            # epoch_table_data["outputs"]["val_metric"].append(epoch_val_metric_data)
+            # out_table_data["epoch"]["data"].append(epoch_table_data)
 
             # epoch_metric_data += (
             #     f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
@@ -841,9 +854,9 @@ class ClassificationCallback:
         # self.Exch.show_text_data(
         #     f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
         # )
-        self.Exch.show_text_data(out_table_data)
+        # self.Exch.show_text_data(out_table_data)
 
-        # return
+        return epoch_table_data
 
     def train_end(self, output_key: str = None, x_val: dict = None):
         self.x_Val = x_val
