@@ -2305,7 +2305,7 @@ class DTS(object):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false'):
+                        elif (param_value == 'false' or param_value == 'off'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = False
                         elif param_value.isdigit():
                             dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
@@ -2320,7 +2320,7 @@ class DTS(object):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false'):
+                        elif (param_value == 'false' or param_value == 'off'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = False
                         else:
                             dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
@@ -2334,12 +2334,15 @@ class DTS(object):
                         continue
                     if (value == 'true' or value == 'on'):
                         dataset_dict["parameters"][key] = True
-                    elif (value == 'false'):
+                    elif (value == 'false' or value == 'off'):
                         dataset_dict["parameters"][key] = False
                     else:
                         dataset_dict["parameters"][key] = int(value)
                 except ValueError:
                     continue
+
+
+        print(dataset_dict)
 
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']

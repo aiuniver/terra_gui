@@ -380,6 +380,9 @@
             this.bind("submit", (event)=>{
                 event.preventDefault();
                 let serialize_data = this.serializeObject();
+                if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
+                    serialize_data.parameters["preserve_sequence"] = "off";
+                }
                 console.log(this.serializeObject());
                 window.ExchangeRequest(
                     "create_dataset",
