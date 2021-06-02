@@ -73,8 +73,9 @@ class CustomCallback(keras.callbacks.Callback):
         self.y_true = samples_y
         self.batch_size = batch_size
         self.epochs = epochs
+        self.last_epoch = 0
         self.batch = 0
-        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+        self.num_batches = 0
         self.msg_epoch = ""
         self.y_pred = []
         self.epoch = 0
@@ -342,6 +343,8 @@ class CustomCallback(keras.callbacks.Callback):
 
     def on_train_begin(self, logs=None):
         self._start_time = time.time()
+        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+        self.batch = 0
         self.Exch.show_current_epoch(self.epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
@@ -381,7 +384,7 @@ class CustomCallback(keras.callbacks.Callback):
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(
-                    epoch,
+                    self.last_epoch,
                     logs=logs,
                     output_key=output_key,
                     y_pred=self.y_pred[i],
@@ -392,7 +395,7 @@ class CustomCallback(keras.callbacks.Callback):
         else:
             for i, output_key in enumerate(self.clbck_params.keys()):
                 self.callbacks[i].epoch_end(
-                    epoch,
+                    self.last_epoch,
                     logs=logs,
                     output_key=output_key,
                     y_pred=self.y_pred,
@@ -400,6 +403,7 @@ class CustomCallback(keras.callbacks.Callback):
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
+        self.last_epoch += 1
         self.Exch.show_current_epoch(epoch)
         self.save_lastmodel()
 
@@ -407,17 +411,17 @@ class CustomCallback(keras.callbacks.Callback):
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
-        # if self.model.stop_training:
-        #     self.Exch.show_text_data(
-        #         f'Затрачено времени на обучение: '
-        #         f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
-        #     msg = f'Модель сохранена.'
-        #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
-        #     self.Exch.out_data['stop_flag'] = True
-        # else:
-        self.Exch.show_text_data(
-            f'Затрачено времени на обучение: '
-            f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+        if self.model.stop_training:
+            self.Exch.show_text_data(
+                f'Затрачено времени на обучение: '
+                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
+            msg = f'Модель сохранена.'
+            self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
+            self.Exch.out_data['stop_flag'] = True
+        else:
+            self.Exch.show_text_data(
+                f'Затрачено времени на обучение: '
+                f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)}')
 
 
 class ClassificationCallback:
@@ -460,6 +464,7 @@ class ClassificationCallback:
         self.Exch = exchange
         self.data_tag = data_tag
         self.epoch = 0
+        self.last_epoch = 0
         self.history = {}
         self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
         self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
@@ -480,6 +485,14 @@ class ClassificationCallback:
         self.y_true = []
         self.y_pred = []
         self.loss = ""
+        self.out_table_data = {}
+        # self.out_table_data = {
+        #     "epoch": {
+        #         "number": 0,
+        #         "data": [],
+        #         },
+        #     "summary": "",
+        #     }
         pass
 
     def plot_result(self, output_key: str = None):
@@ -532,7 +545,7 @@ class ClassificationCallback:
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
                                           self.predict_cls[val_metric_name][j],
-                                          f"{val_metric_name} класс {j}", ] for j in range(self.num_classes)]
+                                          f"{val_metric_name} класс {l}", ] for j, l in enumerate(self.dataset.classes_names[output_key])]  #range(self.num_classes)
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -565,7 +578,7 @@ class ClassificationCallback:
         """
         img_indices = self.image_indices()
 
-        classes_labels = np.arange(self.num_classes)
+        classes_labels = self.dataset.classes_names[output_key]  #np.arange(self.num_classes)
         data = []
         if "categorical_crossentropy" in self.loss:
             y_pred = np.argmax(self.y_pred, axis=-1)
@@ -585,8 +598,19 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
-                    f" Истина: {classes_labels[true_idx]}"
+            # title = f"Выход: {output_key} \n Предикт: {classes_labels[pred_idx]} \n" \
+            #         f" Истина: {classes_labels[true_idx]}"
+            title = [
+                {
+                    "label": "Выход",
+                    "value": output_key},
+                {
+                    "label": "Предикт",
+                    "value": classes_labels[pred_idx]},
+                {
+                    "label": "Истина",
+                    "value": classes_labels[true_idx]},
+            ]
             data.append((image, title))
         out_data = {'images': image_to_base64(data)}
         self.Exch.show_image_data(out_data)
@@ -730,8 +754,23 @@ class ClassificationCallback:
         self.y_pred = y_pred
         self.y_true = y_true
         self.loss = loss
-        epoch_metric_data = ""
-        epoch_val_metric_data = ""
+        # epoch_metric_data = ""
+        # epoch_val_metric_data = ""
+        epoch_table_data = {
+            "time": msg_epoch,
+            "outputs": {
+                "label": output_key,
+                "metric": [],
+                "val_metric": [],
+            },
+        }
+        out_table_data = {
+            "epoch": {
+                "number": epoch+1,
+                "data": [],
+            },
+            "summary": "",
+            }
         for metric_idx in range(len(self.clbck_metrics)):
             # # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
@@ -757,13 +796,20 @@ class ClassificationCallback:
             self.history.update(dm)
             dv = {str(val_metric_name): self.accuracy_val_metric[metric_idx]}
             self.history.update(dv)
+            epoch_metric_data = {"label": metric_name,
+                                 "value": self.history[metric_name][-1]}
+            epoch_val_metric_data = {"label": val_metric_name,
+                                     "value": self.history[val_metric_name][-1]}
+            epoch_table_data["outputs"]["metric"].append(epoch_metric_data)
+            epoch_table_data["outputs"]["val_metric"].append(epoch_val_metric_data)
+            out_table_data["epoch"]["data"].append(epoch_table_data)
 
-            epoch_metric_data += (
-                f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
-            )
-            epoch_val_metric_data += (
-                f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
-            )
+            # epoch_metric_data += (
+            #     f" - {metric_name}: {self.history[metric_name][-1]: .4f}"
+            # )
+            # epoch_val_metric_data += (
+            #     f" - {val_metric_name}: {self.history[val_metric_name][-1]: .4f}"
+            # )
 
             if self.y_pred is not None:
                 # try:
@@ -792,9 +838,11 @@ class ClassificationCallback:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 self.plot_result(output_key)
 
-        self.Exch.show_text_data(
-            f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
-        )
+        # self.Exch.show_text_data(
+        #     f"Эпоха {epoch + 1:03d}, затраченное время: {msg_epoch}, выход: {output_key}, {epoch_metric_data}{epoch_val_metric_data}"
+        # )
+        self.Exch.show_text_data(out_table_data)
+
         # return
 
     def train_end(self, output_key: str = None, x_val: dict = None):
@@ -1061,6 +1109,28 @@ class SegmentationCallback:
         union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
         dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         self.metric_classes = dice
+
+        def evaluate_mean_io_u(self, input_key: str = "input_1", smooth=1.0):
+            """
+            Compute dice coefficient for classes
+
+            Parameters:
+            smooth : float     to avoid division by zero
+
+            Returns:
+            -------
+            None
+            """
+            # TODO сделать для нескольких входов
+            if self.dataset.tags[input_key] == "images":
+                axis = (1, 2)
+            elif self.dataset.tags[input_key] == "text":
+                axis = 1
+            intersection = np.sum(self.y_true * self.y_pred, axis=axis)
+            union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
+            dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
+            self.metric_classes = dice
+
 
     def evaluate_loss(self):
         """
