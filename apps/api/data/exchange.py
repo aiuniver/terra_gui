@@ -48,8 +48,14 @@ class ExchangeData:
     def _execute_prepare_dataset(self, **kwargs):
         return terra_exchange.call("prepare_dataset", **kwargs)
 
+    def _execute_get_zipfiles(self, **kwargs):
+        return terra_exchange.call("get_zipfiles", **kwargs)
+
     def _execute_load_dataset(self, **kwargs):
         return terra_exchange.call("load_dataset", **kwargs)
+
+    def _execute_create_dataset(self, **kwargs):
+        return terra_exchange.call("create_dataset", **kwargs)
 
     def _execute_get_data(self, **kwargs):
         return terra_exchange.call("get_data", **kwargs)
