@@ -729,7 +729,10 @@ class Exchange(StatesData, GuiExch):
             changed dataset and its tags
         """
         if source == "custom":
-            self.dts = self._read_trds(dataset_name)
+            filename = f"{dataset_name}.trds"
+            filepath = os.path.join(self.custom_datasets_path, filename)
+            with open(filepath, "rb") as f:
+                self.dts = dill.load(f)
         if source == "load":
             self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
@@ -740,13 +743,6 @@ class Exchange(StatesData, GuiExch):
         self.out_data["stop_flag"] = True
         self._set_start_layers()
         return self.dts.tags, self.dts.name, self.start_layers
-
-    def _read_trds(self, dataset_name: str) -> DTS:
-        filename = f"{dataset_name}.trds"
-        filepath = os.path.join(self.custom_datasets_path, filename)
-        with open(filepath, "rb") as f:
-            dts = dill.load(f)
-        return dts
 
     def _change_output_layer(self, dts_layer_name):
         task_type = self.dts.task_type.get(dts_layer_name)
