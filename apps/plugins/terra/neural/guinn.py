@@ -255,7 +255,15 @@ class GUINN:
             None
         """
         if self.model_is_trained:
+            if self.model.stop_training:
+                self.epochs = self.epochs - self.callbacks[0].last_epoch
+            else:
+                self.callbacks[0].batch_size = self.batch_size
+                self.callbacks[0].epochs = self.epochs + self.callbacks[0].last_epoch
+            self.model.stop_training = False
+            self.model_is_trained = False
             self.Exch.print_2status_bar(('Компиляция модели', '...'))
+            self.set_custom_metrics()
             self.model.compile(loss=self.loss,
                                optimizer=self.optimizer,
                                metrics=self.metrics
@@ -337,9 +345,8 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
-            self.model_is_trained = True
+        self.model_is_trained = True
 
-        # if self.model.stop_training:
         #     msg = f'Модель сохранена на последней эпохе.'
         #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
         #     self.Exch.out_data['stop_flag'] = True

@@ -38,13 +38,13 @@ import json
 
 # import cv2
 
-__version__ = 0.319
+__version__ = 0.320
 
 tr2dj_obj = Exchange()
 
 class DTS(object):
 
-    def __init__(self, path=mkdtemp(), trds_path=os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets'), exch_obj=tr2dj_obj):
+    def __init__(self, path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=tr2dj_obj):
 
         self.Exch = exch_obj
         self.django_flag = False
@@ -155,12 +155,9 @@ class DTS(object):
                                 icon='check')
 
         #Первая вкладка
-        if os.getcwd() == '/content':
-            filelist = os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-            if not filelist:
-                filelist = ['Нет файлов']
-        else: # Для тестирования на локалке
-            filelist = ['Гугл диск недоступен.']
+        filelist = os.listdir(os.path.join(self.trds_path, 'sources'))
+        if not filelist:
+            filelist = ['Файлы отсутствуют']
         zip_name = widgets.Dropdown(options=filelist, value=filelist[0], description='Файл', disabled=False)
         google_drive = widgets.VBox([zip_name, button])
 
@@ -542,8 +539,7 @@ class DTS(object):
 
             if checkbox_google.value:
                 directory = self.trds_path
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
+                os.makedirs(directory, exist_ok=True)
                 with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
                     dill.dump(self, f)
                 tzinfo = timezone('Europe/Moscow')
@@ -779,9 +775,8 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self) -> list:
-        from django.conf import settings
-        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-        return os.listdir(os.path.join(settings.TERRA_AI_DATA_PATH, 'datasets', 'sources'))
+
+        return os.listdir(os.path.join(self.trds_path, 'sources'))
 
     def _get_size(self, path) -> str:
 
@@ -923,7 +918,7 @@ class DTS(object):
 
         default_path = self.save_path
         if mode == 'google_drive':
-            filepath = os.path.join('/content/drive/MyDrive/TerraAI/datasets/sources', name)
+            filepath = os.path.join(self.trds_path, 'sources', name)
             name = name[:name.rfind('.')]
             file_folder = os.path.join(default_path, name)
             shutil.unpack_archive(filepath, file_folder)
@@ -2168,7 +2163,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2204,12 +2199,15 @@ class DTS(object):
 
             return mask_ohe
 
-        self.classes_names[f'output_{self.iter}'] = list(classes_dict.keys())
-        self.classes_colors[f'output_{self.iter}'] = list(classes_dict.values())
-        num_classes = len(list(classes_dict.keys()))
+        self.classes_names[f'output_{self.iter}'] = classes_names
+        self.classes_colors[f'output_{self.iter}'] = classes_colors
+        num_classes = len(classes_names)
         self.num_classes[f'output_{self.iter}'] = num_classes
         self.one_hot_encoding[f'output_{self.iter}'] = False
         self.y_Scaler[f'output_{self.iter}'] = None
+        classes_dict = {}
+        for i in range(len(classes_names)):
+            classes_dict[classes_names[i]] = classes_colors[i]
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'images':
@@ -2504,8 +2502,7 @@ class DTS(object):
         if is_save:
             print('Идёт сохранение датасета.')
             directory = self.trds_path
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+            os.makedirs(directory, exist_ok=True)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
                 dill.dump(self, f)
             tzinfo = timezone('Europe/Moscow')
