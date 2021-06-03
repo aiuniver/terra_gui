@@ -1099,14 +1099,18 @@ class Exchange(StatesData, GuiExch):
     def reset_training(self):
         self.nn.nn_cleaner()
         self.is_trained = True
+        self.epochs = 0
 
     def start_training(self, model: bytes, **kwargs) -> None:
+        training = kwargs
+        set_epochs = training.get("epochs_count", 10)
+        self.epochs = self.epochs + set_epochs if self.stop_training_flag and self.is_trained else set_epochs
+
         if self.stop_training_flag:
             self.stop_training_flag = False
         self.is_trained = False
         self.process_flag = "train"
         self._reset_out_data()
-        training = kwargs
 
         model_file = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.h5", delete=False
@@ -1124,7 +1128,6 @@ class Exchange(StatesData, GuiExch):
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
         optimizer_params = training.get("optimizer", {})
         output_optimizer_params["op_name"] = optimizer_params.get("name")
