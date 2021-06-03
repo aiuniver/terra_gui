@@ -16,6 +16,7 @@ from terra_ai.trds import DTS
 
 __version__ = 0.07
 
+
 class CustomCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
@@ -31,7 +32,8 @@ class CustomCallback(keras.callbacks.Callback):
             batch_size: int = None,
             epochs: int = None,
             save_model_path: str = "./",
-            model_name: str = "noname"):
+            model_name: str = "noname",
+    ):
 
         """
         Init for Custom callback
@@ -82,7 +84,9 @@ class CustomCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         self._now_time = time.time()
         self._time_first_step = time.time()
-        self.out_table_data ={}
+        self.out_table_data = {}
+        self.retrain_flag = False
+        self.retrain_epochs = 0
         self.task_type_defaults_dict = {
             "classification": {
                 "optimizer_name": "Adam",
@@ -360,8 +364,12 @@ class CustomCallback(keras.callbacks.Callback):
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.last_epoch + 1}/{self.epochs}:' \
                         f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
-            msg_progress_end = f'Расчетное время окончания:' \
-                               f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
+            if self.retrain_flag:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
+            else:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
             msg_progress_start = f'Время выполнения:' \
                                  f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]}, '
             self.batch += 1
@@ -375,12 +383,12 @@ class CustomCallback(keras.callbacks.Callback):
         """
         self.out_table_data = {
             "epoch": {
-                "number": self.last_epoch+1,
+                "number": self.last_epoch + 1,
                 "time": self.update_progress(self.num_batches, self.batch, self._time_first_step, finalize=True)[1],
                 "data": {},
             },
             "summary": "",
-            }
+        }
 
         if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
@@ -419,12 +427,12 @@ class CustomCallback(keras.callbacks.Callback):
         self.out_table_data = {
             "epoch": {},
             "summary": "",
-            }
+        }
         for i, output_key in enumerate(self.clbck_params.keys()):
             self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
         self.save_lastmodel()
         if self.model.stop_training:
-            self.out_table_data["summary"] = f'Затрачено времени на обучение: '\
+            self.out_table_data["summary"] = f'Затрачено времени на обучение: ' \
                                              f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
             self.Exch.show_text_data(self.out_table_data)
             msg = f'Модель сохранена.'
@@ -551,7 +559,8 @@ class ClassificationCallback:
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
                                           self.predict_cls[val_metric_name][j],
-                                          f"{val_metric_name} класс {l}", ] for j, l in enumerate(self.dataset.classes_names[output_key])]  #range(self.num_classes)
+                                          f"{val_metric_name} класс {l}", ] for j, l in
+                                         enumerate(self.dataset.classes_names[output_key])]  # range(self.num_classes)
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -584,7 +593,7 @@ class ClassificationCallback:
         """
         img_indices = self.image_indices()
 
-        classes_labels = self.dataset.classes_names[output_key]  #np.arange(self.num_classes)
+        classes_labels = self.dataset.classes_names[output_key]  # np.arange(self.num_classes)
         data = []
         if "categorical_crossentropy" in self.loss:
             y_pred = np.argmax(self.y_pred, axis=-1)
@@ -609,10 +618,10 @@ class ClassificationCallback:
                     "label": "Выход",
                     "value": output_key},
                 {
-                    "label": "Предикт",
+                    "label": "Распознано",
                     "value": classes_labels[pred_idx]},
                 {
-                    "label": "Истина",
+                    "label": "Верный ответ",
                     "value": classes_labels[true_idx]},
             ]
             data.append((image, title))
@@ -760,7 +769,7 @@ class ClassificationCallback:
         self.loss = loss
         epoch_table_data = {
             output_key: {}
-            }
+        }
         for metric_idx in range(len(self.clbck_metrics)):
             # # проверяем есть ли метрика заданная функцией
             if not isinstance(self.clbck_metrics[metric_idx], str):
@@ -791,7 +800,7 @@ class ClassificationCallback:
             epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
 
             if self.y_pred is not None:
-               # распознаем и выводим результат по классам
+                # распознаем и выводим результат по классам
                 # TODO считаем каждую метрику на каждом выходе
                 if metric_name.endswith("accuracy"):
                     metric_classes = self.evaluate_accuracy()
@@ -1014,7 +1023,7 @@ class SegmentationCallback:
                     "label": "Выход",
                     "value": output_key},
                 {
-                    "label": "Изображение",
+                    "label": "Исходное изображение",
                     "value": None},
             ]
 
@@ -1028,7 +1037,7 @@ class SegmentationCallback:
                     "label": "Выход",
                     "value": output_key},
                 {
-                    "label": "Истинная маска",
+                    "label": "Маска сегментации",
                     "value": None},
             ]
             true_mask_data.append((image, title))
@@ -1041,7 +1050,7 @@ class SegmentationCallback:
                     "label": "Выход",
                     "value": output_key},
                 {
-                    "label": "Маска предикта",
+                    "label": "Результат работы модели",
                     "value": None},
             ]
             pred_mask_data.append((image, title))
@@ -1123,7 +1132,6 @@ class SegmentationCallback:
         #     dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         #     self.metric_classes = dice
 
-
     def evaluate_loss(self):
         """
         Compute loss for classes
@@ -1158,7 +1166,7 @@ class SegmentationCallback:
         self.loss = loss
         epoch_table_data = {
             output_key: {}
-            }
+        }
         self.idx = 0
         for metric_idx in range(len(self.clbck_metrics)):
             # проверяем есть ли метрика заданная функцией
@@ -1377,7 +1385,7 @@ class TimeseriesCallback:
         self.loss = loss
         epoch_table_data = {
             output_key: {}
-            }
+        }
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
@@ -1538,7 +1546,7 @@ class RegressionCallback:
         self.loss = loss
         epoch_table_data = {
             output_key: {}
-            }
+        }
         for i in range(len(self.losses)):
             # проверяем есть ли метрика заданная функцией
             if type(self.losses[i]) == types.FunctionType:
