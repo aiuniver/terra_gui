@@ -670,9 +670,9 @@ class Exchange(StatesData, GuiExch):
                 tags = custom_dts.get("tags", [])
                 name = custom_dts.get("name", "")
                 source = custom_dts.get("source", "")
-                dts_date = custom_dts.get("date", "")
-                dts_size = custom_dts.get("size", "")
-                custom_datasets_dict[name] = [tags, None, source, dts_date, dts_size]
+                # dts_date = custom_dts.get("date", "")
+                # dts_size = custom_dts.get("size", "")
+                custom_datasets_dict[name] = [tags, None, source]
                 del custom_dts
 
         return custom_datasets_dict
