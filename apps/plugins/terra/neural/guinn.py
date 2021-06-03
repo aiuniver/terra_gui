@@ -259,8 +259,9 @@ class GUINN:
                 self.epochs = self.epochs - self.callbacks[0].last_epoch
             else:
                 self.callbacks[0].batch_size = self.batch_size
-                self.callbacks[0].epochs = self.epochs
+                self.callbacks[0].epochs = self.epochs + self.callbacks[0].last_epoch
             self.model.stop_training = False
+            self.model_is_trained = False
             self.Exch.print_2status_bar(('Компиляция модели', '...'))
             self.set_custom_metrics()
             self.model.compile(loss=self.loss,
