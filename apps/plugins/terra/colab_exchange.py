@@ -432,7 +432,7 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.custom_datasets = []
         self.custom_datasets_path = self.paths_obj.gd.datasets
-        self.dts = DTS(exch_obj=self, path=self.custom_datasets_path)  # dataset init
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)  # dataset init
         self.dts_name = None
         self.output_shape = None
         self.task_name = ""
