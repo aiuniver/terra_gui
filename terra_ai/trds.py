@@ -30,7 +30,6 @@ import configparser
 import joblib
 from ast import literal_eval
 import requests
-from urllib import request
 from tempfile import mkdtemp
 from IPython.display import display
 from datetime import datetime
