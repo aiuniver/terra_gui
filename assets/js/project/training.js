@@ -500,7 +500,7 @@
                     return this.children(".texts").children(".content");
                 },
                 set: (texts) => {
-                    if (texts.summary || texts.epochs.length) {
+                    if (Object.keys(texts).length && (texts.summary || texts.epochs.length)) {
                         let disabled = training_toolbar.btn.texts.disabled;
                         training_toolbar.btn.texts.disabled = false;
                         if (disabled) training_toolbar.btn.texts.active = true;
