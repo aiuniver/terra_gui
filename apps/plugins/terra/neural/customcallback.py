@@ -416,11 +416,7 @@ class CustomCallback(keras.callbacks.Callback):
 
     def on_train_end(self, logs=None):
         self.out_table_data = {
-            "epoch": {
-                "number": None,
-                "time": None,
-                "data": {},
-            },
+            "epoch": {},
             "summary": "",
             }
         for i, output_key in enumerate(self.clbck_params.keys()):
