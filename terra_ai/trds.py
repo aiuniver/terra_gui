@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.3181
+__version__ = 0.3182
 
 tr2dj_obj = Exchange()
 
@@ -2142,7 +2142,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
