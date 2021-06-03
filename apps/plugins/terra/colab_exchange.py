@@ -739,7 +739,7 @@ class Exchange(StatesData, GuiExch):
         if source == "load":
             self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
-            self.dts = DTS(exch_obj=self)
+            self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
             gc.collect()
             self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
