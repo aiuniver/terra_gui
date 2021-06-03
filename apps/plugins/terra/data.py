@@ -224,7 +224,6 @@ class Dataset(pydantic.BaseModel):
 class GoogleDrivePath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
     datasets_sources: str = f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"
-    print(f"{settings.TERRA_AI_DATA_PATH}/datasets/sources")
     modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
     training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
     projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
@@ -332,6 +331,7 @@ class ProjectPath(pydantic.BaseModel):
 
     def remove_training(self):
         filepath = os.path.join(self.training, self._training_output)
+        print(filepath)
         if os.path.isfile(filepath):
             os.remove(filepath)
 
