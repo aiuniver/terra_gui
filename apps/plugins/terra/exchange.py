@@ -413,6 +413,10 @@ class TerraExchange:
         response = colab_exchange.get_zipfiles()
         return TerraExchangeResponse(data=response)
 
+    def _call_get_auto_colors(self, **kwargs) -> TerraExchangeResponse:
+        response = colab_exchange.get_auto_colors(**kwargs)
+        return TerraExchangeResponse(data=response)
+
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
         self.project.dir.remove_training()
