@@ -508,29 +508,31 @@
                         training_toolbar.btn.texts.disabled = true;
                     }
                     this.texts.append('<div class=""></div>');
-                    if (texts.epochs.length) {
-                        let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
-                            outputs_cols = {};
-                        this.texts.children(".inner").append(epochs_block);
-                        texts.epochs.forEach((epoch) => {
-                            for (let output_name in epoch.data) {
-                                if (!outputs_cols[output_name]) outputs_cols[output_name] = [];
-                                outputs_cols[output_name] = $.merge(outputs_cols[output_name], Object.keys(epoch.data[output_name])).filter((item, i, items) => {
-                                    return i === items.indexOf(item);
+                    if (Object.keys(texts).length) {
+                        if (texts.epochs.length) {
+                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
+                                outputs_cols = {};
+                            this.texts.children(".inner").append(epochs_block);
+                            texts.epochs.forEach((epoch) => {
+                                for (let output_name in epoch.data) {
+                                    if (!outputs_cols[output_name]) outputs_cols[output_name] = [];
+                                    outputs_cols[output_name] = $.merge(outputs_cols[output_name], Object.keys(epoch.data[output_name])).filter((item, i, items) => {
+                                        return i === items.indexOf(item);
+                                    });
+                                }
+                            });
+                            for (let output_name in outputs_cols) {
+                                let callbacks_cols = outputs_cols[output_name];
+                                epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
+                                callbacks_cols.forEach((callback_name) => {
+                                    epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
                                 });
                             }
-                        });
-                        for (let output_name in outputs_cols) {
-                            let callbacks_cols = outputs_cols[output_name];
-                            epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
-                            callbacks_cols.forEach((callback_name) => {
-                                epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
-                            });
+                            console.log(outputs_cols);
                         }
-                        console.log(outputs_cols);
-                    }
-                    if (texts.summary) {
-                        this.texts.children(".inner").append(`<div class="summary">${texts.summary}</div>`);
+                        if (texts.summary) {
+                            this.texts.children(".inner").append(`<div class="summary">${texts.summary}</div>`);
+                        }
                     }
                 }
             });
