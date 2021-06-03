@@ -2377,7 +2377,7 @@ class DTS(object):
                         elif (param_value == 'false'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = False
                         elif (type(param_value) == list):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = dataset_dict["outputs"][key]["parameters"][param_value]
+                            dataset_dict["outputs"][key]["parameters"][param_key] = param_value
                         elif param_value.isdigit():
                             dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
                     except ValueError:
@@ -2394,7 +2394,7 @@ class DTS(object):
                         elif (param_value == 'false'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = False
                         elif (type(param_value) == list):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = dataset_dict["outputs"][key]["parameters"][param_value]
+                            dataset_dict["outputs"][key]["parameters"][param_key] = param_value
                         else:
                             dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
                     except ValueError:
