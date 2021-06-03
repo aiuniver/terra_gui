@@ -684,7 +684,6 @@ class Exchange(StatesData, GuiExch):
         """
         output = {"datasets": [], "tags": {}}
 
-
         datasets_dict = self.dts.get_datasets_dict()
         datasets_dict.update(self._get_custom_datasets_from_google_drive())
 
@@ -720,12 +719,6 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
-    def create_dataset(self, **kwargs):
-        self.dts.prepare_user_dataset(**kwargs)
-
-    def get_zipfiles(self):
-        return self.dts._get_zipfiles()
-
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
@@ -736,7 +729,12 @@ class Exchange(StatesData, GuiExch):
             changed dataset and its tags
         """
         if source == "custom_dataset":
-            self.dts = self._read_trds(dataset_name)
+            filename = f"{dataset_name}.trds"
+            filepath = os.path.join(self.custom_datasets_path, filename)
+            with open(filepath, "rb") as f:
+                self.dts = dill.load(f)
+        if source == "load":
+            self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self)
             gc.collect()
@@ -745,13 +743,6 @@ class Exchange(StatesData, GuiExch):
         self.out_data["stop_flag"] = True
         self._set_start_layers()
         return self.dts.tags, self.dts.name, self.start_layers
-
-    def _read_trds(self, dataset_name: str) -> DTS:
-        filename = f"{dataset_name}.trds"
-        filepath = os.path.join(self.custom_datasets_path, filename)
-        with open(filepath, "rb") as f:
-            dts = dill.load(f)
-        return dts
 
     def _change_output_layer(self, dts_layer_name):
         task_type = self.dts.task_type.get(dts_layer_name)
@@ -878,7 +869,6 @@ class Exchange(StatesData, GuiExch):
             inputs_count = dts_layer_count.get("inputs", 1)
             outputs_count = dts_layer_count.get("outputs", 1)
         if dataset_name:
-            print(kwargs)
             self.dts.load_data(name=dataset_name, mode=dataset_mode, link=dataset_link)
             self._set_dts_name(self.dts.name)
             output = self.dts.get_parameters_dict()
@@ -1033,6 +1023,12 @@ class Exchange(StatesData, GuiExch):
             if arch_files.endswith(".model"):
                 output.append(arch_files[:-6])
         return output
+
+    def create_dataset(self, **kwargs):
+        self.dts.prepare_user_dataset(**kwargs)
+
+    def get_zipfiles(self):
+        return self.dts._get_zipfiles()
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
