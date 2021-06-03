@@ -736,7 +736,7 @@ class Exchange(StatesData, GuiExch):
             filepath = os.path.join(self.custom_datasets_path, filename)
             with open(filepath, "rb") as f:
                 self.dts = dill.load(f)
-        if source == "load":
+        elif source == "load":
             self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
