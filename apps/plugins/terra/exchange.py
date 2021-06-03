@@ -32,7 +32,6 @@ class TerraExchange:
 
     @project.setter
     def project(self, props: dict):
-        # print(props)
         project = self.project.dict()
         project.update(props)
         self.__project = TerraExchangeProject(**project)

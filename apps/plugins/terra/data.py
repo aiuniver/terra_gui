@@ -331,7 +331,6 @@ class ProjectPath(pydantic.BaseModel):
 
     def remove_training(self):
         filepath = os.path.join(self.training, self._training_output)
-        print(filepath)
         if os.path.isfile(filepath):
             os.remove(filepath)
 
@@ -370,6 +369,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
+        datasets = kwargs.get("datasets", [])
         kwargs["tensorflow"] = tensorflow.__version__
         super().__init__(**kwargs)
 
@@ -385,6 +385,7 @@ class TerraExchangeProject(pydantic.BaseModel):
             except Exception:
                 pass
 
+        kwargs["datasets"] = datasets
         super().__init__(**kwargs)
 
     def dict(self, *args, **kwargs):
