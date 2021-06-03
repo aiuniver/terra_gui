@@ -32,6 +32,7 @@ class TerraExchange:
 
     @project.setter
     def project(self, props: dict):
+        # print(props)
         project = self.project.dict()
         project.update(props)
         self.__project = TerraExchangeProject(**project)
@@ -111,7 +112,7 @@ class TerraExchange:
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
-            source="custom" if is_custom else "",
+            source="custom_dataset" if is_custom else "",
         )
         schema = [[], []]
         for index, layer in start_layers.items():
@@ -175,6 +176,10 @@ class TerraExchange:
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)
+
+    def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.create_dataset(**kwargs)
+        return TerraExchangeResponse()
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
@@ -404,6 +409,10 @@ class TerraExchange:
         self._update_in_training_flag()
         self.project.autosave()
         return TerraExchangeResponse()
+
+    def _call_get_zipfiles(self) -> TerraExchangeResponse:
+        response = colab_exchange.get_zipfiles()
+        return TerraExchangeResponse(data=response)
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()

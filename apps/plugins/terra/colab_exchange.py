@@ -719,6 +719,12 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
+    def create_dataset(self, **kwargs):
+        self.dts.prepare_user_dataset(**kwargs)
+
+    def get_zipfiles(self):
+        return self.dts._get_zipfiles()
+
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
@@ -728,7 +734,7 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        if source == "custom":
+        if source == "custom_dataset":
             filename = f"{dataset_name}.trds"
             filepath = os.path.join(self.custom_datasets_path, filename)
             with open(filepath, "rb") as f:
@@ -863,12 +869,13 @@ class Exchange(StatesData, GuiExch):
         self._reset_out_data()
         dataset_name = kwargs.get("name", "")
         dataset_link = kwargs.get("link", "")
+        dataset_mode = kwargs.get("mode", "")
         dts_layer_count = kwargs.get("num_links", {})
         if dts_layer_count:
             inputs_count = dts_layer_count.get("inputs", 1)
             outputs_count = dts_layer_count.get("outputs", 1)
         if dataset_name:
-            self.dts.load_data(name=dataset_name, link=dataset_link)
+            self.dts.load_data(name=dataset_name, mode=dataset_mode, link=dataset_link)
             self._set_dts_name(self.dts.name)
             output = self.dts.get_parameters_dict()
         else:
