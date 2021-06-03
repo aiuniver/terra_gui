@@ -38,14 +38,13 @@ import json
 
 # import cv2
 
-__version__ = 0.317
+__version__ = 0.3181
 
 tr2dj_obj = Exchange()
 
-
 class DTS(object):
 
-    def __init__(self, path=mkdtemp(), exch_obj=tr2dj_obj):
+    def __init__(self, path=mkdtemp(), trds_path=os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets'), exch_obj=tr2dj_obj):
 
         self.Exch = exch_obj
         self.django_flag = False
@@ -55,6 +54,7 @@ class DTS(object):
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ''
         self.save_path: str = path
+        self.trds_path = trds_path
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
@@ -129,6 +129,8 @@ class DTS(object):
                                  'default': value[0],
                                  'list': True,
                                  'available': value}
+                elif type(value) == dict:
+                    pass
                 else:
                     temp[key] = {'type': type(value).__name__,
                                  'default': value}
@@ -539,7 +541,7 @@ class DTS(object):
                                 y_shape=y_shape, one_hot=ohe, split=split_size)
 
             if checkbox_google.value:
-                directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+                directory = self.trds_path
                 if not os.path.exists(directory):
                     os.makedirs(directory)
                 with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
@@ -2140,8 +2142,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, input_type = ['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'],
-                     classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2476,7 +2477,7 @@ class DTS(object):
         self.dts_prepared = True
         if is_save:
             print('Идёт сохранение датасета.')
-            directory = os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            directory = self.trds_path
             if not os.path.exists(directory):
                 os.makedirs(directory)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
