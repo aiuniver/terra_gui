@@ -352,7 +352,7 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
-            msg = f'ожидайте окончания эпохи {self.epoch + 1}:' \
+            msg = f'ожидайте окончания эпохи {self.last_epoch + 1}:' \
                   f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             self.batch += 1
             self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
@@ -410,8 +410,8 @@ class CustomCallback(keras.callbacks.Callback):
                     msg_epoch=self.msg_epoch
                 )
                 self.out_table_data["epoch"]["data"].update({output_key: callback_table_data[output_key]})
-        self.last_epoch += 1
         self.Exch.show_current_epoch(self.last_epoch)
+        self.last_epoch += 1
         self.Exch.show_text_data(self.out_table_data)
         self.save_lastmodel()
 
