@@ -29,7 +29,7 @@ import dill
 import configparser
 import joblib
 from ast import literal_eval
-from urllib import request
+import requests
 from tempfile import mkdtemp
 from IPython.display import display
 from datetime import datetime
@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.318
+__version__ = 0.319
 
 tr2dj_obj = Exchange()
 
@@ -129,6 +129,8 @@ class DTS(object):
                                  'default': value[0],
                                  'list': True,
                                  'available': value}
+                elif type(value) == dict:
+                    pass
                 else:
                     temp[key] = {'type': type(value).__name__,
                                  'default': value}
@@ -935,9 +937,22 @@ class DTS(object):
                 os.makedirs(file_folder)
             if not file_folder.joinpath('tmp').exists():
                 os.makedirs(os.path.join(file_folder, 'tmp'))
-            with request.urlopen(link) as dl_file:
-                with open(os.path.join(file_folder, 'tmp', filename), 'wb') as out_file:
-                    out_file.write(dl_file.read())
+            resp = requests.get(link, stream=True)
+            total = int(resp.headers.get('content-length', 0))
+            idx = 0
+            with open(os.path.join(file_folder, 'tmp', filename), 'wb') as out_file, tqdm(desc=f"Загрузка архива {filename}", total=total, unit='iB', unit_scale=True, unit_divisor=1024) as progress_bar:
+                for data in resp.iter_content(chunk_size=1024):
+                    size = out_file.write(data)
+                    progress_bar.update(size)
+                    idx += size
+                    if self.django_flag:
+                        if idx % 143360 == 0 or idx == progress_bar.total:
+                            progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                                   f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                            if idx == progress_bar.total:
+                                self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                            else:
+                                self.Exch.print_progress_bar(progress_bar_status)
             if 'zip' in filename or 'zip' in link:
                 file_path = pathlib.Path(os.path.join(file_folder, 'tmp', filename))
                 temp_folder = os.path.join(file_folder, 'tmp')
@@ -953,9 +968,22 @@ class DTS(object):
                     if not file_folder.joinpath('tmp').exists():
                         os.makedirs(os.path.join(file_folder, 'tmp'))
                     link = 'https://storage.googleapis.com/terra_ai/DataSets/Numpy/' + base
-                    with request.urlopen(link) as dl_file:
-                        with open(os.path.join(default_path, name, 'tmp', base), 'wb') as out_file:
-                            out_file.write(dl_file.read())
+                    resp = requests.get(link, stream=True)
+                    total = int(resp.headers.get('content-length', 0))
+                    idx = 0
+                    with open(os.path.join(file_folder, 'tmp', base), 'wb') as out_file, tqdm(desc=f"Загрузка архива {base}", total=total,unit='iB', unit_scale=True, unit_divisor=1024) as progress_bar:
+                        for data in resp.iter_content(chunk_size=1024):
+                            size = out_file.write(data)
+                            progress_bar.update(size)
+                            idx += size
+                            if self.django_flag:
+                                if idx % 143360 == 0 or idx == progress_bar.total:
+                                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                                    if idx == progress_bar.total:
+                                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                                    else:
+                                        self.Exch.print_progress_bar(progress_bar_status)
                     if 'zip' in base:
                         file_path = pathlib.Path(os.path.join(default_path, name, 'tmp', base))
                         temp_folder = file_folder.joinpath('tmp')
@@ -2140,7 +2168,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
