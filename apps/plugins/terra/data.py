@@ -224,7 +224,6 @@ class Dataset(pydantic.BaseModel):
 class GoogleDrivePath(pydantic.BaseModel):
     datasets: str = f"{settings.TERRA_AI_DATA_PATH}/datasets"
     datasets_sources: str = f"{settings.TERRA_AI_DATA_PATH}/datasets/sources"
-    print(f"{settings.TERRA_AI_DATA_PATH}/datasets/sources")
     modeling: str = f"{settings.TERRA_AI_DATA_PATH}/modeling"
     training: str = f"{settings.TERRA_AI_DATA_PATH}/training"
     projects: str = f"{settings.TERRA_AI_DATA_PATH}/projects"
@@ -370,6 +369,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     gd: GoogleDrivePath = GoogleDrivePath()
 
     def __init__(self, **kwargs):
+        datasets = kwargs.get("datasets", [])
         kwargs["tensorflow"] = tensorflow.__version__
         super().__init__(**kwargs)
 
@@ -385,6 +385,7 @@ class TerraExchangeProject(pydantic.BaseModel):
             except Exception:
                 pass
 
+        kwargs["datasets"] = datasets
         super().__init__(**kwargs)
 
     def dict(self, *args, **kwargs):

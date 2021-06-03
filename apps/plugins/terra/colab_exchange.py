@@ -432,7 +432,7 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.custom_datasets = []
         self.custom_datasets_path = self.paths_obj.gd.datasets
-        self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)  # dataset init
         self.dts_name = None
         self.output_shape = None
         self.task_name = ""
@@ -670,9 +670,9 @@ class Exchange(StatesData, GuiExch):
                 tags = custom_dts.get("tags", [])
                 name = custom_dts.get("name", "")
                 source = custom_dts.get("source", "")
-                dts_date = custom_dts.get("date", "")
-                dts_size = custom_dts.get("size", "")
-                custom_datasets_dict[name] = [tags, None, source, dts_date, dts_size]
+                # dts_date = custom_dts.get("date", "")
+                # dts_size = custom_dts.get("size", "")
+                custom_datasets_dict[name] = [tags, None, source]
                 del custom_dts
 
         return custom_datasets_dict
@@ -739,7 +739,7 @@ class Exchange(StatesData, GuiExch):
         if source == "load":
             self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
-            self.dts = DTS(exch_obj=self)
+            self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
             gc.collect()
             self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
@@ -1101,12 +1101,15 @@ class Exchange(StatesData, GuiExch):
         self.is_trained = True
 
     def start_training(self, model: bytes, **kwargs) -> None:
+        training = kwargs
+        set_epochs = training.get("epochs_count", 10)
+        self.epochs = self.epochs + set_epochs if self.process_flag == "train" and self.is_trained else set_epochs
+
         if self.stop_training_flag:
             self.stop_training_flag = False
         self.is_trained = False
         self.process_flag = "train"
         self._reset_out_data()
-        training = kwargs
 
         model_file = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.h5", delete=False
@@ -1124,7 +1127,6 @@ class Exchange(StatesData, GuiExch):
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
         optimizer_params = training.get("optimizer", {})
         output_optimizer_params["op_name"] = optimizer_params.get("name")
@@ -1134,7 +1136,7 @@ class Exchange(StatesData, GuiExch):
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=self.epochs,
+            epochs=set_epochs,
             batch_size=batch_size,
             optimizer_params=output_optimizer_params,
         )
