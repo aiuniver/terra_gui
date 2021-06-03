@@ -31,14 +31,14 @@ import joblib
 from ast import literal_eval
 from urllib import request
 from tempfile import mkdtemp
-from IPython import display
+from IPython.display import display
 from datetime import datetime
 from pytz import timezone
 import json
 
 # import cv2
 
-__version__ = 0.316
+__version__ = 0.317
 
 tr2dj_obj = Exchange()
 
@@ -2140,7 +2140,8 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type = ['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'],
+                     classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
