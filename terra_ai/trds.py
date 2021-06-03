@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.320
+__version__ = 0.3201
 
 tr2dj_obj = Exchange()
 
@@ -2370,12 +2370,14 @@ class DTS(object):
 
                 for param_key, param_value in value["parameters"].items():
                     try:
-                        if (param_key == "folder_name"):
+                        if (param_key == "folder_name" or param_key == "file_name"):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = True
                         elif (param_value == 'false'):
                             dataset_dict["inputs"][key]["parameters"][param_key] = False
+                        elif (type(param_value) == list):
+                            dataset_dict["outputs"][key]["parameters"][param_key] = dataset_dict["outputs"][key]["parameters"][param_value]
                         elif param_value.isdigit():
                             dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
                     except ValueError:
@@ -2385,12 +2387,14 @@ class DTS(object):
 
                 for param_key, param_value in value["parameters"].items():
                     try:
-                        if (param_key == "folder_name"):
+                        if (param_key == "folder_name" or param_key == "file_name"):
                             continue
                         if (param_value == 'true' or param_value == 'on'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = True
                         elif (param_value == 'false'):
                             dataset_dict["outputs"][key]["parameters"][param_key] = False
+                        elif (type(param_value) == list):
+                            dataset_dict["outputs"][key]["parameters"][param_key] = dataset_dict["outputs"][key]["parameters"][param_value]
                         else:
                             dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
                     except ValueError:
