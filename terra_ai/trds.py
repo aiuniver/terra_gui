@@ -29,7 +29,7 @@ import dill
 import configparser
 import joblib
 from ast import literal_eval
-from urllib import request
+import requests
 from tempfile import mkdtemp
 from IPython.display import display
 from datetime import datetime
@@ -38,13 +38,13 @@ import json
 
 # import cv2
 
-__version__ = 0.3182
+__version__ = 0.320
 
 tr2dj_obj = Exchange()
 
 class DTS(object):
 
-    def __init__(self, path=mkdtemp(), trds_path=os.path.join(os.getcwd(), 'drive', 'MyDrive', 'TerraAI', 'datasets'), exch_obj=tr2dj_obj):
+    def __init__(self, path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=tr2dj_obj):
 
         self.Exch = exch_obj
         self.django_flag = False
@@ -155,12 +155,9 @@ class DTS(object):
                                 icon='check')
 
         #Первая вкладка
-        if os.getcwd() == '/content':
-            filelist = os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-            if not filelist:
-                filelist = ['Нет файлов']
-        else: # Для тестирования на локалке
-            filelist = ['Гугл диск недоступен.']
+        filelist = os.listdir(os.path.join(self.trds_path, 'sources'))
+        if not filelist:
+            filelist = ['Файлы отсутствуют']
         zip_name = widgets.Dropdown(options=filelist, value=filelist[0], description='Файл', disabled=False)
         google_drive = widgets.VBox([zip_name, button])
 
@@ -542,8 +539,7 @@ class DTS(object):
 
             if checkbox_google.value:
                 directory = self.trds_path
-                if not os.path.exists(directory):
-                    os.makedirs(directory)
+                os.makedirs(directory, exist_ok=True)
                 with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
                     dill.dump(self, f)
                 tzinfo = timezone('Europe/Moscow')
@@ -779,9 +775,8 @@ class DTS(object):
             return 'Text'
 
     def _get_zipfiles(self) -> list:
-        from django.conf import settings
-        # return os.listdir('/content/drive/MyDrive/TerraAI/datasets/sources')
-        return os.listdir(os.path.join(settings.TERRA_AI_DATA_PATH, 'datasets', 'sources'))
+
+        return os.listdir(os.path.join(self.trds_path, 'sources'))
 
     def _get_size(self, path) -> str:
 
@@ -923,7 +918,7 @@ class DTS(object):
 
         default_path = self.save_path
         if mode == 'google_drive':
-            filepath = os.path.join('/content/drive/MyDrive/TerraAI/datasets/sources', name)
+            filepath = os.path.join(self.trds_path, 'sources', name)
             name = name[:name.rfind('.')]
             file_folder = os.path.join(default_path, name)
             shutil.unpack_archive(filepath, file_folder)
@@ -937,9 +932,22 @@ class DTS(object):
                 os.makedirs(file_folder)
             if not file_folder.joinpath('tmp').exists():
                 os.makedirs(os.path.join(file_folder, 'tmp'))
-            with request.urlopen(link) as dl_file:
-                with open(os.path.join(file_folder, 'tmp', filename), 'wb') as out_file:
-                    out_file.write(dl_file.read())
+            resp = requests.get(link, stream=True)
+            total = int(resp.headers.get('content-length', 0))
+            idx = 0
+            with open(os.path.join(file_folder, 'tmp', filename), 'wb') as out_file, tqdm(desc=f"Загрузка архива {filename}", total=total, unit='iB', unit_scale=True, unit_divisor=1024) as progress_bar:
+                for data in resp.iter_content(chunk_size=1024):
+                    size = out_file.write(data)
+                    progress_bar.update(size)
+                    idx += size
+                    if self.django_flag:
+                        if idx % 143360 == 0 or idx == progress_bar.total:
+                            progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                                   f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                            if idx == progress_bar.total:
+                                self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                            else:
+                                self.Exch.print_progress_bar(progress_bar_status)
             if 'zip' in filename or 'zip' in link:
                 file_path = pathlib.Path(os.path.join(file_folder, 'tmp', filename))
                 temp_folder = os.path.join(file_folder, 'tmp')
@@ -955,9 +963,22 @@ class DTS(object):
                     if not file_folder.joinpath('tmp').exists():
                         os.makedirs(os.path.join(file_folder, 'tmp'))
                     link = 'https://storage.googleapis.com/terra_ai/DataSets/Numpy/' + base
-                    with request.urlopen(link) as dl_file:
-                        with open(os.path.join(default_path, name, 'tmp', base), 'wb') as out_file:
-                            out_file.write(dl_file.read())
+                    resp = requests.get(link, stream=True)
+                    total = int(resp.headers.get('content-length', 0))
+                    idx = 0
+                    with open(os.path.join(file_folder, 'tmp', base), 'wb') as out_file, tqdm(desc=f"Загрузка архива {base}", total=total,unit='iB', unit_scale=True, unit_divisor=1024) as progress_bar:
+                        for data in resp.iter_content(chunk_size=1024):
+                            size = out_file.write(data)
+                            progress_bar.update(size)
+                            idx += size
+                            if self.django_flag:
+                                if idx % 143360 == 0 or idx == progress_bar.total:
+                                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
+                                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
+                                    if idx == progress_bar.total:
+                                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                                    else:
+                                        self.Exch.print_progress_bar(progress_bar_status)
                     if 'zip' in base:
                         file_path = pathlib.Path(os.path.join(default_path, name, 'tmp', base))
                         temp_folder = file_folder.joinpath('tmp')
@@ -2142,7 +2163,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_dict={'название класса': [0, 0, 0]}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2178,12 +2199,15 @@ class DTS(object):
 
             return mask_ohe
 
-        self.classes_names[f'output_{self.iter}'] = list(classes_dict.keys())
-        self.classes_colors[f'output_{self.iter}'] = list(classes_dict.values())
-        num_classes = len(list(classes_dict.keys()))
+        self.classes_names[f'output_{self.iter}'] = classes_names
+        self.classes_colors[f'output_{self.iter}'] = classes_colors
+        num_classes = len(classes_names)
         self.num_classes[f'output_{self.iter}'] = num_classes
         self.one_hot_encoding[f'output_{self.iter}'] = False
         self.y_Scaler[f'output_{self.iter}'] = None
+        classes_dict = {}
+        for i in range(len(classes_names)):
+            classes_dict[classes_names[i]] = classes_colors[i]
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'images':
@@ -2478,8 +2502,7 @@ class DTS(object):
         if is_save:
             print('Идёт сохранение датасета.')
             directory = self.trds_path
-            if not os.path.exists(directory):
-                os.makedirs(directory)
+            os.makedirs(directory, exist_ok=True)
             with open(f"{directory}/{self.name}.trds", "wb") as f:
                 dill.dump(self, f)
             tzinfo = timezone('Europe/Moscow')
