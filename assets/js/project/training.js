@@ -380,6 +380,16 @@
 
             if (!this.length) return this;
 
+            let _camelize = (text) => {
+                let _capitalize = (word) => {
+                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
+                }
+                let words = text.split("_"),
+                    result = [_capitalize(words[0])];
+                words.slice(1).forEach((word) => result.push(word))
+                return result.join(" ")
+            }
+
             Object.defineProperty(this, "charts", {
                 get: () => {
                     return this.children(".charts").children(".content");
@@ -464,12 +474,21 @@
                     this.images.html("");
                     for (let name in images) {
                         let group = images[name],
-                            group_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
+                            group_block = $(`<div class="group"><div class="title">${_camelize(name)}</div><div class="inner"></div></div>`);
                         group.forEach((item) => {
-                            let item_block = $(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /><div class="info"></div></div></div>`);
-                            item.title.forEach((info) => {
-                                item_block.find(".info").append($(`<div class="param"><label>${info.label}: </label><span>${info.value}</span></div>`));
-                            });
+                            let item_block = $(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /></div></div>`);
+                            if (item.title) {
+                                item_block.children(".wrapper").append($(`<div class="title">${item.title}</div>`));
+                            }
+                            if (item.info && item.info.length) {
+                                let info_block = $('<div class="info"></div>');
+                                item.title.forEach((info) => {
+                                    if (info.value) {
+                                        info_block.append($(`<div class="param"><label>${info.label}: </label><span>${info.value}</span></div>`));
+                                    }
+                                });
+                                item_block.children(".wrapper").append(info_block);
+                            }
                             group_block.children(".inner").append(item_block);
                         });
                         this.images.append(group_block);
