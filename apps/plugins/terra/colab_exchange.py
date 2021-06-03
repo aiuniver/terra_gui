@@ -1,5 +1,6 @@
 import base64
 import gc
+import json
 import os
 import re
 import tempfile
@@ -607,7 +608,8 @@ class Exchange(StatesData, GuiExch):
         elif key_name == "texts":
             if not self.out_data["texts"]:
                 self.out_data["texts"] = {"epochs": [], "summary": ""}
-            self.out_data["texts"]["epochs"].append(data.get("epoch", {}))
+            if data.get("epoch", {}):
+                self.out_data["texts"]["epochs"].append(data.get("epoch", {}))
             self.out_data["texts"]["summary"] = data.get("summary", "")
         else:
             self.out_data[key_name] = data
@@ -655,20 +657,22 @@ class Exchange(StatesData, GuiExch):
         if os.path.exists(self.custom_datasets_path):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
-                if not dataset.endswith(".trds"):
+                if not dataset.endswith(".trds.json"):
                     continue
 
                 dataset_path = os.path.join(self.custom_datasets_path, dataset)
                 if not os.path.isfile(dataset_path):
                     continue
 
-                with open(dataset_path, "rb") as f:
-                    custom_dts = dill.load(f)
-
-                tags = list(custom_dts.tags.values())
-                name = custom_dts.name
-                source = custom_dts.source
-                custom_datasets_dict[name] = [tags, None, source]
+                with open(dataset_path, "r") as f:
+                    # custom_dts = dill.load(f)
+                    custom_dts = json.load(f)
+                tags = custom_dts.get("tags", [])
+                name = custom_dts.get("name", "")
+                source = custom_dts.get("source", "")
+                dts_date = custom_dts.get("date", "")
+                dts_size = custom_dts.get("size", "")
+                custom_datasets_dict[name] = [tags, None, source, dts_date, dts_size]
                 del custom_dts
 
         return custom_datasets_dict
@@ -716,7 +720,6 @@ class Exchange(StatesData, GuiExch):
         #     'methods': methods,
         # }
         # tags = self._reformat_tags(list(tags))
-
         return output
 
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
