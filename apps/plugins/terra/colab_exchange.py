@@ -1099,12 +1099,11 @@ class Exchange(StatesData, GuiExch):
     def reset_training(self):
         self.nn.nn_cleaner()
         self.is_trained = True
-        self.epochs = 0
 
     def start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
         set_epochs = training.get("epochs_count", 10)
-        self.epochs = self.epochs + set_epochs if self.stop_training_flag and self.is_trained else set_epochs
+        self.epochs = self.epochs + set_epochs if self.process_flag == "train" and self.is_trained else set_epochs
 
         if self.stop_training_flag:
             self.stop_training_flag = False
@@ -1137,7 +1136,7 @@ class Exchange(StatesData, GuiExch):
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=self.epochs,
+            epochs=set_epochs,
             batch_size=batch_size,
             optimizer_params=output_optimizer_params,
         )
