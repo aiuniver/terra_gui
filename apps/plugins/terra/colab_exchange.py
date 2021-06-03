@@ -1081,6 +1081,13 @@ class Exchange(StatesData, GuiExch):
         optimizer_kwargs = OptimizerParams(**optimizer_params)
         return optimizer_kwargs.dict()
 
+    def get_auto_colors(self, **kwargs):
+        name = kwargs.get("name", "")
+        num_classes = kwargs.get("num_classes", None)
+        mask_range = kwargs.get("mask_range", 10)
+        txt_file = kwargs.get("mask_range", False)
+        return self.dts._find_colors(name, num_classes, mask_range, txt_file=txt_file)
+
     def get_data(self):
         if self.process_flag == "train":
             self.out_data["progress_status"]["progress_text"] = "Train progress"
