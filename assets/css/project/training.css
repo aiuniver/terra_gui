@@ -257,13 +257,18 @@
     font-size:.75rem;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group:not(:last-child) {
-    margin-bottom:10px;
+    margin-bottom:20px;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .title {
+    line-height:1;
     margin:0 0 10px 0;
+    padding:10px 20px;
     color:#A7BED3;
     font-size:.875rem;
+    font-weight:600;
     user-select:none;
+    background:#0E1621;
+    border-radius:4px;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner {
     margin:0 -5px -10px -5px;
@@ -314,6 +319,12 @@
     width:100% !important;
     height:auto !important;
     vertical-align:top;
+}
+.graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .title {
+    line-height:1.25;
+    margin:5px 0 0 0;
+    color:#A7BED3;
+    font-size:.875rem;
 }
 .graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container > .images > .content > .group > .inner > .item > .wrapper > .info {
     line-height:1;
