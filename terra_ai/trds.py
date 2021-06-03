@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.318
+__version__ = 0.3181
 
 tr2dj_obj = Exchange()
 
@@ -129,6 +129,8 @@ class DTS(object):
                                  'default': value[0],
                                  'list': True,
                                  'available': value}
+                elif type(value) == dict:
+                    pass
                 else:
                     temp[key] = {'type': type(value).__name__,
                                  'default': value}
