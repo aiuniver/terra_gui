@@ -719,12 +719,6 @@ class Exchange(StatesData, GuiExch):
 
         return output
 
-    def create_dataset(self, **kwargs):
-        self.dts.prepare_user_dataset(**kwargs)
-
-    def get_zipfiles(self):
-        return self.dts._get_zipfiles()
-
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
         """
         prepare dataset for load to nn
@@ -1029,6 +1023,12 @@ class Exchange(StatesData, GuiExch):
             if arch_files.endswith(".model"):
                 output.append(arch_files[:-6])
         return output
+
+    def create_dataset(self, **kwargs):
+        self.dts.prepare_user_dataset(**kwargs)
+
+    def get_zipfiles(self):
+        return self.dts._get_zipfiles()
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape

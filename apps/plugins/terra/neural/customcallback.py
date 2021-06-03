@@ -411,7 +411,7 @@ class CustomCallback(keras.callbacks.Callback):
                 self.out_table_data["epoch"]["data"].update({output_key: callback_table_data[output_key]})
         self.last_epoch += 1
         self.Exch.show_current_epoch(epoch)
-        self.Exch.show_text_data(f'{self.out_table_data}')
+        self.Exch.show_text_data(self.out_table_data)
         self.save_lastmodel()
 
     def on_train_end(self, logs=None):
@@ -429,14 +429,14 @@ class CustomCallback(keras.callbacks.Callback):
         if self.model.stop_training:
             self.out_table_data["summary"] = f'Затрачено времени на обучение: '\
                                              f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
-            self.Exch.show_text_data(f'{self.out_table_data}')
+            self.Exch.show_text_data(self.out_table_data)
             msg = f'Модель сохранена.'
             self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
         else:
             self.out_table_data["summary"] = f'Затрачено времени на обучение: ' \
                                              f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
-            self.Exch.show_text_data(f'{self.out_table_data}')
+            self.Exch.show_text_data(self.out_table_data)
 
 
 class ClassificationCallback:
