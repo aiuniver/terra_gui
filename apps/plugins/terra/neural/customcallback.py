@@ -664,17 +664,17 @@ class ClassificationCallback:
     #     return classes_accuracy
 
     # Распознаём тестовую выборку и выводим результаты
-    def evaluate_accuracy(self):
+    def evaluate_accuracy(self, output_key: str = None):
         y_true = self.y_true
         y_pred = self.y_pred
         metric_classes = []
-        if "categorical_crossentropy" in self.loss:
+        if (y_pred[-1] == y_true[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true[-1] > 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.argmax(y_true, axis=-1)
-        elif "sparse_categorical_crossentropy" in self.loss:
+        elif (y_pred[-1] > y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif "binary_crossentropy" in self.loss:
+        elif (y_pred[-1] == y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
             pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
             true_classes = np.reshape(y_true, (y_true.shape[0]))
         else:
@@ -697,17 +697,29 @@ class ClassificationCallback:
             metric_classes.append(acc_val)
         return metric_classes
 
-    def evaluate_f1(self):
+    def evaluate_f1(self, output_key: str = None):
         y_true = self.y_true
         y_pred = self.y_pred
         metric_classes = []
-        if "categorical_crossentropy" in self.loss:
+        # if "categorical_crossentropy" in self.loss:
+        #     pred_classes = np.argmax(y_pred, axis=-1)
+        #     true_classes = np.argmax(y_true, axis=-1)
+        # elif "sparse_categorical_crossentropy" in self.loss:
+        #     pred_classes = np.argmax(y_pred, axis=-1)
+        #     true_classes = np.reshape(y_true, (y_true.shape[0]))
+        # elif "binary_crossentropy" in self.loss:
+        #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+        #     true_classes = np.reshape(y_true, (y_true.shape[0]))
+        # else:
+        #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
+        #     true_classes = np.reshape(y_true, (y_true.shape[0]))
+        if (y_pred[-1] == y_true[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true[-1] > 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.argmax(y_true, axis=-1)
-        elif "sparse_categorical_crossentropy" in self.loss:
+        elif (y_pred[-1] > y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif "binary_crossentropy" in self.loss:
+        elif (y_pred[-1] == y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
             pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
             true_classes = np.reshape(y_true, (y_true.shape[0]))
         else:
@@ -734,7 +746,7 @@ class ClassificationCallback:
         return metric_classes
 
     # TODO как разбирать лосс по классам при "sparse_categorical_crossentropy" и "binary_crossentropy"
-    def evaluate_loss(self):
+    def evaluate_loss(self, output_key: str = None):
         y_true = self.y_true
         y_pred = self.y_pred
         metric_classes = []
@@ -756,7 +768,11 @@ class ClassificationCallback:
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
                 metric_classes.append(loss)
-        # else:
+        else:
+            bce = BinaryCrossentropy()
+            for i in range(self.num_classes):
+                loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
+                metric_classes.append(loss)
 
         return metric_classes
 
@@ -788,8 +804,7 @@ class ClassificationCallback:
                 metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
 
-            if len(self.dataset.Y) > 1:  # or (len(self.clbck_metrics) > 1 and
-                # 'loss' not in self.clbck_metrics):
+            if len(self.dataset.Y) > 1:
                 metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
                 val_metric_name = f"val_{metric_name}"
             else:
@@ -815,11 +830,11 @@ class ClassificationCallback:
                 # распознаем и выводим результат по классам
                 # TODO считаем каждую метрику на каждом выходе
                 if metric_name.endswith("accuracy"):
-                    metric_classes = self.evaluate_accuracy()
+                    metric_classes = self.evaluate_accuracy(output_key=output_key)
                 elif metric_name.endswith('loss'):
-                    metric_classes = self.evaluate_loss()
+                    metric_classes = self.evaluate_loss(output_key=output_key)
                 else:
-                    metric_classes = self.evaluate_f1()
+                    metric_classes = self.evaluate_f1(output_key=output_key)
 
                 # собираем в словарь по метрикам и классам
                 dclsup = {}
