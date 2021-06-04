@@ -668,13 +668,13 @@ class ClassificationCallback:
         y_true = self.y_true
         y_pred = self.y_pred
         metric_classes = []
-        if (y_pred[-1] == y_true[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true[-1] > 1):
+        if (y_pred.shape[-1] == y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] > 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.argmax(y_true, axis=-1)
-        elif (y_pred[-1] > y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
+        elif (y_pred.shape[-1] > y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif (y_pred[-1] == y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
+        elif (y_pred.shape[-1] == y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
             pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
             true_classes = np.reshape(y_true, (y_true.shape[0]))
         else:
@@ -713,13 +713,13 @@ class ClassificationCallback:
         # else:
         #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
         #     true_classes = np.reshape(y_true, (y_true.shape[0]))
-        if (y_pred[-1] == y_true[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true[-1] > 1):
+        if (y_pred.shape[-1] == y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] > 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.argmax(y_true, axis=-1)
-        elif (y_pred[-1] > y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
+        elif (y_pred.shape[-1] > y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
             pred_classes = np.argmax(y_pred, axis=-1)
             true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif (y_pred[-1] == y_true[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true[-1] == 1):
+        elif (y_pred.shape[-1] == y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
             pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
             true_classes = np.reshape(y_true, (y_true.shape[0]))
         else:
