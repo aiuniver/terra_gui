@@ -1587,19 +1587,15 @@ class RegressionCallback:
 
 
 def image_to_base64(image_as_array):
-    output = []
-
-    for i, (image, title) in enumerate(image_as_array):
-        if image.dtype == 'int32':
-            image = image.astype(np.uint8)
-        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
-        try:
-            plt.imsave(temp_image.name, image, cmap='Greys')
-        except Exception as e:
-            plt.imsave(temp_image.name, image.reshape(image.shape[:-1]), cmap='gray')
-        with open(temp_image.name, 'rb') as img:
-            output_image = base64.b64encode(img.read()).decode('utf-8')
-        output.append({'image': output_image, 'title': title})
-        temp_image.close()
-        os.remove(temp_image.name)
-    return output
+    if image_as_array.dtype == 'int32':
+        image_as_array = image_as_array.astype(np.uint8)
+    temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+    try:
+        plt.imsave(temp_image.name, image_as_array, cmap='Greys')
+    except Exception as e:
+        plt.imsave(temp_image.name, image_as_array.reshape(image_as_array.shape[:-1]), cmap='gray')
+    with open(temp_image.name, 'rb') as img:
+        output_image = base64.b64encode(img.read()).decode('utf-8')
+    temp_image.close()
+    os.remove(temp_image.name)
+    return output_image
