@@ -164,9 +164,39 @@
 
             if (!this.length) return this;
 
-            let task_type = [
-                "classification", "segmentation", "text_segmentation", "regression", "object_detection", "autoencoder", "gan", "timeseries"
-            ];
+            let task_type_input = ['images', 'text', 'audio', 'dataframe']
+
+            let task_type_output = [
+                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries', 'autoencoder'
+            ]
+            function componentToHex(c) {
+                var hex = c.toString(16);
+                return hex.length == 1 ? "0" + hex : hex;
+            }
+
+            function rgbToHex(r, g, b) {
+                return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+            }
+
+            this.loadBtn = this.find("button");
+
+            Object.defineProperty(this.loadBtn, "disabled", {
+                set: (value) => {
+                    if (value) this.loadBtn.attr("disabled", "disabled");
+                    else this.loadBtn.removeAttr("disabled");
+                },
+                get: () => {
+                    return this.loadBtn.attr("disabled") !== undefined;
+                }
+            });
+
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    let container = $("body.namespace-apps_project main > .container");
+                    this.loadBtn.disabled = value;
+                    value ? container.addClass("locked") : container.removeClass("locked");
+                }
+            });
 
             window.ExchangeRequest(
                 "get_zipfiles",
@@ -191,6 +221,8 @@
                 target.toggleClass("active");
                 $("#"+target.attr("data-type")).removeClass("hidden");
             });
+            $(".load-dataset-field > ul > li[data-type='div-gdrive']").click();
+
 
             let dataset_params;
 
@@ -206,6 +238,7 @@
             };
 
             this.bind("submit", (event)=>{
+                this.locked = true;
                 event.preventDefault();
                 let serialize_data = this.serializeObject(),
                     mode;
@@ -215,18 +248,20 @@
                 }else{
                     mode = "google_drive"
                 }
+                window.StatusBar.clear();
+                window.StatusBar.message("DATASET_LOADING");
                 window.ExchangeRequest(
                     "load_dataset",
                     (success, data) => {
                         if (success) {
-
-                            window.StatusBar.message(window.Messages.get("LOAD_DATASET_SUCCESS"), true);
+                            window.StatusBar.clear();
+                            window.StatusBar.message("DATASET_LOADED", true);
 
                             $(".inputs-layers").empty();
                             $(".outputs-layers").empty();
                             dataset_params = data.data
 
-                            let params = data.data.audio
+                            let params = data.data.images
 
                             for(let i=1; i<=serialize_data.num_links.inputs; i++){
 
@@ -238,9 +273,8 @@
                                 let widget = window.FormWidget("inputs[input_" + i + "][name]", {label: "Название входа", type: "str", default: "input_" + i}).addClass("field-inline");
                                 input_item.find(".layout-params").append(widget)
 
-                                widget = window.FormWidget("inputs[input_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: Object.keys(data.data), default: "audio"}).addClass("field-inline");
+                                widget = window.FormWidget("inputs[input_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_input, default: "images"}).addClass("field-inline");
                                 input_item.find(".layout-params").append(widget)
-
                                 widget.find("select").selectmenu({
                                     change:(event) => {
                                         $(event.target).trigger("change");
@@ -250,10 +284,12 @@
                                     let params = dataset_params[$(event.currentTarget).val()];
                                     load_layout_params(input_item, params, "input")
                                 })
+
                                 input_item.append($("<div></div>").addClass("layout-parameters"));
                                 load_layout_params(input_item, params, "input");
                             }
 
+                            params = data.data.classification
 
                             for(let i=1; i<=serialize_data.num_links.outputs; i++){
 
@@ -265,7 +301,7 @@
                                 let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название входа", type: "str", default: "output_" + i}).addClass("field-inline");
                                 output_item.find(".layout-params").append(widget)
 
-                                widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: Object.keys(data.data), default: "audio"}).addClass("field-inline");
+                                widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
                                 output_item.find(".layout-params").append(widget)
 
                                 widget.find("select").selectmenu({
@@ -273,13 +309,174 @@
                                         $(event.target).trigger("change");
                                     }
                                 }).bind("change", (event) => {
+                                    let output_item = $("#output_"+i);
                                     output_item.find(".layout-parameters").empty();
                                     let params = dataset_params[$(event.currentTarget).val()];
-                                    console.log(params)
-                                    load_layout_params(output_item, params, "output");
+                                    load_layout_params(output_item, params, "output")
+                                    if($(event.currentTarget).val() == "segmentation"){
+                                        $("select[name='outputs[output_" + i + "][parameters][input_type]']").selectmenu({
+                                            change:(event) => {
+                                                $(event.target).trigger("change");
+                                            }
+                                        }).bind("change", (event)=>{
+                                            let segmentation_change = $(event.currentTarget).val();
+                                            let output_id = $(event.currentTarget).parents(".output-layout").attr("id");
+                                            let layout = $(event.target).parents('.layout-item');
+                                            layout.find(".class-inline").remove()
+                                            layout.find(".color-inline").remove()
+                                            layout.find(".number-classes").parent().remove()
+                                            layout.find(".number-classes-auto").parent().remove()
+                                            layout.find(".selected-file").remove()
+                                            if(segmentation_change == "Ручной ввод"){
+                                                let widget = window.FormWidget("outputs[" + output_id + "][num_classes]", {label: "Количество классов", type: "int"}).addClass("field-inline");
+                                                widget.find("input").addClass("number-classes");
+                                                $("#"+output_id).find(".layout-parameters").append(widget)
+                                                $(widget).on("input", (event)=>{
+                                                    layout.find(".layout-parameters > .class-inline").remove()
+                                                    layout.find(".layout-parameters > .color-inline").remove()
+                                                    let num_classes = $(event.target).val();
+                                                    if(num_classes < 0 || num_classes > 16){
+                                                        $(event.target).val(16);
+                                                        num_classes = 16;
+                                                    }
+                                                    for(let i=0; i<num_classes; i++){
+                                                        let html = '';
+                                                        html += '<div class="field-form field-inline class-inline">';
+                                                        html += `<label>класс ${i+1}</label>`;
+                                                        html += '<input type="text" class="class_name">';
+                                                        html += '</div>';
+                                                        html += '<div class="field-form field-inline color-inline">';
+                                                        html += '<label>Цвет</label>';
+                                                        html += `<input type="text" class="color-input" value="#123456"/>`;
+                                                        html += '<button class="colorpicker-btn"></button>';
+                                                        html += '<div class="colorpicker" hidden></div>';
+                                                        html += `</div>`;
+                                                        layout.find(".layout-parameters").append(html);
+                                                        layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+
+                                                        layout.find(".colorpicker-btn").last().bind("click", (event)=>{
+                                                            event.preventDefault();
+                                                            let field = event.target.parentNode;
+                                                            $(field).find(".colorpicker").last().slideToggle();
+                                                        });
+                                                    }
+                                                });
+
+                                            }else if(segmentation_change == "Автоматический поиск"){
+                                                let html = '';
+                                                html += '<div class="field-form field-inline class-inline">';
+                                                html += `<label>Количество классов</label>`;
+                                                html += '<input type="text" class="number-classes-auto">';
+                                                html += '</div>';
+                                                html += '<div class="field-form field-inline class-inline">';
+                                                html += `<button class="search-num-classes">Найти</button>`;
+                                                html += `</div>`;
+                                                layout.find(".layout-parameters").append(html);
+                                                layout.find(".search-num-classes").bind("click", (event)=>{
+                                                    event.preventDefault();
+                                                    console.log($("#"+output_id).find(".number-classes-auto").val())
+                                                    window.ExchangeRequest(
+                                                        'get_auto_colors',
+                                                        (success, data) => {
+                                                            if(success){
+                                                                layout.find(".class-inline").remove()
+                                                                layout.find(".color-inline").remove()
+                                                                layout.find(".search-num-classes").parent().remove()
+                                                                layout.find(".number-classes-auto").parent().remove()
+                                                                for(let i=0; i<data.data.length; i++){
+                                                                    let html = '',
+                                                                    rgb = data.data[i]
+                                                                    html += '<div class="field-form field-inline class-inline">';
+                                                                    html += `<label>класс ${i+1}</label>`;
+                                                                    html += '<input type="text" class="number-classes-auto">';
+                                                                    html += '</div>';
+                                                                    html += '<div class="field-form field-inline color-inline">';
+                                                                    html += '<label>Цвет</label>';
+                                                                    html += `<input type="text" class="color-input" value="${rgbToHex(rgb[0], rgb[1], rgb[2])}" />`;
+                                                                    html += '<button class="colorpicker-btn"></button>';
+                                                                    html += '<div class="colorpicker" hidden></div>';
+                                                                    html += `</div>`;
+                                                                    layout.find(".layout-parameters").append(html);
+                                                                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+
+                                                                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
+                                                                        event.preventDefault();
+                                                                        let field = event.target.parentNode;
+                                                                        $(field).find(".colorpicker").last().slideToggle();
+                                                                    });
+                                                                }
+                                                            }else{
+                                                                console.log("get_auto_colors ERROR")
+                                                            }
+                                                        },
+                                                        {
+                                                            name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][folder_name]']").val(),
+                                                            num_classes: parseInt($("#"+output_id).find(".number-classes-auto").val()),
+                                                            mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val())
+                                                        }
+                                                    )
+                                                })
+                                            }else if(segmentation_change == "Файл аннотации"){
+                                                var folder_values = $.map($("#"+output_id).find("select[name='outputs["+output_id+"][parameters][folder_name]'] option") ,function(option) {
+                                                    return option.value;
+                                                });
+                                                let widget = window.FormWidget("outputs[output_" + i + "][parameters][selected_file]", {label: "Название файла", type: "str", list: true, available: folder_values, default: ""}).addClass("field-inline selected-file");
+                                                layout.find(".layout-parameters").append(widget)
+                                                let html = '';
+                                                html += '<div class="field-form field-inline class-inline">';
+                                                html += `<button class="search-num-classes">Найти</button>`;
+                                                html += `</div>`;
+                                                layout.find(".layout-parameters").append(html);
+                                                layout.find(".search-num-classes").bind("click", (event)=>{
+                                                    event.preventDefault();
+                                                    window.ExchangeRequest(
+                                                        'get_auto_colors',
+                                                        (success, data) => {
+                                                            if(success){
+                                                                layout.find(".class-inline").remove()
+                                                                layout.find(".color-inline").remove()
+                                                                layout.find(".search-num-classes").parent().remove()
+                                                                layout.find(".number-classes-auto").parent().remove()
+                                                                layout.find(".number-classes").parent().remove()
+                                                                for(let i in data.data){
+                                                                    let html = '',
+                                                                    rgb = data.data[i]
+                                                                    html += '<div class="field-form field-inline class-inline">';
+                                                                    html += `<label>класс ${i}</label>`;
+                                                                    html += `<input type="text" value="${i}">`;
+                                                                    html += '</div>';
+                                                                    html += '<div class="field-form field-inline color-inline">';
+                                                                    html += '<label>Цвет</label>';
+                                                                    html += `<input type="text" class="color-input" value="${rgbToHex(rgb[0], rgb[1], rgb[2])}" />`;
+                                                                    html += '<button class="colorpicker-btn"></button>';
+                                                                    html += '<div class="colorpicker" hidden></div>';
+                                                                    html += `</div>`;
+                                                                    layout.find(".layout-parameters").append(html);
+                                                                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+
+                                                                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
+                                                                        event.preventDefault();
+                                                                        let field = event.target.parentNode;
+                                                                        $(field).find(".colorpicker").last().slideToggle();
+                                                                    });
+                                                                }
+                                                            }else{
+                                                                console.log("get_auto_colors ERROR")
+                                                            }
+                                                        },
+                                                        {
+                                                            name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][selected_file]']").val(),
+                                                            mask_range: parseInt($("#"+output_id).find("output[name='inputs["+output_id+"][parameters][mask_range]']").val()),
+                                                            txt_file: true
+                                                        }
+                                                    )
+                                                })
+                                            }
+                                        })
+                                    }
                                 })
 
-                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type}).addClass("field-inline");
+                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output}).addClass("field-inline");
                                 output_item.find(".layout-params").append(widget)
                                 output_item.append($("<div></div>").addClass("layout-parameters"))
                                 load_layout_params(output_item, params, "output")
@@ -289,6 +486,7 @@
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
+                        this.locked = false;
                     },
                     {
                         name: serialize_data.name,
@@ -300,10 +498,6 @@
                 );
             });
 
-
-
-
-
             return this;
         },
 
@@ -311,11 +505,40 @@
 
             if (!this.length) return this;
 
+            function hexToRgb(hex) {
+                var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                return result ? [
+                    parseInt(result[1], 16),
+                    parseInt(result[2], 16),
+                    parseInt(result[3], 16)
+                    ]: null;
+            }
+
+            this.createBtn = this.find("button");
+
+            Object.defineProperty(this.createBtn, "disabled", {
+                set: (value) => {
+                    if (value) this.createBtn.attr("disabled", "disabled");
+                    else this.createBtn.removeAttr("disabled");
+                },
+                get: () => {
+                    return this.createBtn.attr("disabled") !== undefined;
+                }
+            });
+
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    let container = $("body.namespace-apps_project main > .container");
+                    this.createBtn.disabled = value;
+                    value ? container.addClass("locked") : container.removeClass("locked");
+                }
+            });
+
             $( ".slider-range" ).slider({
                 range: true,
                 min: 0,
                 max: 100,
-                values: [ 35, 70 ],
+                values: [ 60, 90 ],
                 slide: function( event, ui ) {
                     if(ui.values[0] > 90){
                         ui.values[0] = 90;
@@ -332,9 +555,9 @@
                 }
             });
 
-            // $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
-            // $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
-            // $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
+            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
+            $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
+            $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
 
              // $("#amount1").on("input", ()=>{
              //     $(".slider-range").slider( "values", 0, $("#amount1").val())
@@ -344,57 +567,48 @@
              //     $(".slider-range").slider( "values", 1, $("#amount2").val())
              // });
 
-            $(".number-classes").on("input", (event)=>{
-                let num_classes = $(event.target).val();
-                let layout = $(event.target).parents('.output-layout')
-                if(num_classes < 0 || num_classes > 16){
-                    $(event.target).val(16);
-                    num_classes = 16;
-                }
-
-                layout.find(".class-inline").remove()
-                layout.find(".color-inline").remove()
-
-                for(let i=0; i<num_classes; i++){
-                    let html = '';
-                    html += '<div class="field-form field-inline class-inline">';
-                    html += `<label>класс ${i+1}</label>`;
-                    html += '<input type="text">';
-                    html += '</div>';
-                    html += '<div class="field-form field-inline color-inline">';
-                    html += '<label>Цвет</label>';
-                    html += `<input type="text" class="color-input" value="#123456" />`;
-                    html += '<button class="colorpicker-btn"></button>';
-                    html += '<div class="colorpicker" hidden></div>';
-                    html += `</div>`;
-                    layout.find(".layout-params").append(html);
-                    layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
-
-                    layout.find(".colorpicker-btn").last().bind("click", (event)=>{
-                        event.preventDefault();
-                        let field = event.target.parentNode;
-                        $(field).find(".colorpicker").last().slideToggle();
-                    });
-                }
-            });
-
             this.bind("submit", (event)=>{
                 event.preventDefault();
+                this.locked = true;
+                let layouts = $(".output-layout"),
+                    classes_names = {},
+                    classes_colors = {};
+                for(let i=0; i< layouts.length; i++){
+                    let layout_id = layouts[i].id;
+                    classes_names[layout_id] = []
+                    classes_colors[layout_id] = []
+                    let items = $(layouts[i]).find(".color-input")
+                    for(let j=0; j<items.length; j++){
+                        let item = $(items[j])
+                        let key_name = item.parent().prev().find("input").val()
+                        classes_names[layout_id].push(key_name)
+                        classes_colors[layout_id].push(hexToRgb(item.val()))
+                        item.parent().prev().find("input").attr("name", `outputs[${layout_id}][parameters][classes_names]`)
+                        item.attr("name", `outputs[${layout_id}][parameters][classes_colors]`)
+                    }
+                }
                 let serialize_data = this.serializeObject();
+
+                for(let input in serialize_data.outputs & classes_names != [] & classes_colors != []){
+                    serialize_data.outputs[input].parameters.classes_names = classes_names[input]
+                    serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
+                }
                 if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
                     serialize_data.parameters["preserve_sequence"] = "off";
                 }
-                console.log(this.serializeObject());
+                window.StatusBar.clear();
+                window.StatusBar.message("CREATING_DATASET");
+                console.log(serialize_data);
                 window.ExchangeRequest(
                     "create_dataset",
                     (success, data) => {
                         if (success) {
-                            window.StatusBar.message(window.Messages.get("PRERAPE_DATASET_SUCCESS"), true);
-                            alert("Dataset created");
-
+                            window.StatusBar.clear();
+                            window.StatusBar.message("DATASET_CREATED", true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
+                        this.locked = false;
                     },
                     {
                         dataset_dict: serialize_data

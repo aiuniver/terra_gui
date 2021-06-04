@@ -1163,6 +1163,7 @@
                 {
                     "layers": event.currentTarget.ModelData.layers,
                     "schema": event.currentTarget.ModelData.schema,
+                    "reset_training": true
                 }
             )
         });

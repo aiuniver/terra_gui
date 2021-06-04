@@ -470,7 +470,6 @@
                     } else {
                         training_toolbar.btn.images.disabled = true;
                     }
-
                     this.images.html("");
                     for (let name in images) {
                         let group = images[name],
@@ -501,26 +500,40 @@
                     return this.children(".texts").children(".content");
                 },
                 set: (texts) => {
-                    if (texts.length) {
+                    if (Object.keys(texts).length && (texts.summary || texts.epochs.length)) {
                         let disabled = training_toolbar.btn.texts.disabled;
                         training_toolbar.btn.texts.disabled = false;
                         if (disabled) training_toolbar.btn.texts.active = true;
                     } else {
                         training_toolbar.btn.texts.disabled = true;
                     }
-                    let map_replace = {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&#34;',
-                        "'": '&#39;'
-                    };
-                    console.log(texts);
-                    // this.texts.children(".inner").html(
-                    //     texts.map((item) => {
-                    //         // return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
-                    //     }).join("")
-                    // );
+                    this.texts.append('<div class=""></div>');
+                    if (Object.keys(texts).length) {
+                        if (texts.epochs.length) {
+                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
+                                outputs_cols = {};
+                            this.texts.children(".inner").append(epochs_block);
+                            texts.epochs.forEach((epoch) => {
+                                for (let output_name in epoch.data) {
+                                    if (!outputs_cols[output_name]) outputs_cols[output_name] = [];
+                                    outputs_cols[output_name] = $.merge(outputs_cols[output_name], Object.keys(epoch.data[output_name])).filter((item, i, items) => {
+                                        return i === items.indexOf(item);
+                                    });
+                                }
+                            });
+                            for (let output_name in outputs_cols) {
+                                let callbacks_cols = outputs_cols[output_name];
+                                epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
+                                callbacks_cols.forEach((callback_name) => {
+                                    epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
+                                });
+                            }
+                            console.log(outputs_cols);
+                        }
+                        if (texts.summary) {
+                            this.texts.children(".inner").append(`<div class="summary">${texts.summary}</div>`);
+                        }
+                    }
                 }
             });
 

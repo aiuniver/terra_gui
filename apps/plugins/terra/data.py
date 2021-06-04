@@ -333,6 +333,10 @@ class ProjectPath(pydantic.BaseModel):
         filepath = os.path.join(self.training, self._training_output)
         if os.path.isfile(filepath):
             os.remove(filepath)
+        for filename in os.listdir(self.training):
+            filepath = os.path.join(self.training, filename)
+            if filename.endswith(".h5") and os.path.isfile(filepath):
+                os.remove(filepath)
 
     def clear_modeling(self):
         self.remove_plan()

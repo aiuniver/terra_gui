@@ -294,8 +294,7 @@
     justify-content: space-around;
     background-color: #0E1621;
     margin: -20px -20px 10px -20px;
-    padding: 0 2px;
-    padding-top: 2px;
+    padding-top: 1px;
 }
 
 .load-dataset-field > ul > li {
@@ -306,7 +305,6 @@
 
 .active{
     background-color: #17212B;
-    border-radius: 4px 4px 0 0;
 }
 
 .load-dataset-field > .inner > .tab-load-dataset > .hidden{
@@ -350,4 +348,10 @@
     width: 140px;
 }
 
+.search-num-classes{
+    width: 80%;
+    height: 30px;
+    padding: 0 20px;
+    margin: 0 auto;
+}
 

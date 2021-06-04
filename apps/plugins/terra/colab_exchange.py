@@ -736,7 +736,7 @@ class Exchange(StatesData, GuiExch):
             filepath = os.path.join(self.custom_datasets_path, filename)
             with open(filepath, "rb") as f:
                 self.dts = dill.load(f)
-        if source == "load":
+        elif source == "load":
             self.dts = self.dts.prepare_user_dataset(**kwargs)
         else:
             self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
@@ -1080,6 +1080,13 @@ class Exchange(StatesData, GuiExch):
                 optimizer_params[name][_param_name] = values.get("default")
         optimizer_kwargs = OptimizerParams(**optimizer_params)
         return optimizer_kwargs.dict()
+
+    def get_auto_colors(self, **kwargs):
+        name = kwargs.get("name", "")
+        num_classes = kwargs.get("num_classes", None)
+        mask_range = kwargs.get("mask_range", 10)
+        txt_file = kwargs.get("mask_range", False)
+        return self.dts._find_colors(name, num_classes, mask_range, txt_file=txt_file)
 
     def get_data(self):
         if self.process_flag == "train":
