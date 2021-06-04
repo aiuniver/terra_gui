@@ -466,7 +466,7 @@
                                                         },
                                                         {
                                                             name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][selected_file]']").val(),
-                                                            mask_range: parseInt($("#"+output_id).find("output[name='inputs["+output_id+"][parameters][mask_range]']").val()),
+                                                            mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val()),
                                                             txt_file: true
                                                         }
                                                     )
