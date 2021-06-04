@@ -167,7 +167,7 @@
             let task_type_input = ['images', 'text', 'audio', 'dataframe']
 
             let task_type_output = [
-                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries', 'autoencoder'
+                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'
             ]
             function componentToHex(c) {
                 var hex = c.toString(16);
@@ -476,7 +476,7 @@
                                     }
                                 })
 
-                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output}).addClass("field-inline");
+                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
                                 output_item.find(".layout-params").append(widget)
                                 output_item.append($("<div></div>").addClass("layout-parameters"))
                                 load_layout_params(output_item, params, "output")
