@@ -557,10 +557,12 @@ class ClassificationCallback:
                     xlabel = "эпоха"
                     ylabel = val_metric_name
                     labels = (classes_title, xlabel, ylabel)
-                    plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
-                                          self.predict_cls[val_metric_name][j],
-                                          f"{val_metric_name} класс {l}", ] for j, l in
-                                         enumerate(self.dataset.classes_names[output_key])]  # range(self.num_classes)
+                    plot_data[labels] = [
+                        [
+                            list(range(len(self.predict_cls[val_metric_name][j]))),
+                            self.predict_cls[val_metric_name][j],
+                            f"{val_metric_name} класс {l}", ] for j, l in
+                        enumerate(self.dataset.classes_names[output_key])]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -823,7 +825,7 @@ class ClassificationCallback:
                 dclsup = {}
                 for j in range(self.num_classes):
                     self.acls_lst[metric_idx][j].append(metric_classes[j])
-                dcls = {str(val_metric_name): self.acls_lst[metric_idx]}
+                dcls = {val_metric_name: self.acls_lst[metric_idx]}
                 dclsup.update(dcls)
                 self.predict_cls.update(dclsup)
 
@@ -1242,7 +1244,7 @@ class SegmentationCallback:
                     dclsup = {}
                     for j in range(self.num_classes):
                         self.acls_lst[metric_idx][j].append(self.metric_classes[j])
-                    dcls = {val_metric_name: self.acls_lst}
+                    dcls = {val_metric_name: self.acls_lst[metric_idx]}
                     dclsup.update(dcls)
                     self.predict_cls.update(dclsup)
 
