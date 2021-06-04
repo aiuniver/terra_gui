@@ -589,10 +589,10 @@
                 }
                 let serialize_data = this.serializeObject();
 
-                for(let input in serialize_data.outputs & classes_names != [] & classes_colors != []){
-                    serialize_data.outputs[input].parameters.classes_names = classes_names[input]
-                    serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
-                }
+                // for(let input in serialize_data.outputs & classes_names != [] & classes_colors != []){
+                //     serialize_data.outputs[input].parameters.classes_names = classes_names[input]
+                //     serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
+                // }
                 if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
                     serialize_data.parameters["preserve_sequence"] = "off";
                 }
