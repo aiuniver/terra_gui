@@ -167,7 +167,7 @@
             let task_type_input = ['images', 'text', 'audio', 'dataframe']
 
             let task_type_output = [
-                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries', 'autoencoder'
+                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'
             ]
             function componentToHex(c) {
                 var hex = c.toString(16);
@@ -466,7 +466,7 @@
                                                         },
                                                         {
                                                             name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][selected_file]']").val(),
-                                                            mask_range: parseInt($("#"+output_id).find("output[name='inputs["+output_id+"][parameters][mask_range]']").val()),
+                                                            mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val()),
                                                             txt_file: true
                                                         }
                                                     )
@@ -476,7 +476,7 @@
                                     }
                                 })
 
-                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output}).addClass("field-inline");
+                                widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
                                 output_item.find(".layout-params").append(widget)
                                 output_item.append($("<div></div>").addClass("layout-parameters"))
                                 load_layout_params(output_item, params, "output")
@@ -589,12 +589,19 @@
                 }
                 let serialize_data = this.serializeObject();
 
-                // for(let input in serialize_data.outputs & classes_names != [] & classes_colors != []){
-                //     serialize_data.outputs[input].parameters.classes_names = classes_names[input]
-                //     serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
-                // }
+                for(let input in serialize_data.outputs){
+                    if(classes_names[input].length != 0 && classes_colors[input].length != 0){
+                        serialize_data.outputs[input].parameters.classes_names = classes_names[input]
+                        serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
+                    }
+                }
                 if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
                     serialize_data.parameters["preserve_sequence"] = "off";
+                }
+                for(let item in serialize_data.outputs){
+                    if(!serialize_data.parameters.hasOwnProperty("selected_file")){
+                        delete serialize_data.outputs[item].parameters.selected_file;
+                    }
                 }
                 window.StatusBar.clear();
                 window.StatusBar.message("CREATING_DATASET");

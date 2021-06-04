@@ -470,7 +470,6 @@
                     } else {
                         training_toolbar.btn.images.disabled = true;
                     }
-                    console.log(images);
                     this.images.html("");
                     for (let name in images) {
                         let group = images[name],
@@ -512,17 +511,21 @@
                     }
                     this.texts.html('<div class="inner"></div>');
                     let format_epoch_value = (value) => {
-                        value = `${Math.round(value*1000)/1000}`;
+                        let num_digits = 3,
+                            factor = 1;
+                        for (let i=0; i<num_digits; i++) factor *= 10;
+                        value = `${Math.round(value*factor)/factor}`;
                         let split_value = value.split(".");
                         if (split_value.length === 2) {
                             split_value[0] = `<span>${split_value[0]}</span>`;
+                            for (let i=0; i<(num_digits - split_value[1].length); i++) split_value[1] += "0";
                             value = split_value.join("<i>.</i>");
                         }
                         return value;
                     }
                     if (Object.keys(texts).length) {
                         if (texts.epochs.length) {
-                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время (сек.)</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
+                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время<br />(сек.)</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
                                 outputs_cols = {},
                                 outputs_list = [];
                             this.texts.children(".inner").append(epochs_block);
@@ -555,9 +558,13 @@
                                 });
                                 epochs_block.find("tbody").append(tr);
                             });
-                        }
-                        if (texts.summary) {
-                            this.texts.children(".inner").append(`<div class="summary">${texts.summary}</div>`);
+                            if (texts.summary) {
+                                let tfoot_colspan = 2;
+                                for (let _ in outputs_cols) {
+                                    tfoot_colspan += outputs_cols[_].length;
+                                }
+                                epochs_block.find("tbody").after($(`<tfoot><tr><th colspan="${tfoot_colspan}">${texts.summary}</th></tr></tfoot>`));
+                            }
                         }
                     }
                 }
