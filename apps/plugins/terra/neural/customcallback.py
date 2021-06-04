@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.07
+__version__ = 0.08
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -591,10 +591,13 @@ class ClassificationCallback:
         Plot images based on indices in dataset
         Returns: None
         """
+        images = {
+            "title": "Исходное изображение",
+            "values": []
+        }
         img_indices = self.image_indices()
 
-        classes_labels = self.dataset.classes_names[output_key]  # np.arange(self.num_classes)
-        data = []
+        classes_labels = self.dataset.classes_names[output_key]
         if "categorical_crossentropy" in self.loss:
             y_pred = np.argmax(self.y_pred, axis=-1)
             y_true = np.argmax(self.y_true, axis=-1)
@@ -613,19 +616,26 @@ class ClassificationCallback:
             image = self.x_Val['input_1'][idx]
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
-            title = [
-                {
-                    "label": "Выход",
-                    "value": output_key},
-                {
-                    "label": "Распознано",
-                    "value": classes_labels[pred_idx]},
-                {
-                    "label": "Верный ответ",
-                    "value": classes_labels[true_idx]},
-            ]
-            data.append((image, title))
-        out_data = {'images': image_to_base64(data)}
+            image_data = {
+                "image": image_to_base64(image),
+                "title": None,
+                "info": [
+                    {
+                        "label": "Выход",
+                        "value": output_key,
+                        },
+                    {
+                        "label": "Распознано",
+                        "value": classes_labels[pred_idx],
+                        },
+                    {
+                        "label": "Верный ответ",
+                        "value": classes_labels[true_idx],
+                        }
+                    ]
+                }
+            images["values"].append(image_data)
+        out_data = {'images': images}
         self.Exch.show_image_data(out_data)
 
     # # Распознаём тестовую выборку и выводим результаты
@@ -1000,9 +1010,18 @@ class SegmentationCallback:
         Returns:
             None:
         """
-        image_data = []
-        true_mask_data = []
-        pred_mask_data = []
+        images = {
+            "title": "Исходное изображение",
+            "values": []
+        }
+        ground_truth_masks = {
+            "title": "Маска сегментации",
+            "values": []
+        }
+        predicted_mask = {
+            "title": "Результат работы модели",
+            "values": []
+        }
 
         self._dice_coef()
 
@@ -1013,54 +1032,41 @@ class SegmentationCallback:
             indexes = np.argsort(self.dice)[:5]
 
         for idx in indexes:
+            image_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                    "label": "Выход",
+                    "value": output_key,
+                    }
+                ]
+                }
             # исходное изобаржение
-
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
-            title = [
-                {
-                    "label": "Выход",
-                    "value": output_key},
-                {
-                    "label": "Исходное изображение",
-                    "value": None},
-            ]
-
-            image_data.append((image, title))
+            image_data["image"] = image_to_base64(image)
+            images["values"].append(image_data)
 
             # истинная маска
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            title = [
-                {
-                    "label": "Выход",
-                    "value": output_key},
-                {
-                    "label": "Маска сегментации",
-                    "value": None},
-            ]
-            true_mask_data.append((image, title))
+            image_data["image"] = image_to_base64(image)
+            ground_truth_masks["values"].append(image_data)
 
             # предсказанная маска
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            title = [
-                {
-                    "label": "Выход",
-                    "value": output_key},
-                {
-                    "label": "Результат работы модели",
-                    "value": None},
-            ]
-            pred_mask_data.append((image, title))
+            image_data["image"] = image_to_base64(image)
+            predicted_mask["values"].append(image_data)
 
-        data = {
-            'images': image_to_base64(image_data),
-            'ground_truth_masks': image_to_base64(true_mask_data),
-            'predicted_mask': image_to_base64(pred_mask_data)
-        }
-        self.Exch.show_image_data(data)
+        out_data = {
+            'images': images,
+            'ground_truth_masks': ground_truth_masks,
+            'predicted_mask': predicted_mask
+            }
+        self.Exch.show_image_data(out_data)
 
     # Распознаём тестовую выборку и выводим результаты
     def evaluate_accuracy(self, smooth=1.0):
