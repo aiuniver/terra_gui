@@ -178,6 +178,26 @@
                 return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
             }
 
+            this.loadBtn = this.find("button");
+
+            Object.defineProperty(this.loadBtn, "disabled", {
+                set: (value) => {
+                    if (value) this.loadBtn.attr("disabled", "disabled");
+                    else this.loadBtn.removeAttr("disabled");
+                },
+                get: () => {
+                    return this.loadBtn.attr("disabled") !== undefined;
+                }
+            });
+
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    let container = $("body.namespace-apps_project main > .container");
+                    this.loadBtn.disabled = value;
+                    value ? container.addClass("locked") : container.removeClass("locked");
+                }
+            });
+
             window.ExchangeRequest(
                 "get_zipfiles",
                 (success, data)=> {
@@ -201,6 +221,8 @@
                 target.toggleClass("active");
                 $("#"+target.attr("data-type")).removeClass("hidden");
             });
+            $(".load-dataset-field > ul > li[data-type='div-gdrive']").click();
+
 
             let dataset_params;
 
@@ -216,6 +238,7 @@
             };
 
             this.bind("submit", (event)=>{
+                this.locked = true;
                 event.preventDefault();
                 let serialize_data = this.serializeObject(),
                     mode;
@@ -225,12 +248,14 @@
                 }else{
                     mode = "google_drive"
                 }
+                window.StatusBar.clear();
+                window.StatusBar.message("DATASET_LOADING");
                 window.ExchangeRequest(
                     "load_dataset",
                     (success, data) => {
                         if (success) {
-
-                            window.StatusBar.message(window.Messages.get("LOAD_DATASET_SUCCESS"), true);
+                            window.StatusBar.clear();
+                            window.StatusBar.message("DATASET_LOADED", true);
 
                             $(".inputs-layers").empty();
                             $(".outputs-layers").empty();
@@ -297,10 +322,11 @@
                                             let segmentation_change = $(event.currentTarget).val();
                                             let output_id = $(event.currentTarget).parents(".output-layout").attr("id");
                                             let layout = $(event.target).parents('.layout-item');
-                                            layout.find(".layout-parameters > .class-inline").remove()
-                                            layout.find(".layout-parameters > .color-inline").remove()
-                                            layout.find(".layout-parameters > .number-classes").parent().remove()
-                                            layout.find(".layout-parameters > .number-classes-auto").parent().remove()
+                                            layout.find(".class-inline").remove()
+                                            layout.find(".color-inline").remove()
+                                            layout.find(".number-classes").parent().remove()
+                                            layout.find(".number-classes-auto").parent().remove()
+                                            layout.find(".selected-file").remove()
                                             if(segmentation_change == "Ручной ввод"){
                                                 let widget = window.FormWidget("outputs[" + output_id + "][num_classes]", {label: "Количество классов", type: "int"}).addClass("field-inline");
                                                 widget.find("input").addClass("number-classes");
@@ -394,7 +420,7 @@
                                                 var folder_values = $.map($("#"+output_id).find("select[name='outputs["+output_id+"][parameters][folder_name]'] option") ,function(option) {
                                                     return option.value;
                                                 });
-                                                let widget = window.FormWidget("outputs[output_" + i + "][parameters][selected_file]", {label: "Название файла", type: "str", list: true, available: folder_values, default: ""}).addClass("field-inline");
+                                                let widget = window.FormWidget("outputs[output_" + i + "][parameters][selected_file]", {label: "Название файла", type: "str", list: true, available: folder_values, default: ""}).addClass("field-inline selected-file");
                                                 layout.find(".layout-parameters").append(widget)
                                                 let html = '';
                                                 html += '<div class="field-form field-inline class-inline">';
@@ -411,6 +437,7 @@
                                                                 layout.find(".color-inline").remove()
                                                                 layout.find(".search-num-classes").parent().remove()
                                                                 layout.find(".number-classes-auto").parent().remove()
+                                                                layout.find(".number-classes").parent().remove()
                                                                 for(let i in data.data){
                                                                     let html = '',
                                                                     rgb = data.data[i]
@@ -459,6 +486,7 @@
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
+                        this.locked = false;
                     },
                     {
                         name: serialize_data.name,
@@ -486,11 +514,31 @@
                     ]: null;
             }
 
+            this.createBtn = this.find("button");
+
+            Object.defineProperty(this.createBtn, "disabled", {
+                set: (value) => {
+                    if (value) this.createBtn.attr("disabled", "disabled");
+                    else this.createBtn.removeAttr("disabled");
+                },
+                get: () => {
+                    return this.createBtn.attr("disabled") !== undefined;
+                }
+            });
+
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    let container = $("body.namespace-apps_project main > .container");
+                    this.createBtn.disabled = value;
+                    value ? container.addClass("locked") : container.removeClass("locked");
+                }
+            });
+
             $( ".slider-range" ).slider({
                 range: true,
                 min: 0,
                 max: 100,
-                values: [ 35, 70 ],
+                values: [ 60, 90 ],
                 slide: function( event, ui ) {
                     if(ui.values[0] > 90){
                         ui.values[0] = 90;
@@ -507,9 +555,9 @@
                 }
             });
 
-            // $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
-            // $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
-            // $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
+            $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
+            $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
+            $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
 
              // $("#amount1").on("input", ()=>{
              //     $(".slider-range").slider( "values", 0, $("#amount1").val())
@@ -521,6 +569,7 @@
 
             this.bind("submit", (event)=>{
                 event.preventDefault();
+                this.locked = true;
                 let layouts = $(".output-layout"),
                     classes_names = {},
                     classes_colors = {};
@@ -540,27 +589,26 @@
                 }
                 let serialize_data = this.serializeObject();
 
-                for(let input in serialize_data.outputs){
-                    serialize_data.outputs[input].parameters.classes_names = []
-                    serialize_data.outputs[input].parameters.classes_colors = []
+                for(let input in serialize_data.outputs & classes_names != [] & classes_colors != []){
                     serialize_data.outputs[input].parameters.classes_names = classes_names[input]
                     serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
-                    console.log("_____   "+ JSON.stringify(serialize_data.outputs[input]))
                 }
                 if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
                     serialize_data.parameters["preserve_sequence"] = "off";
                 }
+                window.StatusBar.clear();
+                window.StatusBar.message("CREATING_DATASET");
                 console.log(serialize_data);
                 window.ExchangeRequest(
                     "create_dataset",
                     (success, data) => {
                         if (success) {
-                            window.StatusBar.message(window.Messages.get("PRERAPE_DATASET_SUCCESS"), true);
-                            alert("Dataset created");
-
+                            window.StatusBar.clear();
+                            window.StatusBar.message("DATASET_CREATED", true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
+                        this.locked = false;
                     },
                     {
                         dataset_dict: serialize_data
