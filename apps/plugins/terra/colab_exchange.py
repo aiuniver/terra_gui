@@ -882,9 +882,15 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def prepare_dataset(self, dataset_name: str = "", source: str = "", **kwargs):
+        output = []
         self._reset_out_data()
         self.process_flag = "dataset"
-        return self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+        try:
+            output = self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
+        return output
 
     def get_default_datasets_params(self):
         return self.dts.get_parameters_dict()
