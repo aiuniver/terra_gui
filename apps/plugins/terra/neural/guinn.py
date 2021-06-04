@@ -64,6 +64,8 @@ class GUINN:
         self.custom_losses_dict: dict = {"dice_coef": DiceCoefficient, "mean_io_u": keras.metrics.MeanIoU}
         self.batch_size = 32
         self.epochs = 20
+        self.sum_epoch = 0
+        self.retrain_flag = False
         self.shuffle: bool = True
 
         """
@@ -257,8 +259,12 @@ class GUINN:
         """
         if self.model_is_trained:
             if self.model.stop_training:
-                self.epochs = self.epochs - self.callbacks[0].last_epoch
+                if self.retrain_flag: # self.sum_epoch = 0
+                    self.epochs = self.sum_epoch - self.callbacks[0].last_epoch
+                else:
+                    self.epochs = self.epochs - self.callbacks[0].last_epoch
             else:
+                self.retrain_flag = True
                 try:
                     list_files = os.listdir(self.training_path)
                     model_name = [x for x in list_files if x.endswith("last.h5")]
@@ -309,6 +315,8 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
+            if not self.model.stop_training:
+                self.sum_epoch += self.epochs
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
@@ -358,6 +366,7 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
+            self.sum_epoch += self.epochs
         self.model_is_trained = True
 
         #     msg = f'Модель сохранена на последней эпохе.'

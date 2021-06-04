@@ -939,23 +939,26 @@ class SegmentationCallback:
                         f"{val_metric_name}",
                     ],
                 ]
-
-            # if self.class_metrics:
-            #     for metric_name in self.class_metrics:
-            #         if not isinstance(metric_name, str):
-            #             metric_name = metric_name.__name__
-            #         if len(self.dataset.Y) > 1:
-            #             metric_name = f'{output_key}_{metric_name}'
-            #             val_metric_name = f"val_{metric_name}"
-            #         else:
-            #             val_metric_name = f"val_{metric_name}"
-            #         classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-            #         xlabel = "epoch"
-            #         ylabel = val_metric_name
-            #         labels = (classes_title, xlabel, ylabel)
-            #         plot_data[labels] = [[list(range(len(self.predict_cls[val_metric_name][j]))),
-            #                               self.predict_cls[val_metric_name][j],
-            #                               f"{val_metric_name} class {j}", ] for j in range(self.num_classes)]
+            if len(self.metric_classes):
+                if len(self.class_metrics):
+                    for metric_name in self.class_metrics:
+                        if not isinstance(metric_name, str):
+                            metric_name = metric_name.name
+                        if len(self.dataset.Y) > 1:
+                            metric_name = f'{output_key}_{metric_name}'
+                            val_metric_name = f"val_{metric_name}"
+                        else:
+                            val_metric_name = f"val_{metric_name}"
+                        classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+                        xlabel = "epoch"
+                        ylabel = val_metric_name
+                        labels = (classes_title, xlabel, ylabel)
+                        plot_data[labels] = [
+                            [
+                                list(range(len(self.predict_cls[val_metric_name][j]))),
+                                self.predict_cls[val_metric_name][j],
+                                f"{val_metric_name} class {l}", ] for j, l in
+                            enumerate(self.dataset.classes_names[output_key])]
             self.Exch.show_plot_data(plot_data)
         pass
 
