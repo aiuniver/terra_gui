@@ -507,11 +507,21 @@
                     } else {
                         training_toolbar.btn.texts.disabled = true;
                     }
-                    this.texts.append('<div class=""></div>');
+                    this.texts.html('<div class="inner"></div>');
+                    let format_epoch_value = (value) => {
+                        value = `${Math.round(value*1000)/1000}`;
+                        let split_value = value.split(".");
+                        if (split_value.length === 2) {
+                            split_value[0] = `<span>${split_value[0]}</span>`;
+                            value = split_value.join("<i>.</i>");
+                        }
+                        return value;
+                    }
                     if (Object.keys(texts).length) {
                         if (texts.epochs.length) {
-                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
-                                outputs_cols = {};
+                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время (сек.)</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
+                                outputs_cols = {},
+                                outputs_list = [];
                             this.texts.children(".inner").append(epochs_block);
                             texts.epochs.forEach((epoch) => {
                                 for (let output_name in epoch.data) {
@@ -523,12 +533,25 @@
                             });
                             for (let output_name in outputs_cols) {
                                 let callbacks_cols = outputs_cols[output_name];
+                                outputs_list.push(output_name);
                                 epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
                                 callbacks_cols.forEach((callback_name) => {
                                     epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
                                 });
                             }
-                            console.log(outputs_cols);
+                            texts.epochs.forEach((epoch) => {
+                                let tr = $(`<tr><td class="epoch_num">${epoch.number}</td><td>${epoch.time}</td></tr>`);
+                                outputs_list.forEach((output_name) => {
+                                    outputs_cols[output_name].forEach((callback_name) => {
+                                        let td = $(`<td class="value"><code></code></td>`);
+                                        try {
+                                            td.html(format_epoch_value(epoch.data[output_name][callback_name]));
+                                        } catch (e) {}
+                                        tr.append(td);
+                                    });
+                                });
+                                epochs_block.find("tbody").append(tr);
+                            });
                         }
                         if (texts.summary) {
                             this.texts.children(".inner").append(`<div class="summary">${texts.summary}</div>`);
