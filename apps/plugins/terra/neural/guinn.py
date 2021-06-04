@@ -279,6 +279,7 @@ class GUINN:
                 self.callbacks[0].retrain_flag = True
                 self.callbacks[0].retrain_epochs = self.epochs
                 self.callbacks[0].epochs = self.epochs + self.callbacks[0].last_epoch
+
             self.model.stop_training = False
             self.model_is_trained = False
             self.Exch.print_2status_bar(('Компиляция модели', '...'))
@@ -408,8 +409,9 @@ class GUINN:
         del self.y_Val
         del self.x_Test
         del self.y_Test
-        gc.collect()
         self.model_is_trained = False
+        self.retrain_flag = False
+        self.sum_epoch = 0
         self.DTS = None
         self.model = keras.Model
         self.optimizer = keras.optimizers.Adam()
@@ -423,6 +425,7 @@ class GUINN:
         self.y_Val = {}
         self.x_Test = {}
         self.y_Test = {}
+        gc.collect()
         pass
 
     @staticmethod
