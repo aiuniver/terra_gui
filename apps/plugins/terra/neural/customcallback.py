@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.07
+__version__ = 0.08
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -1000,9 +1000,18 @@ class SegmentationCallback:
         Returns:
             None:
         """
-        image_data = []
-        true_mask_data = []
-        pred_mask_data = []
+        images = {
+            "title": "Исходное изображение",
+            "values": []
+        }
+        ground_truth_masks = {
+            "title": "Маска сегментации",
+            "values": []
+        }
+        predicted_mask = {
+            "title": "Результат работы модели",
+            "values": []
+        }
 
         self._dice_coef()
 
@@ -1014,7 +1023,16 @@ class SegmentationCallback:
 
         for idx in indexes:
             # исходное изобаржение
-
+            image_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                    "label": "Выход",
+                    "value": output_key,
+                    }
+                ]
+                }
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
@@ -1055,12 +1073,42 @@ class SegmentationCallback:
             ]
             pred_mask_data.append((image, title))
 
-        data = {
-            'images': image_to_base64(image_data),
+        data = {"images": {
+            'images': [image_to_base64(image_data),
             'ground_truth_masks': image_to_base64(true_mask_data),
             'predicted_mask': image_to_base64(pred_mask_data)
         }
+        }
         self.Exch.show_image_data(data)
+
+
+        aa = {
+              "images": {
+                "ground_truth_masks": [
+                  {
+                    "image": "base64encode",
+                    "title": null,
+                    "info": [
+                      {
+                        "label": "Выход",
+                        "value": "output_1"
+                      },
+                      {
+                        "label": "Истинная маска",
+                        "value": null
+                      }
+                    ]
+                  }
+                ],
+                "images": [
+                  {
+                    "image": "base64encode",
+                    "title": "Заголовок",
+                    "info": []
+                  }
+                ]
+              }
+            }
 
     # Распознаём тестовую выборку и выводим результаты
     def evaluate_accuracy(self, smooth=1.0):
