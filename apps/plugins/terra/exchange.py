@@ -238,6 +238,7 @@ class TerraExchange:
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
         layers = kwargs.get("layers")
         schema = kwargs.get("schema")
+        reset_training = kwargs.get("reset_training", False)
         self.project.layers = {}
         if layers:
             for index, layer in layers.items():
@@ -245,6 +246,8 @@ class TerraExchange:
         else:
             for index, layer in self.project.dict().get("layers_start"):
                 self.project.layers[int(index)] = Layer(**layer)
+        if reset_training:
+            self.call("reset_training")
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -283,6 +286,7 @@ class TerraExchange:
         for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
+        self.call("reset_training")
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -419,6 +423,9 @@ class TerraExchange:
 
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
+        colab_exchange._reset_out_data()
+        colab_exchange.out_data["stop_flag"] = True
+        self.project.in_training = False
         self.project.dir.remove_training()
         self._update_in_training_flag()
         self.project.autosave()
