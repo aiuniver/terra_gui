@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.3201
+__version__ = 0.321
 
 tr2dj_obj = Exchange()
 
@@ -124,11 +124,17 @@ class DTS(object):
             for key, value in self.call_method(elem).items():
                 if type(value) == list:
                     if key == 'folder_name' and self.file_folder or key == 'file_name' and self.file_folder:
-                        value += os.listdir(self.file_folder)
-                    temp[key] = {'type': type(value[0]).__name__,
-                                 'default': value[0],
-                                 'list': True,
-                                 'available': value}
+                        list_folders = ['']
+                        list_folders += sorted(os.listdir(self.file_folder))
+                        temp[key] = {'type': type(list_folders[0]).__name__,
+                                     'default': list_folders[0],
+                                     'list': True,
+                                     'available': list_folders}
+                    else:
+                        temp[key] = {'type': type(value[0]).__name__,
+                                     'default': value[0],
+                                     'list': True,
+                                     'available': value}
                 elif type(value) == dict:
                     pass
                 else:
