@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import os
 import gc
+import copy
 import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model

@@ -393,7 +393,7 @@ class CustomCallback(keras.callbacks.Callback):
         if self.x_Val["input_1"] is not None:
             self.y_pred = self.model.predict(self.x_Val)
         else:
-            self.y_pred = self.y_true
+            self.y_pred = copy.copy(self.y_true)
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
                 callback_table_data = self.callbacks[i].epoch_end(
@@ -566,16 +566,22 @@ class ClassificationCallback:
             self.Exch.show_plot_data(plot_data)
         pass
 
-    def image_indices(self, count=5) -> np.ndarray:
+    def image_indices(self, count=5, output_key: str = None) -> np.ndarray:
         """
         Computes indices of images based on instance mode ('worst', 'best')
         Returns: array of best or worst predictions indices
         """
-        if "categorical_crossentropy" in self.loss:
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] > 1):
             classes = np.argmax(self.y_true, axis=-1)
-        elif "sparse_categorical_crossentropy" in self.loss:
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif "binary_crossentropy" in self.loss:
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         else:
             classes = np.reshape(self.y_true, (self.y_true.shape[0]))
@@ -597,7 +603,7 @@ class ClassificationCallback:
             "title": "Исходное изображение",
             "values": []
         }
-        img_indices = self.image_indices()
+        img_indices = self.image_indices(output_key=output_key)
 
         classes_labels = self.dataset.classes_names[output_key]
         # if "categorical_crossentropy" in self.loss:
@@ -677,25 +683,23 @@ class ClassificationCallback:
 
     # Распознаём тестовую выборку и выводим результаты
     def evaluate_accuracy(self, output_key: str = None):
-        y_true = self.y_true
-        y_pred = self.y_pred
         metric_classes = []
-        if (y_pred.shape[-1] == y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] > 1):
-            pred_classes = np.argmax(y_pred, axis=-1)
-            true_classes = np.argmax(y_true, axis=-1)
-        elif (y_pred.shape[-1] > y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
-            pred_classes = np.argmax(y_pred, axis=-1)
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif (y_pred.shape[-1] == y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
-            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+            pred_classes = np.argmax(self.y_pred, axis=-1)
+            true_classes = np.argmax(self.y_true, axis=-1)
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+            pred_classes = np.argmax(self.y_pred, axis=-1)
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+            pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         else:
-            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
+            pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         for j in range(self.num_classes):
             y_true_count_sum = 0
             y_pred_count_sum = 0
-            for i in range(y_true.shape[0]):
+            for i in range(self.y_true.shape[0]):
                 y_true_diff = true_classes[i] - j
                 if y_true_diff == 0:
                     y_pred_count_sum += 1
@@ -710,8 +714,6 @@ class ClassificationCallback:
         return metric_classes
 
     def evaluate_f1(self, output_key: str = None):
-        y_true = self.y_true
-        y_pred = self.y_pred
         metric_classes = []
         # if "categorical_crossentropy" in self.loss:
         #     pred_classes = np.argmax(y_pred, axis=-1)
@@ -725,23 +727,23 @@ class ClassificationCallback:
         # else:
         #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
         #     true_classes = np.reshape(y_true, (y_true.shape[0]))
-        if (y_pred.shape[-1] == y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] > 1):
-            pred_classes = np.argmax(y_pred, axis=-1)
-            true_classes = np.argmax(y_true, axis=-1)
-        elif (y_pred.shape[-1] > y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
-            pred_classes = np.argmax(y_pred, axis=-1)
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
-        elif (y_pred.shape[-1] == y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (y_true.shape[-1] == 1):
-            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+            pred_classes = np.argmax(self.y_pred, axis=-1)
+            true_classes = np.argmax(self.y_true, axis=-1)
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+            pred_classes = np.argmax(self.y_pred, axis=-1)
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+            pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         else:
-            pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
-            true_classes = np.reshape(y_true, (y_true.shape[0]))
+            pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         for j in range(self.num_classes):
             tp = 0
             fp = 0
             fn = 0
-            for i in range(y_true.shape[0]):
+            for i in range(self.y_true.shape[0]):
                 cross = pred_classes[i][pred_classes[i] == true_classes[i]]
                 tp += cross[cross == j].size
 
