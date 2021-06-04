@@ -262,12 +262,13 @@ class GUINN:
                 try:
                     list_files = os.listdir(self.training_path)
                     model_name = [x for x in list_files if x.endswith("last.h5")]
-                    self.Exch.print_error(("Ошибка", "Сохранение не возможно. Модель не обучена."))
+                    if len(model_name) > 1:
+                        self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
                     self.model = load_model(os.path.join(self.training_path, model_name[0]))
                     self.nn_name = f"{self.model.name}"
                     self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
                 except Exception:
-                    self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))
+                    self.Exch.print_error(('Ошибка загрузки модели', "!!!"))
                 self.callbacks[0].batch_size = self.batch_size
                 self.callbacks[0].retrain_flag = True
                 self.callbacks[0].retrain_epochs = self.epochs
