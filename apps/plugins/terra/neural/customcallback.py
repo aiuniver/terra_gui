@@ -1032,6 +1032,7 @@ class SegmentationCallback:
             indexes = np.argsort(self.dice)[:5]
 
         for idx in indexes:
+            # исходное изобаржение
             image_data = {
                 "image": None,
                 "title": None,
@@ -1042,7 +1043,6 @@ class SegmentationCallback:
                     }
                 ]
                 }
-            # исходное изобаржение
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
@@ -1050,12 +1050,33 @@ class SegmentationCallback:
             images["values"].append(image_data)
 
             # истинная маска
+            image_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                    "label": "Выход",
+                    "value": output_key,
+                    }
+                ]
+                }
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
+
             image_data["image"] = image_to_base64(image)
             ground_truth_masks["values"].append(image_data)
 
             # предсказанная маска
+            image_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                    "label": "Выход",
+                    "value": output_key,
+                    }
+                ]
+                }
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
             image_data["image"] = image_to_base64(image)
@@ -1066,6 +1087,7 @@ class SegmentationCallback:
             'ground_truth_masks': ground_truth_masks,
             'predicted_mask': predicted_mask
             }
+        print("out_data", out_data)
         self.Exch.show_image_data(out_data)
 
     # Распознаём тестовую выборку и выводим результаты
