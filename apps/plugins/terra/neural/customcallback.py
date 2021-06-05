@@ -684,13 +684,19 @@ class ClassificationCallback:
     # Распознаём тестовую выборку и выводим результаты
     def evaluate_accuracy(self, output_key: str = None):
         metric_classes = []
-        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
             true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         else:
@@ -727,13 +733,18 @@ class ClassificationCallback:
         # else:
         #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
         #     true_classes = np.reshape(y_true, (y_true.shape[0]))
-        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
             true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
         else:
@@ -1136,8 +1147,27 @@ class SegmentationCallback:
         -------
         None
         """
-        predsegments = np.argmax(self.y_pred, axis=-1)
-        truesegments = np.argmax(self.y_true, axis=-1)
+
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] > 1):
+            predsegments = np.argmax(self.y_pred, axis=-1)
+            truesegments = np.argmax(self.y_true, axis=-1)
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
+            predsegments = np.argmax(self.y_pred, axis=-1)
+            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
+            predsegments = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            truesegments = np.reshape(self.y_true, (self.y_true.shape[0]))
+        else:
+            predsegments = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+            truesegments = np.reshape(self.y_true, (self.y_true.shape[0]))
+        # predsegments = np.argmax(self.y_pred, axis=-1)
+        # truesegments = np.argmax(self.y_true, axis=-1)
         self.metric_classes = []
         for j in range(self.num_classes):
             summ_val = 0

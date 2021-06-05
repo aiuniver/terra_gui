@@ -259,13 +259,21 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            if self.model.stop_training:
+            if self.model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
+                print('if model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch)',
+                      self.callbacks[0].last_epoch, self.sum_epoch)
                 if self.retrain_flag: # self.sum_epoch = 0
+
                     self.epochs = self.sum_epoch - self.callbacks[0].last_epoch
+                    print('print retrain True', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
                 else:
                     self.epochs = self.epochs - self.callbacks[0].last_epoch
+                    print('print retrain False', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
             else:
+                print('else model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch)',
+                      self.callbacks[0].last_epoch, self.sum_epoch)
                 self.retrain_flag = True
+                self.sum_epoch += self.epochs
                 try:
                     list_files = os.listdir(self.training_path)
                     model_name = [x for x in list_files if x.endswith("last.h5")]
@@ -317,8 +325,8 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
-            if not self.model.stop_training:
-                self.sum_epoch += self.epochs
+            # if not self.model.stop_training:
+
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
