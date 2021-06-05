@@ -986,29 +986,28 @@ class SegmentationCallback:
                         f"{val_metric_name}",
                     ],
                 ]
-            if len(self.metric_classes):
-                if len(self.class_metrics):
-                    for metric_name in self.class_metrics:
-                        if metric_name.endswith("accuracy")\
-                                or metric_name.endswith("dice_coef")\
-                                or metric_name.endswith("loss"):
-                            if not isinstance(metric_name, str):
-                                metric_name = metric_name.name
-                            if len(self.dataset.Y) > 1:
-                                metric_name = f'{output_key}_{metric_name}'
-                                val_metric_name = f"val_{metric_name}"
-                            else:
-                                val_metric_name = f"val_{metric_name}"
-                            classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-                            xlabel = "epoch"
-                            ylabel = val_metric_name
-                            labels = (classes_title, xlabel, ylabel)
-                            plot_data[labels] = [
-                                [
-                                    list(range(len(self.predict_cls[val_metric_name][j]))),
-                                    self.predict_cls[val_metric_name][j],
-                                    f"{val_metric_name} class {l}", ] for j, l in
-                                enumerate(self.dataset.classes_names[output_key])]
+            if len(self.class_metrics):
+                for metric_name in self.class_metrics:
+                    if metric_name.endswith("accuracy")\
+                            or metric_name.endswith("dice_coef")\
+                            or metric_name.endswith("loss"):
+                        if not isinstance(metric_name, str):
+                            metric_name = metric_name.name
+                        if len(self.dataset.Y) > 1:
+                            metric_name = f'{output_key}_{metric_name}'
+                            val_metric_name = f"val_{metric_name}"
+                        else:
+                            val_metric_name = f"val_{metric_name}"
+                        classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+                        xlabel = "epoch"
+                        ylabel = val_metric_name
+                        labels = (classes_title, xlabel, ylabel)
+                        plot_data[labels] = [
+                            [
+                                list(range(len(self.predict_cls[val_metric_name][j]))),
+                                self.predict_cls[val_metric_name][j],
+                                f"{val_metric_name} class {l}", ] for j, l in
+                            enumerate(self.dataset.classes_names[output_key])]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -1155,7 +1154,7 @@ class SegmentationCallback:
         -------
         None
         """
-
+        metric_classes = []
         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
                 and (self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_true.shape[-1] > 1):
@@ -1176,7 +1175,6 @@ class SegmentationCallback:
             truesegments = np.reshape(self.y_true, (self.y_true.shape[0]))
         # predsegments = np.argmax(self.y_pred, axis=-1)
         # truesegments = np.argmax(self.y_true, axis=-1)
-        self.metric_classes = []
         for j in range(self.num_classes):
             summ_val = 0
             for i in range(self.y_true.shape[0]):
@@ -1188,7 +1186,9 @@ class SegmentationCallback:
                                     testsegment.size - np.count_nonzero(truezero + predzero)
                             ) / (testsegment.size - np.count_nonzero(predzero) + smooth)
             acc_val = summ_val / self.y_true.shape[0]
-            self.metric_classes.append(acc_val)
+            metric_classes.append(acc_val)
+
+        return metric_classes
 
     def evaluate_dice_coef(self, input_key: str = "input_1", smooth=1.0):
         """
@@ -1209,7 +1209,8 @@ class SegmentationCallback:
         intersection = np.sum(self.y_true * self.y_pred, axis=axis)
         union = np.sum(self.y_true, axis=axis) + np.sum(self.y_pred, axis=axis)
         dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
-        self.metric_classes = dice
+
+        return dice
 
         # def evaluate_mean_io_u(self, input_key: str = "input_1", smooth=1.0):
         #     """
@@ -1240,7 +1241,7 @@ class SegmentationCallback:
         -------
         None
         """
-        # self.metric_classes = []
+        metric_classes = []
         # bce = BinaryCrossentropy()
         # for i in range(self.num_classes):
         #     loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
@@ -1251,7 +1252,7 @@ class SegmentationCallback:
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(self.y_true[..., i], self.y_pred[..., i]).numpy()
-                self.metric_classes.append(loss)
+                metric_classes.append(loss)
         elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_true.shape[-1] == 1):
@@ -1259,7 +1260,7 @@ class SegmentationCallback:
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], self.y_pred[..., i]).numpy()
-                self.metric_classes.append(loss)
+                metric_classes.append(loss)
         elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_true.shape[-1] == 1):
@@ -1268,12 +1269,14 @@ class SegmentationCallback:
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
-                self.metric_classes.append(loss)
+                metric_classes.append(loss)
         else:
             bce = BinaryCrossentropy()
             for i in range(self.num_classes):
                 loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
-                self.metric_classes.append(loss)
+                metric_classes.append(loss)
+
+        return metric_classes
 
     def epoch_end(
             self,
@@ -1327,19 +1330,20 @@ class SegmentationCallback:
                 # TODO Добавить другие варианты по используемым метрикам
                 # вычисляем результат по классам
                 if metric_name.endswith("accuracy"):
-                    self.evaluate_accuracy(output_key=output_key)
+                    metric_classes = self.evaluate_accuracy(output_key=output_key)
                 elif metric_name.endswith("dice_coef"):
-                    self.evaluate_dice_coef(input_key="input_1")
+                    metric_classes = self.evaluate_dice_coef(input_key="input_1")
                 elif metric_name.endswith("loss"):
-                    self.evaluate_loss(output_key=output_key)
+                    metric_classes = self.evaluate_loss(output_key=output_key)
                 else:
+                    metric_classes = []
                     self.Exch.print_2status_bar((f"Выбранная метрика {metric_name}",
                                                  "не поддерживается для вычислений"))
                 # собираем в словарь по метрикам и классам
-                if len(self.metric_classes):
+                if len(metric_classes):
                     dclsup = {}
                     for j in range(self.num_classes):
-                        self.acls_lst[metric_idx][j].append(self.metric_classes[j])
+                        self.acls_lst[metric_idx][j].append(metric_classes[j])
                     dcls = {val_metric_name: self.acls_lst[metric_idx]}
                     dclsup.update(dcls)
                     self.predict_cls.update(dclsup)
