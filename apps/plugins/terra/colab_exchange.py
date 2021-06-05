@@ -1167,7 +1167,9 @@ class Exchange(StatesData, GuiExch):
                 self.process_flag = "trained"
         except Exception as e:
             self.out_data["stop_flag"] = True
+            self.is_trained = True
             self.out_data["errors"] = e.__str__()
+            self.process_flag = ""
         self.out_data["stop_flag"] = True
         self.stop_training_flag = True
 
