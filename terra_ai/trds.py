@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.3221
+__version__ = 0.322
 
 tr2dj_obj = Exchange()
 
