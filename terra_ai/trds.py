@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.321
+__version__ = 0.322
 
 tr2dj_obj = Exchange()
 
@@ -1681,6 +1681,16 @@ class DTS(object):
 
             return words
 
+        def get_segmentation_sequences(textfiles, tags_index):
+            indexes = []
+            for textfile in textfiles:
+                temp = []
+                for ex in textfile:
+                    if not ex in tags_index:
+                        temp.append(ex)
+                indexes.append(temp)
+            return indexes
+
         def get_set_from_indexes(word_indexes, x_len, step):
 
             sample = []
@@ -1694,7 +1704,6 @@ class DTS(object):
                 peg_idx += 1
             if not embedding:
                 self.peg.append(peg_idx + self.peg[-1])
-
             return sample
 
         def create_sets_multi_classes(word_indexes, x_len, step):
@@ -1745,7 +1754,7 @@ class DTS(object):
                     self.peg.append(peg_idx-1)
                     cls_idx += 1
                 if peg_idx == len(y):
-                    self.peg.append(peg_idx - 1)
+                    self.peg.append(peg_idx)
                 if self.django_flag:
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
@@ -1790,7 +1799,7 @@ class DTS(object):
                             txt_list.append(read_text(os.path.join(temp_path, file)))
                             several_files = True
                         else:
-                            txt_list[-1] + read_text(os.path.join(temp_path, file))
+                            txt_list[-1] += read_text(os.path.join(temp_path, file))
                     else:
                         txt_list.append(read_text(os.path.join(temp_path, file)))
                     if self.django_flag:
@@ -1803,17 +1812,18 @@ class DTS(object):
                             self.Exch.print_progress_bar(progress_bar_status)
 
             break
-
+        self.txt_list = txt_list
         if pymorphy:
             for i in range(len(txt_list)):
                 txt_list[i] = apply_pymorphy(txt_list[i])
-
-        filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^_`{|}~\t\n\xa0–\ufeff'
+        self.txt_list_pymorphy = txt_list
+        filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
                 open_tags = self.user_parameters['out'][f'output_{i + 1}']['parameters']['open_tags']
                 close_tags = self.user_parameters['out'][f'output_{i + 1}']['parameters']['close_tags']
                 tags = f'{open_tags} {close_tags}'
+                tags_list = tags.split(' ')
                 for ch in filters:
                     if ch in set(tags):
                         filters = filters.replace(ch, '')
@@ -1824,24 +1834,54 @@ class DTS(object):
         text_seq = tokenizer.texts_to_sequences(txt_list)
         self.sequences = text_seq
         self.tokenizer[f'input_{self.iter}'] = tokenizer
-
-        if embedding:
-            self.peg = []
-            X = []
-            Y = []
-            for i, txt in enumerate(txt_list):
-                for word in txt.split(' '):
-                    X.append(word)
-                    Y.append(i)
-            x = get_set_from_indexes(X, x_len, step)
-            y = get_set_from_indexes(Y, x_len, step)
-            self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10, min_count=1, workers=10, iter=10)
-            X, Y = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
-        else:
-            X, Y = create_sets_multi_classes(text_seq, x_len, step)
-
-            if bag_of_words:
-                X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
+        for i in range(len(self.user_parameters['out'])):
+            if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
+                tags_indexes = np.array([tokenizer.word_index[k] for k in tags_list])
+                if embedding:
+                    self.peg = []
+                    reserve_tok = {}
+                    for key, value in tokenizer.word_index.items():
+                        reserve_tok[value] = key
+                    X = []
+                    Y = []
+                    for i, lst in enumerate(text_seq):
+                        for word in lst:
+                            if not word in tags_indexes:
+                                X.append(reserve_tok[word])
+                                Y.append(i)
+                    x = get_set_from_indexes(X, x_len, step)
+                    y = get_set_from_indexes(Y, x_len, step)
+                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10,
+                                                                            min_count=1, workers=10, iter=10)
+                    X, _ = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
+                    Y = np.array(Y)
+                else:
+                    segm_seq = get_segmentation_sequences(text_seq, tags_indexes)
+                    X, _ = create_sets_multi_classes(segm_seq, x_len, step)
+                    if bag_of_words:
+                        X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
+            else:
+                if embedding:
+                    self.peg = []
+                    X = []
+                    Y = []
+                    for i, txt in enumerate(txt_list):
+                        if isinstance(txt, str):
+                            for word in txt.split(' '):
+                                X.append(word)
+                                Y.append(i)
+                        else:
+                            for word in txt:
+                                X.append(word)
+                                Y.append(i)
+                    x = get_set_from_indexes(X, x_len, step)
+                    y = get_set_from_indexes(Y, x_len, step)
+                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10, min_count=1, workers=10, iter=10)
+                    X, Y = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
+                else:
+                    X, Y = create_sets_multi_classes(text_seq, x_len, step)
+                    if bag_of_words:
+                        X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
 
         self.source_shape[f'input_{self.iter}'] = X.shape[1:]
         self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
@@ -2084,9 +2124,8 @@ class DTS(object):
         def get01XSamples(tok_agreem, tags_index):
             tags01 = []
             indexes = []
-
             for agreement in tok_agreem:
-                tag_place = [0 for _ in range(len(open_tags.split(' ')))]
+                tag_place = [0 for _ in range(self.num_classes[f'output_{self.iter}'])]
                 for ex in agreement:
                     if ex in tags_index:
                         place = np.argwhere(tags_index == ex)
@@ -2096,8 +2135,7 @@ class DTS(object):
                             else:
                                 tag_place[place[0][0] - len(open_tags.split(' '))] = 0
                     else:
-                        tags01.append(
-                            tag_place.copy())
+                        tags01.append(tag_place.copy())
                         indexes.append(ex)
 
             return indexes, tags01
@@ -2114,29 +2152,7 @@ class DTS(object):
 
             return sample
 
-        def get_sets(model, x, y):
-
-            x_vector = []
-            progress_bar = tqdm(x, ncols=800)
-            progress_bar.set_description('Формирование массивов')
-            idx = 0
-            for text in progress_bar:
-                tmp = []
-                for word in text:
-                    tmp.append(model[word])
-                x_vector.append(tmp)
-                if self.django_flag:
-                    idx += 1
-                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
-                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    if idx == progress_bar.total:
-                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    else:
-                        self.Exch.print_progress_bar(progress_bar_status)
-
-            return np.array(x_vector), np.array(y)
-
-        self.num_classes[f'output_{self.iter}'] = len(open_tags)
+        self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
         self.one_hot_encoding[f'output_{self.iter}'] = False
         self.y_Scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
@@ -2149,22 +2165,7 @@ class DTS(object):
                 break
 
         _, y_data = get01XSamples(self.sequences, tags_indexes)
-
-        # X = get_set_from_indexes(x_data, x_len, step)
         Y = get_set_from_indexes(y_data, x_len, step)
-
-        for i in range(len(self.user_parameters['inp'])):
-            if self.user_parameters['inp'][f'input_{i + 1}']['tag'] == 'text':
-                if self.user_parameters['inp'][f'input_{i + 1}']['parameters']['embedding']:
-                    reversed_tok = {}
-                    for key, value in self.tokenizer.word_index.items():
-                        reversed_tok[value] = key
-                    text = []
-                    for lst in self.sequences:
-                        tmp = [reversed_tok.get(letter) for letter in lst]
-                        text.append(tmp)
-                    _, Y = get_sets(self.word2vec[f'input_{i+1}'], text, Y)
-                    break
         Y = np.array(Y)
 
         return Y
