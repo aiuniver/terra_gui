@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.08
+__version__ = 0.09
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -734,7 +734,8 @@ class ClassificationCallback:
         #     pred_classes = np.reshape(y_pred, (y_pred.shape[0]))
         #     true_classes = np.reshape(y_true, (y_true.shape[0]))
         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
-                and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+                and (self.dataset.one_hot_encoding[output_key])\
+                and (self.y_true.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.argmax(self.y_true, axis=-1)
         elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
@@ -770,23 +771,26 @@ class ClassificationCallback:
             metric_classes.append(f1)
         return metric_classes
 
-    # TODO как разбирать лосс по классам при "sparse_categorical_crossentropy" и "binary_crossentropy"
     def evaluate_loss(self, output_key: str = None):
-        y_true = self.y_true
-        y_pred = self.y_pred
         metric_classes = []
-        if "categorical_crossentropy" in self.loss:
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key])\
+                and (self.y_true.shape[-1] > 1):
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
-                loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
+                loss = cross_entropy(self.y_true[..., i], self.y_pred[..., i]).numpy()
                 metric_classes.append(loss)
-        elif "sparse_categorical_crossentropy" in self.loss:
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
-                loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
+                loss = cross_entropy(y_true[..., i], self.y_pred[..., i]).numpy()
                 metric_classes.append(loss)
-        elif "binary_crossentropy" in self.loss:
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
             y_pred = tf.keras.utils.to_categorical(self.y_pred, num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
@@ -862,12 +866,13 @@ class ClassificationCallback:
                     metric_classes = self.evaluate_f1(output_key=output_key)
 
                 # собираем в словарь по метрикам и классам
-                dclsup = {}
-                for j in range(self.num_classes):
-                    self.acls_lst[metric_idx][j].append(metric_classes[j])
-                dcls = {val_metric_name: self.acls_lst[metric_idx]}
-                dclsup.update(dcls)
-                self.predict_cls.update(dclsup)
+                if len(self.metric_classes):
+                    dclsup = {}
+                    for j in range(self.num_classes):
+                        self.acls_lst[metric_idx][j].append(metric_classes[j])
+                    dcls = {val_metric_name: self.acls_lst[metric_idx]}
+                    dclsup.update(dcls)
+                    self.predict_cls.update(dclsup)
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
@@ -984,23 +989,26 @@ class SegmentationCallback:
             if len(self.metric_classes):
                 if len(self.class_metrics):
                     for metric_name in self.class_metrics:
-                        if not isinstance(metric_name, str):
-                            metric_name = metric_name.name
-                        if len(self.dataset.Y) > 1:
-                            metric_name = f'{output_key}_{metric_name}'
-                            val_metric_name = f"val_{metric_name}"
-                        else:
-                            val_metric_name = f"val_{metric_name}"
-                        classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-                        xlabel = "epoch"
-                        ylabel = val_metric_name
-                        labels = (classes_title, xlabel, ylabel)
-                        plot_data[labels] = [
-                            [
-                                list(range(len(self.predict_cls[val_metric_name][j]))),
-                                self.predict_cls[val_metric_name][j],
-                                f"{val_metric_name} class {l}", ] for j, l in
-                            enumerate(self.dataset.classes_names[output_key])]
+                        if metric_name.endswith("accuracy")\
+                                or metric_name.endswith("dice_coef")\
+                                or metric_name.endswith("loss"):
+                            if not isinstance(metric_name, str):
+                                metric_name = metric_name.name
+                            if len(self.dataset.Y) > 1:
+                                metric_name = f'{output_key}_{metric_name}'
+                                val_metric_name = f"val_{metric_name}"
+                            else:
+                                val_metric_name = f"val_{metric_name}"
+                            classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
+                            xlabel = "epoch"
+                            ylabel = val_metric_name
+                            labels = (classes_title, xlabel, ylabel)
+                            plot_data[labels] = [
+                                [
+                                    list(range(len(self.predict_cls[val_metric_name][j]))),
+                                    self.predict_cls[val_metric_name][j],
+                                    f"{val_metric_name} class {l}", ] for j, l in
+                                enumerate(self.dataset.classes_names[output_key])]
             self.Exch.show_plot_data(plot_data)
         pass
 
@@ -1224,7 +1232,7 @@ class SegmentationCallback:
         #     dice = np.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
         #     self.metric_classes = dice
 
-    def evaluate_loss(self):
+    def evaluate_loss(self, output_key: str = None):
         """
         Compute loss for classes
 
@@ -1232,11 +1240,40 @@ class SegmentationCallback:
         -------
         None
         """
-        self.metric_classes = []
-        bce = BinaryCrossentropy()
-        for i in range(self.num_classes):
-            loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
-            self.metric_classes.append(loss)
+        # self.metric_classes = []
+        # bce = BinaryCrossentropy()
+        # for i in range(self.num_classes):
+        #     loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
+        #     self.metric_classes.append(loss)
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key])\
+                and (self.y_true.shape[-1] > 1):
+            cross_entropy = CategoricalCrossentropy()
+            for i in range(self.num_classes):
+                loss = cross_entropy(self.y_true[..., i], self.y_pred[..., i]).numpy()
+                self.metric_classes.append(loss)
+        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
+            y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
+            cross_entropy = CategoricalCrossentropy()
+            for i in range(self.num_classes):
+                loss = cross_entropy(y_true[..., i], self.y_pred[..., i]).numpy()
+                self.metric_classes.append(loss)
+        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_true.shape[-1] == 1):
+            y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
+            y_pred = tf.keras.utils.to_categorical(self.y_pred, num_classes=self.num_classes)
+            cross_entropy = CategoricalCrossentropy()
+            for i in range(self.num_classes):
+                loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
+                self.metric_classes.append(loss)
+        else:
+            bce = BinaryCrossentropy()
+            for i in range(self.num_classes):
+                loss = bce(self.y_true[..., i], self.y_pred[..., i]).numpy()
+                self.metric_classes.append(loss)
 
     def epoch_end(
             self,
@@ -1294,7 +1331,7 @@ class SegmentationCallback:
                 elif metric_name.endswith("dice_coef"):
                     self.evaluate_dice_coef(input_key="input_1")
                 elif metric_name.endswith("loss"):
-                    self.evaluate_loss()
+                    self.evaluate_loss(output_key=output_key)
                 else:
                     self.Exch.print_2status_bar((f"Выбранная метрика {metric_name}",
                                                  "не поддерживается для вычислений"))
