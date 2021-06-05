@@ -1812,11 +1812,11 @@ class DTS(object):
                             self.Exch.print_progress_bar(progress_bar_status)
 
             break
-        self.txt_list = txt_list
+
         if pymorphy:
             for i in range(len(txt_list)):
                 txt_list[i] = apply_pymorphy(txt_list[i])
-        self.txt_list_pymorphy = txt_list
+
         filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
