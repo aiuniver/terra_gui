@@ -361,7 +361,7 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
+        colab_exchange.reset_stop_flag()
         output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
         out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
