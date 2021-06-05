@@ -1136,7 +1136,7 @@ class SegmentationCallback:
         self.Exch.show_image_data(out_data)
 
     # Распознаём тестовую выборку и выводим результаты
-    def evaluate_accuracy(self, smooth=1.0):
+    def evaluate_accuracy(self, smooth=1.0, output_key: str = None):
         """
         Compute accuracy for classes
 
@@ -1290,7 +1290,7 @@ class SegmentationCallback:
                 # TODO Добавить другие варианты по используемым метрикам
                 # вычисляем результат по классам
                 if metric_name.endswith("accuracy"):
-                    self.evaluate_accuracy()
+                    self.evaluate_accuracy(output_key=output_key)
                 elif metric_name.endswith("dice_coef"):
                     self.evaluate_dice_coef(input_key="input_1")
                 elif metric_name.endswith("loss"):
