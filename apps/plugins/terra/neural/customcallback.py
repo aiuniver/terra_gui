@@ -866,7 +866,7 @@ class ClassificationCallback:
                     metric_classes = self.evaluate_f1(output_key=output_key)
 
                 # собираем в словарь по метрикам и классам
-                if len(self.metric_classes):
+                if len(metric_classes):
                     dclsup = {}
                     for j in range(self.num_classes):
                         self.acls_lst[metric_idx][j].append(metric_classes[j])
