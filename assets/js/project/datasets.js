@@ -612,6 +612,21 @@
                         if (success) {
                             window.StatusBar.clear();
                             window.StatusBar.message("DATASET_CREATED", true);
+                            $(".dataset-card-wrapper").remove();
+                            let datasets = window.TerraProject.datasets;
+                            for(let dataset in datasets){
+                                let html = '';
+                                html += `<div class="dataset-card-item ${datasets[dataset].tags.keys }">`
+                                html += `<div class="dataset-card" data-name="${datasets[dataset].name}">`
+                                html += `<div class="card-title">${ datasets[dataset].name }</div>`
+                                html += `<div class="card-body">`
+                                for(let tag in datasets[dataset].tags){
+                                    html += `<div class="card-tag">${datasets[dataset].tags[tag]}</div>`
+                                }
+                                html += `</div>`
+                                html += `</div>`
+                                html += `</div>`
+                            }
                         } else {
                             window.StatusBar.message(data.error, false);
                         }

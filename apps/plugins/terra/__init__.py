@@ -13,6 +13,6 @@ if terra_exchange.project.dataset:
         "prepare_dataset",
         dataset=terra_exchange.project.dataset,
         is_custom=is_custom,
-        not_load_layers=False,
+        not_load_layers=False
     )
     terra_exchange.call("autosave_project")
