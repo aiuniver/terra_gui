@@ -48,6 +48,7 @@ DJANGO_APPS = [
 ]
 EXTERNAL_APPS = [
     "rest_framework",
+    "compressor",
 ]
 INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
@@ -67,6 +68,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.plugins.terra.middleware.TerraProjectMiddleware",
+    "htmlmin.middleware.HtmlMinifyMiddleware",
+    "htmlmin.middleware.MarkRequestMiddleware",
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
@@ -149,7 +152,19 @@ STATIC_URL = "/assets/"
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 ]
+
+
+#  Compress static files
+
+COMPRESS_ENABLED = env.bool("COMPRESS_ENABLED", default=False)
+COMPRESS_OFFLINE = env.bool("COMPRESS_OFFLINE", default=False)
+
+
+#  HTML mimify
+
+HTML_MINIFY = env.bool("HTML_MINIFY", default=False)
 
 
 # Terra AI

@@ -604,14 +604,14 @@
                     }
                 }
                 window.StatusBar.clear();
-                window.StatusBar.message("CREATING_DATASET");
+                window.StatusBar.message(window.Messages.get("CREATING_DATASET"));
                 console.log(serialize_data);
                 window.ExchangeRequest(
                     "create_dataset",
                     (success, data) => {
                         if (success) {
                             window.StatusBar.clear();
-                            window.StatusBar.message("DATASET_CREATED", true);
+                            window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
