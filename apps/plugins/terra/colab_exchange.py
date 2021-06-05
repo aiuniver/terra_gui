@@ -444,7 +444,7 @@ class Exchange(StatesData, GuiExch):
         self.loss = "categorical_crossentropy"
         self.metrics = ["accuracy"]
         self.batch_size = 32
-        self.epochs = 20
+        self.epochs = 0
         self.shuffle = True
         self.epoch = 1
         self.optimizers = self._set_optimizers()
@@ -837,6 +837,9 @@ class Exchange(StatesData, GuiExch):
             "texts": {},
         }
 
+    def reset_stop_flag(self):
+        self.out_data["stop_flag"] = False
+
     def _set_optimizers(self):
         return self.optimizers_dict
 
@@ -1095,11 +1098,9 @@ class Exchange(StatesData, GuiExch):
         return self.dts._find_colors(name, num_classes, mask_range, txt_file=txt_file)
 
     def get_data(self):
-        if self.process_flag == "train":
+        if self.process_flag in ["train", "trained", "stopped"]:
             self.out_data["progress_status"]["progress_text"] = "Train progress"
-            self.out_data["progress_status"]["percents"] = (
-                                                                   self.epoch / self.epochs
-                                                           ) * 100
+            self.out_data["progress_status"]["percents"] = (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
@@ -1111,18 +1112,24 @@ class Exchange(StatesData, GuiExch):
 
     def reset_training(self):
         self.nn.nn_cleaner()
+        self._reset_out_data()
         self.is_trained = True
+        self.process_flag = ""
+        self.epochs = 0
 
     def start_training(self, model: bytes, **kwargs) -> None:
         training = kwargs
         set_epochs = training.get("epochs_count", 10)
-        self.epochs = self.epochs + set_epochs if self.process_flag == "train" and self.is_trained else set_epochs
+        if self.process_flag not in ["trained", "stopped"]:
+            self.process_flag = "train"
+            self._reset_out_data()
+            self.epochs = set_epochs
+        if self.process_flag == "trained":
+            self.epochs = self.epochs + set_epochs
 
         if self.stop_training_flag:
             self.stop_training_flag = False
         self.is_trained = False
-        self.process_flag = "train"
-        self._reset_out_data()
 
         model_file = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.h5", delete=False
@@ -1157,14 +1164,18 @@ class Exchange(StatesData, GuiExch):
             self.nn.terra_fit(nn_model)
             if self.epoch == self.epochs:
                 self.is_trained = True
+                self.process_flag = "trained"
         except Exception as e:
             self.out_data["stop_flag"] = True
+            self.is_trained = True
             self.out_data["errors"] = e.__str__()
+            self.process_flag = ""
         self.out_data["stop_flag"] = True
         self.stop_training_flag = True
 
     def stop_training(self):
         self.stop_training_flag = True
+        self.process_flag = "stopped"
 
 
 if __name__ == "__main__":
