@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.322
+__version__ = 0.3221
 
 tr2dj_obj = Exchange()
 
@@ -2153,6 +2153,7 @@ class DTS(object):
             return sample
 
         self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
+        self.classes_names[f'output_{self.iter}'] = open_tags.split(' ')
         self.one_hot_encoding[f'output_{self.iter}'] = False
         self.y_Scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
