@@ -988,16 +988,16 @@ class SegmentationCallback:
                 ]
             if len(self.class_metrics):
                 for metric_name in self.class_metrics:
-                    if metric_name.endswith("accuracy")\
-                            or metric_name.endswith("dice_coef")\
+                    if not isinstance(metric_name, str):
+                        metric_name = metric_name.name
+                    if len(self.dataset.Y) > 1:
+                        metric_name = f'{output_key}_{metric_name}'
+                        val_metric_name = f"val_{metric_name}"
+                    else:
+                        val_metric_name = f"val_{metric_name}"
+                    if metric_name.endswith("accuracy") \
+                            or metric_name.endswith("dice_coef") \
                             or metric_name.endswith("loss"):
-                        if not isinstance(metric_name, str):
-                            metric_name = metric_name.name
-                        if len(self.dataset.Y) > 1:
-                            metric_name = f'{output_key}_{metric_name}'
-                            val_metric_name = f"val_{metric_name}"
-                        else:
-                            val_metric_name = f"val_{metric_name}"
                         classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
                         xlabel = "epoch"
                         ylabel = val_metric_name
