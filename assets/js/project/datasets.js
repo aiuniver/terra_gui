@@ -615,6 +615,7 @@
                             $(".dataset-card-wrapper").remove();
                             let datasets = window.TerraProject.datasets;
                             for(let dataset in datasets){
+                                console.log(datasets[dataset].name)
                                 let html = '';
                                 html += `<div class="dataset-card-item ${datasets[dataset].tags.keys }">`
                                 html += `<div class="dataset-card" data-name="${datasets[dataset].name}">`
