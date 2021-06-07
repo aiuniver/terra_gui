@@ -545,8 +545,8 @@
                         ui.values[0] = 90;
                         $(".slider-range").slider( "values", 0, 90);
                     }
-                    if(ui.values[1] > 0.95){
-                        ui.values[1] = 0.95;
+                    if(ui.values[1] > 95){
+                        ui.values[1] = 95;
                         $(".slider-range").slider( "values", 1, 95);
                     };
 
