@@ -374,21 +374,21 @@
                                                 layout.find(".layout-parameters").append(html);
                                                 layout.find(".search-num-classes").bind("click", (event)=>{
                                                     event.preventDefault();
-                                                    console.log($("#"+output_id).find(".number-classes-auto").val())
                                                     window.ExchangeRequest(
                                                         'get_auto_colors',
                                                         (success, data) => {
                                                             if(success){
+                                                                let num = 1;
                                                                 layout.find(".class-inline").remove()
                                                                 layout.find(".color-inline").remove()
                                                                 layout.find(".search-num-classes").parent().remove()
                                                                 layout.find(".number-classes-auto").parent().remove()
-                                                                for(let i=0; i<data.data.length; i++){
+                                                                for(let i in data.data){
                                                                     let html = '',
                                                                     rgb = data.data[i]
                                                                     html += '<div class="field-form field-inline class-inline">';
-                                                                    html += `<label>класс ${i+1}</label>`;
-                                                                    html += '<input type="text" class="number-classes-auto">';
+                                                                    html += `<label>класс ${num}</label>`;
+                                                                    html += `<input type="text" class="number-classes-auto" value="${i}">`;
                                                                     html += '</div>';
                                                                     html += '<div class="field-form field-inline color-inline">';
                                                                     html += '<label>Цвет</label>';
@@ -404,6 +404,7 @@
                                                                         let field = event.target.parentNode;
                                                                         $(field).find(".colorpicker").last().slideToggle();
                                                                     });
+                                                                    num++;
                                                                 }
                                                             }else{
                                                                 console.log("get_auto_colors ERROR")
@@ -544,8 +545,8 @@
                         ui.values[0] = 90;
                         $(".slider-range").slider( "values", 0, 90);
                     }
-                    if(ui.values[1] > 95){
-                        ui.values[1] = 95;
+                    if(ui.values[1] > 0.95){
+                        ui.values[1] = 0.95;
                         $(".slider-range").slider( "values", 1, 95);
                     };
 
@@ -558,14 +559,6 @@
             $("#amount1").val( $( ".slider-range" ).slider( "values", 0));
             $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
             $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
-
-             // $("#amount1").on("input", ()=>{
-             //     $(".slider-range").slider( "values", 0, $("#amount1").val())
-             // });
-             //
-             // $("#amount2").on("input", ()=>{
-             //     $(".slider-range").slider( "values", 1, $("#amount2").val())
-             // });
 
             this.bind("submit", (event)=>{
                 event.preventDefault();
@@ -604,30 +597,14 @@
                     }
                 }
                 window.StatusBar.clear();
-                window.StatusBar.message("CREATING_DATASET");
-                console.log(serialize_data);
+                window.StatusBar.message(window.Messages.get("CREATING_DATASET"));
                 window.ExchangeRequest(
                     "create_dataset",
                     (success, data) => {
                         if (success) {
                             window.StatusBar.clear();
-                            window.StatusBar.message("DATASET_CREATED", true);
-                            $(".dataset-card-wrapper").remove();
-                            let datasets = window.TerraProject.datasets;
-                            for(let dataset in datasets){
-                                console.log(datasets[dataset].name)
-                                let html = '';
-                                html += `<div class="dataset-card-item ${datasets[dataset].tags.keys }">`
-                                html += `<div class="dataset-card" data-name="${datasets[dataset].name}">`
-                                html += `<div class="card-title">${ datasets[dataset].name }</div>`
-                                html += `<div class="card-body">`
-                                for(let tag in datasets[dataset].tags){
-                                    html += `<div class="card-tag">${datasets[dataset].tags[tag]}</div>`
-                                }
-                                html += `</div>`
-                                html += `</div>`
-                                html += `</div>`
-                            }
+                            window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
+                            location.reload();
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
