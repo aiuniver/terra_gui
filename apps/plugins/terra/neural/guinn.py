@@ -434,6 +434,12 @@ class GUINN:
             self.history = {}
         gc.collect()
 
+    def get_nn(self):
+        self.nn_cleaner(retrain=True)
+
+        return self
+
+
     @staticmethod
     def _search_best_epoch_data(
             history, monitor="accuracy", monitor2="loss"
