@@ -575,19 +575,19 @@ class ClassificationCallback:
         Returns: array of best or worst predictions indices
         """
         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
-                and (self.dataset.one_hot_encoding[output_key]) \
+                and (self.dataset.one_hot_encoding[output_key])\
                 and (self.y_true.shape[-1] > 1):
             classes = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
-            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.y_pred.shape[-1] > 1):
+            classes = copy.copy(self.y_true)
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
-            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+                and (self.y_pred.shape[-1] == 1):
+            classes = copy.copy(self.y_true)
         else:
-            classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+            classes = copy.copy(self.y_true)
         probs = np.array([pred[classes[i]]
                           for i, pred in enumerate(self.y_pred)])
         sorted_args = np.argsort(probs)
@@ -621,18 +621,24 @@ class ClassificationCallback:
         # else:
         #     y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
         #     y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
-        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] > 1):
+        if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+                and (self.dataset.one_hot_encoding[output_key])\
+                and (self.y_true.shape[-1] > 1):
             y_pred = np.argmax(self.y_pred, axis=-1)
             y_true = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+        elif (len(self.y_true.shape) == 1) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_pred.shape[-1] > 1):
             y_pred = np.argmax(self.y_pred, axis=-1)
-            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) and (not self.dataset.one_hot_encoding[output_key]) and (self.y_true.shape[-1] == 1):
+            y_true = copy.copy(self.y_true)
+        elif (len(self.y_true.shape) == 1) \
+                and (not self.dataset.one_hot_encoding[output_key]) \
+                and (self.y_pred.shape[-1] == 1):
             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
+            y_true = copy.copy(self.y_true)
         else:
             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            y_true = np.reshape(self.y_true, (self.y_true.shape[0]))
+            y_true = copy.copy(self.y_true)
 
         for idx in img_indices:
             # TODO нужно как то определять тип входа по тэгу (images)
@@ -688,23 +694,23 @@ class ClassificationCallback:
     def evaluate_accuracy(self, output_key: str = None):
         metric_classes = []
         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
-                and (self.dataset.one_hot_encoding[output_key]) \
+                and (self.dataset.one_hot_encoding[output_key])\
                 and (self.y_true.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+            true_classes = copy.copy(self.y_true)
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] == 1):
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+            true_classes = copy.copy(self.y_true)
         else:
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+            true_classes = copy.copy(self.y_true)
         for j in range(self.num_classes):
             y_true_count_sum = 0
             y_pred_count_sum = 0
@@ -741,19 +747,19 @@ class ClassificationCallback:
                 and (self.y_true.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
             true_classes = np.argmax(self.y_true, axis=-1)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] > 1):
             pred_classes = np.argmax(self.y_pred, axis=-1)
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+            true_classes = copy.copy(self.y_true)
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] == 1):
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+            true_classes = copy.copy(self.y_true)
         else:
             pred_classes = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-            true_classes = np.reshape(self.y_true, (self.y_true.shape[0]))
+            true_classes = copy.copy(self.y_true)
         for j in range(self.num_classes):
             tp = 0
             fp = 0
@@ -783,17 +789,17 @@ class ClassificationCallback:
             for i in range(self.num_classes):
                 loss = cross_entropy(self.y_true[..., i], self.y_pred[..., i]).numpy()
                 metric_classes.append(loss)
-        elif (self.y_pred.shape[-1] > self.y_true.shape[-1]) \
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] > 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], self.y_pred[..., i]).numpy()
                 metric_classes.append(loss)
-        elif (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+        elif (len(self.y_true.shape) == 1) \
                 and (not self.dataset.one_hot_encoding[output_key]) \
-                and (self.y_true.shape[-1] == 1):
+                and (self.y_pred.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
             y_pred = tf.keras.utils.to_categorical(self.y_pred, num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
