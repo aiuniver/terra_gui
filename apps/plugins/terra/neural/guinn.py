@@ -66,6 +66,7 @@ class GUINN:
         self.batch_size = 32
         self.epochs = 20
         self.sum_epoch = 0
+        self.stop_training = False
         self.retrain_flag = False
         self.shuffle: bool = True
 
@@ -273,7 +274,7 @@ class GUINN:
             except Exception:
                 self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))  # self.Exch.print_error
 
-            if self.model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
+            if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
                 if self.retrain_flag:
                     self.epochs = self.sum_epoch - self.callbacks[0].last_epoch
                     print('print retrain True', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
@@ -288,6 +289,7 @@ class GUINN:
                 self.callbacks[0].epochs = self.epochs + self.callbacks[0].last_epoch
 
             self.model.stop_training = False
+            self.stop_training = False
             self.model_is_trained = False
             self.Exch.print_2status_bar(('Компиляция модели', '...'))
             self.set_custom_metrics()
@@ -375,6 +377,7 @@ class GUINN:
                 )
             self.sum_epoch += self.epochs
         self.model_is_trained = True
+        self.stop_training = self.callbacks[0].stop_training
 
         #     msg = f'Модель сохранена на последней эпохе.'
         #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))

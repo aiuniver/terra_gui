@@ -85,6 +85,7 @@ class CustomCallback(keras.callbacks.Callback):
         self._now_time = time.time()
         self._time_first_step = time.time()
         self.out_table_data = {}
+        self.stop_training = False
         self.retrain_flag = False
         self.retrain_epochs = 0
         self.task_type_defaults_dict = {
@@ -343,6 +344,7 @@ class CustomCallback(keras.callbacks.Callback):
 
     def on_train_begin(self, logs=None):
         self.model.stop_training = False
+        self.stop_training = False
         self._start_time = time.time()
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
         self.batch = 0
@@ -356,6 +358,7 @@ class CustomCallback(keras.callbacks.Callback):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
+            self.stop_training = True
             msg = f'ожидайте окончания эпохи {self.last_epoch + 1}:' \
                   f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             self.batch += 1
