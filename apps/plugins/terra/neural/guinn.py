@@ -156,7 +156,10 @@ class GUINN:
             self.nn_cleaner()
             self.DTS = dts_obj
             self.prepare_dataset()
-
+        else:
+            self.nn_cleaner(retrain=True)
+            self.DTS = dts_obj
+            self.prepare_dataset()
         pass
 
     def show_training_params(self) -> None:
@@ -259,31 +262,26 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            if self.model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
-                print('if model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch)',
-                      self.callbacks[0].last_epoch, self.sum_epoch)
-                if self.retrain_flag: # self.sum_epoch = 0
+            try:
+                list_files = os.listdir(self.training_path)
+                model_name = [x for x in list_files if x.endswith("last.h5")]
+                # if len(model_name) > 1:
+                #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
+                self.model = load_model(os.path.join(self.training_path, model_name[0]))
+                self.nn_name = f"{self.model.name}"
+                self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
+            except Exception:
+                self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))  # self.Exch.print_error
 
+            if self.model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
+                if self.retrain_flag:
                     self.epochs = self.sum_epoch - self.callbacks[0].last_epoch
                     print('print retrain True', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
                 else:
                     self.epochs = self.epochs - self.callbacks[0].last_epoch
-                    print('print retrain False', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
             else:
-                print('else model.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch)',
-                      self.callbacks[0].last_epoch, self.sum_epoch)
                 self.retrain_flag = True
                 self.sum_epoch += self.epochs
-                try:
-                    list_files = os.listdir(self.training_path)
-                    model_name = [x for x in list_files if x.endswith("last.h5")]
-                    # if len(model_name) > 1:
-                    #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
-                    self.model = load_model(os.path.join(self.training_path, model_name[0]))
-                    self.nn_name = f"{self.model.name}"
-                    self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
-                except Exception:
-                    self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!")) #self.Exch.print_error
                 self.callbacks[0].batch_size = self.batch_size
                 self.callbacks[0].retrain_flag = True
                 self.callbacks[0].retrain_epochs = self.epochs
@@ -325,7 +323,6 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
-            # if not self.model.stop_training:
 
         else:
             self.model = nnmodel
@@ -408,7 +405,7 @@ class GUINN:
             callbacks=self.callbacks
         )
 
-    def nn_cleaner(self) -> None:
+    def nn_cleaner(self, retrain=False) -> None:
         keras.backend.clear_session()
         del self.model
         del self.DTS
@@ -418,24 +415,24 @@ class GUINN:
         del self.y_Val
         del self.x_Test
         del self.y_Test
-        self.model_is_trained = False
-        self.retrain_flag = False
-        self.sum_epoch = 0
         self.DTS = None
-        self.model = keras.Model
-        self.optimizer = keras.optimizers.Adam()
-        self.loss = {}
-        self.metrics = {}
-        self.callbacks = []
-        self.history = {}
+        self.model = None
         self.x_Train = {}
         self.x_Val = {}
         self.y_Train = {}
         self.y_Val = {}
         self.x_Test = {}
         self.y_Test = {}
+        if not retrain:
+            self.model_is_trained = False
+            self.retrain_flag = False
+            self.sum_epoch = 0
+            self.optimizer = keras.optimizers.Adam()
+            self.loss = {}
+            self.metrics = {}
+            self.callbacks = []
+            self.history = {}
         gc.collect()
-        pass
 
     @staticmethod
     def _search_best_epoch_data(

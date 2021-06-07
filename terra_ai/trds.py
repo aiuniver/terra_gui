@@ -2421,7 +2421,6 @@ class DTS(object):
                         dataset_dict["parameters"][key] = int(value) / 100
                 except ValueError:
                     continue
-
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags'].split(' ')
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])

@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.09
+__version__ = 0.10
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -998,15 +998,15 @@ class SegmentationCallback:
                     if metric_name.endswith("accuracy") \
                             or metric_name.endswith("dice_coef") \
                             or metric_name.endswith("loss"):
-                        classes_title = f"{val_metric_name} of {self.num_classes} classes. {msg_epoch}"
-                        xlabel = "epoch"
+                        classes_title = f"{val_metric_name} из {self.num_classes} классов. {msg_epoch}"
+                        xlabel = "эпоха"
                         ylabel = val_metric_name
                         labels = (classes_title, xlabel, ylabel)
                         plot_data[labels] = [
                             [
                                 list(range(len(self.predict_cls[val_metric_name][j]))),
                                 self.predict_cls[val_metric_name][j],
-                                f"{val_metric_name} class {l}", ] for j, l in
+                                f"{val_metric_name} класс {l}", ] for j, l in
                             enumerate(self.dataset.classes_names[output_key])]
             self.Exch.show_plot_data(plot_data)
         pass
