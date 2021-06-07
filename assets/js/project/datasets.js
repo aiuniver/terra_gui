@@ -612,6 +612,7 @@
                         if (success) {
                             window.StatusBar.clear();
                             window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
+                            location.reload();
                         } else {
                             window.StatusBar.message(data.error, false);
                         }
