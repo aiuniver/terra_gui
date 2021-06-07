@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.322
+__version__ = 0.323
 
 tr2dj_obj = Exchange()
 
@@ -2415,15 +2415,15 @@ class DTS(object):
                         continue
                     if (value == 'true' or value == 'on'):
                         dataset_dict["parameters"][key] = True
-                    elif (value == 'false'):
+                    elif (value == 'false' or value == 'off'):
                         dataset_dict["parameters"][key] = False
                     else:
-                        dataset_dict["parameters"][key] = int(value)
+                        dataset_dict["parameters"][key] = int(value) / 100
                 except ValueError:
                     continue
 
         self.name = dataset_dict['parameters']['name']
-        self.user_tags = dataset_dict['parameters']['user_tags']
+        self.user_tags = dataset_dict['parameters']['user_tags'].split(' ')
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
 
         self.user_parameters['inp'] = dataset_dict['inputs']
