@@ -48,6 +48,7 @@ DJANGO_APPS = [
 ]
 EXTERNAL_APPS = [
     "rest_framework",
+    "compressor",
 ]
 INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
@@ -151,7 +152,14 @@ STATIC_URL = "/assets/"
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    "compressor.finders.CompressorFinder",
 ]
+
+
+#  Compress static files
+
+COMPRESS_ENABLED = env.bool("COMPRESS_ENABLED", default=False)
+COMPRESS_OFFLINE = env.bool("COMPRESS_OFFLINE", default=False)
 
 
 #  HTML mimify

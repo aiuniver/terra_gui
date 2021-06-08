@@ -130,3 +130,5 @@ dmypy.json
 
 /datasets/
 /TerraAI/
+
+/staticfiles/
