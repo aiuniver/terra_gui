@@ -119,6 +119,7 @@
 }
 .dataset-card-item {
     padding:0 10px 20px 10px;
+    min-height: 160px;
 }
 .dataset-card-item.hidden {
     display:none;
@@ -142,8 +143,9 @@
     cursor:default;
 }
 .card-title {
-    width:100%;
+    width: 90%;
     position:absolute;
+    word-wrap: break-word;
     font-size:.875rem;
 }
 .card-body {
