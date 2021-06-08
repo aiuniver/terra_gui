@@ -1152,7 +1152,7 @@ class Exchange(StatesData, GuiExch):
         output_optimizer_params["op_name"] = optimizer_params.get("name")
         for key, val in optimizer_params.get("params", {}).items():
             output_optimizer_params["op_kwargs"].update(val)
-
+        self.print_2status_bar(('Установка параметров обучения', '...'))
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
@@ -1160,6 +1160,7 @@ class Exchange(StatesData, GuiExch):
             batch_size=batch_size,
             optimizer_params=output_optimizer_params,
         )
+        self.print_2status_bar(('Подготовка запуска обучения', '...'))
         try:
             self.nn.terra_fit(nn_model)
             if self.epoch == self.epochs:
