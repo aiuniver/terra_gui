@@ -349,19 +349,7 @@ class GUINN:
             self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
             self.Exch.print_2status_bar(('Начало обучения', '...'))
             # self.show_training_params()
-            print("DTS.X", self.DTS.X)
-            print()
-            print("DTS.Y", self.DTS.Y)
-            print()
-            print("self.DTS.one_hot_encoding", self.DTS.one_hot_encoding)
-            print()
-            print("self.y_Train['output_1']", self.y_Train['output_1'])
-            print()
-            print("self.y_Train['output_2']", self.y_Train['output_2'])
-            print()
-            print("self.y_Train['output_1'].shape", self.y_Train['output_1'].shape)
-            print()
-            print("self.y_Train['output_2'].shape", self.y_Train['output_2'].shape)
+
             if self.x_Val['input_1'] is not None:
                 # training = Thread(target=self.tr_thread)
                 # training.start()
@@ -406,8 +394,6 @@ class GUINN:
         # except RuntimeError:
         #     self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
         # self.save_model_weights()
-
-        pass
 
     def tr_thread(self, verbose: int = 0):
         self.history = self.model.fit(
