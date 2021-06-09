@@ -414,7 +414,7 @@
                                                             name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][folder_name]']").val(),
                                                             num_classes: parseInt($("#"+output_id).find(".number-classes-auto").val()),
                                                             mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val()),
-                                                            txt_file: true
+                                                            txt_file: false
                                                         }
                                                     )
                                                 })
