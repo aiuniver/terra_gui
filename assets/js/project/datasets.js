@@ -240,7 +240,7 @@
             this.bind("submit", (event)=>{
                 this.locked = true;
                 event.preventDefault();
-                let serialize_data = this.serializeObject(),
+                let serialize_data = this.serializeJSON(),
                     mode;
                 if(serialize_data.name == ""){
                     mode = "url"
@@ -580,7 +580,7 @@
                         item.attr("name", `outputs[${layout_id}][parameters][classes_colors]`)
                     }
                 }
-                let serialize_data = this.serializeObject();
+                let serialize_data = this.serializeJSON();
 
                 for(let input in serialize_data.outputs){
                     if(classes_names[input].length != 0 && classes_colors[input].length != 0){
@@ -588,14 +588,15 @@
                         serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
                     }
                 }
-                if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
-                    serialize_data.parameters["preserve_sequence"] = "off";
-                }
                 for(let item in serialize_data.outputs){
                     if(!serialize_data.parameters.hasOwnProperty("selected_file")){
                         delete serialize_data.outputs[item].parameters.selected_file;
                     }
                 }
+                serialize_data.parameters.train_part /= 100
+                serialize_data.parameters.val_part /= 100
+                serialize_data.parameters.test_part /= 100
+
                 window.StatusBar.clear();
                 window.StatusBar.message(window.Messages.get("CREATING_DATASET"));
                 window.ExchangeRequest(
