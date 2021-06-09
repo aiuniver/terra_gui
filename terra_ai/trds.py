@@ -26,9 +26,7 @@ from io import open as ioopen
 from terra_ai.guiexchange import Exchange
 import ipywidgets as widgets
 import dill
-import configparser
 import joblib
-from ast import literal_eval
 import requests
 from tempfile import mkdtemp
 from IPython.display import display
@@ -38,9 +36,10 @@ import json
 
 # import cv2
 
-__version__ = 0.3241
+__version__ = 0.3265
 
 tr2dj_obj = Exchange()
+
 
 class DTS(object):
 
@@ -54,7 +53,7 @@ class DTS(object):
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
         self.file_folder: str = ''
         self.save_path: str = path
-        self.trds_path = trds_path
+        self.trds_path: str = trds_path
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
@@ -76,8 +75,7 @@ class DTS(object):
 
         self.X: dict = {}
         self.Y: dict = {}
-        self.x_Scaler: dict = {}
-        self.y_Scaler: dict = {}
+        self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.df: dict = {}
@@ -784,9 +782,12 @@ class DTS(object):
 
         return os.listdir(os.path.join(self.trds_path, 'sources'))
 
-    def _get_size(self, path) -> str:
+    def _get_size(self, start_path) -> str:
 
-        size_bytes = os.path.getsize(path)
+        size_bytes = 0
+        for path, dirs, files in os.walk(start_path):
+            for file in files:
+                size_bytes += os.path.getsize(os.path.join(path, file))
 
         con = 1024
         if 0 <= size_bytes <= con:
@@ -1015,70 +1016,79 @@ class DTS(object):
 
             inp_datatype = []
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
-                if arr[0] == 'X':
-                    self.X[arr[2:-3]] = {'data_name': f'Вход_{arr[-4]}',
-                                         'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
-                    self.input_shape[arr[2:-3]] = self.X[arr[2:-3]]['data'][0].shape[1:]
-                    inp_datatype.append(self._set_datatype(shape=self.X[arr[2:-3]]['data'][0].shape))
-                    self.tags[arr[2:-3]] = tag_list[0]
-                elif arr[0] == 'Y':
-                    self.Y[arr[2:-3]] = {'data_name': f'Выход_{arr[-4]}',
-                                         'data': joblib.load(os.path.join(self.file_folder, 'arrays', arr))}
-                    self.output_shape[arr[2:-3]] = self.Y[arr[2:-3]]['data'][0].shape[1:]
-                    self.output_datatype[arr[2:-3]] = self._set_datatype(shape=self.Y[arr[2:-3]]['data'][0].shape)
-                    self.tags[arr[2:-3]] = tag_list[1]
+                if 'input' in arr:
+                    self.X[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
+                    self.input_shape[arr[:-3]] = self.X[arr[:-3]]['data'][0].shape[1:]
+                    inp_datatype.append(self._set_datatype(shape=self.X[arr[:-3]]['data'][0].shape))
+                elif 'output' in arr:
+                    self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
+                    self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[1:]
+                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
             self.input_datatype = ' '.join(inp_datatype)
+
+            pass
 
         def load_scalers():
 
-            if 'scalers' in os.listdir(self.file_folder):
-                X_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if 'X' in sclr]
-                Y_scalers = [sclr[2:-3] for sclr in os.listdir(os.path.join(self.file_folder, 'scalers')) if 'Y' in sclr]
-            else:
-                X_scalers = []
-                Y_scalers = []
+            scalers = []
+            folderpath = os.path.join(self.file_folder, 'scalers')
+            if os.path.exists(folderpath):
+                for arr in os.listdir(folderpath):
+                    scalers.append(arr[:-3])
 
-            for inp in list_of_inputs:
-                if inp in X_scalers:
-                    self.x_Scaler[inp] = joblib.load(os.path.join(self.file_folder, 'scalers', f'X_{inp}.gz'))
+            for put in inputs_outputs:
+                if put in scalers:
+                    self.scaler[put] = joblib.load(os.path.join(folderpath, f'{put}.gz'))
                 else:
-                    self.x_Scaler[inp] = None
-
-            for out in list_of_outputs:
-                if out in Y_scalers:
-                    self.y_Scaler[out] = joblib.load(os.path.join(self.file_folder, 'scalers', f'Y_{out}.gz'))
-                else:
-                    self.y_Scaler[out] = None
+                    self.scaler[put] = None
 
             pass
 
         def load_tokenizer():
 
-            if 'tokenizer' in os.listdir(self.file_folder):
-                tokenizer = [tok[0:-3] for tok in os.listdir(os.path.join(self.file_folder, 'tokenizer'))]
-            else:
-                tokenizer = []
+            tokenizer = []
+            folderpath = os.path.join(self.file_folder, 'tokenizer')
+            if os.path.exists(folderpath):
+                for arr in os.listdir(folderpath):
+                    tokenizer.append(arr[:-3])
 
-            for inp in list_of_inputs:
-                if inp in tokenizer:
-                    self.tokenizer[inp] = joblib.load(os.path.join(self.file_folder, 'tokenizer', f'{inp}.gz'))
+            for put in inputs_outputs:
+                if put in tokenizer:
+                    self.tokenizer[put] = joblib.load(os.path.join(folderpath, f'{put}.gz'))
                 else:
-                    self.tokenizer[inp] = None
+                    self.tokenizer[put] = None
 
             pass
 
         def load_word2vec():
 
-            if 'word2vec' in os.listdir(self.file_folder):
-                word2v = [w2v[0:-3] for w2v in os.listdir(os.path.join(self.file_folder, 'word2vec'))]
-            else:
-                word2v = []
+            word2v = []
+            folderpath = os.path.join(self.file_folder, 'word2vec')
+            if os.path.exists(folderpath):
+                for arr in os.listdir(folderpath):
+                    word2v.append(arr[:-3])
 
-            for inp in list_of_inputs:
-                if inp in word2v:
-                    self.word2vec[inp] = joblib.load(os.path.join(self.file_folder, 'word2vec', f'{inp}.gz'))
+            for put in inputs_outputs:
+                if put in word2v:
+                    self.word2vec[put] = joblib.load(os.path.join(folderpath, f'{put}.gz'))
                 else:
-                    self.word2vec[inp] = None
+                    self.word2vec[put] = None
+
+            pass
+
+        def load_tsgenerator():
+
+            tsgen = []
+            folderpath = os.path.join(self.file_folder, 'tsgenerator')
+            if os.path.exists(folderpath):
+                for arr in os.listdir(folderpath):
+                    tsgen.append(arr[:-3])
+
+            for put in inputs_outputs:
+                if put in tsgen:
+                    self.tsgenerator[put] = joblib.load(os.path.join(folderpath, f'{put}.gz'))
+                else:
+                    self.tsgenerator[put] = None
 
             pass
 
@@ -1099,55 +1109,29 @@ class DTS(object):
 
         else:
 
-            self.load_data(options['dataset_name'], mode='terra')
+            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
+                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber']:
 
-            config = configparser.ConfigParser()
-            config.read(os.path.join(self.file_folder, 'config.ini'), encoding="utf-8")
-            name = config.get('ATTRIBUTES', 'name')
-            if name == 'Акции сбербанка':
-                name = 'sber'
-            elif name == 'Акции газпрома':
-                name = 'трейдинг'
-            num_classes = literal_eval(config.get('ATTRIBUTES', 'num_classes'))
-            if isinstance(num_classes, dict): #ЗАПЛАТКА из за базы "трейдинг" и "сбер"
-                num_classes = num_classes['output_1']
-            self.name = name
-            self.source_datatype = list(literal_eval(config.get('ATTRIBUTES', 'source_datatype')).values())[0]
-            self.source_shape = literal_eval(config.get('ATTRIBUTES', 'source_shape'))
-            self.classes_names['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_names'))
-            self.classes_colors['output_1'] = literal_eval(config.get('ATTRIBUTES', 'classes_colors'))
-            self.num_classes['output_1'] = num_classes
-            self.task_type = literal_eval(config.get('ATTRIBUTES', 'task_type'))
-            self.one_hot_encoding = literal_eval(config.get('ATTRIBUTES', 'one_hot_encoding'))
-            if self.name == 'договоры': # TODO - ЗАПЛАТКА!!!!!!
-                self.task_type['output_1'] = 'segmentation'
-            tag_list = self._set_tag(self.name)
+                self.load_data(options['dataset_name'], mode='terra')
+                self.file_folder = os.path.join(self.save_path, options['dataset_name'])
+            else:
+                self.file_folder = os.path.join(self.trds_path, f"dataset {options['dataset_name']}")
+            with open(os.path.join(self.file_folder, 'config.json'), 'r') as cfg:
+                data = json.load(cfg)
+            for key, value in data.items():
+                self.__dict__[key] = value
+            load_arrays()
+            inputs_outputs = list(self.X.keys()) + list(self.Y.keys())
+            load_scalers()
+            load_tokenizer()
+            load_word2vec()
+            load_tsgenerator()
 
-            # folder_list = sorted([X for X in os.listdir(self.file_folder) if os.path.isdir(os.path.join(self.file_folder, X))])
-            folder_list = ['arrays', 'scalers', 'tokenizer', 'word2vec']
-            progress_bar = tqdm(folder_list, ncols=800)
-            idx = 0
-            for i, folder in enumerate(progress_bar):
-                progress_bar.set_description('Загрузка файлов')
-                if folder == 'arrays':
-                    load_arrays()
-                    list_of_inputs = self.X.keys()
-                    list_of_outputs = self.Y.keys()
-                elif folder == 'scalers':
-                    load_scalers()
-                elif folder == 'tokenizer':
-                    load_tokenizer()
-                elif folder == 'word2vec':
-                    load_word2vec()
-                if self.django_flag:
-                    idx += 1
-                    progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
-                                           f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    if idx == progress_bar.total:
-                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    else:
-                        self.Exch.print_progress_bar(progress_bar_status)
-            self.dts_prepared = True
+        temp_attributes = ['df', 'peg', 'user_parameters']
+        for item in temp_attributes:
+            if hasattr(self, item):
+                delattr(self, item)
+        self.dts_prepared = True
 
         return self
 
@@ -1181,23 +1165,23 @@ class DTS(object):
             source_datatype.append(self._set_datatype(shape=self.X[inp]['data'][0].shape))
             if options['x_scaler'][inp] in ['StandardScaler', 'MinMaxScaler']:
                 if options['x_scaler'][inp] == 'MinMaxScaler':
-                    self.x_Scaler[inp] = MinMaxScaler()
+                    self.scaler[inp] = MinMaxScaler()
                 elif options['x_scaler'][inp] == 'StandardScaler':
-                    self.x_Scaler[inp] = StandardScaler()
+                    self.scaler[inp] = StandardScaler()
                 list_of_arrays = []
-                self.x_Scaler[inp].fit(self.X[inp]['data'][0].reshape(-1, 1))
+                self.scaler[inp].fit(self.X[inp]['data'][0].reshape(-1, 1))
                 for array in self.X[inp]['data']:
                     if isinstance(array, np.ndarray):
                         shape_x = array.shape
-                        array = self.x_Scaler[inp].transform(array.reshape(-1, 1))
+                        array = self.scaler[inp].transform(array.reshape(-1, 1))
                         array = array.reshape(shape_x)
                     else:
                         array = None
                     list_of_arrays.append(array)
                 self.X[inp]['data'] = tuple(list_of_arrays)
                 del list_of_arrays
-            else:
-                self.x_Scaler[inp] = None
+            # else:
+            #     self.scaler[inp] = None
 
             if options['x_shape'][inp] in ['Добавить размерность', 'Выпрямить']:
                 if options['x_shape'][inp] == 'Добавить размерность':
@@ -1225,23 +1209,23 @@ class DTS(object):
         for out in outputs:
             if options['y_scaler'][out] in ['StandardScaler', 'MinMaxScaler']:
                 if options['y_scaler'][out] == 'MinMaxScaler':
-                    self.y_Scaler[out] = MinMaxScaler()
+                    self.scaler[out] = MinMaxScaler()
                 elif options['y_scaler'][out] == 'StandardScaler':
-                    self.y_Scaler[out] = StandardScaler()
+                    self.scaler[out] = StandardScaler()
                 list_of_arrays = []
-                self.y_Scaler[out].fit(self.Y[out]['data'][0].reshape(-1, 1))
+                self.scaler[out].fit(self.Y[out]['data'][0].reshape(-1, 1))
                 for array in self.Y[out]['data']:
                     if isinstance(array, np.ndarray):
                         shape_y = array.shape
-                        array = self.y_Scaler[out].transform(array.reshape(-1, 1))
+                        array = self.scaler[out].transform(array.reshape(-1, 1))
                         array = array.reshape(shape_y)
                     else:
                         array = None
                     list_of_arrays.append(array)
                 self.Y[out]['data'] = tuple(list_of_arrays)
                 del list_of_arrays
-            else:
-                self.y_Scaler[out] = None
+            # else:
+            #     self.scaler[out] = None
 
             if options['y_shape'][out] in ['Добавить размерность', 'Выпрямить']:
                 if options['y_shape'][out] == 'Добавить размерность':
@@ -1414,26 +1398,26 @@ class DTS(object):
                     y_Train = y_Train.reshape(-1, 1)
                     y_Val = y_Val.reshape(-1, 1)
 
-                self.y_Scaler['output_1'] = None
+                # self.scaler['output_1'] = None
                 if options['scaler'] == 'MinMaxScaler':
-                    self.x_Scaler['input_1'] = MinMaxScaler()
+                    self.scaler['input_1'] = MinMaxScaler()
                     if 'classification' not in self.tags['output_1']:
-                        self.y_Scaler['output_1'] = MinMaxScaler()
+                        self.scaler['output_1'] = MinMaxScaler()
 
                 elif options['scaler'] == 'StandardScaler':
-                    self.x_Scaler['input_1'] = StandardScaler()
+                    self.scaler['input_1'] = StandardScaler()
                     if 'classification' not in self.tags['output_1']:
-                        self.y_Scaler['output_1'] = StandardScaler()
+                        self.scaler['output_1'] = StandardScaler()
 
-                self.x_Scaler['input_1'].fit(x_Train)
-                x_Train = self.x_Scaler['input_1'].transform(x_Train)
-                x_Val = self.x_Scaler['input_1'].transform(x_Val)
+                self.scaler['input_1'].fit(x_Train)
+                x_Train = self.scaler['input_1'].transform(x_Train)
+                x_Val = self.scaler['input_1'].transform(x_Val)
                 x_Train = x_Train.reshape(shape_xt)
                 x_Val = x_Val.reshape(shape_xv)
                 if 'classification' not in self.tags['output_1']:
-                    self.y_Scaler['output_1'].fit(y_Train)
-                    y_Train = self.y_Scaler['output_1'].transform(y_Train)
-                    y_Val = self.y_Scaler['output_1'].transform(y_Val)
+                    self.scaler['output_1'].fit(y_Train)
+                    y_Train = self.scaler['output_1'].transform(y_Train)
+                    y_Val = self.scaler['output_1'].transform(y_Val)
                     y_Train = y_Train.reshape(shape_yt)
                     y_Val = y_Val.reshape(shape_yv)
 
@@ -1562,14 +1546,14 @@ class DTS(object):
             shape_x = X.shape
             X = X.reshape(-1, 1)
             if scaler == 'MinMaxScaler':
-                self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
+                self.scaler[f'input_{self.iter}'] = MinMaxScaler()
             elif scaler == 'StandardScaler':
-                self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-            self.x_Scaler[f'input_{self.iter}'].fit(X)
-            X = self.x_Scaler[f'input_{self.iter}'].transform(X)
+                self.scaler[f'input_{self.iter}'] = StandardScaler()
+            self.scaler[f'input_{self.iter}'].fit(X)
+            X = self.scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
-        else:
-            self.x_Scaler[f'input_{self.iter}'] = False
+        # else:
+        #     self.scaler[f'input_{self.iter}'] = None
 
         if net == 'Linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
@@ -1637,13 +1621,13 @@ class DTS(object):
     #         X = X.reshape(-1, 1)
     #
     #         if scaler == 'MinMaxScaler':
-    #             self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
+    #             self.scaler[f'input_{self.iter}'] = MinMaxScaler()
     #
     #         elif scaler == 'StandardScaler':
-    #             self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
+    #             self.scaler[f'input_{self.iter}'] = StandardScaler()
     #
-    #         self.x_Scaler[f'input_{self.iter}'].fit(X)
-    #         X = self.x_Scaler[f'input_{self.iter}'].transform(X)
+    #         self.scaler[f'input_{self.iter}'].fit(X)
+    #         X = self.scaler[f'input_{self.iter}'].transform(X)
     #         X = X.reshape(shape_x)
     #
     #     if 'classification' in self.task_type.values():
@@ -1812,11 +1796,11 @@ class DTS(object):
                             self.Exch.print_progress_bar(progress_bar_status)
 
             break
-
+        self.txt_list = txt_list
         if pymorphy:
             for i in range(len(txt_list)):
                 txt_list[i] = apply_pymorphy(txt_list[i])
-
+        self.txt_list_pymorphy = txt_list
         filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
@@ -1885,7 +1869,7 @@ class DTS(object):
 
         self.source_shape[f'input_{self.iter}'] = X.shape[1:]
         self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
-        self.x_Scaler[f'input_{self.iter}'] = None
+        # self.scaler[f'input_{self.iter}'] = None
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
@@ -1911,14 +1895,14 @@ class DTS(object):
             shape_x = X.shape
             X = X.reshape(-1, 1)
             if scaler == 'MinMaxScaler':
-                self.x_Scaler[f'input_{self.iter}'] = MinMaxScaler()
+                self.scaler[f'input_{self.iter}'] = MinMaxScaler()
             elif scaler == 'StandardScaler':
-                self.x_Scaler[f'input_{self.iter}'] = StandardScaler()
-            self.x_Scaler[f'input_{self.iter}'].fit(X)
-            X = self.x_Scaler[f'input_{self.iter}'].transform(X)
+                self.scaler[f'input_{self.iter}'] = StandardScaler()
+            self.scaler[f'input_{self.iter}'].fit(X)
+            X = self.scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
-        else:
-            self.x_Scaler[f'input_{self.iter}'] = None
+        # else:
+        #     self.scaler[f'input_{self.iter}'] = None
 
         #Если надо работать с временными рядами
         for i in range(len(self.user_parameters['out'])):
@@ -1947,7 +1931,7 @@ class DTS(object):
                 if self.user_parameters['inp'][f'input_{i + 1}']['parameters']['scaler'] in ['MinMaxScaler', 'StandardScaler']:
                     y_shape = Y.shape
                     Y = Y.reshape(-1, 1)
-                    Y = self.x_Scaler[f'input_{i+1}'].transform(Y)
+                    Y = self.scaler[f'input_{i+1}'].transform(Y)
                     Y = Y.reshape(y_shape)
 
         self.one_hot_encoding[f'output_{self.iter}'] = False
@@ -1974,10 +1958,10 @@ class DTS(object):
                 if self.user_parameters['inp'][f'input_{i+1}']['parameters']['scaler'] in ['MinMaxScaler', 'StandardScaler']:
                     y_shape = Y.shape
                     Y = Y.reshape(-1, 1)
-                    Y = self.x_Scaler[f'input_{i+1}'].transform(Y)
+                    Y = self.scaler[f'input_{i+1}'].transform(Y)
                     Y = Y.reshape(y_shape)
 
-        self.y_Scaler[f'output_{self.iter}'] = None
+        # self.scaler[f'output_{self.iter}'] = None
         self.one_hot_encoding[f'output_{self.iter}'] = False
         self.peg = [0]
         for ratio in self.divide_ratio[1][:-1]:
@@ -2089,14 +2073,14 @@ class DTS(object):
             shape_x = X.shape
             X = X.reshape(-1, 1)
             if scaler == 'MinMaxScaler':
-                self.x_Scaler = MinMaxScaler()
+                self.scaler[f'input_{self.iter}'] = MinMaxScaler()
             elif scaler == 'StandardScaler':
-                self.x_Scaler = StandardScaler()
-            self.x_Scaler.fit(X)
+                self.scaler[f'input_{self.iter}'] = StandardScaler()
+            self.scaler[f'input_{self.iter}'].fit(X)
             X = self.x_Scaler.transform(X)
             X = X.reshape(shape_x)
-        else:
-            self.x_Scaler[f'input_{self.iter}'] = None
+        # else:
+        #     self.scaler[f'input_{self.iter}'] = None
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
@@ -2109,7 +2093,6 @@ class DTS(object):
         Y = self.y_Cls
         self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
-        self.y_Scaler[f'output_{self.iter}'] = None
 
         if one_hot_encoding:
             Y = utils.to_categorical(Y, len(np.unique(Y)))
@@ -2155,7 +2138,7 @@ class DTS(object):
         self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
         self.classes_names[f'output_{self.iter}'] = open_tags.split(' ')
         self.one_hot_encoding[f'output_{self.iter}'] = True
-        self.y_Scaler[f'output_{self.iter}'] = None
+        # self.scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
 
         for i in range(len(self.user_parameters['inp'])):
@@ -2212,7 +2195,7 @@ class DTS(object):
         num_classes = len(classes_names)
         self.num_classes[f'output_{self.iter}'] = num_classes
         self.one_hot_encoding[f'output_{self.iter}'] = True
-        self.y_Scaler[f'output_{self.iter}'] = None
+        # self.scaler[f'output_{self.iter}'] = None
         classes_dict = {}
         for i in range(len(classes_names)):
             classes_dict[classes_names[i]] = classes_colors[i]
@@ -2426,7 +2409,7 @@ class DTS(object):
 
 
         self.name = dataset_dict['parameters']['name']
-        self.user_tags = dataset_dict['parameters']['user_tags'].split(' ')
+        self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
 
         self.user_parameters['inp'] = dataset_dict['inputs']
@@ -2453,7 +2436,6 @@ class DTS(object):
             else:
                 self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
 
-        # Train/Val/Test split
         train_mask = []
         val_mask = []
         test_mask = []
@@ -2508,7 +2490,7 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['iter', 'sequences', 'y_Cls', 'peg'] #    'df'
+        temp_attributes = ['iter', 'sequences', 'y_Cls']  # 'df' , 'peg'
         for item in temp_attributes:
             if hasattr(self, item):
                 delattr(self, item)
@@ -2516,23 +2498,48 @@ class DTS(object):
         self.dts_prepared = True
         if is_save:
             print('Идёт сохранение датасета.')
-            directory = self.trds_path
-            os.makedirs(directory, exist_ok=True)
-            with open(f"{directory}/{self.name}.trds", "wb") as f:
-                dill.dump(self, f)
-            tzinfo = timezone('Europe/Moscow')
-            now = datetime.now().astimezone(tzinfo)
-            dt_string = now.isoformat()
+            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}'), exist_ok=True)
+            if self.X:
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays'), exist_ok=True)
+            if self.scaler:
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'scalers'), exist_ok=True)
+            if self.tokenizer:
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer'), exist_ok=True)
+            if self.word2vec:
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec'), exist_ok=True)
+            if self.tsgenerator:
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator'), exist_ok=True)
+
+            for arr in self.X.keys():
+                if self.X[arr]:
+                    joblib.dump(self.X[arr], os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
+            for arr in self.Y.keys():
+                if self.Y[arr]:
+                    joblib.dump(self.Y[arr], os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
+            for sclr in self.scaler.keys():
+                if self.scaler[sclr]:
+                    joblib.dump(self.scaler[sclr], os.path.join(self.trds_path, f'dataset {self.name}', 'scalers', f'{sclr}.gz'))
+            for tok in self.tokenizer.keys():
+                if self.tokenizer[tok]:
+                    joblib.dump(self.tokenizer[tok], os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer', f'{tok}.gz'))
+            for w2v in self.word2vec.keys():
+                if self.word2vec[w2v]:
+                    joblib.dump(self.word2vec[w2v], os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec', f'{w2v}.gz'))
+            for tsg in self.tsgenerator.keys():
+                if self.tsgenerator[tsg]:
+                    joblib.dump(self.tsgenerator[tsg], os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator', f'{tsg}.gz'))
+
             data = {}
-            data['name'] = self.name
-            data['source'] = self.source
-            data['tags'] = list(self.tags.values())
-            data['date'] = dt_string
-            data['size'] = self._get_size(f'{directory}/{self.name}.trds')
-            with open(f'{directory}/{self.name}.trds.json', 'w') as fp:
+            attributes = ['name', 'source', 'tags', 'user_tags', 'classes_colors', 'classes_names', 'dts_prepared',
+                          'language', 'num_classes', 'one_hot_encoding', 'task_type']
+            for attr in attributes:
+                data[attr] = self.__dict__[attr]
+            data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
+            data['size'] = self._get_size(os.path.join(self.trds_path, f'dataset {self.name}'))
+            with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
                 json.dump(data, fp)
-            print(f'Датасет сохранен в файл {directory}/{self.name}.trds')
-            print(f'Json сохранен в файл {directory}/{self.name}.trds.json')
+            print(f'Файлы датасета сохранены в папку {os.path.join(self.trds_path, f"dataset {self.name}")}')
+            print(f'Json сохранен в файл {os.path.join(self.trds_path, f"dataset {self.name}", "config.json")}')
 
         return self
 
