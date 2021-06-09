@@ -349,7 +349,8 @@ class CustomCallback(keras.callbacks.Callback):
         self.stop_training = False
         self._start_time = time.time()
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
-        self.batch = 0
+        if self.retrain_flag:
+            self.batch = 0
         self.Exch.show_current_epoch(self.last_epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
