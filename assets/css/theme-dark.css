@@ -271,7 +271,8 @@ input[type=button][disabled=disabled]:hover {
     border-color:#6C7883;
     background-color:#242F3D;
 }
-.ui-selectmenu-menu .ui-menu {
+.ui-selectmenu-menu .ui-menu,
+.ui-widget.ui-widget-content {
     border-color:#6C7883;
     background:#242F3D;
 }

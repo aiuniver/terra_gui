@@ -110,8 +110,7 @@ class TerraExchange:
         self, dataset: str, is_custom: bool = False, not_load_layers: bool = False
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
-            dataset_name=dataset,
-            source="custom_dataset" if is_custom else ""
+            dataset_name=dataset, source="custom_dataset" if is_custom else ""
         )
         schema = [[], []]
         for index, layer in start_layers.items():
