@@ -171,6 +171,14 @@ class TerraExchange:
             success=response.get("success", True),
         )
 
+    def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.reset_stop_flag()
+        return TerraExchangeResponse()
+
+    def _call_before_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.reset_stop_flag()
+        return TerraExchangeResponse()
+
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)

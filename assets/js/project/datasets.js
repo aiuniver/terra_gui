@@ -497,6 +497,19 @@
                     }
 
                 );
+                window.ExchangeRequest(
+                    "before_load_dataset_source",
+                    (success, data) => {
+                        if (success) {
+                            window.ExchangeRequest(
+                                "get_data",
+                                (success, data) => {
+                                    console.log(success, data);
+                                }
+                            );
+                        }
+                    }
+                );
             });
 
             return this;
@@ -615,9 +628,16 @@
                     }
                 );
                 window.ExchangeRequest(
-                    "get_data",
+                    "before_create_dataset",
                     (success, data) => {
-                        console.log(success, data);
+                        if (success) {
+                            window.ExchangeRequest(
+                                "get_data",
+                                (success, data) => {
+                                    console.log(success, data);
+                                }
+                            );
+                        }
                     }
                 );
             });
