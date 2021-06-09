@@ -327,7 +327,7 @@ class CustomCallback(keras.callbacks.Callback):
         info = ' %s' % eta_format
         return info
 
-    def update_progress(self, target, current, start_time, finalize=False):
+    def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
         """
         Updates the progress bar.
         """
@@ -336,8 +336,10 @@ class CustomCallback(keras.callbacks.Callback):
             eta = _now_time - start_time
         else:
             _now_time = time.time()
-
-            time_per_unit = self._estimate_step(current, start_time, _now_time)
+            if stop_flag:
+                time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
+            else:
+                time_per_unit = self._estimate_step(current, start_time, _now_time)
 
             eta = time_per_unit * (target - current)
         info = self.eta_format(eta)
@@ -351,7 +353,6 @@ class CustomCallback(keras.callbacks.Callback):
         if not self.stop_flag:
             self.batch = 0
         self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
-
 
         self.Exch.show_current_epoch(self.last_epoch)
 
@@ -381,8 +382,9 @@ class CustomCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения дообучения:' \
                                      f'{self.eta_format(time_start)}, '
             elif self.stop_flag:
+                print("batch", batch)
                 msg_progress_end = f'Расчетное время окончания после остановки:' \
-                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(self._sum_time + time_start)}, '
             else:
@@ -390,7 +392,6 @@ class CustomCallback(keras.callbacks.Callback):
                                    f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(time_start)}, '
-
             self.batch += 1
             self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
                                          msg_progress_end + msg_epoch + msg_batch))
@@ -636,8 +637,8 @@ class ClassificationCallback:
                         classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "ошибка"
                     else:
-                        classes_title = f"Метрика {output_key} для {self.num_classes} классов. {msg_epoch}"
-                        ylabel = "метрика"
+                        classes_title = f"Точность {output_key} для {self.num_classes} классов. {msg_epoch}"
+                        ylabel = "точность"
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [
                         [
@@ -1071,8 +1072,8 @@ class SegmentationCallback:
                         classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "ошибка"
                     else:
-                        classes_title = f"Метрика {output_key} для {self.num_classes} классов. {msg_epoch}"
-                        ylabel = "метрика"
+                        classes_title = f"Точность {output_key} для {self.num_classes} классов. {msg_epoch}"
+                        ylabel = "точность"
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [
                         [
@@ -1505,6 +1506,7 @@ class TimeseriesCallback:
         )
         self.met = [[] for _ in range(len(self.losses))]
         self.valmet = [[] for _ in range(len(self.losses))]
+        self.vmet_name = ""
         self.history = {}
         self.predicts = {}
 
@@ -1640,8 +1642,6 @@ class TimeseriesCallback:
 
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
-                self.comment = f" эпоха {epoch + 1}"
-                self.idx = 0
                 plot_data = self.plot_result(output_key=output_key)
                 out_data.update({"plots": plot_data})
 
@@ -1651,8 +1651,6 @@ class TimeseriesCallback:
         self.x_Val = x_val
         out_data = {}
         if self.show_final:
-            self.comment = f"на {self.epoch + 1} эпохе"
-            self.idx = 0
             plot_data = self.plot_result(output_key=output_key)
             out_data.update({"plots": plot_data})
             # Plot correlation and autocorrelation graphics
