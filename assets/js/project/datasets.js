@@ -257,7 +257,11 @@
                             window.ExchangeRequest(
                                 "get_data",
                                 (success, data) => {
-                                    console.log(success, data);
+                                    if (success) {
+                                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                    } else {
+                                        window.StatusBar.message(data.error, false);
+                                    }
                                 }
                             );
                             window.ExchangeRequest(
@@ -617,7 +621,11 @@
                             window.ExchangeRequest(
                                 "get_data",
                                 (success, data) => {
-                                    console.log(success, data);
+                                    if (success) {
+                                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                    } else {
+                                        window.StatusBar.message(data.error, false);
+                                    }
                                 }
                             );
                             window.ExchangeRequest(
