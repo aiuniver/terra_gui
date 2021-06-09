@@ -211,8 +211,15 @@ input[type=number] {
 .checkout-switch > input:checked + .switcher:before {
     transform:translateX(12px);
 }
+.field-form.relative {
+    position:relative;
+}
 .field-form.hidden {
     display:none !important;
+}
+.jquery-ui-autocomplete {
+    position:relative;
+    z-index:101;
 }
 
 
@@ -260,12 +267,22 @@ input[type=number] {
 .ui-selectmenu-button-open {
     border-radius:4px 4px 0 0 !important;
 }
-.ui-selectmenu-menu .ui-menu {
+.ui-selectmenu-menu .ui-menu,
+.ui-widget.ui-autocomplete {
     max-height:201px;
     padding:0;
     border:1px solid;
     border-top-width:0;
     border-radius:0 0 4px 4px;
+}
+.ui-widget.ui-autocomplete {
+    max-height:206px;
+    left:0 !important;
+    top:100% !important;
+    overflow:hidden;
+    overflow-y:auto;
+    padding-top:5px;
+    margin-top:-5px;
 }
 .ui-menu .ui-menu-item {
     list-style-image:none;

@@ -206,8 +206,8 @@
                     widget.find("input").addClass(`_callback_${name}`).bind("change", (event) => {
                         let input = $(event.currentTarget);
                         if (input.hasClass("_callback_show_best_images") || input.hasClass("_callback_show_worst_images")) {
-                            let best = this.find("._callback_show_best_images"),
-                                worst = this.find("._callback_show_worst_images");
+                            let best = input.closest(".inner").find("._callback_show_best_images"),
+                                worst = input.closest(".inner").find("._callback_show_worst_images");
                             if (input.hasClass("_callback_show_best_images")) {
                                 if (best[0].checked) worst[0].checked = false;
                             } else {
