@@ -119,6 +119,7 @@
 }
 .dataset-card-item {
     padding:0 10px 20px 10px;
+    min-height: 160px;
 }
 .dataset-card-item.hidden {
     display:none;
@@ -142,8 +143,9 @@
     cursor:default;
 }
 .card-title {
-    width:100%;
+    width: 90%;
     position:absolute;
+    word-wrap: break-word;
     font-size:.875rem;
 }
 .card-body {
@@ -154,14 +156,24 @@
     justify-content:flex-end;
 }
 .card-tag {
+    position:relative;
     font-size:.75rem;
     line-height:20px;
     color:#A7BED3;
-    padding-left:10px;
+    padding-left:15px;
 }
 .card-tag:before {
-    margin-left:-12px;
+    display:block;
+    content:'';
+    width:8px;
+    height:8px;
+    margin:-4px 0 0 0;
     position:absolute;
+    left:0;
+    top:50%;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
 }
 .next-form{
     margin-top: 40px;

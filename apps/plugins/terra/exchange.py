@@ -111,7 +111,7 @@ class TerraExchange:
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
             dataset_name=dataset,
-            source="custom_dataset" if is_custom else "",
+            source="custom_dataset" if is_custom else ""
         )
         schema = [[], []]
         for index, layer in start_layers.items():

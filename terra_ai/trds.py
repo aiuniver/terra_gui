@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.323
+__version__ = 0.324
 
 tr2dj_obj = Exchange()
 
@@ -2154,7 +2154,7 @@ class DTS(object):
 
         self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
         self.classes_names[f'output_{self.iter}'] = open_tags.split(' ')
-        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.one_hot_encoding[f'output_{self.iter}'] = True
         self.y_Scaler[f'output_{self.iter}'] = None
         tags = open_tags.split(' ') + close_tags.split(' ')
 
@@ -2211,7 +2211,7 @@ class DTS(object):
         self.classes_colors[f'output_{self.iter}'] = classes_colors
         num_classes = len(classes_names)
         self.num_classes[f'output_{self.iter}'] = num_classes
-        self.one_hot_encoding[f'output_{self.iter}'] = False
+        self.one_hot_encoding[f'output_{self.iter}'] = True
         self.y_Scaler[f'output_{self.iter}'] = None
         classes_dict = {}
         for i in range(len(classes_names)):
@@ -2504,7 +2504,7 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['iter', 'model_gensim'] # 'y_Cls' 'sequences' 'peg', 'df'
+        temp_attributes = ['iter', 'sequences', 'y_Cls', 'peg'] #    'df'
         for item in temp_attributes:
             if hasattr(self, item):
                 delattr(self, item)

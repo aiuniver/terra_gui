@@ -374,21 +374,21 @@
                                                 layout.find(".layout-parameters").append(html);
                                                 layout.find(".search-num-classes").bind("click", (event)=>{
                                                     event.preventDefault();
-                                                    console.log($("#"+output_id).find(".number-classes-auto").val())
                                                     window.ExchangeRequest(
                                                         'get_auto_colors',
                                                         (success, data) => {
                                                             if(success){
+                                                                let num = 1;
                                                                 layout.find(".class-inline").remove()
                                                                 layout.find(".color-inline").remove()
                                                                 layout.find(".search-num-classes").parent().remove()
                                                                 layout.find(".number-classes-auto").parent().remove()
-                                                                for(let i=0; i<data.data.length; i++){
+                                                                for(let i in data.data){
                                                                     let html = '',
                                                                     rgb = data.data[i]
                                                                     html += '<div class="field-form field-inline class-inline">';
-                                                                    html += `<label>класс ${i+1}</label>`;
-                                                                    html += '<input type="text" class="number-classes-auto">';
+                                                                    html += `<label>класс ${num}</label>`;
+                                                                    html += `<input type="text" class="number-classes-auto" value="${i}">`;
                                                                     html += '</div>';
                                                                     html += '<div class="field-form field-inline color-inline">';
                                                                     html += '<label>Цвет</label>';
@@ -404,6 +404,7 @@
                                                                         let field = event.target.parentNode;
                                                                         $(field).find(".colorpicker").last().slideToggle();
                                                                     });
+                                                                    num++;
                                                                 }
                                                             }else{
                                                                 console.log("get_auto_colors ERROR")
@@ -559,14 +560,6 @@
             $("#amount2").val( $( ".slider-range" ).slider( "values", 1) - $( ".slider-range" ).slider( "values", 0));
             $("#amount3").val( 100 - $( ".slider-range" ).slider( "values", 1));
 
-             // $("#amount1").on("input", ()=>{
-             //     $(".slider-range").slider( "values", 0, $("#amount1").val())
-             // });
-             //
-             // $("#amount2").on("input", ()=>{
-             //     $(".slider-range").slider( "values", 1, $("#amount2").val())
-             // });
-
             this.bind("submit", (event)=>{
                 event.preventDefault();
                 this.locked = true;
@@ -605,7 +598,6 @@
                 }
                 window.StatusBar.clear();
                 window.StatusBar.message(window.Messages.get("CREATING_DATASET"));
-                console.log(serialize_data);
                 window.ExchangeRequest(
                     "create_dataset",
                     (success, data) => {

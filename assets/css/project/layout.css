@@ -31,9 +31,14 @@ header > .project > .logo {
     display:block;
     user-select:none;
 }
-header > .project > .logo > img {
+header > .project > .logo:after {
+    display:block;
+    content:'';
     width:28px;
     height:28px;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
 }
 header > .project > .title {
     margin:0 0 0 15px;
@@ -341,7 +346,8 @@ main > .container > .properties > .wrapper .mCSB_container {
     position:absolute;
     top:50%;
     right:20px;
-    background:url('../../imgs/collapse.svg') center no-repeat;
+    background-position:center;
+    background-repeat:no-repeat;
     background-size:contain;
     transform:rotate(-180deg);
 }
@@ -616,9 +622,14 @@ footer > .state > .wrapper:before {
 	opacity:.1;
 	cursor:default;
 }
-.toolbar > .wrapper > .menu-section > li > span > img {
-	width:24px;
-	height:24px;
+.toolbar > .wrapper > .menu-section > li > span:after {
+    display:block;
+    content:'';
+    width:24px;
+    height:24px;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
 }
 .toolbar > .wrapper > .menu-section > li > .menu {
 	display:none;
@@ -814,9 +825,14 @@ footer > .state > .wrapper:before {
 	padding:8px;
 	cursor:pointer;
 }
-#modal-window-status-bar-error > .action > span > img {
+#modal-window-status-bar-error > .action > span:after {
+	display:block;
+	content:'';
 	width:24px;
 	height:24px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
 }
 #modal-window-status-bar-error > .action > div {
 	display:inline-block;
@@ -865,9 +881,14 @@ footer > .state > .wrapper:before {
 	padding:8px;
 	cursor:pointer;
 }
-#modal-window-logging > .action > span > img {
+#modal-window-logging > .action > span:after {
+	display:block;
+	content:'';
 	width:24px;
 	height:24px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
 }
 #modal-window-logging > .action > div {
 	display:inline-block;
