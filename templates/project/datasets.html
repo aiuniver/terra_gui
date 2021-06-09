@@ -89,18 +89,18 @@
                             <div id="div-outlink" class="hidden">
                                 <div class="field-form field-inline">
                                     <label for="link">URL</label>
-                                    <input type="text" name="link">
+                                    <input type="text" name="link" data-value-type="string">
                                 </div>
                             </div>
                         </div>
                         <div class="form-inline-label flex">
                             <div class="field-form field-inline">
                                 <label for="num_links[inputs]">Количество входов</label>
-                                <input type="number" name="num_links[inputs]">
+                                <input type="number" name="num_links[inputs]" data-value-type="number">
                             </div>
                             <div class="field-form field-inline">
                                 <label for="num_links[outputs]">Количество выходов</label>
-                                <input type="number" name="num_links[outputs]">
+                                <input type="number" name="num_links[outputs]" data-value-type="number">
                             </div>
                         </div>
                         <div class="actions-form">
@@ -127,24 +127,24 @@
                     <div class="inner form-inline-label">
                         <div class="field-form field-inline">
                             <label for="parameters[name]">Название датасета</label>
-                            <input type="text" name="parameters[name]">
+                            <input type="text" name="parameters[name]" data-value-type="string">
                         </div>
 
                         <div class="field-form field-inline">
                             <label for="parameters[user_tags]">Теги</label>
-                            <input type="text" name="parameters[user_tags]">
+                            <input type="text" name="parameters[user_tags]" data-value-type="string">
                         </div>
                         <div class="field-form field-inline">
                             <label for="parameters[amount]">Train + val + test</label>
                             <div class="slider-range"></div>
-                            <input type="text" id="amount1" name="parameters[train_part]">
-                            <input type="text" id="amount2" name="parameters[val_part]">
-                            <input type="text" id="amount3" name="parameters[test_part]">
+                            <input type="number" id="amount1" name="parameters[train_part]" data-value-type="number">
+                            <input type="number" id="amount2" name="parameters[val_part]" data-value-type="number">
+                            <input type="number" id="amount3" name="parameters[test_part]" data-value-type="number">
                         </div>
                         <div class="field-form field-inline">
                             <label for="checkpoint[save_best]" id="preserve_sequence_label" >Сохранить последовательность</label>
                             <div class="checkout-switch">
-                                <input type="checkbox" id="parameters[preserve_sequence]" name="parameters[preserve_sequence]"/>
+                                <input type="checkbox" id="parameters[preserve_sequence]" name="parameters[preserve_sequence]" data-value-type="boolean" data-unchecked-value="false"/>
                                 <span class="switcher"></span>
                             </div>
                         </div>
