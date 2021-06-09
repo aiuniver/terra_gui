@@ -24,17 +24,8 @@ body.namespace-apps_project header > .user > .item > .menu > .group > ul > li > 
     color:#fff;
     background-color:#6C7883;
 }
-body.namespace-apps_project header > .user > .item > .menu > .group > .title:after {
-    background-image:url('../imgs/menu-title.svg');
-}
 body.namespace-apps_project header > .project > .title > .label {
     color:#A7BED3;
-}
-body.namespace-apps_project header > .project > .title > .name > .value > i {
-    background-image:url('../imgs/edit.svg');
-}
-body.namespace-apps_project header > .user > .project > .icon > i {
-    background-image:url('../imgs/project.svg');
 }
 body.namespace-apps_project header > .project > .title > .name > .value > span[contenteditable=true] {
     border-color:#fff;
@@ -120,9 +111,6 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 }
 .project-datasets-block.datasets .dataset-card-item.active > .dataset-card {
     border-color:#65B9F4;
-}
-.project-datasets-block.datasets .card-tag::before {
-    content:url('../imgs/Vector.png');
 }
 .toolbar > .wrapper {
     border-color:#0E1621;
@@ -283,10 +271,8 @@ input[type=button][disabled=disabled]:hover {
     border-color:#6C7883;
     background-color:#242F3D;
 }
-.ui-selectmenu-icon {
-    background-image:url('../imgs/dropdown.svg') !important;
-}
-.ui-selectmenu-menu .ui-menu {
+.ui-selectmenu-menu .ui-menu,
+.ui-widget.ui-autocomplete {
     border-color:#6C7883;
     background:#242F3D;
 }
@@ -325,9 +311,6 @@ input[type=button][disabled=disabled]:hover {
 #modal-window > .inner > .header > .close:after {
     background-color:#A7BED3;
 }
-#modal-window > .inner > .container.loading:before {
-    background-image:url('../imgs/preloader.svg');
-}
 .modal-window-container > .wrapper a {
     color:#65B9F4;
     border-color:#65B9F4;
@@ -351,16 +334,6 @@ input[type=button][disabled=disabled]:hover {
 #modal-window-project-load > .models-data > .models-list .loaded-list > li.active > span {
     color:#65B9F4;
 	background-color:#2B5278;
-}
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:before,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:before {
-    background-image:url('../imgs/file.svg');
-}
-#modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span:before,
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover:before,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li.active > span:before,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:hover:before {
-    background-image:url('../imgs/file-active.svg');
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
 	color:#A7BED3;

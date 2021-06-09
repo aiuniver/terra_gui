@@ -60,7 +60,6 @@
                             $(item).removeClass("active");
                             training_results.children(`.${$(item).data("type")}`).addClass("hidden");
                         }
-                        $(item).find("img").attr("src", `/assets/imgs/training-${$(item).data("type")}${value ? "-active" : ""}.svg`);
                     },
                     get: () => {
                         return $(item).hasClass("active");
