@@ -1029,7 +1029,7 @@ class Exchange(StatesData, GuiExch):
 
     def create_dataset(self, **kwargs):
         print(kwargs)
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        # self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
         gc.collect()
         # try:
         self.dts.prepare_user_dataset(**kwargs)
