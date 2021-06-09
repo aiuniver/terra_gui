@@ -54,6 +54,12 @@ class ExchangeData:
     def _execute_get_auto_colors(self, **kwargs):
         return terra_exchange.call("get_auto_colors", **kwargs)
 
+    def _execute_before_load_dataset_source(self, **kwargs):
+        return terra_exchange.call("before_load_dataset_source", **kwargs)
+
+    def _execute_before_create_dataset(self, **kwargs):
+        return terra_exchange.call("before_create_dataset", **kwargs)
+
     def _execute_load_dataset(self, **kwargs):
         return terra_exchange.call("load_dataset", **kwargs)
 
