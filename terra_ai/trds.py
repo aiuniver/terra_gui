@@ -38,7 +38,7 @@ import json
 
 # import cv2
 
-__version__ = 0.324
+__version__ = 0.3241
 
 tr2dj_obj = Exchange()
 
@@ -2104,7 +2104,7 @@ class DTS(object):
 
         return X
 
-    def classification(self, one_hot_encoding=[True, False]) -> np.ndarray:
+    def classification(self, one_hot_encoding=True) -> np.ndarray:
 
         Y = self.y_Cls
         self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
