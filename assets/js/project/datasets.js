@@ -637,6 +637,7 @@
                                     if (success) {
                                         window.StatusBar.clear();
                                         window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
+                                        $.cookie('dataset_name', serialize_data.parameters.name);
                                         location.reload();
                                     } else {
                                         window.StatusBar.message(data.error, false);
@@ -668,7 +669,13 @@
         dataset_load = $(".dataset-load").DatasetLoad();
         dataset_prepare = $(".dataset-prepare").DatasetPrepare();
 
-        datasets.dataset = window.TerraProject.dataset;
+        if( $.cookie('dataset_name') != null ) {
+            datasets.dataset = $.cookie('dataset_name');
+            $.removeCookie('dataset_name');
+        } else{
+            datasets.dataset = window.TerraProject.dataset;
+        }
+
 
     })
 
