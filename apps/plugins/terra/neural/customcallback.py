@@ -1147,7 +1147,7 @@ class SegmentationCallback:
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
 
-            image_data["image"] = image_to_base64(image)
+            truth_masks_data["image"] = image_to_base64(image)
             images["ground_truth_masks"].append(truth_masks_data)
 
             # предсказанная маска
@@ -1163,7 +1163,7 @@ class SegmentationCallback:
             }
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            image_data["image"] = image_to_base64(image)
+            predicted_mask_data["image"] = image_to_base64(image)
             images["predicted_mask"].append(predicted_mask_data)
 
         return images
