@@ -1028,7 +1028,8 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def create_dataset(self, **kwargs):
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        f_folder = self.dts.file_folder if self.dts.file_folder else ''
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder)
         gc.collect()
         try:
             self.dts.prepare_user_dataset(**kwargs)
