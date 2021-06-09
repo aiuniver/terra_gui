@@ -1094,7 +1094,7 @@ class Exchange(StatesData, GuiExch):
         name = kwargs.get("name", "")
         num_classes = kwargs.get("num_classes", None)
         mask_range = kwargs.get("mask_range", 10)
-        txt_file = kwargs.get("mask_range", False)
+        txt_file = kwargs.get("txt_file", False)
         return self.dts._find_colors(name, num_classes, mask_range, txt_file=txt_file)
 
     def get_data(self):

@@ -240,7 +240,7 @@
             this.bind("submit", (event)=>{
                 this.locked = true;
                 event.preventDefault();
-                let serialize_data = this.serializeObject(),
+                let serialize_data = this.serializeJSON(),
                     mode;
                 if(serialize_data.name == ""){
                     mode = "url"
@@ -270,23 +270,23 @@
                                     if (success) {
                                         window.StatusBar.clear();
                                         window.StatusBar.message("DATASET_LOADED", true);
-
+            
                                         $(".inputs-layers").empty();
                                         $(".outputs-layers").empty();
                                         dataset_params = data.data
-
+            
                                         let params = data.data.images
-
+            
                                         for(let i=1; i<=serialize_data.num_links.inputs; i++){
-
+            
                                             $(".inputs-layers").append($("<div></div>").addClass("layout-item").addClass("input-layout").attr('name', 'input_' + i).attr('id', 'input_' + i));
                                             let input_item = $("#input_"+i)
                                             input_item.append($("<div></div>").addClass("layout-title").text("Слой \"input_"+i+"\""));
                                             input_item.append($("<div></div>").addClass("layout-params"));
-
+            
                                             let widget = window.FormWidget("inputs[input_" + i + "][name]", {label: "Название входа", type: "str", default: "input_" + i}).addClass("field-inline");
                                             input_item.find(".layout-params").append(widget)
-
+            
                                             widget = window.FormWidget("inputs[input_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_input, default: "images"}).addClass("field-inline");
                                             input_item.find(".layout-params").append(widget)
                                             widget.find("select").selectmenu({
@@ -298,26 +298,26 @@
                                                 let params = dataset_params[$(event.currentTarget).val()];
                                                 load_layout_params(input_item, params, "input")
                                             })
-
+            
                                             input_item.append($("<div></div>").addClass("layout-parameters"));
                                             load_layout_params(input_item, params, "input");
                                         }
-
+            
                                         params = data.data.classification
-
+            
                                         for(let i=1; i<=serialize_data.num_links.outputs; i++){
-
+            
                                             $(".outputs-layers").append($("<div></div>").addClass("layout-item").addClass("output-layout").attr('name', 'output' + i).attr('id', 'output_' + i));
                                             let output_item = $("#output_"+i);
                                             output_item.append($("<div></div>").addClass("layout-title").text("Слой \"output_"+i+"\""));
                                             output_item.append($("<div></div>").addClass("layout-params"));
-
+            
                                             let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название входа", type: "str", default: "output_" + i}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
-
+            
                                             widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
-
+            
                                             widget.find("select").selectmenu({
                                                 change:(event) => {
                                                     $(event.target).trigger("change");
@@ -367,7 +367,7 @@
                                                                     html += `</div>`;
                                                                     layout.find(".layout-parameters").append(html);
                                                                     layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
-
+            
                                                                     layout.find(".colorpicker-btn").last().bind("click", (event)=>{
                                                                         event.preventDefault();
                                                                         let field = event.target.parentNode;
@@ -375,7 +375,7 @@
                                                                     });
                                                                 }
                                                             });
-
+            
                                                         }else if(segmentation_change == "Автоматический поиск"){
                                                             let html = '';
                                                             html += '<div class="field-form field-inline class-inline">';
@@ -412,7 +412,7 @@
                                                                                 html += `</div>`;
                                                                                 layout.find(".layout-parameters").append(html);
                                                                                 layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
-
+            
                                                                                 layout.find(".colorpicker-btn").last().bind("click", (event)=>{
                                                                                     event.preventDefault();
                                                                                     let field = event.target.parentNode;
@@ -427,7 +427,8 @@
                                                                     {
                                                                         name: $("#"+output_id).find("select[name='outputs["+output_id+"][parameters][folder_name]']").val(),
                                                                         num_classes: parseInt($("#"+output_id).find(".number-classes-auto").val()),
-                                                                        mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val())
+                                                                        mask_range: parseInt($("#"+output_id).find("input[name='outputs["+output_id+"][parameters][mask_range]']").val()),
+                                                                        txt_file: false
                                                                     }
                                                                 )
                                                             })
@@ -468,7 +469,7 @@
                                                                                 html += `</div>`;
                                                                                 layout.find(".layout-parameters").append(html);
                                                                                 layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
-
+            
                                                                                 layout.find(".colorpicker-btn").last().bind("click", (event)=>{
                                                                                     event.preventDefault();
                                                                                     let field = event.target.parentNode;
@@ -490,14 +491,14 @@
                                                     })
                                                 }
                                             })
-
+            
                                             widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
                                             output_item.append($("<div></div>").addClass("layout-parameters"))
                                             load_layout_params(output_item, params, "output")
                                         }
-
-
+            
+            
                                     } else {
                                         window.StatusBar.message(data.error, false);
                                     }
@@ -509,6 +510,7 @@
                                     link: serialize_data.link,
                                     num_links: serialize_data.num_links
                                 }
+            
                             );
                         }
                     }
@@ -596,7 +598,7 @@
                         item.attr("name", `outputs[${layout_id}][parameters][classes_colors]`)
                     }
                 }
-                let serialize_data = this.serializeObject();
+                let serialize_data = this.serializeJSON();
 
                 for(let input in serialize_data.outputs){
                     if(classes_names[input].length != 0 && classes_colors[input].length != 0){
@@ -604,14 +606,15 @@
                         serialize_data.outputs[input].parameters.classes_colors = classes_colors[input]
                     }
                 }
-                if(!serialize_data.parameters.hasOwnProperty("preserve_sequence")){
-                    serialize_data.parameters["preserve_sequence"] = "off";
-                }
                 for(let item in serialize_data.outputs){
                     if(!serialize_data.parameters.hasOwnProperty("selected_file")){
                         delete serialize_data.outputs[item].parameters.selected_file;
                     }
                 }
+                serialize_data.parameters.train_part /= 100
+                serialize_data.parameters.val_part /= 100
+                serialize_data.parameters.test_part /= 100
+
                 window.StatusBar.clear();
                 window.StatusBar.message(window.Messages.get("CREATING_DATASET"));
                 window.ExchangeRequest(

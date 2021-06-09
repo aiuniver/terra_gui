@@ -2372,55 +2372,58 @@ class DTS(object):
 
     def prepare_user_dataset(self, dataset_dict: dict, is_save=True):
 
+
         cur_time = time()
         if self.django_flag:
-            for key, value in dataset_dict["inputs"].items():
+            pass
+            # for key, value in dataset_dict["inputs"].items():
+            #
+            #     for param_key, param_value in value["parameters"].items():
+            #         try:
+            #             if (param_key == "folder_name" or param_key == "file_name"):
+            #                 continue
+            #             if (param_value == 'true' or param_value == 'on'):
+            #                 dataset_dict["inputs"][key]["parameters"][param_key] = True
+            #             elif (param_value == 'false'):
+            #                 dataset_dict["inputs"][key]["parameters"][param_key] = False
+            #             elif (type(param_value) == list):
+            #                 dataset_dict["outputs"][key]["parameters"][param_key] = param_value
+            #             elif param_value.isdigit():
+            #                 dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
+            #         except ValueError:
+            #             continue
+            #
+            # for key, value in dataset_dict["outputs"].items():
+            #
+            #     for param_key, param_value in value["parameters"].items():
+            #         try:
+            #             if (param_key == "folder_name" or param_key == "file_name"):
+            #                 continue
+            #             if (param_value == 'true' or param_value == 'on'):
+            #                 dataset_dict["outputs"][key]["parameters"][param_key] = True
+            #             elif (param_value == 'false'):
+            #                 dataset_dict["outputs"][key]["parameters"][param_key] = False
+            #             elif (type(param_value) == list):
+            #                 dataset_dict["outputs"][key]["parameters"][param_key] = param_value
+            #             else:
+            #                 dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
+            #         except ValueError:
+            #             continue
+            #
+            # for key, value in dataset_dict["parameters"].items():
+            #
+            #     try:
+            #         if (param_key == "folder_name"):
+            #             continue
+            #         if (value == 'true' or value == 'on'):
+            #             dataset_dict["parameters"][key] = True
+            #         elif (value == 'false' or value == 'off'):
+            #             dataset_dict["parameters"][key] = False
+            #         else:
+            #             dataset_dict["parameters"][key] = int(value) / 100
+            #     except ValueError:
+            #         continue
 
-                for param_key, param_value in value["parameters"].items():
-                    try:
-                        if (param_key == "folder_name" or param_key == "file_name"):
-                            continue
-                        if (param_value == 'true' or param_value == 'on'):
-                            dataset_dict["inputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false'):
-                            dataset_dict["inputs"][key]["parameters"][param_key] = False
-                        elif (type(param_value) == list):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = param_value
-                        elif param_value.isdigit():
-                            dataset_dict["inputs"][key]["parameters"][param_key] = int(param_value)
-                    except ValueError:
-                        continue
-
-            for key, value in dataset_dict["outputs"].items():
-
-                for param_key, param_value in value["parameters"].items():
-                    try:
-                        if (param_key == "folder_name" or param_key == "file_name"):
-                            continue
-                        if (param_value == 'true' or param_value == 'on'):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = True
-                        elif (param_value == 'false'):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = False
-                        elif (type(param_value) == list):
-                            dataset_dict["outputs"][key]["parameters"][param_key] = param_value
-                        else:
-                            dataset_dict["outputs"][key]["parameters"][param_key] = int(param_value)
-                    except ValueError:
-                        continue
-
-            for key, value in dataset_dict["parameters"].items():
-
-                try:
-                    if (param_key == "folder_name"):
-                        continue
-                    if (value == 'true' or value == 'on'):
-                        dataset_dict["parameters"][key] = True
-                    elif (value == 'false' or value == 'off'):
-                        dataset_dict["parameters"][key] = False
-                    else:
-                        dataset_dict["parameters"][key] = int(value) / 100
-                except ValueError:
-                    continue
 
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags'].split(' ')
