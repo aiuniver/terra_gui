@@ -36,14 +36,14 @@ import json
 
 # import cv2
 
-__version__ = 0.328
+__version__ = 0.329
 
 tr2dj_obj = Exchange()
 
 
 class DTS(object):
 
-    def __init__(self, path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=tr2dj_obj):
+    def __init__(self, f_folder='', path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=tr2dj_obj):
 
         self.Exch = exch_obj
         self.django_flag = False
@@ -51,7 +51,7 @@ class DTS(object):
             self.django_flag = True
 
         self.divide_ratio = [(0.8, 0.2), (0.8, 0.1, 0.1)]
-        self.file_folder: str = ''
+        self.file_folder: str = f_folder
         self.save_path: str = path
         self.trds_path: str = trds_path
         self.name: str = ''
