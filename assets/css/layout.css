@@ -211,7 +211,7 @@ input[type=number] {
 .checkout-switch > input:checked + .switcher:before {
     transform:translateX(12px);
 }
-.field-form {
+.field-form.relative {
     position:relative;
 }
 .field-form.hidden {
