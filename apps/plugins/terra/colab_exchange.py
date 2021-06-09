@@ -657,24 +657,23 @@ class Exchange(StatesData, GuiExch):
         if os.path.exists(self.custom_datasets_path):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
-                if not dataset.endswith(".trds.json"):
+                if dataset.split()[0] != 'dataset':
                     continue
 
-                dataset_path = os.path.join(self.custom_datasets_path, dataset)
-                if not os.path.isfile(dataset_path):
+                config_path = os.path.join(self.custom_datasets_path, f'{dataset}/config.json')
+                if not os.path.isfile(config_path):
                     continue
 
-                with open(dataset_path, "r") as f:
+                with open(config_path, "r") as f:
                     # custom_dts = dill.load(f)
                     custom_dts = json.load(f)
-                tags = custom_dts.get("tags", [])
+                tags = list(custom_dts.get("tags", {}).values())
                 name = custom_dts.get("name", "")
                 source = custom_dts.get("source", "")
                 # dts_date = custom_dts.get("date", "")
                 # dts_size = custom_dts.get("size", "")
                 custom_datasets_dict[name] = [tags, None, source]
                 del custom_dts
-
         return custom_datasets_dict
 
     def _create_datasets_data(self) -> dict:
@@ -731,17 +730,9 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        if source == "custom_dataset":
-            filename = f"{dataset_name}.trds"
-            filepath = os.path.join(self.custom_datasets_path, filename)
-            with open(filepath, "rb") as f:
-                self.dts = dill.load(f)
-        elif source == "load":
-            self.dts = self.dts.prepare_user_dataset(**kwargs)
-        else:
-            self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
-            gc.collect()
-            self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        gc.collect()
+        self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
@@ -1037,7 +1028,14 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def create_dataset(self, **kwargs):
+        print(kwargs)
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        gc.collect()
+        # try:
         self.dts.prepare_user_dataset(**kwargs)
+        # except Exception as e:
+        #     self.out_data["stop_flag"] = True
+        #     self.out_data["errors"] = e.__str__()
 
     def get_zipfiles(self):
         return self.dts._get_zipfiles()
