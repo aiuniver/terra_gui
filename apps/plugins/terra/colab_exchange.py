@@ -1028,14 +1028,14 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def create_dataset(self, **kwargs):
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        print(kwargs)
+        # self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
         gc.collect()
-        try:
-            self.dts.prepare_user_dataset(**kwargs)
-        except Exception as e:
-            self.out_data["stop_flag"] = True
-            self.out_data["errors"] = e.__str__()
-        self.out_data["stop_flag"] = True
+        # try:
+        self.dts.prepare_user_dataset(**kwargs)
+        # except Exception as e:
+        #     self.out_data["stop_flag"] = True
+        #     self.out_data["errors"] = e.__str__()
 
     def get_zipfiles(self):
         return self.dts._get_zipfiles()
