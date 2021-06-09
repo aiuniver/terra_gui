@@ -84,6 +84,7 @@ class CustomCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         self._now_time = time.time()
         self._time_first_step = time.time()
+        self._sum_time = 0
         self.out_table_data = {}
         self.stop_training = False
         self.retrain_flag = False
@@ -314,6 +315,18 @@ class CustomCallback(keras.callbacks.Callback):
             _time_per_unit = (now - start)
         return _time_per_unit
 
+    def eta_format(self, eta):
+        if eta > 3600:
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
+                                                     (eta % 3600) // 60, eta % 60)
+        elif eta > 60:
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
+        else:
+            eta_format = '%d сек' % eta
+
+        info = ' %s' % eta_format
+        return info
+
     def update_progress(self, target, current, start_time, finalize=False):
         """
         Updates the progress bar.
@@ -327,16 +340,8 @@ class CustomCallback(keras.callbacks.Callback):
             time_per_unit = self._estimate_step(current, start_time, _now_time)
 
             eta = time_per_unit * (target - current)
+        info = self.eta_format(eta)
 
-        if eta > 3600:
-            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                                     (eta % 3600) // 60, eta % 60)
-        elif eta > 60:
-            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
-        else:
-            eta_format = '%d сек' % eta
-
-        info = ' %s' % eta_format
         return [info, int(eta)]
 
     def on_train_begin(self, logs=None):
@@ -474,16 +479,19 @@ class CustomCallback(keras.callbacks.Callback):
                                 out_images_data["predicted_mask"]["values"].extend(
                                     callback_out_data[key][im_key])
         self.save_lastmodel()
+        time_end = self.update_progress(self.num_batches * self.epochs + 1,
+                                        self.batch, self._start_time, finalize=True)[1]
+        self._sum_time += time_end
         if self.model.stop_training:
             out_table_data["summary"] = f'Затрачено времени на обучение: ' \
-                                        f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
+                                        f'{self.eta_format(self._sum_time)} '
             self.Exch.show_text_data(self.out_table_data)
             msg = f'Модель сохранена.'
             self.Exch.print_2status_bar(('Обучение остановлено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
         else:
             out_table_data["summary"] = f'Затрачено времени на обучение: ' \
-                                        f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]} '
+                                        f'{self.eta_format(self._sum_time)} '
             self.Exch.show_text_data(out_table_data)
         if len(out_images_data) != 0:
             self.Exch.show_image_data(out_images_data)
@@ -599,10 +607,10 @@ class ClassificationCallback:
                         val_metric_name = f"val_{metric_name}"
                     xlabel = "эпоха"
                     if metric_name.endswith("loss"):
-                        classes_title = f"Ошибка для {self.num_classes} классов. {msg_epoch}"
+                        classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "ошибка"
                     else:
-                        classes_title = f"Метрика для {self.num_classes} классов. {msg_epoch}"
+                        classes_title = f"Метрика {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "метрика"
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [
@@ -1033,15 +1041,12 @@ class SegmentationCallback:
                         val_metric_name = f"val_{metric_name}"
                     else:
                         val_metric_name = f"val_{metric_name}"
-                    # if metric_name.endswith("accuracy") \
-                    #         or metric_name.endswith("dice_coef") \
-                    #         or metric_name.endswith("loss"):
                     xlabel = "эпоха"
                     if metric_name.endswith("loss"):
-                        classes_title = f"Ошибка для {self.num_classes} классов. {msg_epoch}"
+                        classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "ошибка"
                     else:
-                        classes_title = f"Метрика для {self.num_classes} классов. {msg_epoch}"
+                        classes_title = f"Метрика {output_key} для {self.num_classes} классов. {msg_epoch}"
                         ylabel = "метрика"
                     labels = (classes_title, xlabel, ylabel)
                     plot_data[labels] = [
@@ -1401,9 +1406,6 @@ class SegmentationCallback:
                     metric_classes = self.evaluate_loss(output_key=output_key)
                 else:
                     metric_classes = self.evaluate_f1(output_key=output_key)
-                    # metric_classes = []
-                    # self.Exch.print_2status_bar((f"Выбранная метрика {metric_name}",
-                    #                              "не поддерживается для вычислений"))
                 # собираем в словарь по метрикам и классам
                 if len(metric_classes):
                     dclsup = {}
