@@ -282,6 +282,7 @@ class GUINN:
                     self.epochs = self.epochs - self.callbacks[0].last_epoch
             else:
                 self.retrain_flag = True
+                self.callbacks[0].stop_flag = False
                 self.sum_epoch += self.epochs
                 self.callbacks[0].batch_size = self.batch_size
                 self.callbacks[0].retrain_flag = True

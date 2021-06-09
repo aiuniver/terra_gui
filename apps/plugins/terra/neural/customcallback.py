@@ -88,6 +88,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.out_table_data = {}
         self.stop_training = False
         self.retrain_flag = False
+        self.stop_flag = False
         self.retrain_epochs = 0
         self.task_type_defaults_dict = {
             "classification": {
@@ -296,7 +297,7 @@ class CustomCallback(keras.callbacks.Callback):
             self.loss.append(self.clbck_params[_key]["loss"])
             self.task_name.append(self.clbck_params[_key]["task"])
             self.num_classes.append(self.clbck_params.setdefault(_key)["num_classes"])
-            self.y_Scaler.append(self.DTS.y_Scaler.setdefault(_key))
+            self.y_Scaler.append(self.DTS.scaler.setdefault(_key))
             self.tokenizer.append(self.DTS.tokenizer.setdefault(_key))
             self.one_hot_encoding.append(self.DTS.one_hot_encoding.setdefault(_key))
             initialized_callback = self.prepare_callbacks(
@@ -348,9 +349,11 @@ class CustomCallback(keras.callbacks.Callback):
         self.model.stop_training = False
         self.stop_training = False
         self._start_time = time.time()
-        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
-        if self.retrain_flag:
+        if not self.stop_flag:
             self.batch = 0
+        self.num_batches = self.DTS.X['input_1']['data'][0].shape[0] // self.batch_size
+
+
         self.Exch.show_current_epoch(self.last_epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
@@ -362,22 +365,33 @@ class CustomCallback(keras.callbacks.Callback):
         if stop:
             self.model.stop_training = True
             self.stop_training = True
+            self.stop_flag = True
             msg = f'ожидайте окончания эпохи {self.last_epoch + 1}:' \
                   f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             self.batch += 1
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем,', msg))
+            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.last_epoch + 1}/{self.epochs}:' \
                         f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
+            time_start = \
+                self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
             if self.retrain_flag:
                 msg_progress_end = f'Расчетное время окончания:' \
                                    f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения дообучения:' \
+                                     f'{self.eta_format(time_start)}, '
+            elif self.stop_flag:
+                msg_progress_end = f'Расчетное время окончания после остановки:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(self._sum_time + time_start)}, '
             else:
                 msg_progress_end = f'Расчетное время окончания:' \
                                    f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
-            msg_progress_start = f'Время выполнения:' \
-                                 f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[0]}, '
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(time_start)}, '
+
             self.batch += 1
             self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
                                          msg_progress_end + msg_epoch + msg_batch))
@@ -387,6 +401,14 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+
+        print("self.num_batches ", self.num_batches)
+        print("self.epochs ", self.epochs)
+        print("self.num_batches * self.retrain_epochs +1  ", (self.num_batches * self.retrain_epochs + 1))
+        print("self.num_batches * self.epochs +1  ", (self.num_batches * self.epochs + 1))
+        print("self.retrain_epochs ", self.retrain_epochs)
+        print("self.batch ", self.batch)
+        print("self._start_time) ", self._start_time)
         out_table_data = {
             "epoch": {
                 "number": self.last_epoch + 1,
@@ -453,7 +475,7 @@ class CustomCallback(keras.callbacks.Callback):
         out_images_data = {"images": {
             "title": "Исходное изображение",
             "values": []
-            },
+        },
             "ground_truth_masks": {
                 "title": "Маска сегментации",
                 "values": []
@@ -462,7 +484,7 @@ class CustomCallback(keras.callbacks.Callback):
                 "title": "Результат работы модели",
                 "values": []
             },
-            }
+        }
         for i, output_key in enumerate(self.clbck_params.keys()):
             callback_out_data = self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
             if len(callback_out_data) != 0:
@@ -491,8 +513,12 @@ class CustomCallback(keras.callbacks.Callback):
             self.Exch.print_2status_bar(('Обучение остановлено пользователем!', msg))
             self.Exch.out_data['stop_flag'] = True
         else:
-            out_table_data["summary"] = f'Затрачено времени на обучение: ' \
-                                        f'{self.eta_format(self._sum_time)} '
+            if self.retrain_flag:
+                out_table_data["summary"] = f'Затрачено времени на обучение: ' \
+                                            f'{self.eta_format(time_end)} '
+            else:
+                out_table_data["summary"] = f'Затрачено времени на обучение: ' \
+                                            f'{self.eta_format(self._sum_time)} '
             self.Exch.show_text_data(out_table_data)
         if len(out_images_data) != 0:
             self.Exch.show_image_data(out_images_data)
@@ -705,7 +731,6 @@ class ClassificationCallback:
             images["images"].append(image_data)
 
         return images
-
 
     # # Распознаём тестовую выборку и выводим результаты
     # def recognize_classes(self):
@@ -1786,6 +1811,7 @@ class RegressionCallback:
             out_data.update({"plots": plot_data})
 
         return out_data
+
 
 def image_to_base64(image_as_array):
     if image_as_array.dtype == 'int32':
