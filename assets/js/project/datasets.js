@@ -614,6 +614,12 @@
                         dataset_dict: serialize_data
                     }
                 );
+                window.ExchangeRequest(
+                    "get_data",
+                    (success, data) => {
+                        console.log(success, data);
+                    }
+                );
             });
 
 
