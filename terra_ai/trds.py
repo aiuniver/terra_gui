@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.326
+__version__ = 0.3265
 
 tr2dj_obj = Exchange()
 
@@ -1115,7 +1115,7 @@ class DTS(object):
                 self.load_data(options['dataset_name'], mode='terra')
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
             else:
-                self.file_folder = os.path.join(self.trds_path, f"dataset_{options['dataset_name']}")
+                self.file_folder = os.path.join(self.trds_path, f"dataset {options['dataset_name']}")
             with open(os.path.join(self.file_folder, 'config.json'), 'r') as cfg:
                 data = json.load(cfg)
             for key, value in data.items():
@@ -2495,36 +2495,36 @@ class DTS(object):
         self.dts_prepared = True
         if is_save:
             print('Идёт сохранение датасета.')
-            os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}'), exist_ok=True)
+            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}'), exist_ok=True)
             if self.X:
-                os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}', 'arrays'), exist_ok=True)
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays'), exist_ok=True)
             if self.scaler:
-                os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}', 'scalers'), exist_ok=True)
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'scalers'), exist_ok=True)
             if self.tokenizer:
-                os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}', 'tokenizer'), exist_ok=True)
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer'), exist_ok=True)
             if self.word2vec:
-                os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}', 'word2vec'), exist_ok=True)
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec'), exist_ok=True)
             if self.tsgenerator:
-                os.makedirs(os.path.join(self.trds_path, f'dataset_{self.name}', 'tsgenerator'), exist_ok=True)
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator'), exist_ok=True)
 
             for arr in self.X.keys():
                 if self.X[arr]:
-                    joblib.dump(self.X[arr], os.path.join(self.trds_path, f'dataset_{self.name}', 'arrays', f'{arr}.gz'))
+                    joblib.dump(self.X[arr], os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
             for arr in self.Y.keys():
                 if self.Y[arr]:
-                    joblib.dump(self.Y[arr], os.path.join(self.trds_path, f'dataset_{self.name}', 'arrays', f'{arr}.gz'))
+                    joblib.dump(self.Y[arr], os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
             for sclr in self.scaler.keys():
                 if self.scaler[sclr]:
-                    joblib.dump(self.scaler[sclr], os.path.join(self.trds_path, f'dataset_{self.name}', 'scalers', f'{sclr}.gz'))
+                    joblib.dump(self.scaler[sclr], os.path.join(self.trds_path, f'dataset {self.name}', 'scalers', f'{sclr}.gz'))
             for tok in self.tokenizer.keys():
                 if self.tokenizer[tok]:
-                    joblib.dump(self.tokenizer[tok], os.path.join(self.trds_path, f'dataset_{self.name}', 'tokenizer', f'{tok}.gz'))
+                    joblib.dump(self.tokenizer[tok], os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer', f'{tok}.gz'))
             for w2v in self.word2vec.keys():
                 if self.word2vec[w2v]:
-                    joblib.dump(self.word2vec[w2v], os.path.join(self.trds_path, f'dataset_{self.name}', 'word2vec', f'{w2v}.gz'))
+                    joblib.dump(self.word2vec[w2v], os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec', f'{w2v}.gz'))
             for tsg in self.tsgenerator.keys():
                 if self.tsgenerator[tsg]:
-                    joblib.dump(self.tsgenerator[tsg], os.path.join(self.trds_path, f'dataset_{self.name}', 'tsgenerator', f'{tsg}.gz'))
+                    joblib.dump(self.tsgenerator[tsg], os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator', f'{tsg}.gz'))
 
             data = {}
             attributes = ['name', 'source', 'tags', 'user_tags', 'classes_colors', 'classes_names', 'dts_prepared',
@@ -2532,11 +2532,11 @@ class DTS(object):
             for attr in attributes:
                 data[attr] = self.__dict__[attr]
             data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
-            data['size'] = self._get_size(os.path.join(self.trds_path, f'dataset_{self.name}'))
-            with open(os.path.join(self.trds_path, f'dataset_{self.name}', 'config.json'), 'w') as fp:
+            data['size'] = self._get_size(os.path.join(self.trds_path, f'dataset {self.name}'))
+            with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
                 json.dump(data, fp)
-            print(f'Файлы датасета сохранены в папку {os.path.join(self.trds_path, f"dataset_{self.name}")}')
-            print(f'Json сохранен в файл {os.path.join(self.trds_path, f"dataset_{self.name}", "config.json")}')
+            print(f'Файлы датасета сохранены в папку {os.path.join(self.trds_path, f"dataset {self.name}")}')
+            print(f'Json сохранен в файл {os.path.join(self.trds_path, f"dataset {self.name}", "config.json")}')
 
         return self
 
