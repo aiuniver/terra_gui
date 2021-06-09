@@ -272,7 +272,7 @@ input[type=button][disabled=disabled]:hover {
     background-color:#242F3D;
 }
 .ui-selectmenu-menu .ui-menu,
-.ui-widget.ui-widget-content {
+.ui-widget.ui-autocomplete {
     border-color:#6C7883;
     background:#242F3D;
 }
