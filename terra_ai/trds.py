@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.329
+__version__ = 0.330
 
 tr2dj_obj = Exchange()
 
@@ -1018,20 +1018,12 @@ class DTS(object):
             for arr in os.listdir(os.path.join(self.file_folder, 'arrays')):
                 if 'input' in arr:
                     self.X[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
-                    if 'timeseries' in self.tags.values():
-                        self.input_shape[arr[:-3]] = self.X[arr[:-3]]['data'][0].shape[2:]
-                        inp_datatype.append(self._set_datatype(shape=self.X[arr[:-3]]['data'][0].shape[1:]))
-                    else:
-                        self.input_shape[arr[:-3]] = self.X[arr[:-3]]['data'][0].shape[1:]
-                        inp_datatype.append(self._set_datatype(shape=self.X[arr[:-3]]['data'][0].shape))
+                    self.input_shape[arr[:-3]] = self.X[arr[:-3]]['data'][0].shape[1:]
+                    inp_datatype.append(self._set_datatype(shape=self.X[arr[:-3]]['data'][0].shape))
                 elif 'output' in arr:
                     self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
-                    if 'timeseries' in self.tags.values():
-                        self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[2:]
-                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape[1:])
-                    else:
-                        self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[1:]
-                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
+                    self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[1:]
+                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
             self.input_datatype = ' '.join(inp_datatype)
 
             pass
@@ -1135,10 +1127,10 @@ class DTS(object):
             load_word2vec()
             load_tsgenerator()
 
-        temp_attributes = ['df', 'peg', 'user_parameters']
-        for item in temp_attributes:
-            if hasattr(self, item):
-                delattr(self, item)
+        # temp_attributes = ['df', 'peg', 'user_parameters']
+        # for item in temp_attributes:
+        #     if hasattr(self, item):
+        #         delattr(self, item)
         self.dts_prepared = True
 
         return self
@@ -1909,20 +1901,18 @@ class DTS(object):
             self.scaler[f'input_{self.iter}'].fit(X)
             X = self.scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
-        # else:
-        #     self.scaler[f'input_{self.iter}'] = None
 
         #Если надо работать с временными рядами
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'timeseries':
                 length = self.user_parameters['out'][f'output_{i+1}']['parameters']['length']
-                batch_size = self.user_parameters['out'][f'output_{i + 1}']['parameters']['batch_size']
-                generator = TimeseriesGenerator(X, X, length=length, stride=1, batch_size=batch_size)
-                X = []
-                for i in range(len(generator)):
-                    X.append(generator[i][0])
-                X = np.array(X)
+                generator = TimeseriesGenerator(X, X, length=length, stride=1, batch_size=1)
                 self.tsgenerator[f'input_{self.iter}'] = generator
+                X = []
+                for j in range(len(self.tsgenerator[f'input_{self.iter}'])):
+                    for k in range(len(self.tsgenerator[f'input_{self.iter}'][j][0])):
+                        X.append(self.tsgenerator[f'input_{self.iter}'][j][0][k]) # Записываем каждый батч
+                X = np.array(X)
             break
 
         return X
@@ -1950,7 +1940,7 @@ class DTS(object):
 
         return Y
 
-    def timeseries(self, length=1, batch_size=1) -> np.ndarray:
+    def timeseries(self, length=1) -> np.ndarray:
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'dataframe':
@@ -1961,7 +1951,8 @@ class DTS(object):
 
                 Y = []
                 for j in range(len(self.tsgenerator[f'input_{i+1}'])):
-                    Y.append(self.tsgenerator[f'input_{i+1}'][j][1])
+                    for k in range(len(self.tsgenerator[f'input_{i+1}'][j][1])):
+                        Y.append(self.tsgenerator[f'input_{i+1}'][j][1][k]) # Записываем каждый батч отдельно
                 Y = np.array(Y)
 
         self.one_hot_encoding[f'output_{self.iter}'] = False
@@ -2441,10 +2432,10 @@ class DTS(object):
                     if isinstance(item, np.ndarray):
                         print(f'Размерность {out} - {y[i]}: {self.Y[out]["data"][i].shape}')
 
-        temp_attributes = ['iter', 'sequences', 'y_Cls']  # 'df' , 'peg'
-        for item in temp_attributes:
-            if hasattr(self, item):
-                delattr(self, item)
+        # temp_attributes = ['iter', 'sequences', 'y_Cls']  # 'df' , 'peg'
+        # for item in temp_attributes:
+        #     if hasattr(self, item):
+        #         delattr(self, item)
 
         self.dts_prepared = True
         if is_save:
