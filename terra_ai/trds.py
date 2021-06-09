@@ -1135,10 +1135,10 @@ class DTS(object):
             load_word2vec()
             load_tsgenerator()
 
-        temp_attributes = ['df', 'peg', 'user_parameters']
-        for item in temp_attributes:
-            if hasattr(self, item):
-                delattr(self, item)
+        # temp_attributes = ['df', 'peg', 'user_parameters']
+        # for item in temp_attributes:
+        #     if hasattr(self, item):
+        #         delattr(self, item)
         self.dts_prepared = True
 
         return self
