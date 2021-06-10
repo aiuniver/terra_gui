@@ -656,7 +656,6 @@
                                         $(".dataset-card-wrapper").empty()
                                         for(let i in data.data.datasets){
                                             let dataset_item = data.data.datasets[i];
-                                            console.log(dataset_item);
 
                                             let html = '';
                                             html += `<div class="dataset-card-item${ dataset_tags_string(dataset_item.tags) }">`;
@@ -675,6 +674,14 @@
                                         $(".project-datasets-block.datasets").DatasetsItems();
                                         datasets.dataset = serialize_data.parameters.name
 
+                                        $(".project-datasets-block.filters").find("ul").empty()
+                                        for(let name in data.data.tags){
+                                            let tag = data.data.tags[name];
+                                            console.log(name, tag)
+                                            let html = `<li data-name="filter-${ name }"><span>${ tag }</span></li>`;
+                                            $(".project-datasets-block.filters").find("ul").append(html);
+                                        }
+                                        $(".project-datasets-block.filters").find("ul").DatasetsFilters();
                                     } else{
                                         window.StatusBar.message(data.error, false);
                                     }
