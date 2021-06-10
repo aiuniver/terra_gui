@@ -8,6 +8,7 @@ import tempfile
 import dill as dill
 from IPython import get_ipython
 from tensorflow.keras.models import load_model
+from transliterate import translit
 
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
@@ -1078,7 +1079,12 @@ class Exchange(StatesData, GuiExch):
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        model_plan.plan_name = model_name
+        model_plan.plan_name = translit(
+                "_".join(model_name.split()),
+                language_code="ru",
+                reversed=True,
+            )
+        print(model_plan.plan_name)
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
