@@ -1812,6 +1812,7 @@ class DTS(object):
                               lower=True, split=' ', char_level=False, oov_token='<UNK>')
         tokenizer.fit_on_texts(txt_list)
         text_seq = tokenizer.texts_to_sequences(txt_list)
+        self.sequences = text_seq
         self.tokenizer[f'input_{self.iter}'] = tokenizer
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
