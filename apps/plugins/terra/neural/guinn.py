@@ -277,7 +277,6 @@ class GUINN:
             if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
                 if self.retrain_flag:
                     self.epochs = self.sum_epoch - self.callbacks[0].last_epoch
-                    print('print retrain True', self.epochs, self.sum_epoch, self.callbacks[0].last_epoch)
                 else:
                     self.epochs = self.epochs - self.callbacks[0].last_epoch
             else:
