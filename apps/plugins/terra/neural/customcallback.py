@@ -1543,17 +1543,17 @@ class TimeseriesCallback:
                 }
             )
 
-            if self.plot_pred_and_true:
-                y_true, y_pred = self.predicts[vshowmet]
-                pred_title = ("Предикт", "шаги", f"{showmet}")
-                plot_data.update(
-                    {
-                        pred_title: [
-                            [list(range(len(y_true))), y_true, "Истина"],
-                            [list(range(len(y_pred))), y_pred, "Предикт"],
-                        ]
-                    }
-                )
+            # if self.plot_pred_and_true:
+            #     y_true, y_pred = self.predicts[vshowmet]
+            #     pred_title = ("Предикт", "шаги", f"{showmet}")
+            #     plot_data.update(
+            #         {
+            #             pred_title: [
+            #                 [list(range(len(y_true))), y_true, "Истина"],
+            #                 [list(range(len(y_pred))), y_pred, "Предикт"],
+            #             ]
+            #         }
+            #     )
 
         return plot_data
 
