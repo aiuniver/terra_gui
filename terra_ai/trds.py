@@ -1755,7 +1755,7 @@ class DTS(object):
         else:
             working_folder = os.path.join(self.file_folder, folder_name)
         self.peg = [0]
-        print('Я ВНУТРИ ТЕКСТОВ')
+
         txt_list = []
         for _, dirnames, filename in sorted(os.walk(working_folder)):
 
@@ -2349,8 +2349,7 @@ class DTS(object):
     def prepare_user_dataset(self, dataset_dict: dict, is_save=True):
 
         cur_time = time()
-        print('Я ВНУТРИ PREPARE_USER_DATASET')
-        print(dataset_dict)
+
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
