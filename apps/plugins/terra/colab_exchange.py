@@ -1026,6 +1026,7 @@ class Exchange(StatesData, GuiExch):
         for arch_files in files_for_unzipping:
             if arch_files.endswith(".model"):
                 output.append(arch_files[:-6])
+                print(bytes(arch_files[:-6].encode()))
         return output
 
     def create_dataset(self, **kwargs):
@@ -1079,13 +1080,11 @@ class Exchange(StatesData, GuiExch):
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        print(bytes(model_name.encode()))
         model_plan.plan_name = translit(
                 "_".join(model_name.split()),
                 language_code="ru",
                 reversed=True,
             )
-        print(bytes(model_plan.plan_name.encode()))
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
