@@ -8,7 +8,7 @@ import tempfile
 import dill as dill
 from IPython import get_ipython
 from tensorflow.keras.models import load_model
-from transliterate import slugify
+from transliterate import slugify, detect_language
 
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
@@ -1075,12 +1075,13 @@ class Exchange(StatesData, GuiExch):
         return self.optimizers
 
     def get_model_plan(self, plan=None, model_name=""):
+        # is_translite = detect_language(model_name)
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        model_plan.plan_name = slugify(model_name).replace('-', '_')
+        model_plan.plan_name = slugify(model_name, language_code='ru').replace('-', '_') # if is_translite else model_name
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
