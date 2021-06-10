@@ -401,14 +401,6 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-
-        print("self.num_batches ", self.num_batches)
-        print("self.epochs ", self.epochs)
-        print("self.num_batches * self.retrain_epochs +1  ", (self.num_batches * self.retrain_epochs + 1))
-        print("self.num_batches * self.epochs +1  ", (self.num_batches * self.epochs + 1))
-        print("self.retrain_epochs ", self.retrain_epochs)
-        print("self.batch ", self.batch)
-        print("self._start_time) ", self._start_time)
         out_table_data = {
             "epoch": {
                 "number": self.last_epoch + 1,
