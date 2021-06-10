@@ -8,6 +8,7 @@ import tempfile
 import dill as dill
 from IPython import get_ipython
 from tensorflow.keras.models import load_model
+from transliterate import translit
 
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
@@ -359,6 +360,10 @@ class StatesData:
                 "DIM": {
                     "layer_type": LayerType.Dense,
                     "activation": "softmax"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "softmax"
                 }
             },
             "segmentation": {
@@ -373,6 +378,16 @@ class StatesData:
                 "3D": {
                     "layer_type": LayerType.Conv3D,
                     "activation": "softmax"
+                }
+            },
+            "text_segmentation": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "sigmoid"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "sigmoid"
                 }
             },
             "regression": {
@@ -1028,7 +1043,8 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def create_dataset(self, **kwargs):
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        f_folder = self.dts.file_folder if self.dts.file_folder else ''
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder)
         gc.collect()
         try:
             self.dts.prepare_user_dataset(**kwargs)
@@ -1077,7 +1093,12 @@ class Exchange(StatesData, GuiExch):
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        model_plan.plan_name = model_name
+        model_plan.plan_name = translit(
+                "_".join(model_name.split()),
+                language_code="ru",
+                reversed=True,
+            )
+        print(model_plan.plan_name)
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):

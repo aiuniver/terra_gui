@@ -1,3 +1,4 @@
+tensorflow==2.3.0
 Django==3.2
 django-environ==0.4.5
 djangorestframework==3.12.4
@@ -8,3 +9,4 @@ dill==0.3.3
 pydantic>=1.8.2
 cairosvg==2.5.2
 PyYAML==5.4.1
+transliterate==1.10.2

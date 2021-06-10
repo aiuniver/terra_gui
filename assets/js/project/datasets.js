@@ -202,7 +202,6 @@
                 "get_zipfiles",
                 (success, data)=> {
                     if (success) {
-                        console.log(data.data)
                         for(let i in data.data){
                             let option = $(`<option value="${data.data[i]}">${data.data[i]}</option>`);
                             $("#gdrive-select").append(option);
@@ -312,7 +311,7 @@
                                             output_item.append($("<div></div>").addClass("layout-title").text("Слой \"output_"+i+"\""));
                                             output_item.append($("<div></div>").addClass("layout-params"));
             
-                                            let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название входа", type: "str", default: "output_" + i}).addClass("field-inline");
+                                            let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название выхода", type: "str", default: "output_" + i}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
             
                                             widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
@@ -421,7 +420,7 @@
                                                                                 num++;
                                                                             }
                                                                         }else{
-                                                                            console.log("get_auto_colors ERROR")
+                                                                            window.StatusBar.message(data.error, false);
                                                                         }
                                                                     },
                                                                     {
@@ -477,7 +476,7 @@
                                                                                 });
                                                                             }
                                                                         }else{
-                                                                            console.log("get_auto_colors ERROR")
+                                                                            window.StatusBar.message(data.error, false);
                                                                         }
                                                                     },
                                                                     {

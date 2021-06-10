@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.330
+__version__ = 0.331
 
 tr2dj_obj = Exchange()
 
@@ -1092,7 +1092,7 @@ class DTS(object):
 
             pass
 
-        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:
+        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and options['source'] != 'custom_dataset':
 
             if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
                 self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv', test=True)
@@ -1109,8 +1109,7 @@ class DTS(object):
 
         else:
 
-            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
-                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber']:
+            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3', 'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
 
                 self.load_data(options['dataset_name'], mode='terra')
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
