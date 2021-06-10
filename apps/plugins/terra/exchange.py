@@ -110,8 +110,7 @@ class TerraExchange:
         self, dataset: str, is_custom: bool = False, not_load_layers: bool = False
     ) -> TerraExchangeResponse:
         tags, dataset_name, start_layers = colab_exchange.prepare_dataset(
-            dataset_name=dataset,
-            source="custom" if is_custom else "",
+            dataset_name=dataset, source="custom_dataset" if is_custom else ""
         )
         schema = [[], []]
         for index, layer in start_layers.items():
@@ -163,7 +162,7 @@ class TerraExchange:
                 "plots": response.get("plots", []),
                 "scatters": response.get("scatters", []),
                 "images": response.get("images", []),
-                "texts": response.get("texts", []),
+                "texts": response.get("texts", {}),
             }
         )
         return TerraExchangeResponse(
@@ -172,9 +171,21 @@ class TerraExchange:
             success=response.get("success", True),
         )
 
+    def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.reset_stop_flag()
+        return TerraExchangeResponse()
+
+    def _call_before_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.reset_stop_flag()
+        return TerraExchangeResponse()
+
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)
+
+    def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        colab_exchange.create_dataset(**kwargs)
+        return TerraExchangeResponse()
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
@@ -234,6 +245,7 @@ class TerraExchange:
     def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
         layers = kwargs.get("layers")
         schema = kwargs.get("schema")
+        reset_training = kwargs.get("reset_training", False)
         self.project.layers = {}
         if layers:
             for index, layer in layers.items():
@@ -241,6 +253,8 @@ class TerraExchange:
         else:
             for index, layer in self.project.dict().get("layers_start"):
                 self.project.layers[int(index)] = Layer(**layer)
+        if reset_training:
+            self.call("reset_training")
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -266,6 +280,7 @@ class TerraExchange:
                 success=False,
                 error="Модель с таким названием уже существует",
             )
+        self.call("get_change_validation")
         self.project.dir.create_preview(preview)
         self.project.dir.create_layers(self.project.dict().get("layers"))
         filepath = shutil.make_archive(name, "zip", self.project.dir.modeling)
@@ -279,6 +294,7 @@ class TerraExchange:
         for index, layer in self.project.dict().get("layers_start").items():
             self.project.layers[int(index)] = Layer(**layer)
         self.project.model_name = DEFAULT_MODEL_NAME
+        self.call("reset_training")
         return TerraExchangeResponse(
             data={
                 "layers": self.project.dict().get("layers"),
@@ -353,7 +369,7 @@ class TerraExchange:
             return TerraExchangeResponse(data={"validated": False})
 
     def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange._reset_out_data()
+        colab_exchange.reset_stop_flag()
         output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
         out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
         kwargs["checkpoint"]["monitor"]["out_monitor"] = (
@@ -405,8 +421,19 @@ class TerraExchange:
         self.project.autosave()
         return TerraExchangeResponse()
 
+    def _call_get_zipfiles(self) -> TerraExchangeResponse:
+        response = colab_exchange.get_zipfiles()
+        return TerraExchangeResponse(data=response)
+
+    def _call_get_auto_colors(self, **kwargs) -> TerraExchangeResponse:
+        response = colab_exchange.get_auto_colors(**kwargs)
+        return TerraExchangeResponse(data=response)
+
     def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.reset_training()
+        colab_exchange._reset_out_data()
+        colab_exchange.out_data["stop_flag"] = True
+        self.project.in_training = False
         self.project.dir.remove_training()
         self._update_in_training_flag()
         self.project.autosave()
@@ -451,6 +478,7 @@ class TerraExchange:
                 success=False,
                 error="Проект с таким названием уже существует",
             )
+        self.project.save_training_files(name=name)
         filepath = shutil.make_archive(name, "zip", settings.TERRA_AI_PROJECT_PATH)
         shutil.move(filepath, fullpath)
         return TerraExchangeResponse(data={"name": name})

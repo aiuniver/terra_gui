@@ -1,5 +1,6 @@
 import base64
 import gc
+import json
 import os
 import re
 import tempfile
@@ -7,6 +8,7 @@ import tempfile
 import dill as dill
 from IPython import get_ipython
 from tensorflow.keras.models import load_model
+from transliterate import slugify, detect_language
 
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
@@ -353,6 +355,59 @@ class StatesData:
             },
         }
 
+        self.output_layers = {
+            "classification": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "softmax"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "softmax"
+                }
+            },
+            "segmentation": {
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "softmax"
+                },
+                "2D": {
+                    "layer_type": LayerType.Conv2D,
+                    "activation": "softmax"
+                },
+                "3D": {
+                    "layer_type": LayerType.Conv3D,
+                    "activation": "softmax"
+                }
+            },
+            "text_segmentation": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "sigmoid"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "sigmoid"
+                }
+            },
+            "regression": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "linear"
+                }
+            },
+            "timeseries": {
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "linear"
+                },
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "linear"
+                }
+            }
+        }
+
         self.paths_obj = TerraExchangeProject()
 
 
@@ -381,7 +436,7 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
 
         self.property_of = "DJANGO"
@@ -392,8 +447,9 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.custom_datasets = []
         self.custom_datasets_path = self.paths_obj.gd.datasets
-        self.dts = DTS(exch_obj=self, path=self.paths_obj.dir.datasets)  # dataset init
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)  # dataset init
         self.dts_name = None
+        self.output_shape = None
         self.task_name = ""
         self.mounted_drive_path = ""
         self.nn = GUINN(exch_obj=self)  # neural network init
@@ -403,7 +459,7 @@ class Exchange(StatesData, GuiExch):
         self.loss = "categorical_crossentropy"
         self.metrics = ["accuracy"]
         self.batch_size = 32
-        self.epochs = 20
+        self.epochs = 0
         self.shuffle = True
         self.epoch = 1
         self.optimizers = self._set_optimizers()
@@ -565,7 +621,11 @@ class Exchange(StatesData, GuiExch):
         elif key_name == "prints":
             self.out_data["prints"].append(data)
         elif key_name == "texts":
-            self.out_data["texts"].append(data)
+            if not self.out_data["texts"]:
+                self.out_data["texts"] = {"epochs": [], "summary": ""}
+            if data.get("epoch", {}):
+                self.out_data["texts"]["epochs"].append(data.get("epoch", {}))
+            self.out_data["texts"]["summary"] = data.get("summary", "")
         else:
             self.out_data[key_name] = data
         self._check_stop_flag(stop_flag)
@@ -612,22 +672,23 @@ class Exchange(StatesData, GuiExch):
         if os.path.exists(self.custom_datasets_path):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
-                if not dataset.endswith(".trds"):
+                if dataset.split()[0] != 'dataset':
                     continue
 
-                dataset_path = os.path.join(self.custom_datasets_path, dataset)
-                if not os.path.isfile(dataset_path):
+                config_path = os.path.join(self.custom_datasets_path, f'{dataset}/config.json')
+                if not os.path.isfile(config_path):
                     continue
 
-                with open(dataset_path, "rb") as f:
-                    custom_dts = dill.load(f)
-
-                tags = list(custom_dts.tags.values())
-                name = custom_dts.name
-                source = custom_dts.source
+                with open(config_path, "r") as f:
+                    # custom_dts = dill.load(f)
+                    custom_dts = json.load(f)
+                tags = list(custom_dts.get("tags", {}).values())
+                name = custom_dts.get("name", "")
+                source = custom_dts.get("source", "")
+                # dts_date = custom_dts.get("date", "")
+                # dts_size = custom_dts.get("size", "")
                 custom_datasets_dict[name] = [tags, None, source]
                 del custom_dts
-
         return custom_datasets_dict
 
     def _create_datasets_data(self) -> dict:
@@ -673,7 +734,6 @@ class Exchange(StatesData, GuiExch):
         #     'methods': methods,
         # }
         # tags = self._reformat_tags(list(tags))
-
         return output
 
     def _prepare_dataset(self, dataset_name: str, source: str, **kwargs) -> tuple:
@@ -685,44 +745,49 @@ class Exchange(StatesData, GuiExch):
         Returns:
             changed dataset and its tags
         """
-        if source == "custom":
-            self.dts = self._read_trds(dataset_name)
-        if source == "load":
-            self.dts = self.dts.prepare_user_dataset(**kwargs)
-        else:
-            self.dts = DTS(exch_obj=self)
-            gc.collect()
-            self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
+        gc.collect()
+        self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
         return self.dts.tags, self.dts.name, self.start_layers
 
-    def _read_trds(self, dataset_name: str) -> DTS:
-        filename = f"{dataset_name}.trds"
-        filepath = os.path.join(self.custom_datasets_path, filename)
-        with open(filepath, "rb") as f:
-            dts = dill.load(f)
-        return dts
+    def _change_output_layer(self, dts_layer_name):
+        task_type = self.dts.task_type.get(dts_layer_name)
+        dimension = self.dts.output_datatype.get(dts_layer_name)
+        layer_type = self.output_layers.get(task_type, {}).get(dimension, {}).get("layer_type", "")
+        activation = self.output_layers.get(task_type, {}).get(dimension, {}).get("activation", "")
+        return layer_type, activation
 
     def _set_start_layers(self):
         self.start_layers = {}
 
         def _create(dts_data: dict, location: LayerLocation):
+            self.output_shape = {}
+            layer_type = LayerType.Dense
+            activation = "softmax"
             available = [data["data_name"] for name, data in dts_data.items()]
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
                 if location == LayerLocation.output:
-                    default_layers_params = self.layers_params.get(LayerType.Dense)
+                    layer_type, activation = self._change_output_layer(name)
+                    default_layers_params = self.layers_params.get(layer_type)
                     out_param_dict = {
                         x: {y: default_layers_params[x].get(y).get('default')
                             for y in default_layers_params[x].keys()}
                         for x in default_layers_params.keys()
                     }
-                    out_param_dict['main']['units'] = self.dts.num_classes[name]
-                    if self.dts.name == 'mnist':
-                        out_param_dict['main']['activation'] = 'softmax'
+                    units = self.dts.num_classes.get(name,
+                                                     self.dts.output_shape.get(name)[-1] if
+                                                     self.dts.output_shape.get(name) else 1)
+                    if out_param_dict.get('main', {}).get('units', None):
+                        out_param_dict['main']['units'] = units
+                    else:
+                        out_param_dict['main']['filters'] = units
+                    out_param_dict['main']['activation'] = activation
+                    self.output_shape.setdefault(name, list(self.dts.output_shape.get(name, [])))
                 else:
                     out_param_dict = {}
                 self.start_layers[index] = {
@@ -731,11 +796,11 @@ class Exchange(StatesData, GuiExch):
                         "dts_layer_name": name,
                         "type": LayerType.Input
                         if location == LayerLocation.input
-                        else LayerType.Dense,
+                        else layer_type,
                         "location_type": location,
                         "up_link": [],
                         "input_shape": list(self.dts.input_shape.get(name, [])),
-                        "output_shape": [],
+                        "output_shape": list(self.dts.output_shape.get(name, [])),
                         "data_name": data_name,
                         "data_available": available,
                         "params": out_param_dict,
@@ -775,8 +840,11 @@ class Exchange(StatesData, GuiExch):
             "plots": [],
             "scatters": [],
             "images": [],
-            "texts": [],
+            "texts": {},
         }
+
+    def reset_stop_flag(self):
+        self.out_data["stop_flag"] = False
 
     def _set_optimizers(self):
         return self.optimizers_dict
@@ -807,12 +875,13 @@ class Exchange(StatesData, GuiExch):
         self._reset_out_data()
         dataset_name = kwargs.get("name", "")
         dataset_link = kwargs.get("link", "")
+        dataset_mode = kwargs.get("mode", "")
         dts_layer_count = kwargs.get("num_links", {})
         if dts_layer_count:
             inputs_count = dts_layer_count.get("inputs", 1)
             outputs_count = dts_layer_count.get("outputs", 1)
         if dataset_name:
-            self.dts.load_data(name=dataset_name, link=dataset_link)
+            self.dts.load_data(name=dataset_name, mode=dataset_mode, link=dataset_link)
             self._set_dts_name(self.dts.name)
             output = self.dts.get_parameters_dict()
         else:
@@ -822,9 +891,15 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def prepare_dataset(self, dataset_name: str = "", source: str = "", **kwargs):
+        output = []
         self._reset_out_data()
         self.process_flag = "dataset"
-        return self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+        try:
+            output = self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
+        return output
 
     def get_default_datasets_params(self):
         return self.dts.get_parameters_dict()
@@ -965,7 +1040,22 @@ class Exchange(StatesData, GuiExch):
         for arch_files in files_for_unzipping:
             if arch_files.endswith(".model"):
                 output.append(arch_files[:-6])
+                print(bytes(arch_files[:-6].encode()))
         return output
+
+    def create_dataset(self, **kwargs):
+        f_folder = self.dts.file_folder if self.dts.file_folder else ''
+        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder)
+        gc.collect()
+        try:
+            self.dts.prepare_user_dataset(**kwargs)
+        except Exception as e:
+            self.out_data["stop_flag"] = True
+            self.out_data["errors"] = e.__str__()
+        self.out_data["stop_flag"] = True
+
+    def get_zipfiles(self):
+        return self.dts._get_zipfiles()
 
     def get_dataset_input_shape(self):
         return self.dts.input_shape
@@ -999,12 +1089,13 @@ class Exchange(StatesData, GuiExch):
         return self.optimizers
 
     def get_model_plan(self, plan=None, model_name=""):
+        # is_translite = detect_language(model_name)
         model_plan = ModelPlan()
         model_plan.input_datatype = self.dts.input_datatype
         model_plan.input_shape = self.dts.input_shape
-        model_plan.output_shape = {}
+        model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        model_plan.plan_name = model_name
+        model_plan.plan_name = slugify(model_name, language_code='ru').replace('-', '_') # if is_translite else model_name
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
@@ -1015,12 +1106,17 @@ class Exchange(StatesData, GuiExch):
         optimizer_kwargs = OptimizerParams(**optimizer_params)
         return optimizer_kwargs.dict()
 
+    def get_auto_colors(self, **kwargs):
+        name = kwargs.get("name", "")
+        num_classes = kwargs.get("num_classes", None)
+        mask_range = kwargs.get("mask_range", 10)
+        txt_file = kwargs.get("txt_file", False)
+        return self.dts._find_colors(name, num_classes, mask_range, txt_file=txt_file)
+
     def get_data(self):
-        if self.process_flag == "train":
+        if self.process_flag in ["train", "trained", "stopped"]:
             self.out_data["progress_status"]["progress_text"] = "Train progress"
-            self.out_data["progress_status"]["percents"] = (
-                self.epoch / self.epochs
-            ) * 100
+            self.out_data["progress_status"]["percents"] = (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
@@ -1032,15 +1128,24 @@ class Exchange(StatesData, GuiExch):
 
     def reset_training(self):
         self.nn.nn_cleaner()
+        self._reset_out_data()
         self.is_trained = True
+        self.process_flag = ""
+        self.epochs = 0
 
     def start_training(self, model: bytes, **kwargs) -> None:
+        training = kwargs
+        set_epochs = training.get("epochs_count", 10)
+        if self.process_flag not in ["trained", "stopped"]:
+            self.process_flag = "train"
+            self._reset_out_data()
+            self.epochs = set_epochs
+        if self.process_flag == "trained":
+            self.epochs = self.epochs + set_epochs
+
         if self.stop_training_flag:
             self.stop_training_flag = False
         self.is_trained = False
-        self.process_flag = "train"
-        self._reset_out_data()
-        training = kwargs
 
         model_file = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.h5", delete=False
@@ -1058,32 +1163,36 @@ class Exchange(StatesData, GuiExch):
 
         output_params = training.get("outputs", {})
         clbck_chp = training.get("checkpoint", {})
-        self.epochs = training.get("epochs_count", 10)
         batch_size = training.get("batch_sizes", 32)
         optimizer_params = training.get("optimizer", {})
         output_optimizer_params["op_name"] = optimizer_params.get("name")
         for key, val in optimizer_params.get("params", {}).items():
             output_optimizer_params["op_kwargs"].update(val)
-
+        self.print_2status_bar(('Установка параметров обучения', '...'))
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
-            epochs=self.epochs,
+            epochs=set_epochs,
             batch_size=batch_size,
             optimizer_params=output_optimizer_params,
         )
+        self.print_2status_bar(('Подготовка запуска обучения', '...'))
         try:
             self.nn.terra_fit(nn_model)
             if self.epoch == self.epochs:
                 self.is_trained = True
+                self.process_flag = "trained"
         except Exception as e:
             self.out_data["stop_flag"] = True
+            self.is_trained = True
             self.out_data["errors"] = e.__str__()
+            self.process_flag = ""
         self.out_data["stop_flag"] = True
         self.stop_training_flag = True
 
     def stop_training(self):
         self.stop_training_flag = True
+        self.process_flag = "stopped"
 
 
 if __name__ == "__main__":

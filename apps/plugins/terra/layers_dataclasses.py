@@ -568,7 +568,7 @@ class GUILayersDef:
         "Conv1D": {
             "main": {
                 "filters": {"type": "int", "default": 32},
-                "kernel_size": {"type": "int", "default": 2},
+                "kernel_size": {"type": "int", "default": 5},
                 "strides": {"type": "int", "default": 1},
                 "padding": {
                     "type": "str",
@@ -643,7 +643,7 @@ class GUILayersDef:
         "Conv2D": {
             "main": {
                 "filters": {"type": "int", "default": 32},
-                "kernel_size": {"type": "tuple", "default": (1, 1)},
+                "kernel_size": {"type": "tuple", "default": (3, 3)},
                 "strides": {"type": "tuple", "default": (1, 1)},
                 "padding": {
                     "type": "str",
@@ -718,7 +718,7 @@ class GUILayersDef:
         "Conv3D": {
             "main": {
                 "filters": {"type": "int", "default": 32},
-                "kernel_size": {"type": "tuple", "default": (1, 1, 1)},
+                "kernel_size": {"type": "tuple", "default": (3, 3, 3)},
                 "strides": {"type": "tuple", "default": (1, 1, 1)},
                 "padding": {
                     "type": "str",
@@ -1693,10 +1693,10 @@ class GUILayersDef:
         "Embedding": {
             "main": {
                 "output_dim": {"type": "int", "default": None},
-                "input_length": {"type": "int", "default": None},
+                "input_dim": {"type": "int", "default": None},
             },
             "extra": {
-                "input_dim": {"type": "int", "default": None},
+                "input_length": {"type": "int", "default": None},
                 "embeddings_initializer": {
                     "type": "str",
                     "default": "uniform",

@@ -60,7 +60,6 @@
                             $(item).removeClass("active");
                             training_results.children(`.${$(item).data("type")}`).addClass("hidden");
                         }
-                        $(item).find("img").attr("src", `/assets/imgs/training-${$(item).data("type")}${value ? "-active" : ""}.svg`);
                     },
                     get: () => {
                         return $(item).hasClass("active");
@@ -207,8 +206,8 @@
                     widget.find("input").addClass(`_callback_${name}`).bind("change", (event) => {
                         let input = $(event.currentTarget);
                         if (input.hasClass("_callback_show_best_images") || input.hasClass("_callback_show_worst_images")) {
-                            let best = this.find("._callback_show_best_images"),
-                                worst = this.find("._callback_show_worst_images");
+                            let best = input.closest(".inner").find("._callback_show_best_images"),
+                                worst = input.closest(".inner").find("._callback_show_worst_images");
                             if (input.hasClass("_callback_show_best_images")) {
                                 if (best[0].checked) worst[0].checked = false;
                             } else {
@@ -246,7 +245,7 @@
                             this.validate = false;
                             training_results.charts = [];
                             training_results.images = [];
-                            training_results.texts = [];
+                            training_results.texts = {};
                             training_results.scatters = [];
                             _action_training.text("Обучить");
                             window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
@@ -380,6 +379,16 @@
 
             if (!this.length) return this;
 
+            let _camelize = (text) => {
+                let _capitalize = (word) => {
+                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
+                }
+                let words = text.split("_"),
+                    result = [_capitalize(words[0])];
+                words.slice(1).forEach((word) => result.push(word))
+                return result.join(" ")
+            }
+
             Object.defineProperty(this, "charts", {
                 get: () => {
                     return this.children(".charts").children(".content");
@@ -460,15 +469,29 @@
                     } else {
                         training_toolbar.btn.images.disabled = true;
                     }
-
                     this.images.html("");
                     for (let name in images) {
                         let group = images[name],
-                            item_block = $(`<div class="group"><div class="title">${name}</div><div class="inner"></div></div>`);
-                        group.forEach((item) => {
-                            item_block.children(".inner").append(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /><div class="name">${item.title}</div></div></div>`);
-                        });
-                        this.images.append(item_block);
+                            group_block = $(`<div class="group"><div class="title">${_camelize(group.title)}</div><div class="inner"></div></div>`);
+                        if (group.values && group.values.length) {
+                            group.values.forEach((item) => {
+                                let item_block = $(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /></div></div>`);
+                                if (item.title) {
+                                    item_block.children(".wrapper").append($(`<div class="title">${item.title}</div>`));
+                                }
+                                if (item.info && item.info.length) {
+                                    let info_block = $('<div class="info"></div>');
+                                    item.info.forEach((info) => {
+                                        if (info.value) {
+                                            info_block.append($(`<div class="param"><label>${info.label}: </label><span>${info.value}</span></div>`));
+                                        }
+                                    });
+                                    item_block.children(".wrapper").append(info_block);
+                                }
+                                group_block.children(".inner").append(item_block);
+                            });
+                            this.images.append(group_block);
+                        }
                     }
                 }
             });
@@ -478,25 +501,71 @@
                     return this.children(".texts").children(".content");
                 },
                 set: (texts) => {
-                    if (texts.length) {
+                    if (Object.keys(texts).length && (texts.summary || texts.epochs.length)) {
                         let disabled = training_toolbar.btn.texts.disabled;
                         training_toolbar.btn.texts.disabled = false;
                         if (disabled) training_toolbar.btn.texts.active = true;
                     } else {
                         training_toolbar.btn.texts.disabled = true;
                     }
-                    let map_replace = {
-                        '&': '&amp;',
-                        '<': '&lt;',
-                        '>': '&gt;',
-                        '"': '&#34;',
-                        "'": '&#39;'
-                    };
-                    this.texts.children(".inner").html(
-                        texts.map((item) => {
-                            return `<div class="item"><code>${item.replace(/[&<>'"]/g, (c) => {return map_replace[c]})}</code></div>`;
-                        }).join("")
-                    );
+                    this.texts.html('<div class="inner"></div>');
+                    let format_epoch_value = (value) => {
+                        let num_digits = 3,
+                            factor = 1;
+                        for (let i=0; i<num_digits; i++) factor *= 10;
+                        value = `${Math.round(value*factor)/factor}`;
+                        let split_value = value.split(".");
+                        if (split_value.length === 2) {
+                            split_value[0] = `<span>${split_value[0]}</span>`;
+                            for (let i=0; i<(num_digits - split_value[1].length); i++) split_value[1] += "0";
+                            value = split_value.join("<i>.</i>");
+                        }
+                        return value;
+                    }
+                    if (Object.keys(texts).length) {
+                        if (texts.epochs.length) {
+                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время<br />(сек.)</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
+                                outputs_cols = {},
+                                outputs_list = [];
+                            this.texts.children(".inner").append(epochs_block);
+                            texts.epochs.forEach((epoch) => {
+                                for (let output_name in epoch.data) {
+                                    if (!outputs_cols[output_name]) outputs_cols[output_name] = [];
+                                    outputs_cols[output_name] = $.merge(outputs_cols[output_name], Object.keys(epoch.data[output_name])).filter((item, i, items) => {
+                                        return i === items.indexOf(item);
+                                    });
+                                }
+                            });
+                            for (let output_name in outputs_cols) {
+                                let callbacks_cols = outputs_cols[output_name];
+                                outputs_list.push(output_name);
+                                epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
+                                callbacks_cols.forEach((callback_name) => {
+                                    epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
+                                });
+                            }
+                            texts.epochs.forEach((epoch) => {
+                                let tr = $(`<tr><td class="epoch_num">${epoch.number}</td><td>${epoch.time}</td></tr>`);
+                                outputs_list.forEach((output_name) => {
+                                    outputs_cols[output_name].forEach((callback_name) => {
+                                        let td = $(`<td class="value"><code></code></td>`);
+                                        try {
+                                            td.html(format_epoch_value(epoch.data[output_name][callback_name]));
+                                        } catch (e) {}
+                                        tr.append(td);
+                                    });
+                                });
+                                epochs_block.find("tbody").append(tr);
+                            });
+                            if (texts.summary) {
+                                let tfoot_colspan = 2;
+                                for (let _ in outputs_cols) {
+                                    tfoot_colspan += outputs_cols[_].length;
+                                }
+                                epochs_block.find("tbody").after($(`<tfoot><tr><th colspan="${tfoot_colspan}">${texts.summary}</th></tr></tfoot>`));
+                            }
+                        }
+                    }
                 }
             });
 

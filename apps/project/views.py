@@ -5,6 +5,7 @@ from django.http import HttpResponse
 from django.views.generic import View, TemplateView
 
 from apps.plugins.terra import terra_exchange
+from apps.plugins.terra.neural import colab_exchange
 
 
 class ProjectViewMixin(TemplateView):
@@ -32,3 +33,7 @@ class ModelingView(ProjectViewMixin):
 
 class TrainingView(ProjectViewMixin):
     template_name = "project/training.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        colab_exchange.out_data.update(terra_exchange.project.dir.training_output)
+        return super().dispatch(request, *args, **kwargs)

@@ -1,4 +1,4 @@
-{% load static core_utils %}
+{% load static compress core_utils %}
 
 <!DOCTYPE html>
 <html lang="ru">
@@ -18,14 +18,21 @@
 
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon"/>
 
-    <link rel="stylesheet" href="{% static 'css/reset.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/fonts.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/jquery.mCustomScrollbar.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
-    {% block css %}{% endblock css %}
-    <link rel="stylesheet" href="{% static 'css/media.css' %}"/>
-    <link rel="stylesheet" href="{% static 'css/theme-dark.css' %}" id="theme-link"/>
+    {% compress css %}
+        {% block global_css %}
+            <link rel="stylesheet" href="{% static 'css/reset.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/fonts.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/jquery-ui.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/jquery-ui-slider.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/farbtastic.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/jquery.mCustomScrollbar.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/layout.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/icons.css' %}"/>
+            {% block css %}{% endblock css %}
+            <link rel="stylesheet" href="{% static 'css/media.css' %}"/>
+            <link rel="stylesheet" href="{% static 'css/theme-dark.css' %}" id="theme-link"/>
+        {% endblock global_css %}
+    {% endcompress %}
 
 </head>
 
@@ -49,18 +56,26 @@
         </div>
     </div>
 
-    <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.base64.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.serializeObject.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.mCustomScrollbar.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.cookie.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/messages.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/jquery.modal-window.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/form-widgets.js' %}"></script>
-    <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
-    {% block js %}{% endblock js %}
-    <script type="text/javascript" src="{% static 'js/visibility.js' %}"></script>
+    <script type="text/javascript" src="{% url 'apps_project:config_js' %}"></script>
+    {% compress js %}
+        {% block global_js %}
+            <script type="text/javascript" src="{% static 'js/jquery.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery-ui.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.base64.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.serializeObject.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.serializejson.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.mCustomScrollbar.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.cookie.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery-ui-slider.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/farbtastic.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/messages.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/jquery.modal-window.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/form-widgets.js' %}"></script>
+            <script type="text/javascript" src="{% static 'js/script.js' %}"></script>
+            {% block js %}{% endblock js %}
+            <script type="text/javascript" src="{% static 'js/visibility.js' %}"></script>
+        {% endblock global_js %}
+    {% endcompress %}
 
 </body>
 

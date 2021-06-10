@@ -60,9 +60,14 @@
 	cursor:pointer;
 	user-select:none;
 }
-.canvas-container > .zoom > li > span > img {
+.canvas-container > .zoom > li > span:after {
+	display:block;
+	content:'';
 	width:14px;
 	height:14px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
 }
 
 /* properties */
@@ -259,9 +264,14 @@
 	padding:8px;
 	cursor:pointer;
 }
-#modal-window-keras-code > .action > span > img {
+#modal-window-keras-code > .action > span:after {
+	display:block;
+	content:'';
 	width:24px;
 	height:24px;
+	background-position:center;
+	background-repeat:no-repeat;
+	background-size:contain;
 }
 #modal-window-keras-code > .action > div {
 	display:inline-block;

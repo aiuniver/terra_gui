@@ -119,6 +119,7 @@
 }
 .dataset-card-item {
     padding:0 10px 20px 10px;
+    min-height: 160px;
 }
 .dataset-card-item.hidden {
     display:none;
@@ -142,8 +143,9 @@
     cursor:default;
 }
 .card-title {
-    width:100%;
+    width: 90%;
     position:absolute;
+    word-wrap: break-word;
     font-size:.875rem;
 }
 .card-body {
@@ -154,12 +156,215 @@
     justify-content:flex-end;
 }
 .card-tag {
+    position:relative;
     font-size:.75rem;
     line-height:20px;
     color:#A7BED3;
-    padding-left:10px;
+    padding-left:15px;
 }
 .card-tag:before {
-    margin-left:-12px;
+    display:block;
+    content:'';
+    width:8px;
+    height:8px;
+    margin:-4px 0 0 0;
     position:absolute;
+    left:0;
+    top:50%;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
 }
+.next-form{
+    margin-top: 40px;
+}
+.dataset-params > .inner > .field-form > input,
+.load-dataset-field > .inner > .field-form > input{
+    max-width: 170px;
+}
+
+#amount1, #amount2, #amount3{
+    width: 43px;
+    margin-left: 3px;
+}
+
+.dataset-params > .inner > .field-form > label{
+    width: 100px;
+}
+
+.params-container > .input-output-numbers{
+    padding-top: 0px;
+}
+
+.row{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+.layout-item{
+    flex: 0 1 50%;
+    /*width: 50%;*/
+    /*display: flex;*/
+    /*flex-direction: column;*/
+    /*justify-content: flex-start;*/
+}
+.layout-title{
+    font-size: .75rem;
+}
+.layout-params{
+    padding-top: 10px;
+    padding-right: 5px;
+}
+.layout-params > .field-inline,
+.layout-parameters > .field-inline{
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+}
+.layout-params > .field-inline > input,
+.layout-parameters > .field-inline > input{
+    height: 20px;
+    max-width: 75px;
+    font-size: .65rem;
+}
+
+.layout-params > .field-inline > label,
+.layout-parameters > .field-inline > label{
+    width: 95px;
+    font-size: .65rem;
+    margin: 0;
+    text-align: end;
+    padding-right: 5px;
+}
+
+.layout-params > .field-inline > .ui-widget,
+.layout-parameters > .field-inline > .ui-widget{
+    height: 20px;
+    max-width: 75px;
+}
+
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-icon,
+.layout-parameters > .field-inline > .ui-widget > .ui-selectmenu-icon{
+    height: 20px;
+    width: 20px;
+}
+
+.layout-params > .field-inline > .ui-widget > .ui-selectmenu-text,
+.layout-parameters > .field-inline > .ui-widget > .ui-selectmenu-text{
+    line-height: 20px;
+    font-size: .65rem;
+    padding: 0 20px 0 6px;
+}
+
+.search > .inner{
+    display: flex;
+}
+
+.search > .inner > input{
+    width: 250px;
+    height: 30px;
+}
+
+.search > .inner > button{
+    width: 80px;
+    height: 30px;
+    margin-left: 20px;
+    padding: 0;
+    font-size: 0.8rem;
+}
+
+.colorpicker-btn{
+    height: 18px;
+    width: 18px;
+    background-color: #65B9F4;
+    padding: 0;
+    margin-left: 2px;
+}
+
+.colorpicker{
+    position: absolute;
+    z-index: 2;
+    margin-bottom: 220px;
+    margin-left: -20px;
+    background-color: #17212B;
+    border: 1px solid #6C7883;
+    border-radius: 4px;
+    transition: border-color 0.3s ease;
+}
+
+.colorpicker:hover{
+    border-color: #fff;
+}
+
+.layout-params > .color-inline > input[type=text]{
+    max-width: 65px;
+}
+
+.load-dataset-field > ul{
+    list-style-type: none;
+    overflow: hidden;
+    justify-content: space-around;
+    background-color: #0E1621;
+    margin: -20px -20px 10px -20px;
+    padding-top: 1px;
+}
+
+.load-dataset-field > ul > li {
+    float: left;
+    padding: 8px 30px;
+    font-size: .80rem;
+    cursor: pointer;
+}
+
+.active{
+    background-color: #17212B;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > .hidden{
+    display: none;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 40px;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline{
+    display: flex;
+    align-items: center;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > input,
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button{
+    max-width: 170px;
+    height: 22px;
+    font-size: .75rem;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > label{
+    padding-right: 7px;
+    margin: 0;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button > .ui-selectmenu-icon{
+    height: 20px;
+    width: 30px;
+}
+
+.load-dataset-field > .inner > .tab-load-dataset > div > .field-inline > .ui-selectmenu-button > .ui-selectmenu-text{
+    height: 20px;
+    line-height: 20px;
+}
+
+#preserve_sequence_label{
+    width: 140px;
+}
+
+.search-num-classes{
+    width: 80%;
+    height: 30px;
+    padding: 0 20px;
+    margin: 0 auto;
+}
+

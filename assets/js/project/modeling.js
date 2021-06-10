@@ -342,6 +342,7 @@
                         break;
                 }
 
+                terra_toolbar.btn.middle.disabled = true;
                 let indexes = Object.keys(window.TerraProject.layers).map((value) => {
                     return parseInt(value);
                 });
@@ -373,6 +374,7 @@
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
+                        terra_toolbar.btn.middle.disabled = false;
                         if (success) {
                             _create_node(parseInt(data.data.index), data.data.layers[parseInt(data.data.index)]);
                             window.TerraProject.layers = data.data.layers;
@@ -973,7 +975,7 @@
             this.reset = () => {
                 _layer_index_field.val("");
                 _layer_name_field.val("").attr("disabled", "disabled");
-                _layer_type_field.val("").attr("disabled", "disabled").selectmenu("refresh");
+                _layer_type_field.val("").attr("disabled", "disabled");
                 this.find("#field_form-input_shape").parent().remove();
                 this.find("#field_form-data_name").parent().remove();
                 _action_save.attr("disabled", "disabled");
@@ -990,7 +992,6 @@
                 _layer_name_field.val(data.config.name).removeAttr("disabled");
                 _layer_type_field.val(data.config.type);
                 if (data.config.location_type !== "input") _layer_type_field.removeAttr("disabled");
-                _layer_type_field.selectmenu("refresh");
                 _action_save.removeAttr("disabled");
                 if (data.config.location_type === "middle") _action_clone.removeAttr("disabled");
                 _render_params(data.config);
@@ -1028,7 +1029,7 @@
 
             _layer_name_field.bind("input", _on_change_params);
 
-            _layer_type_field.bind("change", (event) => {
+            _layer_type_field.bind("blur", (event) => {
                 let _config = $.extend(true, {}, terra_board.find(`#node-${_layer_index_field.val()}`)[0].__data__);
                 _render_params({
                     "type":event.currentTarget.value,
@@ -1037,10 +1038,6 @@
                     "params":{"main":{},"extra":{}},
                 });
                 _on_change_params();
-            }).selectmenu({
-                change:(event, ui) => {
-                    $(event.target).trigger("change");
-                }
             });
 
             _action_clone.bind("click", (event) => {
@@ -1163,6 +1160,7 @@
                 {
                     "layers": event.currentTarget.ModelData.layers,
                     "schema": event.currentTarget.ModelData.schema,
+                    "reset_training": true
                 }
             )
         });

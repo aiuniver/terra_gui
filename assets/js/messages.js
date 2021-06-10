@@ -25,7 +25,9 @@ let Messages = function() {
         VALIDATION_MODEL_SUCCESS: "Validation of model complete successfully!",
         VALIDATION_MODEL_ERROR: "Validation of model complete with error! Please correct all error and try again",
         TRAINING_DISCARDED: "Обучение сброшено",
-        PROJECT_SAVED: "Проект сохранен"
+        PROJECT_SAVED: "Проект сохранен",
+        CREATING_DATASET: "Dataset creating...",
+        DATASET_CREATED: "Dataset is created.",
     };
 
     this.get = (name, values) => {

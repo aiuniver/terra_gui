@@ -3,14 +3,14 @@
 {% load static %}
 
 {% block css_block %}
-<link rel="stylesheet" href="{% static 'css/project/modeling.css' %}?rnd=4w598totrf"/>
+<link rel="stylesheet" href="{% static 'css/project/modeling.css' %}"/>
 {% endblock css_block %}
 
 {% block js_block %}
 <script type="text/javascript" src="{% static 'js/project/d3/d3.v5.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/project/d3/index.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/project/d3/d3-graphviz.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/project/modeling.js' %}?rnd=4w598totrf"></script>
+<script type="text/javascript" src="{% static 'js/project/modeling.js' %}"></script>
 {% endblock js_block %}
 
 {% block content_block %}
@@ -18,35 +18,35 @@
     <div class="wrapper">
         <ul class="menu-section models">
             <li data-type="load">
-                <span title="Загрузить модель"><img src="{% static 'imgs/model-menu-1.svg' %}" alt="" /></span>
+                <span title="Загрузить модель" class="icon-model-load"></span>
             </li>
             <li data-type="save_model" disabled="disabled">
-                <span title="Сохранить модель"><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+                <span title="Сохранить модель" class="icon-model-save"></span>
             </li>
             <li data-type="save" disabled="disabled" class="hidden">
-                <span><img src="{% static 'imgs/model-menu-2.svg' %}" alt="" /></span>
+                <span class="icon-model-save"></span>
             </li>
             <li data-type="validation">
-                <span title="Валидация"><img src="{% static 'imgs/validation.svg' %}" alt="" /></span>
+                <span title="Валидация" class="icon-model-validation"></span>
             </li>
             <li data-type="clear">
-                <span title="Очистить"><img src="{% static 'imgs/clear-model.svg' %}" alt="" /></span>
+                <span title="Очистить" class="icon-clear-model"></span>
             </li>
         </ul>
         <ul class="menu-section layers">
             <li data-type="input" disabled="disabled">
-                <span title="Входящий слой"><img src="{% static 'imgs/model-menu-3.svg' %}" alt="" /></span>
+                <span title="Входящий слой" class="icon-layer-input"></span>
             </li>
             <li data-type="middle">
-                <span title="Промежуточный слой"><img src="{% static 'imgs/model-menu-4.svg' %}" alt="" /></span>
+                <span title="Промежуточный слой" class="icon-layer-middle"></span>
             </li>
             <li data-type="output" disabled="disabled">
-                <span title="Исходящий слой"><img src="{% static 'imgs/model-menu-5.svg' %}" alt="" /></span>
+                <span title="Исходящий слой" class="icon-layer-output"></span>
             </li>
         </ul>
         <ul class="menu-section others">
             <li data-type="keras"{% if not request.terra_project.model_validated %} disabled="disabled"{% endif %}>
-                <span title="Код на Keras"><img src="{% static 'imgs/code.svg' %}" alt="" /></span>
+                <span title="Код на Keras" class="icon-keras-code"></span>
             </li>
         </ul>
     </div>
@@ -59,9 +59,9 @@
                 <svg><g id="canvas-container"><g id="canvas-lines"></g><g id="canvas-nodes"></g></g></svg>
             </div>
             <ul class="zoom">
-                <li class="inc" id="zoom-inc" data-type="inc"><span><img src="{% static 'imgs/Group-6.svg' %}" alt="" /></span></li>
-                <li class="res" id="zoom-reset" data-type="reset"><span><img src="{% static 'imgs/zoom_res.svg' %}" alt="" /></span></li>
-                <li class="dec" id="zoom-dec" data-type="dec"><span><img src="{% static 'imgs/Group-7.svg' %}" alt="" /></span></li>
+                <li class="inc" id="zoom-inc" data-type="inc"><span class="icon-zoom-inc"></span></li>
+                <li class="res" id="zoom-reset" data-type="reset"><span class="icon-zoom-reset"></span></li>
+                <li class="dec" id="zoom-dec" data-type="dec"><span class="icon-zoom-dec"></span></li>
             </ul>
         </div>
     </div>
@@ -83,12 +83,9 @@
                             <label for="field_form-name">Название слоя</label>
                             <input disabled="disabled" type="text" id="field_form-name" name="name" />
                         </div>
-                        <div class="field-form">
+                        <div class="field-form relative">
                             <label for="field_form-type">Тип слоя</label>
-                            <select disabled="disabled" name="type" id="field_form-type" class="jquery-ui-menuselect">
-                                <option value=""></option>
-                                {% for layer in request.terra_project.layers_types %}<option value="{{ layer }}">{{ layer }}</option>{% endfor %}
-                            </select>
+                            <input type="text" name="type" id="field_form-type" class="jquery-ui-autocomplete" data-source="{% url 'apps_api:layers-types' %}" />
                         </div>
                     </div>
                 </div>
@@ -141,7 +138,7 @@
         <div class="content"></div>
     </div>
     <div class="action">
-        <span class="clipboard" title="Скопировать код в буфер обмена"><img src="{% static 'imgs/clipboard.svg' %}" alt="" /></span><div class="result"></div>
+        <span class="clipboard icon-clipboard" title="Скопировать код в буфер обмена"></span><div class="result"></div>
     </div>
 </div>
 <div id="modal-window-save-model" class="modal-window-container">

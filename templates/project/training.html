@@ -3,12 +3,12 @@
 {% load static core_utils %}
 
 {% block css_block %}
-<link rel="stylesheet" href="{% static 'css/project/training.css' %}?rnd=4w598totrf"/>
+<link rel="stylesheet" href="{% static 'css/project/training.css' %}"/>
 {% endblock css_block %}
 
 {% block js_block %}
 <script type="text/javascript" src="{% static 'js/project/plotly-latest.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'js/project/training.js' %}?rnd=4w598totrf"></script>
+<script type="text/javascript" src="{% static 'js/project/training.js' %}"></script>
 {% endblock js_block %}
 
 {% block content_block %}
@@ -17,16 +17,16 @@
     <div class="wrapper">
         <ul class="menu-section">
             <li data-type="charts" disabled="disabled">
-                <span title="Графики"><img src="{% static 'imgs/training-charts.svg' %}" alt="" /></span>
+                <span title="Графики" class="icon-training-charts"></span>
             </li>
             <li data-type="scatters" disabled="disabled">
-                <span title="Скаттеры"><img src="{% static 'imgs/training-scatters.svg' %}" alt="" /></span>
+                <span title="Скаттеры" class="icon-training-scatters"></span>
             </li>
             <li data-type="images" disabled="disabled">
-                <span title="Изображения"><img src="{% static 'imgs/training-images.svg' %}" alt="" /></span>
+                <span title="Изображения" class="icon-training-images"></span>
             </li>
             <li data-type="texts" disabled="disabled">
-                <span title="Текст"><img src="{% static 'imgs/training-texts.svg' %}" alt="" /></span>
+                <span title="Текст" class="icon-training-texts"></span>
             </li>
         </ul>
     </div>
