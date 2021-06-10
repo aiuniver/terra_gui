@@ -359,6 +359,10 @@ class StatesData:
                 "DIM": {
                     "layer_type": LayerType.Dense,
                     "activation": "softmax"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "softmax"
                 }
             },
             "segmentation": {
@@ -373,6 +377,16 @@ class StatesData:
                 "3D": {
                     "layer_type": LayerType.Conv3D,
                     "activation": "softmax"
+                }
+            },
+            "text_segmentation": {
+                "DIM": {
+                    "layer_type": LayerType.Dense,
+                    "activation": "sigmoid"
+                },
+                "1D": {
+                    "layer_type": LayerType.Conv1D,
+                    "activation": "sigmoid"
                 }
             },
             "regression": {

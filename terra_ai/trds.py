@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.3301
+__version__ = 0.331
 
 tr2dj_obj = Exchange()
 
@@ -1092,7 +1092,7 @@ class DTS(object):
 
             pass
 
-        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and not options['custom_dataset']:
+        if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and options['source'] != 'custom_dataset':
 
             if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
                 self.keras_datasets(options['dataset_name'], one_hot_encoding=True, scaler='MinMaxScaler', net='conv', test=True)
@@ -1110,7 +1110,7 @@ class DTS(object):
         else:
 
             if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
-                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and not options['custom_dataset']:
+                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
 
                 self.load_data(options['dataset_name'], mode='terra')
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
@@ -1755,7 +1755,7 @@ class DTS(object):
         else:
             working_folder = os.path.join(self.file_folder, folder_name)
         self.peg = [0]
-
+        print('Я ВНУТРИ ТЕКСТОВ')
         txt_list = []
         for _, dirnames, filename in sorted(os.walk(working_folder)):
 
@@ -2349,7 +2349,8 @@ class DTS(object):
     def prepare_user_dataset(self, dataset_dict: dict, is_save=True):
 
         cur_time = time()
-
+        print('Я ВНУТРИ PREPARE_USER_DATASET')
+        print(dataset_dict)
         self.name = dataset_dict['parameters']['name']
         self.user_tags = dataset_dict['parameters']['user_tags']
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
