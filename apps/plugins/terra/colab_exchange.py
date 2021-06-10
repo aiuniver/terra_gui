@@ -1079,6 +1079,7 @@ class Exchange(StatesData, GuiExch):
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
+        print(model_name)
         model_plan.plan_name = translit(
                 "_".join(model_name.split()),
                 language_code="ru",
