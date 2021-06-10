@@ -184,8 +184,8 @@ class TerraExchange:
         return TerraExchangeResponse(data=response)
 
     def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
-        colab_exchange.create_dataset(**kwargs)
-        return TerraExchangeResponse()
+        response = colab_exchange.create_dataset(**kwargs)
+        return TerraExchangeResponse(data=response)
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
