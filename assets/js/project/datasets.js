@@ -202,7 +202,6 @@
                 "get_zipfiles",
                 (success, data)=> {
                     if (success) {
-                        console.log(data.data)
                         for(let i in data.data){
                             let option = $(`<option value="${data.data[i]}">${data.data[i]}</option>`);
                             $("#gdrive-select").append(option);
@@ -421,7 +420,7 @@
                                                                                 num++;
                                                                             }
                                                                         }else{
-                                                                            console.log("get_auto_colors ERROR")
+                                                                            window.StatusBar.message(data.error, false);
                                                                         }
                                                                     },
                                                                     {
@@ -477,7 +476,7 @@
                                                                                 });
                                                                             }
                                                                         }else{
-                                                                            console.log("get_auto_colors ERROR")
+                                                                            window.StatusBar.message(data.error, false);
                                                                         }
                                                                     },
                                                                     {
