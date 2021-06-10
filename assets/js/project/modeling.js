@@ -342,6 +342,7 @@
                         break;
                 }
 
+                terra_toolbar.btn.middle.disabled = true;
                 let indexes = Object.keys(window.TerraProject.layers).map((value) => {
                     return parseInt(value);
                 });
@@ -373,6 +374,7 @@
                 window.ExchangeRequest(
                     "save_layer",
                     (success, data) => {
+                        terra_toolbar.btn.middle.disabled = false;
                         if (success) {
                             _create_node(parseInt(data.data.index), data.data.layers[parseInt(data.data.index)]);
                             window.TerraProject.layers = data.data.layers;

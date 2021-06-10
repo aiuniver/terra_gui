@@ -421,8 +421,8 @@ class TerraExchangeProject(pydantic.BaseModel):
         if os.path.isfile(keras_path):
             shutil.copy2(keras_path, os.path.join(dir_path, self.dir._modeling_keras))
 
-        if os.path.isfile(self.dir.config):
-            shutil.copy2(self.dir.config, os.path.join(dir_path, "project.conf"))
+        # if os.path.isfile(self.dir.config):
+        #     shutil.copy2(self.dir.config, os.path.join(dir_path, "project.conf"))
 
         for item in os.listdir(self.dir.training):
             h5_path = os.path.join(self.dir.training, item)
