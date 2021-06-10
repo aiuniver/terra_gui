@@ -347,7 +347,7 @@ class CustomCallback(keras.callbacks.Callback):
         return [info, int(eta)]
 
     def on_train_begin(self, logs=None):
-        self.model.stop_training = False
+        # self.model.stop_training = False
         self.stop_training = False
         self._start_time = time.time()
         if not self.stop_flag:

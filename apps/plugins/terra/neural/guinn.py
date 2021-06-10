@@ -349,7 +349,8 @@ class GUINN:
             self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
             self.Exch.print_2status_bar(('Начало обучения', '...'))
             # self.show_training_params()
-
+            print("self.y_Train", self.y_Train)
+            print("self.DTS.num_classes", self.DTS.num_classes)
             if self.x_Val['input_1'] is not None:
                 # training = Thread(target=self.tr_thread)
                 # training.start()
@@ -426,6 +427,7 @@ class GUINN:
         self.x_Test = {}
         self.y_Test = {}
         if not retrain:
+            self.stop_training = False
             self.model_is_trained = False
             self.retrain_flag = False
             self.sum_epoch = 0
