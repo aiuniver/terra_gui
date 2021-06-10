@@ -638,7 +638,9 @@
                                 "get_data",
                                 (success, data) => {
                                     if (success) {
-                                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                        if(!data.stop_flag){
+                                            window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                        }
                                     } else {
                                         window.StatusBar.message(data.error, false);
                                     }
@@ -646,8 +648,9 @@
                             );
                             window.ExchangeRequest(
                                 "create_dataset",
-                                (success, data) => {
-                                    if (success) {
+                                (success, data)=>{
+                                    this.locked = false;
+                                    if(success){
                                         window.StatusBar.clear();
                                         window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
                                         $(".dataset-card-wrapper").empty()
@@ -671,11 +674,10 @@
                                         window.TerraProject.datasets = data.data.datasets;
                                         $(".project-datasets-block.datasets").DatasetsItems();
                                         datasets.dataset = serialize_data.parameters.name
-                                        // location.reload();
-                                    } else {
+
+                                    } else{
                                         window.StatusBar.message(data.error, false);
                                     }
-                                    this.locked = false;
                                 },
                                 {
                                     dataset_dict: serialize_data
@@ -692,6 +694,36 @@
 
 
     });
+
+
+      // window.ExchangeRequest(
+                                            //     "dataset_created",
+                                            //     (success, data) => {
+                                            //         window.StatusBar.clear();
+                                            //         window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
+                                            //         // $(".dataset-card-wrapper").empty()
+                                            //         // for(let i in data.data.datasets){
+                                            //         //     let dataset_item = data.data.datasets[i];
+                                            //         //     console.log(dataset_item);
+                                            //         //
+                                            //         //     let html = '';
+                                            //         //     html += `<div class="dataset-card-item${ dataset_tags_string(dataset_item.tags) }">`;
+                                            //         //     html += `<div class="dataset-card" data-name="${ dataset_item.name }">`;
+                                            //         //     html += `<div class="card-title">${ dataset_item.name }</div>`;
+                                            //         //     html += '<div class="card-body">';
+                                            //         //     for(let tag in dataset_item.tags){
+                                            //         //         html += `<div class="card-tag">${ dataset_item.tags[tag] }</div>`;
+                                            //         //     }
+                                            //         //     html += '</div>';
+                                            //         //     html += '</div>';
+                                            //         //     html += '</div>';
+                                            //         //     $(".dataset-card-wrapper").append(html);
+                                            //         // }
+                                            //         // window.TerraProject.datasets = data.data.datasets;
+                                            //         // $(".project-datasets-block.datasets").DatasetsItems();
+                                            //         // datasets.dataset = serialize_data.parameters.name
+                                            //     }
+                                            // )
 
 
     $(() => {
