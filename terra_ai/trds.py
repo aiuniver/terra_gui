@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.331
+__version__ = 0.332
 
 tr2dj_obj = Exchange()
 
@@ -1534,10 +1534,10 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
+                        # if idx == progress_bar.total and i+1 == folders_num:
+                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        # else:
+                        self.Exch.print_progress_bar(progress_bar_status)
                 self.peg.append(idx+self.peg[-1])
 
             break
@@ -1640,7 +1640,7 @@ class DTS(object):
     #
     #     return X
 
-    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, embedding=False, embedding_size=200) -> np.ndarray:
+    def text(self, folder_name=[''], delete_symbols='', x_len=100, step=30, max_words_count=20000, pymorphy=False, bag_of_words=False, word_to_vec=False, word_to_vec_size=200) -> np.ndarray:
 
         def read_text(file_path):
 
@@ -1690,8 +1690,7 @@ class DTS(object):
                 sample.append(word_indexes[index:index + x_len])
                 index += step
                 peg_idx += 1
-            if not embedding:
-                self.peg.append(peg_idx + self.peg[-1])
+            self.peg.append(peg_idx + self.peg[-1])
             return sample
 
         def create_sets_multi_classes(word_indexes, x_len, step):
@@ -1715,10 +1714,10 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    if idx == progress_bar.total:
-                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    else:
-                        self.Exch.print_progress_bar(progress_bar_status)
+                    # if idx == progress_bar.total:
+                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                    # else:
+                    self.Exch.print_progress_bar(progress_bar_status)
             x_samples = np.array(x_samples)
             y_samples = np.array(y_samples)
 
@@ -1747,10 +1746,10 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    if idx == progress_bar.total:
-                        self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    else:
-                        self.Exch.print_progress_bar(progress_bar_status)
+                    # if idx == progress_bar.total:
+                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                    # else:
+                    self.Exch.print_progress_bar(progress_bar_status)
 
             return np.array(x_vector), np.array(y)
 
@@ -1794,17 +1793,15 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
+                        # if idx == progress_bar.total and i+1 == folders_num:
+                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        # else:
+                        self.Exch.print_progress_bar(progress_bar_status)
 
             break
-        self.txt_list = txt_list
         if pymorphy:
             for i in range(len(txt_list)):
                 txt_list[i] = apply_pymorphy(txt_list[i])
-        self.txt_list_pymorphy = txt_list
         filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
@@ -1825,8 +1822,7 @@ class DTS(object):
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i + 1}']['tag'] == 'text_segmentation':
                 tags_indexes = np.array([tokenizer.word_index[k] for k in tags_list])
-                if embedding:
-                    self.peg = []
+                if word_to_vec:
                     reserve_tok = {}
                     for key, value in tokenizer.word_index.items():
                         reserve_tok[value] = key
@@ -1839,8 +1835,9 @@ class DTS(object):
                                 Y.append(i)
                     x = get_set_from_indexes(X, x_len, step)
                     y = get_set_from_indexes(Y, x_len, step)
-                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10,
+                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=word_to_vec_size, window=10,
                                                                             min_count=1, workers=10, iter=10)
+                    self.peg = []
                     X, _ = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
                     Y = np.array(Y)
                 else:
@@ -1849,31 +1846,24 @@ class DTS(object):
                     if bag_of_words:
                         X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
             else:
-                if embedding:
-                    self.peg = []
-                    X = []
-                    Y = []
-                    for i, txt in enumerate(txt_list):
-                        if isinstance(txt, str):
-                            for word in txt.split(' '):
-                                X.append(word)
-                                Y.append(i)
-                        else:
-                            for word in txt:
-                                X.append(word)
-                                Y.append(i)
-                    x = get_set_from_indexes(X, x_len, step)
-                    y = get_set_from_indexes(Y, x_len, step)
-                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec(x, size=embedding_size, window=10, min_count=1, workers=10, iter=10)
-                    X, Y = get_sets(self.word2vec[f'input_{self.iter}'], x, y)
-                else:
-                    X, Y = create_sets_multi_classes(text_seq, x_len, step)
-                    if bag_of_words:
-                        X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
+                X, Y = create_sets_multi_classes(text_seq, x_len, step)
+                if bag_of_words:
+                    X = np.array(tokenizer.sequences_to_matrix(X.tolist()))
+                elif word_to_vec:
+                    reverse_tok = {}
+                    for key, value in tokenizer.word_index.items():
+                        reverse_tok[value] = key
+                    self.word2vec[f'input_{self.iter}'] = word2vec.Word2Vec([list(tokenizer.word_index.keys())], size=word_to_vec_size, window=10, min_count=1, workers=10, iter=10)
+                    words_vectors = []
+                    for sequences in X:
+                        tmp = []
+                        for seq in sequences:
+                            tmp.append(self.word2vec[f'input_{self.iter}'][reverse_tok[seq]])
+                        words_vectors.append(tmp)
+                    X = np.array(words_vectors)
 
         self.source_shape[f'input_{self.iter}'] = X.shape[1:]
         self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
-        # self.scaler[f'input_{self.iter}'] = None
 
         if 'classification' in self.task_type.values():
             self.y_Cls = Y.astype('int')
@@ -1910,7 +1900,21 @@ class DTS(object):
         for i in range(len(self.user_parameters['out'])):
             if self.user_parameters['out'][f'output_{i+1}']['tag'] == 'timeseries':
                 length = self.user_parameters['out'][f'output_{i+1}']['parameters']['length']
-                generator = TimeseriesGenerator(X, X, length=length, stride=1, batch_size=1)
+                scaler = self.user_parameters['out'][f'output_{i+1}']['parameters']['scaler']
+                y_cols = self.user_parameters['out'][f'output_{i+1}']['parameters']['y_cols']
+                Y = self.df[f'input_{self.iter}'][y_cols.split(' ')].to_numpy()
+                if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
+                    shape_y = Y.shape
+                    Y = Y.reshape(-1, 1)
+                    if scaler == 'MinMaxScaler':
+                        self.scaler[f'output_{i+1}'] = MinMaxScaler()
+                    elif scaler == 'StandardScaler':
+                        self.scaler[f'output_{i+1}'] = StandardScaler()
+                    self.scaler[f'output_{i+1}'].fit(Y)
+                    Y = self.scaler[f'output_{i+1}'].transform(Y)
+                    Y = Y.reshape(shape_y)
+
+                generator = TimeseriesGenerator(X, Y, length=length, stride=1, batch_size=1)
                 self.tsgenerator[f'input_{self.iter}'] = generator
                 X = []
                 for j in range(len(self.tsgenerator[f'input_{self.iter}'])):
@@ -1944,19 +1948,18 @@ class DTS(object):
 
         return Y
 
-    def timeseries(self, length=1) -> np.ndarray:
+    def timeseries(self, length=1, y_cols='', scaler=['No scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'dataframe':
-                columns = self.user_parameters['inp'][f'input_{i+1}']['parameters']['x_cols']
 
-                self.classes_names[f'output_{self.iter}'] = columns.split(' ')
-                self.num_classes[f'output_{self.iter}'] = len(columns.split(' '))
+                self.classes_names[f'output_{self.iter}'] = y_cols.split(' ')
+                self.num_classes[f'output_{self.iter}'] = len(y_cols.split(' '))
 
                 Y = []
                 for j in range(len(self.tsgenerator[f'input_{i+1}'])):
                     for k in range(len(self.tsgenerator[f'input_{i+1}'][j][1])):
-                        Y.append(self.tsgenerator[f'input_{i+1}'][j][1][k]) # Записываем каждый батч отдельно
+                        Y.append(self.tsgenerator[f'input_{i+1}'][j][1][k])
                 Y = np.array(Y)
 
         self.one_hot_encoding[f'output_{self.iter}'] = False
@@ -2050,10 +2053,10 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
+                        # if idx == progress_bar.total and i+1 == folders_num:
+                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        # else:
+                        self.Exch.print_progress_bar(progress_bar_status)
                 out_vectors = np.array(out_vectors)
                 try:
                     X = np.vstack((X, out_vectors))
@@ -2151,7 +2154,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, input_type=['Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=10, input_type=['', 'Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
@@ -2235,10 +2238,10 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
+                        # if idx == progress_bar.total and i+1 == folders_num:
+                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
+                        # else:
+                        self.Exch.print_progress_bar(progress_bar_status)
             break
         Y = np.array(Y)
 
@@ -2486,6 +2489,7 @@ class DTS(object):
                 json.dump(data, fp)
             print(f'Файлы датасета сохранены в папку {os.path.join(self.trds_path, f"dataset {self.name}")}')
             print(f'Json сохранен в файл {os.path.join(self.trds_path, f"dataset {self.name}", "config.json")}')
+        self.Exch.reset_stop_flag()
 
         return self
 

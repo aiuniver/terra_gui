@@ -293,6 +293,7 @@ class TerraExchange:
                 success=False,
                 error="Модель с таким названием уже существует",
             )
+        self.call("get_change_validation")
         self.project.dir.create_preview(preview)
         self.project.dir.create_layers(self.project.dict().get("layers"))
         filepath = shutil.make_archive(name, "zip", self.project.dir.modeling)
