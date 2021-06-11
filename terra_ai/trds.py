@@ -107,7 +107,7 @@ class DTS(object):
 
         datasets_dict = {}
         for data in datasets:
-            datasets_dict[data] = [self._set_tag(data), self._set_language(data), self._set_source(data)]
+            datasets_dict[data] = {"tags": [self._set_tag(data), self._set_language(data), self._set_source(data)]}
 
         return datasets_dict
 
