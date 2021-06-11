@@ -165,7 +165,9 @@
             if (!this.length) return this;
 
             let task_type_input = ['images', 'text', 'audio', 'dataframe']
-
+            let data_type_output = [
+                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'
+            ]
             let task_type_output = [
                 'classification', 'segmentation', 'regression', 'timeseries', 'autoencoder'
             ]
@@ -314,7 +316,7 @@
                                             let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название выхода", type: "str", default: "output_" + i}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
             
-                                            widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
+                                            widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: data_type_output, default: "classification"}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
             
                                             widget.find("select").selectmenu({
