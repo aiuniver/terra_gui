@@ -181,7 +181,7 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-        model_name = f"model_{self.nn_name}_on_epoch_end_last"
+        model_name = f"model_{self.nn_name}_on_epoch_end.last"
         file_path_model: str = os.path.join(
             self.save_model_path, f"{model_name}.h5"
         )
@@ -347,7 +347,7 @@ class CustomCallback(keras.callbacks.Callback):
         return [info, int(eta)]
 
     def on_train_begin(self, logs=None):
-        self.model.stop_training = False
+        # self.model.stop_training = False
         self.stop_training = False
         self._start_time = time.time()
         if not self.stop_flag:
@@ -849,8 +849,8 @@ class ClassificationCallback:
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_pred.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
-            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0]),
-                                                              num_classes=self.num_classes))
+            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0])),
+                                                   num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
@@ -1349,8 +1349,8 @@ class SegmentationCallback:
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_pred.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
-            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0]),
-                                                              num_classes=self.num_classes))
+            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0])),
+                                                   num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
