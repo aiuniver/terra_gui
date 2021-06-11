@@ -666,6 +666,16 @@
                                                 html += `<div class="card-tag">${ dataset_item.tags[tag] }</div>`;
                                             }
                                             html += '</div>';
+                                            html += ' <div class="card-extra">'
+                                            html += ' <div class="wrapper">'
+                                            if(dataset_item.size){
+                                                html += `<span>${ dataset_item.size }</span>`
+                                            }else{
+                                                html += '<span>предустановленный</span>'
+                                            }
+                                            html += '</div>';
+                                            html += '</div>';
+                                            html += '</div>';
                                             html += '</div>';
                                             html += '</div>';
                                             $(".dataset-card-wrapper").append(html);
