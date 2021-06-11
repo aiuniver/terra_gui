@@ -504,6 +504,9 @@
                                 serialize_data
             
                             );
+                        } else {
+                            window.StatusBar.message(data.error, false);
+                            this.locked = false;
                         }
                     }
                 );
