@@ -216,11 +216,13 @@
             );
 
             $(".load-dataset-field > ul > li").bind("click", (event)=>{
-                let target = $(event.target);
+                let target = $(event.currentTarget);
                 target.parent().children("li").removeClass("active");
                 $(".load-dataset-field > .inner > .tab-load-dataset > div").addClass("hidden");
                 target.toggleClass("active");
                 $("#"+target.attr("data-type")).removeClass("hidden");
+                $("input[name=mode]").removeAttr("checked");
+                $(`input[name=mode][value=${target.attr("data-value")}]`).attr("checked", "checked");
             });
             $(".load-dataset-field > ul > li[data-type='div-gdrive']").click();
 
@@ -241,14 +243,7 @@
             this.bind("submit", (event)=>{
                 this.locked = true;
                 event.preventDefault();
-                let serialize_data = this.serializeJSON(),
-                    mode;
-                if(serialize_data.name == ""){
-                    serialize_data.name = "name"
-                    mode = "url"
-                }else{
-                    mode = "google_drive"
-                }
+                let serialize_data = this.serializeJSON();
                 window.StatusBar.clear();
                 window.StatusBar.message(window.Messages.get("DATASET_SOURCE_LOADING"));
                 window.ExchangeRequest(
@@ -506,12 +501,7 @@
                                     }
                                     this.locked = false;
                                 },
-                                {
-                                    name: serialize_data.name,
-                                    mode: mode,
-                                    link: serialize_data.link,
-                                    num_links: serialize_data.num_links
-                                }
+                                serialize_data
             
                             );
                         }

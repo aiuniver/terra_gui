@@ -13,13 +13,6 @@
 {% block content_block %}
 <div class="board">
     <div class="wrapper">
-{#        <div class="project-datasets-block search">#}
-{#            <div class="title">Поиск</div>#}
-{#            <div class="inner">#}
-{#                <input type="text">#}
-{#                <button>Найти</button>#}
-{#            </div>#}
-{#        </div>#}
         <div class="project-datasets-block filters">
             <div class="title">Теги</div>
             <div class="inner">
@@ -61,7 +54,7 @@
 
 <div class="properties">
     <div class="wrapper custom-scrollbar-wrapper">
-        <form class="params dataset-change">
+        <form class="params dataset-change" novalidate="novalidate">
             <div class="params-container">
                 <div class="params-item">
                     <div class="inner">
@@ -74,18 +67,20 @@
                 </div>
             </div>
         </form>
-        <form class="params next-form dataset-load">
+        <form class="params next-form dataset-load" novalidate="novalidate">
             <div class="params-container">
-                <div class="params-item load-dataset-field collapsable">
+                <div class="params-item load-dataset-field">
+                    <input type="radio" name="mode" value="google_drive" data-value-type="string" />
+                    <input type="radio" name="mode" value="url" data-value-type="string" />
                     <ul>
-                        <li data-type="div-gdrive">Google drive</li>
-                        <li data-type="div-outlink">URL-ссылка</li>
+                        <li data-type="div-gdrive" data-value="google_drive">Google drive</li>
+                        <li data-type="div-outlink" data-value="url">URL-ссылка</li>
                     </ul>
                     <div class="inner form-inline-label">
                         <div class="tab-load-dataset">
                             <div id="div-gdrive" class="hidden">
                                 <div class="field-form field-inline">
-                                    <label for="name">Файл</label>
+                                    <label for="gdrive-select">Файл</label>
                                     <select name="name" id="gdrive-select" class="jquery-ui-menuselect">
                                         <option value=""></option>
                                     </select>
@@ -93,19 +88,19 @@
                             </div>
                             <div id="div-outlink" class="hidden">
                                 <div class="field-form field-inline">
-                                    <label for="link">URL</label>
-                                    <input type="text" name="link" data-value-type="string">
+                                    <label for="field_form-link">URL</label>
+                                    <input type="text" name="link" id="field_form-link" data-value-type="string">
                                 </div>
                             </div>
                         </div>
                         <div class="form-inline-label flex">
                             <div class="field-form field-inline">
-                                <label for="num_links[inputs]">Количество входов</label>
-                                <input type="number" name="num_links[inputs]" data-value-type="number">
+                                <label for="field_form-num_links[inputs]">Количество входов</label>
+                                <input type="number" name="num_links[inputs]" id="field_form-num_links[inputs]" data-value-type="number">
                             </div>
                             <div class="field-form field-inline">
-                                <label for="num_links[outputs]">Количество выходов</label>
-                                <input type="number" name="num_links[outputs]" data-value-type="number">
+                                <label for="field_form-num_links[outputs]">Количество выходов</label>
+                                <input type="number" name="num_links[outputs]" id="field_form-num_links[outputs]" data-value-type="number">
                             </div>
                         </div>
                         <div class="actions-form">
@@ -115,7 +110,7 @@
                 </div>
             </div>
         </form>
-        <form class="params next-form dataset-prepare">
+        <form class="params next-form dataset-prepare" novalidate="novalidate">
             <div class="params-container">
                 <div class="params-item collapsable">
                     <div class="params-title">Входные слои</div>
@@ -131,23 +126,23 @@
                     <div class="params-title">Параметры датасета</div>
                     <div class="inner form-inline-label">
                         <div class="field-form field-inline">
-                            <label for="parameters[name]">Название датасета</label>
-                            <input type="text" name="parameters[name]" data-value-type="string">
+                            <label for="field_form-parameters[name]">Название датасета</label>
+                            <input type="text" name="parameters[name]" id="field_form-parameters[name]" data-value-type="string">
                         </div>
 
                         <div class="field-form field-inline">
-                            <label for="parameters[user_tags]">Теги</label>
-                            <input type="text" name="parameters[user_tags]" data-value-type="string">
+                            <label for="field_form-parameters[user_tags]">Теги</label>
+                            <input type="text" name="parameters[user_tags]" id="field_form-parameters[user_tags]" data-value-type="string">
                         </div>
                         <div class="field-form field-inline">
-                            <label for="parameters[amount]">Train + val + test</label>
+                            <label>Train + val + test</label>
                             <div class="slider-range"></div>
                             <input type="number" id="amount1" name="parameters[train_part]" data-value-type="number">
                             <input type="number" id="amount2" name="parameters[val_part]" data-value-type="number">
                             <input type="number" id="amount3" name="parameters[test_part]" data-value-type="number">
                         </div>
                         <div class="field-form field-inline">
-                            <label for="checkpoint[save_best]" id="preserve_sequence_label" >Сохранить последовательность</label>
+                            <label for="parameters[preserve_sequence]" id="preserve_sequence_label" >Сохранить последовательность</label>
                             <div class="checkout-switch">
                                 <input type="checkbox" id="parameters[preserve_sequence]" name="parameters[preserve_sequence]" data-value-type="boolean" data-unchecked-value="false"/>
                                 <span class="switcher"></span>
