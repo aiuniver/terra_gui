@@ -219,6 +219,8 @@ class Layer(pydantic.BaseModel):
 class Dataset(pydantic.BaseModel):
     name: str = ""
     tags: dict = {}
+    date: Optional[str] = None
+    size: Optional[str] = None
 
 
 class GoogleDrivePath(pydantic.BaseModel):

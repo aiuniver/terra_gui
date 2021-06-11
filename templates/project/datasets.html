@@ -44,6 +44,11 @@
                                             <div class="card-tag">{{ tag }}</div>
                                         {% endfor %}
                                     </div>
+                                    <div class="card-extra">
+                                        <div class="wrapper">
+                                            {% if dataset.size == None %}<span>предустановленный</span>{% else %}{{ dataset.size }}{% endif %}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}

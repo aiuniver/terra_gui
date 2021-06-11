@@ -169,6 +169,7 @@ class TerraExchange:
             data=response,
             stop_flag=response.get("stop_flag", True),
             success=response.get("success", True),
+            error=response.get("errors", ""),
         )
 
     def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
@@ -180,12 +181,26 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
+        print(kwargs)
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)
 
     def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.create_dataset(**kwargs)
-        return TerraExchangeResponse()
+        response = self.call("get_state")
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+        self.project = data
+
+        return TerraExchangeResponse(
+            data={
+                "datasets": self.project.dict().get("datasets"),
+                "tags": self.project.dict().get("tags"),
+            }
+        )
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
