@@ -168,7 +168,9 @@
             let data_type_output = [
                 'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'
             ]
-
+            let task_type_output = [
+                'classification', 'segmentation', 'regression', 'timeseries', 'autoencoder'
+            ]
             function componentToHex(c) {
                 var hex = c.toString(16);
                 return hex.length == 1 ? "0" + hex : hex;
@@ -311,6 +313,9 @@
                                             output_item.append($("<div></div>").addClass("layout-params"));
             
                                             let widget = window.FormWidget("outputs[output_" + i + "][name]", {label: "Название выхода", type: "str", default: "output_" + i}).addClass("field-inline");
+                                            output_item.find(".layout-params").append(widget)
+
+                                            widget = window.FormWidget("outputs[output_" + i + "][tag]", {label: "Тип данных", type: "str", list: true, available: data_type_output, default: "classification"}).addClass("field-inline");
                                             output_item.find(".layout-params").append(widget)
             
                                             widget.find("select").selectmenu({
@@ -489,9 +494,7 @@
                                                     })
                                                 }
                                             })
-            
-                                            widget = window.FormWidget("outputs[output_" + i + "][task_type]", {label: "Тип задачи", type: "str", list: true, available: task_type_output, default: "classification"}).addClass("field-inline");
-                                            output_item.find(".layout-params").append(widget)
+
                                             output_item.append($("<div></div>").addClass("layout-parameters"))
                                             load_layout_params(output_item, params, "output")
                                         }
