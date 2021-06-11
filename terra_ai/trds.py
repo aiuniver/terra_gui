@@ -1115,8 +1115,13 @@ class DTS(object):
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
             else:
                 self.file_folder = os.path.join(self.trds_path, f"dataset {options['dataset_name']}")
-            with open(os.path.join(self.file_folder, 'config.json'), 'r') as cfg:
-                data = json.load(cfg)
+
+            try:
+                with open(os.path.join(self.file_folder, 'config.json'), 'r') as cfg:
+                    data = json.load(cfg)
+            except Exception as e:
+                print(e)
+
             for key, value in data.items():
                 self.__dict__[key] = value
             load_arrays()

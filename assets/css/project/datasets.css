@@ -296,8 +296,9 @@
     border-color: #fff;
 }
 
-.layout-params > .color-inline > input[type=text]{
-    max-width: 65px;
+.layout-parameters > .color-inline > input[type=text]{
+    max-width: 55px;
+    padding: 0 4px;
 }
 
 .load-dataset-field > ul{
@@ -367,4 +368,6 @@
     padding: 0 20px;
     margin: 0 auto;
 }
+
+
 

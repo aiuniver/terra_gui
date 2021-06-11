@@ -366,6 +366,9 @@
                                                                     html += `</div>`;
                                                                     layout.find(".layout-parameters").append(html);
                                                                     layout.find(".colorpicker").last().farbtastic(layout.find(".color-input").last());
+                                                                    layout.find(".colorpicker").last().bind("click", (event)=>{
+                                                                         $(event.target).parents(".field-inline").find(".colorpicker-btn").css("background-color", $(event.target).parents(".field-inline").find(".color-input").val());
+                                                                    })
             
                                                                     layout.find(".colorpicker-btn").last().bind("click", (event)=>{
                                                                         event.preventDefault();
@@ -532,6 +535,14 @@
                     ]: null;
             }
 
+            function dataset_tags_string(tags){
+                let str = '';
+                for(let i in tags){
+                    str += ` filter-${i}`
+                }
+                return str;
+            }
+
             this.createBtn = this.find("button");
 
             Object.defineProperty(this.createBtn, "disabled", {
@@ -554,13 +565,16 @@
 
             $( ".slider-range" ).slider({
                 range: true,
-                min: 0,
-                max: 100,
+                min: 5,
+                max: 98,
                 values: [ 60, 90 ],
                 slide: function( event, ui ) {
                     if(ui.values[0] > 90){
                         ui.values[0] = 90;
                         $(".slider-range").slider( "values", 0, 90);
+                    }else if(ui.values[0] < 5){
+                         ui.values[0] = 90;
+                        $(".slider-range").slider( "values", 0, 5);
                     }
                     if(ui.values[1] > 95){
                         ui.values[1] = 95;
@@ -624,7 +638,9 @@
                                 "get_data",
                                 (success, data) => {
                                     if (success) {
-                                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                        if(!data.stop_flag){
+                                            window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
+                                        }
                                     } else {
                                         window.StatusBar.message(data.error, false);
                                     }
@@ -632,15 +648,43 @@
                             );
                             window.ExchangeRequest(
                                 "create_dataset",
-                                (success, data) => {
-                                    if (success) {
+                                (success, data)=>{
+                                    this.locked = false;
+                                    if(success){
                                         window.StatusBar.clear();
                                         window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
-                                        location.reload();
-                                    } else {
+                                        $(".dataset-card-wrapper").empty()
+                                        for(let i in data.data.datasets){
+                                            let dataset_item = data.data.datasets[i];
+
+                                            let html = '';
+                                            html += `<div class="dataset-card-item${ dataset_tags_string(dataset_item.tags) }">`;
+                                            html += `<div class="dataset-card" data-name="${ dataset_item.name }">`;
+                                            html += `<div class="card-title">${ dataset_item.name }</div>`;
+                                            html += '<div class="card-body">';
+                                            for(let tag in dataset_item.tags){
+                                                html += `<div class="card-tag">${ dataset_item.tags[tag] }</div>`;
+                                            }
+                                            html += '</div>';
+                                            html += '</div>';
+                                            html += '</div>';
+                                            $(".dataset-card-wrapper").append(html);
+                                        }
+                                        window.TerraProject.datasets = data.data.datasets;
+                                        $(".project-datasets-block.datasets").DatasetsItems();
+                                        datasets.dataset = serialize_data.parameters.name
+
+                                        $(".project-datasets-block.filters").find("ul").empty()
+                                        for(let name in data.data.tags){
+                                            let tag = data.data.tags[name];
+                                            console.log(name, tag)
+                                            let html = `<li data-name="filter-${ name }"><span>${ tag }</span></li>`;
+                                            $(".project-datasets-block.filters").find("ul").append(html);
+                                        }
+                                        $(".project-datasets-block.filters").find("ul").DatasetsFilters();
+                                    } else{
                                         window.StatusBar.message(data.error, false);
                                     }
-                                    this.locked = false;
                                 },
                                 {
                                     dataset_dict: serialize_data
@@ -659,6 +703,36 @@
     });
 
 
+      // window.ExchangeRequest(
+                                            //     "dataset_created",
+                                            //     (success, data) => {
+                                            //         window.StatusBar.clear();
+                                            //         window.StatusBar.message(window.Messages.get("DATASET_CREATED"), true);
+                                            //         // $(".dataset-card-wrapper").empty()
+                                            //         // for(let i in data.data.datasets){
+                                            //         //     let dataset_item = data.data.datasets[i];
+                                            //         //     console.log(dataset_item);
+                                            //         //
+                                            //         //     let html = '';
+                                            //         //     html += `<div class="dataset-card-item${ dataset_tags_string(dataset_item.tags) }">`;
+                                            //         //     html += `<div class="dataset-card" data-name="${ dataset_item.name }">`;
+                                            //         //     html += `<div class="card-title">${ dataset_item.name }</div>`;
+                                            //         //     html += '<div class="card-body">';
+                                            //         //     for(let tag in dataset_item.tags){
+                                            //         //         html += `<div class="card-tag">${ dataset_item.tags[tag] }</div>`;
+                                            //         //     }
+                                            //         //     html += '</div>';
+                                            //         //     html += '</div>';
+                                            //         //     html += '</div>';
+                                            //         //     $(".dataset-card-wrapper").append(html);
+                                            //         // }
+                                            //         // window.TerraProject.datasets = data.data.datasets;
+                                            //         // $(".project-datasets-block.datasets").DatasetsItems();
+                                            //         // datasets.dataset = serialize_data.parameters.name
+                                            //     }
+                                            // )
+
+
     $(() => {
 
         filters = $(".project-datasets-block.filters").DatasetsFilters();
@@ -668,6 +742,8 @@
         dataset_prepare = $(".dataset-prepare").DatasetPrepare();
 
         datasets.dataset = window.TerraProject.dataset;
+
+
 
     })
 
