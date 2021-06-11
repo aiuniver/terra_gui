@@ -1484,7 +1484,7 @@ class DTS(object):
         return self
 
     def images(self, folder_name=[''], height=176, width=220, net=['Convolutional', 'Linear'],
-               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
+               scaler=['No Scaler', 'MinMaxScaler']) -> np.ndarray:
 
         def load_image(img_path, shape):
 
