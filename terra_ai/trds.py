@@ -36,7 +36,7 @@ import json
 
 # import cv2
 
-__version__ = 0.332
+__version__ = 0.333
 
 tr2dj_obj = Exchange()
 
@@ -1109,7 +1109,8 @@ class DTS(object):
 
         else:
 
-            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3', 'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
+            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
+                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
 
                 self.load_data(options['dataset_name'], mode='terra')
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
@@ -1534,9 +1535,6 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
                 self.peg.append(idx+self.peg[-1])
 
@@ -1556,13 +1554,11 @@ class DTS(object):
             self.scaler[f'input_{self.iter}'].fit(X)
             X = self.scaler[f'input_{self.iter}'].transform(X)
             X = X.reshape(shape_x)
-        # else:
-        #     self.scaler[f'input_{self.iter}'] = None
 
         if net == 'Linear':
             X = X.reshape(-1, np.prod(np.array(X.shape)[1:]))
 
-        if 'classification' in self.task_type.values():
+        if 'classification' in self.tags.values():
             self.y_Cls = Y_cls.astype('int')
             del Y_cls
 
@@ -1610,10 +1606,7 @@ class DTS(object):
     #                     idx += 1
     #                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
     #                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-    #                     if idx == progress_bar.total and i+1 == folders_num:
-    #                         self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-    #                     else:
-    #                         self.Exch.print_progress_bar(progress_bar_status)
+#                         self.Exch.print_progress_bar(progress_bar_status)
     #         break
     #
     #     X = np.array(X)
@@ -1634,7 +1627,7 @@ class DTS(object):
     #         X = self.scaler[f'input_{self.iter}'].transform(X)
     #         X = X.reshape(shape_x)
     #
-    #     if 'classification' in self.task_type.values():
+    #     if 'classification' in self.tags.values():
     #         self.y_Cls = Y_cls.astype('int')
     #         del Y_cls
     #
@@ -1714,9 +1707,6 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    # if idx == progress_bar.total:
-                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    # else:
                     self.Exch.print_progress_bar(progress_bar_status)
             x_samples = np.array(x_samples)
             y_samples = np.array(y_samples)
@@ -1746,9 +1736,6 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    # if idx == progress_bar.total:
-                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    # else:
                     self.Exch.print_progress_bar(progress_bar_status)
 
             return np.array(x_vector), np.array(y)
@@ -1793,9 +1780,6 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
 
             break
@@ -1865,7 +1849,7 @@ class DTS(object):
         self.source_shape[f'input_{self.iter}'] = X.shape[1:]
         self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
 
-        if 'classification' in self.task_type.values():
+        if 'classification' in self.tags.values():
             self.y_Cls = Y.astype('int')
             del Y
 
@@ -1945,10 +1929,11 @@ class DTS(object):
         for ratio in self.divide_ratio[1][:-1]:
             self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
         self.peg.append(len(Y))
+        self.task_type[f'output_{self.iter}'] = 'regression'
 
         return Y
 
-    def timeseries(self, length=1, y_cols='', scaler=['No scaler', 'StandardScaler', 'MinMaxScaler']) -> np.ndarray:
+    def timeseries(self, length=1, y_cols='', scaler=['No scaler', 'StandardScaler', 'MinMaxScaler'], task_type=['regression', 'timeseries']) -> np.ndarray:
 
         for i in range(len(self.user_parameters['inp'])):
             if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'dataframe':
@@ -1967,16 +1952,17 @@ class DTS(object):
         for ratio in self.divide_ratio[1][:-1]:
             self.peg.append(self.peg[-1] + int(round(len(Y) * ratio, 0)))
         self.peg.append(len(Y))
+        self.task_type[f'output_{self.iter}'] = task_type
 
         return Y
 
     def audio(self, folder_name=[''], length=22050, step=2205,
               scaler=['No Scaler', 'StandardScaler', 'MinMaxScaler'], audio_signal=True, chroma_stft=False, mfcc=False, rms=False,
-              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False) -> np.ndarray:
+              spectral_centroid=False, spectral_bandwidth=False, spectral_rolloff=False, zero_crossing_rate=False):
 
         def call_librosa(feature, section, sr):
 
-            if feature in ['chroma_stft','mfcc','spectral_centroid','spectral_bandwidth','spectral_rolloff']:
+            if feature in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
                 array = getattr(librosafeature, feature)(y=section, sr=sr)
             elif feature == 'rms':
                 array = getattr(librosafeature, feature)(y=section)[0]
@@ -1985,36 +1971,29 @@ class DTS(object):
 
             return array
 
-        def wav_to_features(section):
+        def wav_to_features(section, sr):
 
-            out = []
-            if audio_signal:
-                out.append(section)
-            for feature in list_features:
-                if feature == 'chroma_stft' or feature == 'mfcc':
-                    arr = call_librosa(feature, section, sr)
-                    for e in arr:
-                        out.append(np.mean(e))
+            for feature in feature_dict.keys():
+                if feature == 'audio_signal':
+                    feature_dict['audio_signal'].append(section)
                 else:
-                    out.append(np.mean(call_librosa(feature, section, sr)))
+                    feature_dict[feature].append(call_librosa(feature, section, sr))
 
-            out = np.array(out)
+            pass
 
-            return out
-
-        list_features = []
-        features_str = ['chroma_stft', 'mfcc', 'rms', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff', 'zero_crossing_rate']
-        features = [chroma_stft, mfcc, rms, spectral_centroid, spectral_bandwidth, spectral_rolloff, zero_crossing_rate]
+        feature_dict = {}
+        features_str = ['audio_signal', 'chroma_stft', 'mfcc', 'rms', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff', 'zero_crossing_rate']
+        features = [audio_signal, chroma_stft, mfcc, rms, spectral_centroid, spectral_bandwidth, spectral_rolloff, zero_crossing_rate]
         for i, feature in enumerate(features):
             if feature is True:
-                list_features.append(features_str[i])
+                feature_dict[features_str[i]] = []
 
         if folder_name == None:
             working_folder = self.file_folder
         else:
             working_folder = os.path.join(self.file_folder, folder_name)
         self.peg = [0]
-        Y = np.array([])
+        Y = []
 
         for _, dirnames, filename in sorted(os.walk(working_folder)):
 
@@ -2037,63 +2016,56 @@ class DTS(object):
 
                 progress_bar = tqdm(files, ncols=800)
                 progress_bar.set_description(description)
-                out_vectors = []
                 idx = 0
                 peg_idx = 0
                 for file in progress_bar:
                     y, sr = librosaload(file)
-                    while (len(y) >= length):
+                    while len(y) >= length:
                         section = y[:length]
                         section = np.array(section)
-                        out = wav_to_features(section)
-                        out_vectors.append(out)
+                        wav_to_features(section, sr)
                         y = y[step:]
+                        Y.append(i)
                         peg_idx += 1
                     idx += 1
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
-                out_vectors = np.array(out_vectors)
-                try:
-                    X = np.vstack((X, out_vectors))
-                except NameError:
-                    X = out_vectors
-                Y = np.append(Y, np.full(out_vectors.shape[0], fill_value=(i)))
                 self.peg.append(peg_idx + self.peg[-1])
             break
 
-        self.source_shape[f'input_{self.iter}'] = X.shape[1:]
-        self.source_datatype += f' {self._set_datatype(shape=X.shape)}'
+        Y = np.array(Y)
+        for feature in feature_dict.keys():
+            self.iter += 1
+            self.X[f'input_{self.iter}'] = {'data_name': feature, 'data': np.array(feature_dict[feature])}
+            self.source_shape[f'input_{self.iter}'] = self.X[f'input_{self.iter}']['data'].shape[1:]
+            self.source_datatype += f' {self._set_datatype(shape=self.X[f"input_{self.iter}"]["data"].shape)}'
 
-        if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
-            shape_x = X.shape
-            X = X.reshape(-1, 1)
-            if scaler == 'MinMaxScaler':
-                self.scaler[f'input_{self.iter}'] = MinMaxScaler()
-            elif scaler == 'StandardScaler':
-                self.scaler[f'input_{self.iter}'] = StandardScaler()
-            self.scaler[f'input_{self.iter}'].fit(X)
-            X = self.x_Scaler.transform(X)
-            X = X.reshape(shape_x)
-        # else:
-        #     self.scaler[f'input_{self.iter}'] = None
+            if scaler == 'MinMaxScaler' or scaler == 'StandardScaler':
 
-        if 'classification' in self.task_type.values():
+                shape_x = self.X[f'input_{self.iter}']['data'].shape
+                X = self.X[f'input_{self.iter}']['data'].reshape(-1, 1)
+                if scaler == 'MinMaxScaler':
+                    self.scaler[f'input_{self.iter}'] = MinMaxScaler()
+                elif scaler == 'StandardScaler':
+                    self.scaler[f'input_{self.iter}'] = StandardScaler()
+                self.scaler[f'input_{self.iter}'].fit(X)
+                X = self.scaler[f'input_{self.iter}'].transform(X)
+                self.X[f'input_{self.iter}']['data'] = X.reshape(shape_x)
+
+        if 'classification' in self.tags.values():
             self.y_Cls = Y.astype('int')
             del Y
 
-        return X
+        pass
 
     def classification(self, one_hot_encoding=True) -> np.ndarray:
 
         Y = self.y_Cls
         self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))] # нет информации о выбранной пользователем папке. с другой стороны - надо ли..
         self.num_classes[f'output_{self.iter}'] = len(np.unique(Y, axis=0))
-
+        self.task_type[f'output_{self.iter}'] = 'classification'
         if one_hot_encoding:
             Y = utils.to_categorical(Y, len(np.unique(Y)))
             self.one_hot_encoding[f'output_{self.iter}'] = True
@@ -2138,7 +2110,7 @@ class DTS(object):
         self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
         self.classes_names[f'output_{self.iter}'] = open_tags.split(' ')
         self.one_hot_encoding[f'output_{self.iter}'] = True
-        # self.scaler[f'output_{self.iter}'] = None
+        self.task_type[f'output_{self.iter}'] = 'segmentation'
         tags = open_tags.split(' ') + close_tags.split(' ')
 
         for i in range(len(self.user_parameters['inp'])):
@@ -2195,7 +2167,7 @@ class DTS(object):
         num_classes = len(classes_names)
         self.num_classes[f'output_{self.iter}'] = num_classes
         self.one_hot_encoding[f'output_{self.iter}'] = True
-        # self.scaler[f'output_{self.iter}'] = None
+        self.task_type[f'output_{self.iter}'] = 'segmentation'
         classes_dict = {}
         for i in range(len(classes_names)):
             classes_dict[classes_names[i]] = classes_colors[i]
@@ -2238,9 +2210,6 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
             break
         Y = np.array(Y)
@@ -2307,6 +2276,7 @@ class DTS(object):
                 data[elem[0]] = elem[1]
         num_classes = int(data['classes'])
         self.num_classes[f'output_{self.iter}'] = num_classes
+        self.task_type[f'output_{self.iter}'] = 'object_detection'
 
         # obj.names
         with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
@@ -2368,11 +2338,14 @@ class DTS(object):
             self.tags[f'input_{i + 1}'] = dataset_dict['inputs'][f'input_{i + 1}']['tag']
         for i in range(len(self.user_parameters['out'])):
             self.tags[f'output_{i + 1}'] = dataset_dict['outputs'][f'output_{i + 1}']['tag']
-            self.task_type[f'output_{i + 1}'] = dataset_dict['outputs'][f'output_{i + 1}']['task_type']
 
+        self.iter = 0
         for i in range(len(self.user_parameters['inp'])):
-            self.iter = i + 1
-            self.X[f'input_{i+1}'] = {'data_name': self.user_parameters['inp'][f'input_{i+1}']['name'], 'data': getattr(self, self.user_parameters['inp'][f'input_{i+1}']['tag'])(**self.user_parameters['inp'][f'input_{i+1}']['parameters'])}
+            if self.user_parameters['inp'][f'input_{i+1}']['tag'] == 'audio':
+                getattr(self, 'audio')(**self.user_parameters['inp'][f'input_{i + 1}']['parameters'])
+            else:
+                self.iter += 1
+                self.X[f'input_{i+1}'] = {'data_name': self.user_parameters['inp'][f'input_{i+1}']['name'], 'data': getattr(self, self.user_parameters['inp'][f'input_{i+1}']['tag'])(**self.user_parameters['inp'][f'input_{i+1}']['parameters'])}
 
         for i in range(len(self.user_parameters['out'])):
             self.iter = i + 1
@@ -2381,7 +2354,6 @@ class DTS(object):
                 for k in range(3):
                     self.Y[f'output_{i+k+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': outputs[k]}
                     self.tags[f'output_{i+k+1}'] = dataset_dict['outputs'][f'output_{i+1}']['tag']
-                    self.task_type[f'output_{i+k+1}'] = dataset_dict['outputs'][f'output_{i+1}']['task_type']
             else:
                 self.Y[f'output_{i+1}'] = {'data_name': self.user_parameters['out'][f'output_{i+1}']['name'], 'data': getattr(self, self.user_parameters['out'][f'output_{i+1}']['tag'])(**self.user_parameters['out'][f'output_{i+1}']['parameters'])}
 
@@ -2492,16 +2464,3 @@ class DTS(object):
         self.Exch.reset_stop_flag()
 
         return self
-
-    # def print_data(self, type):
-    #     if type == 'images':
-    #         fig, ax = plt.subplots(1, self.num_classes, figsize=(self.num_classes * 3, 6))
-    #         for i in range(self.num_classes):
-    #             arr = np.zeros(3, dtype='int8')
-    #             arr[i] = 1
-    #             index = np.where(self.y_Train == arr)[0]
-    #             index = np.random.choice(index, 1)[0]
-    #             ax[i].imshow(self.x_Train[index])
-    #             ax[i].set_title(f'{i}: {self.classes_names[i]}')
-    #
-    #     return self
