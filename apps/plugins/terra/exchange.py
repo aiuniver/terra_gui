@@ -169,6 +169,7 @@ class TerraExchange:
             data=response,
             stop_flag=response.get("stop_flag", True),
             success=response.get("success", True),
+            error=response.get("errors", "")
         )
 
     def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
@@ -192,8 +193,6 @@ class TerraExchange:
         else:
             data = {"error": "No connection to TerraAI project"}
         self.project = data
-
-
 
         return TerraExchangeResponse(data={
             "datasets": self.project.dict().get("datasets"),
