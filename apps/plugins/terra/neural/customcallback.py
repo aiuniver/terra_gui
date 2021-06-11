@@ -172,7 +172,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        print("self.callbacks_name", self.callbacks_name)
 
     def save_lastmodel(self) -> None:
         """

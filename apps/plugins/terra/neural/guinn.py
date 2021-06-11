@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
 
-__version__ = 0.05
+__version__ = 0.06
 
 
 class GUINN:
@@ -158,7 +158,6 @@ class GUINN:
             self.DTS = dts_obj
             self.prepare_dataset()
         else:
-            self.nn_cleaner(retrain=True)
             self.DTS = dts_obj
             self.prepare_dataset()
         pass
@@ -193,7 +192,7 @@ class GUINN:
             None
         """
         if self.model_is_trained:
-            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last"
+            model_name = f"model_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}.last"
             file_path_model: str = os.path.join(
                 self.training_path, f"{model_name}.h5"
             )
@@ -216,7 +215,7 @@ class GUINN:
 
         if self.model_is_trained:
             model_weights_name = \
-                f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}_last'
+                f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}.last'
             file_path_weights: str = os.path.join(self.training_path, f'{model_weights_name}.h5')
             self.model.save_weights(filepath=file_path_weights)
             self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
@@ -269,10 +268,14 @@ class GUINN:
                 # if len(model_name) > 1:
                 #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
                 self.model = load_model(os.path.join(self.training_path, model_name[0]))
+                # print("Модель загружена os.path.join(self.training_path, model_name[0]) ",
+                #       os.path.join(self.training_path, model_name[0]))
+                # print("self.model.name", self.model.name)
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
             except Exception:
                 self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))  # self.Exch.print_error
+                print("Ошибка загрузки модели!!!")
 
             if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
                 if self.retrain_flag:
@@ -348,12 +351,19 @@ class GUINN:
                 monitor=self.chp_monitor, mode=self.chp_mode))
             self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
             self.Exch.print_2status_bar(('Начало обучения', '...'))
-            # self.show_training_params()
-            print("self.x_Train", self.x_Train)
-            print("self.x_Train shape", self.x_Train["input_1"].shape)
-            print("self.y_Train", self.y_Train)
-            print("self.y_Train shape", self.y_Train["output_1"].shape)
-            print("self.DTS.num_classes", self.DTS.num_classes)
+            # print("self.x_Train", self.x_Train)
+            # print("self.x_Train shape", self.x_Train["input_1"].shape)
+            # print("self.y_Train", self.y_Train)
+            # print("self.y_Train shape", self.y_Train["output_1"].shape)
+            # print("self.x_Val", self.x_Val)
+            # print("self.x_Val shape", self.x_Val["input_1"].shape)
+            # print("self.y_Val", self.y_Val)
+            # print("self.y_Val shape", self.y_Val["output_1"].shape)
+            # print(self.DTS.one_hot_encoding)
+            # print(self.DTS.scaler)
+            # print(self.DTS.classes_names)
+            # print(self.DTS.classes_colors)
+            # print("self.DTS.num_classes", self.DTS.num_classes)
             if self.x_Val['input_1'] is not None:
                 # training = Thread(target=self.tr_thread)
                 # training.start()
@@ -413,14 +423,14 @@ class GUINN:
 
     def nn_cleaner(self, retrain=False) -> None:
         keras.backend.clear_session()
-        del self.model
-        del self.DTS
-        del self.x_Train
-        del self.x_Val
-        del self.y_Train
-        del self.y_Val
-        del self.x_Test
-        del self.y_Test
+        # del self.model
+        # del self.DTS
+        # del self.x_Train
+        # del self.x_Val
+        # del self.y_Train
+        # del self.y_Val
+        # del self.x_Test
+        # del self.y_Test
         self.DTS = None
         self.model = None
         self.x_Train = {}
