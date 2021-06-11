@@ -353,6 +353,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     name: str = "NoName"
     hardware: Hardware = Hardware.CPU
     datasets: List[Dataset] = []
+    datasets_sources: List[str] = []
     tags: dict = {}
     dataset: str = ""
     model_name: str = ""

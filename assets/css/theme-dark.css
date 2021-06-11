@@ -120,6 +120,19 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 .project-datasets-block.datasets .card-extra > .wrapper > span {
     color:#6C7883;
 }
+.page-datasets .load-dataset-field > form > .tabs {
+    background-color:#0E1621;
+}
+.page-datasets .load-dataset-field > form > .field-inline > label > b {
+    color:#fff;
+}
+.page-datasets .layout-title {
+    color:#A7BED3;
+    background:#242F3D;
+}
+.page-datasets .layout-title > b {
+    color:#fff;
+}
 .toolbar > .wrapper {
     border-color:#0E1621;
 }

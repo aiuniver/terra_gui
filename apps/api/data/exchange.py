@@ -48,9 +48,6 @@ class ExchangeData:
     def _execute_prepare_dataset(self, **kwargs):
         return terra_exchange.call("prepare_dataset", **kwargs)
 
-    def _execute_get_zipfiles(self, **kwargs):
-        return terra_exchange.call("get_zipfiles", **kwargs)
-
     def _execute_get_auto_colors(self, **kwargs):
         return terra_exchange.call("get_auto_colors", **kwargs)
 

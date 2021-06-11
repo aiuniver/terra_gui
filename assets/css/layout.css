@@ -236,6 +236,7 @@ input[type=number] {
 }
 .ui-selectmenu-button.ui-button {
     width:100%;
+    margin-right:0;
     transition:border-color .3s ease-in-out, opacity .3s ease-in-out;
 }
 .ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default, .ui-button, html .ui-button.ui-state-disabled:hover, html .ui-button.ui-state-disabled:active,
@@ -270,9 +271,9 @@ input[type=number] {
 .ui-selectmenu-menu .ui-menu,
 .ui-widget.ui-autocomplete {
     max-height:201px;
+    margin-top:-1px;
     padding:0;
     border:1px solid;
-    border-top-width:0;
     border-radius:0 0 4px 4px;
 }
 .ui-widget.ui-autocomplete {
@@ -283,6 +284,7 @@ input[type=number] {
     overflow-y:auto;
     padding-top:5px;
     margin-top:-5px;
+    border-top-width:0;
 }
 .ui-menu .ui-menu-item {
     list-style-image:none;

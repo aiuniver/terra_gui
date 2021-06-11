@@ -440,10 +440,6 @@ class TerraExchange:
         self.project.autosave()
         return TerraExchangeResponse()
 
-    def _call_get_zipfiles(self) -> TerraExchangeResponse:
-        response = colab_exchange.get_zipfiles()
-        return TerraExchangeResponse(data=response)
-
     def _call_get_auto_colors(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.get_auto_colors(**kwargs)
         return TerraExchangeResponse(data=response)
