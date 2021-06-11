@@ -250,7 +250,7 @@
                     mode = "google_drive"
                 }
                 window.StatusBar.clear();
-                window.StatusBar.message("DATASET_LOADING");
+                window.StatusBar.message(window.Messages.get("DATASET_SOURCE_LOADING"));
                 window.ExchangeRequest(
                     "before_load_dataset_source",
                     (success, data) => {
@@ -270,7 +270,7 @@
                                 (success, data) => {
                                     if (success) {
                                         window.StatusBar.clear();
-                                        window.StatusBar.message("DATASET_LOADED", true);
+                                        window.StatusBar.message(window.Messages.get("DATASET_SOURCE_LOADED"), true);
             
                                         $(".inputs-layers").empty();
                                         $(".outputs-layers").empty();
