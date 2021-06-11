@@ -181,7 +181,6 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
-        print(kwargs)
         response = colab_exchange.load_dataset(**kwargs)
         return TerraExchangeResponse(data=response)
 
