@@ -244,6 +244,7 @@
                 let serialize_data = this.serializeJSON(),
                     mode;
                 if(serialize_data.name == ""){
+                    serialize_data.name = "name"
                     mode = "url"
                 }else{
                     mode = "google_drive"
