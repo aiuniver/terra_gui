@@ -1109,7 +1109,8 @@ class DTS(object):
 
         else:
 
-            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3', 'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
+            if options['dataset_name'] in ['трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
+                                           'заболевания', 'договоры', 'самолеты', 'губы', 'sber'] and options['source'] != 'custom_dataset':
 
                 self.load_data(options['dataset_name'], mode='terra')
                 self.file_folder = os.path.join(self.save_path, options['dataset_name'])
@@ -1529,9 +1530,6 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
                 self.peg.append(idx+self.peg[-1])
 
@@ -1603,10 +1601,7 @@ class DTS(object):
     #                     idx += 1
     #                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
     #                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-    #                     if idx == progress_bar.total and i+1 == folders_num:
-    #                         self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-    #                     else:
-    #                         self.Exch.print_progress_bar(progress_bar_status)
+#                         self.Exch.print_progress_bar(progress_bar_status)
     #         break
     #
     #     X = np.array(X)
@@ -1707,9 +1702,6 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    # if idx == progress_bar.total:
-                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    # else:
                     self.Exch.print_progress_bar(progress_bar_status)
             x_samples = np.array(x_samples)
             y_samples = np.array(y_samples)
@@ -1739,9 +1731,6 @@ class DTS(object):
                     idx += 1
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    # if idx == progress_bar.total:
-                    #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                    # else:
                     self.Exch.print_progress_bar(progress_bar_status)
 
             return np.array(x_vector), np.array(y)
@@ -1786,9 +1775,6 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
 
             break
@@ -2222,9 +2208,6 @@ class DTS(object):
                         idx += 1
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        # if idx == progress_bar.total and i+1 == folders_num:
-                        #     self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        # else:
                         self.Exch.print_progress_bar(progress_bar_status)
             break
         Y = np.array(Y)
