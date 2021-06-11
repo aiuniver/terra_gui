@@ -195,6 +195,9 @@
         });
 
         Object.defineProperty(this, "datasets", {
+            set: (value) => {
+                _datasets = value;
+            },
             get: () => {
                 let output = {};
                 _datasets.forEach((item) => {

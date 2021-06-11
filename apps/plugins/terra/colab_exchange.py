@@ -357,55 +357,25 @@ class StatesData:
 
         self.output_layers = {
             "classification": {
-                "DIM": {
-                    "layer_type": LayerType.Dense,
-                    "activation": "softmax"
-                },
-                "1D": {
-                    "layer_type": LayerType.Conv1D,
-                    "activation": "softmax"
-                }
+                "DIM": {"layer_type": LayerType.Dense, "activation": "softmax"},
+                "1D": {"layer_type": LayerType.Conv1D, "activation": "softmax"},
             },
             "segmentation": {
-                "1D": {
-                    "layer_type": LayerType.Conv1D,
-                    "activation": "softmax"
-                },
-                "2D": {
-                    "layer_type": LayerType.Conv2D,
-                    "activation": "softmax"
-                },
-                "3D": {
-                    "layer_type": LayerType.Conv3D,
-                    "activation": "softmax"
-                }
+                "1D": {"layer_type": LayerType.Conv1D, "activation": "softmax"},
+                "2D": {"layer_type": LayerType.Conv2D, "activation": "softmax"},
+                "3D": {"layer_type": LayerType.Conv3D, "activation": "softmax"},
             },
             "text_segmentation": {
-                "DIM": {
-                    "layer_type": LayerType.Dense,
-                    "activation": "sigmoid"
-                },
-                "1D": {
-                    "layer_type": LayerType.Conv1D,
-                    "activation": "sigmoid"
-                }
+                "DIM": {"layer_type": LayerType.Dense, "activation": "sigmoid"},
+                "1D": {"layer_type": LayerType.Conv1D, "activation": "sigmoid"},
             },
             "regression": {
-                "DIM": {
-                    "layer_type": LayerType.Dense,
-                    "activation": "linear"
-                }
+                "DIM": {"layer_type": LayerType.Dense, "activation": "linear"}
             },
             "timeseries": {
-                "1D": {
-                    "layer_type": LayerType.Conv1D,
-                    "activation": "linear"
-                },
-                "DIM": {
-                    "layer_type": LayerType.Dense,
-                    "activation": "linear"
-                }
-            }
+                "1D": {"layer_type": LayerType.Conv1D, "activation": "linear"},
+                "DIM": {"layer_type": LayerType.Dense, "activation": "linear"},
+            },
         }
 
         self.paths_obj = TerraExchangeProject()
@@ -447,7 +417,9 @@ class Exchange(StatesData, GuiExch):
         self.start_layers = {}
         self.custom_datasets = []
         self.custom_datasets_path = self.paths_obj.gd.datasets
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)  # dataset init
+        self.dts = DTS(
+            exch_obj=self, trds_path=self.custom_datasets_path
+        )  # dataset init
         self.dts_name = None
         self.output_shape = None
         self.task_name = ""
@@ -672,10 +644,12 @@ class Exchange(StatesData, GuiExch):
         if os.path.exists(self.custom_datasets_path):
             self.custom_datasets = os.listdir(self.custom_datasets_path)
             for dataset in self.custom_datasets:
-                if dataset.split()[0] != 'dataset':
+                if dataset.split()[0] != "dataset":
                     continue
 
-                config_path = os.path.join(self.custom_datasets_path, f'{dataset}/config.json')
+                config_path = os.path.join(
+                    self.custom_datasets_path, f"{dataset}/config.json"
+                )
                 if not os.path.isfile(config_path):
                     continue
 
@@ -688,7 +662,11 @@ class Exchange(StatesData, GuiExch):
                 source = custom_dts.get("source", "")
                 dts_date = custom_dts.get("date", "")
                 dts_size = custom_dts.get("size", "")
-                custom_datasets_dict[name] = {"tags": [tags, None, source], "date": dts_date, "size": dts_size}
+                custom_datasets_dict[name] = {
+                    "tags": [tags, None, source],
+                    "date": dts_date,
+                    "size": dts_size,
+                }
                 del custom_dts
         return custom_datasets_dict
 
@@ -730,7 +708,7 @@ class Exchange(StatesData, GuiExch):
                     "name": name,
                     "tags": dataset_tags,
                     "date": data.get("date"),
-                    "size": data.get("size")
+                    "size": data.get("size"),
                 }
             )
 
@@ -765,8 +743,16 @@ class Exchange(StatesData, GuiExch):
     def _change_output_layer(self, dts_layer_name):
         task_type = self.dts.task_type.get(dts_layer_name)
         dimension = self.dts.output_datatype.get(dts_layer_name)
-        layer_type = self.output_layers.get(task_type, {}).get(dimension, {}).get("layer_type", "")
-        activation = self.output_layers.get(task_type, {}).get(dimension, {}).get("activation", "")
+        layer_type = (
+            self.output_layers.get(task_type, {})
+            .get(dimension, {})
+            .get("layer_type", "")
+        )
+        activation = (
+            self.output_layers.get(task_type, {})
+            .get(dimension, {})
+            .get("activation", "")
+        )
         return layer_type, activation
 
     def _set_start_layers(self):
@@ -784,19 +770,26 @@ class Exchange(StatesData, GuiExch):
                     layer_type, activation = self._change_output_layer(name)
                     default_layers_params = self.layers_params.get(layer_type)
                     out_param_dict = {
-                        x: {y: default_layers_params[x].get(y).get('default')
-                            for y in default_layers_params[x].keys()}
+                        x: {
+                            y: default_layers_params[x].get(y).get("default")
+                            for y in default_layers_params[x].keys()
+                        }
                         for x in default_layers_params.keys()
                     }
-                    units = self.dts.num_classes.get(name,
-                                                     self.dts.output_shape.get(name)[-1] if
-                                                     self.dts.output_shape.get(name) else 1)
-                    if out_param_dict.get('main', {}).get('units', None):
-                        out_param_dict['main']['units'] = units
+                    units = self.dts.num_classes.get(
+                        name,
+                        self.dts.output_shape.get(name)[-1]
+                        if self.dts.output_shape.get(name)
+                        else 1,
+                    )
+                    if out_param_dict.get("main", {}).get("units", None):
+                        out_param_dict["main"]["units"] = units
                     else:
-                        out_param_dict['main']['filters'] = units
-                    out_param_dict['main']['activation'] = activation
-                    self.output_shape.setdefault(name, list(self.dts.output_shape.get(name, [])))
+                        out_param_dict["main"]["filters"] = units
+                    out_param_dict["main"]["activation"] = activation
+                    self.output_shape.setdefault(
+                        name, list(self.dts.output_shape.get(name, []))
+                    )
                 else:
                     out_param_dict = {}
                 self.start_layers[index] = {
@@ -904,7 +897,9 @@ class Exchange(StatesData, GuiExch):
         self._reset_out_data()
         self.process_flag = "dataset"
         try:
-            output = self._prepare_dataset(dataset_name=dataset_name, source=source, **kwargs)
+            output = self._prepare_dataset(
+                dataset_name=dataset_name, source=source, **kwargs
+            )
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
@@ -1055,8 +1050,10 @@ class Exchange(StatesData, GuiExch):
     def create_dataset(self, **kwargs):
         self._reset_out_data()
         self.process_flag = "dataset"
-        f_folder = self.dts.file_folder if self.dts.file_folder else ''
-        self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder)
+        f_folder = self.dts.file_folder if self.dts.file_folder else ""
+        self.dts = DTS(
+            exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder
+        )
         gc.collect()
         try:
             self.dts.prepare_user_dataset(**kwargs)
@@ -1084,6 +1081,7 @@ class Exchange(StatesData, GuiExch):
         data = self.get_datasets_data()
         data.update(
             {
+                "datasets_sources": self.get_zipfiles(),
                 "layers_types": self.get_layers_type_list(),
                 "optimizers": self.get_optimizers(),
                 "callbacks": self.callback_show_options_switches_front,
@@ -1106,7 +1104,9 @@ class Exchange(StatesData, GuiExch):
         model_plan.input_shape = self.dts.input_shape
         model_plan.output_shape = self.output_shape
         model_plan.plan = plan if plan else []
-        model_plan.plan_name = slugify(model_name, language_code='ru').replace('-', '_') # if is_translite else model_name
+        model_plan.plan_name = slugify(model_name, language_code="ru").replace(
+            "-", "_"
+        )  # if is_translite else model_name
         return model_plan.dict()
 
     def get_optimizer_kwargs(self, optimizer_name):
@@ -1127,14 +1127,16 @@ class Exchange(StatesData, GuiExch):
     def get_data(self):
         if self.process_flag in ["train", "trained", "stopped"]:
             self.out_data["progress_status"]["progress_text"] = "Train progress"
-            self.out_data["progress_status"]["percents"] = (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
+            self.out_data["progress_status"]["percents"] = (
+                (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
+            )
             self.out_data["progress_status"]["iter_count"] = self.epochs
         return self.out_data
 
     def get_training_flags(self):
         return {
-            'is_trained': self.is_trained,
-            'user_stop_train': self.stop_training_flag
+            "is_trained": self.is_trained,
+            "user_stop_train": self.stop_training_flag,
         }
 
     def reset_training(self):
@@ -1179,7 +1181,7 @@ class Exchange(StatesData, GuiExch):
         output_optimizer_params["op_name"] = optimizer_params.get("name")
         for key, val in optimizer_params.get("params", {}).items():
             output_optimizer_params["op_kwargs"].update(val)
-        self.print_2status_bar(('Установка параметров обучения', '...'))
+        self.print_2status_bar(("Установка параметров обучения", "..."))
         self.nn.set_main_params(
             output_params=output_params,
             clbck_chp=clbck_chp,
@@ -1187,7 +1189,7 @@ class Exchange(StatesData, GuiExch):
             batch_size=batch_size,
             optimizer_params=output_optimizer_params,
         )
-        self.print_2status_bar(('Подготовка запуска обучения', '...'))
+        self.print_2status_bar(("Подготовка запуска обучения", "..."))
         try:
             self.nn.terra_fit(nn_model)
             if self.epoch == self.epochs:

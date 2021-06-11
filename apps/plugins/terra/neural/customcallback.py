@@ -172,7 +172,6 @@ class CustomCallback(keras.callbacks.Callback):
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
-        print("self.callbacks_name", self.callbacks_name)
 
     def save_lastmodel(self) -> None:
         """
@@ -181,7 +180,7 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-        model_name = f"model_{self.nn_name}_on_epoch_end_last"
+        model_name = f"model_{self.nn_name}_on_epoch_end.last"
         file_path_model: str = os.path.join(
             self.save_model_path, f"{model_name}.h5"
         )
@@ -347,7 +346,7 @@ class CustomCallback(keras.callbacks.Callback):
         return [info, int(eta)]
 
     def on_train_begin(self, logs=None):
-        self.model.stop_training = False
+        # self.model.stop_training = False
         self.stop_training = False
         self._start_time = time.time()
         if not self.stop_flag:
@@ -849,8 +848,8 @@ class ClassificationCallback:
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_pred.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
-            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0]),
-                                                              num_classes=self.num_classes))
+            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0])),
+                                                   num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
@@ -1102,6 +1101,8 @@ class SegmentationCallback:
                 index2color(mask[pix], self.num_classes, self.dataset.classes_colors[output_key])
             )
         colored_mask = np.array(colored_mask).astype(np.uint8)
+        # print("self.dataset.input_shape[input_key]", self.dataset.input_shape[input_key])
+        # print("colored_mask", colored_mask.shape)
         self.colored_mask = colored_mask.reshape(self.dataset.input_shape[input_key])
 
     def _dice_coef(self, smooth=1.0):
@@ -1150,6 +1151,8 @@ class SegmentationCallback:
                     }
                 ]
             }
+            # print("self.dataset.input_shape[input_key]", self.dataset.input_shape[input_key])
+            # print("self.x_Val[input_key][idx].reshape", self.x_Val[input_key][idx].shape)
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
@@ -1349,8 +1352,8 @@ class SegmentationCallback:
                 and (not self.dataset.one_hot_encoding[output_key]) \
                 and (self.y_pred.shape[-1] == 1):
             y_true = tf.keras.utils.to_categorical(self.y_true, num_classes=self.num_classes)
-            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0]),
-                                                              num_classes=self.num_classes))
+            y_pred = tf.keras.utils.to_categorical(np.reshape(self.y_pred, (self.y_pred.shape[0])),
+                                                   num_classes=self.num_classes)
             cross_entropy = CategoricalCrossentropy()
             for i in range(self.num_classes):
                 loss = cross_entropy(y_true[..., i], y_pred[..., i]).numpy()
@@ -1440,13 +1443,19 @@ class SegmentationCallback:
 
         return out_data
 
-    def train_end(self, output_key: str = None, x_val: dict = None):
+    def train_end(self, output_key: str = None, x_val: dict = None, input_key="input_1"):
         self.x_Val = x_val
         out_data = {}
         if self.show_final:
             plot_data = self.plot_result(output_key=output_key)
             out_data.update({"plots": plot_data})
             if self.data_tag == 'images':
+                # if self.dataset.scaler["input_1"] is not None:
+                #     x_scale = self.dataset.scaler[input_key].inverse_transform(x_val[input_key].reshape((-1, 1)))
+                #     self.x_Val[input_key] = x_scale.reshape(x_val[input_key].shape)
+                #     print(" self.x_Val ",  self.x_Val[input_key].shape)
+                # else:
+                #     self.x_Val = x_val
                 if self.show_best or self.show_worst:
                     images = self.plot_images(input_key="input_1", output_key=output_key)
                     out_data.update({"images": images})

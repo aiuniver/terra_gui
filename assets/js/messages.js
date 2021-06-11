@@ -7,6 +7,8 @@ let Messages = function() {
         DATASET_SELECTED: "Dataset «{0}» is selected",
         DATASET_LOADING: "Loading dataset «{0}»...",
         DATASET_LOADED: "Dataset «{0}» is loaded",
+        DATASET_SOURCE_LOADING: "Trying to load dataset sources...",
+        DATASET_SOURCE_LOADED: "Dataset sources is loaded.",
         MODEL_SAVED: "Model is saved.",
         INTERNAL_SERVER_ERROR: "Internal Server Error! Please try again later...",
         PARSE_TERRA_PROJECT_CONFIG_ERROR: "Terra project config not loaded. The default config is used.",

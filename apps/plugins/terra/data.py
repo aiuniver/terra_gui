@@ -219,6 +219,8 @@ class Layer(pydantic.BaseModel):
 class Dataset(pydantic.BaseModel):
     name: str = ""
     tags: dict = {}
+    date: Optional[str] = None
+    size: Optional[str] = None
 
 
 class GoogleDrivePath(pydantic.BaseModel):
@@ -351,6 +353,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     name: str = "NoName"
     hardware: Hardware = Hardware.CPU
     datasets: List[Dataset] = []
+    datasets_sources: List[str] = []
     tags: dict = {}
     dataset: str = ""
     model_name: str = ""

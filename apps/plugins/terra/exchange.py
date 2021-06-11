@@ -18,6 +18,7 @@ from .data import (
 )
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
+from . import serializers as terra_serializers
 
 
 DEFAULT_MODEL_NAME = "NoName"
@@ -169,6 +170,7 @@ class TerraExchange:
             data=response,
             stop_flag=response.get("stop_flag", True),
             success=response.get("success", True),
+            error=response.get("errors", ""),
         )
 
     def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
@@ -180,12 +182,29 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
-        response = colab_exchange.load_dataset(**kwargs)
+        serializer = terra_serializers.DatasetSourceSerializers(data=kwargs)
+        if not serializer.is_valid():
+            colab_exchange.out_data["stop_flag"] = True
+            return TerraExchangeResponse(success=False, error=str(serializer.errors))
+        response = colab_exchange.load_dataset(**serializer.validated_data)
         return TerraExchangeResponse(data=response)
 
     def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
         colab_exchange.create_dataset(**kwargs)
-        return TerraExchangeResponse()
+        response = self.call("get_state")
+        if response.success:
+            response.data.update({"error": ""})
+            data = response.data
+        else:
+            data = {"error": "No connection to TerraAI project"}
+        self.project = data
+
+        return TerraExchangeResponse(
+            data={
+                "datasets": self.project.dict().get("datasets"),
+                "tags": self.project.dict().get("tags"),
+            }
+        )
 
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
@@ -420,10 +439,6 @@ class TerraExchange:
         self._update_in_training_flag()
         self.project.autosave()
         return TerraExchangeResponse()
-
-    def _call_get_zipfiles(self) -> TerraExchangeResponse:
-        response = colab_exchange.get_zipfiles()
-        return TerraExchangeResponse(data=response)
 
     def _call_get_auto_colors(self, **kwargs) -> TerraExchangeResponse:
         response = colab_exchange.get_auto_colors(**kwargs)
