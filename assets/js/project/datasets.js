@@ -167,7 +167,7 @@
             let task_type_input = ['images', 'text', 'audio', 'dataframe']
 
             let task_type_output = [
-                'images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'
+                'classification', 'segmentation', 'regression', 'timeseries', 'autoencoder'
             ]
             function componentToHex(c) {
                 var hex = c.toString(16);
