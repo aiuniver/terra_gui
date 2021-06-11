@@ -463,8 +463,12 @@ class DTS(object):
             for i in range(inputs):
                 tags[f'input_{i+1}'] = globals[f'x_tag_{i}'].value
             for i in range(outputs):
-                tags[f'output_{i+1}'] = globals[f'y_tag_{i}'].value
                 task[f'output_{i+1}'] = globals[f'y_task_{i}'].value
+                if globals[f'y_tag_{i}'].value == 'other':
+                    tags[f'output_{i+1}'] = globals[f'y_task_{i}'].value
+                else:
+                    tags[f'output_{i+1}'] = globals[f'y_tag_{i}'].value
+
             self.tags = tags
             self.task_type = task
 
@@ -542,23 +546,36 @@ class DTS(object):
                                 y_shape=y_shape, one_hot=ohe, split=split_size)
 
             if checkbox_google.value:
-                directory = self.trds_path
-                os.makedirs(directory, exist_ok=True)
-                with open(f"{os.path.join(directory, self.name)}.trds", "wb") as f:
-                    dill.dump(self, f)
-                tzinfo = timezone('Europe/Moscow')
-                now = datetime.now().astimezone(tzinfo)
-                dt_string = now.isoformat()
+                print('Идёт сохранение датасета.')
+                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}'), exist_ok=True)
+                if self.X:
+                    os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays'), exist_ok=True)
+                if self.scaler:
+                    os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'scalers'), exist_ok=True)
+
+                for arr in self.X.keys():
+                    if self.X[arr]:
+                        joblib.dump(self.X[arr],
+                                    os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
+                for arr in self.Y.keys():
+                    if self.Y[arr]:
+                        joblib.dump(self.Y[arr],
+                                    os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', f'{arr}.gz'))
+                for sclr in self.scaler.keys():
+                    if self.scaler[sclr]:
+                        joblib.dump(self.scaler[sclr],
+                                    os.path.join(self.trds_path, f'dataset {self.name}', 'scalers', f'{sclr}.gz'))
+
                 data = {}
-                data['name'] = self.name
-                data['source'] = self.source
-                data['tags'] = list(self.tags.values())
-                data['date'] = dt_string
-                data['size'] = self._get_size(f'{directory}/{self.name}.trds')
-                with open(f'{directory}/{self.name}.trds.json', 'w') as fp:
+                attributes = ['name', 'source', 'tags', 'user_tags', 'dts_prepared', 'num_classes', 'one_hot_encoding', 'task_type']
+                for attr in attributes:
+                    data[attr] = self.__dict__[attr]
+                data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
+                data['size'] = self._get_size(os.path.join(self.trds_path, f'dataset {self.name}'))
+                with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
                     json.dump(data, fp)
-                print(f'Датасет сохранен в файл {directory}/{self.name}.trds')
-                print(f'Json сохранен в файл {directory}/{self.name}.trds.json')
+                print(f'Файлы датасета сохранены в папку {os.path.join(self.trds_path, f"dataset {self.name}")}')
+                print(f'Json сохранен в файл {os.path.join(self.trds_path, f"dataset {self.name}", "config.json")}')
 
             pass
 
@@ -600,9 +617,7 @@ class DTS(object):
                 value='other', description=f'Тип данных:', disabled=False)
             globals[f'y_task_{i}'] = widgets.Dropdown(
                 options=[('Классификация', 'classification'), ('Сегментация', 'segmentation'),
-                         ('Обнаружение объектов', 'object_detection'), ('Автокодировщик', 'autoencoder'),
-                         ('Генеративно-состязательная сеть', 'gan'), ('Регрессия', 'regression'),
-                         ('Временные ряды', 'timeseries'), ('Предсказание временного ряда', 'timeseries_prediction')],
+                         ('Регрессия', 'regression'), ('Временные ряды', 'timeseries')],
                 value='classification',
                 description='Тип задачи:',
             )
@@ -2126,7 +2141,7 @@ class DTS(object):
 
         return Y
 
-    def segmentation(self, folder_name=[''], mask_range=10, input_type=['', 'Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
+    def segmentation(self, folder_name=[''], mask_range=50, input_type=['', 'Ручной ввод', 'Автоматический поиск', 'Файл аннотации'], classes_names={}, classes_colors={}) -> np.ndarray:
 
         def load_image(img_path, shape):
 
