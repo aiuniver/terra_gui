@@ -2026,10 +2026,7 @@ class DTS(object):
                     if self.django_flag:
                         progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                                f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                        if idx == progress_bar.total and i+1 == folders_num:
-                            self.Exch.print_progress_bar(progress_bar_status, stop_flag=True)
-                        else:
-                            self.Exch.print_progress_bar(progress_bar_status)
+                        self.Exch.print_progress_bar(progress_bar_status)
                 self.peg.append(peg_idx + self.peg[-1])
             break
 
