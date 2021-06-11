@@ -18,6 +18,7 @@ from .data import (
 )
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
+from . import serializers as terra_serializers
 
 
 DEFAULT_MODEL_NAME = "NoName"
@@ -181,7 +182,11 @@ class TerraExchange:
         return TerraExchangeResponse()
 
     def _call_load_dataset(self, **kwargs) -> TerraExchangeResponse:
-        response = colab_exchange.load_dataset(**kwargs)
+        serializer = terra_serializers.DatasetSourceSerializers(data=kwargs)
+        if not serializer.is_valid():
+            colab_exchange.out_data["stop_flag"] = True
+            return TerraExchangeResponse(success=False, error=str(serializer.errors))
+        response = colab_exchange.load_dataset(**serializer.validated_data)
         return TerraExchangeResponse(data=response)
 
     def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:

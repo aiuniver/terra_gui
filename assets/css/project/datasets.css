@@ -316,6 +316,13 @@
     padding: 0 4px;
 }
 
+.load-dataset-field input[name=mode] {
+    visibility:hidden;
+    position:absolute;
+    left:-99999999px;
+    top:-99999999px;
+    z-index:-1;
+}
 .load-dataset-field > ul{
     list-style-type: none;
     overflow: hidden;

@@ -82,7 +82,7 @@
             customTypes: {}, // extends defaultTypes
             defaultTypes: {
                 "string":  function(str) { return String(str); },
-                "number":  function(str) { return Number(str); },
+                "number":  function(str) { return `${str}` === "" ? NaN : Number(str); },
                 "boolean": function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1; },
                 "null":    function(str) { var falses = ["false", "null", "undefined", "", "0"]; return falses.indexOf(str) === -1 ? str : null; },
                 "array":   function(str) { return JSON.parse(str); },
