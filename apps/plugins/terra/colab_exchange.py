@@ -1052,7 +1052,7 @@ class Exchange(StatesData, GuiExch):
         except Exception as e:
             self.out_data["stop_flag"] = True
             self.out_data["errors"] = e.__str__()
-        # self.out_data["stop_flag"] = True
+        self.out_data["stop_flag"] = True
 
 
     def get_zipfiles(self):
