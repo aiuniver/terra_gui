@@ -669,11 +669,12 @@ class Exchange(StatesData, GuiExch):
                     # custom_dts = dill.load(f)
                     custom_dts = json.load(f)
                 tags = list(custom_dts.get("tags", {}).values())
+                tags.extend(custom_dts.get("user_tags", []))
                 name = custom_dts.get("name", "")
                 source = custom_dts.get("source", "")
-                # dts_date = custom_dts.get("date", "")
-                # dts_size = custom_dts.get("size", "")
-                custom_datasets_dict[name] = [tags, None, source]
+                dts_date = custom_dts.get("date", "")
+                dts_size = custom_dts.get("size", "")
+                custom_datasets_dict[name] = {"tags": [tags, None, source], "date": dts_date, "size": dts_size}
                 del custom_dts
         return custom_datasets_dict
 
@@ -692,6 +693,7 @@ class Exchange(StatesData, GuiExch):
         datasets_dict.update(self._get_custom_datasets_from_google_drive())
 
         for name, data in datasets_dict.items():
+            current_tags = data.get("tags")
             dataset_tags = dict(
                 map(
                     lambda item: (self._reformat_tags([item])[0], item),
@@ -701,7 +703,7 @@ class Exchange(StatesData, GuiExch):
                                 lambda value: value
                                 if isinstance(value, list)
                                 else [value],
-                                list(filter(None, data)),
+                                list(filter(None, current_tags)),
                             )
                         ),
                         [],
@@ -709,7 +711,14 @@ class Exchange(StatesData, GuiExch):
                 )
             )
             output["tags"].update(dataset_tags)
-            output["datasets"].append({"name": name, "tags": dataset_tags})
+            output["datasets"].append(
+                {
+                    "name": name,
+                    "tags": dataset_tags,
+                    "date": data.get("date"),
+                    "size": data.get("size")
+                }
+            )
 
         # TODO for next relise step:
 
@@ -1030,6 +1039,8 @@ class Exchange(StatesData, GuiExch):
         return output
 
     def create_dataset(self, **kwargs):
+        self._reset_out_data()
+        self.process_flag = "dataset"
         f_folder = self.dts.file_folder if self.dts.file_folder else ''
         self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path, f_folder=f_folder)
         gc.collect()
