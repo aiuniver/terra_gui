@@ -2323,7 +2323,7 @@ class DTS(object):
         cur_time = time()
 
         self.name = dataset_dict['parameters']['name']
-        self.user_tags = dataset_dict['parameters']['user_tags']
+        self.user_tags = dataset_dict['parameters']['user_tags'].split(' ')
         self.divide_ratio[1] = (dataset_dict['parameters']['train_part'], dataset_dict['parameters']['val_part'], dataset_dict['parameters']['test_part'])
 
         self.user_parameters['inp'] = dataset_dict['inputs']
