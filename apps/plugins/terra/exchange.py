@@ -154,23 +154,26 @@ class TerraExchange:
     def _call_get_data(self) -> TerraExchangeResponse:
         self._update_in_training_flag()
         response = colab_exchange.get_data()
-        response["in_training"] = self.project.in_training
-        response["user_stop_train"] = colab_exchange.get_training_flags().get(
+        data = response.get("out_data", {})
+        data.update(response.get("last_train_data", {}) or {})
+        print(data)
+        data["in_training"] = self.project.in_training
+        data["user_stop_train"] = colab_exchange.get_training_flags().get(
             "user_stop_train", True
         )
         self.project.dir.save_training_output(
             {
-                "plots": response.get("plots", []),
-                "scatters": response.get("scatters", []),
-                "images": response.get("images", []),
-                "texts": response.get("texts", {}),
+                "plots": data.get("plots", []),
+                "scatters": data.get("scatters", []),
+                "images": data.get("images", []),
+                "texts": data.get("texts", {}),
             }
         )
         return TerraExchangeResponse(
-            data=response,
-            stop_flag=response.get("stop_flag", True),
-            success=response.get("success", True),
-            error=response.get("errors", ""),
+            data=data,
+            stop_flag=data.get("stop_flag", True),
+            success=data.get("success", True),
+            error=data.get("errors", ""),
         )
 
     def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:

@@ -4,6 +4,7 @@ import json
 import os
 import re
 import tempfile
+from copy import deepcopy
 
 import dill as dill
 from IPython import get_ipython
@@ -408,7 +409,7 @@ class Exchange(StatesData, GuiExch):
             "images": [],
             "texts": {},
         }
-
+        self.last_train_data = None
         self.property_of = "DJANGO"
         self.stop_training_flag = True
         self.process_flag = "dataset"
@@ -600,6 +601,8 @@ class Exchange(StatesData, GuiExch):
             self.out_data["texts"]["summary"] = data.get("summary", "")
         else:
             self.out_data[key_name] = data
+        if self.process_flag in ["train", "trained"]:
+            self.last_train_data = deepcopy(self.out_data)
         self._check_stop_flag(stop_flag)
         # print(self.out_data)
 
@@ -1123,7 +1126,10 @@ class Exchange(StatesData, GuiExch):
                 (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
             )
             self.out_data["progress_status"]["iter_count"] = self.epochs
-        return self.out_data
+        return {
+            'out_data': self.out_data,
+            'last_train_data': self.last_train_data
+        }
 
     def get_training_flags(self):
         return {
