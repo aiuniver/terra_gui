@@ -694,7 +694,8 @@
                                             $(".project-datasets-block.filters").find("ul").append(html);
                                         }
                                         $(".project-datasets-block.filters").find("ul").DatasetsFilters();
-                                    } else{
+                                        $(window).trigger("resize");
+                                    } else {
                                         window.StatusBar.message(data.error, false);
                                     }
                                 },
