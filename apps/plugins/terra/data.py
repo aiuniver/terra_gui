@@ -377,6 +377,7 @@ class TerraExchangeProject(pydantic.BaseModel):
 
     def __init__(self, **kwargs):
         datasets = kwargs.get("datasets", [])
+        tags = kwargs.get("tags", {})
         kwargs["tensorflow"] = tensorflow.__version__
         super().__init__(**kwargs)
 
@@ -393,6 +394,7 @@ class TerraExchangeProject(pydantic.BaseModel):
                 pass
 
         kwargs["datasets"] = datasets
+        kwargs["tags"] = tags
         super().__init__(**kwargs)
 
     def dict(self, *args, **kwargs):
@@ -423,9 +425,6 @@ class TerraExchangeProject(pydantic.BaseModel):
         keras_path = os.path.join(self.dir.modeling, self.dir._modeling_keras)
         if os.path.isfile(keras_path):
             shutil.copy2(keras_path, os.path.join(dir_path, self.dir._modeling_keras))
-
-        # if os.path.isfile(self.dir.config):
-        #     shutil.copy2(self.dir.config, os.path.join(dir_path, "project.conf"))
 
         for item in os.listdir(self.dir.training):
             h5_path = os.path.join(self.dir.training, item)
