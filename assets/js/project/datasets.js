@@ -641,6 +641,9 @@
                                         if(!data.stop_flag){
                                             window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                                         }
+                                        if (data.error) {
+                                            window.StatusBar.message(data.error, false);
+                                        }
                                     } else {
                                         window.StatusBar.message(data.error, false);
                                     }
@@ -687,7 +690,6 @@
                                         $(".project-datasets-block.filters").find("ul").empty()
                                         for(let name in data.data.tags){
                                             let tag = data.data.tags[name];
-                                            console.log(name, tag)
                                             let html = `<li data-name="filter-${ name }"><span>${ tag }</span></li>`;
                                             $(".project-datasets-block.filters").find("ul").append(html);
                                         }
@@ -700,6 +702,8 @@
                                     dataset_dict: serialize_data
                                 }
                             );
+                        } else {
+                            window.StatusBar.message(data.error, false);
                         }
                     }
                 );
