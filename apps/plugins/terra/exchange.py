@@ -156,7 +156,6 @@ class TerraExchange:
         response = colab_exchange.get_data()
         data = response.get("out_data", {})
         data.update(response.get("last_train_data", {}) or {})
-        print(data)
         data["in_training"] = self.project.in_training
         data["user_stop_train"] = colab_exchange.get_training_flags().get(
             "user_stop_train", True

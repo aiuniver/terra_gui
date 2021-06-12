@@ -409,7 +409,7 @@ class Exchange(StatesData, GuiExch):
             "images": [],
             "texts": {},
         }
-        self.last_train_data = None
+        self.last_train_data = {}
         self.property_of = "DJANGO"
         self.stop_training_flag = True
         self.process_flag = "dataset"
@@ -602,7 +602,12 @@ class Exchange(StatesData, GuiExch):
         else:
             self.out_data[key_name] = data
         if self.process_flag in ["train", "trained"]:
-            self.last_train_data = deepcopy(self.out_data)
+            self.last_train_data = {
+                "plots": self.out_data.get("plots", []),
+                "texts": self.out_data.get("texts", {}),
+                "scatters": self.out_data.get("scatters", []),
+                "images": self.out_data.get("images", {}),
+            }
         self._check_stop_flag(stop_flag)
         # print(self.out_data)
 
@@ -1126,10 +1131,7 @@ class Exchange(StatesData, GuiExch):
                 (self.epoch / self.epochs) * 100 if self.epochs > 0 else self.epochs
             )
             self.out_data["progress_status"]["iter_count"] = self.epochs
-        return {
-            'out_data': self.out_data,
-            'last_train_data': self.last_train_data
-        }
+        return {"out_data": self.out_data, "last_train_data": self.last_train_data}
 
     def get_training_flags(self):
         return {
