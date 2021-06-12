@@ -25,3 +25,22 @@ class DatasetSourceSerializers(serializers.Serializer):
         if mode == self.MODE_URL and not attrs.get("link"):
             raise ValidationError({"link": "Введите URL на zip-файл"})
         return attrs
+
+
+class DatasetCreateDictParametersSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    preserve_sequence = serializers.BooleanField()
+    test_part = serializers.FloatField(required=True, min_value=0, max_value=1)
+    train_part = serializers.FloatField(required=True, min_value=0, max_value=1)
+    val_part = serializers.FloatField(required=True, min_value=0, max_value=1)
+    user_tags: serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
+
+class DatasetCreateDictSerializer(serializers.Serializer):
+    inputs = serializers.DictField()
+    outputs = serializers.DictField()
+    parameters = DatasetCreateDictParametersSerializer()
+
+
+class DatasetCreateSerializer(serializers.Serializer):
+    dataset_dict = DatasetCreateDictSerializer()

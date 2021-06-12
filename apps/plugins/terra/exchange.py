@@ -192,6 +192,10 @@ class TerraExchange:
         return TerraExchangeResponse(data=response)
 
     def _call_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+        serializer = terra_serializers.DatasetCreateSerializer(data=kwargs)
+        if not serializer.is_valid():
+            colab_exchange.out_data["stop_flag"] = True
+            return TerraExchangeResponse(success=False, error=str(serializer.errors))
         colab_exchange.create_dataset(**kwargs)
         response = self.call("get_state")
         if response.success:
