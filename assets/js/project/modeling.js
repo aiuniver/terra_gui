@@ -4,7 +4,7 @@
 (($) => {
 
 
-    let fontname = "DejaVu Sans",
+    let fontname = "Open Sans",
         terra_toolbar, terra_board, terra_params;
     
 
