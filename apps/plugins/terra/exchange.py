@@ -223,6 +223,7 @@ class TerraExchange:
                     colab_exchange.get_models(),
                 )
             )
+        response.data = sorted(response.data, key=lambda item: item.get("name", ""))
         return response
 
     def _call_get_model_from_list(

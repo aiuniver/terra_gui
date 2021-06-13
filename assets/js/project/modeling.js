@@ -141,6 +141,7 @@
                         "set_model",
                         (success, data) => {
                             if (success) {
+                                console.log("sfsd");
                                 this.btn.save.disabled = true;
                                 this.btn.save_model.disabled = true;
                                 this.btn.keras.disabled = true;
@@ -516,8 +517,7 @@
                     terra_toolbar.btn.keras.disabled = true;
                     window.ExchangeRequest(
                         "save_layer",
-                        (success, data) => {
-                        },
+                        null,
                         {
                             "index": parseInt(node.dataset.index),
                             "layer": _node.data()[0]
@@ -580,8 +580,8 @@
                     _d3_svg.selectAll("g.tools").remove();
                     _d3_svg.selectAll("g.params").remove();
                     _d3_svg.selectAll("rect.pointer").remove();
-                    _d3_svg.selectAll("tspan.name").attr("font-size", "13px");
-                    _d3_svg.selectAll("tspan.params").attr("font-size", "10px");
+                    _d3_svg.selectAll("tspan.name");
+                    _d3_svg.selectAll("tspan.params");
                     let _svg_o = $(_d3_svg._groups[0][0]);
                     _svg_o.find("circle[visibility=hidden]").remove();
                     _svg_o.find("g, line, rect, circle").removeAttr("id").removeAttr("class").removeAttr("data-index").removeAttr("visibility")
@@ -686,7 +686,7 @@
                 let tools = node.append("g").attr("class", "tools"),
                     tools_rect = tools.append("rect").attr("class", "bg").attr("width", 92).attr("height", _NODE_HEIGHT+2).attr("y", -_NODE_HEIGHT/2-1),
                     rect = node.append("rect").attr("class", "node-bg").attr("height", _NODE_HEIGHT).attr("stroke-width", 2).attr("rx", 4).attr("ry", 4).attr("fill", layer_color[layer.config.location_type]).attr("stroke", layer_color[layer.config.location_type]),
-                    text = node.append("text"),
+                    text = node.append("text").attr("font-family", "Open Sans"),
                     text_name = text.append("tspan").text(`${layer.config.name}: ${layer.config.type}`).attr("class", "name").attr("y", -2).attr("fill", "#17212B").attr("font-size", "14px");
                 text_name.attr("x", -text_name._groups[0][0].getBBox().width/2);
 
