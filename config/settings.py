@@ -9,12 +9,9 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-import os
 
 import environ
 import tempfile
-
-from matplotlib.font_manager import fontManager
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -175,14 +172,3 @@ HTML_MINIFY = env.bool("HTML_MINIFY", default=False)
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
-
-
-# Install font
-
-fontname = "OpenSans-Regular.ttf"
-try:
-    fontManager.addfont(os.path.join(STATICFILES_DIRS[0], "fonts", fontname))
-except Exception as error:
-    print(
-        f"WARNING! Can not add font {fontname}. Model creating will be use system font."
-    )

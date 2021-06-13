@@ -4,7 +4,8 @@
 (($) => {
 
 
-    let terra_toolbar, terra_board, terra_params;
+    let fontname = "DejaVu Sans",
+        terra_toolbar, terra_board, terra_params;
     
 
     let LoadModel = $("#modal-window-load-model").ModalWindow({
@@ -320,12 +321,12 @@
                     _error_text = _error_group.append("text");
                 if (_errors_list.length) {
                     _errors_list.forEach((item, index) => {
-                        _error_text.append("tspan").attr("font-family", "Open Sans").text(item).attr("x", 10).attr("y", index*16+18-_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
+                        _error_text.append("tspan").attr("font-family", fontname).text(item).attr("x", 10).attr("y", index*16+18-_NODE_HEIGHT/2+2).attr("fill", "#ffffff").attr("font-size", "12px");
                     });
                 }
                 let _errors_box = _error_text._groups[0][0].getBBox();
                 _error_rect.attr("width", _errors_box.width+20).attr("height", _errors_box.height+14).attr("x", -(_errors_box.width+24)-_node_size.width/2).attr("y", -_NODE_HEIGHT/2);
-                _error_text.selectAll("tspan").attr("font-family", "Open Sans").attr("x", -(_errors_box.width+14)-_node_size.width/2);
+                _error_text.selectAll("tspan").attr("font-family", fontname).attr("x", -(_errors_box.width+14)-_node_size.width/2);
             }
 
             this.load_layer = (class_name) => {
@@ -686,7 +687,7 @@
                     tools_rect = tools.append("rect").attr("class", "bg").attr("width", 92).attr("height", _NODE_HEIGHT+2).attr("y", -_NODE_HEIGHT/2-1),
                     rect = node.append("rect").attr("class", "node-bg").attr("height", _NODE_HEIGHT).attr("stroke-width", 2).attr("rx", 4).attr("ry", 4).attr("fill", layer_color[layer.config.location_type]).attr("stroke", layer_color[layer.config.location_type]),
                     text = node.append("text"),
-                    text_name = text.append("tspan").attr("font-family", "Open Sans").text(`${layer.config.name}: ${layer.config.type}`).attr("class", "name").attr("y", -2).attr("fill", "#17212B").attr("font-size", "14px");
+                    text_name = text.append("tspan").attr("font-family", fontname).text(`${layer.config.name}: ${layer.config.type}`).attr("class", "name").attr("y", -2).attr("fill", "#17212B").attr("font-size", "14px");
                 text_name.attr("x", -text_name._groups[0][0].getBBox().width/2);
 
                 let params_list = [];
@@ -698,7 +699,7 @@
                     }
                 }
                 if (params_list.length) {
-                    let text_params = text.append("tspan").attr("font-family", "Open Sans").text(params_list.join(", ")).attr("class", "params").attr("y", 12).attr("fill", "#2B5278").attr("font-size", "11px");
+                    let text_params = text.append("tspan").attr("font-family", fontname).text(params_list.join(", ")).attr("class", "params").attr("y", 12).attr("fill", "#2B5278").attr("font-size", "11px");
                     text_params.attr("x", -text_params._groups[0][0].getBBox().width/2);
                 } else {
 
