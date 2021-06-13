@@ -35,6 +35,7 @@
                     event.currentTarget.oldValue = item.val();
                     item.trigger("input");
                     item.addClass("onfocus");
+                    item.select();
                 }).bind("blur", (event) => {
                     let item = $(event.currentTarget);
                     item.removeClass("onfocus");

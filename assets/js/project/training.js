@@ -423,6 +423,8 @@
                                 },
                                 showlegend:true,
                                 legend:{
+                                    y:-.25,
+                                    itemsizing:"constant",
                                     orientation:"h",
                                     font:{
                                         family:"Open Sans",
@@ -431,8 +433,11 @@
                                 },
                                 paper_bgcolor:"transparent",
                                 plot_bgcolor:"transparent",
-                                title:item.title,
+                                title:{
+                                    text:item.title,
+                                },
                                 xaxis:{
+                                    title:item.xaxis.title,
                                     showgrid:true,
                                     zeroline:false,
                                     linecolor:"#A7BED3",
@@ -603,6 +608,8 @@
                                 },
                                 showlegend:true,
                                 legend:{
+                                    y:-.25,
+                                    itemsizing:"constant",
                                     orientation:"h",
                                     font:{
                                         family:"Open Sans",
@@ -613,6 +620,7 @@
                                 plot_bgcolor:"transparent",
                                 title:item.title,
                                 xaxis:{
+                                    title:item.xaxis.title,
                                     showgrid:true,
                                     zeroline:false,
                                     linecolor:"#A7BED3",
