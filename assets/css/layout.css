@@ -315,6 +315,10 @@ input[type=number] {
 .mCSB_outside+.mCSB_scrollTools {
     right:0;
 }
+.mCustomScrollBox+.mCSB_scrollTools+.mCSB_scrollTools.mCSB_scrollTools_horizontal,
+.mCustomScrollBox+.mCSB_scrollTools.mCSB_scrollTools_horizontal {
+    bottom:0;
+}
 .mCSB_scrollTools {
     width:16px;
     opacity:1 !important;
@@ -324,6 +328,15 @@ input[type=number] {
 }
 .mCSB_scrollTools .mCSB_dragger .mCSB_dragger_bar {
     opacity:1 !important;
+}
+.mCSB_scrollTools.mCSB_scrollTools_horizontal .mCSB_dragger .mCSB_dragger_bar {
+    margin:0 auto;
+}
+.modal-window-container .mCSB_outside+.mCSB_scrollTools {
+	width:4px;
+}
+.modal-window-container .mCSB_scrollTools.mCSB_scrollTools_horizontal {
+	height:4px;
 }
 
 /* modal-window */
