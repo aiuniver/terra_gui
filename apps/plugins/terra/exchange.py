@@ -162,7 +162,7 @@ class TerraExchange:
             {
                 "plots": response.get("plots", []),
                 "scatters": response.get("scatters", []),
-                "images": response.get("images", []),
+                "images": response.get("images", {}),
                 "texts": response.get("texts", {}),
             }
         )
