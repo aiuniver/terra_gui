@@ -244,7 +244,7 @@
                         if (success) {
                             this.validate = false;
                             training_results.charts = [];
-                            training_results.images = [];
+                            training_results.images = {};
                             training_results.texts = {};
                             training_results.scatters = [];
                             _action_training.text("Обучить");
