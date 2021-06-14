@@ -231,8 +231,27 @@
                     param.default = params[name].default;
                     let widget = window.FormWidget(`${layer}s[${elem.attr('id')}][parameters][${name}]`, param);
                     widget.addClass("field-inline field-reverse");
+                    if (["bag_of_words", "word_to_vec", "word_to_vec_size"].indexOf(name) > -1) {
+                        widget.find("input").attr("data-name", name).attr("data-group", `bow_wtv_group-${elem[0].id}`).addClass(`bow_wtv_group-${elem[0].id} bow_wtv_field-${name}`);
+                        if (!name.endsWith("_size")) widget.find("input").addClass("bow_wtv_type_checkbox");
+                        else widget.find("input").addClass("bow_wtv_type_checkbox");
+                    }
                     elem.find(".layout-parameters").append(widget);
                 }
+                elem.find(".layout-parameters .bow_wtv_type_checkbox").bind("change", (event) => {
+                    let item = $(event.currentTarget);
+                    if (item[0].checked) {
+                        let checkbox = $(`.bow_wtv_type_checkbox.${item.data("group")}`).not(item);
+                        checkbox[0].checked = false;
+                        checkbox.trigger("change");
+                    }
+                    if (item.data("name") === "word_to_vec") {
+                        let size = $(`.${item.data("group")}.bow_wtv_field-word_to_vec_size`);
+                        if (item[0].checked) size.removeAttr("disabled");
+                        else size.attr("disabled", "disabled");
+                    }
+                });
+                elem.find(".layout-parameters .bow_wtv_field-word_to_vec").trigger("change");
             };
 
             let _dataset_source_loaded = (data, serialize_data) => {
