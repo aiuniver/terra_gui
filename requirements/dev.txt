@@ -2,12 +2,11 @@
 
 requests==2.25.1
 ipython==7.22.0
-sklearn==0.0
-Pillow==8.2.0
 librosa==0.8.0
 matplotlib==3.2.2
 pandas==1.1.5
-gdown==3.6.4
 gensim==3.6.0
 notebook==6.1.5
 ipywidgets==7.6.3
+
+yaml~=0.2.5

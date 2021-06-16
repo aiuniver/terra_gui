@@ -180,9 +180,9 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-        model_name = f"model_{self.nn_name}_on_epoch_end.last"
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
         file_path_model: str = os.path.join(
-            self.save_model_path, f"{model_name}.h5"
+            self.save_model_path, f"{model_name}"
         )
         self.model.save(file_path_model)
         self.Exch.print_2status_bar(
