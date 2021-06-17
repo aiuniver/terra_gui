@@ -40,7 +40,7 @@ class DTS(object):
     def __init__(self, f_folder='', path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets',
                  exch_obj=tr2dj_obj):
 
-        self.version = 0.340
+        self.version = 0.341
         self.Exch = exch_obj
         self.django_flag = False
         if self.Exch.property_of != 'TERRA':
@@ -627,13 +627,28 @@ class DTS(object):
 
         return self
 
-    def inverse_data(self, array=None, scaler=None):
+    def inverse_data(self, put: str, array: np.ndarray):
 
-        # Не доделано
-        if scaler:
-            array = self.__dict__[scaler].inverse_transform(array)
+        if self.tags[put] == 'text':
+            if len(array.shape) == 1:
+                if array.shape[0] == self.tokenizer[put].num_words:
+                    idx = 0
+                    arr = []
+                    for num in array:
+                        if num == 1:
+                            arr.append(idx)
+                        idx += 1
+                    array = np.array(arr)
+                inv_tokenizer = {index: word for word, index in self.tokenizer[put].word_index.items()}
+                text: str = ' '.join([inv_tokenizer[seq] for seq in array])
+            else:
+                text_list = []
+                for i in range(len(array)):
+                    text_list.append(
+                        self.word2vec[put].wv.most_similar(positive=np.expand_dims(array[i], axis=0), topn=1)[0][0])
+                text: str = ' '.join(text_list)
 
-        return array
+            return text
 
     def keras_datasets(self, dataset: str, **options):
 
