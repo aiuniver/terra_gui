@@ -87,14 +87,6 @@ class DTS(object):
     @staticmethod
     def get_method_parameters(name: str) -> dict:
 
-        # func_params = {}
-        # for tup in getmembers(self):
-        #     if tup[0] == name:
-        #         sig = signature(tup[1])
-        #         for param in sig.parameters.values():
-        #             func_params[param.name] = param.default
-        #         break
-
         method_parameters = {'images': {'folder_name': [''],
                                         'height': 176,
                                         'width': 220,
@@ -811,7 +803,13 @@ class DTS(object):
 
         return self
 
-    def images(self, folder_name: str, height: int, width: int, net: str, scaler: str) -> np.ndarray:
+    def images(self, **options) -> np.ndarray:
+
+        folder_name: str = options['folder_name']
+        height: int = options['height']
+        width: int = options['width']
+        net: str = options['net']
+        scaler: str = options['scaler']
 
         if folder_name == '':
             working_folder = self.file_folder
@@ -972,8 +970,7 @@ class DTS(object):
     #
     #     return X
 
-    def text(self, folder_name: str, delete_symbols: str, x_len: int, step: int, max_words_count: int, pymorphy: bool,
-             bag_of_words: bool, word_to_vec: bool, word_to_vec_size: int) -> np.ndarray:
+    def text(self, **options) -> np.ndarray:
 
         def read_text(file_path):
 
@@ -1057,6 +1054,16 @@ class DTS(object):
             y_samples = np.array(y_samples)
 
             return x_samples, y_samples
+
+        folder_name: str = options['folder_name']
+        delete_symbols: str = options['delete_symbols']
+        x_len: int = options['x_len']
+        step: int = options['step']
+        max_words_count: int = options['max_words_count']
+        pymorphy: bool = options['pymorphy']
+        bag_of_words: bool = options['bag_of_words']
+        word_to_vec: bool = options['word_to_vec']
+        word_to_vec_size: int = options['word_to_vec_size']
 
         tags_list: list = []
         txt_list: list = []
@@ -1169,7 +1176,13 @@ class DTS(object):
 
         return x_array
 
-    def dataframe(self, file_name: str, separator: str, encoding: str, x_cols: str, scaler: str) -> np.ndarray:
+    def dataframe(self, **options) -> np.ndarray:
+
+        file_name: str = options['file_name']
+        separator: str = options['separator']
+        encoding: str = options['encoding']
+        x_cols: str = options['x_cols']
+        scaler: str = options['scaler']
 
         self.classes_names[f'input_{self.iter}'] = x_cols.split(' ')
         if separator:
@@ -1223,11 +1236,12 @@ class DTS(object):
 
         return x_array
 
-    def regression(self, y_col='') -> np.ndarray:
+    def regression(self, **options) -> np.ndarray:
+
+        y_col: str = options['y_col']
+        y_col: list = y_col.split(' ')
 
         y_array = np.array([])
-
-        y_col = y_col.split(' ')
         self.classes_names[f'output_{self.iter}'] = y_col
         self.num_classes[f'output_{self.iter}'] = len(y_col)
 
@@ -1253,7 +1267,7 @@ class DTS(object):
 
         return y_array
 
-    def timeseries(self, length: int, y_cols: str, scaler: str, task_type: str) -> np.ndarray:
+    def timeseries(self, **options) -> np.ndarray:
 
         y_array = []
         for i in range(len(self.user_parameters['inp'])):
@@ -1263,6 +1277,9 @@ class DTS(object):
                         y_array.append(self.tsgenerator[f'input_{i + 1}'][j][1][k])
                 y_array = np.array(y_array)
             break
+
+        y_cols: str = options['y_cols']
+        task_type: str = options['task_type']
 
         self.classes_names[f'output_{self.iter}'] = y_cols.split(' ')
         self.num_classes[f'output_{self.iter}'] = len(y_cols.split(' '))
@@ -1275,9 +1292,7 @@ class DTS(object):
 
         return y_array
 
-    def audio(self, folder_name: str, length: int, step: int, scaler: str, audio_signal: bool, chroma_stft: bool,
-              mfcc: bool, rms: bool, spectral_centroid: bool, spectral_bandwidth: bool, spectral_rolloff: bool,
-              zero_crossing_rate: bool):
+    def audio(self, **options):
 
         def call_librosa(feature, section, sr):
 
@@ -1301,6 +1316,19 @@ class DTS(object):
                     feature_dict[feature].append(call_librosa(feature, section, sr))
 
             pass
+
+        folder_name: str = options['folder_name']
+        length: int = options['length']
+        step: int = options['step']
+        scaler: str = options['scaler']
+        audio_signal: bool = options['audio_signal']
+        chroma_stft: bool = options['chroma_stft']
+        mfcc: bool = options['mfcc']
+        rms: bool = options['rms']
+        spectral_centroid: bool = options['spectral_centroid']
+        spectral_bandwidth: bool = options['spectral_bandwidth']
+        spectral_rolloff: bool = options['spectral_rolloff']
+        zero_crossing_rate: bool = options['zero_crossing_rate']
 
         features_str = ['audio_signal', 'chroma_stft', 'mfcc', 'rms', 'spectral_centroid', 'spectral_bandwidth',
                         'spectral_rolloff', 'zero_crossing_rate']
@@ -1384,7 +1412,9 @@ class DTS(object):
 
         pass
 
-    def classification(self, one_hot_encoding=True) -> np.ndarray:
+    def classification(self, **options) -> np.ndarray:
+
+        one_hot_encoding: bool = options['one_hot_encoding']
 
         y_array = self.y_cls
         self.classes_names[f'output_{self.iter}'] = [folder for folder in sorted(os.listdir(self.file_folder))]
@@ -1398,7 +1428,7 @@ class DTS(object):
 
         return y_array
 
-    def text_segmentation(self, open_tags='', close_tags='') -> np.ndarray:
+    def text_segmentation(self, **options) -> np.ndarray:
 
         def get_ohe_samples(list_of_txt, tags_index):
             tags01 = []
@@ -1431,6 +1461,9 @@ class DTS(object):
 
             return sample
 
+        open_tags: str = options['open_tags']
+        close_tags: str = options['close_tags']
+
         y_array = np.array([])
 
         self.num_classes[f'output_{self.iter}'] = len(open_tags.split(' '))
@@ -1453,7 +1486,7 @@ class DTS(object):
 
         return y_array
 
-    def segmentation(self, folder_name: str, mask_range: int, classes_names: list, classes_colors: list) -> np.ndarray:
+    def segmentation(self, **options) -> np.ndarray:
 
         def cluster_to_ohe(mask_image):
 
@@ -1481,6 +1514,11 @@ class DTS(object):
                     mask_ohe = np.dstack((mask_ohe, mask))
 
             return mask_ohe
+
+        folder_name: str = options['folder_name']
+        mask_range: int = options['mask_range']
+        classes_names: list = options['classes_names']
+        classes_colors: list = options['classes_colors']
 
         self.classes_names[f'output_{self.iter}'] = classes_names
         self.classes_colors[f'output_{self.iter}'] = classes_colors
