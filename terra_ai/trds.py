@@ -99,6 +99,7 @@ class DTS(object):
                                       'step': 30,
                                       'max_words_count': 20000,
                                       'pymorphy': False,
+                                      'embedding': True,
                                       'bag_of_words': False,
                                       'word_to_vec': False,
                                       'word_to_vec_size': 200},
@@ -1063,7 +1064,8 @@ class DTS(object):
         pymorphy: bool = options['pymorphy']
         bag_of_words: bool = options['bag_of_words']
         word_to_vec: bool = options['word_to_vec']
-        word_to_vec_size: int = options['word_to_vec_size']
+        if word_to_vec:
+            word_to_vec_size: int = options['word_to_vec_size']
 
         tags_list: list = []
         txt_list: list = []
