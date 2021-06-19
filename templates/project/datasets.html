@@ -37,10 +37,11 @@
                                             <div class="card-tag">{{ tag }}</div>
                                         {% endfor %}
                                     </div>
-                                    <div class="card-extra">
+                                    <div class="card-extra{% if dataset.size %} is-custom{% endif %}">
                                         <div class="wrapper">
-                                            {% if dataset.size == None %}<span>предустановленный</span>{% else %}{{ dataset.size }}{% endif %}
+                                            {% if dataset.size %}{{ dataset.size }}{% else %}<span>Предустановленный</span>{% endif %}
                                         </div>
+                                        {% if dataset.size %}<div class="remove"></div>{% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -150,3 +151,21 @@
     </div>
 </div>
 {% endblock content_block %}
+
+{% block modal_window %}
+{{ block.super }}
+<div id="modal-window-remove-dataset" class="modal-window-container">
+    <div class="wrapper">
+        <form>
+            <div class="inner">
+                <div class="field-form">
+                    <label>Вы действительно хотите удалить датасет?</label>
+                </div>
+            </div>
+            <div class="actions-form">
+                <div class="clear"><button>Да</button></div><div class="cancel"><button>Нет</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock modal_window %}

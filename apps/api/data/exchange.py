@@ -78,6 +78,12 @@ class ExchangeData:
     def _execute_create_dataset(self, **kwargs):
         return terra_exchange.call("create_dataset", **kwargs)
 
+    def _execute_remove_dataset(self, **kwargs):
+        serializer = serializers.RemoveDatasetSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("remove_dataset", **serializer.validated_data)
+
     def _execute_get_data(self):
         return terra_exchange.call("get_data")
 

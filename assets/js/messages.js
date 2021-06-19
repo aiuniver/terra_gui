@@ -7,6 +7,7 @@ let Messages = function() {
         DATASET_SELECTED: "Dataset «{0}» is selected",
         DATASET_LOADING: "Loading dataset «{0}»...",
         DATASET_LOADED: "Dataset «{0}» is loaded",
+        DATASET_REMOVED: "Dataset «{0}» is removed",
         DATASET_SOURCE_LOADING: "Trying to load dataset sources...",
         DATASET_SOURCE_LOADED: "Dataset sources is loaded.",
         MODEL_SAVED: "Model is saved.",

@@ -120,6 +120,12 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 .project-datasets-block.datasets .card-extra > .wrapper > span {
     color:#6C7883;
 }
+.project-datasets-block.datasets .card-extra.is-custom > .remove {
+    background:#242F3D;
+}
+.project-datasets-block.datasets .card-extra.is-custom > .remove:hover {
+    background:#2B5278;
+}
 .page-datasets .load-dataset-field > form > .tabs {
     background-color:#0E1621;
 }

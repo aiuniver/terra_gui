@@ -188,7 +188,33 @@
     font-size:.625rem;
     font-weight:600;
     border:1px solid transparent;
+    border-top:0;
     border-radius:0 0 4px 4px;
+}
+.card-extra.is-custom > .wrapper {
+    margin-right:35px;
+}
+.card-extra.is-custom > .remove {
+    width:30px;
+    height:30px;
+    position:absolute;
+    top:0;
+    right:10px;
+    border-radius:0 0 4px 4px;
+    transition:background-color .3s ease-in-out;
+}
+.card-extra.is-custom > .remove:before {
+    display:block;
+    content:'';
+    width:16px;
+    height:17px;
+    margin:-8px 0 0 -8px;
+    position:absolute;
+    left:50%;
+    top:50%;
+    background-position:center;
+    background-repeat:no-repeat;
+    background-size:contain;
 }
 .next-form{
     margin-top: 40px;
@@ -511,6 +537,56 @@
 }
 .colorpicker-btn:hover {
     border-color:#fff;
+}
+#modal-window-remove-dataset form {
+	padding:20px;
+}
+#modal-window-remove-dataset form > .inner {
+	margin-bottom:0;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:flex-end;
+    -ms-flex-line-pack:end;
+    align-content:flex-end;
+    -webkit-box-align:end;
+    -moz-box-align:end;
+    -webkit-align-items:flex-end;
+    -ms-flex-align:end;
+    align-items:flex-end;
+}
+#modal-window-remove-dataset form > .inner > * {
+	margin-bottom:0 !important;
+}
+#modal-window-remove-dataset form > .inner > .field-form > label {
+	margin:0;
+}
+#modal-window-remove-dataset form > .actions-form {
+	margin:20px -2px 0 -2px;
+}
+#modal-window-remove-dataset form > .actions-form > * {
+	display:inline-block;
+	width:50%;
+	margin:0;
+	padding:0 2px;
+	vertical-align:top;
 }
 
 

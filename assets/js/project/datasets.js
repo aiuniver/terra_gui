@@ -7,6 +7,13 @@
     let filters, datasets, params, dataset_load, dataset_prepare;
 
 
+    let RemoveDataset = $("#modal-window-remove-dataset").ModalWindow({
+        title:"Удалить датасет",
+        width:300,
+        height:160
+    });
+
+
     $.fn.extend({
 
 
@@ -81,7 +88,13 @@
 
             this.find(".dataset-card-item").bind("click", (event) => {
                 event.preventDefault();
-                this.dataset = $(event.currentTarget).children(".dataset-card")[0].dataset.name;
+                if ($(event.target).hasClass("remove")) {
+                    window.StatusBar.clear();
+                    RemoveDataset.find("form")[0].current_dataset = $(event.currentTarget).children(".dataset-card")[0];
+                    RemoveDataset.open();
+                } else {
+                    this.dataset = $(event.currentTarget).children(".dataset-card")[0].dataset.name;
+                }
             });
 
             $(window).bind("resize", _onWindowResize);
@@ -693,14 +706,15 @@
                                                 html += `<div class="card-tag">${ dataset_item.tags[tag] }</div>`;
                                             }
                                             html += '</div>';
-                                            html += ' <div class="card-extra">'
+                                            html += ` <div class="card-extra${dataset_item.size ? " is-custom" : ""}">`
                                             html += ' <div class="wrapper">'
                                             if(dataset_item.size){
-                                                html += dataset_item.size
+                                                html += dataset_item.size;
                                             }else{
                                                 html += '<span>предустановленный</span>'
                                             }
                                             html += '</div>';
+                                            if(dataset_item.size) html += `<div class="remove"></div>`;
                                             html += '</div>';
                                             html += '</div>';
                                             html += '</div>';
@@ -752,6 +766,31 @@
         dataset_prepare = $(".dataset-prepare").DatasetPrepare();
 
         datasets.dataset = window.TerraProject.dataset;
+
+        RemoveDataset.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let current_dataset = RemoveDataset.find("form")[0].current_dataset,
+                dataset_name = current_dataset.dataset.name;
+            window.ExchangeRequest(
+                "remove_dataset",
+                (success, data) => {
+                    RemoveDataset.close();
+                    if (success) {
+                        if (dataset_name === datasets.dataset) datasets.dataset = "";
+                        $(current_dataset).remove();
+                        window.StatusBar.message(window.Messages.get("DATASET_REMOVED", [dataset_name]), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                },
+                {name:dataset_name}
+            )
+        });
+
+        RemoveDataset.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            RemoveDataset.close();
+        });
 
     })
 

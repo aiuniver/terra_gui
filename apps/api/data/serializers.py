@@ -12,6 +12,10 @@ class PrepareDatasetSerializer(serializers.Serializer):
     is_custom = serializers.BooleanField(required=False, default=False)
 
 
+class RemoveDatasetSerializer(serializers.Serializer):
+    name = serializers.CharField()
+
+
 class GetAutoColorsSerializer(serializers.Serializer):
     name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     num_classes = serializers.IntegerField(required=False, allow_null=True, min_value=1)
