@@ -267,10 +267,21 @@ class GUINN:
                 model_name = [x for x in list_files if x.endswith("last.h5")]
                 # if len(model_name) > 1:
                 #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
-                self.model = load_model(os.path.join(self.training_path, model_name[0]))
-                # print("Модель загружена os.path.join(self.training_path, model_name[0]) ",
-                #       os.path.join(self.training_path, model_name[0]))
-                # print("self.model.name", self.model.name)
+                custom_objects = {}
+                for output_key in self.metrics.keys():
+                    for metric_name in self.metrics[output_key]:
+                        if not isinstance(metric_name, str):
+                            metric_name = metric_name.name
+                        if metric_name == "dice_coef":
+                            custom_objects.update({"DiceCoefficient": DiceCoefficient})
+                if custom_objects:
+                    self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False,
+                                            custom_objects=custom_objects)
+                else:
+                    self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False)
+                print("Модель загружена os.path.join(self.training_path, model_name[0]) ",
+                      os.path.join(self.training_path, model_name[0]))
+                print("self.model.name", self.model.name)
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
             except Exception:
@@ -328,7 +339,6 @@ class GUINN:
                     verbose=verbose,
                     callbacks=self.callbacks
                 )
-
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
@@ -423,8 +433,8 @@ class GUINN:
 
     def nn_cleaner(self, retrain=False) -> None:
         keras.backend.clear_session()
-        # del self.model
         # del self.DTS
+        # del self.model
         # del self.x_Train
         # del self.x_Val
         # del self.y_Train
