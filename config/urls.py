@@ -19,11 +19,6 @@ from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
 
-from apps.core import views as core_views
-
-
-handler404 = core_views.handler404
-
 
 urlpatterns = [
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
