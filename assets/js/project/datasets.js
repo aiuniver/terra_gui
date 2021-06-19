@@ -124,6 +124,7 @@
                 window.ExchangeRequest(
                     "prepare_dataset",
                     (success, data) => {
+                        this.locked = false;
                         if (success) {
                             window.TerraProject.layers = data.data.layers;
                             window.TerraProject.schema = data.data.schema;
@@ -131,7 +132,8 @@
                             window.TerraProject.start_layers = data.data.start_layers;
                             window.StatusBar.progress_clear();
                             window.StatusBar.message(window.Messages.get("DATASET_LOADED", [datasets.dataset]), true);
-                            this.locked = false;
+                        } else {
+                            window.StatusBar.message(data.error, false);
                         }
                     },
                     {
@@ -516,6 +518,7 @@
                                     if (success) {
                                         window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                                     } else {
+                                        this.locked = false;
                                         window.StatusBar.message(data.error, false);
                                     }
                                 }
@@ -661,9 +664,11 @@
                                             window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
                                         }
                                         if (data.error) {
+                                            this.locked = false;
                                             window.StatusBar.message(data.error, false);
                                         }
                                     } else {
+                                        this.locked = false;
                                         window.StatusBar.message(data.error, false);
                                     }
                                 }
@@ -723,6 +728,7 @@
                                 }
                             );
                         } else {
+                            this.locked = false;
                             window.StatusBar.message(data.error, false);
                         }
                     }

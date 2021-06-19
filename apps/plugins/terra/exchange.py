@@ -1,6 +1,5 @@
 import base64
 import os
-import re
 import json
 import shutil
 
@@ -44,7 +43,7 @@ class TerraExchange:
     def __get_api_url(self, name: str) -> str:
         return f"{self.api_url}/{name}/"
 
-    def __request_get(self, *args, **kwargs) -> TerraExchangeResponse:
+    def __request_get(self, *args) -> TerraExchangeResponse:
         if len(args) != 1:
             raise TerraExchangeException(
                 "«__request_get» method must contain method name as first argument"
@@ -173,12 +172,12 @@ class TerraExchange:
             error=response.get("errors", ""),
         )
 
-    def _call_before_load_dataset_source(self, **kwargs) -> TerraExchangeResponse:
+    def _call_before_load_dataset_source(self) -> TerraExchangeResponse:
         colab_exchange._reset_out_data()
         colab_exchange.reset_stop_flag()
         return TerraExchangeResponse()
 
-    def _call_before_create_dataset(self, **kwargs) -> TerraExchangeResponse:
+    def _call_before_create_dataset(self) -> TerraExchangeResponse:
         colab_exchange._reset_out_data()
         colab_exchange.reset_stop_flag()
         return TerraExchangeResponse()
@@ -227,7 +226,7 @@ class TerraExchange:
         return response
 
     def _call_get_model_from_list(
-        self, model_file: str, is_terra: bool
+        self, model_file: str, is_terra: bool = True
     ) -> TerraExchangeResponse:
         if is_terra:
             data = self.__request_post(
@@ -268,10 +267,11 @@ class TerraExchange:
         data.data.update({"layers": output})
         return data
 
-    def _call_set_model(self, **kwargs) -> TerraExchangeResponse:
-        layers = kwargs.get("layers")
-        schema = kwargs.get("schema")
-        reset_training = kwargs.get("reset_training", False)
+    def _call_set_model(
+        self, layers: dict, schema: list = None, reset_training: bool = False
+    ) -> TerraExchangeResponse:
+        if not schema:
+            schema = []
         self.project.layers = {}
         if layers:
             for index, layer in layers.items():
@@ -292,14 +292,6 @@ class TerraExchange:
     def _call_save_model(
         self, name: str, preview: str, overwrite: bool = False
     ) -> TerraExchangeResponse:
-        if not name:
-            return TerraExchangeResponse(success=False, error="Введите название модели")
-        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
-        if not name_match:
-            return TerraExchangeResponse(
-                success=False,
-                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
-            )
         fullpath = os.path.join(self.project.gd.modeling, f"{name}.model")
         if os.path.isfile(fullpath) and not overwrite:
             return TerraExchangeResponse(
@@ -394,18 +386,36 @@ class TerraExchange:
         else:
             return TerraExchangeResponse(data={"validated": False})
 
-    def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_before_start_training(
+        self,
+        batch_sizes: int,
+        epochs_count: int,
+        checkpoint: dict = None,
+        optimizer: dict = None,
+        outputs: dict = None,
+    ) -> TerraExchangeResponse:
+        if not checkpoint:
+            checkpoint = {}
+        if not optimizer:
+            optimizer = {}
+        if not outputs:
+            outputs = {}
+
         colab_exchange.reset_stop_flag()
-        output = kwargs.get("checkpoint", {}).get("monitor", {}).get("output")
-        out_type = kwargs.get("checkpoint", {}).get("monitor", {}).get("out_type")
-        kwargs["checkpoint"]["monitor"]["out_monitor"] = (
-            kwargs.get("outputs", {}).get(output, {}).get(out_type)
-        )
+        output = checkpoint.get("monitor", {}).get("output")
+        out_type = checkpoint.get("monitor", {}).get("out_type")
+        checkpoint["monitor"]["out_monitor"] = outputs.get(output, {}).get(out_type)
         if out_type == "metrics":
-            kwargs["checkpoint"]["monitor"]["out_monitor"] = kwargs["checkpoint"][
-                "monitor"
-            ]["out_monitor"][0]
-        self.project.training = TrainConfig(**kwargs)
+            checkpoint["monitor"]["out_monitor"] = checkpoint.get("monitor", {}).get(
+                "out_monitor", {}
+            )[0]
+        self.project.training = TrainConfig(
+            batch_sizes=batch_sizes,
+            epochs_count=epochs_count,
+            checkpoint=checkpoint,
+            optimizer=optimizer,
+            outputs=outputs,
+        )
         response = self.call("get_change_validation")
         if not response.data.get("validated"):
             colab_exchange.out_data["stop_flag"] = True
@@ -417,7 +427,7 @@ class TerraExchange:
         response.data["in_training"] = self.project.in_training
         return response
 
-    def _call_start_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_start_training(self) -> TerraExchangeResponse:
         self._update_in_training_flag()
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
@@ -441,17 +451,28 @@ class TerraExchange:
         self.project.autosave()
         return TerraExchangeResponse()
 
-    def _call_stop_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_stop_training(self) -> TerraExchangeResponse:
         colab_exchange.stop_training()
         self._update_in_training_flag()
         self.project.autosave()
         return TerraExchangeResponse()
 
-    def _call_get_auto_colors(self, **kwargs) -> TerraExchangeResponse:
-        response = colab_exchange.get_auto_colors(**kwargs)
+    def _call_get_auto_colors(
+        self,
+        mask_range: int,
+        name: str = None,
+        num_classes: int = None,
+        txt_file: bool = False,
+    ) -> TerraExchangeResponse:
+        response = colab_exchange.get_auto_colors(
+            mask_range=mask_range,
+            name=name,
+            num_classes=num_classes,
+            txt_file=txt_file,
+        )
         return TerraExchangeResponse(data=response)
 
-    def _call_reset_training(self, **kwargs) -> TerraExchangeResponse:
+    def _call_reset_training(self) -> TerraExchangeResponse:
         colab_exchange.reset_training()
         colab_exchange._reset_out_data()
         colab_exchange.out_data["stop_flag"] = True
@@ -461,10 +482,10 @@ class TerraExchange:
         self.project.autosave()
         return TerraExchangeResponse()
 
-    def _call_start_evaluate(self, **kwargs) -> TerraExchangeResponse:
-        return self.__request_post("start_evaluate", **kwargs)
+    def _call_start_evaluate(self) -> TerraExchangeResponse:
+        return self.__request_post("start_evaluate")
 
-    def _call_project_new(self, **kwargs) -> TerraExchangeResponse:
+    def _call_project_new(self) -> TerraExchangeResponse:
         self.project.clear()
         self.__project = TerraExchangeProject()
 
@@ -482,16 +503,6 @@ class TerraExchange:
     def _call_project_save(
         self, name: str, overwrite: bool = False
     ) -> TerraExchangeResponse:
-        if not name:
-            return TerraExchangeResponse(
-                success=False, error="Введите название проекта"
-            )
-        name_match = re.match("^[a-zA-Zа-яА-Я0-9\s\_\-]+$", name)
-        if not name_match:
-            return TerraExchangeResponse(
-                success=False,
-                error="Можно использовать только латиницу, кириллицу, цифры, пробел и символы `-_`",
-            )
         self.project.name = name
         self.project.autosave()
         fullpath = os.path.join(self.project.gd.projects, f"{name}.project")
