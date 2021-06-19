@@ -37,6 +37,10 @@ class TerraExchange:
         self.__project = TerraExchangeProject(**project)
 
     @property
+    def datasets_sources(self) -> list:
+        return colab_exchange.get_zipfiles()
+
+    @property
     def api_url(self) -> str:
         return settings.TERRA_AI_EXCHANGE_API_URL
 

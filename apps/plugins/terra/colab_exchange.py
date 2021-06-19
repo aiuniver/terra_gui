@@ -1079,7 +1079,6 @@ class Exchange(StatesData, GuiExch):
         data = self.get_datasets_data()
         data.update(
             {
-                "datasets_sources": self.get_zipfiles(),
                 "layers_types": self.get_layers_type_list(),
                 "optimizers": self.get_optimizers(),
                 "callbacks": self.callback_show_options_switches_front,

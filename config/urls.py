@@ -18,7 +18,6 @@ from django.urls import path
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
-from django.contrib import admin
 
 from apps.core import views as core_views
 
@@ -27,7 +26,6 @@ handler404 = core_views.handler404
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
     path("project/", include("apps.project.urls", namespace="apps_project")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

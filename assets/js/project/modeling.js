@@ -939,7 +939,7 @@
                                 $(event.target).trigger("change");
                             }
                         }).bind("change", _on_change_params);
-                        widget.addClass("field-inline");
+                        widget.addClass("field-inline field-reverse");
                         inner.append(widget);
                     }
                     container.removeClass("hidden");

@@ -447,6 +447,9 @@
 .dataset-prepare .layout-item .field-inline.field-reverse > .checkout-switch {
     margin-left:0;
 }
+.field-mode-google_drive > .ui-autocomplete {
+    left:20px !important;
+}
 
 .active{
     background-color: #17212B;

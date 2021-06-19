@@ -73,14 +73,9 @@
                             <li data-type="google_drive" class="active">Google drive</li>
                             <li data-type="url">URL-ссылка</li>
                         </ul>
-                        <div class="field-form field-mode-type field-mode-google_drive">
+                        <div class="field-form field-mode-type field-mode-google_drive relative">
                             <label for="gdrive-select">Выберите файл из Google-диска</label>
-                            <select name="name" id="gdrive-select" class="jquery-ui-menuselect">
-                                <option value=""></option>
-                                {% for source in request.terra_project.datasets_sources %}
-                                    <option value="{{ source }}">{{ source }}</option>
-                                {% endfor %}
-                            </select>
+                            <input type="text" name="name" id="gdrive-select" class="jquery-ui-autocomplete" data-source="{% url 'apps_api:datasets-sources' %}" />
                         </div>
                         <div class="field-form field-mode-type field-mode-url hidden">
                             <label for="field_form-link">Введите URL на архив исходников</label>
