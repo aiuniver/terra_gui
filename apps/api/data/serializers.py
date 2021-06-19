@@ -25,8 +25,8 @@ class GetModelFromListSerializer(serializers.Serializer):
 
 
 class LayerSerializer(serializers.Serializer):
-    x = serializers.IntegerField(required=False, allow_null=True)
-    y = serializers.IntegerField(required=False, allow_null=True)
+    x = serializers.FloatField(required=False, allow_null=True)
+    y = serializers.FloatField(required=False, allow_null=True)
     down_link = serializers.ListSerializer(
         required=True,
         allow_null=False,
