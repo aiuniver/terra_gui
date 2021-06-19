@@ -502,16 +502,19 @@ class GUILayersDef:
     padding_lh = ("same", "valid")
     activation_lh = (
         None,
-        "linear",
         "relu",
         "sigmoid",
         "softmax",
         "softplus",
         "softsign",
         "tanh",
+        "linear",
         "selu",
         "elu",
         "exponential",
+        "hard_sigmoid",
+        "gelu",
+        "swish",
     )
     initializer_lh = (
         "random_normal",
@@ -526,6 +529,11 @@ class GUILayersDef:
         "orthogonal",
         "constant",
         "variance_scaling",
+        "lecun_normal",
+        "lecun_uniform",
+        "variance_scaling",
+        "he_normal",
+        "he_uniform"
     )
     regularizer_lh = (None, "l1", "l2", "l1_l2")
     constraint_lh = (
@@ -1787,22 +1795,23 @@ class GUILayersDef:
                     "list": True,
                     "available": constraint_lh,
                 },
-                "renorm": {
-                    "type": "bool",
-                    "default": False,
-                },
-                "renorm_clipping": {"type": "dict", "default": None},
-                "renorm_momentum": {"type": "float", "default": 0.99},
-                "fused": {
-                    "type": "bool",
-                    "default": None,
-                },
-                "trainable": {
-                    "type": "bool",
-                    "default": True,
-                },
-                "virtual_batch_size": {"type": "int", "default": None},
-                "adjustment": {"type": "func", "default": None},
+                # #Парметры для tf 2.3.0
+                # "renorm": {
+                #     "type": "bool",
+                #     "default": False,
+                # },
+                # "renorm_clipping": {"type": "dict", "default": None},
+                # "renorm_momentum": {"type": "float", "default": 0.99},
+                # "fused": {
+                #     "type": "bool",
+                #     "default": None,
+                # },
+                # "trainable": {
+                #     "type": "bool",
+                #     "default": True,
+                # },
+                # "virtual_batch_size": {"type": "int", "default": None},
+                # "adjustment": {"type": "func", "default": None},
             },
         },
     }

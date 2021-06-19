@@ -110,7 +110,7 @@ class StatesData:
                         "type": "float",
                         "default": 0.0,
                     },
-                    # "beta": {"type": "float", "default": 0.0}, for TF versions > 2.3.0
+                    "beta": {"type": "float", "default": 0.0},
                 },
             },
         }
@@ -118,13 +118,19 @@ class StatesData:
         # list of values for activation attribute of layer
         self.activation_values = [
             None,
-            "linear",
+            "relu",
             "sigmoid",
             "softmax",
+            "softplus",
+            "softsign",
             "tanh",
-            "relu",
-            "elu",
+            "linear",
             "selu",
+            "elu",
+            "exponential",
+            "hard_sigmoid",
+            "gelu",
+            "swish",
         ]
 
         # list of values for padding attribute of layer

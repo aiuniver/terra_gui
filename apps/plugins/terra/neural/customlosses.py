@@ -28,6 +28,11 @@ class DiceCoefficient(tf.keras.metrics.Metric):
         """Returns the serializable config of the metric."""
         config = super(DiceCoefficient, self).get_config()
         return config
+    #
+    # def get_config(self):
+    #     config = {'n_layers': self.n_layers, 'filters': self.filters}
+    #     base_config = super(resblock, self).get_config()
+    #     return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod
     def from_config(cls, config):
