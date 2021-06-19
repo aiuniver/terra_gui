@@ -24,3 +24,18 @@ class LayersTypesAPIView(APIView):
         for item in available:
             items.append({"id": item, "label": item, "value": item})
         return Response(items)
+
+
+class DatasetsSourcesAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        term = request.GET.get("term").lower()
+        available = list(
+            filter(
+                lambda item: item.lower().find(term) != -1,
+                terra_exchange.datasets_sources,
+            )
+        )
+        items = []
+        for item in available:
+            items.append({"id": item, "label": item, "value": item})
+        return Response(items)

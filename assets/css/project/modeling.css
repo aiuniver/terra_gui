@@ -508,3 +508,15 @@
 	fill: #17D969;
 }
 
+
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=text],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=number],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=email],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=tel],
+.project-modeling-properties .params-item > .form-inline-label > .field-inline > input[type=password] {
+	max-width:100px;
+	width:100px;
+}
+.project-modeling-properties .params-item > .form-inline-label > .field-inline.field-reverse > .checkout-switch {
+	margin-left:0;
+}
