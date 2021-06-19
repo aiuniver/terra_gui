@@ -2,7 +2,10 @@ from typing import Any
 from dataclasses import dataclass
 
 from apps.plugins.terra import terra_exchange
+from apps.plugins.terra.data import TerraExchangeResponse
 from apps.plugins.terra.utils import get_traceback_text
+
+from . import serializers
 
 
 @dataclass
@@ -39,83 +42,113 @@ class ExchangeData:
             self.success = False
             self.error = f"Method «{name}» is undefined"
 
-    def _execute_autosave_project(self, **kwargs):
-        return terra_exchange.call("autosave_project", **kwargs)
+    def _response_error(self, message: str) -> TerraExchangeResponse:
+        return TerraExchangeResponse(success=False, error=str(message))
+
+    def _execute_autosave_project(self):
+        return terra_exchange.call("autosave_project")
 
     def _execute_set_project_name(self, **kwargs):
-        return terra_exchange.call("set_project_name", **kwargs)
+        serializer = serializers.SetProjectNameSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("set_project_name", **serializer.validated_data)
 
     def _execute_prepare_dataset(self, **kwargs):
-        return terra_exchange.call("prepare_dataset", **kwargs)
+        serializer = serializers.PrepareDatasetSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("prepare_dataset", **serializer.validated_data)
 
     def _execute_get_auto_colors(self, **kwargs):
-        return terra_exchange.call("get_auto_colors", **kwargs)
+        serializer = serializers.GetAutoColorsSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("get_auto_colors", **serializer.validated_data)
 
-    def _execute_before_load_dataset_source(self, **kwargs):
-        return terra_exchange.call("before_load_dataset_source", **kwargs)
+    def _execute_before_load_dataset_source(self):
+        return terra_exchange.call("before_load_dataset_source")
 
-    def _execute_before_create_dataset(self, **kwargs):
-        return terra_exchange.call("before_create_dataset", **kwargs)
+    def _execute_before_create_dataset(self):
+        return terra_exchange.call("before_create_dataset")
 
     def _execute_load_dataset(self, **kwargs):
         return terra_exchange.call("load_dataset", **kwargs)
 
-    def _execute_dataset_created(self, **kwargs):
-        return terra_exchange.call("dataset_created", **kwargs)
-
     def _execute_create_dataset(self, **kwargs):
         return terra_exchange.call("create_dataset", **kwargs)
 
-    def _execute_get_data(self, **kwargs):
-        return terra_exchange.call("get_data", **kwargs)
+    def _execute_get_data(self):
+        return terra_exchange.call("get_data")
 
-    def _execute_get_models(self, **kwargs):
-        return terra_exchange.call("get_models", **kwargs)
+    def _execute_get_models(self):
+        return terra_exchange.call("get_models")
 
     def _execute_get_model_from_list(self, **kwargs):
-        return terra_exchange.call("get_model_from_list", **kwargs)
+        serializer = serializers.GetModelFromListSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("get_model_from_list", **serializer.validated_data)
 
     def _execute_set_model(self, **kwargs):
-        return terra_exchange.call("set_model", **kwargs)
+        serializer = serializers.SetModelSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("set_model", **serializer.validated_data)
 
     def _execute_save_model(self, **kwargs):
-        return terra_exchange.call("save_model", **kwargs)
+        serializer = serializers.SaveModelSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("save_model", **serializer.validated_data)
 
-    def _execute_clear_model(self, **kwargs):
-        return terra_exchange.call("clear_model", **kwargs)
+    def _execute_clear_model(self):
+        return terra_exchange.call("clear_model")
 
     def _execute_save_layer(self, **kwargs):
-        return terra_exchange.call("save_layer", **kwargs)
+        serializer = serializers.SaveLayerSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("save_layer", **serializer.validated_data)
 
-    def _execute_get_change_validation(self, **kwargs):
-        return terra_exchange.call("get_change_validation", **kwargs)
+    def _execute_get_change_validation(self):
+        return terra_exchange.call("get_change_validation")
 
-    def _execute_get_keras_code(self, **kwargs):
-        return terra_exchange.call("get_keras_code", **kwargs)
+    def _execute_get_keras_code(self):
+        return terra_exchange.call("get_keras_code")
 
     def _execute_before_start_training(self, **kwargs):
-        return terra_exchange.call("before_start_training", **kwargs)
+        serializer = serializers.BeforeStartTrainingSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("before_start_training", **serializer.validated_data)
 
-    def _execute_start_training(self, **kwargs):
-        return terra_exchange.call("start_training", **kwargs)
+    def _execute_start_training(self):
+        return terra_exchange.call("start_training")
 
-    def _execute_stop_training(self, **kwargs):
-        return terra_exchange.call("stop_training", **kwargs)
+    def _execute_stop_training(self):
+        return terra_exchange.call("stop_training")
 
-    def _execute_reset_training(self, **kwargs):
-        return terra_exchange.call("reset_training", **kwargs)
+    def _execute_reset_training(self):
+        return terra_exchange.call("reset_training")
 
-    def _execute_start_evaluate(self, **kwargs):
-        return terra_exchange.call("start_evaluate", **kwargs)
+    def _execute_start_evaluate(self):
+        return terra_exchange.call("start_evaluate")
 
-    def _execute_project_new(self, **kwargs):
-        return terra_exchange.call("project_new", **kwargs)
+    def _execute_project_new(self):
+        return terra_exchange.call("project_new")
 
     def _execute_project_save(self, **kwargs):
-        return terra_exchange.call("project_save", **kwargs)
+        serializer = serializers.ProjectSaveSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("project_save", **serializer.validated_data)
 
-    def _execute_project_load(self, **kwargs):
-        return terra_exchange.call("project_load", **kwargs)
+    def _execute_project_load(self):
+        return terra_exchange.call("project_load")
 
     def _execute_get_project(self, **kwargs):
-        return terra_exchange.call("get_project", **kwargs)
+        serializer = serializers.GetProjectSerializer(data=kwargs)
+        if not serializer.is_valid():
+            return self._response_error(str(serializer.errors))
+        return terra_exchange.call("get_project", **serializer.validated_data)
