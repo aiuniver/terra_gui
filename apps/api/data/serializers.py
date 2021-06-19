@@ -46,7 +46,7 @@ class SetModelSerializer(serializers.Serializer):
             required=False,
             allow_null=False,
             allow_empty=False,
-            child=serializers.IntegerField(min_value=1),
+            child=serializers.IntegerField(allow_null=True, min_value=1),
         ),
     )
 
