@@ -25,7 +25,3 @@ class DatasetsList(mixins.UniqueListMixinData):
     class Meta:
         source = DatasetData
         identifier = "alias"
-
-
-class Project(mixins.BaseMixinData):
-    datasets: DatasetsList = DatasetsList()
