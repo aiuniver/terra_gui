@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from . import mixins
+from . import mixins, extra
 
 
 class DatasetTagsData(mixins.AliasMixinData):
@@ -19,7 +19,7 @@ class DatasetData(mixins.AliasMixinData, mixins.ListOfDictMixinData):
         lists_of_dict = ["tags"]
 
     name: str
-    size: Optional[mixins.SizeData]
+    size: Optional[extra.SizeData]
     date: Optional[datetime]
     tags: DatasetTagsListData = DatasetTagsListData()
 

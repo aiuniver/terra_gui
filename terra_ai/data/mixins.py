@@ -4,11 +4,6 @@ from typing import List, Union, Any, Optional
 from pydantic import BaseModel, validator
 
 
-class SizeData(BaseModel):
-    value: float
-    unit: str
-
-
 class AliasMixinData(BaseModel):
     alias: str
 
