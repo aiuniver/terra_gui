@@ -8,30 +8,24 @@ class DatasetTagsData(mixins.AliasMixinData):
     name: str
 
 
-class DatasetTagsListData(mixins.ListMixinData):
+class DatasetTagsListData(mixins.UniqueListMixinData):
     class Meta:
         source = DatasetTagsData
         identifier = "alias"
 
 
-class DatasetData(mixins.AliasMixinData, mixins.ListOfDictMixinData):
-    class Meta:
-        lists_of_dict = ["tags"]
-
+class DatasetData(mixins.AliasMixinData):
     name: str
     size: Optional[extra.SizeData]
     date: Optional[datetime]
     tags: DatasetTagsListData = DatasetTagsListData()
 
 
-class DatasetsList(mixins.ListMixinData):
+class DatasetsList(mixins.UniqueListMixinData):
     class Meta:
         source = DatasetData
         identifier = "alias"
 
 
-class Project(mixins.ListOfDictMixinData):
-    class Meta:
-        lists_of_dict = ["datasets"]
-
+class Project(mixins.BaseMixinData):
     datasets: DatasetsList = DatasetsList()

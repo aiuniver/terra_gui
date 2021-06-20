@@ -1,10 +1,33 @@
 import re
 
-from typing import List, Union, Any, Optional
+from typing import List, Union, Optional
 from pydantic import BaseModel, validator
 
 
-class AliasMixinData(BaseModel):
+class BaseMixinData(BaseModel):
+    def __init__(self, **data):
+        for __name, __field in self.__fields__.items():
+            __type = __field.type_
+            if UniqueListMixinData in __type.__mro__:
+                data.update({__name: __type(data.get(__name, __type()))})
+        super().__init__(**data)
+
+    def dict(self, **kwargs):
+        data = super().dict()
+        for __name, __field in self.__fields__.items():
+            __type = __field.type_
+            if UniqueListMixinData in __type.__mro__:
+                data.update(
+                    {
+                        __name: list(
+                            map(lambda item: item.dict(), data.get(__name, __type()))
+                        )
+                    }
+                )
+        return data
+
+
+class AliasMixinData(BaseMixinData):
     alias: str
 
     @validator("alias", allow_reuse=True)
@@ -16,35 +39,9 @@ class AliasMixinData(BaseModel):
         return value
 
 
-class ListOfDictMixinData(BaseModel):
+class UniqueListMixinData(List):
     class Meta:
-        lists_of_dict: Optional[list] = []
-
-    def __init__(self, **data):
-        if self.Meta.lists_of_dict:
-            for name in self.Meta.lists_of_dict:
-                model_type = self.__fields__.get(name).type_
-                data.update({name: model_type(data.get(name, model_type()))})
-        super().__init__(**data)
-
-    def dict(self, **kwargs):
-        data = super().dict()
-        if self.Meta.lists_of_dict:
-            for name in self.Meta.lists_of_dict:
-                model_type = self.__fields__.get(name).type_
-                data.update(
-                    {
-                        name: list(
-                            map(lambda item: item.dict(), data.get(name, model_type()))
-                        )
-                    }
-                )
-        return data
-
-
-class ListMixinData(List):
-    class Meta:
-        source: Any = dict
+        source: BaseMixinData = BaseMixinData
         identifier: str
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
@@ -54,27 +51,25 @@ class ListMixinData(List):
             data = list(map(lambda item: self.Meta.source(**item), data))
         except TypeError:
             pass
-        super().__init__(data)
+        __data = []
+        for item in data:
+            if item.dict().get(self.Meta.identifier) not in list(
+                map(lambda item: item.dict().get(self.Meta.identifier), __data)
+            ):
+                __data.append(item)
+        super().__init__(__data)
 
     @property
     def ids(self) -> list:
         if not len(self):
             return []
-        if self.Meta.source == dict:
-            data = self
-            if self.Meta.identifier not in self[0].keys():
-                raise AttributeError(
-                    f'Identifier "{self.Meta.identifier}" is undefined as key of dict'
-                )
-        else:
-            data = list(map(lambda item: item.dict(), self))
-            if self.Meta.identifier not in self[0].schema().get("properties").keys():
-                raise AttributeError(
-                    f'Identifier "{self.Meta.identifier}" is undefined as attribute of {self.Meta.source}'
-                )
-        return list(map(lambda item: item.get(self.Meta.identifier), data))
+        if self.Meta.identifier not in self[0].schema().get("properties").keys():
+            raise AttributeError(
+                f'Identifier "{self.Meta.identifier}" is undefined as attribute of {self.Meta.source}'
+            )
+        return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
-    def get(self, name: str) -> Optional[Union[dict, Meta.source]]:
+    def get(self, name: str) -> Optional[Meta.source]:
         __ids = self.ids
         if name not in __ids:
             return None
@@ -83,7 +78,7 @@ class ListMixinData(List):
     def dict(self) -> List[dict]:
         return list(map(lambda item: item.dict(), self))
 
-    def json(self) -> List[dict]:
+    def json(self) -> str:
         return list(map(lambda item: item.json(), self))
 
     def append(self, __object: Union[dict, Meta.source]):

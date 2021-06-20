@@ -31,12 +31,14 @@ data = [
         ],
     },
     {"alias": "disease", "name": "Заболевания"},
+    {"alias": "disease", "name": "Заболеванияяяяяя"},
+    {"alias": "disease", "name": "Заболе"},
 ]
 data_one = {"alias": "mnist", "name": "Договоры"}
 data_two = {"alias": "mnist", "name": "Квартиры"}
 print("--------------------------")
 print("Один датасет")
-print(DatasetData(**data[0]))
+print(DatasetData(**data[2]))
 print("--------------------------")
 print("Список датасетов")
 dd = DatasetsList(data)
