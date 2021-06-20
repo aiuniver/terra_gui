@@ -1239,7 +1239,7 @@
         RemoveModel.find("form").bind("submit", (event) => {
             event.preventDefault();
             let current_model = RemoveModel.find("form")[0].current_model,
-                model_name = current_model.find("span").text();
+                model_name = current_model.attr("data-name");
             window.ExchangeRequest(
                 "remove_model",
                 (success, data) => {
