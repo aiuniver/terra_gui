@@ -16,6 +16,8 @@ if terra_exchange.project.dataset:
 
 
 data = [
+    {"alias": "cifar10", "name": "Cifar10"},
+    {"alias": "lips", "name": "Губы"},
     {
         "alias": "mnist",
         "name": "Mnist",
@@ -28,12 +30,10 @@ data = [
             {"alias": "object_detection", "name": "Object detection"},
         ],
     },
-    {"alias": "cifar10", "name": "Cifar10"},
-    {"alias": "lips", "name": "Губы"},
     {"alias": "disease", "name": "Заболевания"},
 ]
-data_one = {"alias": "contracts", "name": "Договоры"}
-data_two = {"alias": "apartments", "name": "Квартиры"}
+data_one = {"alias": "mnist", "name": "Договоры"}
+data_two = {"alias": "mnist", "name": "Квартиры"}
 print("--------------------------")
 print("Один датасет")
 print(DatasetData(**data[0]))
@@ -44,22 +44,31 @@ print(dd)
 print("--------------------------")
 print("Добавили в список")
 dd.append(data_one)
-dd.insert(2, data_two)
 print(dd)
 print("--------------------------")
-print("Ключи датасетов")
-print(dd.ids)
+print("Добавили в список по индексу")
+dd.insert(0, data_two)
+print(dd)
 print("--------------------------")
-print("Получаем по ключу датасет")
-print(dd.get("mnist"))
-print("--------------------------")
-print("Проект")
-p = Project(datasets=data)
-print(p)
-print("--------------------------")
-print("Проект as dict")
-print(p.dict())
-print("--------------------------")
-print("Проект as json")
-print(p.json())
-print("--------------------------")
+print("Проверка работы переменных ссылок")
+print(dd)
+mnist: DatasetData = dd.get("mnist")
+mnist.name = "NewMnist"
+print(dd)
+# print("--------------------------")
+# print("Ключи датасетов")
+# print(dd.ids)
+# print("--------------------------")
+# print("Получаем по ключу датасет")
+# print(dd.get("mnist"))
+# print("--------------------------")
+# print("Проект")
+# p = Project(datasets=data)
+# print(p)
+# print("--------------------------")
+# print("Проект as dict")
+# print(p.dict())
+# print("--------------------------")
+# print("Проект as json")
+# print(p.json())
+# print("--------------------------")

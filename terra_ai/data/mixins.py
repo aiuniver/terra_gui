@@ -45,9 +45,9 @@ class ListOfDictMixinData(BaseModel):
 class ListMixinData(List):
     class Meta:
         source: Any = dict
-        identifier: Optional[str]
+        identifier: str
 
-    def __init__(self, data: List[Union[dict, Meta.source]] = None):
+    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
         if not data:
             data = []
         try:
@@ -92,7 +92,16 @@ class ListMixinData(List):
                 __object = self.Meta.source(**__object)
         except TypeError:
             pass
-        super().append(__object)
+        if isinstance(__object, dict):
+            data = __object
+        else:
+            data = __object.dict()
+        __name = data.get(self.Meta.identifier)
+        __o = self.get(__name)
+        if __o:
+            self[self.ids.index(__name)] = __object
+        else:
+            super().append(__object)
 
     def insert(self, __index: int, __object: Union[dict, Meta.source]):
         try:
@@ -100,4 +109,18 @@ class ListMixinData(List):
                 __object = self.Meta.source(**__object)
         except TypeError:
             pass
-        super().insert(__index, __object)
+        if isinstance(__object, dict):
+            data = __object
+        else:
+            data = __object.dict()
+        __name = data.get(self.Meta.identifier)
+        __o = self.get(__name)
+        if __o:
+            __o_index = self.ids.index(__name)
+            if self.ids.index(__name) == __index:
+                self[__o_index] = __object
+            else:
+                self.pop(__o_index)
+                super().insert(__index, __object)
+        else:
+            super().insert(__index, __object)
