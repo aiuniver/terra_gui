@@ -1,3 +1,7 @@
+"""
+## Структура данных для датасетов
+"""
+
 import sys
 
 from enum import Enum

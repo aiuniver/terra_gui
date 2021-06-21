@@ -1,7 +1,11 @@
+"""
+## Расширение структур данных
+"""
+
 import json
 
 from typing import List, Union, Optional
-from pydantic import validator, BaseModel, ValidationError
+from pydantic import validator, BaseModel
 
 from . import validators
 
