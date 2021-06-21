@@ -19,6 +19,17 @@ class InputTypeChoice(str, Enum):
     dataframe = "dataframe"
 
 
+class OutputTypeChoice(str, Enum):
+    images = "images"
+    text = "text"
+    audio = "audio"
+    classification = "classification"
+    segmentation = "segmentation"
+    text_segmentation = "text_segmentation"
+    regression = "regression"
+    timeseries = "timeseries"
+
+
 class LayerNetChoice(str, Enum):
     Convolutional = "Convolutional"
     Linear = "Linear"
@@ -33,3 +44,8 @@ class LayerPrepareMethodChoice(str, Enum):
     embedding = "embedding"
     bag_of_words = "bag_of_words"
     word_to_vec = "word_to_vec"
+
+
+class LayerTaskTypeChoice(str, Enum):
+    timeseries = "timeseries"
+    regression = "regression"

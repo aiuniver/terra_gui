@@ -79,6 +79,21 @@ print(
                     "word_to_vec_size": "239",
                 },
             }
-        ]
+        ],
+        outputs=[
+            {
+                "alias": "output_1",
+                "name": "Output 1",
+                "type": "segmentation",
+                "parameters": {
+                    "x_len": "100",
+                    "length": "100",
+                    "step": "30",
+                    "max_words_count": "20000",
+                    "prepare_method": "word_to_vec",
+                    "word_to_vec_size": "239",
+                },
+            }
+        ],
     )
 )
