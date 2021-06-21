@@ -14,31 +14,68 @@ from . import mixins, extra, validators
 
 
 class DatasetTagsData(mixins.AliasMixinData):
+    """
+    Информация о теге
+    """
+
     name: str
+    "Название"
 
 
 class DatasetTagsListData(mixins.UniqueListMixin):
+    """
+    Список тегов, основанных на [`data.dataset.DatasetTagsData`](dataset.html#data.dataset.DatasetTagsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetTagsData
+        identifier = "alias"
+    ```
+    """
+
     class Meta:
         source = DatasetTagsData
         identifier = "alias"
 
 
 class DatasetData(mixins.AliasMixinData):
+    """
+    Информация о датасете
+    """
+
     name: str
+    "Название"
     size: Optional[extra.SizeData]
+    "Вес"
     date: Optional[datetime]
+    "Дата создания"
     tags: DatasetTagsListData = DatasetTagsListData()
+    "Список тегов"
 
 
 class DatasetsList(mixins.UniqueListMixin):
+    """
+    Список датасетов, основанных на [`data.dataset.DatasetData`](dataset.html#data.dataset.DatasetData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetData
+        identifier = "alias"
+    ```
+    """
+
     class Meta:
         source = DatasetData
         identifier = "alias"
 
 
 class DatasetSourceData(mixins.BaseMixinData):
+    """
+    Информация для загрузки исходников датасета
+    """
+
     mode: extra.DatasetSourceModeChoice
+    "Режим загрузки исходных данных"
     value: Union[FilePath, HttpUrl]
+    "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима [`data.dataset.DatasetSourceData.mode`](dataset.html#data.dataset.DatasetSourceData.mode)"
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
@@ -127,6 +164,10 @@ class DatasetCreateInputsDataframeParametersData(mixins.BaseMixinData):
 
 
 class DatasetCreateInputsParameters(str, Enum):
+    """
+    Список возможных типов данных для `input`-слоя в виде строк
+    """
+
     images = "DatasetCreateInputsImagesParametersData"
     text = "DatasetCreateInputsTextParametersData"
     audio = "DatasetCreateInputsAudioParametersData"
@@ -139,12 +180,22 @@ DatasetCreateInputsParametersUnion = tuple(
         DatasetCreateInputsParameters,
     )
 )
+"""
+Список возможных типов данных для `input`-слоя в виде классов
+"""
 
 
 class DatasetCreateInputsData(mixins.AliasMixinData):
+    """
+    Информация о `input`-слое
+    """
+
     name: str
+    "Название"
     type: extra.InputTypeChoice
+    "Тип данных"
     parameters: Optional[Union[DatasetCreateInputsParametersUnion]]
+    "Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateInputsData.type`](dataset.html#data.dataset.DatasetCreateInputsData.type)"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.InputTypeChoice) -> extra.InputTypeChoice:
@@ -162,6 +213,15 @@ class DatasetCreateInputsData(mixins.AliasMixinData):
 
 
 class DatasetCreateInputsList(mixins.UniqueListMixin):
+    """
+    Список `input`-слоев, основанных на [`data.dataset.DatasetCreateInputsData`](dataset.html#data.dataset.DatasetCreateInputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateInputsData
+        identifier = "alias"
+    ```
+    """
+
     class Meta:
         source = DatasetCreateInputsData
         identifier = "alias"
@@ -256,6 +316,10 @@ class DatasetCreateOutputsTimeseriesParametersData(mixins.BaseMixinData):
 
 
 class DatasetCreateOutputsParameters(str, Enum):
+    """
+    Список возможных типов данных для `output`-слоя в виде строк
+    """
+
     images = "DatasetCreateOutputsImagesParametersData"
     text = "DatasetCreateOutputsTextParametersData"
     audio = "DatasetCreateOutputsAudioParametersData"
@@ -272,12 +336,22 @@ DatasetCreateOutputsParametersUnion = tuple(
         DatasetCreateOutputsParameters,
     )
 )
+"""
+Список возможных типов данных для `output`-слоя в виде классов
+"""
 
 
 class DatasetCreateOutputsData(mixins.AliasMixinData):
+    """
+    Информация о `output`-слое
+    """
+
     name: str
+    "Название"
     type: extra.OutputTypeChoice
+    "Тип данных"
     parameters: Optional[Union[DatasetCreateOutputsParametersUnion]]
+    "Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateOutputsData.type`](dataset.html#data.dataset.DatasetCreateOutputsData.type)"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.OutputTypeChoice) -> extra.OutputTypeChoice:
@@ -295,11 +369,26 @@ class DatasetCreateOutputsData(mixins.AliasMixinData):
 
 
 class DatasetCreateOutputsList(mixins.UniqueListMixin):
+    """
+    Список `output`-слоев, основанных на [`data.dataset.DatasetCreateOutputsData`](dataset.html#data.dataset.DatasetCreateOutputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateOutputsData
+        identifier = "alias"
+    ```
+    """
+
     class Meta:
         source = DatasetCreateOutputsData
         identifier = "alias"
 
 
 class DatasetCreateData(mixins.BaseMixinData):
+    """
+    Полная информация о создании датасета
+    """
+
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
+    "`input`-слои"
     outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()
+    "`output`-слои"

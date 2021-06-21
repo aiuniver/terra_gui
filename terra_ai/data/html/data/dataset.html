@@ -43,31 +43,68 @@ from . import mixins, extra, validators
 
 
 class DatasetTagsData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о теге
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
 
 
 class DatasetTagsListData(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список тегов, основанных на [`data.dataset.DatasetTagsData`](dataset.html#data.dataset.DatasetTagsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetTagsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetTagsData
         identifier = &#34;alias&#34;
 
 
 class DatasetData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о датасете
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     size: Optional[extra.SizeData]
+    &#34;Вес&#34;
     date: Optional[datetime]
+    &#34;Дата создания&#34;
     tags: DatasetTagsListData = DatasetTagsListData()
+    &#34;Список тегов&#34;
 
 
 class DatasetsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список датасетов, основанных на [`data.dataset.DatasetData`](dataset.html#data.dataset.DatasetData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetData
         identifier = &#34;alias&#34;
 
 
 class DatasetSourceData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Информация для загрузки исходников датасета
+    &#34;&#34;&#34;
+
     mode: extra.DatasetSourceModeChoice
+    &#34;Режим загрузки исходных данных&#34;
     value: Union[FilePath, HttpUrl]
+    &#34;Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима [`data.dataset.DatasetSourceData.mode`](dataset.html#data.dataset.DatasetSourceData.mode)&#34;
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
@@ -156,6 +193,10 @@ class DatasetCreateInputsDataframeParametersData(mixins.BaseMixinData):
 
 
 class DatasetCreateInputsParameters(str, Enum):
+    &#34;&#34;&#34;
+    Список возможных типов данных для `input`-слоя в виде строк
+    &#34;&#34;&#34;
+
     images = &#34;DatasetCreateInputsImagesParametersData&#34;
     text = &#34;DatasetCreateInputsTextParametersData&#34;
     audio = &#34;DatasetCreateInputsAudioParametersData&#34;
@@ -168,12 +209,22 @@ DatasetCreateInputsParametersUnion = tuple(
         DatasetCreateInputsParameters,
     )
 )
+&#34;&#34;&#34;
+Список возможных типов данных для `input`-слоя в виде классов
+&#34;&#34;&#34;
 
 
 class DatasetCreateInputsData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о `input`-слое
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     type: extra.InputTypeChoice
+    &#34;Тип данных&#34;
     parameters: Optional[Union[DatasetCreateInputsParametersUnion]]
+    &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateInputsData.type`](dataset.html#data.dataset.DatasetCreateInputsData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.InputTypeChoice) -&gt; extra.InputTypeChoice:
@@ -191,6 +242,15 @@ class DatasetCreateInputsData(mixins.AliasMixinData):
 
 
 class DatasetCreateInputsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список `input`-слоев, основанных на [`data.dataset.DatasetCreateInputsData`](dataset.html#data.dataset.DatasetCreateInputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateInputsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetCreateInputsData
         identifier = &#34;alias&#34;
@@ -285,6 +345,10 @@ class DatasetCreateOutputsTimeseriesParametersData(mixins.BaseMixinData):
 
 
 class DatasetCreateOutputsParameters(str, Enum):
+    &#34;&#34;&#34;
+    Список возможных типов данных для `output`-слоя в виде строк
+    &#34;&#34;&#34;
+
     images = &#34;DatasetCreateOutputsImagesParametersData&#34;
     text = &#34;DatasetCreateOutputsTextParametersData&#34;
     audio = &#34;DatasetCreateOutputsAudioParametersData&#34;
@@ -301,12 +365,22 @@ DatasetCreateOutputsParametersUnion = tuple(
         DatasetCreateOutputsParameters,
     )
 )
+&#34;&#34;&#34;
+Список возможных типов данных для `output`-слоя в виде классов
+&#34;&#34;&#34;
 
 
 class DatasetCreateOutputsData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о `output`-слое
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     type: extra.OutputTypeChoice
+    &#34;Тип данных&#34;
     parameters: Optional[Union[DatasetCreateOutputsParametersUnion]]
+    &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateOutputsData.type`](dataset.html#data.dataset.DatasetCreateOutputsData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.OutputTypeChoice) -&gt; extra.OutputTypeChoice:
@@ -324,19 +398,45 @@ class DatasetCreateOutputsData(mixins.AliasMixinData):
 
 
 class DatasetCreateOutputsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список `output`-слоев, основанных на [`data.dataset.DatasetCreateOutputsData`](dataset.html#data.dataset.DatasetCreateOutputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateOutputsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetCreateOutputsData
         identifier = &#34;alias&#34;
 
 
 class DatasetCreateData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Полная информация о создании датасета
+    &#34;&#34;&#34;
+
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
-    outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()</code></pre>
+    &#34;`input`-слои&#34;
+    outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()
+    &#34;`output`-слои&#34;</code></pre>
 </details>
 </section>
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-variables">Global variables</h2>
+<dl>
+<dt id="data.dataset.DatasetCreateInputsParametersUnion"><code class="name">var <span class="ident">DatasetCreateInputsParametersUnion</span></code></dt>
+<dd>
+<div class="desc"><p>Список возможных типов данных для <code>input</code>-слоя в виде классов</p></div>
+</dd>
+<dt id="data.dataset.DatasetCreateOutputsParametersUnion"><code class="name">var <span class="ident">DatasetCreateOutputsParametersUnion</span></code></dt>
+<dd>
+<div class="desc"><p>Список возможных типов данных для <code>output</code>-слоя в виде классов</p></div>
+</dd>
+</dl>
 </section>
 <section>
 </section>
@@ -348,7 +448,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<div class="desc"><p>Полная информация о создании датасета</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -356,8 +456,14 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Полная информация о создании датасета
+    &#34;&#34;&#34;
+
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
-    outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()</code></pre>
+    &#34;`input`-слои&#34;
+    outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()
+    &#34;`output`-слои&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -369,11 +475,11 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetCreateData.inputs"><code class="name">var <span class="ident">inputs</span> : <a title="data.dataset.DatasetCreateInputsList" href="#data.dataset.DatasetCreateInputsList">DatasetCreateInputsList</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><code>input</code>-слои</p></div>
 </dd>
 <dt id="data.dataset.DatasetCreateData.outputs"><code class="name">var <span class="ident">outputs</span> : <a title="data.dataset.DatasetCreateOutputsList" href="#data.dataset.DatasetCreateOutputsList">DatasetCreateOutputsList</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p><code>output</code>-слои</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -488,7 +594,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Расширение модели идентификатором <code>alias</code>.</p>
+<div class="desc"><p>Информация о <code>input</code>-слое</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -496,9 +602,16 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateInputsData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о `input`-слое
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     type: extra.InputTypeChoice
+    &#34;Тип данных&#34;
     parameters: Optional[Union[DatasetCreateInputsParametersUnion]]
+    &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateInputsData.type`](dataset.html#data.dataset.DatasetCreateInputsData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.InputTypeChoice) -&gt; extra.InputTypeChoice:
@@ -525,15 +638,15 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetCreateInputsData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Название</p></div>
 </dd>
 <dt id="data.dataset.DatasetCreateInputsData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[<a title="data.dataset.DatasetCreateInputsImagesParametersData" href="#data.dataset.DatasetCreateInputsImagesParametersData">DatasetCreateInputsImagesParametersData</a>, <a title="data.dataset.DatasetCreateInputsTextParametersData" href="#data.dataset.DatasetCreateInputsTextParametersData">DatasetCreateInputsTextParametersData</a>, <a title="data.dataset.DatasetCreateInputsAudioParametersData" href="#data.dataset.DatasetCreateInputsAudioParametersData">DatasetCreateInputsAudioParametersData</a>, <a title="data.dataset.DatasetCreateInputsDataframeParametersData" href="#data.dataset.DatasetCreateInputsDataframeParametersData">DatasetCreateInputsDataframeParametersData</a>, NoneType]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <a href="dataset.html#data.dataset.DatasetCreateInputsData.type"><code>data.dataset.DatasetCreateInputsData.type</code></a></p></div>
 </dd>
 <dt id="data.dataset.DatasetCreateInputsData.type"><code class="name">var <span class="ident">type</span> : <a title="data.extra.InputTypeChoice" href="extra.html#data.extra.InputTypeChoice">InputTypeChoice</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Тип данных</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -676,12 +789,25 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>data: Union[List[Union[dict, <a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Уникальный список, идентификатор которого определяется в <a href="mixins.html#data.mixins.UniqueListMixin.Meta"><code>Meta.identifier</code></a></p></div>
+<div class="desc"><p>Список <code>input</code>-слоев, основанных на <a href="dataset.html#data.dataset.DatasetCreateInputsData"><code>data.dataset.DatasetCreateInputsData</code></a></p>
+<pre><code>class Meta:
+    source = data.dataset.DatasetCreateInputsData
+    identifier = &quot;alias&quot;
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateInputsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список `input`-слоев, основанных на [`data.dataset.DatasetCreateInputsData`](dataset.html#data.dataset.DatasetCreateInputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateInputsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetCreateInputsData
         identifier = &#34;alias&#34;</code></pre>
@@ -698,7 +824,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.UniqueListMixin.Meta" href="mixins.html#data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.append" href="mixins.html#data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.dict" href="mixins.html#data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.get" href="mixins.html#data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -708,12 +839,16 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>Список возможных типов данных для <code>input</code>-слоя в виде строк</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateInputsParameters(str, Enum):
+    &#34;&#34;&#34;
+    Список возможных типов данных для `input`-слоя в виде строк
+    &#34;&#34;&#34;
+
     images = &#34;DatasetCreateInputsImagesParametersData&#34;
     text = &#34;DatasetCreateInputsTextParametersData&#34;
     audio = &#34;DatasetCreateInputsAudioParametersData&#34;
@@ -971,7 +1106,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Расширение модели идентификатором <code>alias</code>.</p>
+<div class="desc"><p>Информация о <code>output</code>-слое</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -979,9 +1114,16 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateOutputsData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о `output`-слое
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     type: extra.OutputTypeChoice
+    &#34;Тип данных&#34;
     parameters: Optional[Union[DatasetCreateOutputsParametersUnion]]
+    &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dataset.DatasetCreateOutputsData.type`](dataset.html#data.dataset.DatasetCreateOutputsData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: extra.OutputTypeChoice) -&gt; extra.OutputTypeChoice:
@@ -1008,15 +1150,15 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetCreateOutputsData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Название</p></div>
 </dd>
 <dt id="data.dataset.DatasetCreateOutputsData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[<a title="data.dataset.DatasetCreateOutputsImagesParametersData" href="#data.dataset.DatasetCreateOutputsImagesParametersData">DatasetCreateOutputsImagesParametersData</a>, <a title="data.dataset.DatasetCreateOutputsTextParametersData" href="#data.dataset.DatasetCreateOutputsTextParametersData">DatasetCreateOutputsTextParametersData</a>, <a title="data.dataset.DatasetCreateOutputsAudioParametersData" href="#data.dataset.DatasetCreateOutputsAudioParametersData">DatasetCreateOutputsAudioParametersData</a>, <a title="data.dataset.DatasetCreateOutputsClassificationParametersData" href="#data.dataset.DatasetCreateOutputsClassificationParametersData">DatasetCreateOutputsClassificationParametersData</a>, <a title="data.dataset.DatasetCreateOutputsSegmentationParametersData" href="#data.dataset.DatasetCreateOutputsSegmentationParametersData">DatasetCreateOutputsSegmentationParametersData</a>, <a title="data.dataset.DatasetCreateOutputsTextSegmentationParametersData" href="#data.dataset.DatasetCreateOutputsTextSegmentationParametersData">DatasetCreateOutputsTextSegmentationParametersData</a>, <a title="data.dataset.DatasetCreateOutputsRegressionParametersData" href="#data.dataset.DatasetCreateOutputsRegressionParametersData">DatasetCreateOutputsRegressionParametersData</a>, <a title="data.dataset.DatasetCreateOutputsTimeseriesParametersData" href="#data.dataset.DatasetCreateOutputsTimeseriesParametersData">DatasetCreateOutputsTimeseriesParametersData</a>, NoneType]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <a href="dataset.html#data.dataset.DatasetCreateOutputsData.type"><code>data.dataset.DatasetCreateOutputsData.type</code></a></p></div>
 </dd>
 <dt id="data.dataset.DatasetCreateOutputsData.type"><code class="name">var <span class="ident">type</span> : <a title="data.extra.OutputTypeChoice" href="extra.html#data.extra.OutputTypeChoice">OutputTypeChoice</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Тип данных</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -1097,12 +1239,25 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>data: Union[List[Union[dict, <a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Уникальный список, идентификатор которого определяется в <a href="mixins.html#data.mixins.UniqueListMixin.Meta"><code>Meta.identifier</code></a></p></div>
+<div class="desc"><p>Список <code>output</code>-слоев, основанных на <a href="dataset.html#data.dataset.DatasetCreateOutputsData"><code>data.dataset.DatasetCreateOutputsData</code></a></p>
+<pre><code>class Meta:
+    source = data.dataset.DatasetCreateOutputsData
+    identifier = &quot;alias&quot;
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateOutputsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список `output`-слоев, основанных на [`data.dataset.DatasetCreateOutputsData`](dataset.html#data.dataset.DatasetCreateOutputsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetCreateOutputsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetCreateOutputsData
         identifier = &#34;alias&#34;</code></pre>
@@ -1119,7 +1274,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.UniqueListMixin.Meta" href="mixins.html#data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.append" href="mixins.html#data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.dict" href="mixins.html#data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.get" href="mixins.html#data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1129,12 +1289,16 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>Список возможных типов данных для <code>output</code>-слоя в виде строк</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetCreateOutputsParameters(str, Enum):
+    &#34;&#34;&#34;
+    Список возможных типов данных для `output`-слоя в виде строк
+    &#34;&#34;&#34;
+
     images = &#34;DatasetCreateOutputsImagesParametersData&#34;
     text = &#34;DatasetCreateOutputsTextParametersData&#34;
     audio = &#34;DatasetCreateOutputsAudioParametersData&#34;
@@ -1450,7 +1614,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Расширение модели идентификатором <code>alias</code>.</p>
+<div class="desc"><p>Информация о датасете</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -1458,10 +1622,18 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetData(mixins.AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о датасете
+    &#34;&#34;&#34;
+
     name: str
+    &#34;Название&#34;
     size: Optional[extra.SizeData]
+    &#34;Вес&#34;
     date: Optional[datetime]
-    tags: DatasetTagsListData = DatasetTagsListData()</code></pre>
+    &#34;Дата создания&#34;
+    tags: DatasetTagsListData = DatasetTagsListData()
+    &#34;Список тегов&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1474,19 +1646,19 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetData.date"><code class="name">var <span class="ident">date</span> : Union[datetime.datetime, NoneType]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Дата создания</p></div>
 </dd>
 <dt id="data.dataset.DatasetData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Название</p></div>
 </dd>
 <dt id="data.dataset.DatasetData.size"><code class="name">var <span class="ident">size</span> : Union[<a title="data.extra.SizeData" href="extra.html#data.extra.SizeData">SizeData</a>, NoneType]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Вес</p></div>
 </dd>
 <dt id="data.dataset.DatasetData.tags"><code class="name">var <span class="ident">tags</span> : <a title="data.dataset.DatasetTagsListData" href="#data.dataset.DatasetTagsListData">DatasetTagsListData</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Список тегов</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -1505,7 +1677,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<div class="desc"><p>Информация для загрузки исходников датасета</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -1513,8 +1685,14 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetSourceData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Информация для загрузки исходников датасета
+    &#34;&#34;&#34;
+
     mode: extra.DatasetSourceModeChoice
+    &#34;Режим загрузки исходных данных&#34;
     value: Union[FilePath, HttpUrl]
+    &#34;Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима [`data.dataset.DatasetSourceData.mode`](dataset.html#data.dataset.DatasetSourceData.mode)&#34;
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
@@ -1543,11 +1721,11 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetSourceData.mode"><code class="name">var <span class="ident">mode</span> : <a title="data.extra.DatasetSourceModeChoice" href="extra.html#data.extra.DatasetSourceModeChoice">DatasetSourceModeChoice</a></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Режим загрузки исходных данных</p></div>
 </dd>
 <dt id="data.dataset.DatasetSourceData.value"><code class="name">var <span class="ident">value</span> : Union[pydantic.types.FilePath, pydantic.networks.HttpUrl]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима <a href="dataset.html#data.dataset.DatasetSourceData.mode"><code>data.dataset.DatasetSourceData.mode</code></a></p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -1565,7 +1743,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Расширение модели идентификатором <code>alias</code>.</p>
+<div class="desc"><p>Информация о теге</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
@@ -1573,7 +1751,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetTagsData(mixins.AliasMixinData):
-    name: str</code></pre>
+    &#34;&#34;&#34;
+    Информация о теге
+    &#34;&#34;&#34;
+
+    name: str
+    &#34;Название&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1586,7 +1769,7 @@ class DatasetCreateData(mixins.BaseMixinData):
 <dl>
 <dt id="data.dataset.DatasetTagsData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Название</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -1605,12 +1788,25 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>data: Union[List[Union[dict, <a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Уникальный список, идентификатор которого определяется в <a href="mixins.html#data.mixins.UniqueListMixin.Meta"><code>Meta.identifier</code></a></p></div>
+<div class="desc"><p>Список тегов, основанных на <a href="dataset.html#data.dataset.DatasetTagsData"><code>data.dataset.DatasetTagsData</code></a></p>
+<pre><code>class Meta:
+    source = data.dataset.DatasetTagsData
+    identifier = &quot;alias&quot;
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetTagsListData(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список тегов, основанных на [`data.dataset.DatasetTagsData`](dataset.html#data.dataset.DatasetTagsData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetTagsData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetTagsData
         identifier = &#34;alias&#34;</code></pre>
@@ -1627,7 +1823,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.UniqueListMixin.Meta" href="mixins.html#data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.append" href="mixins.html#data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.dict" href="mixins.html#data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.get" href="mixins.html#data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1637,12 +1838,25 @@ class DatasetCreateData(mixins.BaseMixinData):
 <span>(</span><span>data: Union[List[Union[dict, <a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Уникальный список, идентификатор которого определяется в <a href="mixins.html#data.mixins.UniqueListMixin.Meta"><code>Meta.identifier</code></a></p></div>
+<div class="desc"><p>Список датасетов, основанных на <a href="dataset.html#data.dataset.DatasetData"><code>data.dataset.DatasetData</code></a></p>
+<pre><code>class Meta:
+    source = data.dataset.DatasetData
+    identifier = &quot;alias&quot;
+</code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetsList(mixins.UniqueListMixin):
+    &#34;&#34;&#34;
+    Список датасетов, основанных на [`data.dataset.DatasetData`](dataset.html#data.dataset.DatasetData)
+    ```
+    class Meta:
+        source = data.dataset.DatasetData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
     class Meta:
         source = DatasetData
         identifier = &#34;alias&#34;</code></pre>
@@ -1659,7 +1873,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.UniqueListMixin.Meta" href="mixins.html#data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.append" href="mixins.html#data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.dict" href="mixins.html#data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.get" href="mixins.html#data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
+<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1678,6 +1897,12 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="data" href="index.html">data</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-variables">Global variables</a></h3>
+<ul class="">
+<li><code><a title="data.dataset.DatasetCreateInputsParametersUnion" href="#data.dataset.DatasetCreateInputsParametersUnion">DatasetCreateInputsParametersUnion</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateOutputsParametersUnion" href="#data.dataset.DatasetCreateOutputsParametersUnion">DatasetCreateOutputsParametersUnion</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>

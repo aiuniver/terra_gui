@@ -60,7 +60,35 @@ class AliasMixinData(BaseMixinData):
 
 class UniqueListMixin(List):
     """
-    Уникальный список, идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    Уникальный список, состоящий из [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData), идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    ```
+    class SomeData(data.mixins.AliasMixinData):
+        name: str
+
+    class SomeUniqueList(data.mixins.UniqueListMixin):
+        class Meta:
+            source = SomeData
+            identifier = "alias"
+
+    some_unique_list = SomeUniqueList(
+        [
+            {
+                "alias": "some_alias",
+                "name": "Some name",
+            },
+            {
+                "alias": "some_second_alias",
+                "name": "Some second name",
+            }
+        ]
+    )
+
+    >> some_unique_list
+    [SomeData(alias='some_alias', name='Some name'), SomeData(alias='some_second_alias', name='Some second name')]
+
+    >> type(some_unique_list)
+    <class '__main__.SomeUniqueList'>
+    ```
     """
 
     class Meta:
@@ -93,6 +121,18 @@ class UniqueListMixin(List):
 
     @property
     def ids(self) -> list:
+        """
+        Список всех идентификаторов текущего списка элементов
+        ```
+        >> ids = some_unique_list.ids
+
+        >> ids
+        ['some_alias', 'some_second_alias']
+
+        >> type(ids)
+        <class 'list'>
+        ```
+        """
         if not len(self):
             return []
         if self.Meta.identifier not in self[0].schema().get("properties").keys():
@@ -102,21 +142,92 @@ class UniqueListMixin(List):
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
     def get(self, name: str) -> Optional[Meta.source]:
+        """
+        Получение элемента по уникальному идентификатору
+        ```
+        >> some_element = some_unique_list.get("some_alias")
+
+        >> some_element
+        SomeData(alias='some_alias', name='Some name')
+        ```
+        """
         __ids = self.ids
         if name not in __ids:
             return None
         return self[__ids.index(name)]
 
     def dict(self) -> List[dict]:
+        """
+        Получить структуру в виде `List[dict]`
+        ```
+        >> data_dict = some_unique_list.dict()
+
+        >> data_dict
+        [{'alias': 'some_alias', 'name': 'Some name'}, {'alias': 'some_second_alias', 'name': 'Some second name'}]
+
+        >> type(data_dict)
+        <class 'list'>
+        ```
+        """
         return list(map(lambda item: item.dict(), self))
 
     def json(self) -> str:
-        return list(map(lambda item: item.json(), self))
+        """
+        Получить `json`-строку
+        ```
+        >> data_json = some_unique_list.json()
+
+        >> data_json
+        '[{"alias": "some_alias", "name": "Some name"}, {"alias": "some_second_alias", "name": "Some second name"}]'
+
+        >> type(data_json)
+        <class 'str'>
+        ```
+        """
+        return json.dumps(self.dict(), ensure_ascii=False)
 
     def json_indent(self) -> str:
+        """
+        Получить форматированную `json`-строку
+        ```
+        >> data_json_indent = some_unique_list.json_indent()
+
+        >> data_json_indent
+        '[\\n  {\\n    "alias": "some_alias",\\n    "name": "Some name"\\n  },\\n  {\\n    "alias": "some_second_alias",\\n    "name": "Some second name"\\n  }\\n]'
+
+        >> print(data_json_indent)
+        [
+          {
+            "alias": "some_alias",
+            "name": "Some name"
+          },
+          {
+            "alias": "some_second_alias",
+            "name": "Some second name"
+          }
+        ]
+
+        >> type(data_json_indent)
+        <class 'str'>
+        ```
+        """
         return json.dumps(self.dict(), indent=2, ensure_ascii=False)
 
     def append(self, __object: Union[dict, Meta.source]):
+        """
+        Добавить объект в конец списка в случае, если уникальный идентификатор не найден в списке. Если же идентификатор уже существует, то заменяются текущие данные
+        ```
+        >> some_unique_list.append({"alias": "some_alias_append", "name": "Some name append"})
+
+        >> some_unique_list
+        [SomeData(alias='some_alias', name='Some name'), SomeData(alias='some_second_alias', name='Some second name'), SomeData(alias='some_alias_append', name='Some name append')]
+
+        >> some_unique_list.append({"alias": "some_alias", "name": "Some name 2"})
+
+        >> some_unique_list
+        [SomeData(alias='some_alias', name='Some name 2'), SomeData(alias='some_second_alias', name='Some second name'), SomeData(alias='some_alias_append', name='Some name append')]
+        ```
+        """
         try:
             if not isinstance(__object, (self.Meta.source,)):
                 __object = self.Meta.source(**__object)
@@ -134,6 +245,20 @@ class UniqueListMixin(List):
             super().append(__object)
 
     def insert(self, __index: int, __object: Union[dict, Meta.source]):
+        """
+        Добавить объект в конкретную позицию списка. Если уникальный идентификатор уже существует, то старое значение удаляется, а новое добавляется на конкретную позицию
+        ```
+        >> some_unique_list.insert(1, {"alias": "some_alias_insert", "name": "Some name insert"})
+
+        >> some_unique_list
+        [SomeData(alias='some_alias', name='Some name'), SomeData(alias='some_alias_insert', name='Some name insert'), SomeData(alias='some_second_alias', name='Some second name')]
+
+        >> some_unique_list.insert(1, {"alias": "some_alias", "name": "Some name 2"})
+
+        >> some_unique_list
+        [SomeData(alias='some_alias_insert', name='Some name insert'), SomeData(alias='some_alias', name='Some name 2'), SomeData(alias='some_second_alias', name='Some second name')]
+        ```
+        """
         try:
             if not isinstance(__object, (self.Meta.source,)):
                 __object = self.Meta.source(**__object)

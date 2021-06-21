@@ -36,16 +36,32 @@ from pydantic import BaseModel
 
 
 class SizeData(BaseModel):
+    &#34;&#34;&#34;
+    Вес файла
+    &#34;&#34;&#34;
+
     value: float
+    &#34;Значение веса `34.56`&#34;
     unit: str
+    &#34;Единицы измерения: `Мб`&#34;
 
 
 class DatasetSourceModeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Метод загрузки исходных данных для создания датасета
+    &#34;&#34;&#34;
+
     google_drive = &#34;google_drive&#34;
+    &#34;Использовать путь к архиву в папке Google-диска&#34;
     url = &#34;url&#34;
+    &#34;Использовать ссылку на архив&#34;
 
 
 class InputTypeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Типы данных для `input`-слоев
+    &#34;&#34;&#34;
+
     images = &#34;images&#34;
     text = &#34;text&#34;
     audio = &#34;audio&#34;
@@ -53,6 +69,10 @@ class InputTypeChoice(str, Enum):
 
 
 class OutputTypeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Типы данных для `output`-слоев
+    &#34;&#34;&#34;
+
     images = &#34;images&#34;
     text = &#34;text&#34;
     audio = &#34;audio&#34;
@@ -98,14 +118,20 @@ class LayerTaskTypeChoice(str, Enum):
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>Метод загрузки исходных данных для создания датасета</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DatasetSourceModeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Метод загрузки исходных данных для создания датасета
+    &#34;&#34;&#34;
+
     google_drive = &#34;google_drive&#34;
-    url = &#34;url&#34;</code></pre>
+    &#34;Использовать путь к архиву в папке Google-диска&#34;
+    url = &#34;url&#34;
+    &#34;Использовать ссылку на архив&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -116,11 +142,11 @@ class LayerTaskTypeChoice(str, Enum):
 <dl>
 <dt id="data.extra.DatasetSourceModeChoice.google_drive"><code class="name">var <span class="ident">google_drive</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Использовать путь к архиву в папке Google-диска</p></div>
 </dd>
 <dt id="data.extra.DatasetSourceModeChoice.url"><code class="name">var <span class="ident">url</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Использовать ссылку на архив</p></div>
 </dd>
 </dl>
 </dd>
@@ -129,12 +155,16 @@ class LayerTaskTypeChoice(str, Enum):
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>Типы данных для <code>input</code>-слоев</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class InputTypeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Типы данных для `input`-слоев
+    &#34;&#34;&#34;
+
     images = &#34;images&#34;
     text = &#34;text&#34;
     audio = &#34;audio&#34;
@@ -299,12 +329,16 @@ class LayerTaskTypeChoice(str, Enum):
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>An enumeration.</p></div>
+<div class="desc"><p>Типы данных для <code>output</code>-слоев</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class OutputTypeChoice(str, Enum):
+    &#34;&#34;&#34;
+    Типы данных для `output`-слоев
+    &#34;&#34;&#34;
+
     images = &#34;images&#34;
     text = &#34;text&#34;
     audio = &#34;audio&#34;
@@ -360,15 +394,22 @@ class LayerTaskTypeChoice(str, Enum):
 <span>(</span><span>**data: Any)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<div class="desc"><p>Вес файла</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class SizeData(BaseModel):
+    &#34;&#34;&#34;
+    Вес файла
+    &#34;&#34;&#34;
+
     value: float
-    unit: str</code></pre>
+    &#34;Значение веса `34.56`&#34;
+    unit: str
+    &#34;Единицы измерения: `Мб`&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -379,11 +420,11 @@ class LayerTaskTypeChoice(str, Enum):
 <dl>
 <dt id="data.extra.SizeData.unit"><code class="name">var <span class="ident">unit</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Единицы измерения: <code>Мб</code></p></div>
 </dd>
 <dt id="data.extra.SizeData.value"><code class="name">var <span class="ident">value</span> : float</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Значение веса <code>34.56</code></p></div>
 </dd>
 </dl>
 </dd>

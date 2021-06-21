@@ -7,16 +7,32 @@ from pydantic import BaseModel
 
 
 class SizeData(BaseModel):
+    """
+    Вес файла
+    """
+
     value: float
+    "Значение веса `34.56`"
     unit: str
+    "Единицы измерения: `Мб`"
 
 
 class DatasetSourceModeChoice(str, Enum):
+    """
+    Метод загрузки исходных данных для создания датасета
+    """
+
     google_drive = "google_drive"
+    "Использовать путь к архиву в папке Google-диска"
     url = "url"
+    "Использовать ссылку на архив"
 
 
 class InputTypeChoice(str, Enum):
+    """
+    Типы данных для `input`-слоев
+    """
+
     images = "images"
     text = "text"
     audio = "audio"
@@ -24,6 +40,10 @@ class InputTypeChoice(str, Enum):
 
 
 class OutputTypeChoice(str, Enum):
+    """
+    Типы данных для `output`-слоев
+    """
+
     images = "images"
     text = "text"
     audio = "audio"
