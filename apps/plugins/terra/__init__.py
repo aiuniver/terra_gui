@@ -1,4 +1,4 @@
-from terra_ai.data.dataset import DatasetData, DatasetsList, Project
+from terra_ai.data.dataset import DatasetCreateData, DatasetData, DatasetsList
 from .exchange import TerraExchange
 
 terra_exchange = TerraExchange()
@@ -36,31 +36,49 @@ data = [
 ]
 data_one = {"alias": "mnist", "name": "Договоры"}
 data_two = {"alias": "mnist", "name": "Квартиры"}
-print("--------------------------")
-print("Один датасет")
-print(DatasetData(**data[2]))
-print("--------------------------")
-print("Список датасетов")
-dd = DatasetsList(data)
-print(dd)
-print("--------------------------")
-print("Добавили в список")
-dd.append(data_one)
-print(dd)
-print("--------------------------")
-print("Добавили в список по индексу")
-dd.insert(0, data_two)
-print(dd)
-print("--------------------------")
-print("Проверка работы переменных ссылок")
-print(dd)
-mnist: DatasetData = dd.get("mnist")
-mnist.name = "NewMnist"
-print(dd)
-print("--------------------------")
-print("Ключи датасетов")
-print(dd.ids)
-print("--------------------------")
-print("Получаем по ключу датасет")
-print(dd.get("mnist"))
-print("--------------------------")
+# print("--------------------------")
+# print("Один датасет")
+# print(DatasetData(**data[2]))
+# print("--------------------------")
+# print("Список датасетов")
+# dd = DatasetsList(data)
+# print(dd)
+# print("--------------------------")
+# print("Добавили в список")
+# dd.append(data_one)
+# print(dd)
+# print("--------------------------")
+# print("Добавили в список по индексу")
+# dd.insert(0, data_two)
+# print(dd)
+# print("--------------------------")
+# print("Проверка работы переменных ссылок")
+# print(dd)
+# mnist: DatasetData = dd.get("mnist")
+# mnist.name = "NewMnist"
+# print(dd)
+# print("--------------------------")
+# print("Ключи датасетов")
+# print(dd.ids)
+# print("--------------------------")
+# print("Получаем по ключу датасет")
+# print(dd.get("mnist"))
+# print("--------------------------")
+print(
+    DatasetCreateData(
+        inputs=[
+            {
+                "alias": "input_1",
+                "name": "Input 1",
+                "type": "dataframe",
+                "parameters": {
+                    "length": "100",
+                    "step": "30",
+                    "max_words_count": "20000",
+                    "prepare_method": "word_to_vec",
+                    "word_to_vec_size": "239",
+                },
+            }
+        ]
+    )
+)

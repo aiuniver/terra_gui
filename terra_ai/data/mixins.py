@@ -1,45 +1,45 @@
-import re
+import json
 
 from typing import List, Union, Optional
-from pydantic import BaseModel, validator
+from pydantic import validator, BaseModel, ValidationError
+
+from . import validators
 
 
 class BaseMixinData(BaseModel):
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            if UniqueListMixinData in __type.__mro__:
-                data.update({__name: __type(data.get(__name, __type()))})
+            try:
+                if UniqueListMixin in __type.__mro__:
+                    data.update({__name: __type(data.get(__name, __type()))})
+            except AttributeError:
+                pass
         super().__init__(**data)
 
     def dict(self, **kwargs):
         data = super().dict()
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            if UniqueListMixinData in __type.__mro__:
-                data.update(
-                    {
-                        __name: list(
-                            map(lambda item: item.dict(), data.get(__name, __type()))
-                        )
-                    }
-                )
+            try:
+                if UniqueListMixin in __type.__mro__:
+                    __value = map(lambda item: item.dict(), data.get(__name, __type()))
+                    data.update({__name: list(__value)})
+            except AttributeError:
+                pass
         return data
+
+    def json_indent(self) -> str:
+        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
 
 
 class AliasMixinData(BaseMixinData):
     alias: str
 
-    @validator("alias", allow_reuse=True)
-    def validate_alias(cls, value):
-        if not re.match("^[a-z]+[a-z0-9_]*$", value):
-            raise ValueError(
-                f'{value}: It is allowed to use only lowercase latin characters, numbers and the "_" sign, must always begin with a latin character'
-            )
-        return value
+    _validate_alias = validator("alias", allow_reuse=True)(validators.validate_alias)
 
 
-class UniqueListMixinData(List):
+class UniqueListMixin(List):
     class Meta:
         source: BaseMixinData = BaseMixinData
         identifier: str
@@ -47,10 +47,7 @@ class UniqueListMixinData(List):
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
         if not data:
             data = []
-        try:
-            data = list(map(lambda item: self.Meta.source(**item), data))
-        except TypeError:
-            pass
+        data = list(map(lambda item: self.Meta.source(**item), data))
         __data = []
         for item in data:
             if item.dict().get(self.Meta.identifier) not in list(
@@ -80,6 +77,9 @@ class UniqueListMixinData(List):
 
     def json(self) -> str:
         return list(map(lambda item: item.json(), self))
+
+    def json_indent(self) -> str:
+        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
 
     def append(self, __object: Union[dict, Meta.source]):
         try:
