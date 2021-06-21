@@ -40,6 +40,10 @@ from . import validators
 
 
 class BaseMixinData(BaseModel):
+    &#34;&#34;&#34;
+    Базовая модель, которая должна применяться ко всем структурам.
+    &#34;&#34;&#34;
+
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -51,6 +55,9 @@ class BaseMixinData(BaseModel):
         super().__init__(**data)
 
     def dict(self, **kwargs):
+        &#34;&#34;&#34;
+        Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
+        &#34;&#34;&#34;
         data = super().dict()
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -63,17 +70,41 @@ class BaseMixinData(BaseModel):
         return data
 
     def json_indent(self) -&gt; str:
+        &#34;&#34;&#34;
+        Получение форматированной json-строки
+        &#34;&#34;&#34;
         return json.dumps(self.dict(), indent=2, ensure_ascii=False)
 
 
 class AliasMixinData(BaseMixinData):
+    &#34;&#34;&#34;
+    Расширение модели идентификатором `alias`.
+    &#34;&#34;&#34;
+
     alias: str
+    &#34;Применяется валидатор [`data.validators.validate_alias`](validators.html#data.validators.validate_alias)&#34;
 
     _validate_alias = validator(&#34;alias&#34;, allow_reuse=True)(validators.validate_alias)
 
 
 class UniqueListMixin(List):
+    &#34;&#34;&#34;
+    Уникальный список, идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    &#34;&#34;&#34;
+
     class Meta:
+        &#34;&#34;&#34;
+        Мета-данные необходимые для определения типа данных в списке и поля-идентификатора
+        ```
+        source: BaseMixinData = BaseMixinData
+        ```
+        - может быть любой структурой, основанной на [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData)
+        ```
+        identifier: str
+        ```
+        - поле-идентификатор, обычно используется [`data.mixins.AliasMixinData.alias`](mixins.html#data.mixins.AliasMixinData.alias)
+        &#34;&#34;&#34;
+
         source: BaseMixinData = BaseMixinData
         identifier: str
 
@@ -168,14 +199,20 @@ class UniqueListMixin(List):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<div class="desc"><p>Расширение модели идентификатором <code>alias</code>.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class AliasMixinData(BaseMixinData):
+    &#34;&#34;&#34;
+    Расширение модели идентификатором `alias`.
+    &#34;&#34;&#34;
+
     alias: str
+    &#34;Применяется валидатор [`data.validators.validate_alias`](validators.html#data.validators.validate_alias)&#34;
 
     _validate_alias = validator(&#34;alias&#34;, allow_reuse=True)(validators.validate_alias)</code></pre>
 </details>
@@ -196,7 +233,7 @@ class UniqueListMixin(List):
 <dl>
 <dt id="data.mixins.AliasMixinData.alias"><code class="name">var <span class="ident">alias</span> : str</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Применяется валидатор <a href="validators.html#data.validators.validate_alias"><code>data.validators.validate_alias</code></a></p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -204,6 +241,7 @@ class UniqueListMixin(List):
 <li><code><b><a title="data.mixins.BaseMixinData" href="#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="#data.mixins.BaseMixinData.dict">dict</a></code></li>
+<li><code><a title="data.mixins.BaseMixinData.json_indent" href="#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -213,13 +251,18 @@ class UniqueListMixin(List):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class BaseMixinData(BaseModel):
+    &#34;&#34;&#34;
+    Базовая модель, которая должна применяться ко всем структурам.
+    &#34;&#34;&#34;
+
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -231,6 +274,9 @@ class UniqueListMixin(List):
         super().__init__(**data)
 
     def dict(self, **kwargs):
+        &#34;&#34;&#34;
+        Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
+        &#34;&#34;&#34;
         data = super().dict()
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -243,6 +289,9 @@ class UniqueListMixin(List):
         return data
 
     def json_indent(self) -&gt; str:
+        &#34;&#34;&#34;
+        Получение форматированной json-строки
+        &#34;&#34;&#34;
         return json.dumps(self.dict(), indent=2, ensure_ascii=False)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -274,12 +323,15 @@ class UniqueListMixin(List):
 <span>def <span class="ident">dict</span></span>(<span>self, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Generate a dictionary representation of the model, optionally specifying which fields to include or exclude.</p></div>
+<div class="desc"><p>Необходима предобработка на случай, если структура основана на <a href="mixins.html#data.mixins.UniqueListMixin"><code>mixins.UniqueListMixin</code></a></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def dict(self, **kwargs):
+    &#34;&#34;&#34;
+    Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
+    &#34;&#34;&#34;
     data = super().dict()
     for __name, __field in self.__fields__.items():
         __type = __field.type_
@@ -296,12 +348,15 @@ class UniqueListMixin(List):
 <span>def <span class="ident">json_indent</span></span>(<span>self) ‑> str</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Получение форматированной json-строки</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def json_indent(self) -&gt; str:
+    &#34;&#34;&#34;
+    Получение форматированной json-строки
+    &#34;&#34;&#34;
     return json.dumps(self.dict(), indent=2, ensure_ascii=False)</code></pre>
 </details>
 </dd>
@@ -312,15 +367,29 @@ class UniqueListMixin(List):
 <span>(</span><span>data: Union[List[Union[dict, <a title="data.mixins.BaseMixinData" href="#data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Built-in mutable sequence.</p>
-<p>If no argument is given, the constructor creates a new empty list.
-The argument must be an iterable if specified.</p></div>
+<div class="desc"><p>Уникальный список, идентификатор которого определяется в <a href="mixins.html#data.mixins.UniqueListMixin.Meta"><code>Meta.identifier</code></a></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class UniqueListMixin(List):
+    &#34;&#34;&#34;
+    Уникальный список, идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    &#34;&#34;&#34;
+
     class Meta:
+        &#34;&#34;&#34;
+        Мета-данные необходимые для определения типа данных в списке и поля-идентификатора
+        ```
+        source: BaseMixinData = BaseMixinData
+        ```
+        - может быть любой структурой, основанной на [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData)
+        ```
+        identifier: str
+        ```
+        - поле-идентификатор, обычно используется [`data.mixins.AliasMixinData.alias`](mixins.html#data.mixins.AliasMixinData.alias)
+        &#34;&#34;&#34;
+
         source: BaseMixinData = BaseMixinData
         identifier: str
 
@@ -416,7 +485,17 @@ The argument must be an iterable if specified.</p></div>
 <dl>
 <dt id="data.mixins.UniqueListMixin.Meta"><code class="name">var <span class="ident">Meta</span></code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Мета-данные необходимые для определения типа данных в списке и поля-идентификатора</p>
+<pre><code>source: BaseMixinData = BaseMixinData
+</code></pre>
+<ul>
+<li>может быть любой структурой, основанной на <a href="mixins.html#data.mixins.BaseMixinData"><code>data.mixins.BaseMixinData</code></a></li>
+</ul>
+<pre><code>identifier: str
+</code></pre>
+<ul>
+<li>поле-идентификатор, обычно используется <a href="mixins.html#data.mixins.AliasMixinData.alias"><code>data.mixins.AliasMixinData.alias</code></a></li>
+</ul></div>
 </dd>
 </dl>
 <h3>Instance variables</h3>

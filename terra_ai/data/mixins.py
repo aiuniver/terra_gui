@@ -11,6 +11,10 @@ from . import validators
 
 
 class BaseMixinData(BaseModel):
+    """
+    Базовая модель, которая должна применяться ко всем структурам.
+    """
+
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -22,6 +26,9 @@ class BaseMixinData(BaseModel):
         super().__init__(**data)
 
     def dict(self, **kwargs):
+        """
+        Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
+        """
         data = super().dict()
         for __name, __field in self.__fields__.items():
             __type = __field.type_
@@ -34,17 +41,41 @@ class BaseMixinData(BaseModel):
         return data
 
     def json_indent(self) -> str:
+        """
+        Получение форматированной json-строки
+        """
         return json.dumps(self.dict(), indent=2, ensure_ascii=False)
 
 
 class AliasMixinData(BaseMixinData):
+    """
+    Расширение модели идентификатором `alias`.
+    """
+
     alias: str
+    "Применяется валидатор [`data.validators.validate_alias`](validators.html#data.validators.validate_alias)"
 
     _validate_alias = validator("alias", allow_reuse=True)(validators.validate_alias)
 
 
 class UniqueListMixin(List):
+    """
+    Уникальный список, идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    """
+
     class Meta:
+        """
+        Мета-данные необходимые для определения типа данных в списке и поля-идентификатора
+        ```
+        source: BaseMixinData = BaseMixinData
+        ```
+        - может быть любой структурой, основанной на [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData)
+        ```
+        identifier: str
+        ```
+        - поле-идентификатор, обычно используется [`data.mixins.AliasMixinData.alias`](mixins.html#data.mixins.AliasMixinData.alias)
+        """
+
         source: BaseMixinData = BaseMixinData
         identifier: str
 
