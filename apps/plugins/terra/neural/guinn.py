@@ -281,7 +281,7 @@ class GUINN:
                 else:
                     self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False)
 
-                self.nn_name = f"{self.model.name}
+                self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
             except Exception:
                 self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))  # self.Exch.print_error
