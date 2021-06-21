@@ -77,7 +77,7 @@
         sel.addRange(range);
     }
 
-     let RemoveModel = $("#modal-window-remove-dataset").ModalWindow({
+     let RemoveModel = $("#modal-window-remove-model").ModalWindow({
         title:"Удалить модель",
         width:300,
         height:160
@@ -137,7 +137,7 @@
                                 event.preventDefault();
                                 if ($(event.target).hasClass("remove")) {
                                     window.StatusBar.clear();
-                                    RemoveModel.find("form")[0].current_model = $(event.currentTarget).parent();
+                                    RemoveModel.find("form")[0].current_model = $(event.currentTarget).parent()[0];
                                     RemoveModel.open();
                                 }
                             });
@@ -1239,7 +1239,7 @@
         RemoveModel.find("form").bind("submit", (event) => {
             event.preventDefault();
             let current_model = RemoveModel.find("form")[0].current_model,
-                model_name = current_model.attr("data-name");
+                model_name = $(current_model).attr("data-name");
             window.ExchangeRequest(
                 "remove_model",
                 (success, data) => {
@@ -1254,6 +1254,11 @@
                 },
                 {name:model_name}
             )
+        });
+
+        RemoveModel.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            RemoveModel.close();
         });
 
     });

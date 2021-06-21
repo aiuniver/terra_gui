@@ -113,6 +113,22 @@
 
 {% block modal_window %}
 {{ block.super }}
+
+<div id="modal-window-remove-model" class="modal-window-container">
+    <div class="wrapper">
+        <form>
+            <div class="inner">
+                <div class="field-form">
+                    <label>Вы действительно хотите удалить модель?</label>
+                </div>
+            </div>
+            <div class="actions-form">
+                <div class="clear"><button>Да</button></div><div class="cancel"><button>Нет</button></div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="modal-window-load-model" class="modal-window-container">
     <div class="models-data">
         <div class="models-list">
