@@ -41,7 +41,7 @@ class DiceCoefficient(tf.keras.metrics.Metric):
     def result(self):
         return self.dice
 
-    def reset_states(self):
+    def reset_state(self):
         self.dice: float = 0
         # pass
 
