@@ -40,12 +40,6 @@ class BaseMixinData(BaseModel):
                 pass
         return data
 
-    def json_indent(self) -> str:
-        """
-        Получение форматированной json-строки
-        """
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
-
 
 class AliasMixinData(BaseMixinData):
     """
@@ -171,7 +165,7 @@ class UniqueListMixin(List):
         """
         return list(map(lambda item: item.dict(), self))
 
-    def json(self) -> str:
+    def json(self, **kwargs) -> str:
         """
         Получить `json`-строку
         ```
@@ -182,20 +176,10 @@ class UniqueListMixin(List):
 
         >> type(data_json)
         <class 'str'>
-        ```
-        """
-        return json.dumps(self.dict(), ensure_ascii=False)
 
-    def json_indent(self) -> str:
-        """
-        Получить форматированную `json`-строку
-        ```
-        >> data_json_indent = some_unique_list.json_indent()
+        >> data_json_format = some_unique_list.json(indent=2)
 
-        >> data_json_indent
-        '[\\n  {\\n    "alias": "some_alias",\\n    "name": "Some name"\\n  },\\n  {\\n    "alias": "some_second_alias",\\n    "name": "Some second name"\\n  }\\n]'
-
-        >> print(data_json_indent)
+        >> print(data_json_format)
         [
           {
             "alias": "some_alias",
@@ -207,11 +191,11 @@ class UniqueListMixin(List):
           }
         ]
 
-        >> type(data_json_indent)
+        >> type(data_json_format)
         <class 'str'>
         ```
         """
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
+        return json.dumps(self.dict(), **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         """

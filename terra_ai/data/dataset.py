@@ -4,6 +4,7 @@
 
 import sys
 
+from math import fsum
 from enum import Enum
 from datetime import datetime
 from typing import Optional, Union
@@ -383,11 +384,57 @@ class DatasetCreateOutputsList(mixins.UniqueListMixin):
         identifier = "alias"
 
 
+class DatasetCreateInfoPartData(mixins.BaseMixinData):
+    """
+    Доли использования данных для обучающей, тестовой и валидационной выборок"
+    """
+
+    train: float = 0.6
+    "Обучающая выборка"
+    validation: float = 0.3
+    "Валидационная выборка"
+    test: float = 0.1
+    "Тестовая выборка"
+
+    _validate_part_value = validator("train", "validation", "test", allow_reuse=True)(
+        validators.validate_part_value
+    )
+
+    @property
+    def total(self) -> float:
+        return fsum([self.train, self.validation, self.test])
+
+
+class DatasetCreateInfoData(mixins.BaseMixinData):
+    """
+    Информация о данных датасета
+    """
+
+    part: DatasetCreateInfoPartData = DatasetCreateInfoPartData()
+    "Доли выборок"
+    shuffle: Optional[bool] = False
+    "Случайным образом перемешивать элементы"
+
+    @validator("part", allow_reuse=True)
+    def _validate_part(
+        cls, value: DatasetCreateInfoPartData
+    ) -> DatasetCreateInfoPartData:
+        if value.total != float(1):
+            raise ValueError(f"{value}: Sum of all properties must by 1")
+        return value
+
+
 class DatasetCreateData(mixins.BaseMixinData):
     """
     Полная информация о создании датасета
     """
 
+    name: str
+    "Название"
+    info: DatasetCreateInfoData = DatasetCreateInfoData()
+    "Информация о данных"
+    tags: DatasetTagsListData = DatasetTagsListData()
+    "Список тегов"
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
     "`input`-слои"
     outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()

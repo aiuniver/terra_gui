@@ -33,6 +33,7 @@
 
 import sys
 
+from math import fsum
 from enum import Enum
 from datetime import datetime
 from typing import Optional, Union
@@ -412,11 +413,57 @@ class DatasetCreateOutputsList(mixins.UniqueListMixin):
         identifier = &#34;alias&#34;
 
 
+class DatasetCreateInfoPartData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
+    &#34;&#34;&#34;
+
+    train: float = 0.6
+    &#34;Обучающая выборка&#34;
+    validation: float = 0.3
+    &#34;Валидационная выборка&#34;
+    test: float = 0.1
+    &#34;Тестовая выборка&#34;
+
+    _validate_part_value = validator(&#34;train&#34;, &#34;validation&#34;, &#34;test&#34;, allow_reuse=True)(
+        validators.validate_part_value
+    )
+
+    @property
+    def total(self) -&gt; float:
+        return fsum([self.train, self.validation, self.test])
+
+
+class DatasetCreateInfoData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Информация о данных датасета
+    &#34;&#34;&#34;
+
+    part: DatasetCreateInfoPartData = DatasetCreateInfoPartData()
+    &#34;Доли выборок&#34;
+    shuffle: Optional[bool] = False
+    &#34;Случайным образом перемешивать элементы&#34;
+
+    @validator(&#34;part&#34;, allow_reuse=True)
+    def _validate_part(
+        cls, value: DatasetCreateInfoPartData
+    ) -&gt; DatasetCreateInfoPartData:
+        if value.total != float(1):
+            raise ValueError(f&#34;{value}: Sum of all properties must by 1&#34;)
+        return value
+
+
 class DatasetCreateData(mixins.BaseMixinData):
     &#34;&#34;&#34;
     Полная информация о создании датасета
     &#34;&#34;&#34;
 
+    name: str
+    &#34;Название&#34;
+    info: DatasetCreateInfoData = DatasetCreateInfoData()
+    &#34;Информация о данных&#34;
+    tags: DatasetTagsListData = DatasetTagsListData()
+    &#34;Список тегов&#34;
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
     &#34;`input`-слои&#34;
     outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()
@@ -460,6 +507,12 @@ class DatasetCreateData(mixins.BaseMixinData):
     Полная информация о создании датасета
     &#34;&#34;&#34;
 
+    name: str
+    &#34;Название&#34;
+    info: DatasetCreateInfoData = DatasetCreateInfoData()
+    &#34;Информация о данных&#34;
+    tags: DatasetTagsListData = DatasetTagsListData()
+    &#34;Список тегов&#34;
     inputs: DatasetCreateInputsList = DatasetCreateInputsList()
     &#34;`input`-слои&#34;
     outputs: DatasetCreateOutputsList = DatasetCreateOutputsList()
@@ -473,13 +526,25 @@ class DatasetCreateData(mixins.BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="data.dataset.DatasetCreateData.info"><code class="name">var <span class="ident">info</span> : <a title="data.dataset.DatasetCreateInfoData" href="#data.dataset.DatasetCreateInfoData">DatasetCreateInfoData</a></code></dt>
+<dd>
+<div class="desc"><p>Информация о данных</p></div>
+</dd>
 <dt id="data.dataset.DatasetCreateData.inputs"><code class="name">var <span class="ident">inputs</span> : <a title="data.dataset.DatasetCreateInputsList" href="#data.dataset.DatasetCreateInputsList">DatasetCreateInputsList</a></code></dt>
 <dd>
 <div class="desc"><p><code>input</code>-слои</p></div>
 </dd>
+<dt id="data.dataset.DatasetCreateData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Название</p></div>
+</dd>
 <dt id="data.dataset.DatasetCreateData.outputs"><code class="name">var <span class="ident">outputs</span> : <a title="data.dataset.DatasetCreateOutputsList" href="#data.dataset.DatasetCreateOutputsList">DatasetCreateOutputsList</a></code></dt>
 <dd>
 <div class="desc"><p><code>output</code>-слои</p></div>
+</dd>
+<dt id="data.dataset.DatasetCreateData.tags"><code class="name">var <span class="ident">tags</span> : <a title="data.dataset.DatasetTagsListData" href="#data.dataset.DatasetTagsListData">DatasetTagsListData</a></code></dt>
+<dd>
+<div class="desc"><p>Список тегов</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -487,7 +552,139 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="data.dataset.DatasetCreateInfoData"><code class="flex name class">
+<span>class <span class="ident">DatasetCreateInfoData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Информация о данных датасета</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DatasetCreateInfoData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Информация о данных датасета
+    &#34;&#34;&#34;
+
+    part: DatasetCreateInfoPartData = DatasetCreateInfoPartData()
+    &#34;Доли выборок&#34;
+    shuffle: Optional[bool] = False
+    &#34;Случайным образом перемешивать элементы&#34;
+
+    @validator(&#34;part&#34;, allow_reuse=True)
+    def _validate_part(
+        cls, value: DatasetCreateInfoPartData
+    ) -&gt; DatasetCreateInfoPartData:
+        if value.total != float(1):
+            raise ValueError(f&#34;{value}: Sum of all properties must by 1&#34;)
+        return value</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="data.dataset.DatasetCreateInfoData.part"><code class="name">var <span class="ident">part</span> : <a title="data.dataset.DatasetCreateInfoPartData" href="#data.dataset.DatasetCreateInfoPartData">DatasetCreateInfoPartData</a></code></dt>
+<dd>
+<div class="desc"><p>Доли выборок</p></div>
+</dd>
+<dt id="data.dataset.DatasetCreateInfoData.shuffle"><code class="name">var <span class="ident">shuffle</span> : Union[bool, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Случайным образом перемешивать элементы</p></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="data.dataset.DatasetCreateInfoPartData"><code class="flex name class">
+<span>class <span class="ident">DatasetCreateInfoPartData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Доли использования данных для обучающей, тестовой и валидационной выборок"</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DatasetCreateInfoPartData(mixins.BaseMixinData):
+    &#34;&#34;&#34;
+    Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
+    &#34;&#34;&#34;
+
+    train: float = 0.6
+    &#34;Обучающая выборка&#34;
+    validation: float = 0.3
+    &#34;Валидационная выборка&#34;
+    test: float = 0.1
+    &#34;Тестовая выборка&#34;
+
+    _validate_part_value = validator(&#34;train&#34;, &#34;validation&#34;, &#34;test&#34;, allow_reuse=True)(
+        validators.validate_part_value
+    )
+
+    @property
+    def total(self) -&gt; float:
+        return fsum([self.train, self.validation, self.test])</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="data.dataset.DatasetCreateInfoPartData.test"><code class="name">var <span class="ident">test</span> : float</code></dt>
+<dd>
+<div class="desc"><p>Тестовая выборка</p></div>
+</dd>
+<dt id="data.dataset.DatasetCreateInfoPartData.train"><code class="name">var <span class="ident">train</span> : float</code></dt>
+<dd>
+<div class="desc"><p>Обучающая выборка</p></div>
+</dd>
+<dt id="data.dataset.DatasetCreateInfoPartData.validation"><code class="name">var <span class="ident">validation</span> : float</code></dt>
+<dd>
+<div class="desc"><p>Валидационная выборка</p></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="data.dataset.DatasetCreateInfoPartData.total"><code class="name">var <span class="ident">total</span> : float</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def total(self) -&gt; float:
+    return fsum([self.train, self.validation, self.test])</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
 </ul>
 </li>
 </ul>
@@ -584,7 +781,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -655,7 +851,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.AliasMixinData.alias" href="mixins.html#data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="data.mixins.AliasMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.AliasMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -717,7 +912,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -779,7 +973,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -829,7 +1022,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
-<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -961,7 +1153,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1058,7 +1249,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1096,7 +1286,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1167,7 +1356,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.AliasMixinData.alias" href="mixins.html#data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="data.mixins.AliasMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.AliasMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1229,7 +1417,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1279,7 +1466,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
-<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1386,7 +1572,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1417,7 +1602,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1504,7 +1688,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1547,7 +1730,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1604,7 +1786,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1667,7 +1848,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.AliasMixinData.alias" href="mixins.html#data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="data.mixins.AliasMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.AliasMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1733,7 +1913,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><b><a title="data.mixins.BaseMixinData" href="mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1778,7 +1957,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <ul class="hlist">
 <li><code><a title="data.mixins.AliasMixinData.alias" href="mixins.html#data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="data.mixins.AliasMixinData.dict" href="mixins.html#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.AliasMixinData.json_indent" href="mixins.html#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1828,7 +2006,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
-<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1878,7 +2055,6 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li><code><a title="data.mixins.UniqueListMixin.ids" href="mixins.html#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="mixins.html#data.mixins.UniqueListMixin.insert">insert</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.json" href="mixins.html#data.mixins.UniqueListMixin.json">json</a></code></li>
-<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="mixins.html#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1910,8 +2086,27 @@ class DatasetCreateData(mixins.BaseMixinData):
 <li>
 <h4><code><a title="data.dataset.DatasetCreateData" href="#data.dataset.DatasetCreateData">DatasetCreateData</a></code></h4>
 <ul class="">
+<li><code><a title="data.dataset.DatasetCreateData.info" href="#data.dataset.DatasetCreateData.info">info</a></code></li>
 <li><code><a title="data.dataset.DatasetCreateData.inputs" href="#data.dataset.DatasetCreateData.inputs">inputs</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateData.name" href="#data.dataset.DatasetCreateData.name">name</a></code></li>
 <li><code><a title="data.dataset.DatasetCreateData.outputs" href="#data.dataset.DatasetCreateData.outputs">outputs</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateData.tags" href="#data.dataset.DatasetCreateData.tags">tags</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="data.dataset.DatasetCreateInfoData" href="#data.dataset.DatasetCreateInfoData">DatasetCreateInfoData</a></code></h4>
+<ul class="">
+<li><code><a title="data.dataset.DatasetCreateInfoData.part" href="#data.dataset.DatasetCreateInfoData.part">part</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateInfoData.shuffle" href="#data.dataset.DatasetCreateInfoData.shuffle">shuffle</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="data.dataset.DatasetCreateInfoPartData" href="#data.dataset.DatasetCreateInfoPartData">DatasetCreateInfoPartData</a></code></h4>
+<ul class="">
+<li><code><a title="data.dataset.DatasetCreateInfoPartData.test" href="#data.dataset.DatasetCreateInfoPartData.test">test</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateInfoPartData.total" href="#data.dataset.DatasetCreateInfoPartData.total">total</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateInfoPartData.train" href="#data.dataset.DatasetCreateInfoPartData.train">train</a></code></li>
+<li><code><a title="data.dataset.DatasetCreateInfoPartData.validation" href="#data.dataset.DatasetCreateInfoPartData.validation">validation</a></code></li>
 </ul>
 </li>
 <li>

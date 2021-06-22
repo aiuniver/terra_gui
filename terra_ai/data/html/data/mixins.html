@@ -69,12 +69,6 @@ class BaseMixinData(BaseModel):
                 pass
         return data
 
-    def json_indent(self) -&gt; str:
-        &#34;&#34;&#34;
-        Получение форматированной json-строки
-        &#34;&#34;&#34;
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
-
 
 class AliasMixinData(BaseMixinData):
     &#34;&#34;&#34;
@@ -200,7 +194,7 @@ class UniqueListMixin(List):
         &#34;&#34;&#34;
         return list(map(lambda item: item.dict(), self))
 
-    def json(self) -&gt; str:
+    def json(self, **kwargs) -&gt; str:
         &#34;&#34;&#34;
         Получить `json`-строку
         ```
@@ -211,20 +205,10 @@ class UniqueListMixin(List):
 
         &gt;&gt; type(data_json)
         &lt;class &#39;str&#39;&gt;
-        ```
-        &#34;&#34;&#34;
-        return json.dumps(self.dict(), ensure_ascii=False)
 
-    def json_indent(self) -&gt; str:
-        &#34;&#34;&#34;
-        Получить форматированную `json`-строку
-        ```
-        &gt;&gt; data_json_indent = some_unique_list.json_indent()
+        &gt;&gt; data_json_format = some_unique_list.json(indent=2)
 
-        &gt;&gt; data_json_indent
-        &#39;[\\n  {\\n    &#34;alias&#34;: &#34;some_alias&#34;,\\n    &#34;name&#34;: &#34;Some name&#34;\\n  },\\n  {\\n    &#34;alias&#34;: &#34;some_second_alias&#34;,\\n    &#34;name&#34;: &#34;Some second name&#34;\\n  }\\n]&#39;
-
-        &gt;&gt; print(data_json_indent)
+        &gt;&gt; print(data_json_format)
         [
           {
             &#34;alias&#34;: &#34;some_alias&#34;,
@@ -236,11 +220,11 @@ class UniqueListMixin(List):
           }
         ]
 
-        &gt;&gt; type(data_json_indent)
+        &gt;&gt; type(data_json_format)
         &lt;class &#39;str&#39;&gt;
         ```
         &#34;&#34;&#34;
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
+        return json.dumps(self.dict(), **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         &#34;&#34;&#34;
@@ -366,7 +350,6 @@ class UniqueListMixin(List):
 <li><code><b><a title="data.mixins.BaseMixinData" href="#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>
@@ -411,13 +394,7 @@ class UniqueListMixin(List):
                     data.update({__name: list(__value)})
             except AttributeError:
                 pass
-        return data
-
-    def json_indent(self) -&gt; str:
-        &#34;&#34;&#34;
-        Получение форматированной json-строки
-        &#34;&#34;&#34;
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)</code></pre>
+        return data</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -427,6 +404,8 @@ class UniqueListMixin(List):
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="data.dataset.DatasetCreateData" href="dataset.html#data.dataset.DatasetCreateData">DatasetCreateData</a></li>
+<li><a title="data.dataset.DatasetCreateInfoData" href="dataset.html#data.dataset.DatasetCreateInfoData">DatasetCreateInfoData</a></li>
+<li><a title="data.dataset.DatasetCreateInfoPartData" href="dataset.html#data.dataset.DatasetCreateInfoPartData">DatasetCreateInfoPartData</a></li>
 <li><a title="data.dataset.DatasetCreateInputsAudioParametersData" href="dataset.html#data.dataset.DatasetCreateInputsAudioParametersData">DatasetCreateInputsAudioParametersData</a></li>
 <li><a title="data.dataset.DatasetCreateInputsDataframeParametersData" href="dataset.html#data.dataset.DatasetCreateInputsDataframeParametersData">DatasetCreateInputsDataframeParametersData</a></li>
 <li><a title="data.dataset.DatasetCreateInputsImagesParametersData" href="dataset.html#data.dataset.DatasetCreateInputsImagesParametersData">DatasetCreateInputsImagesParametersData</a></li>
@@ -467,22 +446,6 @@ class UniqueListMixin(List):
         except AttributeError:
             pass
     return data</code></pre>
-</details>
-</dd>
-<dt id="data.mixins.BaseMixinData.json_indent"><code class="name flex">
-<span>def <span class="ident">json_indent</span></span>(<span>self) ‑> str</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Получение форматированной json-строки</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def json_indent(self) -&gt; str:
-    &#34;&#34;&#34;
-    Получение форматированной json-строки
-    &#34;&#34;&#34;
-    return json.dumps(self.dict(), indent=2, ensure_ascii=False)</code></pre>
 </details>
 </dd>
 </dl>
@@ -637,7 +600,7 @@ some_unique_list = SomeUniqueList(
         &#34;&#34;&#34;
         return list(map(lambda item: item.dict(), self))
 
-    def json(self) -&gt; str:
+    def json(self, **kwargs) -&gt; str:
         &#34;&#34;&#34;
         Получить `json`-строку
         ```
@@ -648,20 +611,10 @@ some_unique_list = SomeUniqueList(
 
         &gt;&gt; type(data_json)
         &lt;class &#39;str&#39;&gt;
-        ```
-        &#34;&#34;&#34;
-        return json.dumps(self.dict(), ensure_ascii=False)
 
-    def json_indent(self) -&gt; str:
-        &#34;&#34;&#34;
-        Получить форматированную `json`-строку
-        ```
-        &gt;&gt; data_json_indent = some_unique_list.json_indent()
+        &gt;&gt; data_json_format = some_unique_list.json(indent=2)
 
-        &gt;&gt; data_json_indent
-        &#39;[\\n  {\\n    &#34;alias&#34;: &#34;some_alias&#34;,\\n    &#34;name&#34;: &#34;Some name&#34;\\n  },\\n  {\\n    &#34;alias&#34;: &#34;some_second_alias&#34;,\\n    &#34;name&#34;: &#34;Some second name&#34;\\n  }\\n]&#39;
-
-        &gt;&gt; print(data_json_indent)
+        &gt;&gt; print(data_json_format)
         [
           {
             &#34;alias&#34;: &#34;some_alias&#34;,
@@ -673,11 +626,11 @@ some_unique_list = SomeUniqueList(
           }
         ]
 
-        &gt;&gt; type(data_json_indent)
+        &gt;&gt; type(data_json_format)
         &lt;class &#39;str&#39;&gt;
         ```
         &#34;&#34;&#34;
-        return json.dumps(self.dict(), indent=2, ensure_ascii=False)
+        return json.dumps(self.dict(), **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         &#34;&#34;&#34;
@@ -989,7 +942,7 @@ SomeData(alias='some_alias', name='Some name')
 </details>
 </dd>
 <dt id="data.mixins.UniqueListMixin.json"><code class="name flex">
-<span>def <span class="ident">json</span></span>(<span>self) ‑> str</span>
+<span>def <span class="ident">json</span></span>(<span>self, **kwargs) ‑> str</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Получить <code>json</code>-строку</p>
@@ -1000,38 +953,10 @@ SomeData(alias='some_alias', name='Some name')
 
 &gt;&gt; type(data_json)
 &lt;class 'str'&gt;
-</code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def json(self) -&gt; str:
-    &#34;&#34;&#34;
-    Получить `json`-строку
-    ```
-    &gt;&gt; data_json = some_unique_list.json()
 
-    &gt;&gt; data_json
-    &#39;[{&#34;alias&#34;: &#34;some_alias&#34;, &#34;name&#34;: &#34;Some name&#34;}, {&#34;alias&#34;: &#34;some_second_alias&#34;, &#34;name&#34;: &#34;Some second name&#34;}]&#39;
+&gt;&gt; data_json_format = some_unique_list.json(indent=2)
 
-    &gt;&gt; type(data_json)
-    &lt;class &#39;str&#39;&gt;
-    ```
-    &#34;&#34;&#34;
-    return json.dumps(self.dict(), ensure_ascii=False)</code></pre>
-</details>
-</dd>
-<dt id="data.mixins.UniqueListMixin.json_indent"><code class="name flex">
-<span>def <span class="ident">json_indent</span></span>(<span>self) ‑> str</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Получить форматированную <code>json</code>-строку</p>
-<pre><code>&gt;&gt; data_json_indent = some_unique_list.json_indent()
-
-&gt;&gt; data_json_indent
-'[\n  {\n    &quot;alias&quot;: &quot;some_alias&quot;,\n    &quot;name&quot;: &quot;Some name&quot;\n  },\n  {\n    &quot;alias&quot;: &quot;some_second_alias&quot;,\n    &quot;name&quot;: &quot;Some second name&quot;\n  }\n]'
-
-&gt;&gt; print(data_json_indent)
+&gt;&gt; print(data_json_format)
 [
   {
     &quot;alias&quot;: &quot;some_alias&quot;,
@@ -1043,23 +968,28 @@ SomeData(alias='some_alias', name='Some name')
   }
 ]
 
-&gt;&gt; type(data_json_indent)
+&gt;&gt; type(data_json_format)
 &lt;class 'str'&gt;
 </code></pre></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def json_indent(self) -&gt; str:
+<pre><code class="python">def json(self, **kwargs) -&gt; str:
     &#34;&#34;&#34;
-    Получить форматированную `json`-строку
+    Получить `json`-строку
     ```
-    &gt;&gt; data_json_indent = some_unique_list.json_indent()
+    &gt;&gt; data_json = some_unique_list.json()
 
-    &gt;&gt; data_json_indent
-    &#39;[\\n  {\\n    &#34;alias&#34;: &#34;some_alias&#34;,\\n    &#34;name&#34;: &#34;Some name&#34;\\n  },\\n  {\\n    &#34;alias&#34;: &#34;some_second_alias&#34;,\\n    &#34;name&#34;: &#34;Some second name&#34;\\n  }\\n]&#39;
+    &gt;&gt; data_json
+    &#39;[{&#34;alias&#34;: &#34;some_alias&#34;, &#34;name&#34;: &#34;Some name&#34;}, {&#34;alias&#34;: &#34;some_second_alias&#34;, &#34;name&#34;: &#34;Some second name&#34;}]&#39;
 
-    &gt;&gt; print(data_json_indent)
+    &gt;&gt; type(data_json)
+    &lt;class &#39;str&#39;&gt;
+
+    &gt;&gt; data_json_format = some_unique_list.json(indent=2)
+
+    &gt;&gt; print(data_json_format)
     [
       {
         &#34;alias&#34;: &#34;some_alias&#34;,
@@ -1071,11 +1001,11 @@ SomeData(alias='some_alias', name='Some name')
       }
     ]
 
-    &gt;&gt; type(data_json_indent)
+    &gt;&gt; type(data_json_format)
     &lt;class &#39;str&#39;&gt;
     ```
     &#34;&#34;&#34;
-    return json.dumps(self.dict(), indent=2, ensure_ascii=False)</code></pre>
+    return json.dumps(self.dict(), **kwargs)</code></pre>
 </details>
 </dd>
 </dl>
@@ -1108,7 +1038,6 @@ SomeData(alias='some_alias', name='Some name')
 <h4><code><a title="data.mixins.BaseMixinData" href="#data.mixins.BaseMixinData">BaseMixinData</a></code></h4>
 <ul class="">
 <li><code><a title="data.mixins.BaseMixinData.dict" href="#data.mixins.BaseMixinData.dict">dict</a></code></li>
-<li><code><a title="data.mixins.BaseMixinData.json_indent" href="#data.mixins.BaseMixinData.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 <li>
@@ -1121,7 +1050,6 @@ SomeData(alias='some_alias', name='Some name')
 <li><code><a title="data.mixins.UniqueListMixin.ids" href="#data.mixins.UniqueListMixin.ids">ids</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.insert" href="#data.mixins.UniqueListMixin.insert">insert</a></code></li>
 <li><code><a title="data.mixins.UniqueListMixin.json" href="#data.mixins.UniqueListMixin.json">json</a></code></li>
-<li><code><a title="data.mixins.UniqueListMixin.json_indent" href="#data.mixins.UniqueListMixin.json_indent">json_indent</a></code></li>
 </ul>
 </li>
 </ul>

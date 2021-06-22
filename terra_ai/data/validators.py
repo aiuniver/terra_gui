@@ -35,3 +35,12 @@ def validate_positive_integer(value: int) -> Optional[int]:
     if value is not None and value < 1:
         raise ValueError(f"{value}: Value must be greater or equivalent then 1")
     return value
+
+
+def validate_part_value(value: float) -> Optional[float]:
+    """
+    Валидация доли: значение должно быть `float` между `0` и `1`
+    """
+    if value is not None and (value < 0 or value > 1):
+        raise ValueError(f"{value}: Value must be between 0 and 1")
+    return value
