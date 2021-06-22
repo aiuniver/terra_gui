@@ -353,14 +353,22 @@ input[type=button][disabled=disabled]:hover {
 #modal-window-project-load > .models-data > .models-list .loaded-list > li > span {
 	color:#fff;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:hover {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li:hover > span,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li:hover > span {
 	color:#65B9F4;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li.active,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li.active{
+#modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li.active > span {
     color:#65B9F4;
 	background-color:#2B5278;
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > .remove,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > .remove {
+	background-color:rgba(0,0,0,.2);
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > .remove:hover,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > .remove:hover {
+	background-color:rgba(0,0,0,.8);
 }
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
 	color:#A7BED3;

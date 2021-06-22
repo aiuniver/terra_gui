@@ -1245,12 +1245,12 @@
                 (success, data) => {
                     RemoveModel.close();
                     if (success) {
-                        // if (model_name === datasets.dataset) datasets.dataset = "";
                         $(current_model).remove();
                         window.StatusBar.message(window.Messages.get("DATASET_REMOVED", [model_name]), true);
                     } else {
                         window.StatusBar.message(data.error, false);
                     }
+                    $(terra_toolbar.btn.load).children("span").trigger("click");
                 },
                 {name:model_name}
             )
@@ -1259,6 +1259,7 @@
         RemoveModel.find(".actions-form > .cancel > button").bind("click", (event) => {
             event.preventDefault();
             RemoveModel.close();
+            $(terra_toolbar.btn.load).children("span").trigger("click");
         });
 
     });
