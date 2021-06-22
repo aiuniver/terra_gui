@@ -353,8 +353,8 @@ input[type=button][disabled=disabled]:hover {
 #modal-window-project-load > .models-data > .models-list .loaded-list > li > span {
 	color:#fff;
 }
-#modal-window-load-model > .models-data > .models-list .loaded-list > li > span:hover,
-#modal-window-project-load > .models-data > .models-list .loaded-list > li > span:hover {
+#modal-window-load-model > .models-data > .models-list .loaded-list > li:hover > span,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li:hover > span {
 	color:#65B9F4;
 }
 #modal-window-load-model > .models-data > .models-list .loaded-list > li.active > span,
@@ -362,8 +362,67 @@ input[type=button][disabled=disabled]:hover {
     color:#65B9F4;
 	background-color:#2B5278;
 }
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > .remove,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > .remove {
+	background-color:rgba(0,0,0,.2);
+}
+#modal-window-load-model > .models-data > .models-list .loaded-list > li > .remove:hover,
+#modal-window-project-load > .models-data > .models-list .loaded-list > li > .remove:hover {
+	background-color:rgba(0,0,0,.8);
+}
 #modal-window-load-model > .models-data > .model-arch > .wrapper > .modal-arch-info > .model-arch-info-param {
 	color:#A7BED3;
+}
+
+#modal-window-remove-model form {
+	padding:20px;
+}
+#modal-window-remove-model form > .inner {
+	margin-bottom:0;
+    display:-webkit-box;
+    display:-moz-box;
+    display:-ms-flexbox;
+    display:-webkit-flex;
+    display:flex;
+    -webkit-box-direction:normal;
+    -moz-box-direction:normal;
+    -webkit-box-orient:horizontal;
+    -moz-box-orient:horizontal;
+    -webkit-flex-direction:row;
+    -ms-flex-direction:row;
+    flex-direction:row;
+    -webkit-flex-wrap:nowrap;
+    -ms-flex-wrap:nowrap;
+    flex-wrap:nowrap;
+    -webkit-box-pack:start;
+    -moz-box-pack:start;
+    -webkit-justify-content:flex-start;
+    -ms-flex-pack:start;
+    justify-content:flex-start;
+    -webkit-align-content:flex-end;
+    -ms-flex-line-pack:end;
+    align-content:flex-end;
+    -webkit-box-align:end;
+    -moz-box-align:end;
+    -webkit-align-items:flex-end;
+    -ms-flex-align:end;
+    align-items:flex-end;
+}
+#modal-window-remove-model form > .inner > * {
+	margin-bottom:0 !important;
+}
+#modal-window-remove-model form > .inner > .field-form > label {
+	margin:0;
+}
+#modal-window-remove-model form > .actions-form {
+	margin:20px -2px 0 -2px;
+}
+#modal-window-remove-model form > .actions-form > * {
+	display:inline-block;
+	width:50%;
+	margin:0;
+	padding:0 2px;
+	vertical-align:top;
 }
 
 .ui-widget.ui-widget-content.slider-range {
@@ -375,3 +434,4 @@ input[type=button][disabled=disabled]:hover {
     background-color: #65B9F4;
     border: none;
 }
+

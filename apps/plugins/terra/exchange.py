@@ -225,6 +225,16 @@ class TerraExchange:
             success = False
         return TerraExchangeResponse(success=success, error=str(error))
 
+    def _call_remove_model(self, name: str) -> TerraExchangeResponse:
+        try:
+            os.remove(os.path.join(self.project.gd.modeling, f"{name}.model"))
+            success = True
+            error = ""
+            self.project.dataset = ""
+        except Exception as error:
+            success = False
+        return TerraExchangeResponse(success=success, error=str(error))
+
     def _call_get_models(self) -> TerraExchangeResponse:
         response = self.__request_post("get_models")
         if response.success:

@@ -15,6 +15,8 @@ class PrepareDatasetSerializer(serializers.Serializer):
 class RemoveDatasetSerializer(serializers.Serializer):
     name = serializers.CharField()
 
+class RemoveModelSerializer(serializers.Serializer):
+    name = serializers.CharField()
 
 class GetAutoColorsSerializer(serializers.Serializer):
     name = serializers.CharField(required=False, allow_null=True, allow_blank=True)

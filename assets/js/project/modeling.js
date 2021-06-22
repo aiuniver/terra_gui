@@ -77,6 +77,12 @@
         sel.addRange(range);
     }
 
+     let RemoveModel = $("#modal-window-remove-model").ModalWindow({
+        title:"Удалить модель",
+        width:300,
+        height:160
+    });
+
 
     $.fn.extend({
 
@@ -93,6 +99,9 @@
                             block.find(".models-data > .model-arch > .wrapper").addClass("hidden");
                             for (let index in data) {
                                 block.find(".models-data > .models-list .loaded-list").append($(`<li data-name="${data[index].name}" data-is_terra="${data[index].is_terra}"><span>${data[index].name}</span></li>`))
+                                if(!data[index].is_terra){
+                                    block.find(`.loaded-list > li[data-name="${data[index].name}"]`).append('<div class="remove"></div>')
+                                }
                             }
                             block.find(".models-data > .models-list .loaded-list > li > span").bind("click", (event) => {
                                 let item = $(event.currentTarget).parent();
@@ -122,6 +131,15 @@
                                     },
                                     {"model_file":item.data("name"),"is_terra":item.data("is_terra")}
                                 );
+                            });
+
+                            block.find(".remove").bind("click", (event) => {
+                                event.preventDefault();
+                                if ($(event.target).hasClass("remove")) {
+                                    window.StatusBar.clear();
+                                    RemoveModel.find("form")[0].current_model = $(event.currentTarget).parent()[0];
+                                    RemoveModel.open();
+                                }
                             });
                         }
                     );
@@ -1216,6 +1234,32 @@
         ClearModel.find(".actions-form > .cancel > button").bind("click", (event) => {
             event.preventDefault();
             ClearModel.close();
+        });
+
+        RemoveModel.find("form").bind("submit", (event) => {
+            event.preventDefault();
+            let current_model = RemoveModel.find("form")[0].current_model,
+                model_name = $(current_model).attr("data-name");
+            window.ExchangeRequest(
+                "remove_model",
+                (success, data) => {
+                    RemoveModel.close();
+                    if (success) {
+                        $(current_model).remove();
+                        window.StatusBar.message(window.Messages.get("DATASET_REMOVED", [model_name]), true);
+                    } else {
+                        window.StatusBar.message(data.error, false);
+                    }
+                    $(terra_toolbar.btn.load).children("span").trigger("click");
+                },
+                {name:model_name}
+            )
+        });
+
+        RemoveModel.find(".actions-form > .cancel > button").bind("click", (event) => {
+            event.preventDefault();
+            RemoveModel.close();
+            $(terra_toolbar.btn.load).children("span").trigger("click");
         });
 
     });
