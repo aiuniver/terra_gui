@@ -92,6 +92,7 @@ class GUINN:
         """
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
+
         pass
 
     def set_custom_metrics(self):
@@ -279,9 +280,7 @@ class GUINN:
                                             custom_objects=custom_objects)
                 else:
                     self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False)
-                print("Модель загружена os.path.join(self.training_path, model_name[0]) ",
-                      os.path.join(self.training_path, model_name[0]))
-                print("self.model.name", self.model.name)
+
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
             except Exception:
