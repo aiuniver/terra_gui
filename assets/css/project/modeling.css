@@ -361,6 +361,30 @@
 	padding:0 2px;
 	vertical-align:top;
 }
+.loaded-list > li{
+	display: flex;
+	width: 100%;
+}
+
+.loaded-list > li > .remove{
+	display: inline-block;
+	margin: 3px 10px 0 auto;
+	padding: 5px;
+	transition: background 0.3s ease;
+}
+.loaded-list > li > .remove:before{
+	content: '';
+	display: block;
+	width: 18px;
+	height: 18px;
+	background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.loaded-list > li > .remove:hover{
+	background: rgba(255, 255, 255, .2);
+}
 
 #canvas-nodes > .node > .tools {
 	display:none;
