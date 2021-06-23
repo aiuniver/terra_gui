@@ -5,11 +5,12 @@
 import sys
 
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 from pydantic import validator, DirectoryPath, FilePath
+from pydantic.color import Color
 
 
-from ..mixins import BaseMixinData
+from ..mixins import BaseMixinData, UniqueListMixin
 from ..validators import validate_positive_integer
 from .extra import (
     LayerPrepareMethodChoice,
@@ -144,66 +145,35 @@ class LayerOutputTypeClassificationData(BaseMixinData):
     one_hot_encoding: Optional[bool] = True
 
 
-class MaskAssignmentHandmadeData:
-    pass
-
-
-class MaskAssignmentAutosearchData:
-    pass
-
-
-class MaskAssignmentAnnotationData:
-    pass
-
-
-class MaskAssignment(str, Enum):
+class MaskSegmentationData(BaseMixinData):
     """
-    Распознавание масок сегментации
+    Маска сегментации
     """
 
-    handmade = "MaskAssignmentHandmadeData"
-    autosearch = "MaskAssignmentAutosearchData"
-    annotation = "MaskAssignmentAnnotationData"
+    name: str
+    "Название класса"
+    color: Color
+    "Цвет класса"
 
 
-MaskAssignmentUnion = tuple(
-    map(lambda item: getattr(sys.modules[__name__], item), MaskAssignment)
-)
-"""
-Список возможных методов распознавания масок сегментации
-"""
+class MasksSegmentationList(UniqueListMixin):
+    """
+    Список масок сегментации
+    """
+
+    class Meta:
+        source = MaskSegmentationData
+        identifier = "name"
 
 
 class LayerOutputTypeSegmentationData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     mask_range: int
-    mask_assignment: LayerOutputMaskAssignmentChoice
+    mask_assignment: MasksSegmentationList
 
     _validate_positive_integer = validator("mask_range", allow_reuse=True)(
         validate_positive_integer
     )
-
-    @validator("mask_assignment", allow_reuse=True)
-    def _validate_mask_assignment(
-        cls, value: LayerOutputMaskAssignmentChoice
-    ) -> LayerOutputMaskAssignmentChoice:
-        print(value)
-        return value
-
-    # @validator("type", allow_reuse=True, pre=True)
-    # def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-    #     if not hasattr(LayerOutputTypeChoice, value):
-    #         raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-    #     type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
-    #     cls.__fields__["parameters"].type_ = type_
-    #     cls.__fields__["parameters"].required = True
-    #     return value
-    #
-    # @validator("parameters", allow_reuse=True)
-    # def _validate_parameters(
-    #     cls, value: Any, **kwargs
-    # ) -> Union[parameters.LayerOutputDatatypeUnion]:
-    #     return kwargs.get("field").type_(**value)
 
 
 class LayerOutputTypeTextSegmentationData(BaseMixinData):
