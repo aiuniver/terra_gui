@@ -63,7 +63,13 @@ class LayerNetChoice(str, Enum):
 
 class LayerScalerChoice(str, Enum):
     NoScaler = &#34;NoScaler&#34;
-    MinMaxScaler = &#34;MinMaxScaler&#34;</code></pre>
+    MinMaxScaler = &#34;MinMaxScaler&#34;
+
+
+class LayerOutputMaskAssignmentChoice(str, Enum):
+    handmade = &#34;handmade&#34;
+    autosearch = &#34;autosearch&#34;
+    annotation = &#34;annotation&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -101,6 +107,42 @@ class LayerScalerChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="data.dts.extra.LayerNetChoice.Linear"><code class="name">var <span class="ident">Linear</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="data.dts.extra.LayerOutputMaskAssignmentChoice"><code class="flex name class">
+<span>class <span class="ident">LayerOutputMaskAssignmentChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerOutputMaskAssignmentChoice(str, Enum):
+    handmade = &#34;handmade&#34;
+    autosearch = &#34;autosearch&#34;
+    annotation = &#34;annotation&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="data.dts.extra.LayerOutputMaskAssignmentChoice.annotation"><code class="name">var <span class="ident">annotation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.extra.LayerOutputMaskAssignmentChoice.autosearch"><code class="name">var <span class="ident">autosearch</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.extra.LayerOutputMaskAssignmentChoice.handmade"><code class="name">var <span class="ident">handmade</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -264,6 +306,14 @@ class LayerScalerChoice(str, Enum):
 <ul class="">
 <li><code><a title="data.dts.extra.LayerNetChoice.Convolutional" href="#data.dts.extra.LayerNetChoice.Convolutional">Convolutional</a></code></li>
 <li><code><a title="data.dts.extra.LayerNetChoice.Linear" href="#data.dts.extra.LayerNetChoice.Linear">Linear</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="data.dts.extra.LayerOutputMaskAssignmentChoice" href="#data.dts.extra.LayerOutputMaskAssignmentChoice">LayerOutputMaskAssignmentChoice</a></code></h4>
+<ul class="">
+<li><code><a title="data.dts.extra.LayerOutputMaskAssignmentChoice.annotation" href="#data.dts.extra.LayerOutputMaskAssignmentChoice.annotation">annotation</a></code></li>
+<li><code><a title="data.dts.extra.LayerOutputMaskAssignmentChoice.autosearch" href="#data.dts.extra.LayerOutputMaskAssignmentChoice.autosearch">autosearch</a></code></li>
+<li><code><a title="data.dts.extra.LayerOutputMaskAssignmentChoice.handmade" href="#data.dts.extra.LayerOutputMaskAssignmentChoice.handmade">handmade</a></code></li>
 </ul>
 </li>
 <li>

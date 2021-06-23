@@ -3,9 +3,10 @@
 """
 
 from math import fsum
-from typing import Union, Optional
+from typing import Union, Optional, Any
 from pathlib import PosixPath
 from pydantic import validator, FilePath, HttpUrl
+from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
 from ..validators import validate_part_value
@@ -78,7 +79,7 @@ class CreationInfoData(BaseMixinData):
 
     part: CreationInfoPartData = CreationInfoPartData()
     "Доли выборок"
-    shuffle: Optional[bool] = False
+    shuffle: Optional[bool] = True
     "Случайным образом перемешивать элементы"
 
     @validator("part", allow_reuse=True)
@@ -97,20 +98,21 @@ class CreationInputData(AliasMixinData):
     "Название"
     type: LayerInputTypeChoice
     "Тип данных"
-    parameters: Optional[Union[parameters.LayerInputDatatypeUnion]]
+    parameters: Optional[Any]
     "Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationInputData.type`](#data.dts.creation.CreationInputData.type)"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-        cls.__fields__["parameters"].type_ = getattr(
-            parameters, getattr(parameters.LayerInputDatatype, value)
-        )
+        if not hasattr(LayerInputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        cls.__fields__["parameters"].type_ = type_
         cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True, pre=True)
+    @validator("parameters", allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerInputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -> Union[parameters.LayerInputDatatypeUnion]:
         return kwargs.get("field").type_(**value)
 
@@ -124,20 +126,21 @@ class CreationOutputData(AliasMixinData):
     "Название"
     type: LayerOutputTypeChoice
     "Тип данных"
-    parameters: Optional[Union[parameters.LayerOutputDatatypeUnion]]
+    parameters: Optional[Any]
     "Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationOutputData.type`](#data.dts.creation.CreationOutputData.type)"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-        cls.__fields__["parameters"].type_ = getattr(
-            parameters, getattr(parameters.LayerOutputDatatype, value)
-        )
+        if not hasattr(LayerOutputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        cls.__fields__["parameters"].type_ = type_
         cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True, pre=True)
+    @validator("parameters", allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerOutputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -> Union[parameters.LayerOutputDatatypeUnion]:
         return kwargs.get("field").type_(**value)
 
@@ -187,3 +190,9 @@ class CreationData(BaseMixinData):
     "`input`-слои"
     outputs: CreationOutputsList = CreationOutputsList()
     "`output`-слои"
+
+    @validator("inputs", "outputs", allow_reuse=True)
+    def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
+        if not len(value):
+            raise ValueError(f"{type(value)} must not be empty")
+        return value

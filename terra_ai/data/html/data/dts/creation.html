@@ -32,9 +32,10 @@
 &#34;&#34;&#34;
 
 from math import fsum
-from typing import Union, Optional
+from typing import Union, Optional, Any
 from pathlib import PosixPath
 from pydantic import validator, FilePath, HttpUrl
+from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
 from ..validators import validate_part_value
@@ -107,7 +108,7 @@ class CreationInfoData(BaseMixinData):
 
     part: CreationInfoPartData = CreationInfoPartData()
     &#34;Доли выборок&#34;
-    shuffle: Optional[bool] = False
+    shuffle: Optional[bool] = True
     &#34;Случайным образом перемешивать элементы&#34;
 
     @validator(&#34;part&#34;, allow_reuse=True)
@@ -126,20 +127,21 @@ class CreationInputData(AliasMixinData):
     &#34;Название&#34;
     type: LayerInputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Union[parameters.LayerInputDatatypeUnion]]
+    parameters: Optional[Any]
     &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationInputData.type`](#data.dts.creation.CreationInputData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -&gt; LayerInputTypeChoice:
-        cls.__fields__[&#34;parameters&#34;].type_ = getattr(
-            parameters, getattr(parameters.LayerInputDatatype, value)
-        )
+        if not hasattr(LayerInputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;parameters&#34;, allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerInputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -&gt; Union[parameters.LayerInputDatatypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)
 
@@ -153,20 +155,21 @@ class CreationOutputData(AliasMixinData):
     &#34;Название&#34;
     type: LayerOutputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Union[parameters.LayerOutputDatatypeUnion]]
+    parameters: Optional[Any]
     &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationOutputData.type`](#data.dts.creation.CreationOutputData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -&gt; LayerOutputTypeChoice:
-        cls.__fields__[&#34;parameters&#34;].type_ = getattr(
-            parameters, getattr(parameters.LayerOutputDatatype, value)
-        )
+        if not hasattr(LayerOutputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;parameters&#34;, allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerOutputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -&gt; Union[parameters.LayerOutputDatatypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)
 
@@ -215,7 +218,13 @@ class CreationData(BaseMixinData):
     inputs: CreationInputsList = CreationInputsList()
     &#34;`input`-слои&#34;
     outputs: CreationOutputsList = CreationOutputsList()
-    &#34;`output`-слои&#34;</code></pre>
+    &#34;`output`-слои&#34;
+
+    @validator(&#34;inputs&#34;, &#34;outputs&#34;, allow_reuse=True)
+    def _validate_required(cls, value: UniqueListMixin) -&gt; UniqueListMixin:
+        if not len(value):
+            raise ValueError(f&#34;{type(value)} must not be empty&#34;)
+        return value</code></pre>
 </details>
 </section>
 <section>
@@ -253,7 +262,13 @@ class CreationData(BaseMixinData):
     inputs: CreationInputsList = CreationInputsList()
     &#34;`input`-слои&#34;
     outputs: CreationOutputsList = CreationOutputsList()
-    &#34;`output`-слои&#34;</code></pre>
+    &#34;`output`-слои&#34;
+
+    @validator(&#34;inputs&#34;, &#34;outputs&#34;, allow_reuse=True)
+    def _validate_required(cls, value: UniqueListMixin) -&gt; UniqueListMixin:
+        if not len(value):
+            raise ValueError(f&#34;{type(value)} must not be empty&#34;)
+        return value</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -312,7 +327,7 @@ class CreationData(BaseMixinData):
 
     part: CreationInfoPartData = CreationInfoPartData()
     &#34;Доли выборок&#34;
-    shuffle: Optional[bool] = False
+    shuffle: Optional[bool] = True
     &#34;Случайным образом перемешивать элементы&#34;
 
     @validator(&#34;part&#34;, allow_reuse=True)
@@ -451,20 +466,21 @@ def total(self) -&gt; float:
     &#34;Название&#34;
     type: LayerInputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Union[parameters.LayerInputDatatypeUnion]]
+    parameters: Optional[Any]
     &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationInputData.type`](#data.dts.creation.CreationInputData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -&gt; LayerInputTypeChoice:
-        cls.__fields__[&#34;parameters&#34;].type_ = getattr(
-            parameters, getattr(parameters.LayerInputDatatype, value)
-        )
+        if not hasattr(LayerInputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;parameters&#34;, allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerInputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -&gt; Union[parameters.LayerInputDatatypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)</code></pre>
 </details>
@@ -481,7 +497,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Название</p></div>
 </dd>
-<dt id="data.dts.creation.CreationInputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[<a title="data.dts.parameters.LayerInputTypeImagesData" href="parameters.html#data.dts.parameters.LayerInputTypeImagesData">LayerInputTypeImagesData</a>, <a title="data.dts.parameters.LayerInputTypeTextData" href="parameters.html#data.dts.parameters.LayerInputTypeTextData">LayerInputTypeTextData</a>, <a title="data.dts.parameters.LayerInputTypeAudioData" href="parameters.html#data.dts.parameters.LayerInputTypeAudioData">LayerInputTypeAudioData</a>, <a title="data.dts.parameters.LayerInputTypeDataframeData" href="parameters.html#data.dts.parameters.LayerInputTypeDataframeData">LayerInputTypeDataframeData</a>, NoneType]</code></dt>
+<dt id="data.dts.creation.CreationInputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[Any, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <a href="#data.dts.creation.CreationInputData.type"><code>data.dts.creation.CreationInputData.type</code></a></p></div>
 </dd>
@@ -570,20 +586,21 @@ def total(self) -&gt; float:
     &#34;Название&#34;
     type: LayerOutputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Union[parameters.LayerOutputDatatypeUnion]]
+    parameters: Optional[Any]
     &#34;Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationOutputData.type`](#data.dts.creation.CreationOutputData.type)&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -&gt; LayerOutputTypeChoice:
-        cls.__fields__[&#34;parameters&#34;].type_ = getattr(
-            parameters, getattr(parameters.LayerOutputDatatype, value)
-        )
+        if not hasattr(LayerOutputTypeChoice, value):
+            raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;parameters&#34;, allow_reuse=True)
     def _validate_parameters(
-        cls, value: Union[parameters.LayerOutputDatatypeUnion], **kwargs
+        cls, value: Any, **kwargs
     ) -&gt; Union[parameters.LayerOutputDatatypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)</code></pre>
 </details>
@@ -600,7 +617,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Название</p></div>
 </dd>
-<dt id="data.dts.creation.CreationOutputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[<a title="data.dts.parameters.LayerOutputTypeImagesData" href="parameters.html#data.dts.parameters.LayerOutputTypeImagesData">LayerOutputTypeImagesData</a>, <a title="data.dts.parameters.LayerOutputTypeTextData" href="parameters.html#data.dts.parameters.LayerOutputTypeTextData">LayerOutputTypeTextData</a>, <a title="data.dts.parameters.LayerOutputTypeAudioData" href="parameters.html#data.dts.parameters.LayerOutputTypeAudioData">LayerOutputTypeAudioData</a>, <a title="data.dts.parameters.LayerOutputTypeClassificationData" href="parameters.html#data.dts.parameters.LayerOutputTypeClassificationData">LayerOutputTypeClassificationData</a>, <a title="data.dts.parameters.LayerOutputTypeSegmentationData" href="parameters.html#data.dts.parameters.LayerOutputTypeSegmentationData">LayerOutputTypeSegmentationData</a>, <a title="data.dts.parameters.LayerOutputTypeTextSegmentationData" href="parameters.html#data.dts.parameters.LayerOutputTypeTextSegmentationData">LayerOutputTypeTextSegmentationData</a>, <a title="data.dts.parameters.LayerOutputTypeRegressionData" href="parameters.html#data.dts.parameters.LayerOutputTypeRegressionData">LayerOutputTypeRegressionData</a>, <a title="data.dts.parameters.LayerOutputTypeTimeseriesData" href="parameters.html#data.dts.parameters.LayerOutputTypeTimeseriesData">LayerOutputTypeTimeseriesData</a>, NoneType]</code></dt>
+<dt id="data.dts.creation.CreationOutputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[Any, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <a href="#data.dts.creation.CreationOutputData.type"><code>data.dts.creation.CreationOutputData.type</code></a></p></div>
 </dd>

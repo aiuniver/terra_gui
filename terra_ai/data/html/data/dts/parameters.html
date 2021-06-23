@@ -37,6 +37,7 @@ from enum import Enum
 from typing import Optional
 from pydantic import validator, DirectoryPath, FilePath
 
+
 from ..mixins import BaseMixinData
 from ..validators import validate_positive_integer
 from .extra import (
@@ -44,6 +45,7 @@ from .extra import (
     LayerTaskTypeChoice,
     LayerNetChoice,
     LayerScalerChoice,
+    LayerOutputMaskAssignmentChoice,
 )
 
 
@@ -171,8 +173,66 @@ class LayerOutputTypeClassificationData(BaseMixinData):
     one_hot_encoding: Optional[bool] = True
 
 
-class LayerOutputTypeSegmentationData(BaseMixinData):
+class MaskAssignmentHandmadeData:
     pass
+
+
+class MaskAssignmentAutosearchData:
+    pass
+
+
+class MaskAssignmentAnnotationData:
+    pass
+
+
+class MaskAssignment(str, Enum):
+    &#34;&#34;&#34;
+    Распознавание масок сегментации
+    &#34;&#34;&#34;
+
+    handmade = &#34;MaskAssignmentHandmadeData&#34;
+    autosearch = &#34;MaskAssignmentAutosearchData&#34;
+    annotation = &#34;MaskAssignmentAnnotationData&#34;
+
+
+MaskAssignmentUnion = tuple(
+    map(lambda item: getattr(sys.modules[__name__], item), MaskAssignment)
+)
+&#34;&#34;&#34;
+Список возможных методов распознавания масок сегментации
+&#34;&#34;&#34;
+
+
+class LayerOutputTypeSegmentationData(BaseMixinData):
+    folder_path: Optional[DirectoryPath]
+    mask_range: int
+    mask_assignment: LayerOutputMaskAssignmentChoice
+
+    _validate_positive_integer = validator(&#34;mask_range&#34;, allow_reuse=True)(
+        validate_positive_integer
+    )
+
+    @validator(&#34;mask_assignment&#34;, allow_reuse=True)
+    def _validate_mask_assignment(
+        cls, value: LayerOutputMaskAssignmentChoice
+    ) -&gt; LayerOutputMaskAssignmentChoice:
+        print(value)
+        return value
+
+    # @validator(&#34;type&#34;, allow_reuse=True, pre=True)
+    # def _validate_type(cls, value: LayerOutputTypeChoice) -&gt; LayerOutputTypeChoice:
+    #     if not hasattr(LayerOutputTypeChoice, value):
+    #         raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
+    #     type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+    #     cls.__fields__[&#34;parameters&#34;].type_ = type_
+    #     cls.__fields__[&#34;parameters&#34;].required = True
+    #     return value
+    #
+    # @validator(&#34;parameters&#34;, allow_reuse=True)
+    # def _validate_parameters(
+    #     cls, value: Any, **kwargs
+    # ) -&gt; Union[parameters.LayerOutputDatatypeUnion]:
+    #     return kwargs.get(&#34;field&#34;).type_(**value)
 
 
 class LayerOutputTypeTextSegmentationData(BaseMixinData):
@@ -259,6 +319,10 @@ LayerOutputDatatypeUnion = tuple(
 <dt id="data.dts.parameters.LayerOutputDatatypeUnion"><code class="name">var <span class="ident">LayerOutputDatatypeUnion</span></code></dt>
 <dd>
 <div class="desc"><p>Список возможных типов данных для <code>output</code>-слоя в виде классов</p></div>
+</dd>
+<dt id="data.dts.parameters.MaskAssignmentUnion"><code class="name">var <span class="ident">MaskAssignmentUnion</span></code></dt>
+<dd>
+<div class="desc"><p>Список возможных методов распознавания масок сегментации</p></div>
 </dd>
 </dl>
 </section>
@@ -927,7 +991,20 @@ LayerOutputDatatypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerOutputTypeSegmentationData(BaseMixinData):
-    pass</code></pre>
+    folder_path: Optional[DirectoryPath]
+    mask_range: int
+    mask_assignment: LayerOutputMaskAssignmentChoice
+
+    _validate_positive_integer = validator(&#34;mask_range&#34;, allow_reuse=True)(
+        validate_positive_integer
+    )
+
+    @validator(&#34;mask_assignment&#34;, allow_reuse=True)
+    def _validate_mask_assignment(
+        cls, value: LayerOutputMaskAssignmentChoice
+    ) -&gt; LayerOutputMaskAssignmentChoice:
+        print(value)
+        return value</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -935,6 +1012,21 @@ LayerOutputDatatypeUnion = tuple(
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="data.dts.parameters.LayerOutputTypeSegmentationData.folder_path"><code class="name">var <span class="ident">folder_path</span> : Union[pydantic.types.DirectoryPath, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.parameters.LayerOutputTypeSegmentationData.mask_assignment"><code class="name">var <span class="ident">mask_assignment</span> : <a title="data.dts.extra.LayerOutputMaskAssignmentChoice" href="extra.html#data.dts.extra.LayerOutputMaskAssignmentChoice">LayerOutputMaskAssignmentChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.parameters.LayerOutputTypeSegmentationData.mask_range"><code class="name">var <span class="ident">mask_range</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="data.mixins.BaseMixinData" href="../mixins.html#data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -1126,6 +1218,85 @@ LayerOutputDatatypeUnion = tuple(
 </li>
 </ul>
 </dd>
+<dt id="data.dts.parameters.MaskAssignment"><code class="flex name class">
+<span>class <span class="ident">MaskAssignment</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Распознавание масок сегментации</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MaskAssignment(str, Enum):
+    &#34;&#34;&#34;
+    Распознавание масок сегментации
+    &#34;&#34;&#34;
+
+    handmade = &#34;MaskAssignmentHandmadeData&#34;
+    autosearch = &#34;MaskAssignmentAutosearchData&#34;
+    annotation = &#34;MaskAssignmentAnnotationData&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="data.dts.parameters.MaskAssignment.annotation"><code class="name">var <span class="ident">annotation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.parameters.MaskAssignment.autosearch"><code class="name">var <span class="ident">autosearch</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="data.dts.parameters.MaskAssignment.handmade"><code class="name">var <span class="ident">handmade</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="data.dts.parameters.MaskAssignmentAnnotationData"><code class="flex name class">
+<span>class <span class="ident">MaskAssignmentAnnotationData</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MaskAssignmentAnnotationData:
+    pass</code></pre>
+</details>
+</dd>
+<dt id="data.dts.parameters.MaskAssignmentAutosearchData"><code class="flex name class">
+<span>class <span class="ident">MaskAssignmentAutosearchData</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MaskAssignmentAutosearchData:
+    pass</code></pre>
+</details>
+</dd>
+<dt id="data.dts.parameters.MaskAssignmentHandmadeData"><code class="flex name class">
+<span>class <span class="ident">MaskAssignmentHandmadeData</span></span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MaskAssignmentHandmadeData:
+    pass</code></pre>
+</details>
+</dd>
 </dl>
 </section>
 </article>
@@ -1146,6 +1317,7 @@ LayerOutputDatatypeUnion = tuple(
 <ul class="">
 <li><code><a title="data.dts.parameters.LayerInputDatatypeUnion" href="#data.dts.parameters.LayerInputDatatypeUnion">LayerInputDatatypeUnion</a></code></li>
 <li><code><a title="data.dts.parameters.LayerOutputDatatypeUnion" href="#data.dts.parameters.LayerOutputDatatypeUnion">LayerOutputDatatypeUnion</a></code></li>
+<li><code><a title="data.dts.parameters.MaskAssignmentUnion" href="#data.dts.parameters.MaskAssignmentUnion">MaskAssignmentUnion</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
@@ -1263,6 +1435,11 @@ LayerOutputDatatypeUnion = tuple(
 </li>
 <li>
 <h4><code><a title="data.dts.parameters.LayerOutputTypeSegmentationData" href="#data.dts.parameters.LayerOutputTypeSegmentationData">LayerOutputTypeSegmentationData</a></code></h4>
+<ul class="">
+<li><code><a title="data.dts.parameters.LayerOutputTypeSegmentationData.folder_path" href="#data.dts.parameters.LayerOutputTypeSegmentationData.folder_path">folder_path</a></code></li>
+<li><code><a title="data.dts.parameters.LayerOutputTypeSegmentationData.mask_assignment" href="#data.dts.parameters.LayerOutputTypeSegmentationData.mask_assignment">mask_assignment</a></code></li>
+<li><code><a title="data.dts.parameters.LayerOutputTypeSegmentationData.mask_range" href="#data.dts.parameters.LayerOutputTypeSegmentationData.mask_range">mask_range</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="data.dts.parameters.LayerOutputTypeTextData" href="#data.dts.parameters.LayerOutputTypeTextData">LayerOutputTypeTextData</a></code></h4>
@@ -1292,6 +1469,23 @@ LayerOutputDatatypeUnion = tuple(
 <li><code><a title="data.dts.parameters.LayerOutputTypeTimeseriesData.task_type" href="#data.dts.parameters.LayerOutputTypeTimeseriesData.task_type">task_type</a></code></li>
 <li><code><a title="data.dts.parameters.LayerOutputTypeTimeseriesData.y_cols" href="#data.dts.parameters.LayerOutputTypeTimeseriesData.y_cols">y_cols</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="data.dts.parameters.MaskAssignment" href="#data.dts.parameters.MaskAssignment">MaskAssignment</a></code></h4>
+<ul class="">
+<li><code><a title="data.dts.parameters.MaskAssignment.annotation" href="#data.dts.parameters.MaskAssignment.annotation">annotation</a></code></li>
+<li><code><a title="data.dts.parameters.MaskAssignment.autosearch" href="#data.dts.parameters.MaskAssignment.autosearch">autosearch</a></code></li>
+<li><code><a title="data.dts.parameters.MaskAssignment.handmade" href="#data.dts.parameters.MaskAssignment.handmade">handmade</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="data.dts.parameters.MaskAssignmentAnnotationData" href="#data.dts.parameters.MaskAssignmentAnnotationData">MaskAssignmentAnnotationData</a></code></h4>
+</li>
+<li>
+<h4><code><a title="data.dts.parameters.MaskAssignmentAutosearchData" href="#data.dts.parameters.MaskAssignmentAutosearchData">MaskAssignmentAutosearchData</a></code></h4>
+</li>
+<li>
+<h4><code><a title="data.dts.parameters.MaskAssignmentHandmadeData" href="#data.dts.parameters.MaskAssignmentHandmadeData">MaskAssignmentHandmadeData</a></code></h4>
 </li>
 </ul>
 </li>
