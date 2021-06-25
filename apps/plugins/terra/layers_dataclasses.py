@@ -3037,12 +3037,12 @@ class GUILayersDef:
                     "list": True,
                     "available": [None, "avg", "max"],
                 },
-            },
-            'extra': {
                 "trainable": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                 },
+            },
+            'extra': {
                 "classes": {
                     "type": "int",
                     "default": 1000,
