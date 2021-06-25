@@ -3,6 +3,7 @@ import gc
 import json
 import os
 import re
+import shutil
 import tempfile
 from copy import deepcopy
 
@@ -1157,17 +1158,25 @@ class Exchange(StatesData, GuiExch):
             self.stop_training_flag = False
         self.is_trained = False
 
-        model_file = tempfile.NamedTemporaryFile(
-            prefix="model_", suffix="tmp.h5", delete=False
+        # model_file = tempfile.NamedTemporaryFile(
+        #     prefix="model_", suffix="tmp.h5", delete=False
+        # )
+        # with open(model_file.name, "wb") as f:
+        #     f.write(base64.b64decode(model))
+
+        model_dir = tempfile.TemporaryDirectory(prefix="model_")
+        model_zip = tempfile.NamedTemporaryFile(
+            prefix="model_", suffix="tmp.zip", delete=False
         )
         self.nn.training_path = training.get("pathname", "")
-
-        with open(model_file.name, "wb") as f:
+        with open(model_zip.name, "wb") as f:
             f.write(base64.b64decode(model))
-
+        shutil.unpack_archive(model_zip.name, extract_dir=model_dir.name, format="zip")
         self.nn.set_dataset(self.dts)
-        nn_model = load_model(model_file.name)
-        model_file.close()
+        nn_model = load_model(model_dir.name)
+        print(nn_model)
+        model_zip.close()
+        model_dir.cleanup()
 
         output_optimizer_params = {"op_name": "", "op_kwargs": {}}
 
