@@ -1163,19 +1163,26 @@ class Exchange(StatesData, GuiExch):
         # )
         # with open(model_file.name, "wb") as f:
         #     f.write(base64.b64decode(model))
-
+        print("START")
         model_dir = tempfile.TemporaryDirectory(prefix="model_")
+        print(model_dir.name)
         model_zip = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.zip", delete=False
         )
         self.nn.training_path = training.get("pathname", "")
         with open(model_zip.name, "wb") as f:
-            f.write(base64.b64decode(model))
+            print("WRITE START")
+            try:
+                f.write(base64.b64decode(model))
+            except Exception as e:
+                print(e.__str__())
+        print("ARCHIVED")
         shutil.unpack_archive(model_zip.name, extract_dir=model_dir.name, format="zip")
         self.nn.set_dataset(self.dts)
         nn_model = load_model(model_dir.name)
         print(nn_model)
         model_zip.close()
+        os.remove(model_zip.name)
         model_dir.cleanup()
 
         output_optimizer_params = {"op_name": "", "op_kwargs": {}}
