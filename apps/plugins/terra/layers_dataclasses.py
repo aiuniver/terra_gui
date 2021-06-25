@@ -3012,7 +3012,7 @@ class GUILayersDef:
             'main': {
                 "include_top": {
                     "type": "bool",
-                    "default": True,
+                    "default": False,
                 },
                 "weights": {
                     "type": "str",
@@ -3020,21 +3020,15 @@ class GUILayersDef:
                     "list": True,
                     "available": [None, 'imagenet'],
                 },
-                "trainable": {
-                    "type": "bool",
-                    "default": False,
-                },
-                # "input_layer": {
-                #     "type": "str",
-                #     "default": "block1_conv1",
-                #     "list": True,
-                #     "available": ["block1_conv1", "block2_conv1", "block3_conv1", "block4_conv1", "block5_conv1"],
-                # },
                 "output_layer": {
                     "type": "str",
                     "default": "last",
                     "list": True,
-                    "available": ["block1_conv2", "block2_conv2", "block3_conv3", "block4_conv3", "block5_conv3",
+                    "available": ["block1_conv2",
+                                  "block2_conv2",
+                                  "block3_conv3",
+                                  "block4_conv3",
+                                  "block5_conv3",
                                   "last"],
                 },
                 "pooling": {
@@ -3043,12 +3037,16 @@ class GUILayersDef:
                     "list": True,
                     "available": [None, "avg", "max"],
                 },
+            },
+            'extra': {
+                "trainable": {
+                    "type": "bool",
+                    "default": False,
+                },
                 "classes": {
                     "type": "int",
                     "default": 1000,
                 },
-            },
-            'extra': {
                 "classifier_activation": {
                     "type": "str",
                     "default": 'softmax',
