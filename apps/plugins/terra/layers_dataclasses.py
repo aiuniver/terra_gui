@@ -1,7 +1,6 @@
 import sys
 from dataclasses import dataclass
 
-# import keras_contrib
 import tensorflow
 
 
@@ -1834,63 +1833,63 @@ class GUILayersDef:
         #         },
         #     }
         # },
-        # "InstanceNormalization": {
-        #     "main": {},
-        #     'extra': {
-        #         "axis": {
-        #             "type": "int",
-        #             "default": -1
-        #         },
-        #         "epsilon": {
-        #             "type": "float",
-        #             "default": 0.001
-        #         },
-        #         "center": {
-        #             "type": "bool",
-        #             "default": True,
-        #         },
-        #         "scale": {
-        #             "type": "bool",
-        #             "default": True,
-        #         },
-        #         "beta_initializer": {
-        #             "type": "str",
-        #             "default": "zeros",
-        #             "list": True,
-        #             "available": initializer_lh,
-        #         },
-        #         "gamma_initializer": {
-        #             "type": "str",
-        #             "default": "ones",
-        #             "list": True,
-        #             "available": initializer_lh,
-        #         },
-        #         "beta_regularizer": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": regularizer_lh,
-        #         },
-        #         "gamma_regularizer": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": regularizer_lh,
-        #         },
-        #         "beta_constraint": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": constraint_lh,
-        #         },
-        #         "gamma_constraint": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": constraint_lh,
-        #         },
-        #     }
-        # },
+        "InstanceNormalization": {
+            "main": {},
+            'extra': {
+                "axis": {
+                    "type": "int",
+                    "default": -1
+                },
+                "epsilon": {
+                    "type": "float",
+                    "default": 0.001
+                },
+                "center": {
+                    "type": "bool",
+                    "default": True,
+                },
+                "scale": {
+                    "type": "bool",
+                    "default": True,
+                },
+                "beta_initializer": {
+                    "type": "str",
+                    "default": "zeros",
+                    "list": True,
+                    "available": initializer_lh,
+                },
+                "gamma_initializer": {
+                    "type": "str",
+                    "default": "ones",
+                    "list": True,
+                    "available": initializer_lh,
+                },
+                "beta_regularizer": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": regularizer_lh,
+                },
+                "gamma_regularizer": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": regularizer_lh,
+                },
+                "beta_constraint": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": constraint_lh,
+                },
+                "gamma_constraint": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": constraint_lh,
+                },
+            }
+        },
         "Normalization": {
             'main': {},
             'extra': {

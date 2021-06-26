@@ -95,6 +95,7 @@ class LayerType(str, Enum):
     Embedding = "Embedding"
     RepeatVector = "RepeatVector"
     BatchNormalization = "BatchNormalization"
+    InstanceNormalization = "InstanceNormalization"
     Activation = "Activation"
     ReLU = "ReLU"
     Softmax = "Softmax"

@@ -265,7 +265,7 @@ class GUINN:
         if self.model_is_trained:
             try:
                 list_files = os.listdir(self.training_path)
-                model_name = [x for x in list_files if x.endswith("last.h5")]
+                model_name = [x for x in list_files if x.endswith("last")]
                 # if len(model_name) > 1:
                 #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
                 custom_objects = {}
@@ -355,7 +355,7 @@ class GUINN:
                                      model_name=self.nn_name)
             self.callbacks = [clsclbk]
             self.callbacks.append(keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
+                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best'),
                 verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
                 monitor=self.chp_monitor, mode=self.chp_mode))
             self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
