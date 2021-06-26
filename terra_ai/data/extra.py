@@ -7,6 +7,9 @@ from typing import Optional, Tuple
 from pydantic import validator, BaseModel
 
 
+BYTES_UNITS = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
+
+
 class FileSizeData(BaseModel):
     """
     Вес файла
@@ -30,10 +33,9 @@ class FileSizeData(BaseModel):
     @staticmethod
     def __short_unit(value: int) -> Tuple[float, str]:
         divisor = 1024
-        units = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
         num = float(value)
-        unit = units[0]
-        for unit in units:
+        unit = BYTES_UNITS[0]
+        for unit in BYTES_UNITS:
             if abs(num) < divisor:
                 break
             num /= divisor
