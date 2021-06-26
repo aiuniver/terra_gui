@@ -32,8 +32,6 @@ In [2]: source = {
    ...:     &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;,
    ...:     &quot;size&quot;: {
    ...:         &quot;value&quot;: &quot;324133875&quot;,
-   ...:         &quot;short&quot;: &quot;309.12&quot;,
-   ...:         &quot;unit&quot;: &quot;Мб&quot;,
    ...:     },
    ...:     &quot;tags&quot;: [
    ...:         {
@@ -50,19 +48,19 @@ In [2]: source = {
 In [3]: data = DatasetData(**source)
 
 In [4]: data
-Out[4]: DatasetData(alias='cars', name='Cars', size=SizeData(value=324133875, short=309.12, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])
+Out[4]: DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])
 
 In [5]: data.dict()
 Out[5]:
 {'alias': 'cars',
  'name': 'Cars',
- 'size': {'value': 324133875, 'short': 309.12, 'unit': 'Мб'},
+ 'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
  'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
  'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
   {'alias': 'segmentation', 'name': 'Segmentation'}]}
 
 In [6]: data.json()
-Out[6]: '{&quot;alias&quot;: &quot;cars&quot;, &quot;name&quot;: &quot;Cars&quot;, &quot;size&quot;: {&quot;value&quot;: 324133875, &quot;short&quot;: 309.12, &quot;unit&quot;: &quot;\u041c\u0431&quot;}, &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}'
+Out[6]: '{&quot;alias&quot;: &quot;cars&quot;, &quot;name&quot;: &quot;Cars&quot;, &quot;size&quot;: {&quot;value&quot;: 324133875, &quot;short&quot;: 309.1181516647339, &quot;unit&quot;: &quot;\u041c\u0431&quot;}, &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}'
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 {
@@ -70,7 +68,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
   &quot;name&quot;: &quot;Cars&quot;,
   &quot;size&quot;: {
     &quot;value&quot;: 324133875,
-    &quot;short&quot;: 309.12,
+    &quot;short&quot;: 309.1181516647339,
     &quot;unit&quot;: &quot;Мб&quot;
   },
   &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;,
@@ -95,8 +93,6 @@ In [2]: source = {
    ...:     &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;,
    ...:     &quot;size&quot;: {
    ...:         &quot;value&quot;: &quot;324133875&quot;,
-   ...:         &quot;short&quot;: &quot;309.12&quot;,
-   ...:         &quot;unit&quot;: &quot;Мб&quot;,
    ...:     },
    ...:     &quot;tags&quot;: [
    ...:         {
@@ -113,8 +109,6 @@ In [2]: source = {
    ...:     &quot;date&quot;: &quot;2020-12-09T15:34:03+00:00&quot;,
    ...:     &quot;size&quot;: {
    ...:         &quot;value&quot;: &quot;32241733875&quot;,
-   ...:         &quot;short&quot;: &quot;30.03&quot;,
-   ...:         &quot;unit&quot;: &quot;Гб&quot;,
    ...:     },
    ...:     &quot;tags&quot;: [
    ...:         {
@@ -132,26 +126,26 @@ In [3]: data = DatasetsList(source)
 
 In [4]: data
 Out[4]:
-[DatasetData(alias='cars', name='Cars', size=SizeData(value=324133875, short=309.12, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')]),
- DatasetData(alias='kvartiri', name='Квартиры', size=SizeData(value=32241733875, short=30.03, unit='Гб'), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])]
+[DatasetData(alias='cars', name='Cars', size=FileFileSizeData(value=324133875, short=309.1181516647339, unit='Мб'), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')]),
+ DatasetData(alias='kvartiri', name='Квартиры', size=FileSizeData(value=32241733875, short=30.02745460253209, unit='Гб'), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias='tensorflow_keras', name='Tensorflow.keras'), TagData(alias='segmentation', name='Segmentation')])]
 
 In [5]: data.dict()
 Out[5]:
 [{'alias': 'cars',
   'name': 'Cars',
-  'size': {'value': 324133875, 'short': 309.12, 'unit': 'Мб'},
+  'size': {'value': 324133875, 'short': 309.1181516647339, 'unit': 'Мб'},
   'date': datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
   'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
    {'alias': 'segmentation', 'name': 'Segmentation'}]},
  {'alias': 'kvartiri',
   'name': 'Квартиры',
-  'size': {'value': 32241733875, 'short': 30.03, 'unit': 'Гб'},
+  'size': {'value': 32241733875, 'short': 30.02745460253209, 'unit': 'Гб'},
   'date': datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc),
   'tags': [{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
    {'alias': 'segmentation', 'name': 'Segmentation'}]}]
 
 In [6]: data.json()
-Out[6]: '[{&quot;alias&quot;: &quot;cars&quot;, &quot;name&quot;: &quot;Cars&quot;, &quot;size&quot;: {&quot;value&quot;: 324133875, &quot;short&quot;: 309.12, &quot;unit&quot;: &quot;\u041c\u0431&quot;}, &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}, {&quot;alias&quot;: &quot;kvartiri&quot;, &quot;name&quot;: &quot;\u041a\u0432\u0430\u0440\u0442\u0438\u0440\u044b&quot;, &quot;size&quot;: {&quot;value&quot;: 32241733875, &quot;short&quot;: 30.03, &quot;unit&quot;: &quot;\u0413\u0431&quot;}, &quot;date&quot;: &quot;2020-12-09T15:34:03+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}]'
+Out[6]: '[{&quot;alias&quot;: &quot;cars&quot;, &quot;name&quot;: &quot;Cars&quot;, &quot;size&quot;: {&quot;value&quot;: 324133875, &quot;short&quot;: 309.1181516647339, &quot;unit&quot;: &quot;\u041c\u0431&quot;}, &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}, {&quot;alias&quot;: &quot;kvartiri&quot;, &quot;name&quot;: &quot;\u041a\u0432\u0430\u0440\u0442\u0438\u0440\u044b&quot;, &quot;size&quot;: {&quot;value&quot;: 32241733875, &quot;short&quot;: 30.02745460253209, &quot;unit&quot;: &quot;\u0413\u0431&quot;}, &quot;date&quot;: &quot;2020-12-09T15:34:03+00:00&quot;, &quot;tags&quot;: [{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]}]'
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 [
@@ -160,7 +154,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
     &quot;name&quot;: &quot;Cars&quot;,
     &quot;size&quot;: {
       &quot;value&quot;: 324133875,
-      &quot;short&quot;: 309.12,
+      &quot;short&quot;: 309.1181516647339,
       &quot;unit&quot;: &quot;Мб&quot;
     },
     &quot;date&quot;: &quot;2021-06-26T09:30:24+00:00&quot;,
@@ -180,7 +174,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
     &quot;name&quot;: &quot;Квартиры&quot;,
     &quot;size&quot;: {
       &quot;value&quot;: 32241733875,
-      &quot;short&quot;: 30.03,
+      &quot;short&quot;: 30.02745460253209,
       &quot;unit&quot;: &quot;Гб&quot;
     },
     &quot;date&quot;: &quot;2020-12-09T15:34:03+00:00&quot;,
@@ -214,8 +208,6 @@ In [2]: source = {
    ...:     &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;,
    ...:     &#34;size&#34;: {
    ...:         &#34;value&#34;: &#34;324133875&#34;,
-   ...:         &#34;short&#34;: &#34;309.12&#34;,
-   ...:         &#34;unit&#34;: &#34;Мб&#34;,
    ...:     },
    ...:     &#34;tags&#34;: [
    ...:         {
@@ -232,19 +224,19 @@ In [2]: source = {
 In [3]: data = DatasetData(**source)
 
 In [4]: data
-Out[4]: DatasetData(alias=&#39;cars&#39;, name=&#39;Cars&#39;, size=SizeData(value=324133875, short=309.12, unit=&#39;Мб&#39;), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)])
+Out[4]: DatasetData(alias=&#39;cars&#39;, name=&#39;Cars&#39;, size=FileFileSizeData(value=324133875, short=309.1181516647339, unit=&#39;Мб&#39;), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)])
 
 In [5]: data.dict()
 Out[5]:
 {&#39;alias&#39;: &#39;cars&#39;,
  &#39;name&#39;: &#39;Cars&#39;,
- &#39;size&#39;: {&#39;value&#39;: 324133875, &#39;short&#39;: 309.12, &#39;unit&#39;: &#39;Мб&#39;},
+ &#39;size&#39;: {&#39;value&#39;: 324133875, &#39;short&#39;: 309.1181516647339, &#39;unit&#39;: &#39;Мб&#39;},
  &#39;date&#39;: datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
  &#39;tags&#39;: [{&#39;alias&#39;: &#39;tensorflow_keras&#39;, &#39;name&#39;: &#39;Tensorflow.keras&#39;},
   {&#39;alias&#39;: &#39;segmentation&#39;, &#39;name&#39;: &#39;Segmentation&#39;}]}
 
 In [6]: data.json()
-Out[6]: &#39;{&#34;alias&#34;: &#34;cars&#34;, &#34;name&#34;: &#34;Cars&#34;, &#34;size&#34;: {&#34;value&#34;: 324133875, &#34;short&#34;: 309.12, &#34;unit&#34;: &#34;\\u041c\\u0431&#34;}, &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}&#39;
+Out[6]: &#39;{&#34;alias&#34;: &#34;cars&#34;, &#34;name&#34;: &#34;Cars&#34;, &#34;size&#34;: {&#34;value&#34;: 324133875, &#34;short&#34;: 309.1181516647339, &#34;unit&#34;: &#34;\\u041c\\u0431&#34;}, &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}&#39;
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 {
@@ -252,7 +244,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
   &#34;name&#34;: &#34;Cars&#34;,
   &#34;size&#34;: {
     &#34;value&#34;: 324133875,
-    &#34;short&#34;: 309.12,
+    &#34;short&#34;: 309.1181516647339,
     &#34;unit&#34;: &#34;Мб&#34;
   },
   &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;,
@@ -279,8 +271,6 @@ In [2]: source = {
    ...:     &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;,
    ...:     &#34;size&#34;: {
    ...:         &#34;value&#34;: &#34;324133875&#34;,
-   ...:         &#34;short&#34;: &#34;309.12&#34;,
-   ...:         &#34;unit&#34;: &#34;Мб&#34;,
    ...:     },
    ...:     &#34;tags&#34;: [
    ...:         {
@@ -297,8 +287,6 @@ In [2]: source = {
    ...:     &#34;date&#34;: &#34;2020-12-09T15:34:03+00:00&#34;,
    ...:     &#34;size&#34;: {
    ...:         &#34;value&#34;: &#34;32241733875&#34;,
-   ...:         &#34;short&#34;: &#34;30.03&#34;,
-   ...:         &#34;unit&#34;: &#34;Гб&#34;,
    ...:     },
    ...:     &#34;tags&#34;: [
    ...:         {
@@ -316,26 +304,26 @@ In [3]: data = DatasetsList(source)
 
 In [4]: data
 Out[4]:
-[DatasetData(alias=&#39;cars&#39;, name=&#39;Cars&#39;, size=SizeData(value=324133875, short=309.12, unit=&#39;Мб&#39;), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)]),
- DatasetData(alias=&#39;kvartiri&#39;, name=&#39;Квартиры&#39;, size=SizeData(value=32241733875, short=30.03, unit=&#39;Гб&#39;), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)])]
+[DatasetData(alias=&#39;cars&#39;, name=&#39;Cars&#39;, size=FileFileSizeData(value=324133875, short=309.1181516647339, unit=&#39;Мб&#39;), date=datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)]),
+ DatasetData(alias=&#39;kvartiri&#39;, name=&#39;Квартиры&#39;, size=FileSizeData(value=32241733875, short=30.02745460253209, unit=&#39;Гб&#39;), date=datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc), tags=[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;), TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)])]
 
 In [5]: data.dict()
 Out[5]:
 [{&#39;alias&#39;: &#39;cars&#39;,
   &#39;name&#39;: &#39;Cars&#39;,
-  &#39;size&#39;: {&#39;value&#39;: 324133875, &#39;short&#39;: 309.12, &#39;unit&#39;: &#39;Мб&#39;},
+  &#39;size&#39;: {&#39;value&#39;: 324133875, &#39;short&#39;: 309.1181516647339, &#39;unit&#39;: &#39;Мб&#39;},
   &#39;date&#39;: datetime.datetime(2021, 6, 26, 9, 30, 24, tzinfo=datetime.timezone.utc),
   &#39;tags&#39;: [{&#39;alias&#39;: &#39;tensorflow_keras&#39;, &#39;name&#39;: &#39;Tensorflow.keras&#39;},
    {&#39;alias&#39;: &#39;segmentation&#39;, &#39;name&#39;: &#39;Segmentation&#39;}]},
  {&#39;alias&#39;: &#39;kvartiri&#39;,
   &#39;name&#39;: &#39;Квартиры&#39;,
-  &#39;size&#39;: {&#39;value&#39;: 32241733875, &#39;short&#39;: 30.03, &#39;unit&#39;: &#39;Гб&#39;},
+  &#39;size&#39;: {&#39;value&#39;: 32241733875, &#39;short&#39;: 30.02745460253209, &#39;unit&#39;: &#39;Гб&#39;},
   &#39;date&#39;: datetime.datetime(2020, 12, 9, 15, 34, 3, tzinfo=datetime.timezone.utc),
   &#39;tags&#39;: [{&#39;alias&#39;: &#39;tensorflow_keras&#39;, &#39;name&#39;: &#39;Tensorflow.keras&#39;},
    {&#39;alias&#39;: &#39;segmentation&#39;, &#39;name&#39;: &#39;Segmentation&#39;}]}]
 
 In [6]: data.json()
-Out[6]: &#39;[{&#34;alias&#34;: &#34;cars&#34;, &#34;name&#34;: &#34;Cars&#34;, &#34;size&#34;: {&#34;value&#34;: 324133875, &#34;short&#34;: 309.12, &#34;unit&#34;: &#34;\\u041c\\u0431&#34;}, &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}, {&#34;alias&#34;: &#34;kvartiri&#34;, &#34;name&#34;: &#34;\\u041a\\u0432\\u0430\\u0440\\u0442\\u0438\\u0440\\u044b&#34;, &#34;size&#34;: {&#34;value&#34;: 32241733875, &#34;short&#34;: 30.03, &#34;unit&#34;: &#34;\\u0413\\u0431&#34;}, &#34;date&#34;: &#34;2020-12-09T15:34:03+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}]&#39;
+Out[6]: &#39;[{&#34;alias&#34;: &#34;cars&#34;, &#34;name&#34;: &#34;Cars&#34;, &#34;size&#34;: {&#34;value&#34;: 324133875, &#34;short&#34;: 309.1181516647339, &#34;unit&#34;: &#34;\\u041c\\u0431&#34;}, &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}, {&#34;alias&#34;: &#34;kvartiri&#34;, &#34;name&#34;: &#34;\\u041a\\u0432\\u0430\\u0440\\u0442\\u0438\\u0440\\u044b&#34;, &#34;size&#34;: {&#34;value&#34;: 32241733875, &#34;short&#34;: 30.02745460253209, &#34;unit&#34;: &#34;\\u0413\\u0431&#34;}, &#34;date&#34;: &#34;2020-12-09T15:34:03+00:00&#34;, &#34;tags&#34;: [{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]}]&#39;
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 [
@@ -344,7 +332,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
     &#34;name&#34;: &#34;Cars&#34;,
     &#34;size&#34;: {
       &#34;value&#34;: 324133875,
-      &#34;short&#34;: 309.12,
+      &#34;short&#34;: 309.1181516647339,
       &#34;unit&#34;: &#34;Мб&#34;
     },
     &#34;date&#34;: &#34;2021-06-26T09:30:24+00:00&#34;,
@@ -364,7 +352,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
     &#34;name&#34;: &#34;Квартиры&#34;,
     &#34;size&#34;: {
       &#34;value&#34;: 32241733875,
-      &#34;short&#34;: 30.03,
+      &#34;short&#34;: 30.02745460253209,
       &#34;unit&#34;: &#34;Гб&#34;
     },
     &#34;date&#34;: &#34;2020-12-09T15:34:03+00:00&#34;,
@@ -387,7 +375,7 @@ from datetime import datetime
 from typing import Optional
 
 from ..mixins import AliasMixinData, UniqueListMixin
-from ..extra import SizeData
+from ..extra import FileSizeData
 from .tags import TagsList
 
 
@@ -398,7 +386,7 @@ class DatasetData(AliasMixinData):
 
     name: str
     &#34;Название&#34;
-    size: Optional[SizeData]
+    size: Optional[FileSizeData]
     &#34;Вес&#34;
     date: Optional[datetime]
     &#34;Дата создания&#34;
@@ -449,7 +437,7 @@ class DatasetsList(UniqueListMixin):
 
     name: str
     &#34;Название&#34;
-    size: Optional[SizeData]
+    size: Optional[FileSizeData]
     &#34;Вес&#34;
     date: Optional[datetime]
     &#34;Дата создания&#34;
@@ -473,7 +461,7 @@ class DatasetsList(UniqueListMixin):
 <dd>
 <div class="desc"><p>Название</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.dataset.DatasetData.size"><code class="name">var <span class="ident">size</span> : Union[<a title="terra_ai.data.extra.SizeData" href="../extra.html#terra_ai.data.extra.SizeData">SizeData</a>, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.dataset.DatasetData.size"><code class="name">var <span class="ident">size</span> : Union[<a title="terra_ai.data.extra.FileSizeData" href="../extra.html#terra_ai.data.extra.FileSizeData">FileSizeData</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Вес</p></div>
 </dd>

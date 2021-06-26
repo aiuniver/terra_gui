@@ -32,20 +32,41 @@
 &#34;&#34;&#34;
 
 from enum import Enum
+from typing import Optional
 from pydantic import BaseModel
 
 
-class SizeData(BaseModel):
+class FileSizeData(BaseModel):
     &#34;&#34;&#34;
     Вес файла
     &#34;&#34;&#34;
 
     value: int
     &#34;Значение веса: `324133875`&#34;
-    short: float
+    short: Optional[float]
     &#34;Короткое значение веса: `309.12`&#34;
-    unit: str
+    unit: Optional[str]
     &#34;Единицы измерения: `Мб`&#34;
+
+    def __init__(self, *args, **kwargs):
+        kwargs = {
+            &#34;value&#34;: kwargs.get(&#34;value&#34;),
+        }
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def validate(cls, *args, **kwargs):
+        value = super().validate(*args)
+        divisor = 1024
+        units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
+        num = float(value.value)
+        for unit in units:
+            if abs(num) &lt; divisor:
+                value.short = num
+                value.unit = unit
+                break
+            num /= divisor
+        return value
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -83,6 +104,98 @@ class LayerOutputTypeChoice(str, Enum):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="terra_ai.data.extra.FileSizeData"><code class="flex name class">
+<span>class <span class="ident">FileSizeData</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Вес файла</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FileSizeData(BaseModel):
+    &#34;&#34;&#34;
+    Вес файла
+    &#34;&#34;&#34;
+
+    value: int
+    &#34;Значение веса: `324133875`&#34;
+    short: Optional[float]
+    &#34;Короткое значение веса: `309.12`&#34;
+    unit: Optional[str]
+    &#34;Единицы измерения: `Мб`&#34;
+
+    def __init__(self, *args, **kwargs):
+        kwargs = {
+            &#34;value&#34;: kwargs.get(&#34;value&#34;),
+        }
+        super().__init__(*args, **kwargs)
+
+    @classmethod
+    def validate(cls, *args, **kwargs):
+        value = super().validate(*args)
+        divisor = 1024
+        units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
+        num = float(value.value)
+        for unit in units:
+            if abs(num) &lt; divisor:
+                value.short = num
+                value.unit = unit
+                break
+            num /= divisor
+        return value</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.extra.FileSizeData.short"><code class="name">var <span class="ident">short</span> : Union[float, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Короткое значение веса: <code>309.12</code></p></div>
+</dd>
+<dt id="terra_ai.data.extra.FileSizeData.unit"><code class="name">var <span class="ident">unit</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Единицы измерения: <code>Мб</code></p></div>
+</dd>
+<dt id="terra_ai.data.extra.FileSizeData.value"><code class="name">var <span class="ident">value</span> : int</code></dt>
+<dd>
+<div class="desc"><p>Значение веса: <code>324133875</code></p></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="terra_ai.data.extra.FileSizeData.validate"><code class="name flex">
+<span>def <span class="ident">validate</span></span>(<span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def validate(cls, *args, **kwargs):
+    value = super().validate(*args)
+    divisor = 1024
+    units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
+    num = float(value.value)
+    for unit in units:
+        if abs(num) &lt; divisor:
+            value.short = num
+            value.unit = unit
+            break
+        num /= divisor
+    return value</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 <dt id="terra_ai.data.extra.LayerInputTypeChoice"><code class="flex name class">
 <span>class <span class="ident">LayerInputTypeChoice</span></span>
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
@@ -193,51 +306,6 @@ class LayerOutputTypeChoice(str, Enum):
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.extra.SizeData"><code class="flex name class">
-<span>class <span class="ident">SizeData</span></span>
-<span>(</span><span>**data: Any)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Вес файла</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class SizeData(BaseModel):
-    &#34;&#34;&#34;
-    Вес файла
-    &#34;&#34;&#34;
-
-    value: int
-    &#34;Значение веса: `324133875`&#34;
-    short: float
-    &#34;Короткое значение веса: `309.12`&#34;
-    unit: str
-    &#34;Единицы измерения: `Мб`&#34;</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.extra.SizeData.short"><code class="name">var <span class="ident">short</span> : float</code></dt>
-<dd>
-<div class="desc"><p>Короткое значение веса: <code>309.12</code></p></div>
-</dd>
-<dt id="terra_ai.data.extra.SizeData.unit"><code class="name">var <span class="ident">unit</span> : str</code></dt>
-<dd>
-<div class="desc"><p>Единицы измерения: <code>Мб</code></p></div>
-</dd>
-<dt id="terra_ai.data.extra.SizeData.value"><code class="name">var <span class="ident">value</span> : int</code></dt>
-<dd>
-<div class="desc"><p>Значение веса: <code>324133875</code></p></div>
-</dd>
-</dl>
-</dd>
 </dl>
 </section>
 </article>
@@ -256,6 +324,15 @@ class LayerOutputTypeChoice(str, Enum):
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
+<li>
+<h4><code><a title="terra_ai.data.extra.FileSizeData" href="#terra_ai.data.extra.FileSizeData">FileSizeData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.extra.FileSizeData.short" href="#terra_ai.data.extra.FileSizeData.short">short</a></code></li>
+<li><code><a title="terra_ai.data.extra.FileSizeData.unit" href="#terra_ai.data.extra.FileSizeData.unit">unit</a></code></li>
+<li><code><a title="terra_ai.data.extra.FileSizeData.validate" href="#terra_ai.data.extra.FileSizeData.validate">validate</a></code></li>
+<li><code><a title="terra_ai.data.extra.FileSizeData.value" href="#terra_ai.data.extra.FileSizeData.value">value</a></code></li>
+</ul>
+</li>
 <li>
 <h4><code><a title="terra_ai.data.extra.LayerInputTypeChoice" href="#terra_ai.data.extra.LayerInputTypeChoice">LayerInputTypeChoice</a></code></h4>
 <ul class="">
@@ -276,14 +353,6 @@ class LayerOutputTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.extra.LayerOutputTypeChoice.text" href="#terra_ai.data.extra.LayerOutputTypeChoice.text">text</a></code></li>
 <li><code><a title="terra_ai.data.extra.LayerOutputTypeChoice.text_segmentation" href="#terra_ai.data.extra.LayerOutputTypeChoice.text_segmentation">text_segmentation</a></code></li>
 <li><code><a title="terra_ai.data.extra.LayerOutputTypeChoice.timeseries" href="#terra_ai.data.extra.LayerOutputTypeChoice.timeseries">timeseries</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.extra.SizeData" href="#terra_ai.data.extra.SizeData">SizeData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.extra.SizeData.short" href="#terra_ai.data.extra.SizeData.short">short</a></code></li>
-<li><code><a title="terra_ai.data.extra.SizeData.unit" href="#terra_ai.data.extra.SizeData.unit">unit</a></code></li>
-<li><code><a title="terra_ai.data.extra.SizeData.value" href="#terra_ai.data.extra.SizeData.value">value</a></code></li>
 </ul>
 </li>
 </ul>
