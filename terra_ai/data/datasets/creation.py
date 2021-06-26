@@ -11,6 +11,12 @@ from pydantic.errors import EnumMemberError
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
 from ..validators import validate_part_value
 from ..extra import LayerInputTypeChoice, LayerOutputTypeChoice
+from ..exceptions import (
+    ZipFileException,
+    ValueTypeException,
+    PartTotalException,
+    ListEmptyException,
+)
 from .extra import SourceModeChoice
 from .tags import TagsListData
 from . import parameters
@@ -24,7 +30,7 @@ class SourceData(BaseMixinData):
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
     value: Union[FilePath, HttpUrl]
-    "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима [`data.dts.creation.SourceData.mode`](#data.dts.creation.SourceData.mode)"
+    "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
@@ -33,17 +39,17 @@ class SourceData(BaseMixinData):
         if isinstance(value, PosixPath):
             split_value = str(value).split(".")
             if len(split_value) < 2 or split_value[-1].lower() != "zip":
-                raise ValueError(f"{value}: Value must be a zip-file")
+                raise ZipFileException(value)
 
         mode = kwargs.get("values", {}).get("mode")
 
         if mode == SourceModeChoice.google_drive:
             if not isinstance(value, PosixPath):
-                raise ValueError(f'{value}: Value must be a "{PosixPath}"')
+                raise ValueTypeException(value, PosixPath)
 
         if mode == SourceModeChoice.url:
             if not isinstance(value, HttpUrl):
-                raise ValueError(f'{value}: Value must be a "{HttpUrl}"')
+                raise ValueTypeException(value, HttpUrl)
 
         return value
 
@@ -85,7 +91,7 @@ class CreationInfoData(BaseMixinData):
     @validator("part", allow_reuse=True)
     def _validate_part(cls, value: CreationInfoPartData) -> CreationInfoPartData:
         if value.total != float(1):
-            raise ValueError(f"{value}: Sum of all properties must by 1")
+            raise PartTotalException(value)
         return value
 
 
@@ -99,7 +105,7 @@ class CreationInputData(AliasMixinData):
     type: LayerInputTypeChoice
     "Тип данных"
     parameters: Optional[Any]
-    "Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationInputData.type`](#data.dts.creation.CreationInputData.type)"
+    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
@@ -127,7 +133,7 @@ class CreationOutputData(AliasMixinData):
     type: LayerOutputTypeChoice
     "Тип данных"
     parameters: Optional[Any]
-    "Параметры. Тип данных будет зависеть от выбранного типа [`data.dts.creation.CreationOutputData.type`](#data.dts.creation.CreationOutputData.type)"
+    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
     @validator("type", allow_reuse=True, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
@@ -147,10 +153,10 @@ class CreationOutputData(AliasMixinData):
 
 class CreationInputsList(UniqueListMixin):
     """
-    Список `input`-слоев, основанных на [`data.dts.creation.CreationInputData`](#data.dts.creation.CreationInputData)
+    Список `input`-слоев, основанных на `CreationInputData`
     ```
     class Meta:
-        source = data.dts.creation.CreationInputData
+        source = CreationInputData
         identifier = "alias"
     ```
     """
@@ -162,10 +168,10 @@ class CreationInputsList(UniqueListMixin):
 
 class CreationOutputsList(UniqueListMixin):
     """
-    Список `output`-слоев, основанных на [`data.dts.creation.CreationOutputData`](#data.dts.creation.CreationOutputData)
+    Список `output`-слоев, основанных на `CreationOutputData`
     ```
     class Meta:
-        source = data.dts.creation.CreationOutputData
+        source = CreationOutputData
         identifier = "alias"
     ```
     """
@@ -194,5 +200,5 @@ class CreationData(BaseMixinData):
     @validator("inputs", "outputs", allow_reuse=True)
     def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
         if not len(value):
-            raise ValueError(f"{type(value)} must not be empty")
+            raise ListEmptyException(type(value))
         return value

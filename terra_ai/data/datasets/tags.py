@@ -16,10 +16,10 @@ class TagData(AliasMixinData):
 
 class TagsListData(UniqueListMixin):
     """
-    Список тегов, основанных на [`data.dts.tags.TagData`](#data.dts.tags.TagData)
+    Список тегов, основанных на `TagData`
     ```
     class Meta:
-        source = data.dts.tags.TagData
+        source = TagData
         identifier = "alias"
     ```
     """

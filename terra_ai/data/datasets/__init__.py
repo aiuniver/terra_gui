@@ -2,4 +2,4 @@
 ## Структура данных для работы с датасетами
 """
 
-from . import datasets, tags, creation, extra, parameters
+from . import dataset, tags, creation, extra, parameters

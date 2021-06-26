@@ -35,9 +35,3 @@ class LayerNetChoice(str, Enum):
 class LayerScalerChoice(str, Enum):
     NoScaler = "NoScaler"
     MinMaxScaler = "MinMaxScaler"
-
-
-class LayerOutputMaskAssignmentChoice(str, Enum):
-    handmade = "handmade"
-    autosearch = "autosearch"
-    annotation = "annotation"

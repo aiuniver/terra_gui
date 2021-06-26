@@ -5,7 +5,7 @@
 import sys
 
 from enum import Enum
-from typing import Optional, Any
+from typing import Optional
 from pydantic import validator, DirectoryPath, FilePath
 from pydantic.color import Color
 
@@ -17,7 +17,6 @@ from .extra import (
     LayerTaskTypeChoice,
     LayerNetChoice,
     LayerScalerChoice,
-    LayerOutputMaskAssignmentChoice,
 )
 
 

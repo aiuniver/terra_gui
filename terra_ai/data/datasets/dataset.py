@@ -27,10 +27,10 @@ class DatasetData(AliasMixinData):
 
 class DatasetsList(UniqueListMixin):
     """
-    Список датасетов, основанных на [`data.dts.datasets.DatasetData`](#data.dts.datasets.DatasetData)
+    Список датасетов, основанных на `DatasetData`
     ```
     class Meta:
-        source = data.dts.datasets.DatasetData
+        source = DatasetData
         identifier = "alias"
     ```
     """

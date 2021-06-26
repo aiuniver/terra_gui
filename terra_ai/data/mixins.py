@@ -7,7 +7,8 @@ import json
 from typing import List, Union, Optional
 from pydantic import validator, BaseModel
 
-from . import validators
+from .validators import validate_alias
+from .exceptions import UniqueListIdentifierException
 
 
 class BaseMixinData(BaseModel):
@@ -18,26 +19,17 @@ class BaseMixinData(BaseModel):
     def __init__(self, **data):
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            try:
-                if UniqueListMixin in __type.__mro__:
-                    data.update({__name: __type(data.get(__name, __type()))})
-            except AttributeError:
-                pass
+            if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:
+                data.update({__name: __type(data.get(__name, __type()))})
         super().__init__(**data)
 
     def dict(self, **kwargs):
-        """
-        Необходима предобработка на случай, если структура основана на [`mixins.UniqueListMixin`](mixins.html#data.mixins.UniqueListMixin)
-        """
         data = super().dict()
         for __name, __field in self.__fields__.items():
             __type = __field.type_
-            try:
-                if UniqueListMixin in __type.__mro__:
-                    __value = map(lambda item: item.dict(), data.get(__name, __type()))
-                    data.update({__name: list(__value)})
-            except AttributeError:
-                pass
+            if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:
+                __value = map(lambda item: item.dict(), data.get(__name, __type()))
+                data.update({__name: list(__value)})
         return data
 
 
@@ -47,19 +39,19 @@ class AliasMixinData(BaseMixinData):
     """
 
     alias: str
-    "Применяется валидатор [`data.validators.validate_alias`](validators.html#data.validators.validate_alias)"
+    "Применяется валидатор `validate_alias`"
 
-    _validate_alias = validator("alias", allow_reuse=True)(validators.validate_alias)
+    _validate_alias = validator("alias", allow_reuse=True)(validate_alias)
 
 
 class UniqueListMixin(List):
     """
-    Уникальный список, состоящий из [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData), идентификатор которого определяется в [`Meta.identifier`](mixins.html#data.mixins.UniqueListMixin.Meta)
+    Уникальный список, состоящий из `BaseModel`, идентификатор которого определяется в `Meta`
     ```
-    class SomeData(data.mixins.AliasMixinData):
+    class SomeData(AliasMixinData):
         name: str
 
-    class SomeUniqueList(data.mixins.UniqueListMixin):
+    class SomeUniqueList(UniqueListMixin):
         class Meta:
             source = SomeData
             identifier = "alias"
@@ -89,13 +81,13 @@ class UniqueListMixin(List):
         """
         Мета-данные необходимые для определения типа данных в списке и поля-идентификатора
         ```
-        source: BaseMixinData = BaseMixinData
+        source: BaseModel = BaseModel
         ```
-        - может быть любой структурой, основанной на [`data.mixins.BaseMixinData`](mixins.html#data.mixins.BaseMixinData)
+        - может быть любой структурой, основанной на `BaseModel`
         ```
         identifier: str
         ```
-        - поле-идентификатор, обычно используется [`data.mixins.AliasMixinData.alias`](mixins.html#data.mixins.AliasMixinData.alias)
+        - поле-идентификатор
         """
 
         source: BaseMixinData = BaseMixinData
@@ -130,9 +122,7 @@ class UniqueListMixin(List):
         if not len(self):
             return []
         if self.Meta.identifier not in self[0].schema().get("properties").keys():
-            raise AttributeError(
-                f'Identifier "{self.Meta.identifier}" is undefined as attribute of {self.Meta.source}'
-            )
+            raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
     def get(self, name: str) -> Optional[Meta.source]:
