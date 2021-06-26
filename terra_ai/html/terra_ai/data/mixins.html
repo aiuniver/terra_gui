@@ -214,7 +214,10 @@ class UniqueListMixin(List):
         &lt;class &#39;str&#39;&gt;
         ```
         &#34;&#34;&#34;
-        return json.dumps(self.dict(), **kwargs)
+        __items = []
+        for __item in self:
+            __items.append(json.loads(__item.json()))
+        return json.dumps(__items, **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         &#34;&#34;&#34;
@@ -604,7 +607,10 @@ some_unique_list = SomeUniqueList(
         &lt;class &#39;str&#39;&gt;
         ```
         &#34;&#34;&#34;
-        return json.dumps(self.dict(), **kwargs)
+        __items = []
+        for __item in self:
+            __items.append(json.loads(__item.json()))
+        return json.dumps(__items, **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         &#34;&#34;&#34;
@@ -684,7 +690,7 @@ some_unique_list = SomeUniqueList(
 <li><a title="terra_ai.data.datasets.creation.CreationOutputsList" href="datasets/creation.html#terra_ai.data.datasets.creation.CreationOutputsList">CreationOutputsList</a></li>
 <li><a title="terra_ai.data.datasets.dataset.DatasetsList" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MasksSegmentationList" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MasksSegmentationList">MasksSegmentationList</a></li>
-<li><a title="terra_ai.data.datasets.tags.TagsListData" href="datasets/tags.html#terra_ai.data.datasets.tags.TagsListData">TagsListData</a></li>
+<li><a title="terra_ai.data.datasets.tags.TagsList" href="datasets/tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -978,7 +984,10 @@ SomeData(alias='some_alias', name='Some name')
     &lt;class &#39;str&#39;&gt;
     ```
     &#34;&#34;&#34;
-    return json.dumps(self.dict(), **kwargs)</code></pre>
+    __items = []
+    for __item in self:
+        __items.append(json.loads(__item.json()))
+    return json.dumps(__items, **kwargs)</code></pre>
 </details>
 </dd>
 </dl>

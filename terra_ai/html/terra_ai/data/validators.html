@@ -23,12 +23,14 @@
 </header>
 <section id="section-intro">
 <h2 id="_1">Общие валидаторы</h2>
-<pre><code>class SomeModel:
-    length: Optional[int]
+<h3 id="_2"><strong>Пример использования валидаторов</strong></h3>
+<pre><code>In [1]: class SomeModel(BaseMixinData):
+   ...:     length: int
+   ...:
+   ...:     _validate_positive_integer = validator(&quot;length&quot;, allow_reuse=True)(
+   ...:         validate_positive_integer
+   ...:     )
 
-    _validate_positive_integer = validator(&quot;length&quot;, allow_reuse=True)(
-        validate_positive_integer
-    )
 </code></pre>
 <details class="source">
 <summary>
@@ -37,13 +39,15 @@
 <pre><code class="python">&#34;&#34;&#34;
 ## Общие валидаторы
 
+### **Пример использования валидаторов**
 ```
-class SomeModel:
-    length: Optional[int]
+In [1]: class SomeModel(BaseMixinData):
+   ...:     length: int
+   ...:
+   ...:     _validate_positive_integer = validator(&#34;length&#34;, allow_reuse=True)(
+   ...:         validate_positive_integer
+   ...:     )
 
-    _validate_positive_integer = validator(&#34;length&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 ```
 &#34;&#34;&#34;
 
@@ -151,7 +155,10 @@ def validate_part_value(value: float) -&gt; Optional[float]:
 <h1>Index</h1>
 <div class="toc">
 <ul>
-<li><a href="#_1">Общие валидаторы</a></li>
+<li><a href="#_1">Общие валидаторы</a><ul>
+<li><a href="#_2">Пример использования валидаторов</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <ul id="index">

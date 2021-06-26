@@ -185,7 +185,10 @@ class UniqueListMixin(List):
         <class 'str'>
         ```
         """
-        return json.dumps(self.dict(), **kwargs)
+        __items = []
+        for __item in self:
+            __items.append(json.loads(__item.json()))
+        return json.dumps(__items, **kwargs)
 
     def append(self, __object: Union[dict, Meta.source]):
         """

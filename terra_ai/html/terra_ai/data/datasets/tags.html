@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
 <title>terra_ai.data.datasets.tags API documentation</title>
-<meta name="description" content="Структура данных тегов" />
+<meta name="description" content="Структура данных тегов …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -23,12 +23,168 @@
 </header>
 <section id="section-intro">
 <h2 id="_1">Структура данных тегов</h2>
+<h3 id="_2"><strong>Тег</strong></h3>
+<pre><code>In [1]: from terra_ai.data.datasets.tags import TagData
+
+In [2]: source = {
+   ...:     &quot;alias&quot;: &quot;tensorflow_keras&quot;,
+   ...:     &quot;name&quot;: &quot;Tensorflow.keras&quot;,
+   ...: }
+
+In [3]: data = TagData(**source)
+
+In [4]: data
+Out[4]: TagData(alias='tensorflow_keras', name='Tensorflow.keras')
+
+In [5]: data.dict()
+Out[5]: {'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'}
+
+In [6]: data.json()
+Out[6]: '{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}'
+
+In [7]: print(data.json(indent=2, ensure_ascii=False))
+{
+  &quot;alias&quot;: &quot;tensorflow_keras&quot;,
+  &quot;name&quot;: &quot;Tensorflow.keras&quot;
+}
+</code></pre>
+<h3 id="_3"><strong>Список тегов</strong></h3>
+<pre><code>In [1]: from terra_ai.data.datasets.tags import TagsList
+
+In [2]: source = [
+   ...:     {
+   ...:         &quot;alias&quot;: &quot;tensorflow_keras&quot;,
+   ...:         &quot;name&quot;: &quot;Tensorflow.keras&quot;,
+   ...:     },
+   ...:     {
+   ...:         &quot;alias&quot;: &quot;object_detection&quot;,
+   ...:         &quot;name&quot;: &quot;Object detection&quot;,
+   ...:     },
+   ...:     {
+   ...:         &quot;alias&quot;: &quot;segmentation&quot;,
+   ...:         &quot;name&quot;: &quot;Segmentation&quot;,
+   ...:     },
+   ...: ]
+
+In [3]: data = TagsList(source)
+
+In [4]: data
+Out[4]:
+[TagData(alias='tensorflow_keras', name='Tensorflow.keras'),
+ TagData(alias='object_detection', name='Object detection'),
+ TagData(alias='segmentation', name='Segmentation')]
+
+In [5]: data.dict()
+Out[5]:
+[{'alias': 'tensorflow_keras', 'name': 'Tensorflow.keras'},
+ {'alias': 'object_detection', 'name': 'Object detection'},
+ {'alias': 'segmentation', 'name': 'Segmentation'}]
+
+In [6]: data.json()
+Out[6]: '[{&quot;alias&quot;: &quot;tensorflow_keras&quot;, &quot;name&quot;: &quot;Tensorflow.keras&quot;}, {&quot;alias&quot;: &quot;object_detection&quot;, &quot;name&quot;: &quot;Object detection&quot;}, {&quot;alias&quot;: &quot;segmentation&quot;, &quot;name&quot;: &quot;Segmentation&quot;}]'
+
+In [7]: print(data.json(indent=2, ensure_ascii=False))
+[
+  {
+    &quot;alias&quot;: &quot;tensorflow_keras&quot;,
+    &quot;name&quot;: &quot;Tensorflow.keras&quot;
+  },
+  {
+    &quot;alias&quot;: &quot;object_detection&quot;,
+    &quot;name&quot;: &quot;Object detection&quot;
+  },
+  {
+    &quot;alias&quot;: &quot;segmentation&quot;,
+    &quot;name&quot;: &quot;Segmentation&quot;
+  }
+]
+</code></pre>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
 ## Структура данных тегов
+
+### **Тег**
+```
+In [1]: from terra_ai.data.datasets.tags import TagData
+
+In [2]: source = {
+   ...:     &#34;alias&#34;: &#34;tensorflow_keras&#34;,
+   ...:     &#34;name&#34;: &#34;Tensorflow.keras&#34;,
+   ...: }
+
+In [3]: data = TagData(**source)
+
+In [4]: data
+Out[4]: TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;)
+
+In [5]: data.dict()
+Out[5]: {&#39;alias&#39;: &#39;tensorflow_keras&#39;, &#39;name&#39;: &#39;Tensorflow.keras&#39;}
+
+In [6]: data.json()
+Out[6]: &#39;{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}&#39;
+
+In [7]: print(data.json(indent=2, ensure_ascii=False))
+{
+  &#34;alias&#34;: &#34;tensorflow_keras&#34;,
+  &#34;name&#34;: &#34;Tensorflow.keras&#34;
+}
+```
+
+### **Список тегов**
+```
+In [1]: from terra_ai.data.datasets.tags import TagsList
+
+In [2]: source = [
+   ...:     {
+   ...:         &#34;alias&#34;: &#34;tensorflow_keras&#34;,
+   ...:         &#34;name&#34;: &#34;Tensorflow.keras&#34;,
+   ...:     },
+   ...:     {
+   ...:         &#34;alias&#34;: &#34;object_detection&#34;,
+   ...:         &#34;name&#34;: &#34;Object detection&#34;,
+   ...:     },
+   ...:     {
+   ...:         &#34;alias&#34;: &#34;segmentation&#34;,
+   ...:         &#34;name&#34;: &#34;Segmentation&#34;,
+   ...:     },
+   ...: ]
+
+In [3]: data = TagsList(source)
+
+In [4]: data
+Out[4]:
+[TagData(alias=&#39;tensorflow_keras&#39;, name=&#39;Tensorflow.keras&#39;),
+ TagData(alias=&#39;object_detection&#39;, name=&#39;Object detection&#39;),
+ TagData(alias=&#39;segmentation&#39;, name=&#39;Segmentation&#39;)]
+
+In [5]: data.dict()
+Out[5]:
+[{&#39;alias&#39;: &#39;tensorflow_keras&#39;, &#39;name&#39;: &#39;Tensorflow.keras&#39;},
+ {&#39;alias&#39;: &#39;object_detection&#39;, &#39;name&#39;: &#39;Object detection&#39;},
+ {&#39;alias&#39;: &#39;segmentation&#39;, &#39;name&#39;: &#39;Segmentation&#39;}]
+
+In [6]: data.json()
+Out[6]: &#39;[{&#34;alias&#34;: &#34;tensorflow_keras&#34;, &#34;name&#34;: &#34;Tensorflow.keras&#34;}, {&#34;alias&#34;: &#34;object_detection&#34;, &#34;name&#34;: &#34;Object detection&#34;}, {&#34;alias&#34;: &#34;segmentation&#34;, &#34;name&#34;: &#34;Segmentation&#34;}]&#39;
+
+In [7]: print(data.json(indent=2, ensure_ascii=False))
+[
+  {
+    &#34;alias&#34;: &#34;tensorflow_keras&#34;,
+    &#34;name&#34;: &#34;Tensorflow.keras&#34;
+  },
+  {
+    &#34;alias&#34;: &#34;object_detection&#34;,
+    &#34;name&#34;: &#34;Object detection&#34;
+  },
+  {
+    &#34;alias&#34;: &#34;segmentation&#34;,
+    &#34;name&#34;: &#34;Segmentation&#34;
+  }
+]
+```
 &#34;&#34;&#34;
 
 from ..mixins import AliasMixinData, UniqueListMixin
@@ -43,7 +199,7 @@ class TagData(AliasMixinData):
     &#34;Название&#34;
 
 
-class TagsListData(UniqueListMixin):
+class TagsList(UniqueListMixin):
     &#34;&#34;&#34;
     Список тегов, основанных на `TagData`
     ```
@@ -111,8 +267,8 @@ class TagsListData(UniqueListMixin):
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.datasets.tags.TagsListData"><code class="flex name class">
-<span>class <span class="ident">TagsListData</span></span>
+<dt id="terra_ai.data.datasets.tags.TagsList"><code class="flex name class">
+<span>class <span class="ident">TagsList</span></span>
 <span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
@@ -125,7 +281,7 @@ class TagsListData(UniqueListMixin):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class TagsListData(UniqueListMixin):
+<pre><code class="python">class TagsList(UniqueListMixin):
     &#34;&#34;&#34;
     Список тегов, основанных на `TagData`
     ```
@@ -167,7 +323,11 @@ class TagsListData(UniqueListMixin):
 <h1>Index</h1>
 <div class="toc">
 <ul>
-<li><a href="#_1">Структура данных тегов</a></li>
+<li><a href="#_1">Структура данных тегов</a><ul>
+<li><a href="#_2">Тег</a></li>
+<li><a href="#_3">Список тегов</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <ul id="index">
@@ -185,7 +345,7 @@ class TagsListData(UniqueListMixin):
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.datasets.tags.TagsListData" href="#terra_ai.data.datasets.tags.TagsListData">TagsListData</a></code></h4>
+<h4><code><a title="terra_ai.data.datasets.tags.TagsList" href="#terra_ai.data.datasets.tags.TagsList">TagsList</a></code></h4>
 </li>
 </ul>
 </li>

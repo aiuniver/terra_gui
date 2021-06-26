@@ -40,8 +40,10 @@ class SizeData(BaseModel):
     Вес файла
     &#34;&#34;&#34;
 
-    value: float
-    &#34;Значение веса `34.56`&#34;
+    value: int
+    &#34;Значение веса: `324133875`&#34;
+    short: float
+    &#34;Короткое значение веса: `309.12`&#34;
     unit: str
     &#34;Единицы измерения: `Мб`&#34;
 
@@ -208,8 +210,10 @@ class LayerOutputTypeChoice(str, Enum):
     Вес файла
     &#34;&#34;&#34;
 
-    value: float
-    &#34;Значение веса `34.56`&#34;
+    value: int
+    &#34;Значение веса: `324133875`&#34;
+    short: float
+    &#34;Короткое значение веса: `309.12`&#34;
     unit: str
     &#34;Единицы измерения: `Мб`&#34;</code></pre>
 </details>
@@ -220,13 +224,17 @@ class LayerOutputTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.extra.SizeData.short"><code class="name">var <span class="ident">short</span> : float</code></dt>
+<dd>
+<div class="desc"><p>Короткое значение веса: <code>309.12</code></p></div>
+</dd>
 <dt id="terra_ai.data.extra.SizeData.unit"><code class="name">var <span class="ident">unit</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Единицы измерения: <code>Мб</code></p></div>
 </dd>
-<dt id="terra_ai.data.extra.SizeData.value"><code class="name">var <span class="ident">value</span> : float</code></dt>
+<dt id="terra_ai.data.extra.SizeData.value"><code class="name">var <span class="ident">value</span> : int</code></dt>
 <dd>
-<div class="desc"><p>Значение веса <code>34.56</code></p></div>
+<div class="desc"><p>Значение веса: <code>324133875</code></p></div>
 </dd>
 </dl>
 </dd>
@@ -273,6 +281,7 @@ class LayerOutputTypeChoice(str, Enum):
 <li>
 <h4><code><a title="terra_ai.data.extra.SizeData" href="#terra_ai.data.extra.SizeData">SizeData</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.extra.SizeData.short" href="#terra_ai.data.extra.SizeData.short">short</a></code></li>
 <li><code><a title="terra_ai.data.extra.SizeData.unit" href="#terra_ai.data.extra.SizeData.unit">unit</a></code></li>
 <li><code><a title="terra_ai.data.extra.SizeData.value" href="#terra_ai.data.extra.SizeData.value">value</a></code></li>
 </ul>

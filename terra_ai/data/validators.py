@@ -1,13 +1,15 @@
 """
 ## Общие валидаторы
 
+### **Пример использования валидаторов**
 ```
-class SomeModel:
-    length: Optional[int]
+In [1]: class SomeModel(BaseMixinData):
+   ...:     length: int
+   ...:
+   ...:     _validate_positive_integer = validator("length", allow_reuse=True)(
+   ...:         validate_positive_integer
+   ...:     )
 
-    _validate_positive_integer = validator("length", allow_reuse=True)(
-        validate_positive_integer
-    )
 ```
 """
 
