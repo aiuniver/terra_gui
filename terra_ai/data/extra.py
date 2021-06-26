@@ -3,8 +3,8 @@
 """
 
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, Tuple
+from pydantic import validator, BaseModel
 
 
 class FileSizeData(BaseModel):
@@ -15,29 +15,39 @@ class FileSizeData(BaseModel):
     value: int
     "Значение веса: `324133875`"
     short: Optional[float]
-    "Короткое значение веса: `309.12`"
+    "Короткое значение веса: `309.1181516647339`"
     unit: Optional[str]
     "Единицы измерения: `Мб`"
 
     def __init__(self, *args, **kwargs):
         kwargs = {
             "value": kwargs.get("value"),
+            "short": 0,
+            "unit": "",
         }
         super().__init__(*args, **kwargs)
 
-    @classmethod
-    def validate(cls, *args, **kwargs):
-        value = super().validate(*args)
+    @staticmethod
+    def __short_unit(value: int) -> Tuple[float, str]:
         divisor = 1024
         units = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
-        num = float(value.value)
+        num = float(value)
+        unit = units[0]
         for unit in units:
             if abs(num) < divisor:
-                value.short = num
-                value.unit = unit
                 break
             num /= divisor
-        return value
+        return num, unit
+
+    @validator("short", allow_reuse=True)
+    def _validate_short(cls, _: float, **kwargs) -> float:
+        short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
+        return short
+
+    @validator("unit", allow_reuse=True)
+    def _validate_unit(cls, _: str, **kwargs) -> str:
+        short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
+        return unit
 
 
 class LayerInputTypeChoice(str, Enum):
