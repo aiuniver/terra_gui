@@ -31,13 +31,14 @@ from typing import Any
 
 
 class ExceptionMessages(str, Enum):
-    AliasException = f&#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
+    AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
+    UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
     PositiveInteger = &#34;%s: Value must be greater or equivalent then 1&#34;
     PartValue = &#34;%s: Value must be between 0 and 1&#34;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;
     ZipFile = &#34;%s: Value must be a zip-file&#34;
-    ListEmpty = f&#34;%s must not be empty&#34;
+    ListEmpty = &#34;%s must not be empty&#34;
 
 
 class TerraDataException(ValueError):
@@ -102,6 +103,20 @@ class UniqueListIdentifierException(TerraDataException):
                 (args[0] if len(args) else ExceptionMessages.UniqueListIdentifier)
                 % (str(__identifier), str(__source))
             )
+        )
+
+
+class UniqueListUndefinedIdentifierException(TerraDataException):
+    def __init__(self, __source: Any, *args):
+        super().__init__(
+            (
+                (
+                    args[0]
+                    if len(args)
+                    else ExceptionMessages.UniqueListUndefinedIdentifier
+                )
+                % str(__source)
+            )
         )</code></pre>
 </details>
 </section>
@@ -155,13 +170,14 @@ class UniqueListIdentifierException(TerraDataException):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ExceptionMessages(str, Enum):
-    AliasException = f&#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
+    AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
+    UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
     PositiveInteger = &#34;%s: Value must be greater or equivalent then 1&#34;
     PartValue = &#34;%s: Value must be between 0 and 1&#34;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;
     ZipFile = &#34;%s: Value must be a zip-file&#34;
-    ListEmpty = f&#34;%s must not be empty&#34;</code></pre>
+    ListEmpty = &#34;%s must not be empty&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -191,6 +207,10 @@ class UniqueListIdentifierException(TerraDataException):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier"><code class="name">var <span class="ident">UniqueListIdentifier</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier"><code class="name">var <span class="ident">UniqueListUndefinedIdentifier</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -343,6 +363,7 @@ class UniqueListIdentifierException(TerraDataException):
 <ul class="hlist">
 <li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></li>
+<li><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></li>
 </ul>
 </dd>
@@ -403,6 +424,37 @@ class UniqueListIdentifierException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.UniqueListIdentifier)
                 % (str(__identifier), str(__source))
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException"><code class="flex name class">
+<span>class <span class="ident">UniqueListUndefinedIdentifierException</span></span>
+<span>(</span><span>_UniqueListUndefinedIdentifierException__source: Any, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class UniqueListUndefinedIdentifierException(TerraDataException):
+    def __init__(self, __source: Any, *args):
+        super().__init__(
+            (
+                (
+                    args[0]
+                    if len(args)
+                    else ExceptionMessages.UniqueListUndefinedIdentifier
+                )
+                % str(__source)
             )
         )</code></pre>
 </details>
@@ -512,6 +564,7 @@ class UniqueListIdentifierException(TerraDataException):
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartValue" href="#terra_ai.data.exceptions.ExceptionMessages.PartValue">PartValue</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PositiveInteger" href="#terra_ai.data.exceptions.ExceptionMessages.PositiveInteger">PositiveInteger</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier">UniqueListIdentifier</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier">UniqueListUndefinedIdentifier</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ZipFile" href="#terra_ai.data.exceptions.ExceptionMessages.ZipFile">ZipFile</a></code></li>
 </ul>
 </li>
@@ -550,6 +603,9 @@ class UniqueListIdentifierException(TerraDataException):
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></code></h4>

@@ -406,6 +406,42 @@ class DatasetsList(UniqueListMixin):
 
     class Meta:
         source = DatasetData
+        identifier = &#34;alias&#34;
+
+
+class DatasetsGroupData(AliasMixinData):
+    &#34;&#34;&#34;
+    Группа датасетов
+    &#34;&#34;&#34;
+
+    name: str
+    datasets: DatasetsList = DatasetsList()
+
+    @property
+    def tags(self) -&gt; TagsList:
+        __tags = TagsList()
+        for item in self.datasets:
+            __tags += item.tags
+        return __tags
+
+    def dict(self, **kwargs):
+        data = super().dict()
+        data.update({&#34;tags&#34;: self.tags})
+        return data
+
+
+class DatasetsGroupsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список групп датасетов, основанных на `DatasetsGroupData`
+    ```
+    class Meta:
+        source = DatasetsGroupData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = DatasetsGroupData
         identifier = &#34;alias&#34;</code></pre>
 </details>
 </section>
@@ -476,6 +512,133 @@ class DatasetsList(UniqueListMixin):
 <ul class="hlist">
 <li><code><a title="terra_ai.data.mixins.AliasMixinData.alias" href="../mixins.html#terra_ai.data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.DatasetsGroupData"><code class="flex name class">
+<span>class <span class="ident">DatasetsGroupData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Группа датасетов</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DatasetsGroupData(AliasMixinData):
+    &#34;&#34;&#34;
+    Группа датасетов
+    &#34;&#34;&#34;
+
+    name: str
+    datasets: DatasetsList = DatasetsList()
+
+    @property
+    def tags(self) -&gt; TagsList:
+        __tags = TagsList()
+        for item in self.datasets:
+            __tags += item.tags
+        return __tags
+
+    def dict(self, **kwargs):
+        data = super().dict()
+        data.update({&#34;tags&#34;: self.tags})
+        return data</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.dataset.DatasetsGroupData.datasets"><code class="name">var <span class="ident">datasets</span> : <a title="terra_ai.data.datasets.dataset.DatasetsList" href="#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.DatasetsGroupData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.dataset.DatasetsGroupData.tags"><code class="name">var <span class="ident">tags</span> : <a title="terra_ai.data.datasets.tags.TagsList" href="tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def tags(self) -&gt; TagsList:
+    __tags = TagsList()
+    for item in self.datasets:
+        __tags += item.tags
+    return __tags</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.AliasMixinData.alias" href="../mixins.html#terra_ai.data.mixins.AliasMixinData.alias">alias</a></code></li>
+<li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.DatasetsGroupsList"><code class="flex name class">
+<span>class <span class="ident">DatasetsGroupsList</span></span>
+<span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Список групп датасетов, основанных на <code><a title="terra_ai.data.datasets.dataset.DatasetsGroupData" href="#terra_ai.data.datasets.dataset.DatasetsGroupData">DatasetsGroupData</a></code></p>
+<pre><code>class Meta:
+    source = DatasetsGroupData
+    identifier = &quot;alias&quot;
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DatasetsGroupsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список групп датасетов, основанных на `DatasetsGroupData`
+    ```
+    class Meta:
+        source = DatasetsGroupData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = DatasetsGroupData
+        identifier = &#34;alias&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></li>
+<li>builtins.list</li>
+<li>typing.Generic</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.Meta" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.append" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.dict" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.get" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.ids" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.ids">ids</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.insert" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.json" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.json">json</a></code></li>
 </ul>
 </li>
 </ul>
@@ -559,6 +722,17 @@ class DatasetsList(UniqueListMixin):
 <li><code><a title="terra_ai.data.datasets.dataset.DatasetData.size" href="#terra_ai.data.datasets.dataset.DatasetData.size">size</a></code></li>
 <li><code><a title="terra_ai.data.datasets.dataset.DatasetData.tags" href="#terra_ai.data.datasets.dataset.DatasetData.tags">tags</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.datasets.dataset.DatasetsGroupData" href="#terra_ai.data.datasets.dataset.DatasetsGroupData">DatasetsGroupData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.datasets.dataset.DatasetsGroupData.datasets" href="#terra_ai.data.datasets.dataset.DatasetsGroupData.datasets">datasets</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.DatasetsGroupData.name" href="#terra_ai.data.datasets.dataset.DatasetsGroupData.name">name</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.DatasetsGroupData.tags" href="#terra_ai.data.datasets.dataset.DatasetsGroupData.tags">tags</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.datasets.dataset.DatasetsGroupsList" href="#terra_ai.data.datasets.dataset.DatasetsGroupsList">DatasetsGroupsList</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.dataset.DatasetsList" href="#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></code></h4>

@@ -37,7 +37,10 @@ from typing import List, Union, Optional
 from pydantic import validator, BaseModel
 
 from .validators import validate_alias
-from .exceptions import UniqueListIdentifierException
+from .exceptions import (
+    UniqueListIdentifierException,
+    UniqueListUndefinedIdentifierException,
+)
 
 
 class BaseMixinData(BaseModel):
@@ -122,18 +125,6 @@ class UniqueListMixin(List):
         source: BaseMixinData = BaseMixinData
         identifier: str
 
-    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
-            data = []
-        data = list(map(lambda item: self.Meta.source(**item), data))
-        __data = []
-        for item in data:
-            if item.dict().get(self.Meta.identifier) not in list(
-                map(lambda item: item.dict().get(self.Meta.identifier), __data)
-            ):
-                __data.append(item)
-        super().__init__(__data)
-
     @property
     def ids(self) -&gt; list:
         &#34;&#34;&#34;
@@ -153,6 +144,27 @@ class UniqueListMixin(List):
         if self.Meta.identifier not in self[0].schema().get(&#34;properties&#34;).keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+
+    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
+        if not data:
+            data = []
+        data = list(map(lambda item: self.Meta.source(**item), data))
+        __data = []
+        for item in data:
+            __identifier = getattr(self.Meta, &#34;identifier&#34;, None)
+            if __identifier is None:
+                raise UniqueListUndefinedIdentifierException(self.Meta.source)
+            if item.dict().get(__identifier) not in list(
+                map(lambda item: item.dict().get(self.Meta.identifier), __data)
+            ):
+                __data.append(item)
+        super().__init__(__data)
+
+    def __iadd__(self, *args, **kwargs):
+        if isinstance(args[0], UniqueListMixin):
+            for item in args[0]:
+                self.append(item)
+        return self
 
     def get(self, name: str) -&gt; Optional[Meta.source]:
         &#34;&#34;&#34;
@@ -329,6 +341,7 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.creation.CreationInputData" href="datasets/creation.html#terra_ai.data.datasets.creation.CreationInputData">CreationInputData</a></li>
 <li><a title="terra_ai.data.datasets.creation.CreationOutputData" href="datasets/creation.html#terra_ai.data.datasets.creation.CreationOutputData">CreationOutputData</a></li>
 <li><a title="terra_ai.data.datasets.dataset.DatasetData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetData">DatasetData</a></li>
+<li><a title="terra_ai.data.datasets.dataset.DatasetsGroupData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsGroupData">DatasetsGroupData</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagData" href="datasets/tags.html#terra_ai.data.datasets.tags.TagData">TagData</a></li>
 </ul>
 <h3>Class variables</h3>
@@ -405,6 +418,7 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData">LayerOutputTypeTimeseriesData</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MaskSegmentationData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MaskSegmentationData">MaskSegmentationData</a></li>
 <li><a title="terra_ai.data.mixins.AliasMixinData" href="#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelData" href="modeling/models.html#terra_ai.data.modeling.models.ModelData">ModelData</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -515,18 +529,6 @@ some_unique_list = SomeUniqueList(
         source: BaseMixinData = BaseMixinData
         identifier: str
 
-    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
-            data = []
-        data = list(map(lambda item: self.Meta.source(**item), data))
-        __data = []
-        for item in data:
-            if item.dict().get(self.Meta.identifier) not in list(
-                map(lambda item: item.dict().get(self.Meta.identifier), __data)
-            ):
-                __data.append(item)
-        super().__init__(__data)
-
     @property
     def ids(self) -&gt; list:
         &#34;&#34;&#34;
@@ -546,6 +548,27 @@ some_unique_list = SomeUniqueList(
         if self.Meta.identifier not in self[0].schema().get(&#34;properties&#34;).keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+
+    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
+        if not data:
+            data = []
+        data = list(map(lambda item: self.Meta.source(**item), data))
+        __data = []
+        for item in data:
+            __identifier = getattr(self.Meta, &#34;identifier&#34;, None)
+            if __identifier is None:
+                raise UniqueListUndefinedIdentifierException(self.Meta.source)
+            if item.dict().get(__identifier) not in list(
+                map(lambda item: item.dict().get(self.Meta.identifier), __data)
+            ):
+                __data.append(item)
+        super().__init__(__data)
+
+    def __iadd__(self, *args, **kwargs):
+        if isinstance(args[0], UniqueListMixin):
+            for item in args[0]:
+                self.append(item)
+        return self
 
     def get(self, name: str) -&gt; Optional[Meta.source]:
         &#34;&#34;&#34;
@@ -688,6 +711,7 @@ some_unique_list = SomeUniqueList(
 <ul class="hlist">
 <li><a title="terra_ai.data.datasets.creation.CreationInputsList" href="datasets/creation.html#terra_ai.data.datasets.creation.CreationInputsList">CreationInputsList</a></li>
 <li><a title="terra_ai.data.datasets.creation.CreationOutputsList" href="datasets/creation.html#terra_ai.data.datasets.creation.CreationOutputsList">CreationOutputsList</a></li>
+<li><a title="terra_ai.data.datasets.dataset.DatasetsGroupsList" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsGroupsList">DatasetsGroupsList</a></li>
 <li><a title="terra_ai.data.datasets.dataset.DatasetsList" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MasksSegmentationList" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MasksSegmentationList">MasksSegmentationList</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagsList" href="datasets/tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></li>
