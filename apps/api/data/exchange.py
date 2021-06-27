@@ -54,6 +54,9 @@ class ExchangeData:
             return self._response_error(str(serializer.errors))
         return terra_exchange.call("set_project_name", **serializer.validated_data)
 
+    def _execute_get_datasets_info(self, **kwargs):
+        return terra_exchange.call("get_datasets_info", **kwargs)
+
     def _execute_prepare_dataset(self, **kwargs):
         serializer = serializers.PrepareDatasetSerializer(data=kwargs)
         if not serializer.is_valid():

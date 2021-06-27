@@ -110,6 +110,14 @@ class TerraExchange:
         self.project.name = name
         return TerraExchangeResponse()
 
+    def _call_get_datasets_info(self) -> TerraExchangeResponse:
+        return TerraExchangeResponse(
+            data={
+                "datasets": self.project.dict().get("datasets"),
+                "tags": self.project.dict().get("tags"),
+            }
+        )
+
     def _call_prepare_dataset(
         self, dataset: str, is_custom: bool = False, not_load_layers: bool = False
     ) -> TerraExchangeResponse:
