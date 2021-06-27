@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar color="primary lighten-1" dark app height="50px">
+  <v-app-bar color="accent" dark app height="50px">
     <v-avatar size="30px" tile class="mr-2">
       <img alt="Avatar" src="/img/logo.svg" />
     </v-avatar>

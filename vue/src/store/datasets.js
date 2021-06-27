@@ -15,7 +15,7 @@ export default {
       state.datasets = [...value];
     },
     SET_TAGS(state, tags) {
-      state.tags = {...tags};
+      state.tags = { ...tags };
     },
     SET_ADD_DATASET(state, value) {
       state.datasets.push(value);
@@ -27,7 +27,6 @@ export default {
   },
   actions: {
     async get({ commit }) {
-      console.log("sdsdsddsdsdsd");
       try {
         const { data: { data } } = await axios.post(
           "/api/v1/exchange/get_datasets_info/"
@@ -40,15 +39,28 @@ export default {
         console.log(error);
       }
     },
-    async add({ commit }, user) {
+    async loadDataset(_, dataset) {
       try {
+        console.log(dataset)
         const { data } = await axios.post(
-          "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets",
-          user
+          "/api/v1/exchange/prepare_dataset/",
+          { dataset, is_custom: false }
         );
-        if (data) {
-          commit("SET_ADD_DATASET", data);
-        }
+        console.log(data)
+        return data
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async add({ commit }, name) {
+      try {
+        console.log(name)
+        const { data } = await axios.post(
+          "/api/v1/exchange/prepare_dataset/",
+          name
+        );
+        console.log(name)
+        commit("SET_DATASETS", name);
         return data;
       } catch (error) {
         console.log(error);

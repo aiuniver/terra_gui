@@ -1,11 +1,18 @@
 <template>
-  <v-card class="ma-2" width="200" hover color="primary lighten-2">
-    <v-toolbar dense flat color="primary lighten-1" height="40px">
-      <v-toolbar-title class="body-1">
-        <slot></slot>
+  <v-card
+    class="ma-2"
+    width="200"
+    hover
+    color="accent"
+    :loading="isLoading"
+    :disabled="isLoading"
+  >
+    <v-toolbar dense flat color="accent lighten-1" height="40px">
+      <v-toolbar-title class="body-1 text-truncate">
+        {{ dataset.name }}
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <span class="caption grey--text mr-1">{{ size }}</span>
+      <span class="caption grey--text mr-1">{{ dataset.size | format }}</span>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
           <v-btn x-small icon v-bind="attrs" v-on="on">
@@ -16,9 +23,9 @@
           <v-list-item
             v-for="({ title, icon }, i) in menus"
             :key="i"
+            v-show="dataset.size || title === 'Load'"
             dense
-            :disabled="!size"
-            @click="$emit('change', { title, id })"
+            @click="click(title)"
           >
             <v-list-item-icon>
               <v-icon small>{{ icon }}</v-icon>
@@ -33,13 +40,12 @@
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
       <v-chip
-        v-for="(tag, key) in tags"
+        v-for="(tag, key) in dataset.tags"
         :key="`card-tag-${key}`"
         x-small
         label
         small
         outlined
-        color="secondary"
         text-color="success"
         >{{ tag }}</v-chip
       >
@@ -51,28 +57,44 @@
 export default {
   name: "Card",
   props: {
-    id: {
-      type: String,
-      default: "",
-    },
-    size: {
-      type: Number,
-      default: 0,
-    },
-    tags: {
+    dataset: {
       type: Object,
       default: () => {
-        return {};
+        return {
+          name: "",
+          size: 0,
+          date: 0,
+          tags: {},
+        };
       },
     },
   },
   data: () => ({
+    isLoading: false,
     menus: [
-      { title: "load", icon: "mdi-download" },
+      { title: "Load", icon: "mdi-download" },
       { title: "Edit", icon: "mdi-pencil-outline" },
       { title: "Delete", icon: "mdi-delete" },
     ],
   }),
+  methods: {
+    async click(title) {
+      if (title === "Load") {
+        this.isLoading = 'primary';
+        const data = await this.$store.dispatch(
+          "datasets/loadDataset",
+          this.dataset.name
+        );
+        this.$store.dispatch("messages/setMessage", {
+          message: `Dataset ${this.dataset.name} is loading`,
+        });
+        console.log(data);
+        this.isLoading = false;
+        return;
+      }
+      this.$emit("change", { title, id: 0 });
+    },
+  },
   filters: {
     format: (bytes) => {
       if (!bytes) return "";

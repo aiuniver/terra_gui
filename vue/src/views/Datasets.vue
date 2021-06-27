@@ -69,7 +69,6 @@
             v-for="(tag, key) in tags"
             :key="key"
             class="ma-1"
-            color="secondary"
             text-color="success"
             dark
             label
@@ -111,14 +110,12 @@
       </v-col>
       <v-col cols="12" class="d-flex flex-wrap">
         <Card
-          v-for="({ name, size, tags, id }, i) in datasets"
+          v-for="(dataset, i) in datasets"
           :key="i"
-          :size="size"
-          :tags="tags"
-          :id="id"
+          :dataset="dataset"
           @change="change"
-          >{{ name }}</Card
-        >
+          />
+        
       </v-col>
       <v-col cols="12">
         <h3 v-if="!datasets.length" class="text-center">Not datasets</h3>

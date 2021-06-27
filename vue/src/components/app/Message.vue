@@ -1,5 +1,5 @@
 <template>
-  <v-snackbar v-model="snackbar" right top outlined :color="color" text>
+  <v-snackbar v-model="snackbar" right top outlined :color="color" dark text>
     {{ message }}
     <template #action="{ attrs }">
       <v-btn plain icon v-bind="attrs" @click="snackbar = false">

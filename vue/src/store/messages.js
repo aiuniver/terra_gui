@@ -18,7 +18,7 @@ export default {
   },
   actions: {
     setMessage ({ commit }, { error, message }) {
-      commit('SET_COLOR', error ? 'red lighten-2' : 'primary lighten-1')
+      commit('SET_COLOR', error ? 'red' : 'primary')
       commit('SET_MESSAGE', error || message )
       commit('SET_SNACKBAR', true )
     },

@@ -31,7 +31,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-col cols="12" class="pa-0 primary">
+    <v-col cols="12" class="pa-0 accent">
       <div class="d-flex flex-column float-left pt-5">
         <v-btn dark plain small @click="dialog = true" color="text">
           <v-icon>mdi-plus</v-icon>
@@ -54,7 +54,7 @@
       </div>
       <div>
         <simple-flowchart
-          class="primary lighten-1"
+          class="accent"
           :scene.sync="scene"
           @nodeClick="nodeClick"
           @nodeDelete="nodeDelete"

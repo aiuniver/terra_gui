@@ -4,7 +4,7 @@
     width="500"
     right
     fixed
-    color="primary lighten-1"
+    color="accent"
     dark
   >
     <v-list-item>
