@@ -3,13 +3,14 @@ from typing import Any
 
 
 class ExceptionMessages(str, Enum):
-    AliasException = f'%s: It is allowed to use only lowercase latin characters, numbers and the "_" sign, must always begin with a latin character'
+    AliasException = '%s: It is allowed to use only lowercase latin characters, numbers and the "_" sign, must always begin with a latin character'
     UniqueListIdentifier = 'Identifier "%s" is undefined as attribute of %s'
+    UniqueListUndefinedIdentifier = 'Identifier is undefined in "%s"'
     PositiveInteger = "%s: Value must be greater or equivalent then 1"
     PartValue = "%s: Value must be between 0 and 1"
     PartTotal = "%s: Sum of all properties must by 1"
     ZipFile = "%s: Value must be a zip-file"
-    ListEmpty = f"%s must not be empty"
+    ListEmpty = "%s must not be empty"
 
 
 class TerraDataException(ValueError):
@@ -73,5 +74,19 @@ class UniqueListIdentifierException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.UniqueListIdentifier)
                 % (str(__identifier), str(__source))
+            )
+        )
+
+
+class UniqueListUndefinedIdentifierException(TerraDataException):
+    def __init__(self, __source: Any, *args):
+        super().__init__(
+            (
+                (
+                    args[0]
+                    if len(args)
+                    else ExceptionMessages.UniqueListUndefinedIdentifier
+                )
+                % str(__source)
             )
         )

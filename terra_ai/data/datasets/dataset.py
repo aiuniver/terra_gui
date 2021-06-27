@@ -210,3 +210,39 @@ class DatasetsList(UniqueListMixin):
     class Meta:
         source = DatasetData
         identifier = "alias"
+
+
+class DatasetsGroupData(AliasMixinData):
+    """
+    Группа датасетов
+    """
+
+    name: str
+    datasets: DatasetsList = DatasetsList()
+
+    @property
+    def tags(self) -> TagsList:
+        __tags = TagsList()
+        for item in self.datasets:
+            __tags += item.tags
+        return __tags
+
+    def dict(self, **kwargs):
+        data = super().dict()
+        data.update({"tags": self.tags})
+        return data
+
+
+class DatasetsGroupsList(UniqueListMixin):
+    """
+    Список групп датасетов, основанных на `DatasetsGroupData`
+    ```
+    class Meta:
+        source = DatasetsGroupData
+        identifier = "alias"
+    ```
+    """
+
+    class Meta:
+        source = DatasetsGroupData
+        identifier = "alias"

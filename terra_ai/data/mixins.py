@@ -8,7 +8,10 @@ from typing import List, Union, Optional
 from pydantic import validator, BaseModel
 
 from .validators import validate_alias
-from .exceptions import UniqueListIdentifierException
+from .exceptions import (
+    UniqueListIdentifierException,
+    UniqueListUndefinedIdentifierException,
+)
 
 
 class BaseMixinData(BaseModel):
@@ -93,18 +96,6 @@ class UniqueListMixin(List):
         source: BaseMixinData = BaseMixinData
         identifier: str
 
-    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
-            data = []
-        data = list(map(lambda item: self.Meta.source(**item), data))
-        __data = []
-        for item in data:
-            if item.dict().get(self.Meta.identifier) not in list(
-                map(lambda item: item.dict().get(self.Meta.identifier), __data)
-            ):
-                __data.append(item)
-        super().__init__(__data)
-
     @property
     def ids(self) -> list:
         """
@@ -124,6 +115,27 @@ class UniqueListMixin(List):
         if self.Meta.identifier not in self[0].schema().get("properties").keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+
+    def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
+        if not data:
+            data = []
+        data = list(map(lambda item: self.Meta.source(**item), data))
+        __data = []
+        for item in data:
+            __identifier = getattr(self.Meta, "identifier", None)
+            if __identifier is None:
+                raise UniqueListUndefinedIdentifierException(self.Meta.source)
+            if item.dict().get(__identifier) not in list(
+                map(lambda item: item.dict().get(self.Meta.identifier), __data)
+            ):
+                __data.append(item)
+        super().__init__(__data)
+
+    def __iadd__(self, *args, **kwargs):
+        if isinstance(args[0], UniqueListMixin):
+            for item in args[0]:
+                self.append(item)
+        return self
 
     def get(self, name: str) -> Optional[Meta.source]:
         """
