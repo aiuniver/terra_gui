@@ -1,0 +1,11 @@
+$backgroundColor: #17212b;
+
+.theme--dark.v-application {
+    background: $backgroundColor;
+}
+.theme--dark.v-card {
+    background-color: $backgroundColor;
+}
+.theme--dark.v-list {
+    background: $backgroundColor;
+}
