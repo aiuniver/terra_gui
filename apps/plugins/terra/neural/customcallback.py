@@ -14,7 +14,7 @@ import time
 from terra_ai.guiexchange import Exchange
 from terra_ai.trds import DTS
 
-__version__ = 0.12
+__version__ = 0.13
 
 
 class CustomCallback(keras.callbacks.Callback):
@@ -82,7 +82,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.epoch = 0
         self.history = {}
         self._start_time = time.time()
-        self._now_time = time.time()
+        self._time_batch_step = time.time()
         self._time_first_step = time.time()
         self._sum_time = 0
         self.out_table_data = {}
@@ -180,7 +180,7 @@ class CustomCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-        model_name = f"model_{self.nn_name}_on_epoch_end.last"
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
         file_path_model: str = os.path.join(
             self.save_model_path, f"{model_name}"
         )
@@ -359,14 +359,17 @@ class CustomCallback(keras.callbacks.Callback):
         self.epoch = epoch
         self._time_first_step = time.time()
 
+    def on_train_batch_begin(self, batch, logs=None):
+        self._time_batch_step = time.time()
+
     def on_train_batch_end(self, batch, logs=None):
         stop = self.Exch.get_stop_training_flag()
         if stop:
             self.model.stop_training = True
             self.stop_training = True
             self.stop_flag = True
-            msg = f'ожидайте окончания эпохи {self.last_epoch + 1}:' \
-                  f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
+            msg = f'ожидайте остановку:' \
+                  f'{self.update_progress(self.num_batches, batch, self._time_batch_step)[0]}, '
             self.batch += 1
             self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
         else:
@@ -381,7 +384,6 @@ class CustomCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения дообучения:' \
                                      f'{self.eta_format(time_start)}, '
             elif self.stop_flag:
-                print("batch", batch)
                 msg_progress_end = f'Расчетное время окончания после остановки:' \
                                    f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
                 msg_progress_start = f'Время выполнения:' \
