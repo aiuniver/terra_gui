@@ -32,8 +32,11 @@
 &#34;&#34;&#34;
 
 from enum import Enum
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, Tuple
+from pydantic import validator, BaseModel
+
+
+BYTES_UNITS = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
 
 
 class FileSizeData(BaseModel):
@@ -44,29 +47,38 @@ class FileSizeData(BaseModel):
     value: int
     &#34;Значение веса: `324133875`&#34;
     short: Optional[float]
-    &#34;Короткое значение веса: `309.12`&#34;
+    &#34;Короткое значение веса: `309.1181516647339`&#34;
     unit: Optional[str]
     &#34;Единицы измерения: `Мб`&#34;
 
     def __init__(self, *args, **kwargs):
         kwargs = {
             &#34;value&#34;: kwargs.get(&#34;value&#34;),
+            &#34;short&#34;: 0,
+            &#34;unit&#34;: &#34;&#34;,
         }
         super().__init__(*args, **kwargs)
 
-    @classmethod
-    def validate(cls, *args, **kwargs):
-        value = super().validate(*args)
+    @staticmethod
+    def __short_unit(value: int) -&gt; Tuple[float, str]:
         divisor = 1024
-        units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
-        num = float(value.value)
-        for unit in units:
+        num = float(value)
+        unit = BYTES_UNITS[0]
+        for unit in BYTES_UNITS:
             if abs(num) &lt; divisor:
-                value.short = num
-                value.unit = unit
                 break
             num /= divisor
-        return value
+        return num, unit
+
+    @validator(&#34;short&#34;, allow_reuse=True)
+    def _validate_short(cls, _: float, **kwargs) -&gt; float:
+        short, unit = cls.__short_unit(kwargs.get(&#34;values&#34;, {}).get(&#34;value&#34;))
+        return short
+
+    @validator(&#34;unit&#34;, allow_reuse=True)
+    def _validate_unit(cls, _: str, **kwargs) -&gt; str:
+        short, unit = cls.__short_unit(kwargs.get(&#34;values&#34;, {}).get(&#34;value&#34;))
+        return unit
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -124,29 +136,38 @@ class LayerOutputTypeChoice(str, Enum):
     value: int
     &#34;Значение веса: `324133875`&#34;
     short: Optional[float]
-    &#34;Короткое значение веса: `309.12`&#34;
+    &#34;Короткое значение веса: `309.1181516647339`&#34;
     unit: Optional[str]
     &#34;Единицы измерения: `Мб`&#34;
 
     def __init__(self, *args, **kwargs):
         kwargs = {
             &#34;value&#34;: kwargs.get(&#34;value&#34;),
+            &#34;short&#34;: 0,
+            &#34;unit&#34;: &#34;&#34;,
         }
         super().__init__(*args, **kwargs)
 
-    @classmethod
-    def validate(cls, *args, **kwargs):
-        value = super().validate(*args)
+    @staticmethod
+    def __short_unit(value: int) -&gt; Tuple[float, str]:
         divisor = 1024
-        units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
-        num = float(value.value)
-        for unit in units:
+        num = float(value)
+        unit = BYTES_UNITS[0]
+        for unit in BYTES_UNITS:
             if abs(num) &lt; divisor:
-                value.short = num
-                value.unit = unit
                 break
             num /= divisor
-        return value</code></pre>
+        return num, unit
+
+    @validator(&#34;short&#34;, allow_reuse=True)
+    def _validate_short(cls, _: float, **kwargs) -&gt; float:
+        short, unit = cls.__short_unit(kwargs.get(&#34;values&#34;, {}).get(&#34;value&#34;))
+        return short
+
+    @validator(&#34;unit&#34;, allow_reuse=True)
+    def _validate_unit(cls, _: str, **kwargs) -&gt; str:
+        short, unit = cls.__short_unit(kwargs.get(&#34;values&#34;, {}).get(&#34;value&#34;))
+        return unit</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -157,7 +178,7 @@ class LayerOutputTypeChoice(str, Enum):
 <dl>
 <dt id="terra_ai.data.extra.FileSizeData.short"><code class="name">var <span class="ident">short</span> : Union[float, NoneType]</code></dt>
 <dd>
-<div class="desc"><p>Короткое значение веса: <code>309.12</code></p></div>
+<div class="desc"><p>Короткое значение веса: <code>309.1181516647339</code></p></div>
 </dd>
 <dt id="terra_ai.data.extra.FileSizeData.unit"><code class="name">var <span class="ident">unit</span> : Union[str, NoneType]</code></dt>
 <dd>
@@ -166,33 +187,6 @@ class LayerOutputTypeChoice(str, Enum):
 <dt id="terra_ai.data.extra.FileSizeData.value"><code class="name">var <span class="ident">value</span> : int</code></dt>
 <dd>
 <div class="desc"><p>Значение веса: <code>324133875</code></p></div>
-</dd>
-</dl>
-<h3>Static methods</h3>
-<dl>
-<dt id="terra_ai.data.extra.FileSizeData.validate"><code class="name flex">
-<span>def <span class="ident">validate</span></span>(<span>*args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@classmethod
-def validate(cls, *args, **kwargs):
-    value = super().validate(*args)
-    divisor = 1024
-    units = [&#34;б&#34;, &#34;Кб&#34;, &#34;Мб&#34;, &#34;Гб&#34;, &#34;Тб&#34;, &#34;Пб&#34;, &#34;Эб&#34;, &#34;Зб&#34;, &#34;Иб&#34;]
-    num = float(value.value)
-    for unit in units:
-        if abs(num) &lt; divisor:
-            value.short = num
-            value.unit = unit
-            break
-        num /= divisor
-    return value</code></pre>
-</details>
 </dd>
 </dl>
 </dd>
@@ -329,7 +323,6 @@ def validate(cls, *args, **kwargs):
 <ul class="">
 <li><code><a title="terra_ai.data.extra.FileSizeData.short" href="#terra_ai.data.extra.FileSizeData.short">short</a></code></li>
 <li><code><a title="terra_ai.data.extra.FileSizeData.unit" href="#terra_ai.data.extra.FileSizeData.unit">unit</a></code></li>
-<li><code><a title="terra_ai.data.extra.FileSizeData.validate" href="#terra_ai.data.extra.FileSizeData.validate">validate</a></code></li>
 <li><code><a title="terra_ai.data.extra.FileSizeData.value" href="#terra_ai.data.extra.FileSizeData.value">value</a></code></li>
 </ul>
 </li>
