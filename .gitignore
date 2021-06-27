@@ -132,3 +132,4 @@ dmypy.json
 /TerraAI/
 
 /staticfiles/
+node_modules/

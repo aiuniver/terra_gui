@@ -23,4 +23,4 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
     path("project/", include("apps.project.urls", namespace="apps_project")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.VUE_URL, document_root=settings.VUE_ROOT)

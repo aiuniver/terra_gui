@@ -138,6 +138,8 @@ STATICFILES_FINDERS = [
     "compressor.finders.CompressorFinder",
 ]
 
+VUE_URL = "/"
+VUE_ROOT = BASE_DIR("vue/dist")
 
 #  Compress static files
 
