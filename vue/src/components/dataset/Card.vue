@@ -5,7 +5,7 @@
         <slot></slot>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <span class="caption grey--text mr-1">{{ size | format }}</span>
+      <span class="caption grey--text mr-1">{{ size }}</span>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
           <v-btn x-small icon v-bind="attrs" v-on="on">
@@ -17,6 +17,7 @@
             v-for="({ title, icon }, i) in menus"
             :key="i"
             dense
+            :disabled="!size"
             @click="$emit('change', { title, id })"
           >
             <v-list-item-icon>
@@ -32,8 +33,8 @@
     <v-divider class="mx-4"></v-divider>
     <v-card-text>
       <v-chip
-        v-for="(tag, i) in tags"
-        :key="`card-tag-${i}`"
+        v-for="(tag, key) in tags"
+        :key="`card-tag-${key}`"
         x-small
         label
         small
@@ -59,9 +60,9 @@ export default {
       default: 0,
     },
     tags: {
-      type: Array,
+      type: Object,
       default: () => {
-        return [];
+        return {};
       },
     },
   },

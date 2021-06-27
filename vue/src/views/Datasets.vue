@@ -66,8 +66,8 @@
       <v-col cols="12">
         <v-chip-group v-model="tagsFilter" column multiple>
           <v-chip
-            v-for="(tag, i) in tags"
-            :key="i"
+            v-for="(tag, key) in tags"
+            :key="key"
             class="ma-1"
             color="secondary"
             text-color="success"
@@ -111,13 +111,13 @@
       </v-col>
       <v-col cols="12" class="d-flex flex-wrap">
         <Card
-          v-for="({ title, size, tags, id }, i) in datasets"
+          v-for="({ name, size, tags, id }, i) in datasets"
           :key="i"
           :size="size"
           :tags="tags"
           :id="id"
           @change="change"
-          >{{ title }}</Card
+          >{{ name }}</Card
         >
       </v-col>
       <v-col cols="12">

@@ -30,7 +30,7 @@ const gradients = [
   ["#f72047", "#ffd200", "#1feaea"],
 ];
 export default {
-  name: "home",
+  name: "Home",
   data: () => ({
     width: 2,
     radius: 10,

@@ -1,6 +1,5 @@
 <template>
   <v-row>
-    <NavDrawer />
     <v-dialog v-model="dialog" persistent max-width="300px">
       <v-card>
         <v-card-title>
@@ -53,31 +52,17 @@
         </v-btn>
       </div>
       <div>
-        <simple-flowchart
-          class="primary lighten-1"
-          :scene.sync="scene"
-          @nodeClick="nodeClick"
-          @nodeDelete="nodeDelete"
-          @linkBreak="linkBreak"
-          @linkAdded="linkAdded"
-          @canvasClick="canvasClick"
-          :height="800"
-        />
       </div>
     </v-col>
   </v-row>
 </template>
 
 <script>
-import SimpleFlowchart from "@/components/flowchart/SimpleFlowchart";
-import NavDrawer from "@/components/app/NavDrawer";
 import { mapGetters } from "vuex";
 
 export default {
-  name: "Modeling",
+  name: "Training",
   components: {
-    SimpleFlowchart,
-    NavDrawer,
   },
   data() {
     return {

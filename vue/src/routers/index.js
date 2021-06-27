@@ -14,4 +14,9 @@ export default [
     name: 'Modeling',
     component: () => import('@/views/Modeling'),
   },
+  {
+    path: '/training',
+    name: 'Training',
+    component: () => import('@/views/Training'),
+  },
 ]

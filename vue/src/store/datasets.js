@@ -4,19 +4,7 @@ export default {
   namespaced: true,
   state: () => ({
     datasets: [],
-    tags: [
-      "images",
-      "tag",
-      "smarthome",
-      "text",
-      "bird",
-      "time",
-      "cloud",
-      "cats",
-      "smile",
-      "black",
-      "nitify",
-    ],
+    tags: {},
     sort: "",
     tagsFilter: [],
     id: null,
@@ -25,6 +13,9 @@ export default {
   mutations: {
     SET_DATASETS(state, value) {
       state.datasets = [...value];
+    },
+    SET_TAGS(state, tags) {
+      state.tags = {...tags};
     },
     SET_ADD_DATASET(state, value) {
       state.datasets.push(value);
@@ -38,10 +29,13 @@ export default {
     async get({ commit }) {
       console.log("sdsdsddsdsdsd");
       try {
-        const { data } = await axios.get(
-          "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets"
+        const { data: { data } } = await axios.post(
+          "/api/v1/exchange/get_datasets_info/"
         );
-        commit("SET_DATASETS", data);
+        const { datasets, tags } = data
+        console.log(datasets)
+        commit("SET_DATASETS", datasets);
+        commit("SET_TAGS", tags);
       } catch (error) {
         console.log(error);
       }
@@ -94,6 +88,7 @@ export default {
       }
     },
     setTagsFilter({ commit }, value) {
+      console.log(value)
       commit("SET_TAGS_FILTER", value);
     },
   },
@@ -105,18 +100,20 @@ export default {
       return tagsFilter;
     },
     getDatasets({ datasets, tagsFilter, tags }) {
-      const arr = tags.filter((_, i) => {
-        return tagsFilter.indexOf(i) !== -1;
-      })
-      if (!tagsFilter.length) {
-        return datasets
-      } 
-      return datasets.filter((dataset) => {
-        const index = dataset.tags.filter((tag) => {
-          return arr.indexOf(tag) !== -1;
-        })
-        return index.length
-      })
+      console.log(tagsFilter, tags)
+      // const arr = tags.filter((_, i) => {
+      //   return tagsFilter.indexOf(i) !== -1;
+      // })
+      // if (!tagsFilter.length) {
+      //   return datasets
+      // }
+      // return datasets.filter((dataset) => {
+      //   const index = dataset.tags.filter((tag) => {
+      //     return arr.indexOf(tag) !== -1;
+      //   })
+      //   return index.length
+      // })
+      return datasets
     },
   },
 };
