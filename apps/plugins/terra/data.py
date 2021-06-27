@@ -108,6 +108,7 @@ class LayerType(str, Enum):
     Normalization = "Normalization"
     Cropping2D = "Cropping2D"
     VGG16 = "VGG16"
+    Conv2DBNDrop = "Conv2DBNDrop"
 
 
 class OptimizerParams(pydantic.BaseModel):
