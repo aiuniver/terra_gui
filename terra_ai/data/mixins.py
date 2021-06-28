@@ -5,9 +5,9 @@
 import json
 
 from typing import List, Union, Optional
-from pydantic import validator, BaseModel
+from pydantic import BaseModel
 
-from .validators import validate_alias
+from .typing import AliasType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
@@ -41,10 +41,7 @@ class AliasMixinData(BaseMixinData):
     Расширение модели идентификатором `alias`.
     """
 
-    alias: str
-    "Применяется валидатор `validate_alias`"
-
-    _validate_alias = validator("alias", allow_reuse=True)(validate_alias)
+    alias: AliasType
 
 
 class UniqueListMixin(List):
@@ -117,7 +114,7 @@ class UniqueListMixin(List):
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
+        if data is None:
             data = []
         data = list(map(lambda item: self.Meta.source(**item), data))
         __data = []

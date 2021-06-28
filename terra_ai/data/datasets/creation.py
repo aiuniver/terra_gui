@@ -143,21 +143,15 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 """
 
 from math import fsum
+from pathlib import Path
 from typing import Union, Optional, Any
-from pathlib import PosixPath
-from pydantic import validator, FilePath, HttpUrl
+from pydantic import validator, confloat, HttpUrl
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..validators import validate_part_value
-from ..extra import LayerInputTypeChoice, LayerOutputTypeChoice
-from ..exceptions import (
-    ZipFileException,
-    ValueTypeException,
-    PartTotalException,
-    ListEmptyException,
-)
-from .extra import SourceModeChoice
+from ..typing import confilepath, FilePathType
+from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
+from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
 from . import parameters
 
@@ -169,28 +163,20 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
-    value: Union[FilePath, HttpUrl]
+    value: Union[confilepath(ext="zip"), HttpUrl]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[PosixPath, HttpUrl], **kwargs
-    ) -> Union[PosixPath, HttpUrl]:
-        if isinstance(value, PosixPath):
-            split_value = str(value).split(".")
-            if len(split_value) < 2 or split_value[-1].lower() != "zip":
-                raise ZipFileException(value)
-
+        cls, value: Union[FilePathType, HttpUrl], **kwargs
+    ) -> Union[FilePathType, HttpUrl]:
         mode = kwargs.get("values", {}).get("mode")
-
         if mode == SourceModeChoice.google_drive:
-            if not isinstance(value, PosixPath):
-                raise ValueTypeException(value, PosixPath)
-
+            if not isinstance(value, Path):
+                raise ValueTypeException(value, FilePathType)
         if mode == SourceModeChoice.url:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
-
         return value
 
 
@@ -199,16 +185,12 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок"
     """
 
-    train: float = 0.6
+    train: confloat(ge=0, le=1) = 0.6
     "Обучающая выборка"
-    validation: float = 0.3
+    validation: confloat(ge=0, le=1) = 0.3
     "Валидационная выборка"
-    test: float = 0.1
+    test: confloat(ge=0, le=1) = 0.1
     "Тестовая выборка"
-
-    _validate_values = validator("train", "validation", "test", allow_reuse=True)(
-        validate_part_value
-    )
 
     @property
     def total(self) -> float:

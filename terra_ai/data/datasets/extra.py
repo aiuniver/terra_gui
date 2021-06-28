@@ -35,3 +35,29 @@ class LayerNetChoice(str, Enum):
 class LayerScalerChoice(str, Enum):
     NoScaler = "NoScaler"
     MinMaxScaler = "MinMaxScaler"
+
+
+class LayerInputTypeChoice(str, Enum):
+    """
+    Типы данных для `input`-слоев
+    """
+
+    images = "images"
+    text = "text"
+    audio = "audio"
+    dataframe = "dataframe"
+
+
+class LayerOutputTypeChoice(str, Enum):
+    """
+    Типы данных для `output`-слоев
+    """
+
+    images = "images"
+    text = "text"
+    audio = "audio"
+    classification = "classification"
+    segmentation = "segmentation"
+    text_segmentation = "text_segmentation"
+    regression = "regression"
+    timeseries = "timeseries"

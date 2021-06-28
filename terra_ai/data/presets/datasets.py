@@ -197,7 +197,7 @@ groups = DatasetsGroupsList(
         },
         {
             "alias": "custom",
-            "name": "Собственная сборка",
+            "name": "Собственные",
         },
     ]
 )

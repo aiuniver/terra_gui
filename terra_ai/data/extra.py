@@ -2,9 +2,8 @@
 ## Дополнительные структуры данных
 """
 
-from enum import Enum
 from typing import Optional, Tuple
-from pydantic import validator, BaseModel
+from pydantic import validator, conint, confloat, BaseModel
 
 
 BYTES_UNITS = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
@@ -15,9 +14,9 @@ class FileSizeData(BaseModel):
     Вес файла
     """
 
-    value: int
+    value: conint(ge=0)
     "Значение веса: `324133875`"
-    short: Optional[float]
+    short: Optional[confloat(ge=0)]
     "Короткое значение веса: `309.1181516647339`"
     unit: Optional[str]
     "Единицы измерения: `Мб`"
@@ -42,37 +41,15 @@ class FileSizeData(BaseModel):
         return num, unit
 
     @validator("short", allow_reuse=True)
-    def _validate_short(cls, _: float, **kwargs) -> float:
+    def _validate_short(cls, value: float, **kwargs) -> float:
+        if value is None:
+            return value
         short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
         return short
 
     @validator("unit", allow_reuse=True)
-    def _validate_unit(cls, _: str, **kwargs) -> str:
+    def _validate_unit(cls, value: str, **kwargs) -> str:
+        if value is None:
+            return value
         short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
         return unit
-
-
-class LayerInputTypeChoice(str, Enum):
-    """
-    Типы данных для `input`-слоев
-    """
-
-    images = "images"
-    text = "text"
-    audio = "audio"
-    dataframe = "dataframe"
-
-
-class LayerOutputTypeChoice(str, Enum):
-    """
-    Типы данных для `output`-слоев
-    """
-
-    images = "images"
-    text = "text"
-    audio = "audio"
-    classification = "classification"
-    segmentation = "segmentation"
-    text_segmentation = "text_segmentation"
-    regression = "regression"
-    timeseries = "timeseries"
