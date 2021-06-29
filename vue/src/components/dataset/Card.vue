@@ -1,18 +1,18 @@
 <template>
   <v-card
-    class="ma-2"
-    width="200"
     hover
     color="accent"
+    height="150"
+    loader-height="2"
     :loading="isLoading"
-    :disabled="isLoading"
+    :disabled="(isLoading !== false)"
   >
     <v-toolbar dense flat color="accent lighten-1" height="40px">
       <v-toolbar-title class="body-1 text-truncate">
         {{ dataset.name }}
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <span class="caption grey--text mr-1">{{ dataset.size | format }}</span>
+      <span class="caption grey--text mr-1">{{ dataset.size || "" }}</span>
       <v-menu offset-y>
         <template v-slot:activator="{ on, attrs }">
           <v-btn x-small icon v-bind="attrs" v-on="on">
@@ -94,15 +94,6 @@ export default {
       }
       this.$emit("change", { title, id: 0 });
     },
-  },
-  filters: {
-    format: (bytes) => {
-      if (!bytes) return "";
-      var sizes = ["Bytes", "KB", "MB", "GB", "TB"];
-      if (bytes == 0) return "0 Byte";
-      var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
-      return Math.round(bytes / Math.pow(1024, i), 2) + " " + sizes[i];
-    },
-  },
+  }
 };
 </script>

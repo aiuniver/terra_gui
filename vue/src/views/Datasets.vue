@@ -15,7 +15,7 @@
               <v-form ref="form">
                 <v-col cols="12">
                   <v-text-field
-                    v-model="inputTitle"
+                    v-model="inputName"
                     label="Name"
                     type="text"
                     prepend-icon="mdi-layers-outline"
@@ -36,13 +36,14 @@
                 <v-col cols="12">
                   <v-select
                     v-model="inputTags"
-                    :items="tags"
+                    :items="tagsArr"
                     :menu-props="{ maxHeight: '400' }"
                     label="Tags"
                     multiple
                     prepend-icon="mdi-tag"
                     :rules="[rules.required]"
                     persistent-hint
+                    return-object
                     :disabled="dialogTitle === 'Delete'"
                   ></v-select>
                 </v-col>
@@ -60,65 +61,54 @@
       </v-card>
     </v-dialog>
     <v-row>
-      <v-col cols="12" class="align-center pb-0 d-flex">
-        <h5 color="secondary" text-color="success">Tags</h5>
+      <v-col cols="9">
+        <v-row>
+          <v-col cols="12" class="align-center pb-0 d-flex">
+            <h5 class="success--text">Tags</h5>
+          </v-col>
+          <v-col cols="12">
+            <v-chip-group v-model="tagsFilter" column multiple>
+              <v-chip
+                v-for="(tag, key) in tags"
+                :key="key"
+                class="ma-1"
+                text-color="success"
+                dark
+                label
+                :value="key"
+                small
+                filter
+                outlined
+              >
+                {{ tag }}
+              </v-chip>
+            </v-chip-group>
+          </v-col>
+          <v-col cols="12" class="align-center pb-0 d-flex">
+            <h5 class="success--text">Datasets</h5>
+          </v-col>
+          <v-col cols="12">
+            <v-row>
+              <v-col
+                v-for="(dataset, i) in datasets"
+                :key="i"
+                cols="12"
+                sm="6"
+                md="4"
+                lg="3"
+                xl="2"
+              >
+                <Card :dataset="dataset" @change="change" />
+              </v-col>
+            </v-row>
+          </v-col>
+          <v-col cols="12">
+            <h3 v-if="!datasets.length" class="text-center">Not datasets</h3>
+          </v-col>
+        </v-row>
       </v-col>
-      <v-col cols="12">
-        <v-chip-group v-model="tagsFilter" column multiple>
-          <v-chip
-            v-for="(tag, key) in tags"
-            :key="key"
-            class="ma-1"
-            text-color="success"
-            dark
-            label
-            small
-            filter
-            outlined
-          >
-            {{ tag }}
-          </v-chip>
-        </v-chip-group>
-      </v-col>
-      <v-col cols="12" class="align-center pb-0 d-flex">
-        <h5>Datasets</h5>
-        <v-btn
-          class="ml-2"
-          elevation="2"
-          small
-          icon
-          @click="change({ event: 'New' })"
-        >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-btn
-          class="ml-2"
-          elevation="2"
-          small
-          icon
-        >
-          <v-icon>mdi-google-drive</v-icon>
-        </v-btn>
-        <v-btn
-          class="ml-2"
-          elevation="2"
-          small
-          icon
-        >
-          <v-icon>mdi-link</v-icon>
-        </v-btn>
-      </v-col>
-      <v-col cols="12" class="d-flex flex-wrap">
-        <Card
-          v-for="(dataset, i) in datasets"
-          :key="i"
-          :dataset="dataset"
-          @change="change"
-          />
-        
-      </v-col>
-      <v-col cols="12">
-        <h3 v-if="!datasets.length" class="text-center">Not datasets</h3>
+      <v-col cols="3" class="pa-0">
+        <Settings />
       </v-col>
     </v-row>
   </div>
@@ -127,17 +117,20 @@
 <script>
 import { mapGetters } from "vuex";
 import Card from "@/components/dataset/Card";
+import Settings from "@/components/dataset/Settings";
 
 export default {
   name: "Datasets",
   components: {
     Card,
+    Settings,
   },
   data: () => ({
     modalDel: false,
     dialog: false,
     dialogTitle: "",
-    inputTitle: "",
+    inputName: "",
+    inputDate: "",
     inputSize: 0,
     inputTags: [],
     isLoad: false,
@@ -152,6 +145,7 @@ export default {
   computed: {
     ...mapGetters({
       tags: "datasets/getTags",
+      tagsArr: "datasets/getTagsArr",
       datasets: "datasets/getDatasets",
     }),
     tagsFilter: {
@@ -182,21 +176,22 @@ export default {
         this.isLoad = true;
         const dataset = {
           id: this.inputId,
-          title: this.inputTitle,
+          title: this.inputName,
           size: +this.inputSize,
           tags: this.inputTags,
         };
+        console.log(dataset);
         if (event === "New") {
-          const data = await this.$store.dispatch("datasets/add", dataset);
-          this.$store.dispatch("messages/setMessage", {
-            message: `Add dataset ${data.title}`,
-          });
+          // const data = await this.$store.dispatch("datasets/add", dataset);
+          // this.$store.dispatch("messages/setMessage", {
+          // message: `Add dataset ${data.title}`,
+          // });
         }
         if (event === "Edit") {
-          const data = await this.$store.dispatch("datasets/edit", dataset);
-          this.$store.dispatch("messages/setMessage", {
-            message: `Edit dataset ${data.title}`,
-          });
+          // const data = await this.$store.dispatch("datasets/edit", dataset);
+          // this.$store.dispatch("messages/setMessage", {
+          // message: `Edit dataset ${data.title}`,
+          // });
         }
         this.isLoad = false;
         this.dialog = false;
@@ -206,15 +201,41 @@ export default {
       this.dialog = false;
     },
     change({ event, id }) {
+      console.log(event, id);
       this.dialogTitle = event;
       const [dataset] = this.datasets.filter((item) => {
         return item.id === id;
       });
+      console.log(dataset);
       this.inputId = id;
-      this.inputTitle = dataset ? dataset.title || "" : "";
+      this.inputName = dataset ? dataset.title || "" : "";
       this.inputSize = dataset ? dataset.size || 0 : 0;
-      this.inputTags = dataset ? dataset.tags || [] : [];
+      // this.inputTags = dataset ? dataset.tags || {} : {};
       this.dialog = true;
+    },
+  },
+  watch: {
+    search() {
+      // Items have already been loaded
+      if (this.items.length > 0) return;
+      // Items have already been requested
+      if (this.isLoading) return;
+
+      this.isLoading = true;
+
+      // Lazily load input items
+      fetch("/api/v1/datasets-sources/?term=")
+        .then((res) => res.json())
+        .then((res) => {
+          console.log(res);
+          // const { count, entries } = res;
+          // this.count = count;
+          // this.entries = entries;
+        })
+        .catch((err) => {
+          console.log(err);
+        })
+        .finally(() => (this.isLoading = false));
     },
   },
 };

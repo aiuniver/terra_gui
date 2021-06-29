@@ -2,7 +2,7 @@ export default [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/Home')
+    component: () => import('@/views/Datasets')
   },
   {
     path: '/datasets',

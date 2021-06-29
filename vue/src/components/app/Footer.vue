@@ -1,7 +1,7 @@
 <template>
-  <v-footer color="primary" padless app>
+  <v-footer color="accent" padless app>
     <v-row no-gutters>
-      <v-col class="primary lighten-2 text-end success--text caption px-2" cols="12">
+      <v-col class="text-end success--text caption px-2" cols="12">
         Copyright © «Университет искусственного интеллекта»,
         <strong>{{ new Date().getFullYear() }} </strong>
       </v-col>

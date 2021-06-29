@@ -15,11 +15,12 @@
         hide-details
       ></v-text-field>
     </v-toolbar-title>
-    <v-btn-toggle tile color="success accent-3" group>
-      <v-btn to="/datasets" class="ma-0">Data</v-btn>
-      <v-btn to="/modeling" class="ma-0">Modeling</v-btn>
-      <v-btn to="/training" class="ma-0">Training</v-btn>
-    </v-btn-toggle>
+    <v-tabs background-color="accent">
+      <v-tabs-slider color="primary"></v-tabs-slider>
+      <v-tab class="success--text" to="/datasets"> Datasets </v-tab>
+      <v-tab class="success--text" to="/modeling"> Modeling </v-tab>
+      <v-tab class="success--text" to="/training"> Training </v-tab>
+    </v-tabs>
     <v-spacer></v-spacer>
 
     <v-menu bottom>

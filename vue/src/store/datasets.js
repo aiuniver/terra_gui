@@ -26,6 +26,14 @@ export default {
     },
   },
   actions: {
+    async axios(_, params ) {
+      try {
+        const { data } = await axios(params);
+        return data
+      } catch (error) {
+        console.log(error);
+      }
+    },
     async get({ commit }) {
       try {
         const { data: { data } } = await axios.post(
@@ -100,7 +108,6 @@ export default {
       }
     },
     setTagsFilter({ commit }, value) {
-      console.log(value)
       commit("SET_TAGS_FILTER", value);
     },
   },
@@ -108,24 +115,24 @@ export default {
     getTags({ tags }) {
       return tags;
     },
+    getTagsArr({ tags }) {
+      return Object.keys(tags).map((key) => { 
+        return { "text": tags[key], "value": { [key]: tags[key] } } 
+      });
+    },
     getTagsFilter({ tagsFilter }) {
       return tagsFilter;
     },
-    getDatasets({ datasets, tagsFilter, tags }) {
-      console.log(tagsFilter, tags)
-      // const arr = tags.filter((_, i) => {
-      //   return tagsFilter.indexOf(i) !== -1;
-      // })
-      // if (!tagsFilter.length) {
-      //   return datasets
-      // }
-      // return datasets.filter((dataset) => {
-      //   const index = dataset.tags.filter((tag) => {
-      //     return arr.indexOf(tag) !== -1;
-      //   })
-      //   return index.length
-      // })
-      return datasets
+    getDatasets({ datasets, tagsFilter }) {
+      if (!tagsFilter.length) {
+        return datasets
+      }
+      return datasets.filter((dataset) => {
+        const index = Object.keys(dataset.tags).filter((tag) => {
+          return tagsFilter.indexOf(tag) !== -1;
+        })
+        return index.length
+      })
     },
   },
 };

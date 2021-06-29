@@ -9,3 +9,12 @@ $backgroundColor: #17212b;
 .theme--dark.v-list {
     background: $backgroundColor;
 }
+.theme--dark.v-text-field--solo-inverted.v-input--is-focused>.v-input__control>.v-input__slot input {
+    color: rgba(251, 251, 251, 0.87);
+}
+.theme--dark.v-tabs-items {
+    background-color: $backgroundColor;
+}
+.theme--dark.v-expansion-panels .v-expansion-panel {
+    background-color: $backgroundColor;
+}

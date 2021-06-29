@@ -36,14 +36,15 @@ const opts = {
         input: '#f6af54',
         action: '#89d764',
         output: '#9166f2',
+        background: '#17212b',
       }
     }
   },
 };
 
 Vue.config.productionTip = false;
-Vue.use(VueAxios, axios);
 Vue.use(Vuex);
+Vue.use(VueAxios, axios);
 Vue.use(VueRouter);
 Vue.use(Vuetify);
 
