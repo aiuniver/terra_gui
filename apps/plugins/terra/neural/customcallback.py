@@ -331,7 +331,7 @@ class BaseCallback():
 
         return metric_classes
 
-    def image_to_base64(image_as_array):
+    def image_to_base64(self, image_as_array):
         if image_as_array.dtype == 'int32':
             image_as_array = image_as_array.astype(np.uint8)
         temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
