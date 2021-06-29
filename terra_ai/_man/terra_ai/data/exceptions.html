@@ -40,9 +40,7 @@ class ExceptionMessages(str, Enum):
     ListEmpty = &#34;%s: must not be empty&#34;
     FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
     Base64Extension = &#34;Incorrect base64 string value&#34;
-    LayersNotInAvailable = &#34;Layers %s not in available %s&#34;
-    LayersNotDefined = &#34;You must define layers %s&#34;
-    PositionXY = &#34;%s: Position must be a list with 2 elements, received %s&#34;
+    XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;
 
 
 class TerraDataException(ValueError):
@@ -124,31 +122,11 @@ class Base64Exception(TerraDataException):
         super().__init__(ExceptionMessages.Base64Extension.value)
 
 
-class LayersNotInAvailableException(TerraDataException):
-    def __init__(self, __not_in_available: Any, __available: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotInAvailable)
-                % (str(__not_in_available), str(__available))
-            )
-        )
-
-
-class LayersNotDefinedException(TerraDataException):
-    def __init__(self, __not_defined: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotDefined)
-                % str(__not_defined)
-            )
-        )
-
-
-class PositionXYException(TerraDataException):
+class XYException(TerraDataException):
     def __init__(self, __name: Any, __position: Any, *args):
         super().__init__(
             (
-                (args[0] if len(args) else ExceptionMessages.PositionXY)
+                (args[0] if len(args) else ExceptionMessages.XY)
                 % (str(__name), str(__position))
             )
         )</code></pre>
@@ -234,9 +212,7 @@ class PositionXYException(TerraDataException):
     ListEmpty = &#34;%s: must not be empty&#34;
     FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
     Base64Extension = &#34;Incorrect base64 string value&#34;
-    LayersNotInAvailable = &#34;Layers %s not in available %s&#34;
-    LayersNotDefined = &#34;You must define layers %s&#34;
-    PositionXY = &#34;%s: Position must be a list with 2 elements, received %s&#34;</code></pre>
+    XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -257,23 +233,11 @@ class PositionXYException(TerraDataException):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.LayersNotDefined"><code class="name">var <span class="ident">LayersNotDefined</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.LayersNotInAvailable"><code class="name">var <span class="ident">LayersNotInAvailable</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.ListEmpty"><code class="name">var <span class="ident">ListEmpty</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.PartTotal"><code class="name">var <span class="ident">PartTotal</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.PositionXY"><code class="name">var <span class="ident">PositionXY</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -290,6 +254,10 @@ class PositionXYException(TerraDataException):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.ValueType"><code class="name">var <span class="ident">ValueType</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.XY"><code class="name">var <span class="ident">XY</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -311,60 +279,6 @@ class PositionXYException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.FilePathExtension)
                 % (str(__file_path), str(__extension))
-            )
-        )</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.exceptions.LayersNotDefinedException"><code class="flex name class">
-<span>class <span class="ident">LayersNotDefinedException</span></span>
-<span>(</span><span>_LayersNotDefinedException__not_defined: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LayersNotDefinedException(TerraDataException):
-    def __init__(self, __not_defined: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotDefined)
-                % str(__not_defined)
-            )
-        )</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.exceptions.LayersNotInAvailableException"><code class="flex name class">
-<span>class <span class="ident">LayersNotInAvailableException</span></span>
-<span>(</span><span>_LayersNotInAvailableException__not_in_available: Any, _LayersNotInAvailableException__available: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LayersNotInAvailableException(TerraDataException):
-    def __init__(self, __not_in_available: Any, __available: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotInAvailable)
-                % (str(__not_in_available), str(__available))
             )
         )</code></pre>
 </details>
@@ -436,33 +350,6 @@ class PositionXYException(TerraDataException):
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.exceptions.PositionXYException"><code class="flex name class">
-<span>class <span class="ident">PositionXYException</span></span>
-<span>(</span><span>_PositionXYException__name: Any, _PositionXYException__position: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class PositionXYException(TerraDataException):
-    def __init__(self, __name: Any, __position: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.PositionXY)
-                % (str(__name), str(__position))
-            )
-        )</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-</dd>
 <dt id="terra_ai.data.exceptions.TerraDataException"><code class="flex name class">
 <span>class <span class="ident">TerraDataException</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -486,13 +373,11 @@ class PositionXYException(TerraDataException):
 <ul class="hlist">
 <li><a title="terra_ai.data.exceptions.Base64Exception" href="#terra_ai.data.exceptions.Base64Exception">Base64Exception</a></li>
 <li><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></li>
-<li><a title="terra_ai.data.exceptions.LayersNotDefinedException" href="#terra_ai.data.exceptions.LayersNotDefinedException">LayersNotDefinedException</a></li>
-<li><a title="terra_ai.data.exceptions.LayersNotInAvailableException" href="#terra_ai.data.exceptions.LayersNotInAvailableException">LayersNotInAvailableException</a></li>
-<li><a title="terra_ai.data.exceptions.PositionXYException" href="#terra_ai.data.exceptions.PositionXYException">PositionXYException</a></li>
 <li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></li>
+<li><a title="terra_ai.data.exceptions.XYException" href="#terra_ai.data.exceptions.XYException">XYException</a></li>
 </ul>
 </dd>
 <dt id="terra_ai.data.exceptions.TerraDataValueException"><code class="flex name class">
@@ -628,6 +513,33 @@ class PositionXYException(TerraDataException):
 </dd>
 </dl>
 </dd>
+<dt id="terra_ai.data.exceptions.XYException"><code class="flex name class">
+<span>class <span class="ident">XYException</span></span>
+<span>(</span><span>_XYException__name: Any, _XYException__position: Any, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class XYException(TerraDataException):
+    def __init__(self, __name: Any, __position: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.XY)
+                % (str(__name), str(__position))
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 </dl>
 </section>
 </article>
@@ -659,25 +571,17 @@ class PositionXYException(TerraDataException):
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.AliasException" href="#terra_ai.data.exceptions.ExceptionMessages.AliasException">AliasException</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.Base64Extension" href="#terra_ai.data.exceptions.ExceptionMessages.Base64Extension">Base64Extension</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension" href="#terra_ai.data.exceptions.ExceptionMessages.FilePathExtension">FilePathExtension</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.LayersNotDefined" href="#terra_ai.data.exceptions.ExceptionMessages.LayersNotDefined">LayersNotDefined</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.LayersNotInAvailable" href="#terra_ai.data.exceptions.ExceptionMessages.LayersNotInAvailable">LayersNotInAvailable</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ListEmpty" href="#terra_ai.data.exceptions.ExceptionMessages.ListEmpty">ListEmpty</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartTotal" href="#terra_ai.data.exceptions.ExceptionMessages.PartTotal">PartTotal</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PositionXY" href="#terra_ai.data.exceptions.ExceptionMessages.PositionXY">PositionXY</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue" href="#terra_ai.data.exceptions.ExceptionMessages.TerraDataValue">TerraDataValue</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier">UniqueListIdentifier</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier">UniqueListUndefinedIdentifier</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ValueType" href="#terra_ai.data.exceptions.ExceptionMessages.ValueType">ValueType</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.XY" href="#terra_ai.data.exceptions.ExceptionMessages.XY">XY</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></code></h4>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.exceptions.LayersNotDefinedException" href="#terra_ai.data.exceptions.LayersNotDefinedException">LayersNotDefinedException</a></code></h4>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.exceptions.LayersNotInAvailableException" href="#terra_ai.data.exceptions.LayersNotInAvailableException">LayersNotInAvailableException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.ListEmptyException" href="#terra_ai.data.exceptions.ListEmptyException">ListEmptyException</a></code></h4>
@@ -690,9 +594,6 @@ class PositionXYException(TerraDataException):
 <ul class="">
 <li><code><a title="terra_ai.data.exceptions.PartTotalException.Meta" href="#terra_ai.data.exceptions.PartTotalException.Meta">Meta</a></code></li>
 </ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.exceptions.PositionXYException" href="#terra_ai.data.exceptions.PositionXYException">PositionXYException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></code></h4>
@@ -714,6 +615,9 @@ class PositionXYException(TerraDataException):
 <ul class="">
 <li><code><a title="terra_ai.data.exceptions.ValueTypeException.Meta" href="#terra_ai.data.exceptions.ValueTypeException.Meta">Meta</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.XYException" href="#terra_ai.data.exceptions.XYException">XYException</a></code></h4>
 </li>
 </ul>
 </li>

@@ -12,9 +12,7 @@ class ExceptionMessages(str, Enum):
     ListEmpty = "%s: must not be empty"
     FilePathExtension = '%s: File must have "%s" extension'
     Base64Extension = "Incorrect base64 string value"
-    LayersNotInAvailable = "Layers %s not in available %s"
-    LayersNotDefined = "You must define layers %s"
-    PositionXY = "%s: Position must be a list with 2 elements, received %s"
+    XY = "%s: Value must be a list with 2 elements, received %s"
 
 
 class TerraDataException(ValueError):
@@ -96,31 +94,11 @@ class Base64Exception(TerraDataException):
         super().__init__(ExceptionMessages.Base64Extension.value)
 
 
-class LayersNotInAvailableException(TerraDataException):
-    def __init__(self, __not_in_available: Any, __available: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotInAvailable)
-                % (str(__not_in_available), str(__available))
-            )
-        )
-
-
-class LayersNotDefinedException(TerraDataException):
-    def __init__(self, __not_defined: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.LayersNotDefined)
-                % str(__not_defined)
-            )
-        )
-
-
-class PositionXYException(TerraDataException):
+class XYException(TerraDataException):
     def __init__(self, __name: Any, __position: Any, *args):
         super().__init__(
             (
-                (args[0] if len(args) else ExceptionMessages.PositionXY)
+                (args[0] if len(args) else ExceptionMessages.XY)
                 % (str(__name), str(__position))
             )
         )

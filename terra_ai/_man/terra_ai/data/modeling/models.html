@@ -31,17 +31,10 @@
 ## Структура данных моделей
 &#34;&#34;&#34;
 
-from typing import Optional, List, Dict
-from pydantic import validator
+from typing import Optional
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
-from ..typing import confilepath, AliasType
-from ..exceptions import (
-    LayersNotInAvailableException,
-    LayersNotDefinedException,
-    PositionXYException,
-)
-from ..typing import Base64Type
+from ..typing import confilepath, AliasType, Base64Type
 from .layers import LayersList
 
 
@@ -50,13 +43,13 @@ class ModelDetailsData(BaseMixinData):
     Детальная информация о модели
     &#34;&#34;&#34;
 
-    type: str
+    type: Optional[str]
     &#34;Тип модели: `2D`&#34;
-    name: AliasType
+    name: Optional[AliasType]
     &#34;Название модели: `rasposnavanie_avtomobiley`&#34;
-    input_shape: str
+    input_shape: Optional[str]
     &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
-    image: Base64Type
+    image: Optional[Base64Type]
     &#34;Изображение схемы модели в `base64`&#34;
 
 
@@ -69,58 +62,10 @@ class ModelData(AliasMixinData):
     &#34;Название&#34;
     file_path: Optional[confilepath(ext=&#34;model&#34;)]
     &#34;Путь к файлу модели&#34;
-    details: Optional[ModelDetailsData]
+    details: ModelDetailsData = ModelDetailsData()
     &#34;Детальная информация о модели&#34;
     layers: LayersList = LayersList()
     &#34;Список слоев&#34;
-    position: Optional[Dict[str, List[int]]]
-    &#34;Позиция слоев в пользовательском интерфейсе, желательно указывать в процентах&#34;
-    location: Optional[List[List[Optional[str]]]]
-    &#34;Расположение слоев в пользовательском интерфейсе. Список должен состоять из LayerData.alias&#34;
-
-    @validator(&#34;position&#34;, allow_reuse=True)
-    def _validate_position(cls, value: dict, values) -&gt; dict:
-        if value is None:
-            return value
-        __available = list(map(lambda item: item.alias, values.get(&#34;layers&#34;)))
-        __layers = list(value.keys())
-
-        __not_in_available = list(filter(None, list(set(__layers) - set(__available))))
-        if len(__not_in_available):
-            raise LayersNotInAvailableException(__not_in_available, __available)
-
-        __not_defined_location = list(
-            filter(None, list(set(__available) - set(__layers)))
-        )
-        if len(__not_defined_location):
-            raise LayersNotDefinedException(__not_defined_location)
-
-        for __layer, __value in value.items():
-            if len(__value) != 2:
-                raise PositionXYException(__layer, __value)
-
-        return value
-
-    @validator(&#34;location&#34;, allow_reuse=True)
-    def _validate_location(cls, value: list, values) -&gt; list:
-        if value is None:
-            return value
-        __available = list(map(lambda item: item.alias, values.get(&#34;layers&#34;)))
-        __layers = []
-        for __group in value:
-            __layers += __group
-
-        __not_in_available = list(filter(None, list(set(__layers) - set(__available))))
-        if len(__not_in_available):
-            raise LayersNotInAvailableException(__not_in_available, __available)
-
-        __not_defined_location = list(
-            filter(None, list(set(__available) - set(__layers)))
-        )
-        if len(__not_defined_location):
-            raise LayersNotDefinedException(__not_defined_location)
-
-        return value
 
 
 class ModelsList(UniqueListMixin):
@@ -192,58 +137,10 @@ class ModelsGroupsList(UniqueListMixin):
     &#34;Название&#34;
     file_path: Optional[confilepath(ext=&#34;model&#34;)]
     &#34;Путь к файлу модели&#34;
-    details: Optional[ModelDetailsData]
+    details: ModelDetailsData = ModelDetailsData()
     &#34;Детальная информация о модели&#34;
     layers: LayersList = LayersList()
-    &#34;Список слоев&#34;
-    position: Optional[Dict[str, List[int]]]
-    &#34;Позиция слоев в пользовательском интерфейсе, желательно указывать в процентах&#34;
-    location: Optional[List[List[Optional[str]]]]
-    &#34;Расположение слоев в пользовательском интерфейсе. Список должен состоять из LayerData.alias&#34;
-
-    @validator(&#34;position&#34;, allow_reuse=True)
-    def _validate_position(cls, value: dict, values) -&gt; dict:
-        if value is None:
-            return value
-        __available = list(map(lambda item: item.alias, values.get(&#34;layers&#34;)))
-        __layers = list(value.keys())
-
-        __not_in_available = list(filter(None, list(set(__layers) - set(__available))))
-        if len(__not_in_available):
-            raise LayersNotInAvailableException(__not_in_available, __available)
-
-        __not_defined_location = list(
-            filter(None, list(set(__available) - set(__layers)))
-        )
-        if len(__not_defined_location):
-            raise LayersNotDefinedException(__not_defined_location)
-
-        for __layer, __value in value.items():
-            if len(__value) != 2:
-                raise PositionXYException(__layer, __value)
-
-        return value
-
-    @validator(&#34;location&#34;, allow_reuse=True)
-    def _validate_location(cls, value: list, values) -&gt; list:
-        if value is None:
-            return value
-        __available = list(map(lambda item: item.alias, values.get(&#34;layers&#34;)))
-        __layers = []
-        for __group in value:
-            __layers += __group
-
-        __not_in_available = list(filter(None, list(set(__layers) - set(__available))))
-        if len(__not_in_available):
-            raise LayersNotInAvailableException(__not_in_available, __available)
-
-        __not_defined_location = list(
-            filter(None, list(set(__available) - set(__layers)))
-        )
-        if len(__not_defined_location):
-            raise LayersNotDefinedException(__not_defined_location)
-
-        return value</code></pre>
+    &#34;Список слоев&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -254,7 +151,7 @@ class ModelsGroupsList(UniqueListMixin):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.models.ModelData.details"><code class="name">var <span class="ident">details</span> : Union[<a title="terra_ai.data.modeling.models.ModelDetailsData" href="#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a>, NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.models.ModelData.details"><code class="name">var <span class="ident">details</span> : <a title="terra_ai.data.modeling.models.ModelDetailsData" href="#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a></code></dt>
 <dd>
 <div class="desc"><p>Детальная информация о модели</p></div>
 </dd>
@@ -266,17 +163,9 @@ class ModelsGroupsList(UniqueListMixin):
 <dd>
 <div class="desc"><p>Список слоев</p></div>
 </dd>
-<dt id="terra_ai.data.modeling.models.ModelData.location"><code class="name">var <span class="ident">location</span> : Union[List[List[Union[str, NoneType]]], NoneType]</code></dt>
-<dd>
-<div class="desc"><p>Расположение слоев в пользовательском интерфейсе. Список должен состоять из LayerData.alias</p></div>
-</dd>
 <dt id="terra_ai.data.modeling.models.ModelData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
 <div class="desc"><p>Название</p></div>
-</dd>
-<dt id="terra_ai.data.modeling.models.ModelData.position"><code class="name">var <span class="ident">position</span> : Union[Dict[str, List[int]], NoneType]</code></dt>
-<dd>
-<div class="desc"><p>Позиция слоев в пользовательском интерфейсе, желательно указывать в процентах</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -305,13 +194,13 @@ class ModelsGroupsList(UniqueListMixin):
     Детальная информация о модели
     &#34;&#34;&#34;
 
-    type: str
+    type: Optional[str]
     &#34;Тип модели: `2D`&#34;
-    name: AliasType
+    name: Optional[AliasType]
     &#34;Название модели: `rasposnavanie_avtomobiley`&#34;
-    input_shape: str
+    input_shape: Optional[str]
     &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
-    image: Base64Type
+    image: Optional[Base64Type]
     &#34;Изображение схемы модели в `base64`&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -322,19 +211,19 @@ class ModelsGroupsList(UniqueListMixin):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.models.ModelDetailsData.image"><code class="name">var <span class="ident">image</span> : <a title="terra_ai.data.typing.Base64Type" href="../typing.html#terra_ai.data.typing.Base64Type">Base64Type</a></code></dt>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.image"><code class="name">var <span class="ident">image</span> : Union[terra_ai.data.Base64Type, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Изображение схемы модели в <code>base64</code></p></div>
 </dd>
-<dt id="terra_ai.data.modeling.models.ModelDetailsData.input_shape"><code class="name">var <span class="ident">input_shape</span> : str</code></dt>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.input_shape"><code class="name">var <span class="ident">input_shape</span> : Union[str, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Размерность входных слоев: <code>[32,32,3], [128,128,3]</code></p></div>
 </dd>
-<dt id="terra_ai.data.modeling.models.ModelDetailsData.name"><code class="name">var <span class="ident">name</span> : <a title="terra_ai.data.typing.AliasType" href="../typing.html#terra_ai.data.typing.AliasType">AliasType</a></code></dt>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.name"><code class="name">var <span class="ident">name</span> : Union[terra_ai.data.AliasType, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Название модели: <code>rasposnavanie_avtomobiley</code></p></div>
 </dd>
-<dt id="terra_ai.data.modeling.models.ModelDetailsData.type"><code class="name">var <span class="ident">type</span> : str</code></dt>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.type"><code class="name">var <span class="ident">type</span> : Union[str, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Тип модели: <code>2D</code></p></div>
 </dd>
@@ -513,13 +402,11 @@ class ModelsGroupsList(UniqueListMixin):
 <ul>
 <li>
 <h4><code><a title="terra_ai.data.modeling.models.ModelData" href="#terra_ai.data.modeling.models.ModelData">ModelData</a></code></h4>
-<ul class="two-column">
+<ul class="">
 <li><code><a title="terra_ai.data.modeling.models.ModelData.details" href="#terra_ai.data.modeling.models.ModelData.details">details</a></code></li>
 <li><code><a title="terra_ai.data.modeling.models.ModelData.file_path" href="#terra_ai.data.modeling.models.ModelData.file_path">file_path</a></code></li>
 <li><code><a title="terra_ai.data.modeling.models.ModelData.layers" href="#terra_ai.data.modeling.models.ModelData.layers">layers</a></code></li>
-<li><code><a title="terra_ai.data.modeling.models.ModelData.location" href="#terra_ai.data.modeling.models.ModelData.location">location</a></code></li>
 <li><code><a title="terra_ai.data.modeling.models.ModelData.name" href="#terra_ai.data.modeling.models.ModelData.name">name</a></code></li>
-<li><code><a title="terra_ai.data.modeling.models.ModelData.position" href="#terra_ai.data.modeling.models.ModelData.position">position</a></code></li>
 </ul>
 </li>
 <li>
