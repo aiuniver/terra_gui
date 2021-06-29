@@ -182,7 +182,7 @@ class BaseCallback():
             true_idx = y_true[idx]
             pred_idx = y_pred[idx]
             image_data = {
-                "image": image_to_base64(image),
+                "image": self.image_to_base64(image),
                 "title": None,
                 "info": [
                     {
@@ -330,6 +330,21 @@ class BaseCallback():
                 metric_classes.append(loss)
 
         return metric_classes
+
+    def image_to_base64(image_as_array):
+        if image_as_array.dtype == 'int32':
+            image_as_array = image_as_array.astype(np.uint8)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        try:
+            plt.imsave(temp_image.name, image_as_array, cmap='Greys')
+        except Exception as e:
+            plt.imsave(temp_image.name, image_as_array.reshape(image_as_array.shape[:-1]), cmap='gray')
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read()).decode('utf-8')
+        temp_image.close()
+        os.remove(temp_image.name)
+        return output_image
+
 
 class CustomCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
@@ -1096,7 +1111,7 @@ class SegmentationCallback(BaseCallback):
             image = np.squeeze(
                 self.x_Val[input_key][idx].reshape(self.dataset.input_shape[input_key])
             )
-            image_data["image"] = image_to_base64(image)
+            image_data["image"] = self.image_to_base64(image)
             images["images"].append(image_data)
 
             # истинная маска
@@ -1113,7 +1128,7 @@ class SegmentationCallback(BaseCallback):
             self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
 
-            truth_masks_data["image"] = image_to_base64(image)
+            truth_masks_data["image"] = self.image_to_base64(image)
             images["ground_truth_masks"].append(truth_masks_data)
 
             # предсказанная маска
@@ -1129,7 +1144,7 @@ class SegmentationCallback(BaseCallback):
             }
             self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             image = np.squeeze(self.colored_mask)
-            predicted_mask_data["image"] = image_to_base64(image)
+            predicted_mask_data["image"] = self.image_to_base64(image)
             images["predicted_mask"].append(predicted_mask_data)
 
         return images
@@ -1513,7 +1528,7 @@ class TimeseriesCallback(BaseCallback):
         return out_data
 
 
-class RegressionCallback:
+class RegressionCallback(BaseCallback):
     def __init__(
             self,
             metrics,
@@ -1534,6 +1549,7 @@ class RegressionCallback:
         Returns:
             None
         """
+        super().__init__()
         self.__name__ = "Callback for regression"
         if metrics is None:
             metrics = ["loss"]
@@ -1543,20 +1559,11 @@ class RegressionCallback:
         self.plot_scatter = plot_scatter
         self.dataset = dataset
         self.Exch = exchange
-        self.epoch = 0
-        self.x_Val = {}
-        self.y_true = []
-        self.y_pred = []
-        self.loss = ''
-        self.max_accuracy_value = 0
-
         self.losses = (
             self.metrics if "loss" in self.metrics else self.metrics + ["loss"]
         )
         self.met = [[] for _ in range(len(self.losses))]
         self.valmet = [[] for _ in range(len(self.losses))]
-        self.history = {}
-        self.predicts = {}
 
     def plot_result(self, output_key=None):
         """
@@ -1658,17 +1665,3 @@ class RegressionCallback:
 
         return out_data
 
-
-def image_to_base64(image_as_array):
-    if image_as_array.dtype == 'int32':
-        image_as_array = image_as_array.astype(np.uint8)
-    temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
-    try:
-        plt.imsave(temp_image.name, image_as_array, cmap='Greys')
-    except Exception as e:
-        plt.imsave(temp_image.name, image_as_array.reshape(image_as_array.shape[:-1]), cmap='gray')
-    with open(temp_image.name, 'rb') as img:
-        output_image = base64.b64encode(img.read()).decode('utf-8')
-    temp_image.close()
-    os.remove(temp_image.name)
-    return output_image
