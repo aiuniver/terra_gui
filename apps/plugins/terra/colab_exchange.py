@@ -11,7 +11,7 @@ import dill as dill
 from IPython import get_ipython
 from tensorflow.keras.models import load_model
 from transliterate import slugify, detect_language
-from apps.plugins.terra import customLayers
+
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN

@@ -1,7 +1,7 @@
 import copy
 import sys
 from dataclasses import dataclass
-
+from apps.plugins.terra import customLayers
 import tensorflow
 
 __version__ = 0.022
@@ -169,35 +169,35 @@ class PlanLinkLibrary:
             (11, 4, 1, 0, {}, 1, [4, 7, 10]),
             (12, 1, 3, 0, {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, 11, 0),
         ],
-        'UNETBlock': [
-            (1, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
-                          'padding': 'same'}, 0, 0),
-            (2, 6, 2, 0, {}, 1, 0),
-            (3, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 2, 0),
-            (4, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                          'strides': (1, 1), 'padding': 'same'}, 3, 0),
-            (5, 6, 2, 0, {}, 4, 0),
-            (6, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 5, 0),
-            (7, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                          'strides': (1, 1), 'padding': 'same'}, 6, 0),
-            (8, 6, 2, 0, {}, 7, 0),
-            (9, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                          'strides': (1, 1), 'padding': 'same'}, 8, 0),
-            (10, 6, 2, 0, {}, 9, 0),
-            (11, 2, 2, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                           'padding': 'same', 'strides': (2, 2)}, 10, 0),
-            (12, 6, 2, 0, {}, 11, 0),
-            (13, 4, 1, 0, {}, 12, [5]),
-            (14, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                           'strides': (1, 1), 'padding': 'same'}, 13, 0),
-            (15, 6, 2, 0, {}, 14, 0),
-            (16, 2, 2, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                           'padding': 'same', 'strides': (2, 2)}, 15, 0),
-            (17, 6, 2, 0, {}, 16, 0),
-            (18, 4, 1, 0, {}, 17, [2]),
-            (19, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                           'strides': (1, 1), 'padding': 'same'}, 18, 0),
-        ],
+        # 'UNETBlock': [
+        #     (1, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
+        #                   'padding': 'same'}, 0, 0),
+        #     (2, 6, 2, 0, {}, 1, 0),
+        #     (3, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 2, 0),
+        #     (4, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                   'strides': (1, 1), 'padding': 'same'}, 3, 0),
+        #     (5, 6, 2, 0, {}, 4, 0),
+        #     (6, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 5, 0),
+        #     (7, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                   'strides': (1, 1), 'padding': 'same'}, 6, 0),
+        #     (8, 6, 2, 0, {}, 7, 0),
+        #     (9, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                   'strides': (1, 1), 'padding': 'same'}, 8, 0),
+        #     (10, 6, 2, 0, {}, 9, 0),
+        #     (11, 2, 2, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                    'padding': 'same', 'strides': (2, 2)}, 10, 0),
+        #     (12, 6, 2, 0, {}, 11, 0),
+        #     (13, 4, 1, 0, {}, 12, [5]),
+        #     (14, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                    'strides': (1, 1), 'padding': 'same'}, 13, 0),
+        #     (15, 6, 2, 0, {}, 14, 0),
+        #     (16, 2, 2, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                    'padding': 'same', 'strides': (2, 2)}, 15, 0),
+        #     (17, 6, 2, 0, {}, 16, 0),
+        #     (18, 4, 1, 0, {}, 17, [2]),
+        #     (19, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
+        #                    'strides': (1, 1), 'padding': 'same'}, 18, 0),
+        # ],
         'XceptionBlock': [
             (1, 1, 6, 0, {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
                           'activation': 'linear'}, 0, 0),
@@ -225,7 +225,7 @@ class PlanLinkLibrary:
                           'activation': 'linear'}, 6, 0),
             (8, 6, 2, 0, {}, 7, 0),
             (9, 1, 3, 0, {'filters': 48, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                           'activation': 'linear'}, 0, 0),
+                          'activation': 'linear'}, 0, 0),
             (10, 6, 2, 0, {}, 9, 0),
             (11, 5, 1, 0, {'activation': 'relu'}, 10, 0),
             (12, 1, 3, 0, {'filters': 64, 'kernel_size': (5, 5), 'strides': (1, 1), 'padding': 'same',
@@ -2861,6 +2861,7 @@ class PlanLinkLibrary:
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
         #  'Xception': tensorflow.keras.applications.xception,
+        'UNETBlock': customLayers,
     }
 
 
@@ -3025,6 +3026,7 @@ class GUILayersDef:
             26: 'VGG16',
             #  27: 'VGG19',
             #  28: 'Xception',
+            29: 'UNETBlock',
         },
         # Custom_Block
         12: {
@@ -3034,7 +3036,7 @@ class GUILayersDef:
             3: 'CustomResBlock',
             4: 'Resnet50Block',
             5: 'PSPBlock',
-            6: 'UNETBlock',
+            # 6: 'UNETBlock',
             7: 'XceptionBlock',
             8: 'InceptionV3block'
         }
@@ -6089,6 +6091,21 @@ class GUILayersDef:
         },
         #  27: 'VGG19',
         #  28: 'Xception',
+        'UNETBlock': {
+            'main': {
+                "filters": {
+                    "type": "int",
+                    "default": 32
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'relu',
+                    "list": True,
+                    "available": activation_lh,
+                }
+            },
+            'extra': {}
+        },
     }
 
     block_params = {
@@ -6117,11 +6134,11 @@ class GUILayersDef:
                                                layers_dict, layer_params),
             'extra': {}
         },
-        'UNETBlock': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
-                                               layers_dict, layer_params),
-            'extra': {}
-        },
+        # 'UNETBlock': {
+        #     'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
+        #                                        layers_dict, layer_params),
+        #     'extra': {}
+        # },
         'XceptionBlock': {
             'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('XceptionBlock', {}),
                                                layers_dict, layer_params),
