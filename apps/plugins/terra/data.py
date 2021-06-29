@@ -109,6 +109,13 @@ class LayerType(str, Enum):
     Cropping2D = "Cropping2D"
     VGG16 = "VGG16"
     Conv2DBNDrop = "Conv2DBNDrop"
+    Conv2DBNLeaky = 'Conv2DBNLeaky'
+    CustomResBlock = 'CustomResBlock'
+    Resnet50Block = 'Resnet50Block'
+    PSPBlock = 'PSPBlock'
+    UNETBlock = 'UNETBlock'
+    XceptionBlock = 'XceptionBlock'
+    InceptionV3block = 'InceptionV3block'
 
 
 class OptimizerParams(pydantic.BaseModel):
