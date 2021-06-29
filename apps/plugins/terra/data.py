@@ -116,6 +116,12 @@ class LayerType(str, Enum):
     UNETBlock = 'UNETBlock'
     XceptionBlock = 'XceptionBlock'
     InceptionV3block = 'InceptionV3block'
+    Attention = "Attention"
+    InceptionV3 = "InceptionV3"
+    ResNet50 = "ResNet50"
+    Xception = "Xception"
+
+
 
 
 class OptimizerParams(pydantic.BaseModel):

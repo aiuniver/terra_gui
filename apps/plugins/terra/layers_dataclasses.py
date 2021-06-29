@@ -1,10 +1,11 @@
 import copy
 import sys
 from dataclasses import dataclass
-from apps.plugins.terra import customLayers
+
+# import keras_contrib
 import tensorflow
 
-__version__ = 0.022
+__version__ = 0.023
 
 
 def check_datatype(in_shape):
@@ -169,35 +170,35 @@ class PlanLinkLibrary:
             (11, 4, 1, 0, {}, 1, [4, 7, 10]),
             (12, 1, 3, 0, {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, 11, 0),
         ],
-        # 'UNETBlock': [
-        #     (1, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
-        #                   'padding': 'same'}, 0, 0),
-        #     (2, 6, 2, 0, {}, 1, 0),
-        #     (3, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 2, 0),
-        #     (4, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                   'strides': (1, 1), 'padding': 'same'}, 3, 0),
-        #     (5, 6, 2, 0, {}, 4, 0),
-        #     (6, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 5, 0),
-        #     (7, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                   'strides': (1, 1), 'padding': 'same'}, 6, 0),
-        #     (8, 6, 2, 0, {}, 7, 0),
-        #     (9, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                   'strides': (1, 1), 'padding': 'same'}, 8, 0),
-        #     (10, 6, 2, 0, {}, 9, 0),
-        #     (11, 2, 2, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                    'padding': 'same', 'strides': (2, 2)}, 10, 0),
-        #     (12, 6, 2, 0, {}, 11, 0),
-        #     (13, 4, 1, 0, {}, 12, [5]),
-        #     (14, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                    'strides': (1, 1), 'padding': 'same'}, 13, 0),
-        #     (15, 6, 2, 0, {}, 14, 0),
-        #     (16, 2, 2, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                    'padding': 'same', 'strides': (2, 2)}, 15, 0),
-        #     (17, 6, 2, 0, {}, 16, 0),
-        #     (18, 4, 1, 0, {}, 17, [2]),
-        #     (19, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-        #                    'strides': (1, 1), 'padding': 'same'}, 18, 0),
-        # ],
+        'UNETBlock': [
+            (1, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
+                          'padding': 'same'}, 0, 0),
+            (2, 6, 2, 0, {}, 1, 0),
+            (3, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 2, 0),
+            (4, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+                          'strides': (1, 1), 'padding': 'same'}, 3, 0),
+            (5, 6, 2, 0, {}, 4, 0),
+            (6, 3, 2, 0, {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, 5, 0),
+            (7, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
+                          'strides': (1, 1), 'padding': 'same'}, 6, 0),
+            (8, 6, 2, 0, {}, 7, 0),
+            (9, 1, 3, 0, {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
+                          'strides': (1, 1), 'padding': 'same'}, 8, 0),
+            (10, 6, 2, 0, {}, 9, 0),
+            (11, 2, 2, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+                           'padding': 'same', 'strides': (2, 2)}, 10, 0),
+            (12, 6, 2, 0, {}, 11, 0),
+            (13, 4, 1, 0, {}, 12, [5]),
+            (14, 1, 3, 0, {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
+                           'strides': (1, 1), 'padding': 'same'}, 13, 0),
+            (15, 6, 2, 0, {}, 14, 0),
+            (16, 2, 2, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
+                           'padding': 'same', 'strides': (2, 2)}, 15, 0),
+            (17, 6, 2, 0, {}, 16, 0),
+            (18, 4, 1, 0, {}, 17, [2]),
+            (19, 1, 3, 0, {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
+                           'strides': (1, 1), 'padding': 'same'}, 18, 0),
+        ],
         'XceptionBlock': [
             (1, 1, 6, 0, {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
                           'activation': 'linear'}, 0, 0),
@@ -2750,6 +2751,7 @@ class PlanLinkLibrary:
         # "Minimum": tensorflow.keras.layers,
         # "Subtract": tensorflow.keras.layers,
         # "Dot": tensorflow.keras.layers,
+        "Attention": tensorflow.keras.layers,
 
         # Layers and functions Activations
         "Activation": tensorflow.keras.layers,
@@ -2773,7 +2775,6 @@ class PlanLinkLibrary:
         # "ActivityRegularization": tensorflow.keras.layers,
         # "AlphaDropout": tensorflow.keras.layers,
         # "MultiHeadAttention": tensorflow.keras.layers,
-        # "Attention": tensorflow.keras.layers,
         # "AdditiveAttention": tensorflow.keras.layers,
         # "InstanceNormalization": keras_contrib.layers.normalization.instancenormalization, # pip install keras_contrib
         "Normalization": tensorflow.keras.layers.experimental.preprocessing,
@@ -2847,21 +2848,20 @@ class PlanLinkLibrary:
         #  'EfficientNetB6': tensorflow.keras.applications.efficientnet,
         #  'EfficientNetB7': tensorflow.keras.applications.efficientnet,
         #  'InceptionResNetV2': tensorflow.keras.applications.inception_resnet_v2,
-        #  'InceptionV3': tensorflow.keras.applications.inception_v3,
+        'InceptionV3': tensorflow.keras.applications.inception_v3,
         #  'MobileNet': tensorflow.keras.applications.mobilenet,
         #  'MobileNetV2': tensorflow.keras.applications.mobilenet_v2,
         #  'NASNetLarge': tensorflow.keras.applications.nasnet,
         #  'NASNetMobile': tensorflow.keras.applications.nasnet,
         #  'ResNet101': tensorflow.keras.applications.resnet,
         #  'ResNet152': tensorflow.keras.applications.resnet,
-        #  'ResNet50': tensorflow.keras.applications.resnet50,
+        'ResNet50': tensorflow.keras.applications.resnet50,
         #  'ResNet101V2': tensorflow.keras.applications.resnet_v2,
         #  'ResNet152V2': tensorflow.keras.applications.resnet_v2,
         #  'ResNet50V2': tensorflow.keras.applications.resnet_v2,
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
-        #  'Xception': tensorflow.keras.applications.xception,
-        'UNETBlock': customLayers,
+        'Xception': tensorflow.keras.applications.xception,
     }
 
 
@@ -2912,6 +2912,7 @@ class GUILayersDef:
             # 6: "Minimum",
             # 7: "Subtract",
             # 8: "Dot"
+            9: "Attention",
         },
         # Activations Layers
         5: {
@@ -3012,21 +3013,20 @@ class GUILayersDef:
             #  12: 'EfficientNetB6',
             #  13: 'EfficientNetB7',
             #  14: 'InceptionResNetV2',
-            #  15: 'InceptionV3',
+            15: 'InceptionV3',
             #  16: 'MobileNet',
             #  17: 'MobileNetV2',
             #  18: 'NASNetLarge',
             #  19: 'NASNetMobile',
             #  20: 'ResNet101',
             #  21: 'ResNet152',
-            #  22: 'ResNet50',
+            22: 'ResNet50',
             #  23: 'ResNet101V2',
             #  24: 'ResNet152V2',
             #  25: 'ResNet50V2',
             26: 'VGG16',
             #  27: 'VGG19',
-            #  28: 'Xception',
-            29: 'UNETBlock',
+            28: 'Xception',
         },
         # Custom_Block
         12: {
@@ -3036,7 +3036,7 @@ class GUILayersDef:
             3: 'CustomResBlock',
             4: 'Resnet50Block',
             5: 'PSPBlock',
-            # 6: 'UNETBlock',
+            6: 'UNETBlock',
             7: 'XceptionBlock',
             8: 'InceptionV3block'
         }
@@ -4418,6 +4418,23 @@ class GUILayersDef:
         #             "default": False
         #     }
         # }
+        "Attention": {
+            "main": {},
+            'extra': {
+                "use_scale": {
+                    "type": "bool",
+                    "default": False
+                },
+                "causal": {
+                    "type": "bool",
+                    "default": False
+                },
+                "dropout": {
+                    "type": "float",
+                    "default": 0.1
+                },
+            }
+        },
 
         # Activations Layers
         # "sigmoid": {
@@ -4850,15 +4867,6 @@ class GUILayersDef:
         #         }
         #     }
         # },
-        # "Attention": {
-        #     "main": {},
-        #     'extra': {
-        #         "use_scale": {
-        #             "type": "bool",
-        #             "default": False
-        #         },
-        #     }
-        # },
         # "AdditiveAttention": {
         #     "main": {},
         #     'extra': {
@@ -4868,63 +4876,63 @@ class GUILayersDef:
         #         },
         #     }
         # },
-        "InstanceNormalization": {
-            "main": {},
-            'extra': {
-                "axis": {
-                    "type": "int",
-                    "default": -1
-                },
-                "epsilon": {
-                    "type": "float",
-                    "default": 0.001
-                },
-                "center": {
-                    "type": "bool",
-                    "default": True,
-                },
-                "scale": {
-                    "type": "bool",
-                    "default": True,
-                },
-                "beta_initializer": {
-                    "type": "str",
-                    "default": "zeros",
-                    "list": True,
-                    "available": initializer_lh,
-                },
-                "gamma_initializer": {
-                    "type": "str",
-                    "default": "ones",
-                    "list": True,
-                    "available": initializer_lh,
-                },
-                "beta_regularizer": {
-                    "type": "str",
-                    "default": None,
-                    "list": True,
-                    "available": regularizer_lh,
-                },
-                "gamma_regularizer": {
-                    "type": "str",
-                    "default": None,
-                    "list": True,
-                    "available": regularizer_lh,
-                },
-                "beta_constraint": {
-                    "type": "str",
-                    "default": None,
-                    "list": True,
-                    "available": constraint_lh,
-                },
-                "gamma_constraint": {
-                    "type": "str",
-                    "default": None,
-                    "list": True,
-                    "available": constraint_lh,
-                },
-            }
-        },
+        # "InstanceNormalization": {
+        #     "main": {},
+        #     'extra': {
+        #         "axis": {
+        #             "type": "int",
+        #             "default": -1
+        #         },
+        #         "epsilon": {
+        #             "type": "float",
+        #             "default": 0.001
+        #         },
+        #         "center": {
+        #             "type": "bool",
+        #             "default": True,
+        #         },
+        #         "scale": {
+        #             "type": "bool",
+        #             "default": True,
+        #         },
+        #         "beta_initializer": {
+        #             "type": "str",
+        #             "default": "zeros",
+        #             "list": True,
+        #             "available": initializer_lh,
+        #         },
+        #         "gamma_initializer": {
+        #             "type": "str",
+        #             "default": "ones",
+        #             "list": True,
+        #             "available": initializer_lh,
+        #         },
+        #         "beta_regularizer": {
+        #             "type": "str",
+        #             "default": None,
+        #             "list": True,
+        #             "available": regularizer_lh,
+        #         },
+        #         "gamma_regularizer": {
+        #             "type": "str",
+        #             "default": None,
+        #             "list": True,
+        #             "available": regularizer_lh,
+        #         },
+        #         "beta_constraint": {
+        #             "type": "str",
+        #             "default": None,
+        #             "list": True,
+        #             "available": constraint_lh,
+        #         },
+        #         "gamma_constraint": {
+        #             "type": "str",
+        #             "default": None,
+        #             "list": True,
+        #             "available": constraint_lh,
+        #         },
+        #     }
+        # },
         "Normalization": {
             'main': {},
             'extra': {
@@ -6031,14 +6039,109 @@ class GUILayersDef:
         #  12: 'EfficientNetB6',
         #  13: 'EfficientNetB7',
         #  14: 'InceptionResNetV2',
-        #  15: 'InceptionV3',
+        'InceptionV3': {
+            'main': {
+                "include_top": {
+                    "type": "bool",
+                    "default": False,
+                },
+                "weights": {
+                    "type": "str",
+                    "default": 'imagenet',
+                    "list": True,
+                    "available": [None, 'imagenet'],
+                },
+                "output_layer": {
+                    "type": "str",
+                    "default": "last",
+                    "list": True,
+                    "available": ["mixed0",
+                                  "mixed1",
+                                  "mixed2",
+                                  "mixed3",
+                                  "mixed4",
+                                  "mixed5",
+                                  "mixed6",
+                                  "mixed7",
+                                  "mixed8",
+                                  "mixed9",
+                                  "last"],
+                },
+                "pooling": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": [None, "avg", "max"],
+                },
+                "trainable": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
+            'extra': {
+                "classes": {
+                    "type": "int",
+                    "default": 1000,
+                },
+                "classifier_activation": {
+                    "type": "str",
+                    "default": 'softmax',
+                    "list": True,
+                    "available": activation_lh,
+                },
+            }
+        },
         #  16: 'MobileNet',
         #  17: 'MobileNetV2',
         #  18: 'NASNetLarge',
         #  19: 'NASNetMobile',
         #  20: 'ResNet101',
         #  21: 'ResNet152',
-        #  22: 'ResNet50',
+        'ResNet50': {
+            'main': {
+                "include_top": {
+                    "type": "bool",
+                    "default": False,
+                },
+                "weights": {
+                    "type": "str",
+                    "default": 'imagenet',
+                    "list": True,
+                    "available": [None, 'imagenet'],
+                },
+                "output_layer": {
+                    "type": "str",
+                    "default": "last",
+                    "list": True,
+                    "available": ["conv2_block3_out",
+                                  "conv3_block4_out",
+                                  "conv4_block6_out",
+                                  "last"],
+                },
+                "pooling": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": [None, "avg", "max"],
+                },
+                "trainable": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
+            'extra': {
+                "classes": {
+                    "type": "int",
+                    "default": 1000,
+                },
+                "classifier_activation": {
+                    "type": "str",
+                    "default": 'softmax',
+                    "list": True,
+                    "available": activation_lh,
+                },
+            }
+        },
         #  23: 'ResNet101V2',
         #  24: 'ResNet152V2',
         #  25: 'ResNet50V2',
@@ -6090,21 +6193,47 @@ class GUILayersDef:
             }
         },
         #  27: 'VGG19',
-        #  28: 'Xception',
-        'UNETBlock': {
+        'Xception': {
             'main': {
-                "filters": {
-                    "type": "int",
-                    "default": 32
+                "include_top": {
+                    "type": "bool",
+                    "default": False,
                 },
-                "activation": {
+                "weights": {
                     "type": "str",
-                    "default": 'relu',
+                    "default": 'imagenet',
+                    "list": True,
+                    "available": [None, 'imagenet'],
+                },
+                "output_layer": {
+                    "type": "str",
+                    "default": "last",
+                    "list": True,
+                    "available": ["last"],
+                },
+                "pooling": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": [None, "avg", "max"],
+                },
+                "trainable": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
+            'extra': {
+                "classes": {
+                    "type": "int",
+                    "default": 1000,
+                },
+                "classifier_activation": {
+                    "type": "str",
+                    "default": 'softmax',
                     "list": True,
                     "available": activation_lh,
-                }
-            },
-            'extra': {}
+                },
+            }
         },
     }
 
@@ -6134,11 +6263,11 @@ class GUILayersDef:
                                                layers_dict, layer_params),
             'extra': {}
         },
-        # 'UNETBlock': {
-        #     'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
-        #                                        layers_dict, layer_params),
-        #     'extra': {}
-        # },
+        'UNETBlock': {
+            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
+                                               layers_dict, layer_params),
+            'extra': {}
+        },
         'XceptionBlock': {
             'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('XceptionBlock', {}),
                                                layers_dict, layer_params),
@@ -6176,4 +6305,38 @@ class LayersDef(GUILayersDef, PlanLinkLibrary):
     """
     for key in GUILayersDef.layers_params.keys():
         locals()[f"{key}_defaults"] = get_def_parameters_dict(key)
+    pass
+
+
+if __name__ == "__main__":
+    # params = get_block_params_for_gui(LayersDef.custom_block_plan['Conv2DBNDrop'])
+    # params = GUILayersDef.layers_params.get('Conv2DBNDrop', {}).get('main')
+    cblocks = ['Conv2DBNDrop', 'Conv2DBNLeaky', 'CustomResBlock', 'Resnet50Block', 'PSPBlock', 'UNETBlock']
+    # print(PlanLinkLibrary.custom_block_plan.keys())
+    layer = 'InceptionV3block'
+    params = getattr(LayersDef, f'{layer}_defaults')
+    # print(params)
+    # print(getattr(LayersDef, f"{'Conv2DBNLeaky'}_defaults"))
+    for k, v in params.items():
+        if type(v) == str:
+            print(f"'{k}'", ': ', f"'{v}'", ',', sep='')
+        else:
+            print(f"'{k}'", ': ', v, ',', sep='')
+
+    # plan = PlanLinkLibrary.custom_block_plan['ConvBNDr']
+    # print("\nplan\n", plan)
+    #
+    # params_to_set = {'L1_Conv2D_filters': 64,
+    #                  'L1_Conv2D_kernel_size': (5, 5),
+    #                  'L1_Conv2D_strides': (3, 3),
+    #                  'L1_Conv2D_padding': 'same',
+    #                  'L1_Conv2D_activation': 'sigmoid',
+    #                  'L3_Dropout_rate': 0.5}
+    #
+    # update_plan = set_block_params_to_plan(plan, params_to_set)
+    # print("\nupdate_plan\n", update_plan)
+    #
+    # layers_params = GUILayersDef.layers_params
+    print(LayersDef.custom_block_plan.get(layer, None))
+    # print(layers_params.get("Conv2DBNDrop"))
     pass
