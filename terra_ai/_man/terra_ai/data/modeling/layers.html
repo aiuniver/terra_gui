@@ -32,7 +32,8 @@
 &#34;&#34;&#34;
 
 from typing import Optional, List, Tuple, Any, Union
-from pydantic import validator, conint, PositiveInt
+from pydantic import validator
+from pydantic.types import conint, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin

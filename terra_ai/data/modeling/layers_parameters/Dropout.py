@@ -2,12 +2,16 @@
 ## Тип слоя `Dropout`
 """
 
+from typing import Optional
+from pydantic.types import confloat, PositiveInt
+
 from ...mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    rate: confloat(ge=0, le=1)
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    noise_shape: Optional[PositiveInt]
+    seed: Optional[PositiveInt]

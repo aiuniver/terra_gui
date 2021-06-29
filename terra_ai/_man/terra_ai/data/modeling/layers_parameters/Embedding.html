@@ -31,15 +31,25 @@
 ## Тип слоя `Embedding`
 &#34;&#34;&#34;
 
+from typing import Optional
+from pydantic.types import PositiveInt
+
 from ...mixins import BaseMixinData
+from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    input_dim: PositiveInt
+    output_dim: PositiveInt
 
 
 class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    embeddings_initializer: InitializerChoice = InitializerChoice.uniform
+    embeddings_regularizer: Optional[RegularizerChoice]
+    activity_regularizer: Optional[RegularizerChoice]
+    embeddings_constraint: Optional[ConstraintChoice]
+    mask_zero: bool = False
+    input_length: Optional[PositiveInt]</code></pre>
 </details>
 </section>
 <section>
@@ -64,7 +74,12 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    embeddings_initializer: InitializerChoice = InitializerChoice.uniform
+    embeddings_regularizer: Optional[RegularizerChoice]
+    activity_regularizer: Optional[RegularizerChoice]
+    embeddings_constraint: Optional[ConstraintChoice]
+    mask_zero: bool = False
+    input_length: Optional[PositiveInt]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -72,6 +87,33 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.activity_regularizer"><code class="name">var <span class="ident">activity_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_constraint"><code class="name">var <span class="ident">embeddings_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_initializer"><code class="name">var <span class="ident">embeddings_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_regularizer"><code class="name">var <span class="ident">embeddings_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.input_length"><code class="name">var <span class="ident">input_length</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.mask_zero"><code class="name">var <span class="ident">mask_zero</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -94,7 +136,8 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    pass</code></pre>
+    input_dim: PositiveInt
+    output_dim: PositiveInt</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -102,6 +145,17 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.input_dim"><code class="name">var <span class="ident">input_dim</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.output_dim"><code class="name">var <span class="ident">output_dim</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -131,9 +185,21 @@ class ParametersExtraData(BaseMixinData):
 <ul>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData">ParametersExtraData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.activity_regularizer" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.activity_regularizer">activity_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_constraint" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_constraint">embeddings_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_initializer" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_initializer">embeddings_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_regularizer" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.embeddings_regularizer">embeddings_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.input_length" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.input_length">input_length</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.mask_zero" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData.mask_zero">mask_zero</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData">ParametersMainData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.input_dim" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.input_dim">input_dim</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.output_dim" href="#terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData.output_dim">output_dim</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

@@ -31,11 +31,21 @@
 ## Тип слоя `Input`
 &#34;&#34;&#34;
 
+from typing import Optional, Tuple
+from pydantic.types import PositiveInt
+
 from ...mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    shape: Optional[Tuple[PositiveInt, ...]]
+    batch_size: Optional[PositiveInt]
+    name: Optional[str]
+    dtype: Optional[str]
+    sparse: Optional[bool]
+    tensor: Optional[str]
+    ragged: Optional[bool]
+    type_spec: Optional[str]
 
 
 class ParametersExtraData(BaseMixinData):
@@ -94,7 +104,14 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    pass</code></pre>
+    shape: Optional[Tuple[PositiveInt, ...]]
+    batch_size: Optional[PositiveInt]
+    name: Optional[str]
+    dtype: Optional[str]
+    sparse: Optional[bool]
+    tensor: Optional[str]
+    ragged: Optional[bool]
+    type_spec: Optional[str]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -102,6 +119,41 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.batch_size"><code class="name">var <span class="ident">batch_size</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.dtype"><code class="name">var <span class="ident">dtype</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.name"><code class="name">var <span class="ident">name</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.ragged"><code class="name">var <span class="ident">ragged</span> : Union[bool, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.shape"><code class="name">var <span class="ident">shape</span> : Union[Tuple[pydantic.types.PositiveInt, ...], NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.sparse"><code class="name">var <span class="ident">sparse</span> : Union[bool, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.tensor"><code class="name">var <span class="ident">tensor</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.type_spec"><code class="name">var <span class="ident">type_spec</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -134,6 +186,16 @@ class ParametersExtraData(BaseMixinData):
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData">ParametersMainData</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.batch_size" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.batch_size">batch_size</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.dtype" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.dtype">dtype</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.name" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.name">name</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.ragged" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.ragged">ragged</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.shape" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.shape">shape</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.sparse" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.sparse">sparse</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.tensor" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.tensor">tensor</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.type_spec" href="#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData.type_spec">type_spec</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

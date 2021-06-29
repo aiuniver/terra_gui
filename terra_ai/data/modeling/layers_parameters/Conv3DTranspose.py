@@ -1,5 +1,5 @@
 """
-## Тип слоя `Conv3D`
+## Тип слоя `Conv3DTranspose`
 """
 
 from typing import Tuple, Optional
@@ -25,9 +25,9 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
+    output_padding: Optional[Tuple[PositiveInt, PositiveInt, PositiveInt]]
     data_format: Optional[DataFormatChoice]
     dilation_rate: Tuple[PositiveInt, PositiveInt, PositiveInt] = (1, 1, 1)
-    groups: PositiveInt = 1
     use_bias: bool = True
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
     bias_initializer: InitializerChoice = InitializerChoice.zeros

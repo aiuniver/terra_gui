@@ -10,4 +10,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    axis: int = -1

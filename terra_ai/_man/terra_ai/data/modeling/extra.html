@@ -47,6 +47,7 @@ class LayerTypeChoice(str, Enum):
     Conv3D = &#34;Conv3D&#34;
     Conv1DTranspose = &#34;Conv1DTranspose&#34;
     Conv2DTranspose = &#34;Conv2DTranspose&#34;
+    Conv3DTranspose = &#34;Conv3DTranspose&#34;
     SeparableConv1D = &#34;SeparableConv1D&#34;
     SeparableConv2D = &#34;SeparableConv2D&#34;
     DepthwiseConv2D = &#34;DepthwiseConv2D&#34;
@@ -54,6 +55,7 @@ class LayerTypeChoice(str, Enum):
     MaxPooling2D = &#34;MaxPooling2D&#34;
     AveragePooling1D = &#34;AveragePooling1D&#34;
     AveragePooling2D = &#34;AveragePooling2D&#34;
+    AveragePooling3D = &#34;AveragePooling3D&#34;
     UpSampling1D = &#34;UpSampling1D&#34;
     UpSampling2D = &#34;UpSampling2D&#34;
     LeakyReLU = &#34;LeakyReLU&#34;
@@ -68,13 +70,15 @@ class LayerTypeChoice(str, Enum):
     softmax = &#34;softmax&#34;
     tanh = &#34;tanh&#34;
     relu = &#34;relu&#34;
-    elu = &#34;elu&#34;
+    ELU = &#34;ELU&#34;
     selu = &#34;selu&#34;
     PReLU = &#34;PReLU&#34;
-    GlobalMaxPooling1D = &#34;GlobalMaxPooling1D&#34;
-    GlobalMaxPooling2D = &#34;GlobalMaxPooling2D&#34;
+    GlobalMaxPool1D = &#34;GlobalMaxPool1D&#34;
+    GlobalMaxPool2D = &#34;GlobalMaxPool2D&#34;
+    GlobalMaxPool3D = &#34;GlobalMaxPool3D&#34;
     GlobalAveragePooling1D = &#34;GlobalAveragePooling1D&#34;
     GlobalAveragePooling2D = &#34;GlobalAveragePooling2D&#34;
+    GlobalAveragePooling3D = &#34;GlobalAveragePooling3D&#34;
     GRU = &#34;GRU&#34;
     LSTM = &#34;LSTM&#34;
     Embedding = &#34;Embedding&#34;
@@ -144,6 +148,7 @@ class LayerTypeChoice(str, Enum):
     Conv3D = &#34;Conv3D&#34;
     Conv1DTranspose = &#34;Conv1DTranspose&#34;
     Conv2DTranspose = &#34;Conv2DTranspose&#34;
+    Conv3DTranspose = &#34;Conv3DTranspose&#34;
     SeparableConv1D = &#34;SeparableConv1D&#34;
     SeparableConv2D = &#34;SeparableConv2D&#34;
     DepthwiseConv2D = &#34;DepthwiseConv2D&#34;
@@ -151,6 +156,7 @@ class LayerTypeChoice(str, Enum):
     MaxPooling2D = &#34;MaxPooling2D&#34;
     AveragePooling1D = &#34;AveragePooling1D&#34;
     AveragePooling2D = &#34;AveragePooling2D&#34;
+    AveragePooling3D = &#34;AveragePooling3D&#34;
     UpSampling1D = &#34;UpSampling1D&#34;
     UpSampling2D = &#34;UpSampling2D&#34;
     LeakyReLU = &#34;LeakyReLU&#34;
@@ -165,13 +171,15 @@ class LayerTypeChoice(str, Enum):
     softmax = &#34;softmax&#34;
     tanh = &#34;tanh&#34;
     relu = &#34;relu&#34;
-    elu = &#34;elu&#34;
+    ELU = &#34;ELU&#34;
     selu = &#34;selu&#34;
     PReLU = &#34;PReLU&#34;
-    GlobalMaxPooling1D = &#34;GlobalMaxPooling1D&#34;
-    GlobalMaxPooling2D = &#34;GlobalMaxPooling2D&#34;
+    GlobalMaxPool1D = &#34;GlobalMaxPool1D&#34;
+    GlobalMaxPool2D = &#34;GlobalMaxPool2D&#34;
+    GlobalMaxPool3D = &#34;GlobalMaxPool3D&#34;
     GlobalAveragePooling1D = &#34;GlobalAveragePooling1D&#34;
     GlobalAveragePooling2D = &#34;GlobalAveragePooling2D&#34;
+    GlobalAveragePooling3D = &#34;GlobalAveragePooling3D&#34;
     GRU = &#34;GRU&#34;
     LSTM = &#34;LSTM&#34;
     Embedding = &#34;Embedding&#34;
@@ -194,6 +202,10 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling2D"><code class="name">var <span class="ident">AveragePooling2D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling3D"><code class="name">var <span class="ident">AveragePooling3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -225,6 +237,10 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Conv3DTranspose"><code class="name">var <span class="ident">Conv3DTranspose</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Dense"><code class="name">var <span class="ident">Dense</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -234,6 +250,10 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Dropout"><code class="name">var <span class="ident">Dropout</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.ELU"><code class="name">var <span class="ident">ELU</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -257,11 +277,19 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling1D"><code class="name">var <span class="ident">GlobalMaxPooling1D</span></code></dt>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling3D"><code class="name">var <span class="ident">GlobalAveragePooling3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling2D"><code class="name">var <span class="ident">GlobalMaxPooling2D</span></code></dt>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool1D"><code class="name">var <span class="ident">GlobalMaxPool1D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool2D"><code class="name">var <span class="ident">GlobalMaxPool2D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D"><code class="name">var <span class="ident">GlobalMaxPool3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -314,10 +342,6 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D"><code class="name">var <span class="ident">UpSampling2D</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.elu"><code class="name">var <span class="ident">elu</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -375,6 +399,7 @@ class LayerTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Add" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Add">Add</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling1D">AveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling2D">AveragePooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling3D">AveragePooling3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.BatchNormalization" href="#terra_ai.data.modeling.extra.LayerTypeChoice.BatchNormalization">BatchNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Concatenate" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Concatenate">Concatenate</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv1D">Conv1D</a></code></li>
@@ -382,16 +407,20 @@ class LayerTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv2D">Conv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv2DTranspose" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv2DTranspose">Conv2DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv3D">Conv3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv3DTranspose" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv3DTranspose">Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Dense" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Dense">Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.DepthwiseConv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.DepthwiseConv2D">DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Dropout" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Dropout">Dropout</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ELU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ELU">ELU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Embedding" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Embedding">Embedding</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Flatten" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Flatten">Flatten</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GRU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GRU">GRU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling1D">GlobalAveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling2D">GlobalAveragePooling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling1D">GlobalMaxPooling1D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPooling2D">GlobalMaxPooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalAveragePooling3D">GlobalAveragePooling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool1D">GlobalMaxPool1D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool2D">GlobalMaxPool2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D">GlobalMaxPool3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Input" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.LSTM" href="#terra_ai.data.modeling.extra.LayerTypeChoice.LSTM">LSTM</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.LeakyReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.LeakyReLU">LeakyReLU</a></code></li>
@@ -405,7 +434,6 @@ class LayerTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D">SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D">UpSampling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.elu" href="#terra_ai.data.modeling.extra.LayerTypeChoice.elu">elu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.relu" href="#terra_ai.data.modeling.extra.LayerTypeChoice.relu">relu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.selu" href="#terra_ai.data.modeling.extra.LayerTypeChoice.selu">selu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.sigmoid" href="#terra_ai.data.modeling.extra.LayerTypeChoice.sigmoid">sigmoid</a></code></li>

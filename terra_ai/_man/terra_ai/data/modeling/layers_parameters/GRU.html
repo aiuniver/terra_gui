@@ -31,15 +31,45 @@
 ## Тип слоя `GRU`
 &#34;&#34;&#34;
 
+from typing import Optional
+from pydantic.types import confloat, PositiveInt
+
 from ...mixins import BaseMixinData
+from .extra import (
+    ActivationChoice,
+    InitializerChoice,
+    RegularizerChoice,
+    ConstraintChoice,
+)
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    units: PositiveInt
+    return_sequences: bool = False
+    return_state: bool = False
 
 
 class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    activation: ActivationChoice = ActivationChoice.tanh
+    recurrent_activation: ActivationChoice = ActivationChoice.sigmoid
+    use_bias: bool = True
+    kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
+    recurrent_initializer: InitializerChoice = InitializerChoice.orthogonal
+    bias_initializer: InitializerChoice = InitializerChoice.zeros
+    kernel_regularizer: Optional[RegularizerChoice]
+    recurrent_regularizer: Optional[RegularizerChoice]
+    bias_regularizer: Optional[RegularizerChoice]
+    activity_regularizer: Optional[RegularizerChoice]
+    kernel_constraint: Optional[ConstraintChoice]
+    recurrent_constraint: Optional[ConstraintChoice]
+    bias_constraint: Optional[ConstraintChoice]
+    dropout: confloat(ge=0, le=1) = 0
+    recurrent_dropout: confloat(ge=0, le=1) = 0
+    go_backwards: bool = False
+    stateful: bool = False
+    unroll: bool = False
+    time_major: bool = False
+    reset_after: bool = True</code></pre>
 </details>
 </section>
 <section>
@@ -64,7 +94,26 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    activation: ActivationChoice = ActivationChoice.tanh
+    recurrent_activation: ActivationChoice = ActivationChoice.sigmoid
+    use_bias: bool = True
+    kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
+    recurrent_initializer: InitializerChoice = InitializerChoice.orthogonal
+    bias_initializer: InitializerChoice = InitializerChoice.zeros
+    kernel_regularizer: Optional[RegularizerChoice]
+    recurrent_regularizer: Optional[RegularizerChoice]
+    bias_regularizer: Optional[RegularizerChoice]
+    activity_regularizer: Optional[RegularizerChoice]
+    kernel_constraint: Optional[ConstraintChoice]
+    recurrent_constraint: Optional[ConstraintChoice]
+    bias_constraint: Optional[ConstraintChoice]
+    dropout: confloat(ge=0, le=1) = 0
+    recurrent_dropout: confloat(ge=0, le=1) = 0
+    go_backwards: bool = False
+    stateful: bool = False
+    unroll: bool = False
+    time_major: bool = False
+    reset_after: bool = True</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -72,6 +121,89 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activation"><code class="name">var <span class="ident">activation</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.ActivationChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ActivationChoice">ActivationChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activity_regularizer"><code class="name">var <span class="ident">activity_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_constraint"><code class="name">var <span class="ident">bias_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_initializer"><code class="name">var <span class="ident">bias_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_regularizer"><code class="name">var <span class="ident">bias_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.dropout"><code class="name">var <span class="ident">dropout</span> : terra_ai.data.modeling.layers_parameters.GRU.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.go_backwards"><code class="name">var <span class="ident">go_backwards</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_constraint"><code class="name">var <span class="ident">kernel_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_initializer"><code class="name">var <span class="ident">kernel_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_regularizer"><code class="name">var <span class="ident">kernel_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_activation"><code class="name">var <span class="ident">recurrent_activation</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.ActivationChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ActivationChoice">ActivationChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_constraint"><code class="name">var <span class="ident">recurrent_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_dropout"><code class="name">var <span class="ident">recurrent_dropout</span> : terra_ai.data.modeling.layers_parameters.GRU.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_initializer"><code class="name">var <span class="ident">recurrent_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_regularizer"><code class="name">var <span class="ident">recurrent_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.reset_after"><code class="name">var <span class="ident">reset_after</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.stateful"><code class="name">var <span class="ident">stateful</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.time_major"><code class="name">var <span class="ident">time_major</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.unroll"><code class="name">var <span class="ident">unroll</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.use_bias"><code class="name">var <span class="ident">use_bias</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -94,7 +226,9 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    pass</code></pre>
+    units: PositiveInt
+    return_sequences: bool = False
+    return_state: bool = False</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -102,6 +236,21 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_sequences"><code class="name">var <span class="ident">return_sequences</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_state"><code class="name">var <span class="ident">return_state</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.units"><code class="name">var <span class="ident">units</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -131,9 +280,36 @@ class ParametersExtraData(BaseMixinData):
 <ul>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData">ParametersExtraData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activation" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activation">activation</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activity_regularizer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.activity_regularizer">activity_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_constraint" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_constraint">bias_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_initializer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_initializer">bias_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_regularizer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.bias_regularizer">bias_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.dropout" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.dropout">dropout</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.go_backwards" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.go_backwards">go_backwards</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_constraint" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_constraint">kernel_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_initializer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_initializer">kernel_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_regularizer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.kernel_regularizer">kernel_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_activation" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_activation">recurrent_activation</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_constraint" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_constraint">recurrent_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_dropout" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_dropout">recurrent_dropout</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_initializer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_initializer">recurrent_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_regularizer" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.recurrent_regularizer">recurrent_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.reset_after" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.reset_after">reset_after</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.stateful" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.stateful">stateful</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.time_major" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.time_major">time_major</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.unroll" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.unroll">unroll</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.use_bias" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData.use_bias">use_bias</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData">ParametersMainData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_sequences" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_sequences">return_sequences</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_state" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.return_state">return_state</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.units" href="#terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData.units">units</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

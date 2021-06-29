@@ -26,23 +26,29 @@ class ParametersTypeInputData(ParametersTypeMixinData):
 
 
 class ParametersTypeConv1DData(ParametersTypeMixinData):
-    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData()
+    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData(
+        filters=32, kernel_size=5
+    )
     extra: lps.Conv1D.ParametersExtraData = lps.Conv1D.ParametersExtraData()
 
 
 class ParametersTypeConv2DData(ParametersTypeMixinData):
-    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData()
+    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData(
+        filters=32, kernel_size=(3, 3)
+    )
     extra: lps.Conv2D.ParametersExtraData = lps.Conv2D.ParametersExtraData()
 
 
 class ParametersTypeConv3DData(ParametersTypeMixinData):
-    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData()
+    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData(
+        filters=32, kernel_size=(3, 3, 3)
+    )
     extra: lps.Conv3D.ParametersExtraData = lps.Conv3D.ParametersExtraData()
 
 
 class ParametersTypeConv1DTransposeData(ParametersTypeMixinData):
     main: lps.Conv1DTranspose.ParametersMainData = (
-        lps.Conv1DTranspose.ParametersMainData()
+        lps.Conv1DTranspose.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.Conv1DTranspose.ParametersExtraData = (
         lps.Conv1DTranspose.ParametersExtraData()
@@ -51,10 +57,19 @@ class ParametersTypeConv1DTransposeData(ParametersTypeMixinData):
 
 class ParametersTypeConv2DTransposeData(ParametersTypeMixinData):
     main: lps.Conv2DTranspose.ParametersMainData = (
-        lps.Conv2DTranspose.ParametersMainData()
+        lps.Conv2DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.Conv2DTranspose.ParametersExtraData = (
         lps.Conv2DTranspose.ParametersExtraData()
+    )
+
+
+class ParametersTypeConv3DTransposeData(ParametersTypeMixinData):
+    main: lps.Conv3DTranspose.ParametersMainData = (
+        lps.Conv3DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1, 1))
+    )
+    extra: lps.Conv3DTranspose.ParametersExtraData = (
+        lps.Conv3DTranspose.ParametersExtraData()
     )
 
 
@@ -78,7 +93,7 @@ class ParametersTypeSeparableConv2DData(ParametersTypeMixinData):
 
 class ParametersTypeDepthwiseConv2DData(ParametersTypeMixinData):
     main: lps.DepthwiseConv2D.ParametersMainData = (
-        lps.DepthwiseConv2D.ParametersMainData()
+        lps.DepthwiseConv2D.ParametersMainData(kernel_size=(1, 1))
     )
     extra: lps.DepthwiseConv2D.ParametersExtraData = (
         lps.DepthwiseConv2D.ParametersExtraData()
@@ -113,6 +128,15 @@ class ParametersTypeAveragePooling2DData(ParametersTypeMixinData):
     )
 
 
+class ParametersTypeAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.AveragePooling3D.ParametersMainData = (
+        lps.AveragePooling3D.ParametersMainData()
+    )
+    extra: lps.AveragePooling3D.ParametersExtraData = (
+        lps.AveragePooling3D.ParametersExtraData()
+    )
+
+
 class ParametersTypeUpSampling1DData(ParametersTypeMixinData):
     main: lps.UpSampling1D.ParametersMainData = lps.UpSampling1D.ParametersMainData()
     extra: lps.UpSampling1D.ParametersExtraData = lps.UpSampling1D.ParametersExtraData()
@@ -129,12 +153,12 @@ class ParametersTypeLeakyReLUData(ParametersTypeMixinData):
 
 
 class ParametersTypeDropoutData(ParametersTypeMixinData):
-    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData()
+    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData(rate=0.1)
     extra: lps.Dropout.ParametersExtraData = lps.Dropout.ParametersExtraData()
 
 
 class ParametersTypeDenseData(ParametersTypeMixinData):
-    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData()
+    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData(units=32)
     extra: lps.Dense.ParametersExtraData = lps.Dense.ParametersExtraData()
 
 
@@ -183,9 +207,9 @@ class ParametersTypereluData(ParametersTypeMixinData):
     extra: lps.relu.ParametersExtraData = lps.relu.ParametersExtraData()
 
 
-class ParametersTypeeluData(ParametersTypeMixinData):
-    main: lps.elu.ParametersMainData = lps.elu.ParametersMainData()
-    extra: lps.elu.ParametersExtraData = lps.elu.ParametersExtraData()
+class ParametersTypeELUData(ParametersTypeMixinData):
+    main: lps.ELU.ParametersMainData = lps.ELU.ParametersMainData()
+    extra: lps.ELU.ParametersExtraData = lps.ELU.ParametersExtraData()
 
 
 class ParametersTypeseluData(ParametersTypeMixinData):
@@ -198,21 +222,30 @@ class ParametersTypePReLUData(ParametersTypeMixinData):
     extra: lps.PReLU.ParametersExtraData = lps.PReLU.ParametersExtraData()
 
 
-class ParametersTypeGlobalMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling1D.ParametersMainData = (
-        lps.GlobalMaxPooling1D.ParametersMainData()
+class ParametersTypeGlobalMaxPool1DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool1D.ParametersMainData = (
+        lps.GlobalMaxPool1D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling1D.ParametersExtraData = (
-        lps.GlobalMaxPooling1D.ParametersExtraData()
+    extra: lps.GlobalMaxPool1D.ParametersExtraData = (
+        lps.GlobalMaxPool1D.ParametersExtraData()
     )
 
 
-class ParametersTypeGlobalMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling2D.ParametersMainData = (
-        lps.GlobalMaxPooling2D.ParametersMainData()
+class ParametersTypeGlobalMaxPool2DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool2D.ParametersMainData = (
+        lps.GlobalMaxPool2D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling2D.ParametersExtraData = (
-        lps.GlobalMaxPooling2D.ParametersExtraData()
+    extra: lps.GlobalMaxPool2D.ParametersExtraData = (
+        lps.GlobalMaxPool2D.ParametersExtraData()
+    )
+
+
+class ParametersTypeGlobalMaxPool3DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool3D.ParametersMainData = (
+        lps.GlobalMaxPool3D.ParametersMainData()
+    )
+    extra: lps.GlobalMaxPool3D.ParametersExtraData = (
+        lps.GlobalMaxPool3D.ParametersExtraData()
     )
 
 
@@ -234,8 +267,17 @@ class ParametersTypeGlobalAveragePooling2DData(ParametersTypeMixinData):
     )
 
 
+class ParametersTypeGlobalAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.GlobalAveragePooling3D.ParametersMainData = (
+        lps.GlobalAveragePooling3D.ParametersMainData()
+    )
+    extra: lps.GlobalAveragePooling3D.ParametersExtraData = (
+        lps.GlobalAveragePooling3D.ParametersExtraData()
+    )
+
+
 class ParametersTypeGRUData(ParametersTypeMixinData):
-    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData()
+    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData(units=32)
     extra: lps.GRU.ParametersExtraData = lps.GRU.ParametersExtraData()
 
 
@@ -245,7 +287,9 @@ class ParametersTypeLSTMData(ParametersTypeMixinData):
 
 
 class ParametersTypeEmbeddingData(ParametersTypeMixinData):
-    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData()
+    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData(
+        input_dim=1000, output_dim=64
+    )
     extra: lps.Embedding.ParametersExtraData = lps.Embedding.ParametersExtraData()
 
 

@@ -3,7 +3,8 @@
 """
 
 from typing import Optional, Tuple
-from pydantic import validator, conint, confloat, BaseModel
+from pydantic import validator, BaseModel
+from pydantic.types import conint, confloat
 
 
 BYTES_UNITS = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]

@@ -38,6 +38,7 @@ from . import (
     Conv3D,
     Conv1DTranspose,
     Conv2DTranspose,
+    Conv3DTranspose,
     SeparableConv1D,
     SeparableConv2D,
     DepthwiseConv2D,
@@ -45,6 +46,7 @@ from . import (
     MaxPooling2D,
     AveragePooling1D,
     AveragePooling2D,
+    AveragePooling3D,
     UpSampling1D,
     UpSampling2D,
     LeakyReLU,
@@ -59,13 +61,15 @@ from . import (
     softmax,
     tanh,
     relu,
-    elu,
+    ELU,
     selu,
     PReLU,
-    GlobalMaxPooling1D,
-    GlobalMaxPooling2D,
+    GlobalMaxPool1D,
+    GlobalMaxPool2D,
+    GlobalMaxPool3D,
     GlobalAveragePooling1D,
     GlobalAveragePooling2D,
+    GlobalAveragePooling3D,
     GRU,
     LSTM,
     Embedding,
@@ -88,6 +92,10 @@ from . import (
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.AveragePooling2D" href="AveragePooling2D.html">terra_ai.data.modeling.layers_parameters.AveragePooling2D</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.AveragePooling2D" href="AveragePooling2D.html">terra_ai.data.modeling.layers_parameters.AveragePooling2D</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D" href="AveragePooling3D.html">terra_ai.data.modeling.layers_parameters.AveragePooling3D</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D" href="AveragePooling3D.html">terra_ai.data.modeling.layers_parameters.AveragePooling3D</a></code></p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization" href="BatchNormalization.html">terra_ai.data.modeling.layers_parameters.BatchNormalization</a></code></dt>
 <dd>
@@ -117,6 +125,10 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.Conv3D" href="Conv3D.html">terra_ai.data.modeling.layers_parameters.Conv3D</a></code></p></div>
 </dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose" href="Conv3DTranspose.html">terra_ai.data.modeling.layers_parameters.Conv3DTranspose</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose" href="Conv3DTranspose.html">terra_ai.data.modeling.layers_parameters.Conv3DTranspose</a></code></p></div>
+</dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.Dense" href="Dense.html">terra_ai.data.modeling.layers_parameters.Dense</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.Dense" href="Dense.html">terra_ai.data.modeling.layers_parameters.Dense</a></code></p></div>
@@ -128,6 +140,10 @@ from . import (
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.Dropout" href="Dropout.html">terra_ai.data.modeling.layers_parameters.Dropout</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.Dropout" href="Dropout.html">terra_ai.data.modeling.layers_parameters.Dropout</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.ELU" href="ELU.html">terra_ai.data.modeling.layers_parameters.ELU</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.ELU" href="ELU.html">terra_ai.data.modeling.layers_parameters.ELU</a></code></p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.Embedding" href="Embedding.html">terra_ai.data.modeling.layers_parameters.Embedding</a></code></dt>
 <dd>
@@ -149,13 +165,21 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D" href="GlobalAveragePooling2D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D</a></code></p></div>
 </dd>
-<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D" href="GlobalMaxPooling1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D</a></code></dt>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D" href="GlobalAveragePooling3D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D</a></code></dt>
 <dd>
-<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D" href="GlobalMaxPooling1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D</a></code></p></div>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D" href="GlobalAveragePooling3D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D</a></code></p></div>
 </dd>
-<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D" href="GlobalMaxPooling2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D</a></code></dt>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D" href="GlobalMaxPool1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D</a></code></dt>
 <dd>
-<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D" href="GlobalMaxPooling2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D</a></code></p></div>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D" href="GlobalMaxPool1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D" href="GlobalMaxPool2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D" href="GlobalMaxPool2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D</a></code></p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.Input" href="Input.html">terra_ai.data.modeling.layers_parameters.Input</a></code></dt>
 <dd>
@@ -209,9 +233,9 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D" href="UpSampling2D.html">terra_ai.data.modeling.layers_parameters.UpSampling2D</a></code></p></div>
 </dd>
-<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.elu" href="elu.html">terra_ai.data.modeling.layers_parameters.elu</a></code></dt>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.extra" href="extra.html">terra_ai.data.modeling.layers_parameters.extra</a></code></dt>
 <dd>
-<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers_parameters.elu" href="elu.html">terra_ai.data.modeling.layers_parameters.elu</a></code></p></div>
+<div class="desc"><p>Дополнительные структуры данных параметров типов слоев</p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers_parameters.relu" href="relu.html">terra_ai.data.modeling.layers_parameters.relu</a></code></dt>
 <dd>
@@ -260,6 +284,7 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Add" href="Add.html">terra_ai.data.modeling.layers_parameters.Add</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.AveragePooling1D" href="AveragePooling1D.html">terra_ai.data.modeling.layers_parameters.AveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.AveragePooling2D" href="AveragePooling2D.html">terra_ai.data.modeling.layers_parameters.AveragePooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D" href="AveragePooling3D.html">terra_ai.data.modeling.layers_parameters.AveragePooling3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization" href="BatchNormalization.html">terra_ai.data.modeling.layers_parameters.BatchNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Concatenate" href="Concatenate.html">terra_ai.data.modeling.layers_parameters.Concatenate</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Conv1D" href="Conv1D.html">terra_ai.data.modeling.layers_parameters.Conv1D</a></code></li>
@@ -267,16 +292,20 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Conv2D" href="Conv2D.html">terra_ai.data.modeling.layers_parameters.Conv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Conv2DTranspose" href="Conv2DTranspose.html">terra_ai.data.modeling.layers_parameters.Conv2DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Conv3D" href="Conv3D.html">terra_ai.data.modeling.layers_parameters.Conv3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose" href="Conv3DTranspose.html">terra_ai.data.modeling.layers_parameters.Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Dense" href="Dense.html">terra_ai.data.modeling.layers_parameters.Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.DepthwiseConv2D" href="DepthwiseConv2D.html">terra_ai.data.modeling.layers_parameters.DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Dropout" href="Dropout.html">terra_ai.data.modeling.layers_parameters.Dropout</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.ELU" href="ELU.html">terra_ai.data.modeling.layers_parameters.ELU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Embedding" href="Embedding.html">terra_ai.data.modeling.layers_parameters.Embedding</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Flatten" href="Flatten.html">terra_ai.data.modeling.layers_parameters.Flatten</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.GRU" href="GRU.html">terra_ai.data.modeling.layers_parameters.GRU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D" href="GlobalAveragePooling1D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D" href="GlobalAveragePooling2D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D" href="GlobalMaxPooling1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D" href="GlobalMaxPooling2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D" href="GlobalAveragePooling3D.html">terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D" href="GlobalMaxPool1D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D" href="GlobalMaxPool2D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.Input" href="Input.html">terra_ai.data.modeling.layers_parameters.Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.LSTM" href="LSTM.html">terra_ai.data.modeling.layers_parameters.LSTM</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.LeakyReLU" href="LeakyReLU.html">terra_ai.data.modeling.layers_parameters.LeakyReLU</a></code></li>
@@ -290,7 +319,7 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers_parameters.SeparableConv2D" href="SeparableConv2D.html">terra_ai.data.modeling.layers_parameters.SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling1D" href="UpSampling1D.html">terra_ai.data.modeling.layers_parameters.UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D" href="UpSampling2D.html">terra_ai.data.modeling.layers_parameters.UpSampling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers_parameters.elu" href="elu.html">terra_ai.data.modeling.layers_parameters.elu</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.extra" href="extra.html">terra_ai.data.modeling.layers_parameters.extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.relu" href="relu.html">terra_ai.data.modeling.layers_parameters.relu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.selu" href="selu.html">terra_ai.data.modeling.layers_parameters.selu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers_parameters.sigmoid" href="sigmoid.html">terra_ai.data.modeling.layers_parameters.sigmoid</a></code></li>

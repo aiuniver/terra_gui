@@ -6,7 +6,8 @@ import sys
 
 from enum import Enum
 from typing import Optional
-from pydantic import validator, DirectoryPath, FilePath, PositiveInt
+from pydantic import validator, DirectoryPath, FilePath
+from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 

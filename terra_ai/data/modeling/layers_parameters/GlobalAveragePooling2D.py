@@ -2,7 +2,10 @@
 ## Тип слоя `GlobalAveragePooling2D`
 """
 
+from typing import Optional
+
 from ...mixins import BaseMixinData
+from .extra import DataFormatChoice
 
 
 class ParametersMainData(BaseMixinData):
@@ -10,4 +13,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    data_format: Optional[DataFormatChoice]

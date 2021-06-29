@@ -31,7 +31,11 @@
 ## Тип слоя `BatchNormalization`
 &#34;&#34;&#34;
 
+from typing import Optional
+from pydantic.types import confloat
+
 from ...mixins import BaseMixinData
+from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 
 class ParametersMainData(BaseMixinData):
@@ -39,7 +43,19 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    axis: int = -1
+    momentum: confloat(ge=0, le=1) = 0.99
+    epsilon: confloat(gt=0) = 0.001
+    center: bool = True
+    scale: bool = True
+    beta_initializer: InitializerChoice = InitializerChoice.zeros
+    gamma_initializer: InitializerChoice = InitializerChoice.ones
+    moving_mean_initializer: InitializerChoice = InitializerChoice.zeros
+    moving_variance_initializer: InitializerChoice = InitializerChoice.ones
+    beta_regularizer: Optional[RegularizerChoice]
+    gamma_regularizer: Optional[RegularizerChoice]
+    beta_constraint: Optional[ConstraintChoice]
+    gamma_constraint: Optional[ConstraintChoice]</code></pre>
 </details>
 </section>
 <section>
@@ -64,7 +80,19 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    axis: int = -1
+    momentum: confloat(ge=0, le=1) = 0.99
+    epsilon: confloat(gt=0) = 0.001
+    center: bool = True
+    scale: bool = True
+    beta_initializer: InitializerChoice = InitializerChoice.zeros
+    gamma_initializer: InitializerChoice = InitializerChoice.ones
+    moving_mean_initializer: InitializerChoice = InitializerChoice.zeros
+    moving_variance_initializer: InitializerChoice = InitializerChoice.ones
+    beta_regularizer: Optional[RegularizerChoice]
+    gamma_regularizer: Optional[RegularizerChoice]
+    beta_constraint: Optional[ConstraintChoice]
+    gamma_constraint: Optional[ConstraintChoice]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -72,6 +100,61 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.axis"><code class="name">var <span class="ident">axis</span> : int</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_constraint"><code class="name">var <span class="ident">beta_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_initializer"><code class="name">var <span class="ident">beta_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_regularizer"><code class="name">var <span class="ident">beta_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.center"><code class="name">var <span class="ident">center</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.epsilon"><code class="name">var <span class="ident">epsilon</span> : terra_ai.data.modeling.layers_parameters.BatchNormalization.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_constraint"><code class="name">var <span class="ident">gamma_constraint</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.ConstraintChoice">ConstraintChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_initializer"><code class="name">var <span class="ident">gamma_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_regularizer"><code class="name">var <span class="ident">gamma_regularizer</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.RegularizerChoice">RegularizerChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.momentum"><code class="name">var <span class="ident">momentum</span> : terra_ai.data.modeling.layers_parameters.BatchNormalization.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_mean_initializer"><code class="name">var <span class="ident">moving_mean_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_variance_initializer"><code class="name">var <span class="ident">moving_variance_initializer</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InitializerChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InitializerChoice">InitializerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.scale"><code class="name">var <span class="ident">scale</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -131,6 +214,21 @@ class ParametersExtraData(BaseMixinData):
 <ul>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData">ParametersExtraData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.axis" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.axis">axis</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_constraint" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_constraint">beta_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_initializer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_initializer">beta_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_regularizer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.beta_regularizer">beta_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.center" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.center">center</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.epsilon" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.epsilon">epsilon</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_constraint" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_constraint">gamma_constraint</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_initializer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_initializer">gamma_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_regularizer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.gamma_regularizer">gamma_regularizer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.momentum" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.momentum">momentum</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_mean_initializer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_mean_initializer">moving_mean_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_variance_initializer" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.moving_variance_initializer">moving_variance_initializer</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.scale" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData.scale">scale</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersMainData">ParametersMainData</a></code></h4>

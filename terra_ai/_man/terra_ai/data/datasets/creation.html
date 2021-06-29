@@ -310,7 +310,8 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
-from pydantic import validator, confloat, HttpUrl
+from pydantic import validator, HttpUrl
+from pydantic.types import confloat
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData

@@ -55,23 +55,29 @@ class ParametersTypeInputData(ParametersTypeMixinData):
 
 
 class ParametersTypeConv1DData(ParametersTypeMixinData):
-    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData()
+    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData(
+        filters=32, kernel_size=5
+    )
     extra: lps.Conv1D.ParametersExtraData = lps.Conv1D.ParametersExtraData()
 
 
 class ParametersTypeConv2DData(ParametersTypeMixinData):
-    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData()
+    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData(
+        filters=32, kernel_size=(3, 3)
+    )
     extra: lps.Conv2D.ParametersExtraData = lps.Conv2D.ParametersExtraData()
 
 
 class ParametersTypeConv3DData(ParametersTypeMixinData):
-    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData()
+    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData(
+        filters=32, kernel_size=(3, 3, 3)
+    )
     extra: lps.Conv3D.ParametersExtraData = lps.Conv3D.ParametersExtraData()
 
 
 class ParametersTypeConv1DTransposeData(ParametersTypeMixinData):
     main: lps.Conv1DTranspose.ParametersMainData = (
-        lps.Conv1DTranspose.ParametersMainData()
+        lps.Conv1DTranspose.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.Conv1DTranspose.ParametersExtraData = (
         lps.Conv1DTranspose.ParametersExtraData()
@@ -80,10 +86,19 @@ class ParametersTypeConv1DTransposeData(ParametersTypeMixinData):
 
 class ParametersTypeConv2DTransposeData(ParametersTypeMixinData):
     main: lps.Conv2DTranspose.ParametersMainData = (
-        lps.Conv2DTranspose.ParametersMainData()
+        lps.Conv2DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.Conv2DTranspose.ParametersExtraData = (
         lps.Conv2DTranspose.ParametersExtraData()
+    )
+
+
+class ParametersTypeConv3DTransposeData(ParametersTypeMixinData):
+    main: lps.Conv3DTranspose.ParametersMainData = (
+        lps.Conv3DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1, 1))
+    )
+    extra: lps.Conv3DTranspose.ParametersExtraData = (
+        lps.Conv3DTranspose.ParametersExtraData()
     )
 
 
@@ -107,7 +122,7 @@ class ParametersTypeSeparableConv2DData(ParametersTypeMixinData):
 
 class ParametersTypeDepthwiseConv2DData(ParametersTypeMixinData):
     main: lps.DepthwiseConv2D.ParametersMainData = (
-        lps.DepthwiseConv2D.ParametersMainData()
+        lps.DepthwiseConv2D.ParametersMainData(kernel_size=(1, 1))
     )
     extra: lps.DepthwiseConv2D.ParametersExtraData = (
         lps.DepthwiseConv2D.ParametersExtraData()
@@ -142,6 +157,15 @@ class ParametersTypeAveragePooling2DData(ParametersTypeMixinData):
     )
 
 
+class ParametersTypeAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.AveragePooling3D.ParametersMainData = (
+        lps.AveragePooling3D.ParametersMainData()
+    )
+    extra: lps.AveragePooling3D.ParametersExtraData = (
+        lps.AveragePooling3D.ParametersExtraData()
+    )
+
+
 class ParametersTypeUpSampling1DData(ParametersTypeMixinData):
     main: lps.UpSampling1D.ParametersMainData = lps.UpSampling1D.ParametersMainData()
     extra: lps.UpSampling1D.ParametersExtraData = lps.UpSampling1D.ParametersExtraData()
@@ -158,12 +182,12 @@ class ParametersTypeLeakyReLUData(ParametersTypeMixinData):
 
 
 class ParametersTypeDropoutData(ParametersTypeMixinData):
-    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData()
+    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData(rate=0.1)
     extra: lps.Dropout.ParametersExtraData = lps.Dropout.ParametersExtraData()
 
 
 class ParametersTypeDenseData(ParametersTypeMixinData):
-    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData()
+    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData(units=32)
     extra: lps.Dense.ParametersExtraData = lps.Dense.ParametersExtraData()
 
 
@@ -212,9 +236,9 @@ class ParametersTypereluData(ParametersTypeMixinData):
     extra: lps.relu.ParametersExtraData = lps.relu.ParametersExtraData()
 
 
-class ParametersTypeeluData(ParametersTypeMixinData):
-    main: lps.elu.ParametersMainData = lps.elu.ParametersMainData()
-    extra: lps.elu.ParametersExtraData = lps.elu.ParametersExtraData()
+class ParametersTypeELUData(ParametersTypeMixinData):
+    main: lps.ELU.ParametersMainData = lps.ELU.ParametersMainData()
+    extra: lps.ELU.ParametersExtraData = lps.ELU.ParametersExtraData()
 
 
 class ParametersTypeseluData(ParametersTypeMixinData):
@@ -227,21 +251,30 @@ class ParametersTypePReLUData(ParametersTypeMixinData):
     extra: lps.PReLU.ParametersExtraData = lps.PReLU.ParametersExtraData()
 
 
-class ParametersTypeGlobalMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling1D.ParametersMainData = (
-        lps.GlobalMaxPooling1D.ParametersMainData()
+class ParametersTypeGlobalMaxPool1DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool1D.ParametersMainData = (
+        lps.GlobalMaxPool1D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling1D.ParametersExtraData = (
-        lps.GlobalMaxPooling1D.ParametersExtraData()
+    extra: lps.GlobalMaxPool1D.ParametersExtraData = (
+        lps.GlobalMaxPool1D.ParametersExtraData()
     )
 
 
-class ParametersTypeGlobalMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling2D.ParametersMainData = (
-        lps.GlobalMaxPooling2D.ParametersMainData()
+class ParametersTypeGlobalMaxPool2DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool2D.ParametersMainData = (
+        lps.GlobalMaxPool2D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling2D.ParametersExtraData = (
-        lps.GlobalMaxPooling2D.ParametersExtraData()
+    extra: lps.GlobalMaxPool2D.ParametersExtraData = (
+        lps.GlobalMaxPool2D.ParametersExtraData()
+    )
+
+
+class ParametersTypeGlobalMaxPool3DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool3D.ParametersMainData = (
+        lps.GlobalMaxPool3D.ParametersMainData()
+    )
+    extra: lps.GlobalMaxPool3D.ParametersExtraData = (
+        lps.GlobalMaxPool3D.ParametersExtraData()
     )
 
 
@@ -263,8 +296,17 @@ class ParametersTypeGlobalAveragePooling2DData(ParametersTypeMixinData):
     )
 
 
+class ParametersTypeGlobalAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.GlobalAveragePooling3D.ParametersMainData = (
+        lps.GlobalAveragePooling3D.ParametersMainData()
+    )
+    extra: lps.GlobalAveragePooling3D.ParametersExtraData = (
+        lps.GlobalAveragePooling3D.ParametersExtraData()
+    )
+
+
 class ParametersTypeGRUData(ParametersTypeMixinData):
-    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData()
+    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData(units=32)
     extra: lps.GRU.ParametersExtraData = lps.GRU.ParametersExtraData()
 
 
@@ -274,7 +316,9 @@ class ParametersTypeLSTMData(ParametersTypeMixinData):
 
 
 class ParametersTypeEmbeddingData(ParametersTypeMixinData):
-    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData()
+    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData(
+        input_dim=1000, output_dim=64
+    )
     extra: lps.Embedding.ParametersExtraData = lps.Embedding.ParametersExtraData()
 
 
@@ -351,6 +395,10 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.AveragePooling3D"><code class="name">var <span class="ident">LayerTypeChoice.AveragePooling3D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.BatchNormalization"><code class="name">var <span class="ident">LayerTypeChoice.BatchNormalization</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -379,6 +427,10 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.Conv3DTranspose"><code class="name">var <span class="ident">LayerTypeChoice.Conv3DTranspose</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.Dense"><code class="name">var <span class="ident">LayerTypeChoice.Dense</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -388,6 +440,10 @@ ParametersTypeUnion = tuple(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.Dropout"><code class="name">var <span class="ident">LayerTypeChoice.Dropout</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.ELU"><code class="name">var <span class="ident">LayerTypeChoice.ELU</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -411,11 +467,19 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling1D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalMaxPooling1D</span></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling3D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalAveragePooling3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling2D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalMaxPooling2D</span></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool1D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalMaxPool1D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool2D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalMaxPool2D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool3D"><code class="name">var <span class="ident">LayerTypeChoice.GlobalMaxPool3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -468,10 +532,6 @@ ParametersTypeUnion = tuple(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.UpSampling2D"><code class="name">var <span class="ident">LayerTypeChoice.UpSampling2D</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.elu"><code class="name">var <span class="ident">LayerTypeChoice.elu</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -634,6 +694,53 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeAveragePooling3DData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.AveragePooling3D.ParametersMainData = (
+        lps.AveragePooling3D.ParametersMainData()
+    )
+    extra: lps.AveragePooling3D.ParametersExtraData = (
+        lps.AveragePooling3D.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersExtraData" href="layers_parameters/AveragePooling3D.html#terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersMainData" href="layers_parameters/AveragePooling3D.html#terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeBatchNormalizationData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypeBatchNormalizationData</span></span>
 <span>(</span><span>**data)</span>
@@ -737,7 +844,9 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeConv1DData(ParametersTypeMixinData):
-    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData()
+    main: lps.Conv1D.ParametersMainData = lps.Conv1D.ParametersMainData(
+        filters=32, kernel_size=5
+    )
     extra: lps.Conv1D.ParametersExtraData = lps.Conv1D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -781,7 +890,7 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeConv1DTransposeData(ParametersTypeMixinData):
     main: lps.Conv1DTranspose.ParametersMainData = (
-        lps.Conv1DTranspose.ParametersMainData()
+        lps.Conv1DTranspose.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.Conv1DTranspose.ParametersExtraData = (
         lps.Conv1DTranspose.ParametersExtraData()
@@ -827,7 +936,9 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeConv2DData(ParametersTypeMixinData):
-    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData()
+    main: lps.Conv2D.ParametersMainData = lps.Conv2D.ParametersMainData(
+        filters=32, kernel_size=(3, 3)
+    )
     extra: lps.Conv2D.ParametersExtraData = lps.Conv2D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -871,7 +982,7 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeConv2DTransposeData(ParametersTypeMixinData):
     main: lps.Conv2DTranspose.ParametersMainData = (
-        lps.Conv2DTranspose.ParametersMainData()
+        lps.Conv2DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.Conv2DTranspose.ParametersExtraData = (
         lps.Conv2DTranspose.ParametersExtraData()
@@ -917,7 +1028,9 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeConv3DData(ParametersTypeMixinData):
-    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData()
+    main: lps.Conv3D.ParametersMainData = lps.Conv3D.ParametersMainData(
+        filters=32, kernel_size=(3, 3, 3)
+    )
     extra: lps.Conv3D.ParametersExtraData = lps.Conv3D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -934,6 +1047,53 @@ ParametersTypeUnion = tuple(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeConv3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.Conv3D.ParametersMainData" href="layers_parameters/Conv3D.html#terra_ai.data.modeling.layers_parameters.Conv3D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeConv3DTransposeData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeConv3DTransposeData(ParametersTypeMixinData):
+    main: lps.Conv3DTranspose.ParametersMainData = (
+        lps.Conv3DTranspose.ParametersMainData(filters=32, kernel_size=(1, 1, 1))
+    )
+    extra: lps.Conv3DTranspose.ParametersExtraData = (
+        lps.Conv3DTranspose.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersExtraData" href="layers_parameters/Conv3DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersMainData" href="layers_parameters/Conv3DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -990,7 +1150,7 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeDenseData(ParametersTypeMixinData):
-    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData()
+    main: lps.Dense.ParametersMainData = lps.Dense.ParametersMainData(units=32)
     extra: lps.Dense.ParametersExtraData = lps.Dense.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1034,7 +1194,7 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeDepthwiseConv2DData(ParametersTypeMixinData):
     main: lps.DepthwiseConv2D.ParametersMainData = (
-        lps.DepthwiseConv2D.ParametersMainData()
+        lps.DepthwiseConv2D.ParametersMainData(kernel_size=(1, 1))
     )
     extra: lps.DepthwiseConv2D.ParametersExtraData = (
         lps.DepthwiseConv2D.ParametersExtraData()
@@ -1080,7 +1240,7 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeDropoutData(ParametersTypeMixinData):
-    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData()
+    main: lps.Dropout.ParametersMainData = lps.Dropout.ParametersMainData(rate=0.1)
     extra: lps.Dropout.ParametersExtraData = lps.Dropout.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1110,6 +1270,49 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeELUData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeELUData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeELUData(ParametersTypeMixinData):
+    main: lps.ELU.ParametersMainData = lps.ELU.ParametersMainData()
+    extra: lps.ELU.ParametersExtraData = lps.ELU.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeELUData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.ELU.ParametersExtraData" href="layers_parameters/ELU.html#terra_ai.data.modeling.layers_parameters.ELU.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeELUData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.ELU.ParametersMainData" href="layers_parameters/ELU.html#terra_ai.data.modeling.layers_parameters.ELU.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeEmbeddingData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypeEmbeddingData</span></span>
 <span>(</span><span>**data)</span>
@@ -1123,7 +1326,9 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeEmbeddingData(ParametersTypeMixinData):
-    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData()
+    main: lps.Embedding.ParametersMainData = lps.Embedding.ParametersMainData(
+        input_dim=1000, output_dim=64
+    )
     extra: lps.Embedding.ParametersExtraData = lps.Embedding.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1209,7 +1414,7 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeGRUData(ParametersTypeMixinData):
-    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData()
+    main: lps.GRU.ParametersMainData = lps.GRU.ParametersMainData(units=32)
     extra: lps.GRU.ParametersExtraData = lps.GRU.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1333,8 +1538,8 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeGlobalMaxPooling1DData</span></span>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeGlobalAveragePooling3DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -1345,12 +1550,12 @@ ParametersTypeUnion = tuple(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeGlobalMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling1D.ParametersMainData = (
-        lps.GlobalMaxPooling1D.ParametersMainData()
+<pre><code class="python">class ParametersTypeGlobalAveragePooling3DData(ParametersTypeMixinData):
+    main: lps.GlobalAveragePooling3D.ParametersMainData = (
+        lps.GlobalAveragePooling3D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling1D.ParametersExtraData = (
-        lps.GlobalMaxPooling1D.ParametersExtraData()
+    extra: lps.GlobalAveragePooling3D.ParametersExtraData = (
+        lps.GlobalAveragePooling3D.ParametersExtraData()
     )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1362,11 +1567,11 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D.ParametersExtraData" href="layers_parameters/GlobalMaxPooling1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersExtraData" href="layers_parameters/GlobalAveragePooling3D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D.ParametersMainData" href="layers_parameters/GlobalMaxPooling1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPooling1D.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersMainData" href="layers_parameters/GlobalAveragePooling3D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1380,8 +1585,8 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeGlobalMaxPooling2DData</span></span>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeGlobalMaxPool1DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -1392,12 +1597,12 @@ ParametersTypeUnion = tuple(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeGlobalMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.GlobalMaxPooling2D.ParametersMainData = (
-        lps.GlobalMaxPooling2D.ParametersMainData()
+<pre><code class="python">class ParametersTypeGlobalMaxPool1DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool1D.ParametersMainData = (
+        lps.GlobalMaxPool1D.ParametersMainData()
     )
-    extra: lps.GlobalMaxPooling2D.ParametersExtraData = (
-        lps.GlobalMaxPooling2D.ParametersExtraData()
+    extra: lps.GlobalMaxPool1D.ParametersExtraData = (
+        lps.GlobalMaxPool1D.ParametersExtraData()
     )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1409,11 +1614,105 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D.ParametersExtraData" href="layers_parameters/GlobalMaxPooling2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersExtraData" href="layers_parameters/GlobalMaxPool1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D.ParametersMainData" href="layers_parameters/GlobalMaxPooling2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPooling2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersMainData" href="layers_parameters/GlobalMaxPool1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeGlobalMaxPool2DData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeGlobalMaxPool2DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool2D.ParametersMainData = (
+        lps.GlobalMaxPool2D.ParametersMainData()
+    )
+    extra: lps.GlobalMaxPool2D.ParametersExtraData = (
+        lps.GlobalMaxPool2D.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersExtraData" href="layers_parameters/GlobalMaxPool2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersMainData" href="layers_parameters/GlobalMaxPool2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeGlobalMaxPool3DData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeGlobalMaxPool3DData(ParametersTypeMixinData):
+    main: lps.GlobalMaxPool3D.ParametersMainData = (
+        lps.GlobalMaxPool3D.ParametersMainData()
+    )
+    extra: lps.GlobalMaxPool3D.ParametersExtraData = (
+        lps.GlobalMaxPool3D.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersExtraData" href="layers_parameters/GlobalMaxPool3D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersMainData" href="layers_parameters/GlobalMaxPool3D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1669,6 +1968,7 @@ ParametersTypeUnion = tuple(
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAddData" href="#terra_ai.data.modeling.parameters.ParametersTypeAddData">ParametersTypeAddData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling1DData">ParametersTypeAveragePooling1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData">ParametersTypeAveragePooling2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData">ParametersTypeAveragePooling3DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeBatchNormalizationData" href="#terra_ai.data.modeling.parameters.ParametersTypeBatchNormalizationData">ParametersTypeBatchNormalizationData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeConcatenateData" href="#terra_ai.data.modeling.parameters.ParametersTypeConcatenateData">ParametersTypeConcatenateData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeConv1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv1DData">ParametersTypeConv1DData</a></li>
@@ -1676,16 +1976,20 @@ ParametersTypeUnion = tuple(
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeConv2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv2DData">ParametersTypeConv2DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeConv2DTransposeData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv2DTransposeData">ParametersTypeConv2DTransposeData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeConv3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv3DData">ParametersTypeConv3DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData">ParametersTypeConv3DTransposeData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeDenseData" href="#terra_ai.data.modeling.parameters.ParametersTypeDenseData">ParametersTypeDenseData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeDepthwiseConv2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeDepthwiseConv2DData">ParametersTypeDepthwiseConv2DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeDropoutData" href="#terra_ai.data.modeling.parameters.ParametersTypeDropoutData">ParametersTypeDropoutData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeELUData" href="#terra_ai.data.modeling.parameters.ParametersTypeELUData">ParametersTypeELUData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeEmbeddingData" href="#terra_ai.data.modeling.parameters.ParametersTypeEmbeddingData">ParametersTypeEmbeddingData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeFlattenData" href="#terra_ai.data.modeling.parameters.ParametersTypeFlattenData">ParametersTypeFlattenData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeGRUData" href="#terra_ai.data.modeling.parameters.ParametersTypeGRUData">ParametersTypeGRUData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling1DData">ParametersTypeGlobalAveragePooling1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling2DData">ParametersTypeGlobalAveragePooling2DData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData">ParametersTypeGlobalMaxPooling1DData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData">ParametersTypeGlobalMaxPooling2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData">ParametersTypeGlobalAveragePooling3DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData">ParametersTypeGlobalMaxPool1DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData">ParametersTypeGlobalMaxPool2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData">ParametersTypeGlobalMaxPool3DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeInputData" href="#terra_ai.data.modeling.parameters.ParametersTypeInputData">ParametersTypeInputData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeLSTMData" href="#terra_ai.data.modeling.parameters.ParametersTypeLSTMData">ParametersTypeLSTMData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData" href="#terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData">ParametersTypeLeakyReLUData</a></li>
@@ -1699,7 +2003,6 @@ ParametersTypeUnion = tuple(
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeSeparableConv2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeSeparableConv2DData">ParametersTypeSeparableConv2DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData">ParametersTypeUpSampling1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData">ParametersTypeUpSampling2DData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeeluData" href="#terra_ai.data.modeling.parameters.ParametersTypeeluData">ParametersTypeeluData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypereluData" href="#terra_ai.data.modeling.parameters.ParametersTypereluData">ParametersTypereluData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeseluData" href="#terra_ai.data.modeling.parameters.ParametersTypeseluData">ParametersTypeseluData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypesigmoidData" href="#terra_ai.data.modeling.parameters.ParametersTypesigmoidData">ParametersTypesigmoidData</a></li>
@@ -2078,49 +2381,6 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeeluData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeeluData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeeluData(ParametersTypeMixinData):
-    main: lps.elu.ParametersMainData = lps.elu.ParametersMainData()
-    extra: lps.elu.ParametersExtraData = lps.elu.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeeluData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.elu.ParametersExtraData" href="layers_parameters/elu.html#terra_ai.data.modeling.layers_parameters.elu.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeeluData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.elu.ParametersMainData" href="layers_parameters/elu.html#terra_ai.data.modeling.layers_parameters.elu.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypereluData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypereluData</span></span>
 <span>(</span><span>**data)</span>
@@ -2365,6 +2625,7 @@ ParametersTypeUnion = tuple(
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Add" href="#terra_ai.data.modeling.parameters.ParametersType.Add">Add</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.AveragePooling1D" href="#terra_ai.data.modeling.parameters.ParametersType.AveragePooling1D">AveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.AveragePooling2D" href="#terra_ai.data.modeling.parameters.ParametersType.AveragePooling2D">AveragePooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.AveragePooling3D" href="#terra_ai.data.modeling.parameters.ParametersType.AveragePooling3D">AveragePooling3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.BatchNormalization" href="#terra_ai.data.modeling.parameters.ParametersType.BatchNormalization">BatchNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Concatenate" href="#terra_ai.data.modeling.parameters.ParametersType.Concatenate">Concatenate</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Conv1D" href="#terra_ai.data.modeling.parameters.ParametersType.Conv1D">Conv1D</a></code></li>
@@ -2372,16 +2633,20 @@ ParametersTypeUnion = tuple(
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Conv2D" href="#terra_ai.data.modeling.parameters.ParametersType.Conv2D">Conv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Conv2DTranspose" href="#terra_ai.data.modeling.parameters.ParametersType.Conv2DTranspose">Conv2DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Conv3D" href="#terra_ai.data.modeling.parameters.ParametersType.Conv3D">Conv3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Conv3DTranspose" href="#terra_ai.data.modeling.parameters.ParametersType.Conv3DTranspose">Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Dense" href="#terra_ai.data.modeling.parameters.ParametersType.Dense">Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.DepthwiseConv2D" href="#terra_ai.data.modeling.parameters.ParametersType.DepthwiseConv2D">DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Dropout" href="#terra_ai.data.modeling.parameters.ParametersType.Dropout">Dropout</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.ELU" href="#terra_ai.data.modeling.parameters.ParametersType.ELU">ELU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Embedding" href="#terra_ai.data.modeling.parameters.ParametersType.Embedding">Embedding</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Flatten" href="#terra_ai.data.modeling.parameters.ParametersType.Flatten">Flatten</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GRU" href="#terra_ai.data.modeling.parameters.ParametersType.GRU">GRU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling1D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling1D">GlobalAveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling2D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling2D">GlobalAveragePooling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling1D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling1D">GlobalMaxPooling1D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling2D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPooling2D">GlobalMaxPooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling3D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalAveragePooling3D">GlobalAveragePooling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool1D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool1D">GlobalMaxPool1D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool2D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool2D">GlobalMaxPool2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool3D" href="#terra_ai.data.modeling.parameters.ParametersType.GlobalMaxPool3D">GlobalMaxPool3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Input" href="#terra_ai.data.modeling.parameters.ParametersType.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.LSTM" href="#terra_ai.data.modeling.parameters.ParametersType.LSTM">LSTM</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.LeakyReLU" href="#terra_ai.data.modeling.parameters.ParametersType.LeakyReLU">LeakyReLU</a></code></li>
@@ -2395,7 +2660,6 @@ ParametersTypeUnion = tuple(
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.SeparableConv2D" href="#terra_ai.data.modeling.parameters.ParametersType.SeparableConv2D">SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.UpSampling1D" href="#terra_ai.data.modeling.parameters.ParametersType.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.UpSampling2D" href="#terra_ai.data.modeling.parameters.ParametersType.UpSampling2D">UpSampling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.elu" href="#terra_ai.data.modeling.parameters.ParametersType.elu">elu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.relu" href="#terra_ai.data.modeling.parameters.ParametersType.relu">relu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.selu" href="#terra_ai.data.modeling.parameters.ParametersType.selu">selu</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.sigmoid" href="#terra_ai.data.modeling.parameters.ParametersType.sigmoid">sigmoid</a></code></li>
@@ -2422,6 +2686,13 @@ ParametersTypeUnion = tuple(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData">ParametersTypeAveragePooling3DData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling3DData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2474,6 +2745,13 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData" href="#terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData">ParametersTypeConv3DTransposeData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeConv3DTransposeData.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></code></h4>
 </li>
 <li>
@@ -2495,6 +2773,13 @@ ParametersTypeUnion = tuple(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeDropoutData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeDropoutData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeDropoutData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeDropoutData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeELUData" href="#terra_ai.data.modeling.parameters.ParametersTypeELUData">ParametersTypeELUData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeELUData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeELUData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeELUData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeELUData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2533,17 +2818,31 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData">ParametersTypeGlobalMaxPooling1DData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData">ParametersTypeGlobalAveragePooling3DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling1DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalAveragePooling3DData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData">ParametersTypeGlobalMaxPooling2DData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData">ParametersTypeGlobalMaxPool1DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPooling2DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool1DData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData">ParametersTypeGlobalMaxPool2DData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool2DData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData">ParametersTypeGlobalMaxPool3DData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeGlobalMaxPool3DData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2642,13 +2941,6 @@ ParametersTypeUnion = tuple(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeeluData" href="#terra_ai.data.modeling.parameters.ParametersTypeeluData">ParametersTypeeluData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeeluData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeeluData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeeluData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeeluData.main">main</a></code></li>
 </ul>
 </li>
 <li>

@@ -1,6 +1,8 @@
 """
-## Тип слоя `GlobalMaxPooling2D`
+## Тип слоя `ELU`
 """
+
+from pydantic.types import confloat
 
 from ...mixins import BaseMixinData
 
@@ -10,4 +12,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    alpha: confloat(ge=0, le=1) = 1

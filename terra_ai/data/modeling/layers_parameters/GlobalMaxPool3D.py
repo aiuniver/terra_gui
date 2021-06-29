@@ -1,6 +1,8 @@
 """
-## Тип слоя `GlobalAveragePooling1D`
+## Тип слоя `GlobalMaxPool3D`
 """
+
+from typing import Optional
 
 from ...mixins import BaseMixinData
 from .extra import DataFormatChoice
@@ -11,4 +13,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: DataFormatChoice = DataFormatChoice.channels_last
+    data_format: Optional[DataFormatChoice]
