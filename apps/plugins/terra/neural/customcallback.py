@@ -16,6 +16,7 @@ from terra_ai.trds import DTS
 
 __version__ = 0.13
 
+
 class BaseCallback():
     """Callback for callbacks"""
 
@@ -1373,7 +1374,6 @@ class TimeseriesCallback(BaseCallback):
         self.met = [[] for _ in range(len(self.losses))]
         self.valmet = [[] for _ in range(len(self.losses))]
 
-
     def plot_result(self, output_key=None):
         """
         Returns: plot_data
@@ -1664,4 +1664,3 @@ class RegressionCallback(BaseCallback):
             out_data.update({"plots": plot_data})
 
         return out_data
-

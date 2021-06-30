@@ -149,8 +149,13 @@ class InstanceNormalization(Layer):
 
 
 class UNETBlock(Layer):
-    """Unet block layer """
+    """
+    Unet block layer
 
+    # Arguments
+        filters: Default: 32
+        activation: Default: 'relu', or any possible activation.
+        """
     def __init__(self,
                  filters=32,
                  activation='relu',
