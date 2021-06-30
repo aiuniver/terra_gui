@@ -148,7 +148,7 @@ class InstanceNormalization(Layer):
         return cls(**config)
 
 
-class UNETBlock(Layer):
+class CustomUNETBlock(Layer):
     """
     Unet block layer
 
@@ -160,7 +160,7 @@ class UNETBlock(Layer):
                  filters=32,
                  activation='relu',
                  **kwargs):
-        super(UNETBlock, self).__init__(**kwargs)
+        super(CustomUNETBlock, self).__init__(**kwargs)
         self.filters = filters
         self.activation = activation
         self.x_1 = layers.Conv2D(filters=self.filters, kernel_size=(3, 3), strides=(1, 1), padding='same',
@@ -279,7 +279,7 @@ class UNETBlock(Layer):
             'filters': self.filters,
             'activation': self.activation,
         }
-        base_config = super(UNETBlock, self).get_config()
+        base_config = super(CustomUNETBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod
