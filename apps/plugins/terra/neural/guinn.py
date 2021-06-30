@@ -1,9 +1,9 @@
-from threading import Thread
+# from threading import Thread
 from typing import Tuple
 import numpy as np
 import os
 import gc
-import copy
+# import copy
 import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model
@@ -86,9 +86,6 @@ class GUINN:
         """
         Set optimizer method for using terra w/o gui
 
-        Args:
-            optimizer_name (str):   name of keras optimizer
-            kwargs (dict):          kwargs for optimizer
         """
         self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
         self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
@@ -152,15 +149,12 @@ class GUINN:
         Setting task nn_name
 
         Args:
-            dts_obj (object): setting task_name
+            dts_obj (object): setting dataset
         """
         if not self.model_is_trained:
             self.nn_cleaner()
-            self.DTS = dts_obj
-            self.prepare_dataset()
-        else:
-            self.DTS = dts_obj
-            self.prepare_dataset()
+        self.DTS = dts_obj
+        self.prepare_dataset()
         pass
 
     def show_training_params(self) -> None:
@@ -465,7 +459,6 @@ class GUINN:
 
         return self
 
-
     @staticmethod
     def _search_best_epoch_data(
             history, monitor="accuracy", monitor2="loss"
@@ -542,7 +535,7 @@ class GUINN:
                         history.history[monitor2][i],
                         history.history[monitor2][best_epoch_num],
                     )
-            )
+                    )
                     & (not np.isnan(history.history[monitor][i]))
             ):
                 best_epoch_num = i

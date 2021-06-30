@@ -7,7 +7,7 @@ import tensorflow as tf
 
 import matplotlib.pyplot as plt
 from tensorflow import keras
-from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
+from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy
 import numpy as np
 import types
 import time
@@ -16,14 +16,15 @@ from terra_ai.trds import DTS
 
 __version__ = 0.13
 
+
 class BaseCallback():
     """Callback for callbacks"""
 
     def __init__(
             self,
-            metrics=[],
+            metrics=None,
             step=1,
-            class_metrics=[],
+            class_metrics=None,
             data_tag=None,
             num_classes=2,
             show_worst=False,
@@ -46,6 +47,22 @@ class BaseCallback():
         Returns:
             None
         """
+        self.step = step
+        if metrics is None:
+            metrics = []
+        if class_metrics is None:
+            class_metrics = []
+        if data_tag is None:
+            data_tag = []
+        self.clbck_metrics = metrics
+        self.class_metrics = class_metrics
+        self.exchange = exchange
+        self.dataset = dataset
+        self.show_final = show_final
+        self.show_best = show_best
+        self.show_worst = show_worst
+        self.num_classes = num_classes
+        self.data_tag = data_tag
         self.epoch = 0
         self.history = {}
         self.predict_cls = {}
@@ -849,9 +866,9 @@ class ClassificationCallback(BaseCallback):
 
     def __init__(
             self,
-            metrics=[],
+            metrics=None,
             step=1,
-            class_metrics=[],
+            class_metrics=None,
             data_tag=None,
             num_classes=2,
             show_worst=False,
@@ -874,6 +891,10 @@ class ClassificationCallback(BaseCallback):
             None
         """
         super().__init__()
+        if class_metrics is None:
+            class_metrics = []
+        if metrics is None:
+            metrics = []
         self.__name__ = "Callback for classification"
         self.step = step
         self.clbck_metrics = metrics
@@ -988,10 +1009,10 @@ class SegmentationCallback(BaseCallback):
 
     def __init__(
             self,
-            metrics=[],
+            metrics=None,
             step=1,
             num_classes=2,
-            class_metrics=[],
+            class_metrics=None,
             data_tag=None,
             show_worst=False,
             show_best=True,
@@ -1013,6 +1034,10 @@ class SegmentationCallback(BaseCallback):
             None
         """
         super().__init__()
+        if class_metrics is None:
+            class_metrics = []
+        if metrics is None:
+            metrics = []
         self.__name__ = "Callback for segmentation"
         self.step = step
         self.clbck_metrics = metrics
@@ -1358,7 +1383,7 @@ class TimeseriesCallback(BaseCallback):
         super().__init__()
         self.__name__ = "Callback for timeseries"
         if metrics is None:
-            metrics = ["loss"]
+            metrics = []
         self.metrics = metrics
         self.step = step
         self.show_final = show_final
@@ -1372,7 +1397,6 @@ class TimeseriesCallback(BaseCallback):
         )
         self.met = [[] for _ in range(len(self.losses))]
         self.valmet = [[] for _ in range(len(self.losses))]
-
 
     def plot_result(self, output_key=None):
         """
@@ -1531,7 +1555,7 @@ class TimeseriesCallback(BaseCallback):
 class RegressionCallback(BaseCallback):
     def __init__(
             self,
-            metrics,
+            metrics=None,
             step=1,
             show_final=True,
             plot_scatter=False,
@@ -1552,7 +1576,7 @@ class RegressionCallback(BaseCallback):
         super().__init__()
         self.__name__ = "Callback for regression"
         if metrics is None:
-            metrics = ["loss"]
+            metrics = []
         self.step = step
         self.metrics = metrics
         self.show_final = show_final
@@ -1664,4 +1688,3 @@ class RegressionCallback(BaseCallback):
             out_data.update({"plots": plot_data})
 
         return out_data
-
