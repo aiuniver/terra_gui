@@ -96,6 +96,7 @@ class LayerType(str, Enum):
     Embedding = "Embedding"
     RepeatVector = "RepeatVector"
     BatchNormalization = "BatchNormalization"
+    InstanceNormalization = "InstanceNormalization"
     Activation = "Activation"
     ReLU = "ReLU"
     Softmax = "Softmax"
@@ -120,6 +121,7 @@ class LayerType(str, Enum):
     ResNet50 = "ResNet50"
     Xception = "Xception"
     Attention = "Attention"
+
 
 
 class OptimizerParams(pydantic.BaseModel):
