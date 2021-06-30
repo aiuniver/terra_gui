@@ -31,11 +31,13 @@
 ## Тип слоя `UpSampling1D`
 &#34;&#34;&#34;
 
+from pydantic.types import PositiveInt
+
 from ...mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    size: PositiveInt = 2
 
 
 class ParametersExtraData(BaseMixinData):
@@ -94,7 +96,7 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    pass</code></pre>
+    size: PositiveInt = 2</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -102,6 +104,13 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData.size"><code class="name">var <span class="ident">size</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -134,6 +143,9 @@ class ParametersExtraData(BaseMixinData):
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData">ParametersMainData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData.size" href="#terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData.size">size</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

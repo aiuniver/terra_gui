@@ -51,13 +51,15 @@ class LayerTypeChoice(str, Enum):
     SeparableConv1D = &#34;SeparableConv1D&#34;
     SeparableConv2D = &#34;SeparableConv2D&#34;
     DepthwiseConv2D = &#34;DepthwiseConv2D&#34;
-    MaxPooling1D = &#34;MaxPooling1D&#34;
-    MaxPooling2D = &#34;MaxPooling2D&#34;
+    MaxPool1D = &#34;MaxPool1D&#34;
+    MaxPool2D = &#34;MaxPool2D&#34;
+    MaxPool3D = &#34;MaxPool3D&#34;
     AveragePooling1D = &#34;AveragePooling1D&#34;
     AveragePooling2D = &#34;AveragePooling2D&#34;
     AveragePooling3D = &#34;AveragePooling3D&#34;
     UpSampling1D = &#34;UpSampling1D&#34;
     UpSampling2D = &#34;UpSampling2D&#34;
+    UpSampling3D = &#34;UpSampling3D&#34;
     LeakyReLU = &#34;LeakyReLU&#34;
     Dropout = &#34;Dropout&#34;
     Dense = &#34;Dense&#34;
@@ -66,12 +68,10 @@ class LayerTypeChoice(str, Enum):
     Flatten = &#34;Flatten&#34;
     Concatenate = &#34;Concatenate&#34;
     Reshape = &#34;Reshape&#34;
-    sigmoid = &#34;sigmoid&#34;
-    softmax = &#34;softmax&#34;
-    tanh = &#34;tanh&#34;
-    relu = &#34;relu&#34;
+    Activation = &#34;Activation&#34;
+    Softmax = &#34;Softmax&#34;
+    ReLU = &#34;ReLU&#34;
     ELU = &#34;ELU&#34;
-    selu = &#34;selu&#34;
     PReLU = &#34;PReLU&#34;
     GlobalMaxPool1D = &#34;GlobalMaxPool1D&#34;
     GlobalMaxPool2D = &#34;GlobalMaxPool2D&#34;
@@ -152,13 +152,15 @@ class LayerTypeChoice(str, Enum):
     SeparableConv1D = &#34;SeparableConv1D&#34;
     SeparableConv2D = &#34;SeparableConv2D&#34;
     DepthwiseConv2D = &#34;DepthwiseConv2D&#34;
-    MaxPooling1D = &#34;MaxPooling1D&#34;
-    MaxPooling2D = &#34;MaxPooling2D&#34;
+    MaxPool1D = &#34;MaxPool1D&#34;
+    MaxPool2D = &#34;MaxPool2D&#34;
+    MaxPool3D = &#34;MaxPool3D&#34;
     AveragePooling1D = &#34;AveragePooling1D&#34;
     AveragePooling2D = &#34;AveragePooling2D&#34;
     AveragePooling3D = &#34;AveragePooling3D&#34;
     UpSampling1D = &#34;UpSampling1D&#34;
     UpSampling2D = &#34;UpSampling2D&#34;
+    UpSampling3D = &#34;UpSampling3D&#34;
     LeakyReLU = &#34;LeakyReLU&#34;
     Dropout = &#34;Dropout&#34;
     Dense = &#34;Dense&#34;
@@ -167,12 +169,10 @@ class LayerTypeChoice(str, Enum):
     Flatten = &#34;Flatten&#34;
     Concatenate = &#34;Concatenate&#34;
     Reshape = &#34;Reshape&#34;
-    sigmoid = &#34;sigmoid&#34;
-    softmax = &#34;softmax&#34;
-    tanh = &#34;tanh&#34;
-    relu = &#34;relu&#34;
+    Activation = &#34;Activation&#34;
+    Softmax = &#34;Softmax&#34;
+    ReLU = &#34;ReLU&#34;
     ELU = &#34;ELU&#34;
-    selu = &#34;selu&#34;
     PReLU = &#34;PReLU&#34;
     GlobalMaxPool1D = &#34;GlobalMaxPool1D&#34;
     GlobalMaxPool2D = &#34;GlobalMaxPool2D&#34;
@@ -193,6 +193,10 @@ class LayerTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Activation"><code class="name">var <span class="ident">Activation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Add"><code class="name">var <span class="ident">Add</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -305,11 +309,15 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling1D"><code class="name">var <span class="ident">MaxPooling1D</span></code></dt>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool1D"><code class="name">var <span class="ident">MaxPool1D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling2D"><code class="name">var <span class="ident">MaxPooling2D</span></code></dt>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool2D"><code class="name">var <span class="ident">MaxPool2D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool3D"><code class="name">var <span class="ident">MaxPool3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -318,6 +326,10 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.PReLU"><code class="name">var <span class="ident">PReLU</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.ReLU"><code class="name">var <span class="ident">ReLU</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -337,6 +349,10 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Softmax"><code class="name">var <span class="ident">Softmax</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D"><code class="name">var <span class="ident">UpSampling1D</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -345,23 +361,7 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.relu"><code class="name">var <span class="ident">relu</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.selu"><code class="name">var <span class="ident">selu</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.sigmoid"><code class="name">var <span class="ident">sigmoid</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.softmax"><code class="name">var <span class="ident">softmax</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.tanh"><code class="name">var <span class="ident">tanh</span></code></dt>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D"><code class="name">var <span class="ident">UpSampling3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -396,6 +396,7 @@ class LayerTypeChoice(str, Enum):
 <li>
 <h4><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice" href="#terra_ai.data.modeling.extra.LayerTypeChoice">LayerTypeChoice</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Activation" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Activation">Activation</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Add" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Add">Add</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling1D">AveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.AveragePooling2D">AveragePooling2D</a></code></li>
@@ -424,21 +425,20 @@ class LayerTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Input" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.LSTM" href="#terra_ai.data.modeling.extra.LayerTypeChoice.LSTM">LSTM</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.LeakyReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.LeakyReLU">LeakyReLU</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling1D">MaxPooling1D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.MaxPooling2D">MaxPooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool1D">MaxPool1D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool2D">MaxPool2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.MaxPool3D">MaxPool3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Multiply" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Multiply">Multiply</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.PReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.PReLU">PReLU</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ReLU">ReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.RepeatVector" href="#terra_ai.data.modeling.extra.LayerTypeChoice.RepeatVector">RepeatVector</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Reshape" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Reshape">Reshape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv1D">SeparableConv1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D">SeparableConv2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Softmax" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Softmax">Softmax</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D">UpSampling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.relu" href="#terra_ai.data.modeling.extra.LayerTypeChoice.relu">relu</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.selu" href="#terra_ai.data.modeling.extra.LayerTypeChoice.selu">selu</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.sigmoid" href="#terra_ai.data.modeling.extra.LayerTypeChoice.sigmoid">sigmoid</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.softmax" href="#terra_ai.data.modeling.extra.LayerTypeChoice.softmax">softmax</a></code></li>
-<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.tanh" href="#terra_ai.data.modeling.extra.LayerTypeChoice.tanh">tanh</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D">UpSampling3D</a></code></li>
 </ul>
 </li>
 </ul>

@@ -37,6 +37,7 @@ from enum import Enum
 
 from ..mixins import BaseMixinData
 from .extra import LayerTypeChoice
+from .layers_parameters.extra import ActivationChoice
 from . import layers_parameters as lps
 
 
@@ -104,7 +105,7 @@ class ParametersTypeConv3DTransposeData(ParametersTypeMixinData):
 
 class ParametersTypeSeparableConv1DData(ParametersTypeMixinData):
     main: lps.SeparableConv1D.ParametersMainData = (
-        lps.SeparableConv1D.ParametersMainData()
+        lps.SeparableConv1D.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.SeparableConv1D.ParametersExtraData = (
         lps.SeparableConv1D.ParametersExtraData()
@@ -113,7 +114,7 @@ class ParametersTypeSeparableConv1DData(ParametersTypeMixinData):
 
 class ParametersTypeSeparableConv2DData(ParametersTypeMixinData):
     main: lps.SeparableConv2D.ParametersMainData = (
-        lps.SeparableConv2D.ParametersMainData()
+        lps.SeparableConv2D.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.SeparableConv2D.ParametersExtraData = (
         lps.SeparableConv2D.ParametersExtraData()
@@ -129,14 +130,19 @@ class ParametersTypeDepthwiseConv2DData(ParametersTypeMixinData):
     )
 
 
-class ParametersTypeMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.MaxPooling1D.ParametersMainData = lps.MaxPooling1D.ParametersMainData()
-    extra: lps.MaxPooling1D.ParametersExtraData = lps.MaxPooling1D.ParametersExtraData()
+class ParametersTypeMaxPool1DData(ParametersTypeMixinData):
+    main: lps.MaxPool1D.ParametersMainData = lps.MaxPool1D.ParametersMainData()
+    extra: lps.MaxPool1D.ParametersExtraData = lps.MaxPool1D.ParametersExtraData()
 
 
-class ParametersTypeMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.MaxPooling2D.ParametersMainData = lps.MaxPooling2D.ParametersMainData()
-    extra: lps.MaxPooling2D.ParametersExtraData = lps.MaxPooling2D.ParametersExtraData()
+class ParametersTypeMaxPool2DData(ParametersTypeMixinData):
+    main: lps.MaxPool2D.ParametersMainData = lps.MaxPool2D.ParametersMainData()
+    extra: lps.MaxPool2D.ParametersExtraData = lps.MaxPool2D.ParametersExtraData()
+
+
+class ParametersTypeMaxPool3DData(ParametersTypeMixinData):
+    main: lps.MaxPool3D.ParametersMainData = lps.MaxPool3D.ParametersMainData()
+    extra: lps.MaxPool3D.ParametersExtraData = lps.MaxPool3D.ParametersExtraData()
 
 
 class ParametersTypeAveragePooling1DData(ParametersTypeMixinData):
@@ -174,6 +180,11 @@ class ParametersTypeUpSampling1DData(ParametersTypeMixinData):
 class ParametersTypeUpSampling2DData(ParametersTypeMixinData):
     main: lps.UpSampling2D.ParametersMainData = lps.UpSampling2D.ParametersMainData()
     extra: lps.UpSampling2D.ParametersExtraData = lps.UpSampling2D.ParametersExtraData()
+
+
+class ParametersTypeUpSampling3DData(ParametersTypeMixinData):
+    main: lps.UpSampling3D.ParametersMainData = lps.UpSampling3D.ParametersMainData()
+    extra: lps.UpSampling3D.ParametersExtraData = lps.UpSampling3D.ParametersExtraData()
 
 
 class ParametersTypeLeakyReLUData(ParametersTypeMixinData):
@@ -216,24 +227,14 @@ class ParametersTypeReshapeData(ParametersTypeMixinData):
     extra: lps.Reshape.ParametersExtraData = lps.Reshape.ParametersExtraData()
 
 
-class ParametersTypesigmoidData(ParametersTypeMixinData):
-    main: lps.sigmoid.ParametersMainData = lps.sigmoid.ParametersMainData()
-    extra: lps.sigmoid.ParametersExtraData = lps.sigmoid.ParametersExtraData()
+class ParametersTypeSoftmaxData(ParametersTypeMixinData):
+    main: lps.Softmax.ParametersMainData = lps.Softmax.ParametersMainData()
+    extra: lps.Softmax.ParametersExtraData = lps.Softmax.ParametersExtraData()
 
 
-class ParametersTypesoftmaxData(ParametersTypeMixinData):
-    main: lps.softmax.ParametersMainData = lps.softmax.ParametersMainData()
-    extra: lps.softmax.ParametersExtraData = lps.softmax.ParametersExtraData()
-
-
-class ParametersTypetanhData(ParametersTypeMixinData):
-    main: lps.tanh.ParametersMainData = lps.tanh.ParametersMainData()
-    extra: lps.tanh.ParametersExtraData = lps.tanh.ParametersExtraData()
-
-
-class ParametersTypereluData(ParametersTypeMixinData):
-    main: lps.relu.ParametersMainData = lps.relu.ParametersMainData()
-    extra: lps.relu.ParametersExtraData = lps.relu.ParametersExtraData()
+class ParametersTypeReLUData(ParametersTypeMixinData):
+    main: lps.ReLU.ParametersMainData = lps.ReLU.ParametersMainData()
+    extra: lps.ReLU.ParametersExtraData = lps.ReLU.ParametersExtraData()
 
 
 class ParametersTypeELUData(ParametersTypeMixinData):
@@ -241,9 +242,11 @@ class ParametersTypeELUData(ParametersTypeMixinData):
     extra: lps.ELU.ParametersExtraData = lps.ELU.ParametersExtraData()
 
 
-class ParametersTypeseluData(ParametersTypeMixinData):
-    main: lps.selu.ParametersMainData = lps.selu.ParametersMainData()
-    extra: lps.selu.ParametersExtraData = lps.selu.ParametersExtraData()
+class ParametersTypeActivationData(ParametersTypeMixinData):
+    main: lps.Activation.ParametersMainData = lps.Activation.ParametersMainData(
+        activation=ActivationChoice.relu
+    )
+    extra: lps.Activation.ParametersExtraData = lps.Activation.ParametersExtraData()
 
 
 class ParametersTypePReLUData(ParametersTypeMixinData):
@@ -311,7 +314,7 @@ class ParametersTypeGRUData(ParametersTypeMixinData):
 
 
 class ParametersTypeLSTMData(ParametersTypeMixinData):
-    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData()
+    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData(units=32)
     extra: lps.LSTM.ParametersExtraData = lps.LSTM.ParametersExtraData()
 
 
@@ -324,7 +327,9 @@ class ParametersTypeEmbeddingData(ParametersTypeMixinData):
 
 class ParametersTypeRepeatVectorData(ParametersTypeMixinData):
     main: lps.RepeatVector.ParametersMainData = lps.RepeatVector.ParametersMainData()
-    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData()
+    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData(
+        n=8
+    )
 
 
 class ParametersTypeBatchNormalizationData(ParametersTypeMixinData):
@@ -383,6 +388,10 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.Activation"><code class="name">var <span class="ident">LayerTypeChoice.Activation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.Add"><code class="name">var <span class="ident">LayerTypeChoice.Add</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -495,11 +504,15 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.MaxPooling1D"><code class="name">var <span class="ident">LayerTypeChoice.MaxPooling1D</span></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.MaxPool1D"><code class="name">var <span class="ident">LayerTypeChoice.MaxPool1D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.MaxPooling2D"><code class="name">var <span class="ident">LayerTypeChoice.MaxPooling2D</span></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.MaxPool2D"><code class="name">var <span class="ident">LayerTypeChoice.MaxPool2D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.MaxPool3D"><code class="name">var <span class="ident">LayerTypeChoice.MaxPool3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -508,6 +521,10 @@ ParametersTypeUnion = tuple(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.PReLU"><code class="name">var <span class="ident">LayerTypeChoice.PReLU</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.ReLU"><code class="name">var <span class="ident">LayerTypeChoice.ReLU</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -527,6 +544,10 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.Softmax"><code class="name">var <span class="ident">LayerTypeChoice.Softmax</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersType.UpSampling1D"><code class="name">var <span class="ident">LayerTypeChoice.UpSampling1D</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -535,27 +556,56 @@ ParametersTypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.relu"><code class="name">var <span class="ident">LayerTypeChoice.relu</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.selu"><code class="name">var <span class="ident">LayerTypeChoice.selu</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.sigmoid"><code class="name">var <span class="ident">LayerTypeChoice.sigmoid</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.softmax"><code class="name">var <span class="ident">LayerTypeChoice.softmax</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersType.tanh"><code class="name">var <span class="ident">LayerTypeChoice.tanh</span></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersType.UpSampling3D"><code class="name">var <span class="ident">LayerTypeChoice.UpSampling3D</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeActivationData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeActivationData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeActivationData(ParametersTypeMixinData):
+    main: lps.Activation.ParametersMainData = lps.Activation.ParametersMainData(
+        activation=ActivationChoice.relu
+    )
+    extra: lps.Activation.ParametersExtraData = lps.Activation.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeActivationData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData" href="layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeActivationData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData" href="layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeAddData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypeAddData</span></span>
@@ -1782,7 +1832,7 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeLSTMData(ParametersTypeMixinData):
-    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData()
+    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData(units=32)
     extra: lps.LSTM.ParametersExtraData = lps.LSTM.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1855,8 +1905,8 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeMaxPooling1DData</span></span>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeMaxPool1DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -1867,9 +1917,9 @@ ParametersTypeUnion = tuple(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.MaxPooling1D.ParametersMainData = lps.MaxPooling1D.ParametersMainData()
-    extra: lps.MaxPooling1D.ParametersExtraData = lps.MaxPooling1D.ParametersExtraData()</code></pre>
+<pre><code class="python">class ParametersTypeMaxPool1DData(ParametersTypeMixinData):
+    main: lps.MaxPool1D.ParametersMainData = lps.MaxPool1D.ParametersMainData()
+    extra: lps.MaxPool1D.ParametersExtraData = lps.MaxPool1D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1880,11 +1930,11 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPooling1D.ParametersExtraData" href="layers_parameters/MaxPooling1D.html#terra_ai.data.modeling.layers_parameters.MaxPooling1D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersExtraData" href="layers_parameters/MaxPool1D.html#terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPooling1D.ParametersMainData" href="layers_parameters/MaxPooling1D.html#terra_ai.data.modeling.layers_parameters.MaxPooling1D.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersMainData" href="layers_parameters/MaxPool1D.html#terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1898,8 +1948,8 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeMaxPooling2DData</span></span>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeMaxPool2DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -1910,9 +1960,9 @@ ParametersTypeUnion = tuple(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.MaxPooling2D.ParametersMainData = lps.MaxPooling2D.ParametersMainData()
-    extra: lps.MaxPooling2D.ParametersExtraData = lps.MaxPooling2D.ParametersExtraData()</code></pre>
+<pre><code class="python">class ParametersTypeMaxPool2DData(ParametersTypeMixinData):
+    main: lps.MaxPool2D.ParametersMainData = lps.MaxPool2D.ParametersMainData()
+    extra: lps.MaxPool2D.ParametersExtraData = lps.MaxPool2D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1923,11 +1973,54 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPooling2D.ParametersExtraData" href="layers_parameters/MaxPooling2D.html#terra_ai.data.modeling.layers_parameters.MaxPooling2D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersExtraData" href="layers_parameters/MaxPool2D.html#terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPooling2D.ParametersMainData" href="layers_parameters/MaxPooling2D.html#terra_ai.data.modeling.layers_parameters.MaxPooling2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersMainData" href="layers_parameters/MaxPool2D.html#terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeMaxPool3DData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeMaxPool3DData(ParametersTypeMixinData):
+    main: lps.MaxPool3D.ParametersMainData = lps.MaxPool3D.ParametersMainData()
+    extra: lps.MaxPool3D.ParametersExtraData = lps.MaxPool3D.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersExtraData" href="layers_parameters/MaxPool3D.html#terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersMainData" href="layers_parameters/MaxPool3D.html#terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1965,6 +2058,7 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeActivationData" href="#terra_ai.data.modeling.parameters.ParametersTypeActivationData">ParametersTypeActivationData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAddData" href="#terra_ai.data.modeling.parameters.ParametersTypeAddData">ParametersTypeAddData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling1DData">ParametersTypeAveragePooling1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeAveragePooling2DData">ParametersTypeAveragePooling2DData</a></li>
@@ -1993,21 +2087,20 @@ ParametersTypeUnion = tuple(
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeInputData" href="#terra_ai.data.modeling.parameters.ParametersTypeInputData">ParametersTypeInputData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeLSTMData" href="#terra_ai.data.modeling.parameters.ParametersTypeLSTMData">ParametersTypeLSTMData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData" href="#terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData">ParametersTypeLeakyReLUData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData">ParametersTypeMaxPooling1DData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData">ParametersTypeMaxPooling2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData">ParametersTypeMaxPool1DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData">ParametersTypeMaxPool2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData">ParametersTypeMaxPool3DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeMultiplyData" href="#terra_ai.data.modeling.parameters.ParametersTypeMultiplyData">ParametersTypeMultiplyData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypePReLUData" href="#terra_ai.data.modeling.parameters.ParametersTypePReLUData">ParametersTypePReLUData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeReLUData" href="#terra_ai.data.modeling.parameters.ParametersTypeReLUData">ParametersTypeReLUData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeRepeatVectorData" href="#terra_ai.data.modeling.parameters.ParametersTypeRepeatVectorData">ParametersTypeRepeatVectorData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeReshapeData" href="#terra_ai.data.modeling.parameters.ParametersTypeReshapeData">ParametersTypeReshapeData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeSeparableConv1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeSeparableConv1DData">ParametersTypeSeparableConv1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeSeparableConv2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeSeparableConv2DData">ParametersTypeSeparableConv2DData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData" href="#terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData">ParametersTypeSoftmaxData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData">ParametersTypeUpSampling1DData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling2DData">ParametersTypeUpSampling2DData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypereluData" href="#terra_ai.data.modeling.parameters.ParametersTypereluData">ParametersTypereluData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeseluData" href="#terra_ai.data.modeling.parameters.ParametersTypeseluData">ParametersTypeseluData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypesigmoidData" href="#terra_ai.data.modeling.parameters.ParametersTypesigmoidData">ParametersTypesigmoidData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData" href="#terra_ai.data.modeling.parameters.ParametersTypesoftmaxData">ParametersTypesoftmaxData</a></li>
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypetanhData" href="#terra_ai.data.modeling.parameters.ParametersTypetanhData">ParametersTypetanhData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData">ParametersTypeUpSampling3DData</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -2115,6 +2208,49 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeReLUData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeReLUData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeReLUData(ParametersTypeMixinData):
+    main: lps.ReLU.ParametersMainData = lps.ReLU.ParametersMainData()
+    extra: lps.ReLU.ParametersExtraData = lps.ReLU.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeReLUData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData" href="layers_parameters/ReLU.html#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeReLUData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData" href="layers_parameters/ReLU.html#terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeRepeatVectorData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypeRepeatVectorData</span></span>
 <span>(</span><span>**data)</span>
@@ -2129,7 +2265,9 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeRepeatVectorData(ParametersTypeMixinData):
     main: lps.RepeatVector.ParametersMainData = lps.RepeatVector.ParametersMainData()
-    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData()</code></pre>
+    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData(
+        n=8
+    )</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2215,7 +2353,7 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeSeparableConv1DData(ParametersTypeMixinData):
     main: lps.SeparableConv1D.ParametersMainData = (
-        lps.SeparableConv1D.ParametersMainData()
+        lps.SeparableConv1D.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.SeparableConv1D.ParametersExtraData = (
         lps.SeparableConv1D.ParametersExtraData()
@@ -2262,7 +2400,7 @@ ParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class ParametersTypeSeparableConv2DData(ParametersTypeMixinData):
     main: lps.SeparableConv2D.ParametersMainData = (
-        lps.SeparableConv2D.ParametersMainData()
+        lps.SeparableConv2D.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.SeparableConv2D.ParametersExtraData = (
         lps.SeparableConv2D.ParametersExtraData()
@@ -2282,6 +2420,49 @@ ParametersTypeUnion = tuple(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeSeparableConv2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersMainData" href="layers_parameters/SeparableConv2D.html#terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeSoftmaxData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeSoftmaxData(ParametersTypeMixinData):
+    main: lps.Softmax.ParametersMainData = lps.Softmax.ParametersMainData()
+    extra: lps.Softmax.ParametersExtraData = lps.Softmax.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.Softmax.ParametersExtraData" href="layers_parameters/Softmax.html#terra_ai.data.modeling.layers_parameters.Softmax.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.Softmax.ParametersMainData" href="layers_parameters/Softmax.html#terra_ai.data.modeling.layers_parameters.Softmax.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2381,8 +2562,8 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypereluData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypereluData</span></span>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeUpSampling3DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -2393,9 +2574,9 @@ ParametersTypeUnion = tuple(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypereluData(ParametersTypeMixinData):
-    main: lps.relu.ParametersMainData = lps.relu.ParametersMainData()
-    extra: lps.relu.ParametersExtraData = lps.relu.ParametersExtraData()</code></pre>
+<pre><code class="python">class ParametersTypeUpSampling3DData(ParametersTypeMixinData):
+    main: lps.UpSampling3D.ParametersMainData = lps.UpSampling3D.ParametersMainData()
+    extra: lps.UpSampling3D.ParametersExtraData = lps.UpSampling3D.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2406,183 +2587,11 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypereluData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.relu.ParametersExtraData" href="layers_parameters/relu.html#terra_ai.data.modeling.layers_parameters.relu.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData" href="layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypereluData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.relu.ParametersMainData" href="layers_parameters/relu.html#terra_ai.data.modeling.layers_parameters.relu.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeseluData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeseluData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeseluData(ParametersTypeMixinData):
-    main: lps.selu.ParametersMainData = lps.selu.ParametersMainData()
-    extra: lps.selu.ParametersExtraData = lps.selu.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeseluData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.selu.ParametersExtraData" href="layers_parameters/selu.html#terra_ai.data.modeling.layers_parameters.selu.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeseluData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.selu.ParametersMainData" href="layers_parameters/selu.html#terra_ai.data.modeling.layers_parameters.selu.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesigmoidData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypesigmoidData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypesigmoidData(ParametersTypeMixinData):
-    main: lps.sigmoid.ParametersMainData = lps.sigmoid.ParametersMainData()
-    extra: lps.sigmoid.ParametersExtraData = lps.sigmoid.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesigmoidData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.sigmoid.ParametersExtraData" href="layers_parameters/sigmoid.html#terra_ai.data.modeling.layers_parameters.sigmoid.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesigmoidData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.sigmoid.ParametersMainData" href="layers_parameters/sigmoid.html#terra_ai.data.modeling.layers_parameters.sigmoid.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypesoftmaxData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypesoftmaxData(ParametersTypeMixinData):
-    main: lps.softmax.ParametersMainData = lps.softmax.ParametersMainData()
-    extra: lps.softmax.ParametersExtraData = lps.softmax.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.softmax.ParametersExtraData" href="layers_parameters/softmax.html#terra_ai.data.modeling.layers_parameters.softmax.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.softmax.ParametersMainData" href="layers_parameters/softmax.html#terra_ai.data.modeling.layers_parameters.softmax.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypetanhData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypetanhData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypetanhData(ParametersTypeMixinData):
-    main: lps.tanh.ParametersMainData = lps.tanh.ParametersMainData()
-    extra: lps.tanh.ParametersExtraData = lps.tanh.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypetanhData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers_parameters.tanh.ParametersExtraData" href="layers_parameters/tanh.html#terra_ai.data.modeling.layers_parameters.tanh.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypetanhData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.tanh.ParametersMainData" href="layers_parameters/tanh.html#terra_ai.data.modeling.layers_parameters.tanh.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData" href="layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2622,6 +2631,7 @@ ParametersTypeUnion = tuple(
 <li>
 <h4><code><a title="terra_ai.data.modeling.parameters.ParametersType" href="#terra_ai.data.modeling.parameters.ParametersType">ParametersType</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Activation" href="#terra_ai.data.modeling.parameters.ParametersType.Activation">Activation</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Add" href="#terra_ai.data.modeling.parameters.ParametersType.Add">Add</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.AveragePooling1D" href="#terra_ai.data.modeling.parameters.ParametersType.AveragePooling1D">AveragePooling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.AveragePooling2D" href="#terra_ai.data.modeling.parameters.ParametersType.AveragePooling2D">AveragePooling2D</a></code></li>
@@ -2650,21 +2660,27 @@ ParametersTypeUnion = tuple(
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Input" href="#terra_ai.data.modeling.parameters.ParametersType.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.LSTM" href="#terra_ai.data.modeling.parameters.ParametersType.LSTM">LSTM</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.LeakyReLU" href="#terra_ai.data.modeling.parameters.ParametersType.LeakyReLU">LeakyReLU</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.MaxPooling1D" href="#terra_ai.data.modeling.parameters.ParametersType.MaxPooling1D">MaxPooling1D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.MaxPooling2D" href="#terra_ai.data.modeling.parameters.ParametersType.MaxPooling2D">MaxPooling2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.MaxPool1D" href="#terra_ai.data.modeling.parameters.ParametersType.MaxPool1D">MaxPool1D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.MaxPool2D" href="#terra_ai.data.modeling.parameters.ParametersType.MaxPool2D">MaxPool2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.MaxPool3D" href="#terra_ai.data.modeling.parameters.ParametersType.MaxPool3D">MaxPool3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Multiply" href="#terra_ai.data.modeling.parameters.ParametersType.Multiply">Multiply</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.PReLU" href="#terra_ai.data.modeling.parameters.ParametersType.PReLU">PReLU</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.ReLU" href="#terra_ai.data.modeling.parameters.ParametersType.ReLU">ReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.RepeatVector" href="#terra_ai.data.modeling.parameters.ParametersType.RepeatVector">RepeatVector</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Reshape" href="#terra_ai.data.modeling.parameters.ParametersType.Reshape">Reshape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.SeparableConv1D" href="#terra_ai.data.modeling.parameters.ParametersType.SeparableConv1D">SeparableConv1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.SeparableConv2D" href="#terra_ai.data.modeling.parameters.ParametersType.SeparableConv2D">SeparableConv2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.Softmax" href="#terra_ai.data.modeling.parameters.ParametersType.Softmax">Softmax</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.UpSampling1D" href="#terra_ai.data.modeling.parameters.ParametersType.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersType.UpSampling2D" href="#terra_ai.data.modeling.parameters.ParametersType.UpSampling2D">UpSampling2D</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.relu" href="#terra_ai.data.modeling.parameters.ParametersType.relu">relu</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.selu" href="#terra_ai.data.modeling.parameters.ParametersType.selu">selu</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.sigmoid" href="#terra_ai.data.modeling.parameters.ParametersType.sigmoid">sigmoid</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.softmax" href="#terra_ai.data.modeling.parameters.ParametersType.softmax">softmax</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.tanh" href="#terra_ai.data.modeling.parameters.ParametersType.tanh">tanh</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersType.UpSampling3D" href="#terra_ai.data.modeling.parameters.ParametersType.UpSampling3D">UpSampling3D</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeActivationData" href="#terra_ai.data.modeling.parameters.ParametersTypeActivationData">ParametersTypeActivationData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeActivationData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeActivationData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeActivationData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeActivationData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2867,17 +2883,24 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData">ParametersTypeMaxPooling1DData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData">ParametersTypeMaxPool1DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling1DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData">ParametersTypeMaxPooling2DData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData">ParametersTypeMaxPool2DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPooling2DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool2DData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData">ParametersTypeMaxPool3DData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool3DData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2899,6 +2922,13 @@ ParametersTypeUnion = tuple(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypePReLUData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypePReLUData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypePReLUData.main" href="#terra_ai.data.modeling.parameters.ParametersTypePReLUData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeReLUData" href="#terra_ai.data.modeling.parameters.ParametersTypeReLUData">ParametersTypeReLUData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeReLUData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeReLUData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeReLUData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeReLUData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -2930,6 +2960,13 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData" href="#terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData">ParametersTypeSoftmaxData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeSoftmaxData.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData">ParametersTypeUpSampling1DData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling1DData.extra">extra</a></code></li>
@@ -2944,38 +2981,10 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypereluData" href="#terra_ai.data.modeling.parameters.ParametersTypereluData">ParametersTypereluData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData">ParametersTypeUpSampling3DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypereluData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypereluData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypereluData.main" href="#terra_ai.data.modeling.parameters.ParametersTypereluData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeseluData" href="#terra_ai.data.modeling.parameters.ParametersTypeseluData">ParametersTypeseluData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeseluData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeseluData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeseluData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeseluData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypesigmoidData" href="#terra_ai.data.modeling.parameters.ParametersTypesigmoidData">ParametersTypesigmoidData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypesigmoidData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypesigmoidData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypesigmoidData.main" href="#terra_ai.data.modeling.parameters.ParametersTypesigmoidData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData" href="#terra_ai.data.modeling.parameters.ParametersTypesoftmaxData">ParametersTypesoftmaxData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.main" href="#terra_ai.data.modeling.parameters.ParametersTypesoftmaxData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypetanhData" href="#terra_ai.data.modeling.parameters.ParametersTypetanhData">ParametersTypetanhData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypetanhData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypetanhData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypetanhData.main" href="#terra_ai.data.modeling.parameters.ParametersTypetanhData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeUpSampling3DData.main">main</a></code></li>
 </ul>
 </li>
 </ul>

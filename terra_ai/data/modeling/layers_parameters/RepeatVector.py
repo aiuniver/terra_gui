@@ -2,6 +2,8 @@
 ## Тип слоя `RepeatVector`
 """
 
+from pydantic.types import PositiveInt
+
 from ...mixins import BaseMixinData
 
 
@@ -10,4 +12,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    n: PositiveInt

@@ -31,15 +31,20 @@
 ## Тип слоя `UpSampling2D`
 &#34;&#34;&#34;
 
+from typing import Optional, Tuple
+from pydantic.types import PositiveInt
+
 from ...mixins import BaseMixinData
+from .extra import DataFormatChoice, InterpolationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    size: Tuple[PositiveInt, PositiveInt] = (2, 2)
 
 
 class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    data_format: Optional[DataFormatChoice]
+    interpolation: InterpolationChoice = InterpolationChoice.nearest</code></pre>
 </details>
 </section>
 <section>
@@ -64,7 +69,8 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    data_format: Optional[DataFormatChoice]
+    interpolation: InterpolationChoice = InterpolationChoice.nearest</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -72,6 +78,17 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.data_format"><code class="name">var <span class="ident">data_format</span> : Union[<a title="terra_ai.data.modeling.layers_parameters.extra.DataFormatChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.DataFormatChoice">DataFormatChoice</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.interpolation"><code class="name">var <span class="ident">interpolation</span> : <a title="terra_ai.data.modeling.layers_parameters.extra.InterpolationChoice" href="extra.html#terra_ai.data.modeling.layers_parameters.extra.InterpolationChoice">InterpolationChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -94,7 +111,7 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    pass</code></pre>
+    size: Tuple[PositiveInt, PositiveInt] = (2, 2)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -102,6 +119,13 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData.size"><code class="name">var <span class="ident">size</span> : Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -131,9 +155,16 @@ class ParametersExtraData(BaseMixinData):
 <ul>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData">ParametersExtraData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.data_format" href="#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.data_format">data_format</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.interpolation" href="#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData.interpolation">interpolation</a></code></li>
+</ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData">ParametersMainData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData.size" href="#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData.size">size</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

@@ -71,3 +71,8 @@ class ActivationChoice(str, Enum):
     softsign = "softsign"
     swish = "swish"
     tanh = "tanh"
+
+
+class InterpolationChoice(str, Enum):
+    nearest = "nearest"
+    bilinear = "bilinear"

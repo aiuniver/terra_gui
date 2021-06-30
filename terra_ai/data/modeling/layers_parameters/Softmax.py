@@ -1,5 +1,5 @@
 """
-## Тип слоя `softmax`
+## Тип слоя `Softmax`
 """
 
 from ...mixins import BaseMixinData
@@ -10,4 +10,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    axis: int = -1

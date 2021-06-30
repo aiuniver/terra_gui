@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>terra_ai.data.modeling.layers_parameters.selu API documentation</title>
-<meta name="description" content="Тип слоя `selu`" />
+<title>terra_ai.data.modeling.layers_parameters.ReLU API documentation</title>
+<meta name="description" content="Тип слоя `ReLU`" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,17 +19,20 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>terra_ai.data.modeling.layers_parameters.selu</code></h1>
+<h1 class="title">Module <code>terra_ai.data.modeling.layers_parameters.ReLU</code></h1>
 </header>
 <section id="section-intro">
-<h2 id="selu">Тип слоя <code>selu</code></h2>
+<h2 id="relu">Тип слоя <code>ReLU</code></h2>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-## Тип слоя `selu`
+## Тип слоя `ReLU`
 &#34;&#34;&#34;
+
+from typing import Optional
+from pydantic.types import confloat
 
 from ...mixins import BaseMixinData
 
@@ -39,7 +42,9 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    max_value: Optional[confloat(ge=0)]
+    negative_slope: confloat(ge=0) = 0
+    threshold: confloat(ge=0) = 0</code></pre>
 </details>
 </section>
 <section>
@@ -51,7 +56,7 @@ class ParametersExtraData(BaseMixinData):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.modeling.layers_parameters.selu.ParametersExtraData"><code class="flex name class">
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData"><code class="flex name class">
 <span>class <span class="ident">ParametersExtraData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
@@ -64,7 +69,9 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    pass</code></pre>
+    max_value: Optional[confloat(ge=0)]
+    negative_slope: confloat(ge=0) = 0
+    threshold: confloat(ge=0) = 0</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -72,6 +79,21 @@ class ParametersExtraData(BaseMixinData):
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.max_value"><code class="name">var <span class="ident">max_value</span> : Union[terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.negative_slope"><code class="name">var <span class="ident">negative_slope</span> : terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.threshold"><code class="name">var <span class="ident">threshold</span> : terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -81,7 +103,7 @@ class ParametersExtraData(BaseMixinData):
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers_parameters.selu.ParametersMainData"><code class="flex name class">
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData"><code class="flex name class">
 <span>class <span class="ident">ParametersMainData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
@@ -118,7 +140,7 @@ class ParametersExtraData(BaseMixinData):
 <h1>Index</h1>
 <div class="toc">
 <ul>
-<li><a href="#selu">Тип слоя selu</a></li>
+<li><a href="#relu">Тип слоя ReLU</a></li>
 </ul>
 </div>
 <ul id="index">
@@ -130,10 +152,15 @@ class ParametersExtraData(BaseMixinData):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers_parameters.selu.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.selu.ParametersExtraData">ParametersExtraData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData" href="#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData">ParametersExtraData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.max_value" href="#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.max_value">max_value</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.negative_slope" href="#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.negative_slope">negative_slope</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.threshold" href="#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.threshold">threshold</a></code></li>
+</ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers_parameters.selu.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.selu.ParametersMainData">ParametersMainData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData" href="#terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData">ParametersMainData</a></code></h4>
 </li>
 </ul>
 </li>

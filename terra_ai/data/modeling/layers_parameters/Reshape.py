@@ -2,6 +2,8 @@
 ## Тип слоя `Reshape`
 """
 
+from typing import Tuple
+
 from ...mixins import BaseMixinData
 
 
@@ -10,4 +12,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    target_shape: Tuple[int, ...] = ()

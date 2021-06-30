@@ -8,6 +8,7 @@ from enum import Enum
 
 from ..mixins import BaseMixinData
 from .extra import LayerTypeChoice
+from .layers_parameters.extra import ActivationChoice
 from . import layers_parameters as lps
 
 
@@ -75,7 +76,7 @@ class ParametersTypeConv3DTransposeData(ParametersTypeMixinData):
 
 class ParametersTypeSeparableConv1DData(ParametersTypeMixinData):
     main: lps.SeparableConv1D.ParametersMainData = (
-        lps.SeparableConv1D.ParametersMainData()
+        lps.SeparableConv1D.ParametersMainData(filters=32, kernel_size=1)
     )
     extra: lps.SeparableConv1D.ParametersExtraData = (
         lps.SeparableConv1D.ParametersExtraData()
@@ -84,7 +85,7 @@ class ParametersTypeSeparableConv1DData(ParametersTypeMixinData):
 
 class ParametersTypeSeparableConv2DData(ParametersTypeMixinData):
     main: lps.SeparableConv2D.ParametersMainData = (
-        lps.SeparableConv2D.ParametersMainData()
+        lps.SeparableConv2D.ParametersMainData(filters=32, kernel_size=(1, 1))
     )
     extra: lps.SeparableConv2D.ParametersExtraData = (
         lps.SeparableConv2D.ParametersExtraData()
@@ -100,14 +101,19 @@ class ParametersTypeDepthwiseConv2DData(ParametersTypeMixinData):
     )
 
 
-class ParametersTypeMaxPooling1DData(ParametersTypeMixinData):
-    main: lps.MaxPooling1D.ParametersMainData = lps.MaxPooling1D.ParametersMainData()
-    extra: lps.MaxPooling1D.ParametersExtraData = lps.MaxPooling1D.ParametersExtraData()
+class ParametersTypeMaxPool1DData(ParametersTypeMixinData):
+    main: lps.MaxPool1D.ParametersMainData = lps.MaxPool1D.ParametersMainData()
+    extra: lps.MaxPool1D.ParametersExtraData = lps.MaxPool1D.ParametersExtraData()
 
 
-class ParametersTypeMaxPooling2DData(ParametersTypeMixinData):
-    main: lps.MaxPooling2D.ParametersMainData = lps.MaxPooling2D.ParametersMainData()
-    extra: lps.MaxPooling2D.ParametersExtraData = lps.MaxPooling2D.ParametersExtraData()
+class ParametersTypeMaxPool2DData(ParametersTypeMixinData):
+    main: lps.MaxPool2D.ParametersMainData = lps.MaxPool2D.ParametersMainData()
+    extra: lps.MaxPool2D.ParametersExtraData = lps.MaxPool2D.ParametersExtraData()
+
+
+class ParametersTypeMaxPool3DData(ParametersTypeMixinData):
+    main: lps.MaxPool3D.ParametersMainData = lps.MaxPool3D.ParametersMainData()
+    extra: lps.MaxPool3D.ParametersExtraData = lps.MaxPool3D.ParametersExtraData()
 
 
 class ParametersTypeAveragePooling1DData(ParametersTypeMixinData):
@@ -145,6 +151,11 @@ class ParametersTypeUpSampling1DData(ParametersTypeMixinData):
 class ParametersTypeUpSampling2DData(ParametersTypeMixinData):
     main: lps.UpSampling2D.ParametersMainData = lps.UpSampling2D.ParametersMainData()
     extra: lps.UpSampling2D.ParametersExtraData = lps.UpSampling2D.ParametersExtraData()
+
+
+class ParametersTypeUpSampling3DData(ParametersTypeMixinData):
+    main: lps.UpSampling3D.ParametersMainData = lps.UpSampling3D.ParametersMainData()
+    extra: lps.UpSampling3D.ParametersExtraData = lps.UpSampling3D.ParametersExtraData()
 
 
 class ParametersTypeLeakyReLUData(ParametersTypeMixinData):
@@ -187,24 +198,14 @@ class ParametersTypeReshapeData(ParametersTypeMixinData):
     extra: lps.Reshape.ParametersExtraData = lps.Reshape.ParametersExtraData()
 
 
-class ParametersTypesigmoidData(ParametersTypeMixinData):
-    main: lps.sigmoid.ParametersMainData = lps.sigmoid.ParametersMainData()
-    extra: lps.sigmoid.ParametersExtraData = lps.sigmoid.ParametersExtraData()
+class ParametersTypeSoftmaxData(ParametersTypeMixinData):
+    main: lps.Softmax.ParametersMainData = lps.Softmax.ParametersMainData()
+    extra: lps.Softmax.ParametersExtraData = lps.Softmax.ParametersExtraData()
 
 
-class ParametersTypesoftmaxData(ParametersTypeMixinData):
-    main: lps.softmax.ParametersMainData = lps.softmax.ParametersMainData()
-    extra: lps.softmax.ParametersExtraData = lps.softmax.ParametersExtraData()
-
-
-class ParametersTypetanhData(ParametersTypeMixinData):
-    main: lps.tanh.ParametersMainData = lps.tanh.ParametersMainData()
-    extra: lps.tanh.ParametersExtraData = lps.tanh.ParametersExtraData()
-
-
-class ParametersTypereluData(ParametersTypeMixinData):
-    main: lps.relu.ParametersMainData = lps.relu.ParametersMainData()
-    extra: lps.relu.ParametersExtraData = lps.relu.ParametersExtraData()
+class ParametersTypeReLUData(ParametersTypeMixinData):
+    main: lps.ReLU.ParametersMainData = lps.ReLU.ParametersMainData()
+    extra: lps.ReLU.ParametersExtraData = lps.ReLU.ParametersExtraData()
 
 
 class ParametersTypeELUData(ParametersTypeMixinData):
@@ -212,9 +213,11 @@ class ParametersTypeELUData(ParametersTypeMixinData):
     extra: lps.ELU.ParametersExtraData = lps.ELU.ParametersExtraData()
 
 
-class ParametersTypeseluData(ParametersTypeMixinData):
-    main: lps.selu.ParametersMainData = lps.selu.ParametersMainData()
-    extra: lps.selu.ParametersExtraData = lps.selu.ParametersExtraData()
+class ParametersTypeActivationData(ParametersTypeMixinData):
+    main: lps.Activation.ParametersMainData = lps.Activation.ParametersMainData(
+        activation=ActivationChoice.relu
+    )
+    extra: lps.Activation.ParametersExtraData = lps.Activation.ParametersExtraData()
 
 
 class ParametersTypePReLUData(ParametersTypeMixinData):
@@ -282,7 +285,7 @@ class ParametersTypeGRUData(ParametersTypeMixinData):
 
 
 class ParametersTypeLSTMData(ParametersTypeMixinData):
-    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData()
+    main: lps.LSTM.ParametersMainData = lps.LSTM.ParametersMainData(units=32)
     extra: lps.LSTM.ParametersExtraData = lps.LSTM.ParametersExtraData()
 
 
@@ -295,7 +298,9 @@ class ParametersTypeEmbeddingData(ParametersTypeMixinData):
 
 class ParametersTypeRepeatVectorData(ParametersTypeMixinData):
     main: lps.RepeatVector.ParametersMainData = lps.RepeatVector.ParametersMainData()
-    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData()
+    extra: lps.RepeatVector.ParametersExtraData = lps.RepeatVector.ParametersExtraData(
+        n=8
+    )
 
 
 class ParametersTypeBatchNormalizationData(ParametersTypeMixinData):
