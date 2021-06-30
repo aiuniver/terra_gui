@@ -1,10 +1,12 @@
 import copy
 import sys
 from dataclasses import dataclass
-# from terra_ai import customLayers
+from terra_ai import customLayers
 # import keras_contrib
 import tensorflow
 
+# import keras_contrib
+import tensorflow
 
 def check_datatype(in_shape):
     dim = len(in_shape)
@@ -26,7 +28,6 @@ def check_datatype(in_shape):
         msg = f"Error: More than 6 dimensions arrays is not supported! input_shape = {in_shape}"
         sys.exit(msg)
     return result
-
 
 def get_def_parameters_dict(layer_name):
     new_dict = {}
@@ -2774,7 +2775,7 @@ class PlanLinkLibrary:
         # "AlphaDropout": tensorflow.keras.layers,
         # "MultiHeadAttention": tensorflow.keras.layers,
         # "AdditiveAttention": tensorflow.keras.layers,
-        # "InstanceNormalization": customLayers,
+        "InstanceNormalization": customLayers,
         "Normalization": tensorflow.keras.layers.experimental.preprocessing,
 
         # Recurrent layers
@@ -2860,7 +2861,7 @@ class PlanLinkLibrary:
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
         'Xception': tensorflow.keras.applications.xception,
-        # 'CustomUNETBlock': customLayers,
+        'CustomUNETBlock': customLayers,
     }
 
 
@@ -3579,13 +3580,13 @@ class GUILayersDef:
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "bias_regularizer": {
+                "pointwise_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "activity_regularizer": {
+                "bias_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
@@ -3595,7 +3596,7 @@ class GUILayersDef:
                     "type": "str",
                     "default": None,
                     "list": True,
-                    "available": constraint_lh,
+                    "available": regularizer_lh,
                 },
                 "pointwise_constraint": {
                     "type": "str",
@@ -4550,7 +4551,7 @@ class GUILayersDef:
                     "type": "float",
                     "default": 0.1
                 }
-            },
+            },          
             'extra': {
                 "noise_shape": {
                     "type": "tensor",
