@@ -7,11 +7,11 @@ import sys
 from enum import Enum
 from typing import Optional
 from pydantic import validator, DirectoryPath, FilePath
+from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 
 from ..mixins import BaseMixinData, UniqueListMixin
-from ..validators import validate_positive_integer
 from .extra import (
     LayerPrepareMethodChoice,
     LayerTaskTypeChoice,
@@ -22,29 +22,21 @@ from .extra import (
 
 class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator("width", "height", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerInputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        "x_len", "step", "max_words_count", "word_to_vec_size", allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator("prepare_method", allow_reuse=True)
     def _validate_prepare_method(
@@ -57,8 +49,8 @@ class LayerInputTypeTextData(BaseMixinData):
 
 class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -69,48 +61,32 @@ class LayerInputTypeAudioData(BaseMixinData):
     spectral_rolloff: Optional[bool] = False
     zero_crossing_rate: Optional[bool] = False
 
-    _validate_positive_integer = validator("length", "step", allow_reuse=True)(
-        validate_positive_integer
-    )
-
 
 class LayerInputTypeDataframeData(BaseMixinData):
     file_path: Optional[FilePath]
     separator: Optional[str]
     encoding: str = "utf-8"
-    x_cols: Optional[int]
+    x_cols: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator("x_cols", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator("width", "height", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        "x_len", "step", "max_words_count", "word_to_vec_size", allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator("prepare_method", allow_reuse=True)
     def _validate_prepare_method(
@@ -123,8 +99,8 @@ class LayerOutputTypeTextData(BaseMixinData):
 
 class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -134,10 +110,6 @@ class LayerOutputTypeAudioData(BaseMixinData):
     spectral_bandwidth: Optional[bool] = False
     spectral_rolloff: Optional[bool] = False
     zero_crossing_rate: Optional[bool] = False
-
-    _validate_positive_integer = validator("length", "step", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeClassificationData(BaseMixinData):
@@ -167,12 +139,8 @@ class MasksSegmentationList(UniqueListMixin):
 
 class LayerOutputTypeSegmentationData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    mask_range: int
+    mask_range: PositiveInt
     mask_assignment: MasksSegmentationList
-
-    _validate_positive_integer = validator("mask_range", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeTextSegmentationData(BaseMixinData):
@@ -181,22 +149,14 @@ class LayerOutputTypeTextSegmentationData(BaseMixinData):
 
 
 class LayerOutputTypeRegressionData(BaseMixinData):
-    y_col: Optional[int]
-
-    _validate_positive_integer = validator("y_col", allow_reuse=True)(
-        validate_positive_integer
-    )
+    y_col: Optional[PositiveInt]
 
 
 class LayerOutputTypeTimeseriesData(BaseMixinData):
-    length: int
-    y_cols: Optional[int]
+    length: PositiveInt
+    y_cols: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
-
-    _validate_positive_integer = validator("length", "y_cols", allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerInputDatatype(str, Enum):

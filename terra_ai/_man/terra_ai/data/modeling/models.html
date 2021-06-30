@@ -31,11 +31,80 @@
 ## Структура данных моделей
 &#34;&#34;&#34;
 
-from ..mixins import BaseMixinData
+from typing import Optional
+
+from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
+from ..typing import confilepath, AliasType, Base64Type
+from .layers import LayersList
 
 
-class ModelData(BaseMixinData):
-    name: str</code></pre>
+class ModelDetailsData(BaseMixinData):
+    &#34;&#34;&#34;
+    Детальная информация о модели
+    &#34;&#34;&#34;
+
+    type: Optional[str]
+    &#34;Тип модели: `2D`&#34;
+    name: Optional[AliasType]
+    &#34;Название модели: `rasposnavanie_avtomobiley`&#34;
+    input_shape: Optional[str]
+    &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
+    image: Optional[Base64Type]
+    &#34;Изображение схемы модели в `base64`&#34;
+
+
+class ModelData(AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о модели
+    &#34;&#34;&#34;
+
+    name: str
+    &#34;Название&#34;
+    file_path: Optional[confilepath(ext=&#34;model&#34;)]
+    &#34;Путь к файлу модели&#34;
+    details: ModelDetailsData = ModelDetailsData()
+    &#34;Детальная информация о модели&#34;
+    layers: LayersList = LayersList()
+    &#34;Список слоев&#34;
+
+
+class ModelsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список моделей, основанных на `ModelData`
+    ```
+    class Meta:
+        source = ModelData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = ModelData
+        identifier = &#34;alias&#34;
+
+
+class ModelsGroupData(AliasMixinData):
+    &#34;&#34;&#34;
+    Группа моделей
+    &#34;&#34;&#34;
+
+    name: str
+    models: ModelsList = ModelsList()
+
+
+class ModelsGroupsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список групп моделей, основанных на `ModelsGroupData`
+    ```
+    class Meta:
+        source = ModelsGroupData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = ModelsGroupData
+        identifier = &#34;alias&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -52,15 +121,87 @@ class ModelData(BaseMixinData):
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<div class="desc"><p>Информация о модели</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ModelData(BaseMixinData):
-    name: str</code></pre>
+<pre><code class="python">class ModelData(AliasMixinData):
+    &#34;&#34;&#34;
+    Информация о модели
+    &#34;&#34;&#34;
+
+    name: str
+    &#34;Название&#34;
+    file_path: Optional[confilepath(ext=&#34;model&#34;)]
+    &#34;Путь к файлу модели&#34;
+    details: ModelDetailsData = ModelDetailsData()
+    &#34;Детальная информация о модели&#34;
+    layers: LayersList = LayersList()
+    &#34;Список слоев&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.models.ModelData.details"><code class="name">var <span class="ident">details</span> : <a title="terra_ai.data.modeling.models.ModelDetailsData" href="#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a></code></dt>
+<dd>
+<div class="desc"><p>Детальная информация о модели</p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelData.file_path"><code class="name">var <span class="ident">file_path</span> : Union[terra_ai.data.FilePathType, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Путь к файлу модели</p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelData.layers"><code class="name">var <span class="ident">layers</span> : <a title="terra_ai.data.modeling.layers.LayersList" href="layers.html#terra_ai.data.modeling.layers.LayersList">LayersList</a></code></dt>
+<dd>
+<div class="desc"><p>Список слоев</p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"><p>Название</p></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData"><code class="flex name class">
+<span>class <span class="ident">ModelDetailsData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Детальная информация о модели</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelDetailsData(BaseMixinData):
+    &#34;&#34;&#34;
+    Детальная информация о модели
+    &#34;&#34;&#34;
+
+    type: Optional[str]
+    &#34;Тип модели: `2D`&#34;
+    name: Optional[AliasType]
+    &#34;Название модели: `rasposnavanie_avtomobiley`&#34;
+    input_shape: Optional[str]
+    &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
+    image: Optional[Base64Type]
+    &#34;Изображение схемы модели в `base64`&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -70,9 +211,21 @@ class ModelData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.models.ModelData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.image"><code class="name">var <span class="ident">image</span> : Union[terra_ai.data.Base64Type, NoneType]</code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Изображение схемы модели в <code>base64</code></p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.input_shape"><code class="name">var <span class="ident">input_shape</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Размерность входных слоев: <code>[32,32,3], [128,128,3]</code></p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.name"><code class="name">var <span class="ident">name</span> : Union[terra_ai.data.AliasType, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Название модели: <code>rasposnavanie_avtomobiley</code></p></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelDetailsData.type"><code class="name">var <span class="ident">type</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Тип модели: <code>2D</code></p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -80,6 +233,151 @@ class ModelData(BaseMixinData):
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelsGroupData"><code class="flex name class">
+<span>class <span class="ident">ModelsGroupData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Группа моделей</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelsGroupData(AliasMixinData):
+    &#34;&#34;&#34;
+    Группа моделей
+    &#34;&#34;&#34;
+
+    name: str
+    models: ModelsList = ModelsList()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.models.ModelsGroupData.models"><code class="name">var <span class="ident">models</span> : <a title="terra_ai.data.modeling.models.ModelsList" href="#terra_ai.data.modeling.models.ModelsList">ModelsList</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelsGroupData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelsGroupsList"><code class="flex name class">
+<span>class <span class="ident">ModelsGroupsList</span></span>
+<span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Список групп моделей, основанных на <code><a title="terra_ai.data.modeling.models.ModelsGroupData" href="#terra_ai.data.modeling.models.ModelsGroupData">ModelsGroupData</a></code></p>
+<pre><code>class Meta:
+    source = ModelsGroupData
+    identifier = &quot;alias&quot;
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelsGroupsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список групп моделей, основанных на `ModelsGroupData`
+    ```
+    class Meta:
+        source = ModelsGroupData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = ModelsGroupData
+        identifier = &#34;alias&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></li>
+<li>builtins.list</li>
+<li>typing.Generic</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.Meta" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.append" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.dict" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.get" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.ids" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.ids">ids</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.insert" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.json" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.json">json</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.models.ModelsList"><code class="flex name class">
+<span>class <span class="ident">ModelsList</span></span>
+<span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Список моделей, основанных на <code><a title="terra_ai.data.modeling.models.ModelData" href="#terra_ai.data.modeling.models.ModelData">ModelData</a></code></p>
+<pre><code>class Meta:
+    source = ModelData
+    identifier = &quot;alias&quot;
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelsList(UniqueListMixin):
+    &#34;&#34;&#34;
+    Список моделей, основанных на `ModelData`
+    ```
+    class Meta:
+        source = ModelData
+        identifier = &#34;alias&#34;
+    ```
+    &#34;&#34;&#34;
+
+    class Meta:
+        source = ModelData
+        identifier = &#34;alias&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></li>
+<li>builtins.list</li>
+<li>typing.Generic</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.Meta" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.append" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.dict" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.get" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.ids" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.ids">ids</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.insert" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.json" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.json">json</a></code></li>
 </ul>
 </li>
 </ul>
@@ -105,8 +403,33 @@ class ModelData(BaseMixinData):
 <li>
 <h4><code><a title="terra_ai.data.modeling.models.ModelData" href="#terra_ai.data.modeling.models.ModelData">ModelData</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.modeling.models.ModelData.details" href="#terra_ai.data.modeling.models.ModelData.details">details</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelData.file_path" href="#terra_ai.data.modeling.models.ModelData.file_path">file_path</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelData.layers" href="#terra_ai.data.modeling.models.ModelData.layers">layers</a></code></li>
 <li><code><a title="terra_ai.data.modeling.models.ModelData.name" href="#terra_ai.data.modeling.models.ModelData.name">name</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.models.ModelDetailsData" href="#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.models.ModelDetailsData.image" href="#terra_ai.data.modeling.models.ModelDetailsData.image">image</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelDetailsData.input_shape" href="#terra_ai.data.modeling.models.ModelDetailsData.input_shape">input_shape</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelDetailsData.name" href="#terra_ai.data.modeling.models.ModelDetailsData.name">name</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelDetailsData.type" href="#terra_ai.data.modeling.models.ModelDetailsData.type">type</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.models.ModelsGroupData" href="#terra_ai.data.modeling.models.ModelsGroupData">ModelsGroupData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.models.ModelsGroupData.models" href="#terra_ai.data.modeling.models.ModelsGroupData.models">models</a></code></li>
+<li><code><a title="terra_ai.data.modeling.models.ModelsGroupData.name" href="#terra_ai.data.modeling.models.ModelsGroupData.name">name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.models.ModelsGroupsList" href="#terra_ai.data.modeling.models.ModelsGroupsList">ModelsGroupsList</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.models.ModelsList" href="#terra_ai.data.modeling.models.ModelsList">ModelsList</a></code></h4>
 </li>
 </ul>
 </li>

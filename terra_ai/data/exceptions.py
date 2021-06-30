@@ -3,14 +3,16 @@ from typing import Any
 
 
 class ExceptionMessages(str, Enum):
+    TerraDataValue = "%s: Value error"
+    ValueType = "%s: Value must be a %s"
     AliasException = '%s: It is allowed to use only lowercase latin characters, numbers and the "_" sign, must always begin with a latin character'
     UniqueListIdentifier = 'Identifier "%s" is undefined as attribute of %s'
     UniqueListUndefinedIdentifier = 'Identifier is undefined in "%s"'
-    PositiveInteger = "%s: Value must be greater or equivalent then 1"
-    PartValue = "%s: Value must be between 0 and 1"
     PartTotal = "%s: Sum of all properties must by 1"
-    ZipFile = "%s: Value must be a zip-file"
-    ListEmpty = "%s must not be empty"
+    ListEmpty = "%s: must not be empty"
+    FilePathExtension = '%s: File must have "%s" extension'
+    Base64Extension = "Incorrect base64 string value"
+    XY = "%s: Value must be a list with 2 elements, received %s"
 
 
 class TerraDataException(ValueError):
@@ -19,7 +21,7 @@ class TerraDataException(ValueError):
 
 class TerraDataValueException(TerraDataException):
     class Meta:
-        message: str = "%s: Value error"
+        message: str = ExceptionMessages.TerraDataValue
 
     def __init__(self, __value: Any, *args):
         super().__init__(((args[0] if len(args) else self.Meta.message) % str(__value)))
@@ -27,7 +29,7 @@ class TerraDataValueException(TerraDataException):
 
 class ValueTypeException(TerraDataException):
     class Meta:
-        message: str = "%s: Value must be a %s"
+        message: str = ExceptionMessages.ValueType
 
     def __init__(self, __value: Any, __type: Any, *args):
         super().__init__(
@@ -43,24 +45,9 @@ class AliasException(TerraDataValueException):
         message: str = ExceptionMessages.AliasException
 
 
-class PositiveIntegerException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PositiveInteger
-
-
-class PartValueException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PartValue
-
-
 class PartTotalException(TerraDataValueException):
     class Meta:
         message: str = ExceptionMessages.PartTotal
-
-
-class ZipFileException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.ZipFile
 
 
 class ListEmptyException(TerraDataValueException):
@@ -88,5 +75,30 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
                     else ExceptionMessages.UniqueListUndefinedIdentifier
                 )
                 % str(__source)
+            )
+        )
+
+
+class FilePathExtensionException(TerraDataException):
+    def __init__(self, __file_path: Any, __extension: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.FilePathExtension)
+                % (str(__file_path), str(__extension))
+            )
+        )
+
+
+class Base64Exception(TerraDataException):
+    def __init__(self):
+        super().__init__(ExceptionMessages.Base64Extension.value)
+
+
+class XYException(TerraDataException):
+    def __init__(self, __name: Any, __position: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.XY)
+                % (str(__name), str(__position))
             )
         )

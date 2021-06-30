@@ -34,9 +34,9 @@
 import json
 
 from typing import List, Union, Optional
-from pydantic import validator, BaseModel
+from pydantic import BaseModel
 
-from .validators import validate_alias
+from .typing import AliasType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
@@ -70,10 +70,7 @@ class AliasMixinData(BaseMixinData):
     Расширение модели идентификатором `alias`.
     &#34;&#34;&#34;
 
-    alias: str
-    &#34;Применяется валидатор `validate_alias`&#34;
-
-    _validate_alias = validator(&#34;alias&#34;, allow_reuse=True)(validate_alias)
+    alias: AliasType
 
 
 class UniqueListMixin(List):
@@ -146,7 +143,7 @@ class UniqueListMixin(List):
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
+        if data is None:
             data = []
         data = list(map(lambda item: self.Meta.source(**item), data))
         __data = []
@@ -325,10 +322,7 @@ class UniqueListMixin(List):
     Расширение модели идентификатором `alias`.
     &#34;&#34;&#34;
 
-    alias: str
-    &#34;Применяется валидатор `validate_alias`&#34;
-
-    _validate_alias = validator(&#34;alias&#34;, allow_reuse=True)(validate_alias)</code></pre>
+    alias: AliasType</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -343,12 +337,15 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.dataset.DatasetData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetData">DatasetData</a></li>
 <li><a title="terra_ai.data.datasets.dataset.DatasetsGroupData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsGroupData">DatasetsGroupData</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagData" href="datasets/tags.html#terra_ai.data.datasets.tags.TagData">TagData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerData">LayerData</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelData" href="modeling/models.html#terra_ai.data.modeling.models.ModelData">ModelData</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelsGroupData" href="modeling/models.html#terra_ai.data.modeling.models.ModelsGroupData">ModelsGroupData</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.mixins.AliasMixinData.alias"><code class="name">var <span class="ident">alias</span> : str</code></dt>
+<dt id="terra_ai.data.mixins.AliasMixinData.alias"><code class="name">var <span class="ident">alias</span> : <a title="terra_ai.data.typing.AliasType" href="typing.html#terra_ai.data.typing.AliasType">AliasType</a></code></dt>
 <dd>
-<div class="desc"><p>Применяется валидатор <code>validate_alias</code></p></div>
+<div class="desc"></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -418,7 +415,97 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData">LayerOutputTypeTimeseriesData</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MaskSegmentationData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MaskSegmentationData">MaskSegmentationData</a></li>
 <li><a title="terra_ai.data.mixins.AliasMixinData" href="#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelData" href="modeling/models.html#terra_ai.data.modeling.models.ModelData">ModelData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerBindData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerBindData">LayerBindData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerShapeData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerShapeData">LayerShapeData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData" href="modeling/layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData" href="modeling/layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Add.ParametersExtraData" href="modeling/layers_parameters/Add.html#terra_ai.data.modeling.layers_parameters.Add.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Add.ParametersMainData" href="modeling/layers_parameters/Add.html#terra_ai.data.modeling.layers_parameters.Add.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling1D.ParametersExtraData" href="modeling/layers_parameters/AveragePooling1D.html#terra_ai.data.modeling.layers_parameters.AveragePooling1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling1D.ParametersMainData" href="modeling/layers_parameters/AveragePooling1D.html#terra_ai.data.modeling.layers_parameters.AveragePooling1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling2D.ParametersExtraData" href="modeling/layers_parameters/AveragePooling2D.html#terra_ai.data.modeling.layers_parameters.AveragePooling2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling2D.ParametersMainData" href="modeling/layers_parameters/AveragePooling2D.html#terra_ai.data.modeling.layers_parameters.AveragePooling2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersExtraData" href="modeling/layers_parameters/AveragePooling3D.html#terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersMainData" href="modeling/layers_parameters/AveragePooling3D.html#terra_ai.data.modeling.layers_parameters.AveragePooling3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData" href="modeling/layers_parameters/BatchNormalization.html#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersMainData" href="modeling/layers_parameters/BatchNormalization.html#terra_ai.data.modeling.layers_parameters.BatchNormalization.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Concatenate.ParametersExtraData" href="modeling/layers_parameters/Concatenate.html#terra_ai.data.modeling.layers_parameters.Concatenate.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Concatenate.ParametersMainData" href="modeling/layers_parameters/Concatenate.html#terra_ai.data.modeling.layers_parameters.Concatenate.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv1D.ParametersExtraData" href="modeling/layers_parameters/Conv1D.html#terra_ai.data.modeling.layers_parameters.Conv1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv1D.ParametersMainData" href="modeling/layers_parameters/Conv1D.html#terra_ai.data.modeling.layers_parameters.Conv1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv1DTranspose.ParametersExtraData" href="modeling/layers_parameters/Conv1DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv1DTranspose.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv1DTranspose.ParametersMainData" href="modeling/layers_parameters/Conv1DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv1DTranspose.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv2D.ParametersExtraData" href="modeling/layers_parameters/Conv2D.html#terra_ai.data.modeling.layers_parameters.Conv2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv2D.ParametersMainData" href="modeling/layers_parameters/Conv2D.html#terra_ai.data.modeling.layers_parameters.Conv2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv2DTranspose.ParametersExtraData" href="modeling/layers_parameters/Conv2DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv2DTranspose.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv2DTranspose.ParametersMainData" href="modeling/layers_parameters/Conv2DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv2DTranspose.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv3D.ParametersExtraData" href="modeling/layers_parameters/Conv3D.html#terra_ai.data.modeling.layers_parameters.Conv3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv3D.ParametersMainData" href="modeling/layers_parameters/Conv3D.html#terra_ai.data.modeling.layers_parameters.Conv3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersExtraData" href="modeling/layers_parameters/Conv3DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersMainData" href="modeling/layers_parameters/Conv3DTranspose.html#terra_ai.data.modeling.layers_parameters.Conv3DTranspose.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Dense.ParametersExtraData" href="modeling/layers_parameters/Dense.html#terra_ai.data.modeling.layers_parameters.Dense.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Dense.ParametersMainData" href="modeling/layers_parameters/Dense.html#terra_ai.data.modeling.layers_parameters.Dense.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.DepthwiseConv2D.ParametersExtraData" href="modeling/layers_parameters/DepthwiseConv2D.html#terra_ai.data.modeling.layers_parameters.DepthwiseConv2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.DepthwiseConv2D.ParametersMainData" href="modeling/layers_parameters/DepthwiseConv2D.html#terra_ai.data.modeling.layers_parameters.DepthwiseConv2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Dropout.ParametersExtraData" href="modeling/layers_parameters/Dropout.html#terra_ai.data.modeling.layers_parameters.Dropout.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Dropout.ParametersMainData" href="modeling/layers_parameters/Dropout.html#terra_ai.data.modeling.layers_parameters.Dropout.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.ELU.ParametersExtraData" href="modeling/layers_parameters/ELU.html#terra_ai.data.modeling.layers_parameters.ELU.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.ELU.ParametersMainData" href="modeling/layers_parameters/ELU.html#terra_ai.data.modeling.layers_parameters.ELU.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData" href="modeling/layers_parameters/Embedding.html#terra_ai.data.modeling.layers_parameters.Embedding.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData" href="modeling/layers_parameters/Embedding.html#terra_ai.data.modeling.layers_parameters.Embedding.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Flatten.ParametersExtraData" href="modeling/layers_parameters/Flatten.html#terra_ai.data.modeling.layers_parameters.Flatten.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Flatten.ParametersMainData" href="modeling/layers_parameters/Flatten.html#terra_ai.data.modeling.layers_parameters.Flatten.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData" href="modeling/layers_parameters/GRU.html#terra_ai.data.modeling.layers_parameters.GRU.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData" href="modeling/layers_parameters/GRU.html#terra_ai.data.modeling.layers_parameters.GRU.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D.ParametersExtraData" href="modeling/layers_parameters/GlobalAveragePooling1D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D.ParametersMainData" href="modeling/layers_parameters/GlobalAveragePooling1D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D.ParametersExtraData" href="modeling/layers_parameters/GlobalAveragePooling2D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D.ParametersMainData" href="modeling/layers_parameters/GlobalAveragePooling2D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersExtraData" href="modeling/layers_parameters/GlobalAveragePooling3D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersMainData" href="modeling/layers_parameters/GlobalAveragePooling3D.html#terra_ai.data.modeling.layers_parameters.GlobalAveragePooling3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersExtraData" href="modeling/layers_parameters/GlobalMaxPool1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersMainData" href="modeling/layers_parameters/GlobalMaxPool1D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersExtraData" href="modeling/layers_parameters/GlobalMaxPool2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersMainData" href="modeling/layers_parameters/GlobalMaxPool2D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersExtraData" href="modeling/layers_parameters/GlobalMaxPool3D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersMainData" href="modeling/layers_parameters/GlobalMaxPool3D.html#terra_ai.data.modeling.layers_parameters.GlobalMaxPool3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersExtraData" href="modeling/layers_parameters/Input.html#terra_ai.data.modeling.layers_parameters.Input.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Input.ParametersMainData" href="modeling/layers_parameters/Input.html#terra_ai.data.modeling.layers_parameters.Input.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.LSTM.ParametersExtraData" href="modeling/layers_parameters/LSTM.html#terra_ai.data.modeling.layers_parameters.LSTM.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.LSTM.ParametersMainData" href="modeling/layers_parameters/LSTM.html#terra_ai.data.modeling.layers_parameters.LSTM.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersExtraData" href="modeling/layers_parameters/LeakyReLU.html#terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersMainData" href="modeling/layers_parameters/LeakyReLU.html#terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersExtraData" href="modeling/layers_parameters/MaxPool1D.html#terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersMainData" href="modeling/layers_parameters/MaxPool1D.html#terra_ai.data.modeling.layers_parameters.MaxPool1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersExtraData" href="modeling/layers_parameters/MaxPool2D.html#terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersMainData" href="modeling/layers_parameters/MaxPool2D.html#terra_ai.data.modeling.layers_parameters.MaxPool2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersExtraData" href="modeling/layers_parameters/MaxPool3D.html#terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersMainData" href="modeling/layers_parameters/MaxPool3D.html#terra_ai.data.modeling.layers_parameters.MaxPool3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Multiply.ParametersExtraData" href="modeling/layers_parameters/Multiply.html#terra_ai.data.modeling.layers_parameters.Multiply.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Multiply.ParametersMainData" href="modeling/layers_parameters/Multiply.html#terra_ai.data.modeling.layers_parameters.Multiply.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.PReLU.ParametersExtraData" href="modeling/layers_parameters/PReLU.html#terra_ai.data.modeling.layers_parameters.PReLU.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.PReLU.ParametersMainData" href="modeling/layers_parameters/PReLU.html#terra_ai.data.modeling.layers_parameters.PReLU.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData" href="modeling/layers_parameters/ReLU.html#terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData" href="modeling/layers_parameters/ReLU.html#terra_ai.data.modeling.layers_parameters.ReLU.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.RepeatVector.ParametersExtraData" href="modeling/layers_parameters/RepeatVector.html#terra_ai.data.modeling.layers_parameters.RepeatVector.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.RepeatVector.ParametersMainData" href="modeling/layers_parameters/RepeatVector.html#terra_ai.data.modeling.layers_parameters.RepeatVector.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Reshape.ParametersExtraData" href="modeling/layers_parameters/Reshape.html#terra_ai.data.modeling.layers_parameters.Reshape.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Reshape.ParametersMainData" href="modeling/layers_parameters/Reshape.html#terra_ai.data.modeling.layers_parameters.Reshape.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.SeparableConv1D.ParametersExtraData" href="modeling/layers_parameters/SeparableConv1D.html#terra_ai.data.modeling.layers_parameters.SeparableConv1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.SeparableConv1D.ParametersMainData" href="modeling/layers_parameters/SeparableConv1D.html#terra_ai.data.modeling.layers_parameters.SeparableConv1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersExtraData" href="modeling/layers_parameters/SeparableConv2D.html#terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersMainData" href="modeling/layers_parameters/SeparableConv2D.html#terra_ai.data.modeling.layers_parameters.SeparableConv2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Softmax.ParametersExtraData" href="modeling/layers_parameters/Softmax.html#terra_ai.data.modeling.layers_parameters.Softmax.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.Softmax.ParametersMainData" href="modeling/layers_parameters/Softmax.html#terra_ai.data.modeling.layers_parameters.Softmax.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersExtraData" href="modeling/layers_parameters/UpSampling1D.html#terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData" href="modeling/layers_parameters/UpSampling1D.html#terra_ai.data.modeling.layers_parameters.UpSampling1D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData" href="modeling/layers_parameters/UpSampling2D.html#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData" href="modeling/layers_parameters/UpSampling2D.html#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData" href="modeling/layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData" href="modeling/layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData">ParametersMainData</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelDetailsData" href="modeling/models.html#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="modeling/parameters.html#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="modeling/parameters.html#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -550,7 +637,7 @@ some_unique_list = SomeUniqueList(
         return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
-        if not data:
+        if data is None:
             data = []
         data = list(map(lambda item: self.Meta.source(**item), data))
         __data = []
@@ -715,6 +802,9 @@ some_unique_list = SomeUniqueList(
 <li><a title="terra_ai.data.datasets.dataset.DatasetsList" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MasksSegmentationList" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MasksSegmentationList">MasksSegmentationList</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagsList" href="datasets/tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayersList" href="modeling/layers.html#terra_ai.data.modeling.layers.LayersList">LayersList</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelsGroupsList" href="modeling/models.html#terra_ai.data.modeling.models.ModelsGroupsList">ModelsGroupsList</a></li>
+<li><a title="terra_ai.data.modeling.models.ModelsList" href="modeling/models.html#terra_ai.data.modeling.models.ModelsList">ModelsList</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>

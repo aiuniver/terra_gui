@@ -36,11 +36,11 @@ import sys
 from enum import Enum
 from typing import Optional
 from pydantic import validator, DirectoryPath, FilePath
+from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 
 from ..mixins import BaseMixinData, UniqueListMixin
-from ..validators import validate_positive_integer
 from .extra import (
     LayerPrepareMethodChoice,
     LayerTaskTypeChoice,
@@ -51,29 +51,21 @@ from .extra import (
 
 class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;width&#34;, &#34;height&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerInputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        &#34;x_len&#34;, &#34;step&#34;, &#34;max_words_count&#34;, &#34;word_to_vec_size&#34;, allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator(&#34;prepare_method&#34;, allow_reuse=True)
     def _validate_prepare_method(
@@ -86,8 +78,8 @@ class LayerInputTypeTextData(BaseMixinData):
 
 class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -98,48 +90,32 @@ class LayerInputTypeAudioData(BaseMixinData):
     spectral_rolloff: Optional[bool] = False
     zero_crossing_rate: Optional[bool] = False
 
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;step&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
-
 
 class LayerInputTypeDataframeData(BaseMixinData):
     file_path: Optional[FilePath]
     separator: Optional[str]
     encoding: str = &#34;utf-8&#34;
-    x_cols: Optional[int]
+    x_cols: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;x_cols&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;width&#34;, &#34;height&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        &#34;x_len&#34;, &#34;step&#34;, &#34;max_words_count&#34;, &#34;word_to_vec_size&#34;, allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator(&#34;prepare_method&#34;, allow_reuse=True)
     def _validate_prepare_method(
@@ -152,8 +128,8 @@ class LayerOutputTypeTextData(BaseMixinData):
 
 class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -163,10 +139,6 @@ class LayerOutputTypeAudioData(BaseMixinData):
     spectral_bandwidth: Optional[bool] = False
     spectral_rolloff: Optional[bool] = False
     zero_crossing_rate: Optional[bool] = False
-
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;step&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeClassificationData(BaseMixinData):
@@ -196,12 +168,8 @@ class MasksSegmentationList(UniqueListMixin):
 
 class LayerOutputTypeSegmentationData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    mask_range: int
+    mask_range: PositiveInt
     mask_assignment: MasksSegmentationList
-
-    _validate_positive_integer = validator(&#34;mask_range&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerOutputTypeTextSegmentationData(BaseMixinData):
@@ -210,22 +178,14 @@ class LayerOutputTypeTextSegmentationData(BaseMixinData):
 
 
 class LayerOutputTypeRegressionData(BaseMixinData):
-    y_col: Optional[int]
-
-    _validate_positive_integer = validator(&#34;y_col&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
+    y_col: Optional[PositiveInt]
 
 
 class LayerOutputTypeTimeseriesData(BaseMixinData):
-    length: int
-    y_cols: Optional[int]
+    length: PositiveInt
+    y_cols: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
-
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;y_cols&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )
 
 
 class LayerInputDatatype(str, Enum):
@@ -355,8 +315,8 @@ LayerOutputDatatypeUnion = tuple(
 </summary>
 <pre><code class="python">class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -365,11 +325,7 @@ LayerOutputDatatypeUnion = tuple(
     spectral_centroid: Optional[bool] = False
     spectral_bandwidth: Optional[bool] = False
     spectral_rolloff: Optional[bool] = False
-    zero_crossing_rate: Optional[bool] = False
-
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;step&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    zero_crossing_rate: Optional[bool] = False</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -391,7 +347,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeAudioData.length"><code class="name">var <span class="ident">length</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeAudioData.length"><code class="name">var <span class="ident">length</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -419,7 +375,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeAudioData.step"><code class="name">var <span class="ident">step</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeAudioData.step"><code class="name">var <span class="ident">step</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -453,12 +409,8 @@ LayerOutputDatatypeUnion = tuple(
     file_path: Optional[FilePath]
     separator: Optional[str]
     encoding: str = &#34;utf-8&#34;
-    x_cols: Optional[int]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;x_cols&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    x_cols: Optional[PositiveInt]
+    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -484,7 +436,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeDataframeData.x_cols"><code class="name">var <span class="ident">x_cols</span> : Union[int, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeDataframeData.x_cols"><code class="name">var <span class="ident">x_cols</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -512,14 +464,10 @@ LayerOutputDatatypeUnion = tuple(
 </summary>
 <pre><code class="python">class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;width&#34;, &#34;height&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -533,7 +481,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeImagesData.height"><code class="name">var <span class="ident">height</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeImagesData.height"><code class="name">var <span class="ident">height</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -545,7 +493,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeImagesData.width"><code class="name">var <span class="ident">width</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeImagesData.width"><code class="name">var <span class="ident">width</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -574,16 +522,12 @@ LayerOutputDatatypeUnion = tuple(
 <pre><code class="python">class LayerInputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        &#34;x_len&#34;, &#34;step&#34;, &#34;max_words_count&#34;, &#34;word_to_vec_size&#34;, allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator(&#34;prepare_method&#34;, allow_reuse=True)
     def _validate_prepare_method(
@@ -609,7 +553,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.max_words_count"><code class="name">var <span class="ident">max_words_count</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.max_words_count"><code class="name">var <span class="ident">max_words_count</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -621,15 +565,15 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.step"><code class="name">var <span class="ident">step</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.step"><code class="name">var <span class="ident">step</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.word_to_vec_size"><code class="name">var <span class="ident">word_to_vec_size</span> : Union[int, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.word_to_vec_size"><code class="name">var <span class="ident">word_to_vec_size</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.x_len"><code class="name">var <span class="ident">x_len</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputTypeTextData.x_len"><code class="name">var <span class="ident">x_len</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -722,8 +666,8 @@ LayerOutputDatatypeUnion = tuple(
 </summary>
 <pre><code class="python">class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    length: int
-    step: int
+    length: PositiveInt
+    step: PositiveInt
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
@@ -732,11 +676,7 @@ LayerOutputDatatypeUnion = tuple(
     spectral_centroid: Optional[bool] = False
     spectral_bandwidth: Optional[bool] = False
     spectral_rolloff: Optional[bool] = False
-    zero_crossing_rate: Optional[bool] = False
-
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;step&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    zero_crossing_rate: Optional[bool] = False</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -758,7 +698,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeAudioData.length"><code class="name">var <span class="ident">length</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeAudioData.length"><code class="name">var <span class="ident">length</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -786,7 +726,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeAudioData.step"><code class="name">var <span class="ident">step</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeAudioData.step"><code class="name">var <span class="ident">step</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -855,14 +795,10 @@ LayerOutputDatatypeUnion = tuple(
 </summary>
 <pre><code class="python">class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    width: int
-    height: int
+    width: PositiveInt
+    height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-
-    _validate_positive_integer = validator(&#34;width&#34;, &#34;height&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -876,7 +812,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeImagesData.height"><code class="name">var <span class="ident">height</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeImagesData.height"><code class="name">var <span class="ident">height</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -888,7 +824,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeImagesData.width"><code class="name">var <span class="ident">width</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeImagesData.width"><code class="name">var <span class="ident">width</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -915,11 +851,7 @@ LayerOutputDatatypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerOutputTypeRegressionData(BaseMixinData):
-    y_col: Optional[int]
-
-    _validate_positive_integer = validator(&#34;y_col&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    y_col: Optional[PositiveInt]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -929,7 +861,7 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeRegressionData.y_col"><code class="name">var <span class="ident">y_col</span> : Union[int, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeRegressionData.y_col"><code class="name">var <span class="ident">y_col</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -957,12 +889,8 @@ LayerOutputDatatypeUnion = tuple(
 </summary>
 <pre><code class="python">class LayerOutputTypeSegmentationData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
-    mask_range: int
-    mask_assignment: MasksSegmentationList
-
-    _validate_positive_integer = validator(&#34;mask_range&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    mask_range: PositiveInt
+    mask_assignment: MasksSegmentationList</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -980,7 +908,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeSegmentationData.mask_range"><code class="name">var <span class="ident">mask_range</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeSegmentationData.mask_range"><code class="name">var <span class="ident">mask_range</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1009,16 +937,12 @@ LayerOutputDatatypeUnion = tuple(
 <pre><code class="python">class LayerOutputTypeTextData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     delete_symbols: Optional[str]
-    x_len: int
-    step: int
-    max_words_count: int
+    x_len: PositiveInt
+    step: PositiveInt
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    word_to_vec_size: Optional[int]
-
-    _validate_positive_integer = validator(
-        &#34;x_len&#34;, &#34;step&#34;, &#34;max_words_count&#34;, &#34;word_to_vec_size&#34;, allow_reuse=True
-    )(validate_positive_integer)
+    word_to_vec_size: Optional[PositiveInt]
 
     @validator(&#34;prepare_method&#34;, allow_reuse=True)
     def _validate_prepare_method(
@@ -1044,7 +968,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.max_words_count"><code class="name">var <span class="ident">max_words_count</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.max_words_count"><code class="name">var <span class="ident">max_words_count</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1056,15 +980,15 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.step"><code class="name">var <span class="ident">step</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.step"><code class="name">var <span class="ident">step</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.word_to_vec_size"><code class="name">var <span class="ident">word_to_vec_size</span> : Union[int, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.word_to_vec_size"><code class="name">var <span class="ident">word_to_vec_size</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.x_len"><code class="name">var <span class="ident">x_len</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTextData.x_len"><code class="name">var <span class="ident">x_len</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1133,14 +1057,10 @@ LayerOutputDatatypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerOutputTypeTimeseriesData(BaseMixinData):
-    length: int
-    y_cols: Optional[int]
+    length: PositiveInt
+    y_cols: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
-    task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
-
-    _validate_positive_integer = validator(&#34;length&#34;, &#34;y_cols&#34;, allow_reuse=True)(
-        validate_positive_integer
-    )</code></pre>
+    task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1150,7 +1070,7 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData.length"><code class="name">var <span class="ident">length</span> : int</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData.length"><code class="name">var <span class="ident">length</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1162,7 +1082,7 @@ LayerOutputDatatypeUnion = tuple(
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData.y_cols"><code class="name">var <span class="ident">y_cols</span> : Union[int, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData.y_cols"><code class="name">var <span class="ident">y_cols</span> : Union[pydantic.types.PositiveInt, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

@@ -308,21 +308,16 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 &#34;&#34;&#34;
 
 from math import fsum
+from pathlib import Path
 from typing import Union, Optional, Any
-from pathlib import PosixPath
-from pydantic import validator, FilePath, HttpUrl
+from pydantic import validator, HttpUrl
+from pydantic.types import confloat
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..validators import validate_part_value
-from ..extra import LayerInputTypeChoice, LayerOutputTypeChoice
-from ..exceptions import (
-    ZipFileException,
-    ValueTypeException,
-    PartTotalException,
-    ListEmptyException,
-)
-from .extra import SourceModeChoice
+from ..typing import confilepath, FilePathType
+from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
+from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
 from . import parameters
 
@@ -334,28 +329,20 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     &#34;Режим загрузки исходных данных&#34;
-    value: Union[FilePath, HttpUrl]
+    value: Union[confilepath(ext=&#34;zip&#34;), HttpUrl]
     &#34;Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`&#34;
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[PosixPath, HttpUrl], **kwargs
-    ) -&gt; Union[PosixPath, HttpUrl]:
-        if isinstance(value, PosixPath):
-            split_value = str(value).split(&#34;.&#34;)
-            if len(split_value) &lt; 2 or split_value[-1].lower() != &#34;zip&#34;:
-                raise ZipFileException(value)
-
+        cls, value: Union[FilePathType, HttpUrl], **kwargs
+    ) -&gt; Union[FilePathType, HttpUrl]:
         mode = kwargs.get(&#34;values&#34;, {}).get(&#34;mode&#34;)
-
         if mode == SourceModeChoice.google_drive:
-            if not isinstance(value, PosixPath):
-                raise ValueTypeException(value, PosixPath)
-
+            if not isinstance(value, Path):
+                raise ValueTypeException(value, FilePathType)
         if mode == SourceModeChoice.url:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
-
         return value
 
 
@@ -364,16 +351,12 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
     &#34;&#34;&#34;
 
-    train: float = 0.6
+    train: confloat(ge=0, le=1) = 0.6
     &#34;Обучающая выборка&#34;
-    validation: float = 0.3
+    validation: confloat(ge=0, le=1) = 0.3
     &#34;Валидационная выборка&#34;
-    test: float = 0.1
+    test: confloat(ge=0, le=1) = 0.1
     &#34;Тестовая выборка&#34;
-
-    _validate_values = validator(&#34;train&#34;, &#34;validation&#34;, &#34;test&#34;, allow_reuse=True)(
-        validate_part_value
-    )
 
     @property
     def total(self) -&gt; float:
@@ -661,16 +644,12 @@ class CreationData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
     &#34;&#34;&#34;
 
-    train: float = 0.6
+    train: confloat(ge=0, le=1) = 0.6
     &#34;Обучающая выборка&#34;
-    validation: float = 0.3
+    validation: confloat(ge=0, le=1) = 0.3
     &#34;Валидационная выборка&#34;
-    test: float = 0.1
+    test: confloat(ge=0, le=1) = 0.1
     &#34;Тестовая выборка&#34;
-
-    _validate_values = validator(&#34;train&#34;, &#34;validation&#34;, &#34;test&#34;, allow_reuse=True)(
-        validate_part_value
-    )
 
     @property
     def total(self) -&gt; float:
@@ -687,15 +666,15 @@ class CreationData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.test"><code class="name">var <span class="ident">test</span> : float</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.test"><code class="name">var <span class="ident">test</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
 <dd>
 <div class="desc"><p>Тестовая выборка</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.train"><code class="name">var <span class="ident">train</span> : float</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.train"><code class="name">var <span class="ident">train</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
 <dd>
 <div class="desc"><p>Обучающая выборка</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.validation"><code class="name">var <span class="ident">validation</span> : float</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.validation"><code class="name">var <span class="ident">validation</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
 <dd>
 <div class="desc"><p>Валидационная выборка</p></div>
 </dd>
@@ -783,7 +762,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <code>type</code></p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInputData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.extra.LayerInputTypeChoice" href="../extra.html#terra_ai.data.extra.LayerInputTypeChoice">LayerInputTypeChoice</a></code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInputData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.datasets.extra.LayerInputTypeChoice" href="extra.html#terra_ai.data.datasets.extra.LayerInputTypeChoice">LayerInputTypeChoice</a></code></dt>
 <dd>
 <div class="desc"><p>Тип данных</p></div>
 </dd>
@@ -792,7 +771,6 @@ def total(self) -&gt; float:
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></b></code>:
 <ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.AliasMixinData.alias" href="../mixins.html#terra_ai.data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
 </ul>
 </li>
@@ -903,7 +881,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <code>type</code></p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationOutputData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.extra.LayerOutputTypeChoice" href="../extra.html#terra_ai.data.extra.LayerOutputTypeChoice">LayerOutputTypeChoice</a></code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationOutputData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice" href="extra.html#terra_ai.data.datasets.extra.LayerOutputTypeChoice">LayerOutputTypeChoice</a></code></dt>
 <dd>
 <div class="desc"><p>Тип данных</p></div>
 </dd>
@@ -912,7 +890,6 @@ def total(self) -&gt; float:
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.AliasMixinData" href="../mixins.html#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></b></code>:
 <ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.AliasMixinData.alias" href="../mixins.html#terra_ai.data.mixins.AliasMixinData.alias">alias</a></code></li>
 <li><code><a title="terra_ai.data.mixins.AliasMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
 </ul>
 </li>
@@ -986,28 +963,20 @@ def total(self) -&gt; float:
 
     mode: SourceModeChoice
     &#34;Режим загрузки исходных данных&#34;
-    value: Union[FilePath, HttpUrl]
+    value: Union[confilepath(ext=&#34;zip&#34;), HttpUrl]
     &#34;Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`&#34;
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[PosixPath, HttpUrl], **kwargs
-    ) -&gt; Union[PosixPath, HttpUrl]:
-        if isinstance(value, PosixPath):
-            split_value = str(value).split(&#34;.&#34;)
-            if len(split_value) &lt; 2 or split_value[-1].lower() != &#34;zip&#34;:
-                raise ZipFileException(value)
-
+        cls, value: Union[FilePathType, HttpUrl], **kwargs
+    ) -&gt; Union[FilePathType, HttpUrl]:
         mode = kwargs.get(&#34;values&#34;, {}).get(&#34;mode&#34;)
-
         if mode == SourceModeChoice.google_drive:
-            if not isinstance(value, PosixPath):
-                raise ValueTypeException(value, PosixPath)
-
+            if not isinstance(value, Path):
+                raise ValueTypeException(value, FilePathType)
         if mode == SourceModeChoice.url:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
-
         return value</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1022,7 +991,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Режим загрузки исходных данных</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.SourceData.value"><code class="name">var <span class="ident">value</span> : Union[pydantic.types.FilePath, pydantic.networks.HttpUrl]</code></dt>
+<dt id="terra_ai.data.datasets.creation.SourceData.value"><code class="name">var <span class="ident">value</span> : Union[terra_ai.data.FilePathType, pydantic.networks.HttpUrl]</code></dt>
 <dd>
 <div class="desc"><p>Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима <code>mode</code></p></div>
 </dd>

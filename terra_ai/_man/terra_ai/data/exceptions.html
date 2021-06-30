@@ -31,14 +31,16 @@ from typing import Any
 
 
 class ExceptionMessages(str, Enum):
+    TerraDataValue = &#34;%s: Value error&#34;
+    ValueType = &#34;%s: Value must be a %s&#34;
     AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
     UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
-    PositiveInteger = &#34;%s: Value must be greater or equivalent then 1&#34;
-    PartValue = &#34;%s: Value must be between 0 and 1&#34;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;
-    ZipFile = &#34;%s: Value must be a zip-file&#34;
-    ListEmpty = &#34;%s must not be empty&#34;
+    ListEmpty = &#34;%s: must not be empty&#34;
+    FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
+    Base64Extension = &#34;Incorrect base64 string value&#34;
+    XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;
 
 
 class TerraDataException(ValueError):
@@ -47,7 +49,7 @@ class TerraDataException(ValueError):
 
 class TerraDataValueException(TerraDataException):
     class Meta:
-        message: str = &#34;%s: Value error&#34;
+        message: str = ExceptionMessages.TerraDataValue
 
     def __init__(self, __value: Any, *args):
         super().__init__(((args[0] if len(args) else self.Meta.message) % str(__value)))
@@ -55,7 +57,7 @@ class TerraDataValueException(TerraDataException):
 
 class ValueTypeException(TerraDataException):
     class Meta:
-        message: str = &#34;%s: Value must be a %s&#34;
+        message: str = ExceptionMessages.ValueType
 
     def __init__(self, __value: Any, __type: Any, *args):
         super().__init__(
@@ -71,24 +73,9 @@ class AliasException(TerraDataValueException):
         message: str = ExceptionMessages.AliasException
 
 
-class PositiveIntegerException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PositiveInteger
-
-
-class PartValueException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PartValue
-
-
 class PartTotalException(TerraDataValueException):
     class Meta:
         message: str = ExceptionMessages.PartTotal
-
-
-class ZipFileException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.ZipFile
 
 
 class ListEmptyException(TerraDataValueException):
@@ -116,6 +103,31 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
                     else ExceptionMessages.UniqueListUndefinedIdentifier
                 )
                 % str(__source)
+            )
+        )
+
+
+class FilePathExtensionException(TerraDataException):
+    def __init__(self, __file_path: Any, __extension: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.FilePathExtension)
+                % (str(__file_path), str(__extension))
+            )
+        )
+
+
+class Base64Exception(TerraDataException):
+    def __init__(self):
+        super().__init__(ExceptionMessages.Base64Extension.value)
+
+
+class XYException(TerraDataException):
+    def __init__(self, __name: Any, __position: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.XY)
+                % (str(__name), str(__position))
             )
         )</code></pre>
 </details>
@@ -159,6 +171,27 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </dd>
 </dl>
 </dd>
+<dt id="terra_ai.data.exceptions.Base64Exception"><code class="flex name class">
+<span>class <span class="ident">Base64Exception</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Base64Exception(TerraDataException):
+    def __init__(self):
+        super().__init__(ExceptionMessages.Base64Extension.value)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages"><code class="flex name class">
 <span>class <span class="ident">ExceptionMessages</span></span>
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
@@ -170,14 +203,16 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ExceptionMessages(str, Enum):
+    TerraDataValue = &#34;%s: Value error&#34;
+    ValueType = &#34;%s: Value must be a %s&#34;
     AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
     UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
-    PositiveInteger = &#34;%s: Value must be greater or equivalent then 1&#34;
-    PartValue = &#34;%s: Value must be between 0 and 1&#34;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;
-    ZipFile = &#34;%s: Value must be a zip-file&#34;
-    ListEmpty = &#34;%s must not be empty&#34;</code></pre>
+    ListEmpty = &#34;%s: must not be empty&#34;
+    FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
+    Base64Extension = &#34;Incorrect base64 string value&#34;
+    XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -190,6 +225,14 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.Base64Extension"><code class="name">var <span class="ident">Base64Extension</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension"><code class="name">var <span class="ident">FilePathExtension</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.ListEmpty"><code class="name">var <span class="ident">ListEmpty</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -198,11 +241,7 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.PartValue"><code class="name">var <span class="ident">PartValue</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.PositiveInteger"><code class="name">var <span class="ident">PositiveInteger</span></code></dt>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue"><code class="name">var <span class="ident">TerraDataValue</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -214,11 +253,42 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.ZipFile"><code class="name">var <span class="ident">ZipFile</span></code></dt>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.ValueType"><code class="name">var <span class="ident">ValueType</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.XY"><code class="name">var <span class="ident">XY</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
+</dd>
+<dt id="terra_ai.data.exceptions.FilePathExtensionException"><code class="flex name class">
+<span>class <span class="ident">FilePathExtensionException</span></span>
+<span>(</span><span>_FilePathExtensionException__file_path: Any, _FilePathExtensionException__extension: Any, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FilePathExtensionException(TerraDataException):
+    def __init__(self, __file_path: Any, __extension: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.FilePathExtension)
+                % (str(__file_path), str(__extension))
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
 </dd>
 <dt id="terra_ai.data.exceptions.ListEmptyException"><code class="flex name class">
 <span>class <span class="ident">ListEmptyException</span></span>
@@ -280,66 +350,6 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.exceptions.PartValueException"><code class="flex name class">
-<span>class <span class="ident">PartValueException</span></span>
-<span>(</span><span>_TerraDataValueException__value: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class PartValueException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PartValue</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.exceptions.PartValueException.Meta"><code class="name">var <span class="ident">Meta</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-</dd>
-<dt id="terra_ai.data.exceptions.PositiveIntegerException"><code class="flex name class">
-<span>class <span class="ident">PositiveIntegerException</span></span>
-<span>(</span><span>_TerraDataValueException__value: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class PositiveIntegerException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.PositiveInteger</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.exceptions.PositiveIntegerException.Meta"><code class="name">var <span class="ident">Meta</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-</dd>
 <dt id="terra_ai.data.exceptions.TerraDataException"><code class="flex name class">
 <span>class <span class="ident">TerraDataException</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -361,10 +371,13 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
+<li><a title="terra_ai.data.exceptions.Base64Exception" href="#terra_ai.data.exceptions.Base64Exception">Base64Exception</a></li>
+<li><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></li>
 <li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></li>
+<li><a title="terra_ai.data.exceptions.XYException" href="#terra_ai.data.exceptions.XYException">XYException</a></li>
 </ul>
 </dd>
 <dt id="terra_ai.data.exceptions.TerraDataValueException"><code class="flex name class">
@@ -379,7 +392,7 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </summary>
 <pre><code class="python">class TerraDataValueException(TerraDataException):
     class Meta:
-        message: str = &#34;%s: Value error&#34;
+        message: str = ExceptionMessages.TerraDataValue
 
     def __init__(self, __value: Any, *args):
         super().__init__(((args[0] if len(args) else self.Meta.message) % str(__value)))</code></pre>
@@ -396,9 +409,6 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <li><a title="terra_ai.data.exceptions.AliasException" href="#terra_ai.data.exceptions.AliasException">AliasException</a></li>
 <li><a title="terra_ai.data.exceptions.ListEmptyException" href="#terra_ai.data.exceptions.ListEmptyException">ListEmptyException</a></li>
 <li><a title="terra_ai.data.exceptions.PartTotalException" href="#terra_ai.data.exceptions.PartTotalException">PartTotalException</a></li>
-<li><a title="terra_ai.data.exceptions.PartValueException" href="#terra_ai.data.exceptions.PartValueException">PartValueException</a></li>
-<li><a title="terra_ai.data.exceptions.PositiveIntegerException" href="#terra_ai.data.exceptions.PositiveIntegerException">PositiveIntegerException</a></li>
-<li><a title="terra_ai.data.exceptions.ZipFileException" href="#terra_ai.data.exceptions.ZipFileException">ZipFileException</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -478,7 +488,7 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </summary>
 <pre><code class="python">class ValueTypeException(TerraDataException):
     class Meta:
-        message: str = &#34;%s: Value must be a %s&#34;
+        message: str = ExceptionMessages.ValueType
 
     def __init__(self, __value: Any, __type: Any, *args):
         super().__init__(
@@ -503,9 +513,9 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.exceptions.ZipFileException"><code class="flex name class">
-<span>class <span class="ident">ZipFileException</span></span>
-<span>(</span><span>_TerraDataValueException__value: Any, *args)</span>
+<dt id="terra_ai.data.exceptions.XYException"><code class="flex name class">
+<span>class <span class="ident">XYException</span></span>
+<span>(</span><span>_XYException__name: Any, _XYException__position: Any, *args)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
@@ -513,25 +523,22 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ZipFileException(TerraDataValueException):
-    class Meta:
-        message: str = ExceptionMessages.ZipFile</code></pre>
+<pre><code class="python">class XYException(TerraDataException):
+    def __init__(self, __name: Any, __position: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.XY)
+                % (str(__name), str(__position))
+            )
+        )</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
 <li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
 <li>builtins.ValueError</li>
 <li>builtins.Exception</li>
 <li>builtins.BaseException</li>
 </ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.exceptions.ZipFileException.Meta"><code class="name">var <span class="ident">Meta</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
 </dd>
 </dl>
 </section>
@@ -556,17 +563,25 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.exceptions.Base64Exception" href="#terra_ai.data.exceptions.Base64Exception">Base64Exception</a></code></h4>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.exceptions.ExceptionMessages" href="#terra_ai.data.exceptions.ExceptionMessages">ExceptionMessages</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.AliasException" href="#terra_ai.data.exceptions.ExceptionMessages.AliasException">AliasException</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.Base64Extension" href="#terra_ai.data.exceptions.ExceptionMessages.Base64Extension">Base64Extension</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension" href="#terra_ai.data.exceptions.ExceptionMessages.FilePathExtension">FilePathExtension</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ListEmpty" href="#terra_ai.data.exceptions.ExceptionMessages.ListEmpty">ListEmpty</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartTotal" href="#terra_ai.data.exceptions.ExceptionMessages.PartTotal">PartTotal</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartValue" href="#terra_ai.data.exceptions.ExceptionMessages.PartValue">PartValue</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PositiveInteger" href="#terra_ai.data.exceptions.ExceptionMessages.PositiveInteger">PositiveInteger</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue" href="#terra_ai.data.exceptions.ExceptionMessages.TerraDataValue">TerraDataValue</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier">UniqueListIdentifier</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier">UniqueListUndefinedIdentifier</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ZipFile" href="#terra_ai.data.exceptions.ExceptionMessages.ZipFile">ZipFile</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ValueType" href="#terra_ai.data.exceptions.ExceptionMessages.ValueType">ValueType</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.XY" href="#terra_ai.data.exceptions.ExceptionMessages.XY">XY</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.ListEmptyException" href="#terra_ai.data.exceptions.ListEmptyException">ListEmptyException</a></code></h4>
@@ -578,18 +593,6 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 <h4><code><a title="terra_ai.data.exceptions.PartTotalException" href="#terra_ai.data.exceptions.PartTotalException">PartTotalException</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.exceptions.PartTotalException.Meta" href="#terra_ai.data.exceptions.PartTotalException.Meta">Meta</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.exceptions.PartValueException" href="#terra_ai.data.exceptions.PartValueException">PartValueException</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.exceptions.PartValueException.Meta" href="#terra_ai.data.exceptions.PartValueException.Meta">Meta</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.exceptions.PositiveIntegerException" href="#terra_ai.data.exceptions.PositiveIntegerException">PositiveIntegerException</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.exceptions.PositiveIntegerException.Meta" href="#terra_ai.data.exceptions.PositiveIntegerException.Meta">Meta</a></code></li>
 </ul>
 </li>
 <li>
@@ -614,10 +617,7 @@ class UniqueListUndefinedIdentifierException(TerraDataException):
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.exceptions.ZipFileException" href="#terra_ai.data.exceptions.ZipFileException">ZipFileException</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.exceptions.ZipFileException.Meta" href="#terra_ai.data.exceptions.ZipFileException.Meta">Meta</a></code></li>
-</ul>
+<h4><code><a title="terra_ai.data.exceptions.XYException" href="#terra_ai.data.exceptions.XYException">XYException</a></code></h4>
 </li>
 </ul>
 </li>
