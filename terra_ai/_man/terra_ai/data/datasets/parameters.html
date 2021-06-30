@@ -42,6 +42,8 @@ from pydantic.color import Color
 
 from ..mixins import BaseMixinData, UniqueListMixin
 from .extra import (
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
     LayerPrepareMethodChoice,
     LayerTaskTypeChoice,
     LayerNetChoice,
@@ -188,30 +190,18 @@ class LayerOutputTypeTimeseriesData(BaseMixinData):
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
 
 
-class LayerInputDatatype(str, Enum):
-    &#34;&#34;&#34;
-    Список возможных типов данных для `input`-слоя в виде строк
-    &#34;&#34;&#34;
-
-    images = &#34;LayerInputTypeImagesData&#34;
-    text = &#34;LayerInputTypeTextData&#34;
-    audio = &#34;LayerInputTypeAudioData&#34;
-    dataframe = &#34;LayerInputTypeDataframeData&#34;
-
-
-class LayerOutputDatatype(str, Enum):
-    &#34;&#34;&#34;
-    Список возможных типов данных для `output`-слоя в виде строк
-    &#34;&#34;&#34;
-
-    images = &#34;LayerOutputTypeImagesData&#34;
-    text = &#34;LayerOutputTypeTextData&#34;
-    audio = &#34;LayerOutputTypeAudioData&#34;
-    classification = &#34;LayerOutputTypeClassificationData&#34;
-    segmentation = &#34;LayerOutputTypeSegmentationData&#34;
-    text_segmentation = &#34;LayerOutputTypeTextSegmentationData&#34;
-    regression = &#34;LayerOutputTypeRegressionData&#34;
-    timeseries = &#34;LayerOutputTypeTimeseriesData&#34;
+LayerInputDatatype = Enum(
+    &#34;LayerInputDatatype&#34;,
+    dict(
+        map(
+            lambda item: (item, f&#34;LayerInputType{item}Data&#34;), list(LayerInputTypeChoice)
+        )
+    ),
+    type=str,
+)
+&#34;&#34;&#34;
+Список возможных типов параметров `input`-слоя
+&#34;&#34;&#34;
 
 
 LayerInputDatatypeUnion = tuple(
@@ -222,6 +212,21 @@ LayerInputDatatypeUnion = tuple(
 )
 &#34;&#34;&#34;
 Список возможных типов данных для `input`-слоя в виде классов
+&#34;&#34;&#34;
+
+
+LayerOutputDatatype = Enum(
+    &#34;LayerOutputDatatype&#34;,
+    dict(
+        map(
+            lambda item: (item, f&#34;LayerOutputType{item}Data&#34;),
+            list(LayerOutputTypeChoice),
+        )
+    ),
+    type=str,
+)
+&#34;&#34;&#34;
+Список возможных типов параметров `output`-слоя
 &#34;&#34;&#34;
 
 
@@ -261,21 +266,7 @@ LayerOutputDatatypeUnion = tuple(
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Список возможных типов данных для <code>input</code>-слоя в виде строк</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LayerInputDatatype(str, Enum):
-    &#34;&#34;&#34;
-    Список возможных типов данных для `input`-слоя в виде строк
-    &#34;&#34;&#34;
-
-    images = &#34;LayerInputTypeImagesData&#34;
-    text = &#34;LayerInputTypeTextData&#34;
-    audio = &#34;LayerInputTypeAudioData&#34;
-    dataframe = &#34;LayerInputTypeDataframeData&#34;</code></pre>
-</details>
+<div class="desc"><p>An enumeration.</p></div>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li>builtins.str</li>
@@ -283,19 +274,19 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.audio"><code class="name">var <span class="ident">audio</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Audio"><code class="name">var <span class="ident">LayerInputTypeChoice.audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.dataframe"><code class="name">var <span class="ident">dataframe</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Dataframe"><code class="name">var <span class="ident">LayerInputTypeChoice.dataframe</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.images"><code class="name">var <span class="ident">images</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Images"><code class="name">var <span class="ident">LayerInputTypeChoice.images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Text"><code class="name">var <span class="ident">LayerInputTypeChoice.text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -592,25 +583,7 @@ LayerOutputDatatypeUnion = tuple(
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Список возможных типов данных для <code>output</code>-слоя в виде строк</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LayerOutputDatatype(str, Enum):
-    &#34;&#34;&#34;
-    Список возможных типов данных для `output`-слоя в виде строк
-    &#34;&#34;&#34;
-
-    images = &#34;LayerOutputTypeImagesData&#34;
-    text = &#34;LayerOutputTypeTextData&#34;
-    audio = &#34;LayerOutputTypeAudioData&#34;
-    classification = &#34;LayerOutputTypeClassificationData&#34;
-    segmentation = &#34;LayerOutputTypeSegmentationData&#34;
-    text_segmentation = &#34;LayerOutputTypeTextSegmentationData&#34;
-    regression = &#34;LayerOutputTypeRegressionData&#34;
-    timeseries = &#34;LayerOutputTypeTimeseriesData&#34;</code></pre>
-</details>
+<div class="desc"><p>An enumeration.</p></div>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li>builtins.str</li>
@@ -618,35 +591,35 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.audio"><code class="name">var <span class="ident">audio</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Audio"><code class="name">var <span class="ident">LayerOutputTypeChoice.audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.classification"><code class="name">var <span class="ident">classification</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Classification"><code class="name">var <span class="ident">LayerOutputTypeChoice.classification</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.images"><code class="name">var <span class="ident">images</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Images"><code class="name">var <span class="ident">LayerOutputTypeChoice.images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.regression"><code class="name">var <span class="ident">regression</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Regression"><code class="name">var <span class="ident">LayerOutputTypeChoice.regression</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.segmentation"><code class="name">var <span class="ident">segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Segmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.segmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Text"><code class="name">var <span class="ident">LayerOutputTypeChoice.text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.text_segmentation"><code class="name">var <span class="ident">text_segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.TextSegmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.text_segmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.timeseries"><code class="name">var <span class="ident">timeseries</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Timeseries"><code class="name">var <span class="ident">LayerOutputTypeChoice.timeseries</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1211,10 +1184,10 @@ LayerOutputDatatypeUnion = tuple(
 <li>
 <h4><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype" href="#terra_ai.data.datasets.parameters.LayerInputDatatype">LayerInputDatatype</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.audio" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.audio">audio</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.dataframe" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.dataframe">dataframe</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.images" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.images">images</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.text" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.text">text</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.Audio" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.Audio">Audio</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.Dataframe" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.Dataframe">Dataframe</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.Images" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.Images">Images</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerInputDatatype.Text" href="#terra_ai.data.datasets.parameters.LayerInputDatatype.Text">Text</a></code></li>
 </ul>
 </li>
 <li>
@@ -1270,14 +1243,14 @@ LayerOutputDatatypeUnion = tuple(
 <li>
 <h4><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype">LayerOutputDatatype</a></code></h4>
 <ul class="two-column">
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.audio" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.audio">audio</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.classification" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.classification">classification</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.images" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.images">images</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.regression" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.regression">regression</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.segmentation" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.segmentation">segmentation</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.text" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.text">text</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.text_segmentation" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.text_segmentation">text_segmentation</a></code></li>
-<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.timeseries" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.timeseries">timeseries</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Audio" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Audio">Audio</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Classification" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Classification">Classification</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Images" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Images">Images</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Regression" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Regression">Regression</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Segmentation" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Segmentation">Segmentation</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Text" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Text">Text</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.TextSegmentation" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.TextSegmentation">TextSegmentation</a></code></li>
+<li><code><a title="terra_ai.data.datasets.parameters.LayerOutputDatatype.Timeseries" href="#terra_ai.data.datasets.parameters.LayerOutputDatatype.Timeseries">Timeseries</a></code></li>
 </ul>
 </li>
 <li>

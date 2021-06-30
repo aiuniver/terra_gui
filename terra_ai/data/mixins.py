@@ -7,7 +7,7 @@ import json
 from typing import List, Union, Optional
 from pydantic import BaseModel
 
-from .typing import AliasType
+from .types import AliasType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,

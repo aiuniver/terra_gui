@@ -2,9 +2,8 @@
 ## Тип слоя `ELU`
 """
 
-from pydantic.types import confloat
-
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1
 
 
 class ParametersMainData(BaseMixinData):
@@ -12,4 +11,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    alpha: confloat(ge=0, le=1) = 1
+    alpha: ConstrainedFloatValueGe0Le1 = 1

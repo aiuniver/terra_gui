@@ -32,9 +32,9 @@
 &#34;&#34;&#34;
 
 from typing import Optional
-from pydantic.types import confloat
 
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):
@@ -42,9 +42,9 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    max_value: Optional[confloat(ge=0)]
-    negative_slope: confloat(ge=0) = 0
-    threshold: confloat(ge=0) = 0</code></pre>
+    max_value: Optional[ConstrainedFloatValueGe0]
+    negative_slope: ConstrainedFloatValueGe0 = 0
+    threshold: ConstrainedFloatValueGe0 = 0</code></pre>
 </details>
 </section>
 <section>
@@ -69,9 +69,9 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    max_value: Optional[confloat(ge=0)]
-    negative_slope: confloat(ge=0) = 0
-    threshold: confloat(ge=0) = 0</code></pre>
+    max_value: Optional[ConstrainedFloatValueGe0]
+    negative_slope: ConstrainedFloatValueGe0 = 0
+    threshold: ConstrainedFloatValueGe0 = 0</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -81,15 +81,15 @@ class ParametersExtraData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.max_value"><code class="name">var <span class="ident">max_value</span> : Union[terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue, NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.max_value"><code class="name">var <span class="ident">max_value</span> : Union[<a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.negative_slope"><code class="name">var <span class="ident">negative_slope</span> : terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.negative_slope"><code class="name">var <span class="ident">negative_slope</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.threshold"><code class="name">var <span class="ident">threshold</span> : terra_ai.data.modeling.layers_parameters.ReLU.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.modeling.layers_parameters.ReLU.ParametersExtraData.threshold"><code class="name">var <span class="ident">threshold</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

@@ -36,7 +36,7 @@ import json
 from typing import List, Union, Optional
 from pydantic import BaseModel
 
-from .typing import AliasType
+from .types import AliasType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
@@ -337,13 +337,13 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.dataset.DatasetData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetData">DatasetData</a></li>
 <li><a title="terra_ai.data.datasets.dataset.DatasetsGroupData" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsGroupData">DatasetsGroupData</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagData" href="datasets/tags.html#terra_ai.data.datasets.tags.TagData">TagData</a></li>
-<li><a title="terra_ai.data.modeling.layers.LayerData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerData">LayerData</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelData" href="modeling/models.html#terra_ai.data.modeling.models.ModelData">ModelData</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelsGroupData" href="modeling/models.html#terra_ai.data.modeling.models.ModelsGroupData">ModelsGroupData</a></li>
+<li><a title="terra_ai.data.modeling.layer.LayerData" href="modeling/layer.html#terra_ai.data.modeling.layer.LayerData">LayerData</a></li>
+<li><a title="terra_ai.data.modeling.model.ModelData" href="modeling/model.html#terra_ai.data.modeling.model.ModelData">ModelData</a></li>
+<li><a title="terra_ai.data.modeling.model.ModelsGroupData" href="modeling/model.html#terra_ai.data.modeling.model.ModelsGroupData">ModelsGroupData</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.mixins.AliasMixinData.alias"><code class="name">var <span class="ident">alias</span> : <a title="terra_ai.data.typing.AliasType" href="typing.html#terra_ai.data.typing.AliasType">AliasType</a></code></dt>
+<dt id="terra_ai.data.mixins.AliasMixinData.alias"><code class="name">var <span class="ident">alias</span> : <a title="terra_ai.data.types.AliasType" href="types.html#terra_ai.data.types.AliasType">AliasType</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -415,8 +415,8 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.LayerOutputTypeTimeseriesData">LayerOutputTypeTimeseriesData</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MaskSegmentationData" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MaskSegmentationData">MaskSegmentationData</a></li>
 <li><a title="terra_ai.data.mixins.AliasMixinData" href="#terra_ai.data.mixins.AliasMixinData">AliasMixinData</a></li>
-<li><a title="terra_ai.data.modeling.layers.LayerBindData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerBindData">LayerBindData</a></li>
-<li><a title="terra_ai.data.modeling.layers.LayerShapeData" href="modeling/layers.html#terra_ai.data.modeling.layers.LayerShapeData">LayerShapeData</a></li>
+<li><a title="terra_ai.data.modeling.layer.LayerBindData" href="modeling/layer.html#terra_ai.data.modeling.layer.LayerBindData">LayerBindData</a></li>
+<li><a title="terra_ai.data.modeling.layer.LayerShapeData" href="modeling/layer.html#terra_ai.data.modeling.layer.LayerShapeData">LayerShapeData</a></li>
 <li><a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData" href="modeling/layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersExtraData">ParametersExtraData</a></li>
 <li><a title="terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData" href="modeling/layers_parameters/Activation.html#terra_ai.data.modeling.layers_parameters.Activation.ParametersMainData">ParametersMainData</a></li>
 <li><a title="terra_ai.data.modeling.layers_parameters.Add.ParametersExtraData" href="modeling/layers_parameters/Add.html#terra_ai.data.modeling.layers_parameters.Add.ParametersExtraData">ParametersExtraData</a></li>
@@ -503,9 +503,21 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData" href="modeling/layers_parameters/UpSampling2D.html#terra_ai.data.modeling.layers_parameters.UpSampling2D.ParametersMainData">ParametersMainData</a></li>
 <li><a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData" href="modeling/layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersExtraData">ParametersExtraData</a></li>
 <li><a title="terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData" href="modeling/layers_parameters/UpSampling3D.html#terra_ai.data.modeling.layers_parameters.UpSampling3D.ParametersMainData">ParametersMainData</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelDetailsData" href="modeling/models.html#terra_ai.data.modeling.models.ModelDetailsData">ModelDetailsData</a></li>
+<li><a title="terra_ai.data.modeling.model.ModelDetailsData" href="modeling/model.html#terra_ai.data.modeling.model.ModelDetailsData">ModelDetailsData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="modeling/parameters.html#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></li>
 <li><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="modeling/parameters.html#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.training.optimizer.OptimizerData" href="training/optimizer.html#terra_ai.data.training.optimizer.OptimizerData">OptimizerData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Adadelta.ParametersExtraData" href="training/optimizers_parameters/Adadelta.html#terra_ai.data.training.optimizers_parameters.Adadelta.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Adagrad.ParametersExtraData" href="training/optimizers_parameters/Adagrad.html#terra_ai.data.training.optimizers_parameters.Adagrad.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Adam.ParametersExtraData" href="training/optimizers_parameters/Adam.html#terra_ai.data.training.optimizers_parameters.Adam.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData" href="training/optimizers_parameters/Adamax.html#terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Ftrl.ParametersExtraData" href="training/optimizers_parameters/Ftrl.html#terra_ai.data.training.optimizers_parameters.Ftrl.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData" href="training/optimizers_parameters/Nadam.html#terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData" href="training/optimizers_parameters/RMSprop.html#terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData" href="training/optimizers_parameters/SGD.html#terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="training/parameters.html#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="training/parameters.html#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.training.train.TrainData" href="training/train.html#terra_ai.data.training.train.TrainData">TrainData</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -802,9 +814,9 @@ some_unique_list = SomeUniqueList(
 <li><a title="terra_ai.data.datasets.dataset.DatasetsList" href="datasets/dataset.html#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></li>
 <li><a title="terra_ai.data.datasets.parameters.MasksSegmentationList" href="datasets/parameters.html#terra_ai.data.datasets.parameters.MasksSegmentationList">MasksSegmentationList</a></li>
 <li><a title="terra_ai.data.datasets.tags.TagsList" href="datasets/tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></li>
-<li><a title="terra_ai.data.modeling.layers.LayersList" href="modeling/layers.html#terra_ai.data.modeling.layers.LayersList">LayersList</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelsGroupsList" href="modeling/models.html#terra_ai.data.modeling.models.ModelsGroupsList">ModelsGroupsList</a></li>
-<li><a title="terra_ai.data.modeling.models.ModelsList" href="modeling/models.html#terra_ai.data.modeling.models.ModelsList">ModelsList</a></li>
+<li><a title="terra_ai.data.modeling.layer.LayersList" href="modeling/layer.html#terra_ai.data.modeling.layer.LayersList">LayersList</a></li>
+<li><a title="terra_ai.data.modeling.model.ModelsGroupsList" href="modeling/model.html#terra_ai.data.modeling.model.ModelsGroupsList">ModelsGroupsList</a></li>
+<li><a title="terra_ai.data.modeling.model.ModelsList" href="modeling/model.html#terra_ai.data.modeling.model.ModelsList">ModelsList</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>

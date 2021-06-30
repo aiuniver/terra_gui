@@ -42,10 +42,10 @@ class LayerInputTypeChoice(str, Enum):
     Типы данных для `input`-слоев
     """
 
-    images = "images"
-    text = "text"
-    audio = "audio"
-    dataframe = "dataframe"
+    images = "Images"
+    text = "Text"
+    audio = "Audio"
+    dataframe = "Dataframe"
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -53,11 +53,11 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `output`-слоев
     """
 
-    images = "images"
-    text = "text"
-    audio = "audio"
-    classification = "classification"
-    segmentation = "segmentation"
-    text_segmentation = "text_segmentation"
-    regression = "regression"
-    timeseries = "timeseries"
+    images = "Images"
+    text = "Text"
+    audio = "Audio"
+    classification = "Classification"
+    segmentation = "Segmentation"
+    text_segmentation = "TextSegmentation"
+    regression = "Regression"
+    timeseries = "Timeseries"

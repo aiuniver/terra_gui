@@ -8,8 +8,16 @@ import binascii
 
 from typing import Type
 from pydantic import FilePath
+from pydantic.types import conint, confloat
 
 from .exceptions import AliasException, Base64Exception, FilePathExtensionException
+
+
+ConstrainedIntValueGe0 = conint(ge=0)
+ConstrainedFloatValueGe0 = confloat(ge=0)
+ConstrainedFloatValueGt0 = confloat(gt=0)
+ConstrainedFloatValueLe0 = confloat(le=0)
+ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
 
 
 class AliasType(str):

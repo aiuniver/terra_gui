@@ -146,11 +146,10 @@ from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
 from pydantic import validator, HttpUrl
-from pydantic.types import confloat
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..typing import confilepath, FilePathType
+from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
@@ -186,11 +185,11 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок"
     """
 
-    train: confloat(ge=0, le=1) = 0.6
+    train: ConstrainedFloatValueGe0Le1 = 0.6
     "Обучающая выборка"
-    validation: confloat(ge=0, le=1) = 0.3
+    validation: ConstrainedFloatValueGe0Le1 = 0.3
     "Валидационная выборка"
-    test: confloat(ge=0, le=1) = 0.1
+    test: ConstrainedFloatValueGe0Le1 = 0.1
     "Тестовая выборка"
 
     @property

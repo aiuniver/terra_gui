@@ -311,11 +311,10 @@ from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
 from pydantic import validator, HttpUrl
-from pydantic.types import confloat
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..typing import confilepath, FilePathType
+from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
@@ -351,11 +350,11 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
     &#34;&#34;&#34;
 
-    train: confloat(ge=0, le=1) = 0.6
+    train: ConstrainedFloatValueGe0Le1 = 0.6
     &#34;Обучающая выборка&#34;
-    validation: confloat(ge=0, le=1) = 0.3
+    validation: ConstrainedFloatValueGe0Le1 = 0.3
     &#34;Валидационная выборка&#34;
-    test: confloat(ge=0, le=1) = 0.1
+    test: ConstrainedFloatValueGe0Le1 = 0.1
     &#34;Тестовая выборка&#34;
 
     @property
@@ -644,11 +643,11 @@ class CreationData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок&#34;
     &#34;&#34;&#34;
 
-    train: confloat(ge=0, le=1) = 0.6
+    train: ConstrainedFloatValueGe0Le1 = 0.6
     &#34;Обучающая выборка&#34;
-    validation: confloat(ge=0, le=1) = 0.3
+    validation: ConstrainedFloatValueGe0Le1 = 0.3
     &#34;Валидационная выборка&#34;
-    test: confloat(ge=0, le=1) = 0.1
+    test: ConstrainedFloatValueGe0Le1 = 0.1
     &#34;Тестовая выборка&#34;
 
     @property
@@ -666,15 +665,15 @@ class CreationData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.test"><code class="name">var <span class="ident">test</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.test"><code class="name">var <span class="ident">test</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"><p>Тестовая выборка</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.train"><code class="name">var <span class="ident">train</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.train"><code class="name">var <span class="ident">train</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"><p>Обучающая выборка</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.validation"><code class="name">var <span class="ident">validation</span> : terra_ai.data.datasets.creation.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInfoPartData.validation"><code class="name">var <span class="ident">validation</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"><p>Валидационная выборка</p></div>
 </dd>
@@ -991,7 +990,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Режим загрузки исходных данных</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.SourceData.value"><code class="name">var <span class="ident">value</span> : Union[terra_ai.data.FilePathType, pydantic.networks.HttpUrl]</code></dt>
+<dt id="terra_ai.data.datasets.creation.SourceData.value"><code class="name">var <span class="ident">value</span> : Union[<a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a>, pydantic.networks.HttpUrl]</code></dt>
 <dd>
 <div class="desc"><p>Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима <code>mode</code></p></div>
 </dd>

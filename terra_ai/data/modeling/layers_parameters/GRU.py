@@ -3,9 +3,10 @@
 """
 
 from typing import Optional
-from pydantic.types import confloat, PositiveInt
+from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1
 from .extra import (
     ActivationChoice,
     InitializerChoice,
@@ -34,8 +35,8 @@ class ParametersExtraData(BaseMixinData):
     kernel_constraint: Optional[ConstraintChoice]
     recurrent_constraint: Optional[ConstraintChoice]
     bias_constraint: Optional[ConstraintChoice]
-    dropout: confloat(ge=0, le=1) = 0
-    recurrent_dropout: confloat(ge=0, le=1) = 0
+    dropout: ConstrainedFloatValueGe0Le1 = 0
+    recurrent_dropout: ConstrainedFloatValueGe0Le1 = 0
     go_backwards: bool = False
     stateful: bool = False
     unroll: bool = False

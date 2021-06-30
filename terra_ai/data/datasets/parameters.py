@@ -13,6 +13,8 @@ from pydantic.color import Color
 
 from ..mixins import BaseMixinData, UniqueListMixin
 from .extra import (
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
     LayerPrepareMethodChoice,
     LayerTaskTypeChoice,
     LayerNetChoice,
@@ -159,30 +161,18 @@ class LayerOutputTypeTimeseriesData(BaseMixinData):
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
 
 
-class LayerInputDatatype(str, Enum):
-    """
-    Список возможных типов данных для `input`-слоя в виде строк
-    """
-
-    images = "LayerInputTypeImagesData"
-    text = "LayerInputTypeTextData"
-    audio = "LayerInputTypeAudioData"
-    dataframe = "LayerInputTypeDataframeData"
-
-
-class LayerOutputDatatype(str, Enum):
-    """
-    Список возможных типов данных для `output`-слоя в виде строк
-    """
-
-    images = "LayerOutputTypeImagesData"
-    text = "LayerOutputTypeTextData"
-    audio = "LayerOutputTypeAudioData"
-    classification = "LayerOutputTypeClassificationData"
-    segmentation = "LayerOutputTypeSegmentationData"
-    text_segmentation = "LayerOutputTypeTextSegmentationData"
-    regression = "LayerOutputTypeRegressionData"
-    timeseries = "LayerOutputTypeTimeseriesData"
+LayerInputDatatype = Enum(
+    "LayerInputDatatype",
+    dict(
+        map(
+            lambda item: (item, f"LayerInputType{item}Data"), list(LayerInputTypeChoice)
+        )
+    ),
+    type=str,
+)
+"""
+Список возможных типов параметров `input`-слоя
+"""
 
 
 LayerInputDatatypeUnion = tuple(
@@ -193,6 +183,21 @@ LayerInputDatatypeUnion = tuple(
 )
 """
 Список возможных типов данных для `input`-слоя в виде классов
+"""
+
+
+LayerOutputDatatype = Enum(
+    "LayerOutputDatatype",
+    dict(
+        map(
+            lambda item: (item, f"LayerOutputType{item}Data"),
+            list(LayerOutputTypeChoice),
+        )
+    ),
+    type=str,
+)
+"""
+Список возможных типов параметров `output`-слоя
 """
 
 

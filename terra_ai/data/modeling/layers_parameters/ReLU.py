@@ -3,9 +3,9 @@
 """
 
 from typing import Optional
-from pydantic.types import confloat
 
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):
@@ -13,6 +13,6 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    max_value: Optional[confloat(ge=0)]
-    negative_slope: confloat(ge=0) = 0
-    threshold: confloat(ge=0) = 0
+    max_value: Optional[ConstrainedFloatValueGe0]
+    negative_slope: ConstrainedFloatValueGe0 = 0
+    threshold: ConstrainedFloatValueGe0 = 0

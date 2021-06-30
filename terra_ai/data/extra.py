@@ -4,7 +4,8 @@
 
 from typing import Optional, Tuple
 from pydantic import validator, BaseModel
-from pydantic.types import conint, confloat
+
+from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
 
 BYTES_UNITS = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
@@ -15,9 +16,9 @@ class FileSizeData(BaseModel):
     Вес файла
     """
 
-    value: conint(ge=0)
+    value: ConstrainedIntValueGe0
     "Значение веса: `324133875`"
-    short: Optional[confloat(ge=0)]
+    short: Optional[ConstrainedFloatValueGe0]
     "Короткое значение веса: `309.1181516647339`"
     unit: Optional[str]
     "Единицы измерения: `Мб`"

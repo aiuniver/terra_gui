@@ -3,9 +3,9 @@
 """
 
 from typing import Optional
-from pydantic.types import confloat
 
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1, ConstrainedFloatValueGt0
 from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 
@@ -15,8 +15,8 @@ class ParametersMainData(BaseMixinData):
 
 class ParametersExtraData(BaseMixinData):
     axis: int = -1
-    momentum: confloat(ge=0, le=1) = 0.99
-    epsilon: confloat(gt=0) = 0.001
+    momentum: ConstrainedFloatValueGe0Le1 = 0.99
+    epsilon: ConstrainedFloatValueGt0 = 0.001
     center: bool = True
     scale: bool = True
     beta_initializer: InitializerChoice = InitializerChoice.zeros

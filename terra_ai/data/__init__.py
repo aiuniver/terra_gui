@@ -2,4 +2,4 @@
 ## Структура данных проекта
 """
 
-from . import exceptions, extra, mixins, typing
+from . import exceptions, extra, mixins, types

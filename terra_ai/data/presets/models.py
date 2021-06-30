@@ -2,7 +2,7 @@
 Предустановки моделей
 """
 
-from ..modeling.models import ModelsGroupsList
+from ..modeling.model import ModelsGroupsList
 
 
 groups = ModelsGroupsList(
