@@ -1,12 +1,12 @@
 import copy
 import sys
 from dataclasses import dataclass
-
+# from terra_ai import customLayers
 # import keras_contrib
 import tensorflow
 
-__version__ = 0.023
-
+# import keras_contrib
+import tensorflow
 
 def check_datatype(in_shape):
     dim = len(in_shape)
@@ -28,7 +28,6 @@ def check_datatype(in_shape):
         msg = f"Error: More than 6 dimensions arrays is not supported! input_shape = {in_shape}"
         sys.exit(msg)
     return result
-
 
 def get_def_parameters_dict(layer_name):
     new_dict = {}
@@ -2776,7 +2775,7 @@ class PlanLinkLibrary:
         # "AlphaDropout": tensorflow.keras.layers,
         # "MultiHeadAttention": tensorflow.keras.layers,
         # "AdditiveAttention": tensorflow.keras.layers,
-        # "InstanceNormalization": keras_contrib.layers.normalization.instancenormalization, # pip install keras_contrib
+        "InstanceNormalization": customLayers,
         "Normalization": tensorflow.keras.layers.experimental.preprocessing,
 
         # Recurrent layers
@@ -2862,6 +2861,7 @@ class PlanLinkLibrary:
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
         'Xception': tensorflow.keras.applications.xception,
+        'CustomUNETBlock': customLayers,
     }
 
 
@@ -2940,7 +2940,7 @@ class GUILayersDef:
             # 12: "MultiHeadAttention",
             # 13: "Attention",
             # 14: "AdditiveAttention"
-            # 15: "InstanceNormalization",
+            15: "InstanceNormalization",
             16: "Normalization",
         },
         # Recurrent layers
@@ -3027,6 +3027,7 @@ class GUILayersDef:
             26: 'VGG16',
             #  27: 'VGG19',
             28: 'Xception',
+            29: 'CustomUNETBlock',
         },
         # Custom_Block
         12: {
@@ -3079,13 +3080,13 @@ class GUILayersDef:
     axis_lh = (0, 1)
 
     tf_2_5_0_layers = [
-        'Activation',  # added
+        'Activation',               # added
         # 'ActivityRegularization', # added
         'Add',
         # 'AdditiveAttention',      # added
         # 'AlphaDropout',           # added
-        # 'Attention',              # added
-        'Average',  # added
+        'Attention',                # added
+        'Average',                  # added
         'AveragePooling1D',
         'AveragePooling2D',
         # 'AveragePooling3D',       # added
@@ -3142,7 +3143,7 @@ class GUILayersDef:
         'PReLU',
         # 'Permute',                # added
         # 'RNN',                    # added
-        'ReLU',  # added
+        'ReLU',                     # added
         'RepeatVector',
         'Reshape',
         'SeparableConv1D',
@@ -3162,7 +3163,7 @@ class GUILayersDef:
         # 'UpSampling3D',           # added
         # 'Wrapper',
         # 'ZeroPadding1D',          # added
-        'ZeroPadding2D',  # added
+        'ZeroPadding2D',            # added
         # 'ZeroPadding3D',          # added
     ]
 
@@ -3579,13 +3580,13 @@ class GUILayersDef:
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "bias_regularizer": {
+                "pointwise_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "activity_regularizer": {
+                "bias_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
@@ -3595,7 +3596,7 @@ class GUILayersDef:
                     "type": "str",
                     "default": None,
                     "list": True,
-                    "available": constraint_lh,
+                    "available": regularizer_lh,
                 },
                 "pointwise_constraint": {
                     "type": "str",
@@ -4417,24 +4418,16 @@ class GUILayersDef:
         #             "type": "bool",
         #             "default": False
         #     }
-        # }
+        # },
         "Attention": {
-            "main": {},
-            'extra': {
-                "use_scale": {
-                    "type": "bool",
-                    "default": False
-                },
-                "causal": {
-                    "type": "bool",
-                    "default": False
-                },
-                "dropout": {
-                    "type": "float",
-                    "default": 0.1
-                },
-            }
-        },
+                "main": {},
+                'extra': {
+                    "use_scale": {
+                        "type": "bool",
+                        "default": False
+                    },
+                }
+            },
 
         # Activations Layers
         # "sigmoid": {
@@ -4558,7 +4551,7 @@ class GUILayersDef:
                     "type": "float",
                     "default": 0.1
                 }
-            },
+            },          
             'extra': {
                 "noise_shape": {
                     "type": "tensor",
@@ -4867,6 +4860,7 @@ class GUILayersDef:
         #         }
         #     }
         # },
+        #
         # "AdditiveAttention": {
         #     "main": {},
         #     'extra': {
@@ -4876,63 +4870,63 @@ class GUILayersDef:
         #         },
         #     }
         # },
-        # "InstanceNormalization": {
-        #     "main": {},
-        #     'extra': {
-        #         "axis": {
-        #             "type": "int",
-        #             "default": -1
-        #         },
-        #         "epsilon": {
-        #             "type": "float",
-        #             "default": 0.001
-        #         },
-        #         "center": {
-        #             "type": "bool",
-        #             "default": True,
-        #         },
-        #         "scale": {
-        #             "type": "bool",
-        #             "default": True,
-        #         },
-        #         "beta_initializer": {
-        #             "type": "str",
-        #             "default": "zeros",
-        #             "list": True,
-        #             "available": initializer_lh,
-        #         },
-        #         "gamma_initializer": {
-        #             "type": "str",
-        #             "default": "ones",
-        #             "list": True,
-        #             "available": initializer_lh,
-        #         },
-        #         "beta_regularizer": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": regularizer_lh,
-        #         },
-        #         "gamma_regularizer": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": regularizer_lh,
-        #         },
-        #         "beta_constraint": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": constraint_lh,
-        #         },
-        #         "gamma_constraint": {
-        #             "type": "str",
-        #             "default": None,
-        #             "list": True,
-        #             "available": constraint_lh,
-        #         },
-        #     }
-        # },
+        "InstanceNormalization": {
+            "main": {},
+            'extra': {
+                "axis": {
+                    "type": "int",
+                    "default": -1
+                },
+                "epsilon": {
+                    "type": "float",
+                    "default": 0.001
+                },
+                "center": {
+                    "type": "bool",
+                    "default": True,
+                },
+                "scale": {
+                    "type": "bool",
+                    "default": True,
+                },
+                "beta_initializer": {
+                    "type": "str",
+                    "default": "zeros",
+                    "list": True,
+                    "available": initializer_lh,
+                },
+                "gamma_initializer": {
+                    "type": "str",
+                    "default": "ones",
+                    "list": True,
+                    "available": initializer_lh,
+                },
+                "beta_regularizer": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": regularizer_lh,
+                },
+                "gamma_regularizer": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": regularizer_lh,
+                },
+                "beta_constraint": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": constraint_lh,
+                },
+                "gamma_constraint": {
+                    "type": "str",
+                    "default": None,
+                    "list": True,
+                    "available": constraint_lh,
+                },
+            }
+        },
         "Normalization": {
             'main': {},
             'extra': {
@@ -6235,6 +6229,21 @@ class GUILayersDef:
                 },
             }
         },
+        'CustomUNETBlock': {
+            'main': {
+                "filters": {
+                    "type": "int",
+                    "default": 32
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'relu',
+                    "list": True,
+                    "available": activation_lh,
+                }
+            },
+            'extra': {}
+        },
     }
 
     block_params = {
@@ -6322,21 +6331,6 @@ if __name__ == "__main__":
             print(f"'{k}'", ': ', f"'{v}'", ',', sep='')
         else:
             print(f"'{k}'", ': ', v, ',', sep='')
-
-    # plan = PlanLinkLibrary.custom_block_plan['ConvBNDr']
-    # print("\nplan\n", plan)
-    #
-    # params_to_set = {'L1_Conv2D_filters': 64,
-    #                  'L1_Conv2D_kernel_size': (5, 5),
-    #                  'L1_Conv2D_strides': (3, 3),
-    #                  'L1_Conv2D_padding': 'same',
-    #                  'L1_Conv2D_activation': 'sigmoid',
-    #                  'L3_Dropout_rate': 0.5}
-    #
-    # update_plan = set_block_params_to_plan(plan, params_to_set)
-    # print("\nupdate_plan\n", update_plan)
-    #
-    # layers_params = GUILayersDef.layers_params
     print(LayersDef.custom_block_plan.get(layer, None))
     # print(layers_params.get("Conv2DBNDrop"))
     pass
