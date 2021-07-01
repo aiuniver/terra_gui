@@ -1,17 +1,15 @@
 <template>
-  <div>
-    <Filters />
-    <Dataset />
-    <Params />
-    <Footer />
-  </div>
+  <main class="page-datasets">
+    <div class="container">
+      <Dataset />
+      <Params />
+    </div>
+  </main>
 </template>
 
 <script>
-import Filters from '@/components/datasets/Filters.vue'
-import Dataset from '@/components/datasets/Dataset.vue'
-import Params from '@/components/datasets/Params.vue'
-import Footer from '@/components/app/Footer.vue'
+import Dataset from "@/components/datasets/Dataset.vue";
+import Params from "@/components/datasets/Params.vue";
 
 import { mapGetters } from "vuex";
 // import Card from "@/components/dataset/Card";
@@ -20,10 +18,9 @@ import { mapGetters } from "vuex";
 export default {
   name: "Datasets",
   components: {
-    Filters,
+    // Filters,
     Dataset,
     Params,
-    Footer,
   },
   data: () => ({
     modalDel: false,

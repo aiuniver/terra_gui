@@ -2,15 +2,8 @@
   <div>
     <Header />
     <Nav />
-    <main class="page-datasets">
-      <div class="container">
-        <div class="board">
-          <div class="wrapper">
-            <router-view></router-view>
-          </div>
-        </div>
-      </div>
-    </main>
+    <router-view></router-view>
+    <Footer />
   </div>
 </template>
 
@@ -19,7 +12,7 @@ import Header from "@/components/app/Header.vue";
 import Nav from "@/components/app/Nav.vue";
 import { mapGetters } from "vuex";
 // import Message from "@/components/app/Message";
-// import Footer from "@/components/app/Footer";
+import Footer from "@/components/app/Footer";
 // import Bar from "@/components/app/Bar";
 
 export default {
@@ -27,6 +20,7 @@ export default {
   components: {
     Header,
     Nav,
+    Footer
   },
   computed: {
     ...mapGetters({

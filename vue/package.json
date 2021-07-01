@@ -13,6 +13,7 @@
     "form-serialize": "^0.7.2",
     "vue": "^2.6.14",
     "vue-axios": "^3.2.4",
+    "vue-custom-scrollbar": "^1.4.1",
     "vue-router": "^3.5.1",
     "vue-simple-flowchart": "^0.1.8",
     "vuetify": "^2.5.4",
