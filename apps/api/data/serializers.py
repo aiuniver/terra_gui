@@ -15,8 +15,10 @@ class PrepareDatasetSerializer(serializers.Serializer):
 class RemoveDatasetSerializer(serializers.Serializer):
     name = serializers.CharField()
 
+
 class RemoveModelSerializer(serializers.Serializer):
     name = serializers.CharField()
+
 
 class GetAutoColorsSerializer(serializers.Serializer):
     name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -47,6 +49,7 @@ class SetModelSerializer(serializers.Serializer):
     reset_training = serializers.BooleanField(required=False, default=False)
     schema = serializers.ListSerializer(
         required=False,
+        allow_null=True,
         default=[],
         child=serializers.ListSerializer(
             required=False,
