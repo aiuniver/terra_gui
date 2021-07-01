@@ -2,13 +2,12 @@
 ## Тип слоя `LeakyReLU`
 """
 
-from pydantic.types import confloat
-
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):
-    alpha: confloat(ge=0) = 0.3
+    alpha: ConstrainedFloatValueGe0 = 0.3
 
 
 class ParametersExtraData(BaseMixinData):

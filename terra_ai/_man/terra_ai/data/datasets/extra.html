@@ -57,13 +57,13 @@ class LayerTaskTypeChoice(str, Enum):
 
 
 class LayerNetChoice(str, Enum):
-    Convolutional = &#34;Convolutional&#34;
-    Linear = &#34;Linear&#34;
+    convolutional = &#34;convolutional&#34;
+    linear = &#34;linear&#34;
 
 
 class LayerScalerChoice(str, Enum):
-    NoScaler = &#34;NoScaler&#34;
-    MinMaxScaler = &#34;MinMaxScaler&#34;
+    no_scaler = &#34;no_scaler&#34;
+    min_max_scaler = &#34;min_max_scaler&#34;
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -71,10 +71,10 @@ class LayerInputTypeChoice(str, Enum):
     Типы данных для `input`-слоев
     &#34;&#34;&#34;
 
-    images = &#34;images&#34;
-    text = &#34;text&#34;
-    audio = &#34;audio&#34;
-    dataframe = &#34;dataframe&#34;
+    Images = &#34;Images&#34;
+    Text = &#34;Text&#34;
+    Audio = &#34;Audio&#34;
+    Dataframe = &#34;Dataframe&#34;
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -82,14 +82,14 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `output`-слоев
     &#34;&#34;&#34;
 
-    images = &#34;images&#34;
-    text = &#34;text&#34;
-    audio = &#34;audio&#34;
-    classification = &#34;classification&#34;
-    segmentation = &#34;segmentation&#34;
-    text_segmentation = &#34;text_segmentation&#34;
-    regression = &#34;regression&#34;
-    timeseries = &#34;timeseries&#34;</code></pre>
+    Images = &#34;Images&#34;
+    Text = &#34;Text&#34;
+    Audio = &#34;Audio&#34;
+    Classification = &#34;Classification&#34;
+    Segmentation = &#34;Segmentation&#34;
+    TextSegmentation = &#34;TextSegmentation&#34;
+    Regression = &#34;Regression&#34;
+    Timeseries = &#34;Timeseries&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -116,10 +116,10 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `input`-слоев
     &#34;&#34;&#34;
 
-    images = &#34;images&#34;
-    text = &#34;text&#34;
-    audio = &#34;audio&#34;
-    dataframe = &#34;dataframe&#34;</code></pre>
+    Images = &#34;Images&#34;
+    Text = &#34;Text&#34;
+    Audio = &#34;Audio&#34;
+    Dataframe = &#34;Dataframe&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -128,19 +128,19 @@ class LayerOutputTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.audio"><code class="name">var <span class="ident">audio</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.Audio"><code class="name">var <span class="ident">Audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.dataframe"><code class="name">var <span class="ident">dataframe</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.Dataframe"><code class="name">var <span class="ident">Dataframe</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.images"><code class="name">var <span class="ident">images</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.Images"><code class="name">var <span class="ident">Images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerInputTypeChoice.Text"><code class="name">var <span class="ident">Text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -157,8 +157,8 @@ class LayerOutputTypeChoice(str, Enum):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerNetChoice(str, Enum):
-    Convolutional = &#34;Convolutional&#34;
-    Linear = &#34;Linear&#34;</code></pre>
+    convolutional = &#34;convolutional&#34;
+    linear = &#34;linear&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -167,11 +167,11 @@ class LayerOutputTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.extra.LayerNetChoice.Convolutional"><code class="name">var <span class="ident">Convolutional</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerNetChoice.convolutional"><code class="name">var <span class="ident">convolutional</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerNetChoice.Linear"><code class="name">var <span class="ident">Linear</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerNetChoice.linear"><code class="name">var <span class="ident">linear</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -192,14 +192,14 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `output`-слоев
     &#34;&#34;&#34;
 
-    images = &#34;images&#34;
-    text = &#34;text&#34;
-    audio = &#34;audio&#34;
-    classification = &#34;classification&#34;
-    segmentation = &#34;segmentation&#34;
-    text_segmentation = &#34;text_segmentation&#34;
-    regression = &#34;regression&#34;
-    timeseries = &#34;timeseries&#34;</code></pre>
+    Images = &#34;Images&#34;
+    Text = &#34;Text&#34;
+    Audio = &#34;Audio&#34;
+    Classification = &#34;Classification&#34;
+    Segmentation = &#34;Segmentation&#34;
+    TextSegmentation = &#34;TextSegmentation&#34;
+    Regression = &#34;Regression&#34;
+    Timeseries = &#34;Timeseries&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -208,35 +208,35 @@ class LayerOutputTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.audio"><code class="name">var <span class="ident">audio</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Audio"><code class="name">var <span class="ident">Audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.classification"><code class="name">var <span class="ident">classification</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Classification"><code class="name">var <span class="ident">Classification</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.images"><code class="name">var <span class="ident">images</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Images"><code class="name">var <span class="ident">Images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.regression"><code class="name">var <span class="ident">regression</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Regression"><code class="name">var <span class="ident">Regression</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.segmentation"><code class="name">var <span class="ident">segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Segmentation"><code class="name">var <span class="ident">Segmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Text"><code class="name">var <span class="ident">Text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.text_segmentation"><code class="name">var <span class="ident">text_segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.TextSegmentation"><code class="name">var <span class="ident">TextSegmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.timeseries"><code class="name">var <span class="ident">timeseries</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Timeseries"><code class="name">var <span class="ident">Timeseries</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -289,8 +289,8 @@ class LayerOutputTypeChoice(str, Enum):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerScalerChoice(str, Enum):
-    NoScaler = &#34;NoScaler&#34;
-    MinMaxScaler = &#34;MinMaxScaler&#34;</code></pre>
+    no_scaler = &#34;no_scaler&#34;
+    min_max_scaler = &#34;min_max_scaler&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -299,11 +299,11 @@ class LayerOutputTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.extra.LayerScalerChoice.MinMaxScaler"><code class="name">var <span class="ident">MinMaxScaler</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerScalerChoice.min_max_scaler"><code class="name">var <span class="ident">min_max_scaler</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.extra.LayerScalerChoice.NoScaler"><code class="name">var <span class="ident">NoScaler</span></code></dt>
+<dt id="terra_ai.data.datasets.extra.LayerScalerChoice.no_scaler"><code class="name">var <span class="ident">no_scaler</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -398,30 +398,30 @@ class LayerOutputTypeChoice(str, Enum):
 <li>
 <h4><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice">LayerInputTypeChoice</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.audio" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.audio">audio</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.dataframe" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.dataframe">dataframe</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.images" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.images">images</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.text" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.text">text</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.Audio" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.Audio">Audio</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.Dataframe" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.Dataframe">Dataframe</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.Images" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.Images">Images</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerInputTypeChoice.Text" href="#terra_ai.data.datasets.extra.LayerInputTypeChoice.Text">Text</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.extra.LayerNetChoice" href="#terra_ai.data.datasets.extra.LayerNetChoice">LayerNetChoice</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.datasets.extra.LayerNetChoice.Convolutional" href="#terra_ai.data.datasets.extra.LayerNetChoice.Convolutional">Convolutional</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerNetChoice.Linear" href="#terra_ai.data.datasets.extra.LayerNetChoice.Linear">Linear</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerNetChoice.convolutional" href="#terra_ai.data.datasets.extra.LayerNetChoice.convolutional">convolutional</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerNetChoice.linear" href="#terra_ai.data.datasets.extra.LayerNetChoice.linear">linear</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice">LayerOutputTypeChoice</a></code></h4>
 <ul class="two-column">
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.audio" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.audio">audio</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.classification" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.classification">classification</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.images" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.images">images</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.regression" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.regression">regression</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.segmentation" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.segmentation">segmentation</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.text" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.text">text</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.text_segmentation" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.text_segmentation">text_segmentation</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.timeseries" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.timeseries">timeseries</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Audio" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Audio">Audio</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Classification" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Classification">Classification</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Images" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Images">Images</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Regression" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Regression">Regression</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Segmentation" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Segmentation">Segmentation</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Text" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Text">Text</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.TextSegmentation" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.TextSegmentation">TextSegmentation</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerOutputTypeChoice.Timeseries" href="#terra_ai.data.datasets.extra.LayerOutputTypeChoice.Timeseries">Timeseries</a></code></li>
 </ul>
 </li>
 <li>
@@ -435,8 +435,8 @@ class LayerOutputTypeChoice(str, Enum):
 <li>
 <h4><code><a title="terra_ai.data.datasets.extra.LayerScalerChoice" href="#terra_ai.data.datasets.extra.LayerScalerChoice">LayerScalerChoice</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.datasets.extra.LayerScalerChoice.MinMaxScaler" href="#terra_ai.data.datasets.extra.LayerScalerChoice.MinMaxScaler">MinMaxScaler</a></code></li>
-<li><code><a title="terra_ai.data.datasets.extra.LayerScalerChoice.NoScaler" href="#terra_ai.data.datasets.extra.LayerScalerChoice.NoScaler">NoScaler</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerScalerChoice.min_max_scaler" href="#terra_ai.data.datasets.extra.LayerScalerChoice.min_max_scaler">min_max_scaler</a></code></li>
+<li><code><a title="terra_ai.data.datasets.extra.LayerScalerChoice.no_scaler" href="#terra_ai.data.datasets.extra.LayerScalerChoice.no_scaler">no_scaler</a></code></li>
 </ul>
 </li>
 <li>

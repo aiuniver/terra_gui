@@ -31,13 +31,12 @@
 ## Тип слоя `LeakyReLU`
 &#34;&#34;&#34;
 
-from pydantic.types import confloat
-
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):
-    alpha: confloat(ge=0) = 0.3
+    alpha: ConstrainedFloatValueGe0 = 0.3
 
 
 class ParametersExtraData(BaseMixinData):
@@ -96,7 +95,7 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    alpha: confloat(ge=0) = 0.3</code></pre>
+    alpha: ConstrainedFloatValueGe0 = 0.3</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -106,7 +105,7 @@ class ParametersExtraData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersMainData.alpha"><code class="name">var <span class="ident">alpha</span> : terra_ai.data.modeling.layers_parameters.LeakyReLU.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.modeling.layers_parameters.LeakyReLU.ParametersMainData.alpha"><code class="name">var <span class="ident">alpha</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

@@ -45,9 +45,17 @@ class ParametersTypeDefaultData(BaseMixinData):
     pass
 
 
+class ParametersTypeMainDefaultData(ParametersTypeDefaultData):
+    pass
+
+
+class ParametersTypeExtraDefaultData(ParametersTypeDefaultData):
+    pass
+
+
 class ParametersTypeMixinData(BaseMixinData):
-    main: ParametersTypeDefaultData = ParametersTypeDefaultData()
-    extra: ParametersTypeDefaultData = ParametersTypeDefaultData()
+    main: ParametersTypeMainDefaultData = ParametersTypeMainDefaultData()
+    extra: ParametersTypeExtraDefaultData = ParametersTypeExtraDefaultData()
 
 
 class ParametersTypeInputData(ParametersTypeMixinData):
@@ -1178,6 +1186,11 @@ ParametersTypeUnion = tuple(
 <li>pydantic.main.BaseModel</li>
 <li>pydantic.utils.Representation</li>
 </ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData">ParametersTypeExtraDefaultData</a></li>
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData">ParametersTypeMainDefaultData</a></li>
+</ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
@@ -1404,6 +1417,37 @@ ParametersTypeUnion = tuple(
 <li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData" href="#terra_ai.data.modeling.parameters.ParametersTypeMixinData">ParametersTypeMixinData</a></b></code>:
 <ul class="hlist">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeExtraDefaultData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeExtraDefaultData(ParametersTypeDefaultData):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
 </ul>
 </li>
 </ul>
@@ -1905,6 +1949,37 @@ ParametersTypeUnion = tuple(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData"><code class="flex name class">
+<span>class <span class="ident">ParametersTypeMainDefaultData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ParametersTypeMainDefaultData(ParametersTypeDefaultData):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData"><code class="flex name class">
 <span>class <span class="ident">ParametersTypeMaxPool1DData</span></span>
 <span>(</span><span>**data)</span>
@@ -2047,8 +2122,8 @@ ParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersTypeMixinData(BaseMixinData):
-    main: ParametersTypeDefaultData = ParametersTypeDefaultData()
-    extra: ParametersTypeDefaultData = ParametersTypeDefaultData()</code></pre>
+    main: ParametersTypeMainDefaultData = ParametersTypeMainDefaultData()
+    extra: ParametersTypeExtraDefaultData = ParametersTypeExtraDefaultData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2104,11 +2179,11 @@ ParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMixinData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMixinData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData">ParametersTypeExtraDefaultData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.parameters.ParametersTypeMixinData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.parameters.ParametersTypeDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeDefaultData">ParametersTypeDefaultData</a></code></dt>
+<dt id="terra_ai.data.modeling.parameters.ParametersTypeMixinData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData">ParametersTypeMainDefaultData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2806,6 +2881,9 @@ ParametersTypeUnion = tuple(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeExtraDefaultData">ParametersTypeExtraDefaultData</a></code></h4>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeFlattenData" href="#terra_ai.data.modeling.parameters.ParametersTypeFlattenData">ParametersTypeFlattenData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeFlattenData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeFlattenData.extra">extra</a></code></li>
@@ -2881,6 +2959,9 @@ ParametersTypeUnion = tuple(
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData.extra" href="#terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData.main" href="#terra_ai.data.modeling.parameters.ParametersTypeLeakyReLUData.main">main</a></code></li>
 </ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData" href="#terra_ai.data.modeling.parameters.ParametersTypeMainDefaultData">ParametersTypeMainDefaultData</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData" href="#terra_ai.data.modeling.parameters.ParametersTypeMaxPool1DData">ParametersTypeMaxPool1DData</a></code></h4>

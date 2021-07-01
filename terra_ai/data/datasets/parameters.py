@@ -13,6 +13,8 @@ from pydantic.color import Color
 
 from ..mixins import BaseMixinData, UniqueListMixin
 from .extra import (
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
     LayerPrepareMethodChoice,
     LayerTaskTypeChoice,
     LayerNetChoice,
@@ -24,8 +26,8 @@ class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerInputTypeTextData(BaseMixinData):
@@ -51,7 +53,7 @@ class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -67,15 +69,15 @@ class LayerInputTypeDataframeData(BaseMixinData):
     separator: Optional[str]
     encoding: str = "utf-8"
     x_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeTextData(BaseMixinData):
@@ -101,7 +103,7 @@ class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -155,39 +157,27 @@ class LayerOutputTypeRegressionData(BaseMixinData):
 class LayerOutputTypeTimeseriesData(BaseMixinData):
     length: PositiveInt
     y_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
 
 
-class LayerInputDatatype(str, Enum):
-    """
-    Список возможных типов данных для `input`-слоя в виде строк
-    """
-
-    images = "LayerInputTypeImagesData"
-    text = "LayerInputTypeTextData"
-    audio = "LayerInputTypeAudioData"
-    dataframe = "LayerInputTypeDataframeData"
-
-
-class LayerOutputDatatype(str, Enum):
-    """
-    Список возможных типов данных для `output`-слоя в виде строк
-    """
-
-    images = "LayerOutputTypeImagesData"
-    text = "LayerOutputTypeTextData"
-    audio = "LayerOutputTypeAudioData"
-    classification = "LayerOutputTypeClassificationData"
-    segmentation = "LayerOutputTypeSegmentationData"
-    text_segmentation = "LayerOutputTypeTextSegmentationData"
-    regression = "LayerOutputTypeRegressionData"
-    timeseries = "LayerOutputTypeTimeseriesData"
+LayerInputDatatype = Enum(
+    "LayerInputDatatype",
+    dict(
+        map(
+            lambda item: (item, f"LayerInputType{item}Data"), list(LayerInputTypeChoice)
+        )
+    ),
+    type=str,
+)
+"""
+Список возможных типов параметров `input`-слоя
+"""
 
 
 LayerInputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerInputDatatype,
     )
 )
@@ -196,9 +186,24 @@ LayerInputDatatypeUnion = tuple(
 """
 
 
+LayerOutputDatatype = Enum(
+    "LayerOutputDatatype",
+    dict(
+        map(
+            lambda item: (item, f"LayerOutputType{item}Data"),
+            list(LayerOutputTypeChoice),
+        )
+    ),
+    type=str,
+)
+"""
+Список возможных типов параметров `output`-слоя
+"""
+
+
 LayerOutputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerOutputDatatype,
     )
 )

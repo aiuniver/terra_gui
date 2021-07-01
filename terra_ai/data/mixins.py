@@ -4,10 +4,10 @@
 
 import json
 
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Any
 from pydantic import BaseModel
 
-from .typing import AliasType
+from .types import AliasType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
@@ -111,7 +111,7 @@ class UniqueListMixin(List):
             return []
         if self.Meta.identifier not in self[0].schema().get("properties").keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
-        return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+        return list(map(lambda item: getattr(item, self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
         if data is None:
@@ -134,7 +134,7 @@ class UniqueListMixin(List):
                 self.append(item)
         return self
 
-    def get(self, name: str) -> Optional[Meta.source]:
+    def get(self, name: Any) -> Optional[Meta.source]:
         """
         Получение элемента по уникальному идентификатору
         ```

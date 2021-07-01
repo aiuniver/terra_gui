@@ -32,13 +32,14 @@
 &#34;&#34;&#34;
 
 from typing import Optional
-from pydantic.types import confloat, PositiveInt
+from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1
 
 
 class ParametersMainData(BaseMixinData):
-    rate: confloat(ge=0, le=1)
+    rate: ConstrainedFloatValueGe0Le1
 
 
 class ParametersExtraData(BaseMixinData):
@@ -110,7 +111,7 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    rate: confloat(ge=0, le=1)</code></pre>
+    rate: ConstrainedFloatValueGe0Le1</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -120,7 +121,7 @@ class ParametersExtraData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers_parameters.Dropout.ParametersMainData.rate"><code class="name">var <span class="ident">rate</span> : terra_ai.data.modeling.layers_parameters.Dropout.ConstrainedFloatValue</code></dt>
+<dt id="terra_ai.data.modeling.layers_parameters.Dropout.ParametersMainData.rate"><code class="name">var <span class="ident">rate</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

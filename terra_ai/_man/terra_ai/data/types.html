@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>terra_ai.data.typing API documentation</title>
+<title>terra_ai.data.types API documentation</title>
 <meta name="description" content="Типы полей" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>terra_ai.data.typing</code></h1>
+<h1 class="title">Module <code>terra_ai.data.types</code></h1>
 </header>
 <section id="section-intro">
 <h2 id="_1">Типы полей</h2>
@@ -37,8 +37,15 @@ import binascii
 
 from typing import Type
 from pydantic import FilePath
+from pydantic.types import conint, confloat
 
 from .exceptions import AliasException, Base64Exception, FilePathExtensionException
+
+
+ConstrainedIntValueGe0 = conint(ge=0)
+ConstrainedFloatValueGe0 = confloat(ge=0)
+ConstrainedFloatValueLe0 = confloat(le=0)
+ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
 
 
 class AliasType(str):
@@ -90,7 +97,7 @@ def confilepath(*, ext: str) -&gt; Type[FilePath]:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="terra_ai.data.typing.confilepath"><code class="name flex">
+<dt id="terra_ai.data.types.confilepath"><code class="name flex">
 <span>def <span class="ident">confilepath</span></span>(<span>*, ext: str) ‑> Type[pydantic.types.FilePath]</span>
 </code></dt>
 <dd>
@@ -109,7 +116,7 @@ def confilepath(*, ext: str) -&gt; Type[FilePath]:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.typing.AliasType"><code class="flex name class">
+<dt id="terra_ai.data.types.AliasType"><code class="flex name class">
 <span>class <span class="ident">AliasType</span></span>
 <span>(</span><span>...)</span>
 </code></dt>
@@ -144,7 +151,7 @@ errors defaults to 'strict'.</p></div>
 </ul>
 <h3>Static methods</h3>
 <dl>
-<dt id="terra_ai.data.typing.AliasType.validate"><code class="name flex">
+<dt id="terra_ai.data.types.AliasType.validate"><code class="name flex">
 <span>def <span class="ident">validate</span></span>(<span>value: str) ‑> str</span>
 </code></dt>
 <dd>
@@ -162,7 +169,7 @@ def validate(self, value: str) -&gt; str:
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.typing.Base64Type"><code class="flex name class">
+<dt id="terra_ai.data.types.Base64Type"><code class="flex name class">
 <span>class <span class="ident">Base64Type</span></span>
 <span>(</span><span>...)</span>
 </code></dt>
@@ -199,7 +206,7 @@ errors defaults to 'strict'.</p></div>
 </ul>
 <h3>Static methods</h3>
 <dl>
-<dt id="terra_ai.data.typing.Base64Type.validate"><code class="name flex">
+<dt id="terra_ai.data.types.Base64Type.validate"><code class="name flex">
 <span>def <span class="ident">validate</span></span>(<span>value: str) ‑> str</span>
 </code></dt>
 <dd>
@@ -219,7 +226,180 @@ def validate(self, value: str) -&gt; str:
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.typing.FilePathType"><code class="flex name class">
+<dt id="terra_ai.data.types.ConstrainedFloatValue"><code class="flex name class">
+<span>class <span class="ident">ConstrainedFloatValueGe0</span></span>
+<span>(</span><span>x=0, /)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a string or number to a floating point number, if possible.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.types.ConstrainedFloat</li>
+<li>builtins.float</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.ge"><code class="name">var <span class="ident">ge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.gt"><code class="name">var <span class="ident">gt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.le"><code class="name">var <span class="ident">le</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.lt"><code class="name">var <span class="ident">lt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.multiple_of"><code class="name">var <span class="ident">multiple_of</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.strict"><code class="name">var <span class="ident">strict</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue"><code class="flex name class">
+<span>class <span class="ident">ConstrainedFloatValueLe0</span></span>
+<span>(</span><span>x=0, /)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a string or number to a floating point number, if possible.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.types.ConstrainedFloat</li>
+<li>builtins.float</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.ge"><code class="name">var <span class="ident">ge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.gt"><code class="name">var <span class="ident">gt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.le"><code class="name">var <span class="ident">le</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.lt"><code class="name">var <span class="ident">lt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.multiple_of"><code class="name">var <span class="ident">multiple_of</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.strict"><code class="name">var <span class="ident">strict</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue"><code class="flex name class">
+<span>class <span class="ident">ConstrainedFloatValueGe0Le1</span></span>
+<span>(</span><span>x=0, /)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Convert a string or number to a floating point number, if possible.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.types.ConstrainedFloat</li>
+<li>builtins.float</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.ge"><code class="name">var <span class="ident">ge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.gt"><code class="name">var <span class="ident">gt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.le"><code class="name">var <span class="ident">le</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.lt"><code class="name">var <span class="ident">lt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.multiple_of"><code class="name">var <span class="ident">multiple_of</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedFloatValue.strict"><code class="name">var <span class="ident">strict</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue"><code class="flex name class">
+<span>class <span class="ident">ConstrainedIntValueGe0</span></span>
+<span>(</span><span>...)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>int([x]) -&gt; integer
+int(x, base=10) -&gt; integer</p>
+<p>Convert a number or string to an integer, or return 0 if no arguments
+are given.
+If x is a number, return x.<strong>int</strong>().
+For floating point
+numbers, this truncates towards zero.</p>
+<p>If x is not a number or if base is given, then x must be a string,
+bytes, or bytearray instance representing an integer literal in the
+given base.
+The literal can be preceded by '+' or '-' and be surrounded
+by whitespace.
+The base defaults to 10.
+Valid bases are 0 and 2-36.
+Base 0 means to interpret the base from the string as an integer literal.</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; int('0b100', base=0)
+4
+</code></pre></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>pydantic.types.ConstrainedInt</li>
+<li>builtins.int</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.types.ConstrainedIntValue.ge"><code class="name">var <span class="ident">ge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue.gt"><code class="name">var <span class="ident">gt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue.le"><code class="name">var <span class="ident">le</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue.lt"><code class="name">var <span class="ident">lt</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue.multiple_of"><code class="name">var <span class="ident">multiple_of</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.types.ConstrainedIntValue.strict"><code class="name">var <span class="ident">strict</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.types.FilePathType"><code class="flex name class">
 <span>class <span class="ident">FilePathType</span></span>
 <span>(</span><span>*args, **kwargs)</span>
 </code></dt>
@@ -252,19 +432,19 @@ but cannot instantiate a WindowsPath on a POSIX system or vice versa.</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="terra_ai.data.typing.FilePathType" href="#terra_ai.data.typing.FilePathType">FilePathType</a></li>
-<li><a title="terra_ai.data.typing.FilePathType" href="#terra_ai.data.typing.FilePathType">FilePathType</a></li>
+<li><a title="terra_ai.data.types.FilePathType" href="#terra_ai.data.types.FilePathType">FilePathType</a></li>
+<li><a title="terra_ai.data.types.FilePathType" href="#terra_ai.data.types.FilePathType">FilePathType</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.typing.FilePathType.ext"><code class="name">var <span class="ident">ext</span> : str</code></dt>
+<dt id="terra_ai.data.types.FilePathType.ext"><code class="name">var <span class="ident">ext</span> : str</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
 </dl>
 <h3>Static methods</h3>
 <dl>
-<dt id="terra_ai.data.typing.FilePathType.validate"><code class="name flex">
+<dt id="terra_ai.data.types.FilePathType.validate"><code class="name flex">
 <span>def <span class="ident">validate</span></span>(<span>value: pydantic.types.FilePath) ‑> pydantic.types.FilePath</span>
 </code></dt>
 <dd>
@@ -301,28 +481,72 @@ def validate(self, value: FilePath) -&gt; FilePath:
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="terra_ai.data.typing.confilepath" href="#terra_ai.data.typing.confilepath">confilepath</a></code></li>
+<li><code><a title="terra_ai.data.types.confilepath" href="#terra_ai.data.types.confilepath">confilepath</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="terra_ai.data.typing.AliasType" href="#terra_ai.data.typing.AliasType">AliasType</a></code></h4>
+<h4><code><a title="terra_ai.data.types.AliasType" href="#terra_ai.data.types.AliasType">AliasType</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.typing.AliasType.validate" href="#terra_ai.data.typing.AliasType.validate">validate</a></code></li>
+<li><code><a title="terra_ai.data.types.AliasType.validate" href="#terra_ai.data.types.AliasType.validate">validate</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.typing.Base64Type" href="#terra_ai.data.typing.Base64Type">Base64Type</a></code></h4>
+<h4><code><a title="terra_ai.data.types.Base64Type" href="#terra_ai.data.types.Base64Type">Base64Type</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.typing.Base64Type.validate" href="#terra_ai.data.typing.Base64Type.validate">validate</a></code></li>
+<li><code><a title="terra_ai.data.types.Base64Type.validate" href="#terra_ai.data.types.Base64Type.validate">validate</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.typing.FilePathType" href="#terra_ai.data.typing.FilePathType">FilePathType</a></code></h4>
+<h4><code><a title="terra_ai.data.types.ConstrainedFloatValue" href="#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.ge" href="#terra_ai.data.types.ConstrainedFloatValue.ge">ge</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.gt" href="#terra_ai.data.types.ConstrainedFloatValue.gt">gt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.le" href="#terra_ai.data.types.ConstrainedFloatValue.le">le</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.lt" href="#terra_ai.data.types.ConstrainedFloatValue.lt">lt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.multiple_of" href="#terra_ai.data.types.ConstrainedFloatValue.multiple_of">multiple_of</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.strict" href="#terra_ai.data.types.ConstrainedFloatValue.strict">strict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.types.ConstrainedFloatValue" href="#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.ge" href="#terra_ai.data.types.ConstrainedFloatValue.ge">ge</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.gt" href="#terra_ai.data.types.ConstrainedFloatValue.gt">gt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.le" href="#terra_ai.data.types.ConstrainedFloatValue.le">le</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.lt" href="#terra_ai.data.types.ConstrainedFloatValue.lt">lt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.multiple_of" href="#terra_ai.data.types.ConstrainedFloatValue.multiple_of">multiple_of</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.strict" href="#terra_ai.data.types.ConstrainedFloatValue.strict">strict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.types.ConstrainedFloatValue" href="#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.ge" href="#terra_ai.data.types.ConstrainedFloatValue.ge">ge</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.gt" href="#terra_ai.data.types.ConstrainedFloatValue.gt">gt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.le" href="#terra_ai.data.types.ConstrainedFloatValue.le">le</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.lt" href="#terra_ai.data.types.ConstrainedFloatValue.lt">lt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.multiple_of" href="#terra_ai.data.types.ConstrainedFloatValue.multiple_of">multiple_of</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.strict" href="#terra_ai.data.types.ConstrainedFloatValue.strict">strict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.types.ConstrainedIntValue" href="#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.ge" href="#terra_ai.data.types.ConstrainedIntValue.ge">ge</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.gt" href="#terra_ai.data.types.ConstrainedIntValue.gt">gt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.le" href="#terra_ai.data.types.ConstrainedIntValue.le">le</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.lt" href="#terra_ai.data.types.ConstrainedIntValue.lt">lt</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.multiple_of" href="#terra_ai.data.types.ConstrainedIntValue.multiple_of">multiple_of</a></code></li>
+<li><code><a title="terra_ai.data.types.ConstrainedIntValue.strict" href="#terra_ai.data.types.ConstrainedIntValue.strict">strict</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.types.FilePathType" href="#terra_ai.data.types.FilePathType">FilePathType</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.typing.FilePathType.ext" href="#terra_ai.data.typing.FilePathType.ext">ext</a></code></li>
-<li><code><a title="terra_ai.data.typing.FilePathType.validate" href="#terra_ai.data.typing.FilePathType.validate">validate</a></code></li>
+<li><code><a title="terra_ai.data.types.FilePathType.ext" href="#terra_ai.data.types.FilePathType.ext">ext</a></code></li>
+<li><code><a title="terra_ai.data.types.FilePathType.validate" href="#terra_ai.data.types.FilePathType.validate">validate</a></code></li>
 </ul>
 </li>
 </ul>

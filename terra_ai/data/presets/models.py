@@ -2,10 +2,10 @@
 Предустановки моделей
 """
 
-from ..modeling.models import ModelsGroupsList
+from ..modeling.model import ModelsGroupsList
 
 
-groups = ModelsGroupsList(
+ModelsGroups = ModelsGroupsList(
     [
         {
             "alias": "preset",

@@ -25,7 +25,7 @@ class Tags(dict, Enum):
     trading = TagData(alias="trading", name="Trading").dict()
 
 
-groups = DatasetsGroupsList(
+DatasetsGroups = DatasetsGroupsList(
     [
         {
             "alias": "preset",

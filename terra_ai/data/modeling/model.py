@@ -5,8 +5,8 @@
 from typing import Optional
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
-from ..typing import confilepath, AliasType, Base64Type
-from .layers import LayersList
+from ..types import confilepath, AliasType, Base64Type
+from .layer import LayersList
 
 
 class ModelDetailsData(BaseMixinData):

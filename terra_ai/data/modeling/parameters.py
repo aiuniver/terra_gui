@@ -16,9 +16,17 @@ class ParametersTypeDefaultData(BaseMixinData):
     pass
 
 
+class ParametersTypeMainDefaultData(ParametersTypeDefaultData):
+    pass
+
+
+class ParametersTypeExtraDefaultData(ParametersTypeDefaultData):
+    pass
+
+
 class ParametersTypeMixinData(BaseMixinData):
-    main: ParametersTypeDefaultData = ParametersTypeDefaultData()
-    extra: ParametersTypeDefaultData = ParametersTypeDefaultData()
+    main: ParametersTypeMainDefaultData = ParametersTypeMainDefaultData()
+    extra: ParametersTypeExtraDefaultData = ParametersTypeExtraDefaultData()
 
 
 class ParametersTypeInputData(ParametersTypeMixinData):

@@ -4,10 +4,11 @@
 
 from typing import Optional, List, Tuple, Any, Union
 from pydantic import validator
-from pydantic.types import conint, PositiveInt
+from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
+from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
 from .extra import LayerTypeChoice, LayerGroupChoice
 from . import parameters
@@ -46,7 +47,7 @@ class LayerData(AliasMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
-    location: Optional[List[conint(ge=0)]]
+    location: Optional[List[ConstrainedIntValueGe0]]
     "Расположение слоя в сетке модели"
     position: Optional[List[int]]
     "Расположение слоя в сетке модели"
