@@ -7,7 +7,7 @@
             <form class="inner" novalidate="novalidate">
               <div class="actions-form">
                 <div class="item prepare">
-                  <button disabled="disabled">Подготовить</button>
+                  <button>Подготовить</button>
                 </div>
                 <div class="item delete">
                   <button disabled="disabled">Удалить</button>
@@ -20,48 +20,30 @@
           </div>
           <div class="params-item load-dataset-field">
             <form class="inner form-inline-label" novalidate="novalidate">
-              <input
-                type="radio"
-                name="mode"
-                value="google_drive"
-                data-value-type="string"
-                checked="checked"
-              />
-              <input
-                type="radio"
-                name="mode"
-                value="url"
-                data-value-type="string"
-              />
               <ul class="tabs">
-                <li data-type="google_drive" class="active">Google drive</li>
-                <li data-type="url">URL-ссылка</li>
+                <li
+                  :class="tabGoogle ? 'active' : ''"
+                  @click.prevent="tabGoogle = true"
+                >
+                  Google drive
+                </li>
+                <li
+                  :class="!tabGoogle ? 'active' : ''"
+                  @click.prevent="tabGoogle = false"
+                >
+                  URL-ссылка
+                </li>
               </ul>
-              <div
-                class="
-                  field-form field-mode-type
-                  field-mode-google_drive
-                  relative
-                "
+              
+              <Dropdown
+                :options="options"
+                :disabled="false"
+                :label="tabGoogle ? 'Выберите файл из Google-диска' : 'Введите URL на архив исходников'"
+                name="zipcode"
+                :maxItem="10"
+                placeholder="Please select an option"
               >
-                <label for="gdrive-select">Выберите файл из Google-диска</label>
-                <input
-                  type="text"
-                  name="name"
-                  id="gdrive-select"
-                  class="jquery-ui-autocomplete ui-autocomplete-input"
-                  data-source="/api/v1/datasets-sources/"
-                  autocomplete="off"
-                />
-                <ul
-                  id="ui-id-1"
-                  tabindex="0"
-                  class="
-                    ui-menu ui-widget ui-widget-content ui-autocomplete ui-front
-                  "
-                  style="display: none"
-                ></ul>
-              </div>
+              </Dropdown>
               <div class="field-form field-mode-type field-mode-url hidden">
                 <label for="field_form-link"
                   >Введите URL на архив исходников</label
@@ -221,6 +203,22 @@
   </div>
 </template>
 
+<script>
+import Dropdown from "@/components/forms/Dropdown.vue";
+
+export default {
+  components: {
+    Dropdown,
+  },
+  data: () => ({
+    tabGoogle: true,
+    options: [
+      { id: 1, name: "Option 1" },
+      { id: 2, name: "Option 2" },
+    ],
+  }),
+};
+</script>
 <style>
 .params-container {
   padding: 20px 0 20px 20px;

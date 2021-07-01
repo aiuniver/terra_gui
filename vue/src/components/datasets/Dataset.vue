@@ -2,13 +2,9 @@
   <div class="board">
     <div class="wrapper">
       <Filters />
-      <div class="project-datasets-block datasets" style="padding-top: 173px">
+      <div class="project-datasets-block datasets">
         <div class="title">Выберите датасет</div>
-
-        <vue-custom-scrollbar
-          class="scroll-area"
-          :settings="settings"
-        >
+        <vue-custom-scrollbar class="scroll-area" :settings="settings">
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">

@@ -580,6 +580,7 @@ footer > .state > .wrapper:before {
     bottom:0;
     z-index:901;
     user-select:none;
+    background: #0e1621;
 }
 #copyright > .container {
     line-height:30px;

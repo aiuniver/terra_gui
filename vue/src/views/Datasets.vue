@@ -12,13 +12,10 @@ import Dataset from "@/components/datasets/Dataset.vue";
 import Params from "@/components/datasets/Params.vue";
 
 import { mapGetters } from "vuex";
-// import Card from "@/components/dataset/Card";
-// import Settings from "@/components/dataset/Settings";
 
 export default {
   name: "Datasets",
   components: {
-    // Filters,
     Dataset,
     Params,
   },
