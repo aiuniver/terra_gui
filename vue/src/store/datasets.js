@@ -4,7 +4,7 @@ export default {
   namespaced: true,
   state: () => ({
     datasets: [],
-    tags: {},
+    tags: [],
     sort: "",
     tagsFilter: [],
     id: null,
@@ -15,7 +15,7 @@ export default {
       state.datasets = [...value];
     },
     SET_TAGS(state, tags) {
-      state.tags = { ...tags };
+      state.tags = [...tags ];
     },
     SET_ADD_DATASET(state, value) {
       state.datasets.push(value);
@@ -40,9 +40,13 @@ export default {
           "/api/v1/exchange/get_datasets_info/"
         );
         const { datasets, tags } = data
+        console.log(tags)
         console.log(datasets)
+        const arr = Object.keys(tags).map((key) => {
+          return { text: tags[key], key, active: false };
+        });
         commit("SET_DATASETS", datasets);
-        commit("SET_TAGS", tags);
+        commit("SET_TAGS", arr);
       } catch (error) {
         console.log(error);
       }

@@ -1,27 +1,30 @@
 <template>
   <nav class="menu">
     <ul class="flexbox-left-nowrap">
-      <router-link to="/datasets" v-slot="{ isActive,  href, navigate }">
-        <li :class="isActive ? 'active item' : 'item'">
-          <a :href="href" @click="navigate">Данные</a>
-        </li>
-      </router-link>
-      <router-link to="/modeling" v-slot="{ isActive,  href, navigate }">
-        <li :class="isActive ? 'active item' : 'item'">
-          <a :href="href" @click="navigate">Проектирование</a>
-        </li>
-      </router-link>
-      <router-link to="/training" v-slot="{ isActive,  href, navigate }">
-        <li :class="isActive ? 'active item' : 'item'">
-          <a :href="href" @click="navigate">Обучение</a>
-        </li>
-      </router-link>
+      <template v-for="({title, path}, i) in items">
+        <router-link
+          :to="path"
+          v-slot="{ isActive, href, navigate }"
+          :key="i"
+        >
+          <li :class="isActive ? 'active item' : 'item'">
+            <a :href="href" @click="navigate">{{title}}</a>
+          </li>
+        </router-link>
+      </template>
     </ul>
   </nav>
 </template>
 
 <script>
 export default {
+  data: () => ({
+    items: [
+      { title: 'Данные', path: '/datasets' },
+      { title: 'Проектирование', path: '/modeling' },
+      { title: 'Обучение', path: '/training' },
+    ]
+  }),
   created() {
     console.log(this.$router.history.current.fullPath === "/datasets");
   },

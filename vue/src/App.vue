@@ -1,20 +1,22 @@
 <template>
-  <main class="page-datasets">
+  <div>
     <Header />
     <Nav />
-    <div class="container">
-      <div class="board">
-        <div class="wrapper">
-          <router-view></router-view>
+    <main class="page-datasets">
+      <div class="container">
+        <div class="board">
+          <div class="wrapper">
+            <router-view></router-view>
+          </div>
         </div>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
 </template>
 
 <script>
-import Header from '@/components/app/Header.vue'
-import Nav from '@/components/app/Nav.vue'
+import Header from "@/components/app/Header.vue";
+import Nav from "@/components/app/Nav.vue";
 import { mapGetters } from "vuex";
 // import Message from "@/components/app/Message";
 // import Footer from "@/components/app/Footer";
