@@ -36,7 +36,7 @@ from pydantic import validator
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData
-from .extra import OptimizerTypeChoice
+from .extra import OptimizerChoice
 from . import parameters
 
 
@@ -45,15 +45,15 @@ class OptimizerData(BaseMixinData):
     Параметры оптимайзера
     &#34;&#34;&#34;
 
-    type: OptimizerTypeChoice
+    type: OptimizerChoice
     &#34;Тип оптимайзера&#34;
     parameters: Optional[Any]
     &#34;Параметры оптимайзера&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
-    def _validate_type(cls, value: OptimizerTypeChoice) -&gt; OptimizerTypeChoice:
-        if not hasattr(OptimizerTypeChoice, value):
-            raise EnumMemberError(enum_values=list(OptimizerTypeChoice))
+    def _validate_type(cls, value: OptimizerChoice) -&gt; OptimizerChoice:
+        if not hasattr(OptimizerChoice, value):
+            raise EnumMemberError(enum_values=list(OptimizerChoice))
         type_ = getattr(parameters, getattr(parameters.OptimizerParametersType, value))
         cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
@@ -92,15 +92,15 @@ class OptimizerData(BaseMixinData):
     Параметры оптимайзера
     &#34;&#34;&#34;
 
-    type: OptimizerTypeChoice
+    type: OptimizerChoice
     &#34;Тип оптимайзера&#34;
     parameters: Optional[Any]
     &#34;Параметры оптимайзера&#34;
 
     @validator(&#34;type&#34;, allow_reuse=True, pre=True)
-    def _validate_type(cls, value: OptimizerTypeChoice) -&gt; OptimizerTypeChoice:
-        if not hasattr(OptimizerTypeChoice, value):
-            raise EnumMemberError(enum_values=list(OptimizerTypeChoice))
+    def _validate_type(cls, value: OptimizerChoice) -&gt; OptimizerChoice:
+        if not hasattr(OptimizerChoice, value):
+            raise EnumMemberError(enum_values=list(OptimizerChoice))
         type_ = getattr(parameters, getattr(parameters.OptimizerParametersType, value))
         cls.__fields__[&#34;parameters&#34;].type_ = type_
         cls.__fields__[&#34;parameters&#34;].required = True
@@ -124,7 +124,7 @@ class OptimizerData(BaseMixinData):
 <dd>
 <div class="desc"><p>Параметры оптимайзера</p></div>
 </dd>
-<dt id="terra_ai.data.training.optimizer.OptimizerData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.training.extra.OptimizerTypeChoice" href="extra.html#terra_ai.data.training.extra.OptimizerTypeChoice">OptimizerTypeChoice</a></code></dt>
+<dt id="terra_ai.data.training.optimizer.OptimizerData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.training.extra.OptimizerChoice" href="extra.html#terra_ai.data.training.extra.OptimizerChoice">OptimizerChoice</a></code></dt>
 <dd>
 <div class="desc"><p>Тип оптимайзера</p></div>
 </dd>

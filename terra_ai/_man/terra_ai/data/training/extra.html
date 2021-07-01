@@ -34,7 +34,7 @@
 from enum import Enum
 
 
-class OptimizerTypeChoice(str, Enum):
+class OptimizerChoice(str, Enum):
     SGD = &#34;SGD&#34;
     RMSprop = &#34;RMSprop&#34;
     Adam = &#34;Adam&#34;
@@ -42,7 +42,54 @@ class OptimizerTypeChoice(str, Enum):
     Adagrad = &#34;Adagrad&#34;
     Adamax = &#34;Adamax&#34;
     Nadam = &#34;Nadam&#34;
-    Ftrl = &#34;Ftrl&#34;</code></pre>
+    Ftrl = &#34;Ftrl&#34;
+
+
+class TaskChoice(str, Enum):
+    classification = &#34;classification&#34;
+    segmentation = &#34;segmentation&#34;
+    regression = &#34;regression&#34;
+    timeseries = &#34;timeseries&#34;
+
+
+class LossChoice(str, Enum):
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    mse = &#34;mse&#34;
+    squared_hinge = &#34;squared_hinge&#34;
+    hinge = &#34;hinge&#34;
+    categorical_hinge = &#34;categorical_hinge&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    kl_divergence = &#34;kl_divergence&#34;
+    poisson = &#34;poisson&#34;
+    mae = &#34;mae&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    log_cosh = &#34;log_cosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;
+
+
+class MetricChoice(str, Enum):
+    accuracy = &#34;accuracy&#34;
+    binary_accuracy = &#34;binary_accuracy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    categorical_accuracy = &#34;categorical_accuracy&#34;
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    sparse_categorical_accuracy = &#34;sparse_categorical_accuracy&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    top_k_categorical_accuracy = &#34;top_k_categorical_accuracy&#34;
+    sparse_top_k_categorical_accuracy = &#34;sparse_top_k_categorical_accuracy&#34;
+    hinge = &#34;hinge&#34;
+    kullback_leibler_divergence = &#34;kullback_leibler_divergence&#34;
+    poisson = &#34;poisson&#34;
+    dice_coef = &#34;dice_coef&#34;
+    mean_io_u = &#34;mean_io_u&#34;
+    mae = &#34;mae&#34;
+    mse = &#34;mse&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    logcosh = &#34;logcosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -54,8 +101,8 @@ class OptimizerTypeChoice(str, Enum):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice"><code class="flex name class">
-<span>class <span class="ident">OptimizerTypeChoice</span></span>
+<dt id="terra_ai.data.training.extra.LossChoice"><code class="flex name class">
+<span>class <span class="ident">LossChoice</span></span>
 <span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
 </code></dt>
 <dd>
@@ -64,7 +111,219 @@ class OptimizerTypeChoice(str, Enum):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class OptimizerTypeChoice(str, Enum):
+<pre><code class="python">class LossChoice(str, Enum):
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    mse = &#34;mse&#34;
+    squared_hinge = &#34;squared_hinge&#34;
+    hinge = &#34;hinge&#34;
+    categorical_hinge = &#34;categorical_hinge&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    kl_divergence = &#34;kl_divergence&#34;
+    poisson = &#34;poisson&#34;
+    mae = &#34;mae&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    log_cosh = &#34;log_cosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.extra.LossChoice.binary_crossentropy"><code class="name">var <span class="ident">binary_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.categorical_crossentropy"><code class="name">var <span class="ident">categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.categorical_hinge"><code class="name">var <span class="ident">categorical_hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.cosine_similarity"><code class="name">var <span class="ident">cosine_similarity</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.hinge"><code class="name">var <span class="ident">hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.kl_divergence"><code class="name">var <span class="ident">kl_divergence</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.log_cosh"><code class="name">var <span class="ident">log_cosh</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.mae"><code class="name">var <span class="ident">mae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.mape"><code class="name">var <span class="ident">mape</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.mse"><code class="name">var <span class="ident">mse</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.msle"><code class="name">var <span class="ident">msle</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.poisson"><code class="name">var <span class="ident">poisson</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.sparse_categorical_crossentropy"><code class="name">var <span class="ident">sparse_categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.LossChoice.squared_hinge"><code class="name">var <span class="ident">squared_hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice"><code class="flex name class">
+<span>class <span class="ident">MetricChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MetricChoice(str, Enum):
+    accuracy = &#34;accuracy&#34;
+    binary_accuracy = &#34;binary_accuracy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    categorical_accuracy = &#34;categorical_accuracy&#34;
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    sparse_categorical_accuracy = &#34;sparse_categorical_accuracy&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    top_k_categorical_accuracy = &#34;top_k_categorical_accuracy&#34;
+    sparse_top_k_categorical_accuracy = &#34;sparse_top_k_categorical_accuracy&#34;
+    hinge = &#34;hinge&#34;
+    kullback_leibler_divergence = &#34;kullback_leibler_divergence&#34;
+    poisson = &#34;poisson&#34;
+    dice_coef = &#34;dice_coef&#34;
+    mean_io_u = &#34;mean_io_u&#34;
+    mae = &#34;mae&#34;
+    mse = &#34;mse&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    logcosh = &#34;logcosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.extra.MetricChoice.accuracy"><code class="name">var <span class="ident">accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.binary_accuracy"><code class="name">var <span class="ident">binary_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.binary_crossentropy"><code class="name">var <span class="ident">binary_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.categorical_accuracy"><code class="name">var <span class="ident">categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.categorical_crossentropy"><code class="name">var <span class="ident">categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.cosine_similarity"><code class="name">var <span class="ident">cosine_similarity</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.dice_coef"><code class="name">var <span class="ident">dice_coef</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.hinge"><code class="name">var <span class="ident">hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.kullback_leibler_divergence"><code class="name">var <span class="ident">kullback_leibler_divergence</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.logcosh"><code class="name">var <span class="ident">logcosh</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.mae"><code class="name">var <span class="ident">mae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.mape"><code class="name">var <span class="ident">mape</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.mean_io_u"><code class="name">var <span class="ident">mean_io_u</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.mse"><code class="name">var <span class="ident">mse</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.msle"><code class="name">var <span class="ident">msle</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.poisson"><code class="name">var <span class="ident">poisson</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.sparse_categorical_accuracy"><code class="name">var <span class="ident">sparse_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.sparse_categorical_crossentropy"><code class="name">var <span class="ident">sparse_categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.sparse_top_k_categorical_accuracy"><code class="name">var <span class="ident">sparse_top_k_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.MetricChoice.top_k_categorical_accuracy"><code class="name">var <span class="ident">top_k_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.training.extra.OptimizerChoice"><code class="flex name class">
+<span>class <span class="ident">OptimizerChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerChoice(str, Enum):
     SGD = &#34;SGD&#34;
     RMSprop = &#34;RMSprop&#34;
     Adam = &#34;Adam&#34;
@@ -81,35 +340,76 @@ class OptimizerTypeChoice(str, Enum):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Adadelta"><code class="name">var <span class="ident">Adadelta</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Adadelta"><code class="name">var <span class="ident">Adadelta</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Adagrad"><code class="name">var <span class="ident">Adagrad</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Adagrad"><code class="name">var <span class="ident">Adagrad</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Adam"><code class="name">var <span class="ident">Adam</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Adam"><code class="name">var <span class="ident">Adam</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Adamax"><code class="name">var <span class="ident">Adamax</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Adamax"><code class="name">var <span class="ident">Adamax</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Ftrl"><code class="name">var <span class="ident">Ftrl</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Ftrl"><code class="name">var <span class="ident">Ftrl</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.Nadam"><code class="name">var <span class="ident">Nadam</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.Nadam"><code class="name">var <span class="ident">Nadam</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.RMSprop"><code class="name">var <span class="ident">RMSprop</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.RMSprop"><code class="name">var <span class="ident">RMSprop</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.extra.OptimizerTypeChoice.SGD"><code class="name">var <span class="ident">SGD</span></code></dt>
+<dt id="terra_ai.data.training.extra.OptimizerChoice.SGD"><code class="name">var <span class="ident">SGD</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.training.extra.TaskChoice"><code class="flex name class">
+<span>class <span class="ident">TaskChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TaskChoice(str, Enum):
+    classification = &#34;classification&#34;
+    segmentation = &#34;segmentation&#34;
+    regression = &#34;regression&#34;
+    timeseries = &#34;timeseries&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.extra.TaskChoice.classification"><code class="name">var <span class="ident">classification</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.TaskChoice.regression"><code class="name">var <span class="ident">regression</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.TaskChoice.segmentation"><code class="name">var <span class="ident">segmentation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.extra.TaskChoice.timeseries"><code class="name">var <span class="ident">timeseries</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -134,16 +434,69 @@ class OptimizerTypeChoice(str, Enum):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice" href="#terra_ai.data.training.extra.OptimizerTypeChoice">OptimizerTypeChoice</a></code></h4>
+<h4><code><a title="terra_ai.data.training.extra.LossChoice" href="#terra_ai.data.training.extra.LossChoice">LossChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.extra.LossChoice.binary_crossentropy" href="#terra_ai.data.training.extra.LossChoice.binary_crossentropy">binary_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.categorical_crossentropy" href="#terra_ai.data.training.extra.LossChoice.categorical_crossentropy">categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.categorical_hinge" href="#terra_ai.data.training.extra.LossChoice.categorical_hinge">categorical_hinge</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.cosine_similarity" href="#terra_ai.data.training.extra.LossChoice.cosine_similarity">cosine_similarity</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.hinge" href="#terra_ai.data.training.extra.LossChoice.hinge">hinge</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.kl_divergence" href="#terra_ai.data.training.extra.LossChoice.kl_divergence">kl_divergence</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.log_cosh" href="#terra_ai.data.training.extra.LossChoice.log_cosh">log_cosh</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.mae" href="#terra_ai.data.training.extra.LossChoice.mae">mae</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.mape" href="#terra_ai.data.training.extra.LossChoice.mape">mape</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.mse" href="#terra_ai.data.training.extra.LossChoice.mse">mse</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.msle" href="#terra_ai.data.training.extra.LossChoice.msle">msle</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.poisson" href="#terra_ai.data.training.extra.LossChoice.poisson">poisson</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.sparse_categorical_crossentropy" href="#terra_ai.data.training.extra.LossChoice.sparse_categorical_crossentropy">sparse_categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.LossChoice.squared_hinge" href="#terra_ai.data.training.extra.LossChoice.squared_hinge">squared_hinge</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.extra.MetricChoice" href="#terra_ai.data.training.extra.MetricChoice">MetricChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.accuracy" href="#terra_ai.data.training.extra.MetricChoice.accuracy">accuracy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.binary_accuracy" href="#terra_ai.data.training.extra.MetricChoice.binary_accuracy">binary_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.binary_crossentropy" href="#terra_ai.data.training.extra.MetricChoice.binary_crossentropy">binary_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.categorical_accuracy" href="#terra_ai.data.training.extra.MetricChoice.categorical_accuracy">categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.categorical_crossentropy" href="#terra_ai.data.training.extra.MetricChoice.categorical_crossentropy">categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.cosine_similarity" href="#terra_ai.data.training.extra.MetricChoice.cosine_similarity">cosine_similarity</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.dice_coef" href="#terra_ai.data.training.extra.MetricChoice.dice_coef">dice_coef</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.hinge" href="#terra_ai.data.training.extra.MetricChoice.hinge">hinge</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.kullback_leibler_divergence" href="#terra_ai.data.training.extra.MetricChoice.kullback_leibler_divergence">kullback_leibler_divergence</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.logcosh" href="#terra_ai.data.training.extra.MetricChoice.logcosh">logcosh</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.mae" href="#terra_ai.data.training.extra.MetricChoice.mae">mae</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.mape" href="#terra_ai.data.training.extra.MetricChoice.mape">mape</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.mean_io_u" href="#terra_ai.data.training.extra.MetricChoice.mean_io_u">mean_io_u</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.mse" href="#terra_ai.data.training.extra.MetricChoice.mse">mse</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.msle" href="#terra_ai.data.training.extra.MetricChoice.msle">msle</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.poisson" href="#terra_ai.data.training.extra.MetricChoice.poisson">poisson</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.sparse_categorical_accuracy" href="#terra_ai.data.training.extra.MetricChoice.sparse_categorical_accuracy">sparse_categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.sparse_categorical_crossentropy" href="#terra_ai.data.training.extra.MetricChoice.sparse_categorical_crossentropy">sparse_categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.sparse_top_k_categorical_accuracy" href="#terra_ai.data.training.extra.MetricChoice.sparse_top_k_categorical_accuracy">sparse_top_k_categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.MetricChoice.top_k_categorical_accuracy" href="#terra_ai.data.training.extra.MetricChoice.top_k_categorical_accuracy">top_k_categorical_accuracy</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.extra.OptimizerChoice" href="#terra_ai.data.training.extra.OptimizerChoice">OptimizerChoice</a></code></h4>
 <ul class="two-column">
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Adadelta" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Adadelta">Adadelta</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Adagrad" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Adagrad">Adagrad</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Adam" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Adam">Adam</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Adamax" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Adamax">Adamax</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Ftrl" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Ftrl">Ftrl</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.Nadam" href="#terra_ai.data.training.extra.OptimizerTypeChoice.Nadam">Nadam</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.RMSprop" href="#terra_ai.data.training.extra.OptimizerTypeChoice.RMSprop">RMSprop</a></code></li>
-<li><code><a title="terra_ai.data.training.extra.OptimizerTypeChoice.SGD" href="#terra_ai.data.training.extra.OptimizerTypeChoice.SGD">SGD</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Adadelta" href="#terra_ai.data.training.extra.OptimizerChoice.Adadelta">Adadelta</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Adagrad" href="#terra_ai.data.training.extra.OptimizerChoice.Adagrad">Adagrad</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Adam" href="#terra_ai.data.training.extra.OptimizerChoice.Adam">Adam</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Adamax" href="#terra_ai.data.training.extra.OptimizerChoice.Adamax">Adamax</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Ftrl" href="#terra_ai.data.training.extra.OptimizerChoice.Ftrl">Ftrl</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.Nadam" href="#terra_ai.data.training.extra.OptimizerChoice.Nadam">Nadam</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.RMSprop" href="#terra_ai.data.training.extra.OptimizerChoice.RMSprop">RMSprop</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.OptimizerChoice.SGD" href="#terra_ai.data.training.extra.OptimizerChoice.SGD">SGD</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.extra.TaskChoice" href="#terra_ai.data.training.extra.TaskChoice">TaskChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.extra.TaskChoice.classification" href="#terra_ai.data.training.extra.TaskChoice.classification">classification</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.TaskChoice.regression" href="#terra_ai.data.training.extra.TaskChoice.regression">regression</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.TaskChoice.segmentation" href="#terra_ai.data.training.extra.TaskChoice.segmentation">segmentation</a></code></li>
+<li><code><a title="terra_ai.data.training.extra.TaskChoice.timeseries" href="#terra_ai.data.training.extra.TaskChoice.timeseries">timeseries</a></code></li>
 </ul>
 </li>
 </ul>

@@ -28,13 +28,13 @@ class LayerTaskTypeChoice(str, Enum):
 
 
 class LayerNetChoice(str, Enum):
-    Convolutional = "Convolutional"
-    Linear = "Linear"
+    convolutional = "convolutional"
+    linear = "linear"
 
 
 class LayerScalerChoice(str, Enum):
-    NoScaler = "NoScaler"
-    MinMaxScaler = "MinMaxScaler"
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
 
 
 class LayerInputTypeChoice(str, Enum):
@@ -42,10 +42,10 @@ class LayerInputTypeChoice(str, Enum):
     Типы данных для `input`-слоев
     """
 
-    images = "Images"
-    text = "Text"
-    audio = "Audio"
-    dataframe = "Dataframe"
+    Images = "Images"
+    Text = "Text"
+    Audio = "Audio"
+    Dataframe = "Dataframe"
 
 
 class LayerOutputTypeChoice(str, Enum):
@@ -53,11 +53,11 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `output`-слоев
     """
 
-    images = "Images"
-    text = "Text"
-    audio = "Audio"
-    classification = "Classification"
-    segmentation = "Segmentation"
-    text_segmentation = "TextSegmentation"
-    regression = "Regression"
-    timeseries = "Timeseries"
+    Images = "Images"
+    Text = "Text"
+    Audio = "Audio"
+    Classification = "Classification"
+    Segmentation = "Segmentation"
+    TextSegmentation = "TextSegmentation"
+    Regression = "Regression"
+    Timeseries = "Timeseries"

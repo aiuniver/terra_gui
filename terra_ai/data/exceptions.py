@@ -17,6 +17,7 @@ class ExceptionMessages(str, Enum):
     FilePathExtension = '%s: File must have "%s" extension'
     Base64Extension = "Incorrect base64 string value"
     XY = "%s: Value must be a list with 2 elements, received %s"
+    TaskGroup = "%s: Value must be in list %s"
 
 
 class TerraDataException(ValueError):
@@ -104,5 +105,15 @@ class XYException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.XY)
                 % (str(__name), str(__position))
+            )
+        )
+
+
+class TaskGroupException(TerraDataException):
+    def __init__(self, __value: Any, __items: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.TaskGroup)
+                % (str(__value), str(__items))
             )
         )

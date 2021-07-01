@@ -31,8 +31,11 @@
 ## Структура данных обучения
 &#34;&#34;&#34;
 
+from pydantic.types import PositiveInt
+
 from ..mixins import BaseMixinData
 from .optimizer import OptimizerData
+from .outputs import OutputsList
 
 
 class TrainData(BaseMixinData):
@@ -40,7 +43,10 @@ class TrainData(BaseMixinData):
     Параметры обучения
     &#34;&#34;&#34;
 
-    optimizer: OptimizerData</code></pre>
+    batch: PositiveInt = 32
+    epochs: PositiveInt = 20
+    optimizer: OptimizerData
+    outputs: OutputsList</code></pre>
 </details>
 </section>
 <section>
@@ -69,7 +75,10 @@ class TrainData(BaseMixinData):
     Параметры обучения
     &#34;&#34;&#34;
 
-    optimizer: OptimizerData</code></pre>
+    batch: PositiveInt = 32
+    epochs: PositiveInt = 20
+    optimizer: OptimizerData
+    outputs: OutputsList</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -79,7 +88,19 @@ class TrainData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.training.train.TrainData.batch"><code class="name">var <span class="ident">batch</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.train.TrainData.epochs"><code class="name">var <span class="ident">epochs</span> : pydantic.types.PositiveInt</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.training.train.TrainData.optimizer"><code class="name">var <span class="ident">optimizer</span> : <a title="terra_ai.data.training.optimizer.OptimizerData" href="optimizer.html#terra_ai.data.training.optimizer.OptimizerData">OptimizerData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.train.TrainData.outputs"><code class="name">var <span class="ident">outputs</span> : <a title="terra_ai.data.training.outputs.OutputsList" href="outputs.html#terra_ai.data.training.outputs.OutputsList">OutputsList</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -114,7 +135,10 @@ class TrainData(BaseMixinData):
 <li>
 <h4><code><a title="terra_ai.data.training.train.TrainData" href="#terra_ai.data.training.train.TrainData">TrainData</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.training.train.TrainData.batch" href="#terra_ai.data.training.train.TrainData.batch">batch</a></code></li>
+<li><code><a title="terra_ai.data.training.train.TrainData.epochs" href="#terra_ai.data.training.train.TrainData.epochs">epochs</a></code></li>
 <li><code><a title="terra_ai.data.training.train.TrainData.optimizer" href="#terra_ai.data.training.train.TrainData.optimizer">optimizer</a></code></li>
+<li><code><a title="terra_ai.data.training.train.TrainData.outputs" href="#terra_ai.data.training.train.TrainData.outputs">outputs</a></code></li>
 </ul>
 </li>
 </ul>

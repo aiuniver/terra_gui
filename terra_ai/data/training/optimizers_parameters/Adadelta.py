@@ -2,10 +2,11 @@
 ## Оптимайзер `Adadelta`
 """
 
+from pydantic.types import PositiveFloat
+
 from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGt0
 
 
 class ParametersExtraData(BaseMixinData):
-    rho: ConstrainedFloatValueGt0 = 0.95
-    epsilon: ConstrainedFloatValueGt0 = 1e-07
+    rho: PositiveFloat = 0.95
+    epsilon: PositiveFloat = 1e-07

@@ -26,8 +26,8 @@ class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerInputTypeTextData(BaseMixinData):
@@ -53,7 +53,7 @@ class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -69,15 +69,15 @@ class LayerInputTypeDataframeData(BaseMixinData):
     separator: Optional[str]
     encoding: str = "utf-8"
     x_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeTextData(BaseMixinData):
@@ -103,7 +103,7 @@ class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -157,7 +157,7 @@ class LayerOutputTypeRegressionData(BaseMixinData):
 class LayerOutputTypeTimeseriesData(BaseMixinData):
     length: PositiveInt
     y_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
 
 
@@ -177,7 +177,7 @@ LayerInputDatatype = Enum(
 
 LayerInputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerInputDatatype,
     )
 )
@@ -203,7 +203,7 @@ LayerOutputDatatype = Enum(
 
 LayerOutputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerOutputDatatype,
     )
 )

@@ -7,7 +7,7 @@ from pydantic import validator
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData
-from .extra import OptimizerTypeChoice
+from .extra import OptimizerChoice
 from . import parameters
 
 
@@ -16,15 +16,15 @@ class OptimizerData(BaseMixinData):
     Параметры оптимайзера
     """
 
-    type: OptimizerTypeChoice
+    type: OptimizerChoice
     "Тип оптимайзера"
     parameters: Optional[Any]
     "Параметры оптимайзера"
 
     @validator("type", allow_reuse=True, pre=True)
-    def _validate_type(cls, value: OptimizerTypeChoice) -> OptimizerTypeChoice:
-        if not hasattr(OptimizerTypeChoice, value):
-            raise EnumMemberError(enum_values=list(OptimizerTypeChoice))
+    def _validate_type(cls, value: OptimizerChoice) -> OptimizerChoice:
+        if not hasattr(OptimizerChoice, value):
+            raise EnumMemberError(enum_values=list(OptimizerChoice))
         type_ = getattr(parameters, getattr(parameters.OptimizerParametersType, value))
         cls.__fields__["parameters"].type_ = type_
         cls.__fields__["parameters"].required = True

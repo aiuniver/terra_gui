@@ -83,7 +83,7 @@ In [2]: source = {
 In [3]: data = CreationData(**source)
 
 In [4]: data
-Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=&lt;LayerInputTypeChoice.text: 'text'&gt;, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=&lt;LayerPrepareMethodChoice.embedding: 'embedding'&gt;, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=&lt;LayerOutputTypeChoice.images: 'images'&gt;, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=&lt;LayerNetChoice.Convolutional: 'Convolutional'&gt;, scaler=&lt;LayerScalerChoice.NoScaler: 'NoScaler'&gt;))])
+Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=&lt;LayerInputTypeChoice.text: 'text'&gt;, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=&lt;LayerPrepareMethodChoice.embedding: 'embedding'&gt;, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=&lt;LayerOutputTypeChoice.images: 'images'&gt;, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=&lt;LayerNetChoice.convolutional: 'convolutional'&gt;, scaler=&lt;LayerScalerChoice.no_scaler: 'no_scaler'&gt;))])
 
 In [5]: data.dict()
 Out[5]:
@@ -108,8 +108,8 @@ Out[5]:
    'parameters': {'folder_path': None,
     'width': 120,
     'height': 80,
-    'net': &lt;LayerNetChoice.Convolutional: 'Convolutional'&gt;,
-    'scaler': &lt;LayerScalerChoice.NoScaler: 'NoScaler'&gt;}}]}
+    'net': &lt;LayerNetChoice.convolutional: 'convolutional'&gt;,
+    'scaler': &lt;LayerScalerChoice.no_scaler: 'no_scaler'&gt;}}]}
 
 In [6]: data.json()
 Out[6]: '{&quot;name&quot;: &quot;\u0421\u0430\u043c\u043e\u043b\u0435\u0442\u044b&quot;, &quot;info&quot;: {&quot;part&quot;: {&quot;train&quot;: 0.6, &quot;validation&quot;: 0.3, &quot;test&quot;: 0.1}, &quot;shuffle&quot;: true}, &quot;tags&quot;: [], &quot;inputs&quot;: [{&quot;alias&quot;: &quot;input_1&quot;, &quot;name&quot;: &quot;Input 1&quot;, &quot;type&quot;: &quot;text&quot;, &quot;parameters&quot;: {&quot;folder_path&quot;: null, &quot;delete_symbols&quot;: null, &quot;x_len&quot;: 100, &quot;step&quot;: 30, &quot;max_words_count&quot;: 20000, &quot;pymorphy&quot;: false, &quot;prepare_method&quot;: &quot;embedding&quot;, &quot;word_to_vec_size&quot;: null}}], &quot;outputs&quot;: [{&quot;alias&quot;: &quot;input_1&quot;, &quot;name&quot;: &quot;Input 1&quot;, &quot;type&quot;: &quot;images&quot;, &quot;parameters&quot;: {&quot;folder_path&quot;: null, &quot;width&quot;: 120, &quot;height&quot;: 80, &quot;net&quot;: &quot;Convolutional&quot;, &quot;scaler&quot;: &quot;NoScaler&quot;}}]}'
@@ -229,7 +229,7 @@ In [2]: source = {
 In [3]: data = CreationData(**source)
 
 In [4]: data
-Out[4]: CreationData(name=&#39;Самолеты&#39;, info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias=&#39;input_1&#39;, name=&#39;Input 1&#39;, type=&lt;LayerInputTypeChoice.text: &#39;text&#39;&gt;, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=&lt;LayerPrepareMethodChoice.embedding: &#39;embedding&#39;&gt;, word_to_vec_size=None))], outputs=[CreationOutputData(alias=&#39;input_1&#39;, name=&#39;Input 1&#39;, type=&lt;LayerOutputTypeChoice.images: &#39;images&#39;&gt;, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=&lt;LayerNetChoice.Convolutional: &#39;Convolutional&#39;&gt;, scaler=&lt;LayerScalerChoice.NoScaler: &#39;NoScaler&#39;&gt;))])
+Out[4]: CreationData(name=&#39;Самолеты&#39;, info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias=&#39;input_1&#39;, name=&#39;Input 1&#39;, type=&lt;LayerInputTypeChoice.text: &#39;text&#39;&gt;, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=&lt;LayerPrepareMethodChoice.embedding: &#39;embedding&#39;&gt;, word_to_vec_size=None))], outputs=[CreationOutputData(alias=&#39;input_1&#39;, name=&#39;Input 1&#39;, type=&lt;LayerOutputTypeChoice.images: &#39;images&#39;&gt;, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=&lt;LayerNetChoice.convolutional: &#39;convolutional&#39;&gt;, scaler=&lt;LayerScalerChoice.no_scaler: &#39;no_scaler&#39;&gt;))])
 
 In [5]: data.dict()
 Out[5]:
@@ -254,8 +254,8 @@ Out[5]:
    &#39;parameters&#39;: {&#39;folder_path&#39;: None,
     &#39;width&#39;: 120,
     &#39;height&#39;: 80,
-    &#39;net&#39;: &lt;LayerNetChoice.Convolutional: &#39;Convolutional&#39;&gt;,
-    &#39;scaler&#39;: &lt;LayerScalerChoice.NoScaler: &#39;NoScaler&#39;&gt;}}]}
+    &#39;net&#39;: &lt;LayerNetChoice.convolutional: &#39;convolutional&#39;&gt;,
+    &#39;scaler&#39;: &lt;LayerScalerChoice.no_scaler: &#39;no_scaler&#39;&gt;}}]}
 
 In [6]: data.json()
 Out[6]: &#39;{&#34;name&#34;: &#34;\\u0421\\u0430\\u043c\\u043e\\u043b\\u0435\\u0442\\u044b&#34;, &#34;info&#34;: {&#34;part&#34;: {&#34;train&#34;: 0.6, &#34;validation&#34;: 0.3, &#34;test&#34;: 0.1}, &#34;shuffle&#34;: true}, &#34;tags&#34;: [], &#34;inputs&#34;: [{&#34;alias&#34;: &#34;input_1&#34;, &#34;name&#34;: &#34;Input 1&#34;, &#34;type&#34;: &#34;text&#34;, &#34;parameters&#34;: {&#34;folder_path&#34;: null, &#34;delete_symbols&#34;: null, &#34;x_len&#34;: 100, &#34;step&#34;: 30, &#34;max_words_count&#34;: 20000, &#34;pymorphy&#34;: false, &#34;prepare_method&#34;: &#34;embedding&#34;, &#34;word_to_vec_size&#34;: null}}], &#34;outputs&#34;: [{&#34;alias&#34;: &#34;input_1&#34;, &#34;name&#34;: &#34;Input 1&#34;, &#34;type&#34;: &#34;images&#34;, &#34;parameters&#34;: {&#34;folder_path&#34;: null, &#34;width&#34;: 120, &#34;height&#34;: 80, &#34;net&#34;: &#34;Convolutional&#34;, &#34;scaler&#34;: &#34;NoScaler&#34;}}]}&#39;

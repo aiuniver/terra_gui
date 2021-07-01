@@ -33,7 +33,7 @@
 
 import json
 
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Any
 from pydantic import BaseModel
 
 from .types import AliasType
@@ -140,7 +140,7 @@ class UniqueListMixin(List):
             return []
         if self.Meta.identifier not in self[0].schema().get(&#34;properties&#34;).keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
-        return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+        return list(map(lambda item: getattr(item, self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
         if data is None:
@@ -163,7 +163,7 @@ class UniqueListMixin(List):
                 self.append(item)
         return self
 
-    def get(self, name: str) -&gt; Optional[Meta.source]:
+    def get(self, name: Any) -&gt; Optional[Meta.source]:
         &#34;&#34;&#34;
         Получение элемента по уникальному идентификатору
         ```
@@ -340,6 +340,8 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.modeling.layer.LayerData" href="modeling/layer.html#terra_ai.data.modeling.layer.LayerData">LayerData</a></li>
 <li><a title="terra_ai.data.modeling.model.ModelData" href="modeling/model.html#terra_ai.data.modeling.model.ModelData">ModelData</a></li>
 <li><a title="terra_ai.data.modeling.model.ModelsGroupData" href="modeling/model.html#terra_ai.data.modeling.model.ModelsGroupData">ModelsGroupData</a></li>
+<li><a title="terra_ai.data.presets.extra.training.TaskGroupData" href="presets/extra/training.html#terra_ai.data.presets.extra.training.TaskGroupData">TaskGroupData</a></li>
+<li><a title="terra_ai.data.training.outputs.OutputData" href="training/outputs.html#terra_ai.data.training.outputs.OutputData">OutputData</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -515,6 +517,10 @@ class UniqueListMixin(List):
 <li><a title="terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData" href="training/optimizers_parameters/Nadam.html#terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData">ParametersExtraData</a></li>
 <li><a title="terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData" href="training/optimizers_parameters/RMSprop.html#terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData">ParametersExtraData</a></li>
 <li><a title="terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData" href="training/optimizers_parameters/SGD.html#terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData">ParametersExtraData</a></li>
+<li><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData" href="training/outputs.html#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData">TaskCallbacksTypeclassificationData</a></li>
+<li><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData" href="training/outputs.html#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData">TaskCallbacksTyperegressionData</a></li>
+<li><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData" href="training/outputs.html#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData">TaskCallbacksTypesegmentationData</a></li>
+<li><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData" href="training/outputs.html#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData">TaskCallbacksTypetimeseriesData</a></li>
 <li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="training/parameters.html#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></li>
 <li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="training/parameters.html#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
 <li><a title="terra_ai.data.training.train.TrainData" href="training/train.html#terra_ai.data.training.train.TrainData">TrainData</a></li>
@@ -646,7 +652,7 @@ some_unique_list = SomeUniqueList(
             return []
         if self.Meta.identifier not in self[0].schema().get(&#34;properties&#34;).keys():
             raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
-        return list(map(lambda item: item.dict().get(self.Meta.identifier), self))
+        return list(map(lambda item: getattr(item, self.Meta.identifier), self))
 
     def __init__(self, data: Optional[List[Union[dict, Meta.source]]] = None):
         if data is None:
@@ -669,7 +675,7 @@ some_unique_list = SomeUniqueList(
                 self.append(item)
         return self
 
-    def get(self, name: str) -&gt; Optional[Meta.source]:
+    def get(self, name: Any) -&gt; Optional[Meta.source]:
         &#34;&#34;&#34;
         Получение элемента по уникальному идентификатору
         ```
@@ -817,6 +823,8 @@ some_unique_list = SomeUniqueList(
 <li><a title="terra_ai.data.modeling.layer.LayersList" href="modeling/layer.html#terra_ai.data.modeling.layer.LayersList">LayersList</a></li>
 <li><a title="terra_ai.data.modeling.model.ModelsGroupsList" href="modeling/model.html#terra_ai.data.modeling.model.ModelsGroupsList">ModelsGroupsList</a></li>
 <li><a title="terra_ai.data.modeling.model.ModelsList" href="modeling/model.html#terra_ai.data.modeling.model.ModelsList">ModelsList</a></li>
+<li><a title="terra_ai.data.presets.extra.training.TasksGroupsList" href="presets/extra/training.html#terra_ai.data.presets.extra.training.TasksGroupsList">TasksGroupsList</a></li>
+<li><a title="terra_ai.data.training.outputs.OutputsList" href="training/outputs.html#terra_ai.data.training.outputs.OutputsList">OutputsList</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -870,7 +878,7 @@ def ids(self) -&gt; list:
         return []
     if self.Meta.identifier not in self[0].schema().get(&#34;properties&#34;).keys():
         raise UniqueListIdentifierException(self.Meta.identifier, self.Meta.source)
-    return list(map(lambda item: item.dict().get(self.Meta.identifier), self))</code></pre>
+    return list(map(lambda item: getattr(item, self.Meta.identifier), self))</code></pre>
 </details>
 </dd>
 </dl>
@@ -961,7 +969,7 @@ def ids(self) -&gt; list:
 </details>
 </dd>
 <dt id="terra_ai.data.mixins.UniqueListMixin.get"><code class="name flex">
-<span>def <span class="ident">get</span></span>(<span>self, name: str) ‑> Union[<a title="terra_ai.data.mixins.BaseMixinData" href="#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>, NoneType]</span>
+<span>def <span class="ident">get</span></span>(<span>self, name: Any) ‑> Union[<a title="terra_ai.data.mixins.BaseMixinData" href="#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>, NoneType]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Получение элемента по уникальному идентификатору</p>
@@ -974,7 +982,7 @@ SomeData(alias='some_alias', name='Some name')
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get(self, name: str) -&gt; Optional[Meta.source]:
+<pre><code class="python">def get(self, name: Any) -&gt; Optional[Meta.source]:
     &#34;&#34;&#34;
     Получение элемента по уникальному идентификатору
     ```

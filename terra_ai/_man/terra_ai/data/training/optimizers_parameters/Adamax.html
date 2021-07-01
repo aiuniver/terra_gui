@@ -31,14 +31,15 @@
 ## Оптимайзер `Adamax`
 &#34;&#34;&#34;
 
+from pydantic.types import PositiveFloat
+
 from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGt0
 
 
 class ParametersExtraData(BaseMixinData):
-    beta_1: ConstrainedFloatValueGt0 = 0.9
-    beta_2: ConstrainedFloatValueGt0 = 0.999
-    epsilon: ConstrainedFloatValueGt0 = 1e-07</code></pre>
+    beta_1: PositiveFloat = 0.9
+    beta_2: PositiveFloat = 0.999
+    epsilon: PositiveFloat = 1e-07</code></pre>
 </details>
 </section>
 <section>
@@ -63,9 +64,9 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersExtraData(BaseMixinData):
-    beta_1: ConstrainedFloatValueGt0 = 0.9
-    beta_2: ConstrainedFloatValueGt0 = 0.999
-    epsilon: ConstrainedFloatValueGt0 = 1e-07</code></pre>
+    beta_1: PositiveFloat = 0.9
+    beta_2: PositiveFloat = 0.999
+    epsilon: PositiveFloat = 1e-07</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -75,15 +76,15 @@ class ParametersExtraData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.beta_1"><code class="name">var <span class="ident">beta_1</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
+<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.beta_1"><code class="name">var <span class="ident">beta_1</span> : pydantic.types.PositiveFloat</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.beta_2"><code class="name">var <span class="ident">beta_2</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
+<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.beta_2"><code class="name">var <span class="ident">beta_2</span> : pydantic.types.PositiveFloat</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.epsilon"><code class="name">var <span class="ident">epsilon</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
+<dt id="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData.epsilon"><code class="name">var <span class="ident">epsilon</span> : pydantic.types.PositiveFloat</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

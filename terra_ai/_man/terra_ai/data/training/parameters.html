@@ -34,10 +34,10 @@
 import sys
 
 from enum import Enum
+from pydantic.types import PositiveFloat
 
 from ..mixins import BaseMixinData
-from ..types import ConstrainedFloatValueGt0
-from .extra import OptimizerTypeChoice
+from .extra import OptimizerChoice
 from . import optimizers_parameters as ops
 
 
@@ -46,8 +46,8 @@ class OptimizerParametersTypeDefaultData(BaseMixinData):
 
 
 class OptimizerParametersTypeMainDefaultData(OptimizerParametersTypeDefaultData):
-    name: OptimizerTypeChoice
-    learning_rate: ConstrainedFloatValueGt0 = 0.001
+    name: OptimizerChoice
+    learning_rate: PositiveFloat = 0.001
 
 
 class OptimizerParametersTypeExtraDefaultData(OptimizerParametersTypeDefaultData):
@@ -62,56 +62,56 @@ class OptimizerParametersTypeMixinData(BaseMixinData):
 
 class OptimizerParametersTypeSGDData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;SGD&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.SGD)
     )
     extra: ops.SGD.ParametersExtraData = ops.SGD.ParametersExtraData()
 
 
 class OptimizerParametersTypeRMSpropData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;RMSprop&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.RMSprop)
     )
     extra: ops.RMSprop.ParametersExtraData = ops.RMSprop.ParametersExtraData()
 
 
 class OptimizerParametersTypeAdamData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adam&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adam)
     )
     extra: ops.Adam.ParametersExtraData = ops.Adam.ParametersExtraData()
 
 
 class OptimizerParametersTypeAdadeltaData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adadelta&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adadelta)
     )
     extra: ops.Adadelta.ParametersExtraData = ops.Adadelta.ParametersExtraData()
 
 
 class OptimizerParametersTypeAdagradData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adagrad&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adagrad)
     )
     extra: ops.Adagrad.ParametersExtraData = ops.Adagrad.ParametersExtraData()
 
 
 class OptimizerParametersTypeAdamaxData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adamax&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adamax)
     )
     extra: ops.Adamax.ParametersExtraData = ops.Adamax.ParametersExtraData()
 
 
 class OptimizerParametersTypeNadamData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Nadam&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Nadam)
     )
     extra: ops.Nadam.ParametersExtraData = ops.Nadam.ParametersExtraData()
 
 
 class OptimizerParametersTypeFtrlData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Ftrl&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Ftrl)
     )
     extra: ops.Ftrl.ParametersExtraData = ops.Ftrl.ParametersExtraData()
 
@@ -121,7 +121,7 @@ OptimizerParametersType = Enum(
     dict(
         map(
             lambda item: (item, f&#34;OptimizerParametersType{item}Data&#34;),
-            list(OptimizerTypeChoice),
+            list(OptimizerChoice),
         )
     ),
     type=str,
@@ -171,35 +171,35 @@ OptimizerParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adadelta"><code class="name">var <span class="ident">OptimizerTypeChoice.Adadelta</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adadelta"><code class="name">var <span class="ident">OptimizerChoice.Adadelta</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adagrad"><code class="name">var <span class="ident">OptimizerTypeChoice.Adagrad</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adagrad"><code class="name">var <span class="ident">OptimizerChoice.Adagrad</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adam"><code class="name">var <span class="ident">OptimizerTypeChoice.Adam</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adam"><code class="name">var <span class="ident">OptimizerChoice.Adam</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adamax"><code class="name">var <span class="ident">OptimizerTypeChoice.Adamax</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adamax"><code class="name">var <span class="ident">OptimizerChoice.Adamax</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Ftrl"><code class="name">var <span class="ident">OptimizerTypeChoice.Ftrl</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Ftrl"><code class="name">var <span class="ident">OptimizerChoice.Ftrl</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Nadam"><code class="name">var <span class="ident">OptimizerTypeChoice.Nadam</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Nadam"><code class="name">var <span class="ident">OptimizerChoice.Nadam</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.RMSprop"><code class="name">var <span class="ident">OptimizerTypeChoice.RMSprop</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.RMSprop"><code class="name">var <span class="ident">OptimizerChoice.RMSprop</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersType.SGD"><code class="name">var <span class="ident">OptimizerTypeChoice.SGD</span></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.SGD"><code class="name">var <span class="ident">OptimizerChoice.SGD</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -219,7 +219,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeAdadeltaData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adadelta&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adadelta)
     )
     extra: ops.Adadelta.ParametersExtraData = ops.Adadelta.ParametersExtraData()</code></pre>
 </details>
@@ -264,7 +264,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeAdagradData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adagrad&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adagrad)
     )
     extra: ops.Adagrad.ParametersExtraData = ops.Adagrad.ParametersExtraData()</code></pre>
 </details>
@@ -309,7 +309,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeAdamData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adam&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adam)
     )
     extra: ops.Adam.ParametersExtraData = ops.Adam.ParametersExtraData()</code></pre>
 </details>
@@ -354,7 +354,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeAdamaxData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Adamax&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adamax)
     )
     extra: ops.Adamax.ParametersExtraData = ops.Adamax.ParametersExtraData()</code></pre>
 </details>
@@ -465,7 +465,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeFtrlData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Ftrl&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Ftrl)
     )
     extra: ops.Ftrl.ParametersExtraData = ops.Ftrl.ParametersExtraData()</code></pre>
 </details>
@@ -509,8 +509,8 @@ OptimizerParametersTypeUnion = tuple(
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class OptimizerParametersTypeMainDefaultData(OptimizerParametersTypeDefaultData):
-    name: OptimizerTypeChoice
-    learning_rate: ConstrainedFloatValueGt0 = 0.001</code></pre>
+    name: OptimizerChoice
+    learning_rate: PositiveFloat = 0.001</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -521,11 +521,11 @@ OptimizerParametersTypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.learning_rate"><code class="name">var <span class="ident">learning_rate</span> : <a title="terra_ai.data.types.ConstrainedFloatValue" href="../types.html#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.learning_rate"><code class="name">var <span class="ident">learning_rate</span> : pydantic.types.PositiveFloat</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.name"><code class="name">var <span class="ident">name</span> : <a title="terra_ai.data.training.extra.OptimizerTypeChoice" href="extra.html#terra_ai.data.training.extra.OptimizerTypeChoice">OptimizerTypeChoice</a></code></dt>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.name"><code class="name">var <span class="ident">name</span> : <a title="terra_ai.data.training.extra.OptimizerChoice" href="extra.html#terra_ai.data.training.extra.OptimizerChoice">OptimizerChoice</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -603,7 +603,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeNadamData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;Nadam&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Nadam)
     )
     extra: ops.Nadam.ParametersExtraData = ops.Nadam.ParametersExtraData()</code></pre>
 </details>
@@ -648,7 +648,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeRMSpropData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;RMSprop&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.RMSprop)
     )
     extra: ops.RMSprop.ParametersExtraData = ops.RMSprop.ParametersExtraData()</code></pre>
 </details>
@@ -693,7 +693,7 @@ OptimizerParametersTypeUnion = tuple(
 </summary>
 <pre><code class="python">class OptimizerParametersTypeSGDData(OptimizerParametersTypeMixinData):
     main: OptimizerParametersTypeMainDefaultData = (
-        OptimizerParametersTypeMainDefaultData(name=&#34;SGD&#34;)
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.SGD)
     )
     extra: ops.SGD.ParametersExtraData = ops.SGD.ParametersExtraData()</code></pre>
 </details>

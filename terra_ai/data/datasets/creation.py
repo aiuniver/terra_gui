@@ -64,7 +64,7 @@ In [2]: source = {
 In [3]: data = CreationData(**source)
 
 In [4]: data
-Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=<LayerInputTypeChoice.text: 'text'>, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=<LayerPrepareMethodChoice.embedding: 'embedding'>, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=<LayerOutputTypeChoice.images: 'images'>, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=<LayerNetChoice.Convolutional: 'Convolutional'>, scaler=<LayerScalerChoice.NoScaler: 'NoScaler'>))])
+Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=<LayerInputTypeChoice.text: 'text'>, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=<LayerPrepareMethodChoice.embedding: 'embedding'>, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=<LayerOutputTypeChoice.images: 'images'>, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=<LayerNetChoice.convolutional: 'convolutional'>, scaler=<LayerScalerChoice.no_scaler: 'no_scaler'>))])
 
 In [5]: data.dict()
 Out[5]:
@@ -89,8 +89,8 @@ Out[5]:
    'parameters': {'folder_path': None,
     'width': 120,
     'height': 80,
-    'net': <LayerNetChoice.Convolutional: 'Convolutional'>,
-    'scaler': <LayerScalerChoice.NoScaler: 'NoScaler'>}}]}
+    'net': <LayerNetChoice.convolutional: 'convolutional'>,
+    'scaler': <LayerScalerChoice.no_scaler: 'no_scaler'>}}]}
 
 In [6]: data.json()
 Out[6]: '{"name": "\\u0421\\u0430\\u043c\\u043e\\u043b\\u0435\\u0442\\u044b", "info": {"part": {"train": 0.6, "validation": 0.3, "test": 0.1}, "shuffle": true}, "tags": [], "inputs": [{"alias": "input_1", "name": "Input 1", "type": "text", "parameters": {"folder_path": null, "delete_symbols": null, "x_len": 100, "step": 30, "max_words_count": 20000, "pymorphy": false, "prepare_method": "embedding", "word_to_vec_size": null}}], "outputs": [{"alias": "input_1", "name": "Input 1", "type": "images", "parameters": {"folder_path": null, "width": 120, "height": 80, "net": "Convolutional", "scaler": "NoScaler"}}]}'

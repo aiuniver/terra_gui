@@ -55,8 +55,8 @@ class LayerInputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerInputTypeTextData(BaseMixinData):
@@ -82,7 +82,7 @@ class LayerInputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -98,15 +98,15 @@ class LayerInputTypeDataframeData(BaseMixinData):
     separator: Optional[str]
     encoding: str = &#34;utf-8&#34;
     x_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeImagesData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
 
 
 class LayerOutputTypeTextData(BaseMixinData):
@@ -132,7 +132,7 @@ class LayerOutputTypeAudioData(BaseMixinData):
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -186,7 +186,7 @@ class LayerOutputTypeRegressionData(BaseMixinData):
 class LayerOutputTypeTimeseriesData(BaseMixinData):
     length: PositiveInt
     y_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
 
 
@@ -206,7 +206,7 @@ LayerInputDatatype = Enum(
 
 LayerInputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerInputDatatype,
     )
 )
@@ -232,7 +232,7 @@ LayerOutputDatatype = Enum(
 
 LayerOutputDatatypeUnion = tuple(
     map(
-        lambda item: getattr(sys.modules[__name__], item),
+        lambda item: getattr(sys.modules.get(__name__), item),
         LayerOutputDatatype,
     )
 )
@@ -274,19 +274,19 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Audio"><code class="name">var <span class="ident">LayerInputTypeChoice.audio</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Audio"><code class="name">var <span class="ident">LayerInputTypeChoice.Audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Dataframe"><code class="name">var <span class="ident">LayerInputTypeChoice.dataframe</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Dataframe"><code class="name">var <span class="ident">LayerInputTypeChoice.Dataframe</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Images"><code class="name">var <span class="ident">LayerInputTypeChoice.images</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Images"><code class="name">var <span class="ident">LayerInputTypeChoice.Images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Text"><code class="name">var <span class="ident">LayerInputTypeChoice.text</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerInputDatatype.Text"><code class="name">var <span class="ident">LayerInputTypeChoice.Text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -308,7 +308,7 @@ LayerOutputDatatypeUnion = tuple(
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -401,7 +401,7 @@ LayerOutputDatatypeUnion = tuple(
     separator: Optional[str]
     encoding: str = &#34;utf-8&#34;
     x_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -457,8 +457,8 @@ LayerOutputDatatypeUnion = tuple(
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -591,35 +591,35 @@ LayerOutputDatatypeUnion = tuple(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Audio"><code class="name">var <span class="ident">LayerOutputTypeChoice.audio</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Audio"><code class="name">var <span class="ident">LayerOutputTypeChoice.Audio</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Classification"><code class="name">var <span class="ident">LayerOutputTypeChoice.classification</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Classification"><code class="name">var <span class="ident">LayerOutputTypeChoice.Classification</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Images"><code class="name">var <span class="ident">LayerOutputTypeChoice.images</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Images"><code class="name">var <span class="ident">LayerOutputTypeChoice.Images</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Regression"><code class="name">var <span class="ident">LayerOutputTypeChoice.regression</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Regression"><code class="name">var <span class="ident">LayerOutputTypeChoice.Regression</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Segmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Segmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.Segmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Text"><code class="name">var <span class="ident">LayerOutputTypeChoice.text</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Text"><code class="name">var <span class="ident">LayerOutputTypeChoice.Text</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.TextSegmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.text_segmentation</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.TextSegmentation"><code class="name">var <span class="ident">LayerOutputTypeChoice.TextSegmentation</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Timeseries"><code class="name">var <span class="ident">LayerOutputTypeChoice.timeseries</span></code></dt>
+<dt id="terra_ai.data.datasets.parameters.LayerOutputDatatype.Timeseries"><code class="name">var <span class="ident">LayerOutputTypeChoice.Timeseries</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -641,7 +641,7 @@ LayerOutputDatatypeUnion = tuple(
     folder_path: Optional[DirectoryPath]
     length: PositiveInt
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     audio_signal: Optional[bool] = True
     chroma_stft: Optional[bool] = False
     mfcc: Optional[bool] = False
@@ -770,8 +770,8 @@ LayerOutputDatatypeUnion = tuple(
     folder_path: Optional[DirectoryPath]
     width: PositiveInt
     height: PositiveInt
-    net: LayerNetChoice = LayerNetChoice.Convolutional
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler</code></pre>
+    net: LayerNetChoice = LayerNetChoice.convolutional
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1032,7 +1032,7 @@ LayerOutputDatatypeUnion = tuple(
 <pre><code class="python">class LayerOutputTypeTimeseriesData(BaseMixinData):
     length: PositiveInt
     y_cols: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.NoScaler
+    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries</code></pre>
 </details>
 <h3>Ancestors</h3>

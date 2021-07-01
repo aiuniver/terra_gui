@@ -44,7 +44,6 @@ from .exceptions import AliasException, Base64Exception, FilePathExtensionExcept
 
 ConstrainedIntValueGe0 = conint(ge=0)
 ConstrainedFloatValueGe0 = confloat(ge=0)
-ConstrainedFloatValueGt0 = confloat(gt=0)
 ConstrainedFloatValueLe0 = confloat(le=0)
 ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
 
@@ -229,45 +228,6 @@ def validate(self, value: str) -&gt; str:
 </dd>
 <dt id="terra_ai.data.types.ConstrainedFloatValue"><code class="flex name class">
 <span>class <span class="ident">ConstrainedFloatValueGe0</span></span>
-<span>(</span><span>x=0, /)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Convert a string or number to a floating point number, if possible.</p></div>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>pydantic.types.ConstrainedFloat</li>
-<li>builtins.float</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.ge"><code class="name">var <span class="ident">ge</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.gt"><code class="name">var <span class="ident">gt</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.le"><code class="name">var <span class="ident">le</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.lt"><code class="name">var <span class="ident">lt</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.multiple_of"><code class="name">var <span class="ident">multiple_of</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue.strict"><code class="name">var <span class="ident">strict</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-</dd>
-<dt id="terra_ai.data.types.ConstrainedFloatValue"><code class="flex name class">
-<span>class <span class="ident">ConstrainedFloatValueGt0</span></span>
 <span>(</span><span>x=0, /)</span>
 </code></dt>
 <dd>
@@ -536,17 +496,6 @@ def validate(self, value: FilePath) -&gt; FilePath:
 <h4><code><a title="terra_ai.data.types.Base64Type" href="#terra_ai.data.types.Base64Type">Base64Type</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.types.Base64Type.validate" href="#terra_ai.data.types.Base64Type.validate">validate</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.types.ConstrainedFloatValue" href="#terra_ai.data.types.ConstrainedFloatValue">ConstrainedFloatValue</a></code></h4>
-<ul class="two-column">
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.ge" href="#terra_ai.data.types.ConstrainedFloatValue.ge">ge</a></code></li>
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.gt" href="#terra_ai.data.types.ConstrainedFloatValue.gt">gt</a></code></li>
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.le" href="#terra_ai.data.types.ConstrainedFloatValue.le">le</a></code></li>
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.lt" href="#terra_ai.data.types.ConstrainedFloatValue.lt">lt</a></code></li>
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.multiple_of" href="#terra_ai.data.types.ConstrainedFloatValue.multiple_of">multiple_of</a></code></li>
-<li><code><a title="terra_ai.data.types.ConstrainedFloatValue.strict" href="#terra_ai.data.types.ConstrainedFloatValue.strict">strict</a></code></li>
 </ul>
 </li>
 <li>
