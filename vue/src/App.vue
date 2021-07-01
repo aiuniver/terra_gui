@@ -1,29 +1,30 @@
 <template>
-  <v-app id="app">
-    <Bar />
-    <Message />
-    <v-main>
-      <v-container fluid>
-        <router-view></router-view>
-      </v-container>
-    </v-main>
-
-    <Footer />
-  </v-app>
+  <main class="page-datasets">
+    <Header />
+    <Nav />
+    <div class="container">
+      <div class="board">
+        <div class="wrapper">
+          <router-view></router-view>
+        </div>
+      </div>
+    </div>
+  </main>
 </template>
 
 <script>
+import Header from '@/components/app/Header.vue'
+import Nav from '@/components/app/Nav.vue'
 import { mapGetters } from "vuex";
-import Message from "@/components/app/Message";
-import Footer from "@/components/app/Footer";
-import Bar from "@/components/app/Bar";
+// import Message from "@/components/app/Message";
+// import Footer from "@/components/app/Footer";
+// import Bar from "@/components/app/Bar";
 
 export default {
   name: "App",
   components: {
-    Message,
-    Footer,
-    Bar,
+    Header,
+    Nav,
   },
   computed: {
     ...mapGetters({
