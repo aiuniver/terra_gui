@@ -36,6 +36,7 @@ class InitializerChoice(str, Enum):
     variance_scaling = "variance_scaling"
     lecun_normal = "lecun_normal"
     lecun_uniform = "lecun_uniform"
+    variance_scaling = "variance_scaling"
     he_normal = "he_normal"
     he_uniform = "he_uniform"
 
@@ -55,16 +56,16 @@ class ConstraintChoice(str, Enum):
 
 
 class ActivationChoice(str, Enum):
-    deserialize = "deserialize"
+    # deserialize = "deserialize"
     elu = "elu"
     exponential = "exponential"
     gelu = "gelu"
-    get = "get"
+    # get = "get"
     hard_sigmoid = "hard_sigmoid"
     linear = "linear"
     relu = "relu"
     selu = "selu"
-    serialize = "serialize"
+    # serialize = "serialize"
     sigmoid = "sigmoid"
     softmax = "softmax"
     softplus = "softplus"

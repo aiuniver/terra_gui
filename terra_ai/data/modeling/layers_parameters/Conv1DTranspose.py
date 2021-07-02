@@ -17,11 +17,11 @@ from .extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    filters: PositiveInt
-    kernel_size: PositiveInt
-    strides: PositiveInt = 1
-    padding: PaddingChoice = PaddingChoice.valid
-    activation: Optional[ActivationChoice]
+    filters: PositiveInt = 32
+    kernel_size: PositiveInt = 5
+    strides: PositiveInt = 2
+    padding: PaddingChoice = PaddingChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):

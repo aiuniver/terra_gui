@@ -11,7 +11,8 @@ from .extra import PaddingChoice, DataFormatChoice
 
 class ParametersMainData(BaseMixinData):
     pool_size: Tuple[PositiveInt, PositiveInt] = (2, 2)
-    strides: Optional[PositiveInt]
+    # strides: Optional[PositiveInt]
+    strides: Optional[Tuple[PositiveInt, PositiveInt]]
     padding: PaddingChoice = PaddingChoice.valid
 
 

@@ -10,7 +10,7 @@ from ...types import ConstrainedFloatValueGe0Le1
 
 
 class ParametersMainData(BaseMixinData):
-    rate: ConstrainedFloatValueGe0Le1
+    rate: ConstrainedFloatValueGe0Le1 = 0.1
 
 
 class ParametersExtraData(BaseMixinData):

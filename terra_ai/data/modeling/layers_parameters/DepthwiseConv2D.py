@@ -17,10 +17,10 @@ from .extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    kernel_size: Tuple[PositiveInt, PositiveInt]
+    kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
-    padding: PaddingChoice = PaddingChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingChoice = PaddingChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):

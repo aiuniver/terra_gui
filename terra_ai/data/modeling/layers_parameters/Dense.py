@@ -15,8 +15,8 @@ from .extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    units: PositiveInt
-    activation: Optional[ActivationChoice]
+    units: PositiveInt = 32
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
