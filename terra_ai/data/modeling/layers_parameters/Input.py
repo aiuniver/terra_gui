@@ -14,7 +14,7 @@ class ParametersMainData(BaseMixinData):
     name: Optional[str]
     dtype: Optional[str]
     sparse: Optional[bool]
-    tensor: Optional[str]
+    # tensor: Optional[str]   # тут тензор а не str
     ragged: Optional[bool]
     type_spec: Optional[str]
 

@@ -13,4 +13,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last

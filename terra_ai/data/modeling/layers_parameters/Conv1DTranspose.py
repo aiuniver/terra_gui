@@ -18,15 +18,15 @@ from .extra import (
 
 class ParametersMainData(BaseMixinData):
     filters: PositiveInt = 32
-    kernel_size: PositiveInt = 5
-    strides: PositiveInt = 2
+    kernel_size: PositiveInt = 3
+    strides: PositiveInt = 1
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
     output_padding: Optional[PositiveInt]
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: PositiveInt = 1
     use_bias: bool = True
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform

@@ -26,7 +26,7 @@ class ParametersMainData(BaseMixinData):
 
 class ParametersExtraData(BaseMixinData):
     output_padding: Optional[Tuple[PositiveInt, PositiveInt, PositiveInt]]
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt, PositiveInt] = (1, 1, 1)
     use_bias: bool = True
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform

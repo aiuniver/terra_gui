@@ -17,15 +17,15 @@ from .extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    filters: PositiveInt
-    kernel_size: Tuple[PositiveInt, PositiveInt]
+    filters: PositiveInt = 32
+    kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
-    padding: PaddingChoice = PaddingChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingChoice = PaddingChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt] = (1, 1)
     depth_multiplier: PositiveInt = 1
     use_bias: bool = True

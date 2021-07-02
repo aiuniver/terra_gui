@@ -13,8 +13,8 @@ class ParametersMainData(BaseMixinData):
     pool_size: Tuple[PositiveInt, PositiveInt] = (2, 2)
     # strides: Optional[PositiveInt]
     strides: Optional[Tuple[PositiveInt, PositiveInt]]
-    padding: PaddingChoice = PaddingChoice.valid
+    padding: PaddingChoice = PaddingChoice.same
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last

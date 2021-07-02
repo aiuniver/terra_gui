@@ -25,7 +25,7 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt, PositiveInt] = (1, 1, 1)
     groups: PositiveInt = 1
     use_bias: bool = True

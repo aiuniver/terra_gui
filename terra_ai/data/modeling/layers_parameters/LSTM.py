@@ -16,7 +16,7 @@ from .extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    units: PositiveInt
+    units: PositiveInt = 32
     return_sequences: bool = False
     return_state: bool = False
 

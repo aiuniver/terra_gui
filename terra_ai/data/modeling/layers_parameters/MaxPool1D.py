@@ -12,7 +12,7 @@ from .extra import PaddingChoice, DataFormatChoice
 class ParametersMainData(BaseMixinData):
     pool_size: PositiveInt = 2
     strides: Optional[PositiveInt]
-    padding: PaddingChoice = PaddingChoice.valid
+    padding: PaddingChoice = PaddingChoice.same
 
 
 class ParametersExtraData(BaseMixinData):

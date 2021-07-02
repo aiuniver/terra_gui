@@ -19,14 +19,14 @@ from .extra import (
 class ParametersMainData(BaseMixinData):
     filters: PositiveInt = 32
     kernel_size: Tuple[PositiveInt, PositiveInt] = (3, 3)
-    strides: Tuple[PositiveInt, PositiveInt] = (2, 2)
+    strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
     output_padding: Optional[Tuple[PositiveInt, PositiveInt]]
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt] = (1, 1)
     use_bias: bool = True
     kernel_initializer: InitializerChoice = InitializerChoice.glorot_uniform
