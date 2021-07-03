@@ -5,6 +5,7 @@ export default {
   state: () => ({
     datasets: [],
     tags: [],
+    settings: {},
     sort: "",
     tagsFilter: [],
     id: null,
@@ -14,8 +15,11 @@ export default {
     SET_DATASETS(state, value) {
       state.datasets = [...value];
     },
+    SET_SETTINGS(state, value) {
+      state.settings = {...value};
+    },
     SET_TAGS(state, tags) {
-      state.tags = [...tags ];
+      state.tags = [...tags];
     },
     SET_ADD_DATASET(state, value) {
       state.datasets.push(value);
@@ -26,9 +30,31 @@ export default {
     },
   },
   actions: {
-    async axios(_, params ) {
+    async axios(_, params) {
       try {
         const { data } = await axios(params);
+        return data;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async settings({ commit }, { inputs, outputs, name }) {
+      try {
+        const res = {
+          link: "",
+          mode: "google_drive",
+          name,
+          num_links: {
+            inputs: +inputs,
+            outputs: +outputs,
+          },
+        };
+        const { data:{ data } } = await axios.post(
+          "/api/v1/exchange/load_dataset/",
+          res
+        );
+        console.log(data)
+        commit("SET_SETTINGS", data);
         return data
       } catch (error) {
         console.log(error);
@@ -36,12 +62,12 @@ export default {
     },
     async get({ commit }) {
       try {
-        const { data: { data } } = await axios.post(
-          "/api/v1/exchange/get_datasets_info/"
-        );
-        const { datasets, tags } = data
-        console.log(tags)
-        console.log(datasets)
+        const {
+          data: { data },
+        } = await axios.post("/api/v1/exchange/get_datasets_info/");
+        const { datasets, tags } = data;
+        console.log(tags);
+        console.log(datasets);
         const arr = Object.keys(tags).map((key) => {
           return { text: tags[key], key, active: false };
         });
@@ -53,25 +79,25 @@ export default {
     },
     async loadDataset(_, dataset) {
       try {
-        console.log(dataset)
-        const { data } = await axios.post(
-          "/api/v1/exchange/prepare_dataset/",
-          { dataset, is_custom: false }
-        );
-        console.log(data)
-        return data
+        console.log(dataset);
+        const { data } = await axios.post("/api/v1/exchange/prepare_dataset/", {
+          dataset,
+          is_custom: false,
+        });
+        console.log(data);
+        return data;
       } catch (error) {
         console.log(error);
       }
     },
     async add({ commit }, name) {
       try {
-        console.log(name)
+        console.log(name);
         const { data } = await axios.post(
           "/api/v1/exchange/prepare_dataset/",
           name
         );
-        console.log(name)
+        console.log(name);
         commit("SET_DATASETS", name);
         return data;
       } catch (error) {
@@ -82,7 +108,8 @@ export default {
       try {
         console.log(dataset);
         const { data } = await axios.put(
-          "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets/" + dataset.id,
+          "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets/" +
+            dataset.id,
           dataset
         );
         console.log(data);
@@ -96,7 +123,7 @@ export default {
     },
     async delete({ commit, state }, id) {
       try {
-        console.log(id)
+        console.log(id);
         const { data } = await axios.delete(
           "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets/" + id
         );
@@ -116,12 +143,15 @@ export default {
     },
   },
   getters: {
+    getSettings({ settings }) {
+      return settings;
+    },
     getTags({ tags }) {
       return tags;
     },
     getTagsArr({ tags }) {
-      return Object.keys(tags).map((key) => { 
-        return { "text": tags[key], "value": { [key]: tags[key] } } 
+      return Object.keys(tags).map((key) => {
+        return { text: tags[key], value: { [key]: tags[key] } };
       });
     },
     getTagsFilter({ tagsFilter }) {
@@ -129,14 +159,14 @@ export default {
     },
     getDatasets({ datasets, tagsFilter }) {
       if (!tagsFilter.length) {
-        return datasets
+        return datasets;
       }
       return datasets.filter((dataset) => {
         const index = Object.keys(dataset.tags).filter((tag) => {
           return tagsFilter.indexOf(tag) !== -1;
-        })
-        return index.length
-      })
+        });
+        return index.length;
+      });
     },
   },
 };
