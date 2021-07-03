@@ -13,7 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-
+from django.shortcuts import redirect
 from django.urls import path
 from django.conf import settings
 from django.conf.urls import include
@@ -24,3 +24,5 @@ urlpatterns = [
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
     path("project/", include("apps.project.urls", namespace="apps_project")),
 ] + static(settings.VUE_URL, document_root=settings.VUE_ROOT)
+
+

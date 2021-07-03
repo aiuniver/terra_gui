@@ -1,7 +1,7 @@
 <template>
 <main class="page-modeling">
     <div class="container">
-        
+
 <div class="toolbar project-modeling-toolbar">
     <div class="wrapper">
         <ul class="menu-section models">

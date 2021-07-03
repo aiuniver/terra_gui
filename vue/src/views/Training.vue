@@ -1,60 +1,180 @@
 <template>
-  <v-row>
-    <v-dialog v-model="dialog" persistent max-width="300px">
-      <v-card>
-        <v-card-title>
-          <span class="text-h5">{{
-            `Add ${nodeCategory[nodeType]} layer`
-          }}</span>
-        </v-card-title>
-        <v-card-text>
-          <v-container>
-            <v-form ref="form">
-              <v-row>
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="nodeLabel"
-                    label="Name"
-                    :prepend-icon="nodeIcons[nodeType]"
-                    :rules="[rules.length(3)]"
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-            </v-form>
-          </v-container>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="grey darken-1" text @click="cancel"> Cancel </v-btn>
-          <v-btn color="blue darken-1" text @click="add"> add </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-    <v-col cols="12" class="pa-0 primary">
-      <div class="d-flex flex-column float-left pt-5">
-        <v-btn dark plain small @click="dialog = true" color="text">
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-btn small plain text :color="isColor(0)" @click="nodeType = 0">
-          <v-icon>mdi-format-horizontal-align-left</v-icon>
-        </v-btn>
-        <v-btn small plain text :color="isColor(1)" @click="nodeType = 1">
-          <v-icon>mdi-format-horizontal-align-center</v-icon>
-        </v-btn>
-        <v-btn small plain text :color="isColor(2)" @click="nodeType = 2">
-          <v-icon>mdi-format-horizontal-align-right</v-icon>
-        </v-btn>
-        <v-btn dark plain small disabled @click="save" color="text">
-          <v-icon>mdi-cloud-download-outline</v-icon>
-        </v-btn>
-        <v-btn dark plain small @click="save" color="text">
-          <v-icon>mdi-cloud-upload-outline</v-icon>
-        </v-btn>
+  <main class="page-training">
+    <div class="container">
+      <div class="toolbar project-training-toolbar">
+        <div class="wrapper">
+          <ul class="menu-section">
+            <li data-type="charts" disabled="disabled">
+              <span title="Графики" class="icon-training-charts"></span>
+            </li>
+            <li data-type="scatters" disabled="disabled">
+              <span title="Скаттеры" class="icon-training-scatters"></span>
+            </li>
+            <li data-type="images" disabled="disabled">
+              <span title="Изображения" class="icon-training-images"></span>
+            </li>
+            <li data-type="texts" disabled="disabled">
+              <span title="Текст" class="icon-training-texts"></span>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div>
+
+      <div class="board">
+        <div class="graphics">
+          <div class="wrapper">
+            <div class="tabs-content">
+              <div class="inner">
+                <div class="tabs-item graphics custom-scrollbar-wrapper">
+                  <div class="tab-container">
+                    <div class="charts hidden">
+                      <div class="category-title">Графики</div>
+                      <div class="content">
+                        <div class="inner"></div>
+                      </div>
+                    </div>
+                    <div class="scatters hidden">
+                      <div class="category-title">Скаттеры</div>
+                      <div class="content">
+                        <div class="inner"></div>
+                      </div>
+                    </div>
+                    <div class="images hidden">
+                      <div class="category-title">Изображения</div>
+                      <div class="content"></div>
+                    </div>
+                    <div class="texts hidden">
+                      <div class="category-title">Текст</div>
+                      <div class="content">
+                        <div class="inner"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </v-col>
-  </v-row>
+
+      <div class="properties project-training-properties">
+        <div class="wrapper">
+          <div class="params">
+            <form class="params-container">
+              <div class="params-item params-config">
+                <div class="inner settings">
+                  <div class="params-item params-optimizer">
+                    <div class="inner">
+                      <div class="field-form field-inline">
+                        <label for="field_form-optimizer">Оптимизатор</label>
+                        <select id="field_form-optimizer" name="optimizer[name]" class="jquery-ui-menuselect">
+                          <option value="1">1</option>
+                        </select>
+                      </div>
+                      <div class="field-form form-inline-label">
+                        <div class="field-form field-inline">
+                          <label for="field_form-batch_sizes">Размер батча</label>
+                          <input name="batch_sizes" id="field_form-batch_sizes" type="number" value="1" />
+                        </div>
+                        <div class="field-form field-inline">
+                          <label for="field_form-epochs_count">Количество эпох</label>
+                          <input name="epochs_count" id="field_form-epochs_count" type="number" value="1" />
+                        </div>
+                        <div class="field-form field-inline">
+                          <label for="field_form-learning_rate">Learning rate</label>
+                          <input name="optimizer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="params-item params-optimizer-extra collapsable collapsed hidden">
+                    <div class="params-title">Параметры оптимизатора</div>
+                    <div class="inner form-inline-label"></div>
+                  </div>
+
+                  <div class="params-item params-output collapsable">
+                    <div class="params-title">Параметры outputs слоев</div>
+
+                    <div class="inner">
+                      <div class="title">Слой <b>«1»</b></div>
+                      <div class="form-inline-label">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="params-item params-checkpoint collapsable">
+                    <div class="params-title">Чекпоинты</div>
+                    <div class="inner form-inline-label">
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[monitor][output]">Монитор</label>
+                        <select name="checkpoint[monitor][output]" id="checkpoint[monitor][output]" class="jquery-ui-menuselect">
+                        </select>
+                      </div>
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[indicator]">Indicator</label>
+                        <select name="checkpoint[indicator]" id="checkpoint[indicator]" class="jquery-ui-menuselect">
+                        </select>
+                      </div>
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[monitor][out_type]">Тип</label>
+                        <select name="checkpoint[monitor][out_type]" id="checkpoint[monitor][out_type]" class="jquery-ui-menuselect">
+                        </select>
+                      </div>
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[mode]">Режим</label>
+                        <select name="checkpoint[mode]" id="checkpoint[mode]" class="jquery-ui-menuselect">
+                        </select>
+                      </div>
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[save_best]">Сохранить лучшее</label>
+                        <div class="checkout-switch">
+                          <input type="checkbox" id="checkpoint[save_best]" name="checkpoint[save_best]"/>
+                          <span class="switcher"></span>
+                        </div>
+                      </div>
+                      <div class="field-form field-inline field-reverse">
+                        <label for="checkpoint[save_weights]">Сохранить веса</label>
+                        <div class="checkout-switch">
+                          <input type="checkbox" id="checkpoint[save_weights]" name="checkpoint[save_weights]"/>
+                          <span class="switcher"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="params-item params-callbacks collapsable">
+                    <div class="params-title">Выводить</div>
+                    <div class="inner callback-1">
+                      <div class="title">Слой <b>«1»</b></div>
+                      <div class="form-inline-label"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="params-item params-actions">
+                <div class="inner actions">
+                  <div class="actions-form">
+                    <div class="item training">
+                      <button>Обучить</button>
+                    </div>
+                    <div class="item stop">
+                      <button disabled="disabled">Остановить</button>
+                    </div>
+                    <div class="item reset">
+                      <button disabled="disabled">Сбросить</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </template>
 
 <script>
