@@ -5,7 +5,7 @@
     <input
       class="dropdown-input"
       :name="name"
-      @focus="showOptions()"
+      @focus="showOptions"
       @blur="exit()"
       @keyup="keyMonitor"
       v-model="searchFilter"
@@ -91,10 +91,11 @@ export default {
       this.searchFilter = this.selected.name;
       this.$emit("selected", this.selected);
     },
-    showOptions() {
+    showOptions(e) {
       if (!this.disabled) {
         this.searchFilter = "";
         this.optionsShown = true;
+        this.$emit("focus", e);
       }
     },
     exit() {

@@ -7,10 +7,12 @@
           {{ tag }}
         </div>
       </div>
-      <div class="card-extra">
+      <div :class="'card-extra ' + (size ? 'is-custom' : '')">
         <div class="wrapper">
           <span>{{ size ? size : 'Предустановленный' }}</span>
         </div>
+          <div class="remove">            
+          </div>
       </div>
     </div>
   </div>

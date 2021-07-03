@@ -29,6 +29,7 @@ export default {
   },
   created() {
     this.$store.dispatch("datasets/get");
+    this.$Message('Thanks for using AT-UI')
   },
 };
 </script>

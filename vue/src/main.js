@@ -7,41 +7,63 @@ import VueAxios from "vue-axios";
 
 import routes from "./routers/index";
 import store from "./store/index";
-// import Vuetify from "vuetify";
 
-// import "vuetify/dist/vuetify.min.css";
-// import "./assets/css/main.scss";
-// import colors from "vuetify/lib/util/colors";
+// import {
+//   Button,
+//   ButtonGroup,
+//   Tag,
+//   Radio,
+//   RadioGroup,
+//   RadioButton,
+//   Checkbox,
+//   CheckboxGroup,
+//   Input,
+//   InputNumber,
+//   Textarea,
+//   Badge,
+//   Switch,
+//   Slider,
+//   Tooltip,
+//   Popover,
+//   Alert,
+//   Progress,
+//   LoadingBar,
+//   Modal,
+//   Select,
+//   Option,
+//   OptionGroup,
+//   Dropdown,
+//   DropdownMenu,
+//   DropdownItem,
+//   Breadcrumb,
+//   BreadcrumbItem,
+//   Pagination,
+//   Menu,
+//   MenuItem,
+//   MenuItemGroup,
+//   Submenu,
+//   Table,
+//   Card,
+//   Collapse,
+//   CollapseItem,
+//   Steps,
+//   Step,
+//   Rate,
+//   Tabs,
+//   TabPane,
+//   Timeline,
+//   TimelineItem
+// } from '@/at-ui/src'
 
-// const opts = {
-//   theme: {
-//     dark: true,
-//     themes: {
-//       light: {
-//         primary: '#17212b',
-//         secondary: colors.grey.darken1,
-//         accent: colors.shades.black,
-//         error: colors.red.accent3,
-//         background: '#292930',
-//       },
-//       dark: {
-//         primary: '#65b9f4',
-//         secondary: '#65b9f4',
-//         info: '#2b5278',
-//         accent: '#242f3d',
-//         error: '#FF5252',
-//         success: '#A7BED3',
-//         warning: '#FFC107',
-//         text: '#65b9f4',
-//         input: '#f6af54',
-//         action: '#89d764',
-//         output: '#9166f2',
-//         background: '#17212b',
-//       }
-//     }
-//   },
-// };
+import AtComponents from '@/at-ui/src'
+import '@/at-ui/scss/index.scss' 
 
+Vue.use(AtComponents)
+
+// Vue.prototype.$Notify = Notification
+// Vue.prototype.$Loading = LoadingBar
+// Vue.prototype.$Modal = Dialog
+// Vue.prototype.$Message = Message
 
 Vue.config.productionTip = false;
 Vue.use(Vuex);
