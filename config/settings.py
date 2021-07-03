@@ -44,16 +44,12 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
 ]
 EXTERNAL_APPS = [
     "rest_framework",
-    "compressor",
 ]
 INTERNAL_APPS = [
     "apps.api.apps.APIConfig",
-    "apps.core.apps.CoreConfig",
-    "apps.project.apps.ProjectConfig",
     "terra_ai.apps.TerraAiConfig",
 ]
 
@@ -68,8 +64,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.plugins.terra.middleware.TerraProjectMiddleware",
-    "htmlmin.middleware.HtmlMinifyMiddleware",
-    "htmlmin.middleware.MarkRequestMiddleware",
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
@@ -79,7 +73,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [str(BASE_DIR("templates"))],
+        "DIRS": [str(BASE_DIR("vue/dist"))],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -128,28 +122,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_ROOT = BASE_DIR("staticfiles")
-STATICFILES_DIRS = [BASE_DIR("assets")]
-STATIC_URL = "/assets/"
-
-STATICFILES_FINDERS = [
-    "django.contrib.staticfiles.finders.FileSystemFinder",
-    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
-    "compressor.finders.CompressorFinder",
-]
-
-VUE_URL = "/"
 VUE_ROOT = BASE_DIR("vue/dist")
-
-#  Compress static files
-
-COMPRESS_ENABLED = env.bool("COMPRESS_ENABLED", default=False)
-COMPRESS_OFFLINE = env.bool("COMPRESS_OFFLINE", default=False)
-
-
-#  HTML mimify
-
-HTML_MINIFY = env.bool("HTML_MINIFY", default=False)
+VUE_URL = "/"
 
 
 # Terra AI

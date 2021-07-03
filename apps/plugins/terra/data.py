@@ -12,7 +12,6 @@ from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass
 
 from django.conf import settings
-from django.urls import reverse_lazy
 
 from . import utils as terra_utils
 
@@ -266,7 +265,6 @@ class ProjectPath(pydantic.BaseModel):
     @property
     def keras_code(self) -> (bool, str):
         success = False
-        output = ""
         try:
             with open(
                 os.path.join(self.modeling, self._modeling_keras), "r"
@@ -367,9 +365,9 @@ class TerraExchangeProject(pydantic.BaseModel):
     training: TrainConfig = TrainConfig()
     in_training: bool = False
     path: dict = {
-        "datasets": reverse_lazy("apps_project:datasets"),
-        "modeling": reverse_lazy("apps_project:modeling"),
-        "training": reverse_lazy("apps_project:training"),
+        "datasets": "/project/datasets/",
+        "modeling": "/project/modeling/",
+        "training": "/project/training/",
     }
     dir: ProjectPath = ProjectPath()
     gd: GoogleDrivePath = GoogleDrivePath()
