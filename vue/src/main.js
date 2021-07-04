@@ -70,6 +70,7 @@ Vue.use(Vuex);
 Vue.use(VueAxios, axios);
 Vue.use(VueRouter);
 // Vue.use(Vuetify);
+export const bus = new Vue();
 
 new Vue({
   router: new VueRouter({

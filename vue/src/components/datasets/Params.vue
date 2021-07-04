@@ -1,6 +1,6 @@
 <template>
   <div class="properties">
-    <div class="wrapper" >
+    <div class="wrapper">
       <div class="params">
         <vue-custom-scrollbar
           class="scroll-area"
@@ -64,8 +64,9 @@
                   <input
                     v-model="inputs"
                     type="number"
+                    min="0"
+                    max="100"
                     name="num_links[inputs]"
-                    id="field_form-num_links[inputs]"
                     data-value-type="number"
                   />
                 </div>
@@ -76,7 +77,8 @@
                   <input
                     type="number"
                     name="num_links[outputs]"
-                    id="field_form-num_links[outputs]"
+                    min="0"
+                    max="100"
                     data-value-type="number"
                     :value="outputs"
                   />
@@ -91,18 +93,41 @@
             <div class="params-item dataset-prepare">
               <form novalidate="novalidate" ref="form">
                 <div class="params-container">
-                  <div class="params-item collapsable">
+                  <at-collapse>
+                    <at-collapse-item class="mt-3" title="Входные слои">
+                      <div class="inner row inputs-layers">
+                        <template v-for="(input, i) of imputLayer">
+                          <Layer :name="`input_${input}`" :key="i" />
+                        </template>
+                      </div>
+                    </at-collapse-item>
+                    <at-collapse-item class="mt-3" title="Выходные слои">
+                      <div class="inner row inputs-layers">
+                        <!-- <template v-for="(input, i) of imputLayer"> -->
+                          <!-- <Layer :key="i" /> -->
+                        <!-- </template> -->
+                      </div>
+                    </at-collapse-item>
+                  </at-collapse>
+
+                  <!-- <div class="params-item collapsable">
                     <div class="params-title">Входные слои</div>
                     <div class="inner row inputs-layers">
                       <template v-for="(input, i) of +inputs">
                         <Layer :settings="settings" :key="i" />
                       </template>
                     </div>
-                  </div>
+                  </div> -->
+                  <!-- <div class="params-item collapsable">
+                    <div class="params-title">Выходные слои</div>
+                    <div class="inner row outputs-layers">
+                      <Layer :settings="settings" :key="i" />
+                    </div>
+                  </div> -->
                 </div>
               </form>
             </div>
-            <div><button @click.prevent="click">test</button></div>
+            <div class="mt-5"><button @click.prevent="click">test</button></div>
           </div>
         </vue-custom-scrollbar>
       </div>
@@ -111,6 +136,7 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 import vueCustomScrollbar from "vue-custom-scrollbar";
 import Dropdown from "@/components/forms/Dropdown.vue";
 import Layer from "@/components/datasets/Layer.vue";
@@ -130,7 +156,6 @@ export default {
     ],
     inputs: 1,
     outputs: 1,
-    settings: {},
     tab: null,
     name: "",
     items: [],
@@ -141,6 +166,17 @@ export default {
       required: (len) => len.length !== 0 || `Not be empty`,
     },
   }),
+  computed: {
+    ...mapGetters({
+      settings: 'datasets/getSettings'
+    }),
+    imputLayer() {
+      const int = +this.inputs
+      const settings = this.settings
+      console.log(settings)
+      return ((int > 0 && int < 100) && Object.keys(settings).length) ? int : 0;
+    },
+  },
   methods: {
     async download() {
       if (this.name && this.inputs && this.outputs) {
@@ -151,8 +187,8 @@ export default {
             inputs: this.inputs,
             outputs: this.outputs,
           };
-          const status = this.$store.dispatch("datasets/settings", res);
-          console.log(status);
+          await this.$store.dispatch("datasets/settings", res);
+          this.$Notify.success({ title: "success", message: 'success' });
         } catch (error) {
           this.$Notify.error({ title: "Error", message: error });
         }
@@ -198,9 +234,6 @@ export default {
 </script>
 
 <style>
-.params-container {
-  padding: 20px 0 20px 20px;
-}
 .scroll-area {
   position: relative;
   width: 100%;

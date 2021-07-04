@@ -1,26 +1,19 @@
 <template>
   <div class="field-form field-inline field-reverse">
-    <!-- Dropdown Input -->
     <label>{{ label }}</label>
-    <select
-      id="field_form-inputs[input_1][parameters][folder_name]"
-      data-value-type="string"
-      :name="name"
+    <input
       style="display: none"
+      :name="`${parse}[parameters][${name}]`"
       :value="select"
-    >
-      <option value="" selected="selected"></option>
-      <option value="Аппендицит">Аппендицит</option>
-      <option value="Гастрит">Гастрит</option>
-    </select>
-
-    <at-select v-model="select" clearable size="small" :value="value" style="width: 100px">
+    />
+    <at-select v-model="select" clearable size="small" :value="value" style="width: 100px" @on-change="change">
       <at-option v-for="(item, i) of lists" :key="i" :value="item">{{ item }}</at-option>
     </at-select>
   </div>
 </template>
 
 <script>
+import { bus } from '@/main'
 export default {
   name: "Dropdown",
   props: {
@@ -48,7 +41,18 @@ export default {
   },
   data: () => ({
     select: ''
-  })
+  }),
+  methods: {
+    change(e) {
+      bus.$emit('change', e);
+    }
+  },
+  created() {
+    console.log(this.name)
+    bus.$on('change', (data) => {
+      console.log(data)
+    })
+  }
 }
 </script>
 

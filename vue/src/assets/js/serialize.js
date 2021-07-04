@@ -50,21 +50,28 @@ function serialize(form, options) {
             k_r_submitter.test(element.type)) {
             continue;
         }
-
-        var key = element.name;
-        var val = element.value;
-
+   
         // we can't just use element.value for checkboxes cause some browsers lie to us
         // they say "on" for value when the box isn't checked
         if ((element.type === 'checkbox' || element.type === 'radio') && !element.checked) {
             val = undefined;
         }
 
+        var key = element.name;
+        var val = element.value;
+        if (element.type === 'number') {
+            val = +val
+        }
+        if (element.type === 'checkbox') {
+            val = (val === 'true')
+        }
+        console.log(element.type, key, val, typeof(val))    
+
         // If we want empty elements
         if (options.empty) {
             // for checkbox
             if (element.type === 'checkbox' && !element.checked) {
-                val = '';
+                val = false;
             }
 
             // for radio

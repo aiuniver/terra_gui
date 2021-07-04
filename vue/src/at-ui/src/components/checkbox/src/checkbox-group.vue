@@ -26,7 +26,7 @@ export default {
     }
   },
   watch: {
-    value (value) {
+    value () {
       this.updateModel()
     }
   },

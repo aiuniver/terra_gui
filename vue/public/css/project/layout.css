@@ -307,9 +307,9 @@ main > .container > .properties > .wrapper {
 main > .container > .properties > .wrapper .mCSB_container {
     padding:20px 0 20px 20px;
 }
-.params-container .params-item {
+/* .params-container .params-item {
     padding:20px 20px 20px 0;
-}
+} */
 .params-container .params-item:first-child {
     padding-top:0;
 }

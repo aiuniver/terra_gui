@@ -66,7 +66,7 @@ const showNextModal = () => {
 
     const options = currentModal.options
     for (const prop in options) {
-      if (options.hasOwnProperty(prop)) {
+      if (options.hasOwnProperty(prop)) { // eslint-disable-line
         instance[prop] = options[prop]
       }
     }

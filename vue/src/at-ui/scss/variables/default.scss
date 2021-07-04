@@ -9,7 +9,9 @@ $css-prefix: at;
 
 /* The Color of O2Team Brand */
 
-$color-bg                   : #242f3d;
+$color-bg                   : #17212b;
+$color-bg-el                : #242f3d;
+$color-bg-base              : #0e1621;
 $color-bg-hover             : #6c7883;
 $color-text-button          : #a7b5ac;
 $color-border               : #6c7883;
@@ -411,11 +413,11 @@ $card-border-radius         : $border-radius-base;
 $card-head-height           : 48px;
 
 /* Collapse */
-$collapse-border-color               : $grey-200;
+$collapse-border-color               : $color-border;
 $collapse-border-radius              : $border-radius-base;
 
-$collapse-header-bg-color            : $grey-50;
-$collapse-header-text-color          : $title-color;
+$collapse-header-bg-color            : $color-bg-base;
+$collapse-header-text-color          : $text-color;
 $collapse-header-text-color-disabled : $grey-400;
 
 $collapse-icon-size                  : $font-size-smer;
@@ -483,7 +485,7 @@ $select-font-size-sm        : $font-size-smest;
 $select-font-size-base      : $font-size-smer;
 $select-font-size-lg        : $font-size-base;
 
-$select-bg-color            : $color-bg;
+$select-bg-color            : $color-bg-el;
 $select-font-color          : $color-text-button;
 
 $select-border-c-hover       : $color-bg-hover;
@@ -508,9 +510,9 @@ $select-dropdown-font-size-base : $font-size-smer;
 $select-dropdown-font-size-lg   : $font-size-sm;
 
 $select-dropdown-bg-color       : $select-bg-color;
-$select-dropdown-height         : 200px;
+$select-dropdown-height         : 100px;
 
-$dropdown-option-padding-base   : 6px 12px;
+$dropdown-option-padding-base   : 2px 12px;
 $dropdown-option-bg-c-hover     : $color-bg-hover;
 $dropdown-option-bg-c-selected  : $color-bg-hover;
 
@@ -780,6 +782,6 @@ $zindex-modal               : 1000;
 $zindex-notification        : 1010;
 $zindex-message             : 1010;
 $zindex-popover             : 1020;
-$zindex-dropdown            : 1050;
+$zindex-dropdown            : 1090;
 $zindex-tooltip             : 1050;
 $zindex-loading-bar         : 1080;
