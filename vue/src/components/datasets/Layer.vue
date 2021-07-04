@@ -8,30 +8,25 @@
           type="text"
           :name="`inputs[${name}][name]`"
           :value="name"
-          data-value-type="string"
         />
       </div>
-      <div class="field-form field-inline field-reverse">
-        <label>Тип данных</label>
-        <at-select
+        <Select
           v-model="selectType"
-          :name="`inputs[${name}][tags]`"
-          clearable
-          size="small"
-          style="width: 100px"
-        >
-          <at-option v-for="(val, key) of settings" :key="key" :value="key">{{ key }}</at-option>
-        </at-select>
-      </div>
+          label="Тип данных"
+          :lists="settings"
+          value="images"
+          :parse="`inputs[${name}][tag]`"
+          name="tag"
+        />
     </div>
     <div class="layout-parameters form-inline-label">
-      <template v-for="({ type, default: def, available }, key) of items">
+      <template v-for="({ type, default: def, available, event }, key) of items">
         <Input
           v-if="type === 'int' || type === 'string'"
           :value="def"
           :label="key"
           :type="type === 'int' ? 'number' : 'text'"
-          :parse="`inputs[${name}]`"
+          :parse="`inputs[${name}][parameters][${key}]`"
           :name="key"
           :key="key"
         />
@@ -40,8 +35,9 @@
           :value="def"
           :label="key"
           type="checkbox"
-          :parse="`inputs[${name}]`"
+          :parse="`inputs[${name}][parameters][${key}]`"
           :name="key"
+          :event="event"
           :key="key"
         />
         <Select
@@ -49,7 +45,7 @@
           :label="key"
           :lists="available"
           :value="def"
-          :parse="`inputs[${name}]`"
+          :parse="`inputs[${name}][parameters][${key}]`"
           :name="key"
           :key="key"
         />

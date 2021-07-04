@@ -3,7 +3,7 @@
     <label>{{ label }}</label>
     <input
       :type="type"
-      :name="`${parse}[parameters][${name}]`"
+      :name="parse"
       :value="value"
       data-value-type="number"
     />

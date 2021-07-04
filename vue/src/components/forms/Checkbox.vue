@@ -9,7 +9,7 @@
         data-unchecked-value="false"
         :type="type"
         :value="checked"
-        :name="`${parse}[parameters][${name}]`"
+        :name="parse"
         @change="change(value)"
       />
       <span class="switcher"></span>
@@ -54,17 +54,17 @@ export default {
   },
   created() {
     this.checked = this.value;
-    if (this.event.lenght) {
+    if (this.event.length) {
       console.log("created", this.name);
-      bus.$on("change", ({ event, value }) => {
+      bus.$on("change", ({ event }) => {
         if (this.event.includes(event)) {
-          this.checked = !value;
+          this.checked = false;
         }
       });
     }
   },
   destroyed() {
-    if (this.event.lenght) {
+    if (this.event.length) {
       bus.$off();
       console.log("destroyed", this.name);
     }
