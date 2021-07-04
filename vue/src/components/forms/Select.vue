@@ -6,14 +6,14 @@
       :name="`${parse}[parameters][${name}]`"
       :value="select"
     />
-    <at-select v-model="select" clearable size="small" :value="value" style="width: 100px" @on-change="change">
+    <at-select v-model="select" clearable size="small" :value="value" style="width: 100px">
       <at-option v-for="(item, i) of lists" :key="i" :value="item">{{ item }}</at-option>
     </at-select>
   </div>
 </template>
 
 <script>
-import { bus } from '@/main'
+// import { bus } from '@/main'
 export default {
   name: "Dropdown",
   props: {
@@ -43,15 +43,19 @@ export default {
     select: ''
   }),
   methods: {
-    change(e) {
-      bus.$emit('change', e);
-    }
+    // change(e) {
+      // bus.$emit("change", e);
+    // },
   },
   created() {
-    console.log(this.name)
-    bus.$on('change', (data) => {
-      console.log(data)
-    })
+    // console.log('created', this.name);
+    // bus.$on("change", () => {
+    //   console.log(this.name, 'data');
+    // });
+  },
+  destroyed() {
+    // bus.$off()
+    // console.log('destroyed', this.name);
   }
 }
 </script>

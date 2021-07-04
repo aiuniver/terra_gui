@@ -29,8 +29,7 @@
 
 <script>
 export default {
-  name: "Dropdown",
-  template: "Dropdown",
+  name: "Autocomplete",
   props: {
     name: {
       type: String,

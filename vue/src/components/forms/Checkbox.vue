@@ -3,12 +3,14 @@
     <label>{{ label }}</label>
     <div class="checkout-switch">
       <input
+        v-model="checked"
         :checked="value ? 'checked' : ''"
         data-value-type="boolean"
         data-unchecked-value="false"
         :type="type"
-        :value="value"
+        :value="checked"
         :name="`${parse}[parameters][${name}]`"
+        @change="change(value)"
       />
       <span class="switcher"></span>
     </div>
@@ -16,6 +18,7 @@
 </template>
 
 <script>
+import { bus } from "@/main";
 export default {
   props: {
     label: {
@@ -35,6 +38,36 @@ export default {
     parse: {
       type: String,
     },
+    event: {
+      type: Array,
+      default: () => [],
+    },
+  },
+  data: () => ({
+    checked: null,
+  }),
+  methods: {
+    change() {
+      console.log(this.name, this.checked);
+      bus.$emit("change", { event: this.name, value: this.checked });
+    },
+  },
+  created() {
+    this.checked = this.value;
+    if (this.event.lenght) {
+      console.log("created", this.name);
+      bus.$on("change", ({ event, value }) => {
+        if (this.event.includes(event)) {
+          this.checked = !value;
+        }
+      });
+    }
+  },
+  destroyed() {
+    if (this.event.lenght) {
+      bus.$off();
+      console.log("destroyed", this.name);
+    }
   },
 };
 </script>

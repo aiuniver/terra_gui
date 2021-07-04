@@ -19,7 +19,6 @@
           clearable
           size="small"
           style="width: 100px"
-          @on-change="change"
         >
           <at-option v-for="(val, key) of settings" :key="key" :value="key">{{ key }}</at-option>
         </at-select>
@@ -35,7 +34,6 @@
           :parse="`inputs[${name}]`"
           :name="key"
           :key="key"
-          @change="change"
         />
         <Checkbox
           v-if="type === 'bool'"
@@ -45,7 +43,6 @@
           :parse="`inputs[${name}]`"
           :name="key"
           :key="key"
-          @change="change"
         />
         <Select
           v-if="available"
@@ -55,7 +52,6 @@
           :parse="`inputs[${name}]`"
           :name="key"
           :key="key"
-          @change="change"
         />
       </template>
     </div>

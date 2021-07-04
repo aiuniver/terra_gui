@@ -65,7 +65,7 @@ function serialize(form, options) {
         if (element.type === 'checkbox') {
             val = (val === 'true')
         }
-        console.log(element.type, key, val, typeof(val))    
+        // console.log(element.type, key, val, typeof(val))    
 
         // If we want empty elements
         if (options.empty) {

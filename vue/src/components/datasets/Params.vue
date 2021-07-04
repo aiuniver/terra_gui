@@ -31,7 +31,7 @@
                     URL-ссылка
                   </li>
                 </ul>
-                <Dropdown
+                <Autocomplete
                   :options="items"
                   :disabled="false"
                   :label="
@@ -45,7 +45,7 @@
                   @focus="focus"
                   @selected="selected"
                 >
-                </Dropdown>
+                </Autocomplete>
                 <div class="field-form field-mode-type field-mode-url hidden">
                   <label for="field_form-link"
                     >Введите URL на архив исходников</label
@@ -93,7 +93,7 @@
             <div class="params-item dataset-prepare">
               <form novalidate="novalidate" ref="form">
                 <div class="params-container">
-                  <at-collapse>
+                  <at-collapse value="0">
                     <at-collapse-item class="mt-3" title="Входные слои">
                       <div class="inner row inputs-layers">
                         <template v-for="(input, i) of imputLayer">
@@ -138,13 +138,13 @@
 <script>
 import { mapGetters } from 'vuex'
 import vueCustomScrollbar from "vue-custom-scrollbar";
-import Dropdown from "@/components/forms/Dropdown.vue";
+import Autocomplete from "@/components/forms/Autocomplete.vue";
 import Layer from "@/components/datasets/Layer.vue";
 import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
   components: {
-    Dropdown,
+    Autocomplete,
     Layer,
     vueCustomScrollbar,
   },
@@ -213,7 +213,6 @@ export default {
       this.name = value.name;
     },
     click() {
-      console.log(this.$refs.form.$el);
 
       if (this.$refs.form) {
         console.log(
