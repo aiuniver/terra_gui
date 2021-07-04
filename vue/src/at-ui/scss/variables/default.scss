@@ -1,6 +1,7 @@
 /**
  * Default Variables
  */
+@use "sass:math";
 @import '../mixins/index.scss';
 
  /* Prefix */
@@ -391,7 +392,7 @@ $alert-border-color-info    : $blue-100;
 /* Badge */
 $badge-height               : 18px;
 $badge-padding              : 0 6px;
-$badge-border-radius        : $badge-height / 2;
+$badge-border-radius        : math.div($badge-height, 2);
 $badge-font-size            : $font-size-smer;
 $badge-font-color           : $color-white;
 
