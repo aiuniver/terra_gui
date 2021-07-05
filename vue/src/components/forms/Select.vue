@@ -1,28 +1,26 @@
 <template>
   <div class="field-form field-inline field-reverse">
-    <!-- Dropdown Input -->
     <label>{{ label }}</label>
-    <select
-      id="field_form-inputs[input_1][parameters][folder_name]"
-      data-value-type="string"
-      :name="name"
-      style="display: none"
-      :value="select"
+    <input style="display: none" :name="parse" :value="select" />
+    <at-select
+      v-model="select"
+      clearable
+      size="small"
+      :value="value"
+      style="width: 100px"
+      @on-change="change"
     >
-      <option value="" selected="selected"></option>
-      <option value="Аппендицит">Аппендицит</option>
-      <option value="Гастрит">Гастрит</option>
-    </select>
-
-    <at-select v-model="select" clearable size="small" :value="value" style="width: 100px">
-      <at-option v-for="(item, i) of lists" :key="i" :value="item">{{ item }}</at-option>
+      <at-option v-for="(item, key) in items" :key="item+key" :value="item">{{
+        item
+      }}</at-option>
     </at-select>
   </div>
 </template>
 
 <script>
+// import { bus } from '@/main'
 export default {
-  name: "Dropdown",
+  name: "Select",
   props: {
     label: {
       type: String,
@@ -39,20 +37,45 @@ export default {
       type: String,
     },
     parse: {
-      type: String
+      type: String,
     },
     lists: {
-      type: Array,
-      default: () => []
-    }
+      type: [Array, Object],
+    },
   },
   data: () => ({
-    select: ''
-  })
-}
+    select: "",
+  }),
+  computed: {
+    items () {
+      if (Array.isArray(this.lists)) {
+        return this.lists
+      } else {
+        return Object.keys(this.lists);
+      }
+    },
+  },
+  methods: {
+    change(e) {
+      console.log(e)
+      this.$emit('input', e)
+    // bus.$emit("change", e);
+    },
+  },
+  created() {
+    this.select = this.value
+    // console.log('created', this.name);
+    // bus.$on("change", () => {
+    //   console.log(this.name, 'data');
+    // });
+  },
+  destroyed() {
+    // bus.$off()
+    // console.log('destroyed', this.name);
+  },
+};
 </script>
 
 
 <style lang="scss" scope>
-
 </style>

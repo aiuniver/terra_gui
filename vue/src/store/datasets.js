@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import inputs from "@/json";
 export default {
   namespaced: true,
   state: () => ({
@@ -143,8 +143,8 @@ export default {
     },
   },
   getters: {
-    getSettings({ settings }) {
-      return settings;
+    getSettings() {
+      return inputs;
     },
     getTags({ tags }) {
       return tags;

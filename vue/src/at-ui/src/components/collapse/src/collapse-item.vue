@@ -5,7 +5,7 @@
       'at-collapse__item--disabled': disabled
     }">
     <div class="at-collapse__header" @click="toggle">
-      <i class="icon at-collapse__icon icon-chevron-right"></i>
+      <i class="icon at-collapse__icon icon-chevron-left"></i>
       <slot name="title" v-if="$slots.title"></slot>
       <div v-else>{{ title }}</div>
     </div>

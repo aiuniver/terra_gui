@@ -30,7 +30,7 @@
       }
     },
     methods: {
-      handleClick (evt) {
+      handleClick () {
         if (this.disabled) return
         this.dispatch('AtDropdown', 'menu-item-click', this.name)
       }

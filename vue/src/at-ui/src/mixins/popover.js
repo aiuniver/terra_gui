@@ -38,7 +38,7 @@ export default {
     }
   },
   methods: {
-    toggle (evt) {
+    toggle () {
       this.show = !this.show
       this.$emit('toggle', this.show)
       if (!this.show) return
