@@ -2,10 +2,6 @@ import copy
 import sys
 from dataclasses import dataclass
 from terra_ai import customLayers
-# import keras_contrib
-import tensorflow
-
-# import keras_contrib
 import tensorflow
 
 def check_datatype(in_shape):
