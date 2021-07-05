@@ -2,185 +2,154 @@
   <div class="properties project-training-properties">
     <div class="wrapper">
       <div class="params">
-        <vue-custom-scrollbar
-          class="scroll-area"
-          :settings="{
-            suppressScrollY: false,
-            suppressScrollX: true,
-            wheelPropagation: false,
-          }"
-        >
-        <form class="params-container">
-          <div class="params-item params-config">
-            <div class="inner settings">
-              <div class="params-item params-optimizer">
-                <div class="inner">
-                  <div class="field-form field-inline">
-                    <label for="optimazer">Оптимизатор</label>
-                    <Dropdown
-                        :options="items"
-                        :disabled="false"
-                        :label="Оптимизатор"
-                        name="optimazer"
-                        :maxItem="10"
-                        placeholder="Please select an option"
-                        @focus="focus"
-                        @selected="selected"
-                    >
-                    </Dropdown>
-                  </div>
-                  <div class="field-form form-inline-label">
+          <form class="params-container">
+            <div class="params-item params-config">
+              <div class="inner settings">
+                <div class="params-item params-optimizer">
+                  <div class="inner">
                     <div class="field-form field-inline">
-                      <label for="field_form-batch_sizes">Размер батча</label>
-                      <input name="batch_sizes" id="field_form-batch_sizes" type="number" value="1" />
+                      <Autocomplete
+                          :options="optimazer_items"
+                          :disabled="false"
+                          :label="Оптимизатор"
+                          name="optimazer"
+                          :maxItem="10"
+                          placeholder="Please select an option"
+                          @focus="focus"
+                          @selected="selected"
+                      >
+                      </Autocomplete>
                     </div>
-                    <div class="field-form field-inline">
-                      <label for="field_form-epochs_count">Количество эпох</label>
-                      <input name="epochs_count" id="field_form-epochs_count" type="number" value="1" />
-                    </div>
-                    <div class="field-form field-inline">
-                      <label for="field_form-learning_rate">Learning rate</label>
-                      <input name="optimizer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
+                    <div class="field-form form-inline-label flex wrap">
+                      <div class="field-form field-inline">
+                        <label for="field_form-batch_sizes">Размер батча</label>
+                        <input name="batch_sizes" id="field_form-batch_sizes" type="number" value="1" />
+                      </div>
+                      <div class="field-form field-inline">
+                        <label for="field_form-epochs_count">Количество эпох</label>
+                        <input name="epochs_count" id="field_form-epochs_count" type="number" value="1" />
+                      </div>
+                      <div class="field-form field-inline">
+                        <label for="field_form-learning_rate">Learning rate</label>
+                        <input name="optimizer[params][main][learning_rate]" id="field_form-learning_rate" type="number" value="" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="params-item params-optimizer-extra collapsable collapsed hidden">
-                <div class="params-title">Параметры оптимизатора</div>
-                <div class="inner form-inline-label"></div>
-              </div>
+                <at-collapse>
 
-              <div class="params-item params-output collapsable">
-                <div class="params-title">Параметры outputs слоев</div>
+                  <at-collapse-item class="mt-3" title="Параметры оптимизатора">
+                  </at-collapse-item>
 
-                <div class="inner">
-                  <div class="title">Слой <b>«1»</b></div>
-                  <div class="form-inline-label">
-                  </div>
-                </div>
-              </div>
+                  <at-collapse-item class="mt-3" title="Параметры выходных слоев">
+                  </at-collapse-item>
 
-              <div class="params-item params-checkpoint collapsable">
-                <div class="params-title">Чекпоинты</div>
-                <div class="inner form-inline-label">
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[monitor][output]">Монитор</label>
-                     <Dropdown
-                        :options="items"
-                        :disabled="false"
-                        :label="Монитор"
-                        name="checkpoint[monitor][output]"
-                        :maxItem="10"
-                        placeholder="Please select an option"
-                        @focus="focus"
-                        @selected="selected"
-                    >
-                    </Dropdown>
-                  </div>
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[indicator]">Indicator</label>
-                    <Dropdown
-                        :options="items"
-                        :disabled="false"
-                        :label="Монитор"
-                        name="checkpoint[monitor][output]"
-                        :maxItem="10"
-                        placeholder="Please select an option"
-                        @focus="focus"
-                        @selected="selected"
-                    >
-                    </Dropdown>
-                  </div>
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[monitor][out_type]">Тип</label>
-                    <Dropdown
-                        :options="items"
-                        :disabled="false"
-                        :label="Тип"
-                        name="checkpoint[monitor][out_type]"
-                        :maxItem="10"
-                        placeholder="Please select an option"
-                        @focus="focus"
-                        @selected="selected"
-                    >
-                    </Dropdown>
-                  </div>
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[mode]">Режим</label>
-                    <Dropdown
-                        :options="items"
-                        :disabled="false"
-                        :label="Режим"
-                        name="checkpoint[mode]"
-                        :maxItem="10"
-                        placeholder="Please select an option"
-                        @focus="focus"
-                        @selected="selected"
-                    >
-                    </Dropdown>
-                  </div>
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[save_best]">Сохранить лучшее</label>
-                    <div class="checkout-switch">
-                      <input type="checkbox" id="checkpoint[save_best]" name="checkpoint[save_best]"/>
-                      <span class="switcher"></span>
+                  <at-collapse-item class="mt-3" title="Чекпоинты">
+                    <div class="inner form-inline-label flex wrap">
+                      <Select
+                          :label="'Монитор'"
+                          :lists="select_list"
+                          :value="'OPTION_1'"
+                          :parse="'checkpoint[monitor][output]'"
+                          :name="'checkpoint[monitor][output]'"
+                      />
+                      <Select
+                          :label="'Indicator'"
+                          :lists="select_list"
+                          :value="'OPTION_1'"
+                          :parse="'checkpoint[indicator]'"
+                          :name="'checkpoint[indicator]'"
+                      />
+                      <Select
+                          :label="'Тип'"
+                          :lists="select_list"
+                          :value="'OPTION_1'"
+                          :parse="'checkpoint[monitor][out_type]'"
+                          :name="'checkpoint[monitor][out_type]'"
+                      />
+                      <Select
+                          :label="'Режим'"
+                          :lists="select_list"
+                          :value="'OPTION_1'"
+                          :parse="'checkpoint[mode]'"
+                          :name="'checkpoint[mode]'"
+                      />
+                      <Checkbox
+                          :value="true"
+                          :label="'Сохранить лучшее'"
+                          type="checkbox"
+                          :parse="'checkpoint[save_best]'"
+                          :name="'checkpoint[save_best]'"
+                      />
+                      <Checkbox
+                          :value="true"
+                          :label="'Сохранить веса'"
+                          type="checkbox"
+                          :parse="'checkpoint[save_weights]'"
+                          :name="'checkpoint[save_weights]'"
+                      />
+
                     </div>
-                  </div>
-                  <div class="field-form field-inline field-reverse">
-                    <label for="checkpoint[save_weights]">Сохранить веса</label>
-                    <div class="checkout-switch">
-                      <input type="checkbox" id="checkpoint[save_weights]" name="checkpoint[save_weights]"/>
-                      <span class="switcher"></span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </at-collapse-item>
 
-              <div class="params-item params-callbacks collapsable">
-                <div class="params-title">Выводить</div>
-                <div class="inner callback-1">
-                  <div class="title">Слой <b>«1»</b></div>
-                  <div class="form-inline-label"></div>
+                  <at-collapse-item class="mt-3" title="Выводить">
+                  </at-collapse-item>
+
+
+                </at-collapse>
+
+
+
+
+
+
+              </div>
+            </div>
+
+            <div class="params-item params-actions">
+              <div class="inner actions">
+                <div class="actions-form">
+                  <div class="item training">
+                    <button>Обучить</button>
+                  </div>
+                  <div class="item stop">
+                    <button disabled="disabled">Остановить</button>
+                  </div>
+                  <div class="item reset">
+                    <button disabled="disabled">Сбросить</button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="params-item params-actions">
-            <div class="inner actions">
-              <div class="actions-form">
-                <div class="item training">
-                  <button>Обучить</button>
-                </div>
-                <div class="item stop">
-                  <button disabled="disabled">Остановить</button>
-                </div>
-                <div class="item reset">
-                  <button disabled="disabled">Сбросить</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </form>
-        </vue-custom-scrollbar>
+          </form>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import vueCustomScrollbar from "vue-custom-scrollbar";
-import Dropdown from "@/components/forms/Dropdown.vue";
-// import Layer from "@/components/datasets/Layer.vue";
+import Autocomplete from "@/components/forms/Autocomplete.vue";
+import Select from "@/components/forms/Select.vue";
+import Checkbox from "@/components/forms/Checkbox.vue";
 
 export default {
   name: "Params",
   components: {
-    Dropdown,
-    // Layer,
-    vueCustomScrollbar,
+    Autocomplete,
+    Select,
+    Checkbox
   },
+  data: () => ({
+    optimazer_items: [
+      { id: 1, name: "Adam" },
+      { id: 2, name: "SGD" },
+    ],
+    select_list: [
+        "OPTION_1",
+        "OPTION_2"
+    ]
+  }),
 }
 </script>
 

@@ -175,9 +175,9 @@ input[type=number] {
     height:14px;
     position:relative;
 }
-.field-inline.field-reverse > .checkout-switch {
-    margin-left:19px;
-}
+/*.field-inline.field-reverse > .checkout-switch {*/
+/*    margin-left:19px;*/
+/*}*/
 .checkout-switch > input {
     width:100%;
     height:100%;

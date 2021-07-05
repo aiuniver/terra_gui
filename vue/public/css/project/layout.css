@@ -230,7 +230,13 @@ main {
     padding:94px 0 61px 0;
 }
 main > .container {
+    /*Контейнер во всю ширину и высоту*/
     height:100%;
+    width: 100%;
+    top: 92px;
+    left: 0;
+    position: absolute;
+
     display:-webkit-box;
     display:-moz-box;
     display:-ms-flexbox;
@@ -310,17 +316,27 @@ main > .container > .properties > .wrapper .mCSB_container {
 /* .params-container .params-item {
     padding:20px 20px 20px 0;
 } */
+
+.flex{
+    display: flex;
+}
+.flex > div{
+    width: 50%;
+}
+.wrap{
+    flex-wrap: wrap;
+}
 .params-container .params-item:first-child {
-    padding-top:0;
+    padding: 20px;
 }
 .params-container .params-item:last-child {
-    padding-bottom:0;
+    padding: 20px;
 }
 .params-container .params-item.collapsed {
     padding-bottom:0;
 }
 .params-container .params-item > .inner > :not(:last-child) {
-    margin-bottom:20px;
+    padding: 10px;
 }
 .params-container .params-item.collapsed > .inner {
     display:none;
