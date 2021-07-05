@@ -2,6 +2,7 @@ from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
+import tensorflow as tf
 
 
 class InstanceNormalization(Layer):
@@ -156,6 +157,7 @@ class CustomUNETBlock(Layer):
         filters: Default: 32
         activation: Default: 'relu', or any possible activation.
         """
+
     def __init__(self,
                  filters=32,
                  activation='relu',
@@ -280,6 +282,127 @@ class CustomUNETBlock(Layer):
             'activation': self.activation,
         }
         base_config = super(CustomUNETBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class VAEBlock(Layer):
+    '''
+    Custom Layer VAEBlock
+    Keras Layer to grab a random sample from a distribution (by multiplication)
+    Computes "(normal)*stddev + mean" for the vae sampling operation
+    (written for tf backend)
+    Additionally,
+        Applies regularization to the latent space representation.
+        Can perform standard regularization or B-VAE regularization.
+    call:
+        pass in mean then stddev layers to sample from the distribution
+        ex.
+            sample = SampleLayer('bvae', 16)([mean, stddev])
+    '''
+
+    def __init__(self, latent_size=32, latent_regularizer='vae', beta=5.,
+                 capacity=128., randomSample=True, roll_up=True, **kwargs):
+        '''
+        args:
+        ------
+        latent_regularizer : str
+            Either 'bvae', 'vae', or None
+            Determines whether regularization is applied
+                to the latent space representation.
+        beta : float
+            beta > 1, used for 'bvae' latent_regularizer,
+            (Unused if 'bvae' not selected)
+        capacity : float
+            used for 'bvae' to try to break input down to a set number
+                of basis. (e.g. at 25, the network will try to use
+                25 dimensions of the latent space)
+            (unused if 'bvae' not selected)
+        randomSample : bool
+            whether or not to use random sampling when selecting from
+                distribution.
+            if false, the latent vector equals the mean, essentially turning
+                this into a standard autoencoder.
+        latent_size : int
+        roll_up: bool
+        ------
+        ex.
+            sample = VAEBlock(latent_regularizer='bvae', beta=16,
+                              latent_size=32)(x)
+        '''
+        super(VAEBlock, self).__init__(name='vaeblock', **kwargs)
+        # sampling
+        self.reg = latent_regularizer
+        self.beta = beta
+        self.capacity = capacity
+        self.random = randomSample
+        # variational encoder
+        self.latent_size = latent_size
+        self.roll_up = roll_up
+        self.conv_mean = layers.Conv2D(filters=self.latent_size, kernel_size=(1, 1),
+                                       padding='same')
+        self.gla_mean = layers.GlobalAveragePooling2D()
+        self.conv_stddev = layers.Conv2D(filters=self.latent_size, kernel_size=(1, 1),
+                                         padding='same')
+        self.gla_stddev = layers.GlobalAveragePooling2D()
+        self.inter_dense = layers.Dense(8 * self.latent_size, activation='relu')
+        self.dense_mean = layers.Dense(self.latent_size)
+        self.dense_stddev = layers.Dense(self.latent_size)
+
+    def call(self, inputs):
+        # variational encoder output (distributions)
+        if len(K.shape(inputs)) == 4 or len(K.shape(inputs)) == 4:
+            mean = self.conv_mean(inputs)
+            stddev = self.conv_stddev(inputs)
+            if self.roll_up:
+                mean = self.gla_mean(mean)
+                stddev = self.gla_stddev(stddev)
+
+        elif len(K.shape(inputs)) == 2 or len(K.shape(inputs)) == 2:
+            inter = self.inter_dense(inputs)
+            mean = self.dense_mean(inter)
+            stddev = self.dense_stddev(inter)
+        else:
+            raise Exception(
+                'input shape VAEBlock is not a vector [batchSize, intermediate_dim] or [batchSize, width, heigth, ch]')
+        if self.reg:
+            # kl divergence:
+            latent_loss = -0.5 * tf.reduce_sum(1 + stddev
+                                               - K.square(mean)
+                                               - K.exp(stddev), axis=-1)
+            if self.reg == 'bvae':
+                # use beta to force less usage of vector space:
+                # also try to use <capacity> dimensions of the space:
+                latent_loss = self.beta * K.abs(latent_loss - self.capacity / self.latent_size)
+            self.add_loss(tf.reduce_mean(latent_loss))
+
+        epsilon = K.random_normal(shape=K.shape(mean),
+                                  mean=0., stddev=1.)
+
+        if self.random:
+            # 'reparameterization trick':
+            return mean + K.exp(stddev / 2) * epsilon
+        else:  # do not perform random sampling, simply grab the impulse value
+            return mean + 0 * stddev  # Keras needs the *0 so the gradinent is not None
+
+    # def compute_output_shape(self, input_shape):
+    #     return tf.shape(input_shape)[0]
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'activation': self.activation,
+            'latent_regularizer': self.reg,
+            'beta': self.beta,
+            'capacity': self.capacity,
+            'randomSample': self.random,
+            'latent_size': self.latent_size,
+            'roll_up': self.roll_up,
+        }
+        base_config = super(VAEBlock, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
     @classmethod
