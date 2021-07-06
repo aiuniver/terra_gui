@@ -7,6 +7,7 @@ from django.views.generic import View, TemplateView
 from apps.plugins.terra import terra_exchange
 
 
+
 class ProjectViewMixin(TemplateView):
     pass
 

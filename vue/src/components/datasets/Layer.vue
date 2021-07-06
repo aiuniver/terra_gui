@@ -55,7 +55,7 @@ export default {
     }),
     items() {
       // console.log(this.selectType)
-      // console.log(this.settings)
+      console.log(this.settings)
       return (this.settings || {})[this.selectType] || {};
     },
   },
