@@ -6,7 +6,7 @@
         :value="def"
         :label="key"
         :type="type === 'int' ? 'number' : 'text'"
-        :parse="`${prefixParse}[parameters][${key}]`"
+        :parse="`${parse}[parameters][${key}]`"
         :name="key"
         :key="key"
       />
@@ -15,7 +15,7 @@
         :value="def"
         :label="key"
         type="checkbox"
-        :parse="`${prefixParse}[parameters][${key}]`"
+        :parse="`${parse}[parameters][${key}]`"
         :name="key"
         :event="event"
         :key="key"
@@ -25,7 +25,7 @@
         :label="key"
         :lists="available"
         :value="def"
-        :parse="`${prefixParse}[parameters][${key}]`"
+        :parse="`${parse}[parameters][${key}]`"
         :name="key"
         :key="key"
       />
@@ -50,7 +50,7 @@ export default {
       type: Object,
       required: true,
     },
-    prefixParse: {
+    parse: {
         type: String
     },
   },

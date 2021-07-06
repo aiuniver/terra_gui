@@ -1,5 +1,5 @@
 <template>
-    <header class="flexbox-center-nowrap">
+    <header class="flexbox-center-nowrap px-2">
     <div class="project flexbox-left-nowrap">
         <a href="/project/datasets/" class="logo"></a>
         <div class="title flexbox-left-nowrap">

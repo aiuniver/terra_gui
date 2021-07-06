@@ -1,9 +1,8 @@
 <template>
   <div class="field-form field-inline field-reverse">
     <label>{{ label }}</label>
-    <input style="display: none" :name="parse" :value="select" />
+    <input style="display: none" :name="parse" :value="value"/>
     <at-select
-      v-model="select"
       clearable
       size="small"
       :value="value"
@@ -28,7 +27,7 @@ export default {
     },
     type: {
       type: String,
-      default: "text",
+      default: "",
     },
     value: {
       type: [String, Number],
@@ -64,6 +63,7 @@ export default {
   },
   created() {
     this.select = this.value
+    console.log(this.select)
     // console.log('created', this.name);
     // bus.$on("change", () => {
     //   console.log(this.name, 'data');

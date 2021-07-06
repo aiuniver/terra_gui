@@ -113,6 +113,7 @@
       font-size: $select-dropdown-font-size-base;
       line-height: 1.5;
       text-align: left;
+      color: $select-dropdown-text-color;
       white-space: nowrap;
       transition: all .2s;
       overflow: hidden;
@@ -121,10 +122,12 @@
       &--selected {
         font-weight: bold;
         background-color: $dropdown-option-bg-c-selected;
+        color: $text-color;
       }
       &:hover,
       &--focus {
         background-color: $dropdown-option-bg-c-hover;
+        color: $text-color;
       }
       &--disabled {
         color: $input-placeholder-color-disabled;

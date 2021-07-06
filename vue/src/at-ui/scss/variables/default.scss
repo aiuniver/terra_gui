@@ -486,7 +486,7 @@ $select-font-size-base      : $font-size-smer;
 $select-font-size-lg        : $font-size-base;
 
 $select-bg-color            : $color-bg-el;
-$select-font-color          : $color-text-button;
+$select-font-color          : $text-color;
 
 $select-border-c-hover       : $color-bg-hover;
 $select-border-c-checked     : $color-bg-hover;
@@ -509,6 +509,7 @@ $select-dropdown-font-size-sm   : $font-size-smest;
 $select-dropdown-font-size-base : $font-size-smer;
 $select-dropdown-font-size-lg   : $font-size-sm;
 
+$select-dropdown-text-color     : $color-text-button;
 $select-dropdown-bg-color       : $select-bg-color;
 $select-dropdown-height         : 100px;
 

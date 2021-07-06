@@ -4,24 +4,27 @@
       Слой <b>«{{ name }}»</b>
     </div>
     <div class="layout-params form-inline-label">
-      <div class="field-form field-inline field-reverse">
-        <label>Название входа</label>
-        <input type="text" :name="`inputs[${name}][name]`" :value="name" />
-      </div>
+      <Input
+        label="Название"
+        type="text"
+        :parse="`${parse}[name]`"
+        name="name"
+        :value="name"
+      />
       <Select
-        v-model="selectType"
+        v-model="select"
         label="Тип данных"
         :lists="settings"
-        :value="def"
-        :parse="`inputs[${name}][tag]`"
+        :parse="`${parse}[tag]`"
         name="tag"
       />
     </div>
-    <Forms :prefixParse="`inputs[${name}]`" :items="items" />
+    <Forms :parse="parse" :items="items" />
   </div>
 </template>
 
 <script>
+import Input from "@/components/forms/Input.vue";
 import Select from "@/components/forms/Select.vue";
 import Forms from "@/components/forms";
 
@@ -31,6 +34,7 @@ export default {
   components: {
     Select,
     Forms,
+    Input,
   },
   props: {
     name: {
@@ -41,29 +45,29 @@ export default {
       type: String,
       required: true,
     },
+    parse: {
+      type: String,
+      required: true,
+    },
   },
   data: () => ({
-    selectType: "images",
-    rules: {
-      length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
-      required: (len) => len.length !== 0 || `Not be empty`,
-    },
+    select: "",
   }),
   computed: {
     ...mapGetters({
       settings: "datasets/getSettings",
     }),
     items() {
-      // console.log(this.selectType)
-      console.log(this.settings)
-      return (this.settings || {})[this.selectType] || {};
+      return (this.settings || {})[this.select] || {};
     },
   },
-  methods: {
-    change(v) {
-      console.log(v);
-    },
+  mounted() {
+    console.log(this.def);
+    this.select = this.def;
+   console.log(this.items);
+    this.$nextTick(() => {
+      this.select = this.def;
+    });
   },
-  mounted() {},
 };
 </script>

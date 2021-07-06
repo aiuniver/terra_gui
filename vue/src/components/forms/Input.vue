@@ -1,12 +1,9 @@
 <template>
   <div class="field-form field-inline field-reverse">
-    <label>{{ label }}</label>
-    <input
-      :type="type"
-      :name="parse"
-      :value="value"
-      data-value-type="number"
-    />
+    <slot>
+      <label>{{ label }}</label>
+    </slot>
+    <input :type="type" :name="parse" :value="value" />
   </div>
 </template>
 
@@ -24,12 +21,9 @@ export default {
     value: {
       type: [String, Number],
     },
-    name: {
+    parse: {
       type: String,
     },
-    parse: {
-      type: String
-    }
   },
 };
 </script>

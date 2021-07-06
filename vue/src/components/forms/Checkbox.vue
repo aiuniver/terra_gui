@@ -5,8 +5,6 @@
       <input
         v-model="checked"
         :checked="value ? 'checked' : ''"
-        data-value-type="boolean"
-        data-unchecked-value="false"
         :type="type"
         :value="checked"
         :name="parse"

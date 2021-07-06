@@ -332,25 +332,25 @@ main > .container > .properties > .wrapper .mCSB_container {
 /*.params-container .params-item:first-child {*/
 /*    padding: 20px;*/
 /*}*/
-.params-container .params-item:last-child {
+/* .params-container .params-item:last-child {
     padding: 20px;
-}
+} */
 .params-container .params-item.collapsed {
     padding-bottom:0;
 }
 /*.params-container .params-item > .inner > :not(:last-child) {*/
 /*    padding: 10px;*/
 /*}*/
-.params-container .params-item.collapsed > .inner {
+/* .params-container .params-item.collapsed > .inner {
     display:none;
-}
+} */
 .params-container .params-item > .params-title {
-    display:block;
+    /* display:block; */
     line-height:1.25;
-    margin:-20px -20px 10px -20px;
+    /* margin:-20px -20px 10px -20px; */
     padding:5px 20px;
     font-size:.75rem;
-    user-select:none;
+    /* user-select:none; */
 }
 .params-container .params-item.collapsable > .params-title {
     position:relative;
@@ -382,9 +382,9 @@ main > .container > .properties > .wrapper .mCSB_container {
 .actions-form > :not(:last-child) {
     margin-bottom:5px;
 }
-.form-inline-label {
-    margin-bottom:-10px;
-}
+/* .form-inline-label {
+    padding: 10px 20px;
+} */
 .form-inline-label > * {
     margin-bottom:10px !important;
 }
