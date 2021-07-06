@@ -110,6 +110,7 @@ class LayerType(str, Enum):
     Cropping2D = "Cropping2D"
     VGG16 = "VGG16"
     CustomUNETBlock = "CustomUNETBlock"
+    VAEBlock = 'VAEBlock'
     Conv2DBNDrop = "Conv2DBNDrop"
     Conv2DBNLeaky = 'Conv2DBNLeaky'
     CustomResBlock = 'CustomResBlock'

@@ -3027,6 +3027,9 @@ class GUILayersDef:
             #  27: 'VGG19',
             28: 'Xception',
             29: 'CustomUNETBlock',
+            # 30:
+            # 31:
+            32: 'VAEBlock'
         },
         # Custom_Block
         12: {
@@ -6240,6 +6243,37 @@ class GUILayersDef:
                     "list": True,
                     "available": activation_lh,
                 }
+            },
+            'extra': {}
+        },
+        'VAEBlock': {
+            'main': {
+                "latent_size": {
+                    "type": "int",
+                    "default": 32
+                },
+                "latent_regularizer": {
+                    "type": "str",
+                    "default": 'vae',
+                    "list": True,
+                    "available": [None, 'vae', 'bvae'],
+                },
+                "beta": {
+                    "type": "float",
+                    "default": 5.0
+                }
+                "capacity": {
+                    "type": "float",
+                    "default": 128.0
+                },
+                "randomSample": {
+                    "type": "bool",
+                    "default": True
+                },
+                "roll_up": {
+                    "type": "bool",
+                    "default": True
+                },
             },
             'extra': {}
         },
