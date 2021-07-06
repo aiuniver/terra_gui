@@ -5,6 +5,21 @@
 from enum import Enum
 
 
+class CheckpointIndicatorChoice(str, Enum):
+    val = "val"
+    train = "train"
+
+
+class CheckpointModeChoice(str, Enum):
+    min = "min"
+    max = "max"
+
+
+class CheckpointTypeChoice(str, Enum):
+    metrics = "metrics"
+    loss = "loss"
+
+
 class OptimizerChoice(str, Enum):
     SGD = "SGD"
     RMSprop = "RMSprop"
