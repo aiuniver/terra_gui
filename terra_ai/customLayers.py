@@ -12,7 +12,8 @@ class InstanceNormalization(Layer):
     close to 0 and the activation standard deviation close to 1.
     # Arguments
         axis: Integer, the axis that should be normalized
-            (typically the features axis).
+            (typically the features axis).+
+
             For instance, after a `Conv2D` layer with
             `data_format="channels_first"`,
             set `axis=1` in `InstanceNormalization`.
@@ -393,8 +394,6 @@ class VAEBlock(Layer):
 
     def get_config(self):
         config = {
-            'filters': self.filters,
-            'activation': self.activation,
             'latent_regularizer': self.reg,
             'beta': self.beta,
             'capacity': self.capacity,

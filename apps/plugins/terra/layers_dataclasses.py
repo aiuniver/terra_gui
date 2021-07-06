@@ -2857,7 +2857,10 @@ class PlanLinkLibrary:
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
         'Xception': tensorflow.keras.applications.xception,
+
+        # Custom block
         'CustomUNETBlock': customLayers,
+        'VAEBlock': customLayers,
     }
 
 
