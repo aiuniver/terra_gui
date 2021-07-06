@@ -2,6 +2,8 @@
 ## Структура данных слоев
 """
 
+import json
+
 from typing import Optional, List, Tuple, Any, Union
 from pydantic import validator
 from pydantic.types import PositiveInt
@@ -47,8 +49,8 @@ class LayerData(AliasMixinData):
 
     @property
     def parameters_dict(self) -> dict:
-        __data = self.parameters.main.dict()
-        __data.update(self.parameters.extra.dict())
+        __data = json.loads(self.parameters.main.json())
+        __data.update(json.loads(self.parameters.extra.json()))
         return __data
 
     @validator("location", "position", allow_reuse=True)
