@@ -19,8 +19,8 @@ class LayerShapeData(BaseMixinData):
     Размерности слоя
     """
 
-    input: Tuple[PositiveInt, ...] = ()
-    output: Tuple[PositiveInt, ...] = ()
+    input: Optional[Tuple[PositiveInt, ...]]
+    output: Optional[Tuple[PositiveInt, ...]]
 
 
 class LayerData(AliasMixinData):
@@ -38,12 +38,18 @@ class LayerData(AliasMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
-    location: Optional[List[ConstrainedIntValueGe0]]
+    location: Optional[Tuple[ConstrainedIntValueGe0, ...]]
     "Расположение слоя в сетке модели"
-    position: Optional[List[int]]
+    position: Optional[Tuple[int, ...]]
     "Расположение слоя в сетке модели"
     parameters: Optional[Any]
     "Параметры слоя"
+
+    @property
+    def parameters_dict(self) -> dict:
+        __data = self.parameters.main.dict()
+        __data.update(self.parameters.extra.dict())
+        return __data
 
     @validator("location", "position", allow_reuse=True)
     def _validate_xy(cls, value: list, values) -> list:
