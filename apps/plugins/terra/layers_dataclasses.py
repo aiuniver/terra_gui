@@ -6261,7 +6261,7 @@ class GUILayersDef:
                 "beta": {
                     "type": "float",
                     "default": 5.0
-                }
+                },
                 "capacity": {
                     "type": "float",
                     "default": 128.0
