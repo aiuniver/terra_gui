@@ -103,27 +103,12 @@
                     </at-collapse-item>
                     <at-collapse-item class="mt-3" title="Выходные слои">
                       <div class="inner row inputs-layers">
-                        <!-- <template v-for="(input, i) of imputLayer"> -->
-                          <!-- <Layer :key="i" /> -->
-                        <!-- </template> -->
+                        <template v-for="(input, i) of imputLayer">
+                          <Layer :name="`output_${input}`" :key="i" />
+                        </template>
                       </div>
                     </at-collapse-item>
                   </at-collapse>
-
-                  <!-- <div class="params-item collapsable">
-                    <div class="params-title">Входные слои</div>
-                    <div class="inner row inputs-layers">
-                      <template v-for="(input, i) of +inputs">
-                        <Layer :settings="settings" :key="i" />
-                      </template>
-                    </div>
-                  </div> -->
-                  <!-- <div class="params-item collapsable">
-                    <div class="params-title">Выходные слои</div>
-                    <div class="inner row outputs-layers">
-                      <Layer :settings="settings" :key="i" />
-                    </div>
-                  </div> -->
                 </div>
               </form>
             </div>
