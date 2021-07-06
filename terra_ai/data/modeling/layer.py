@@ -14,15 +14,6 @@ from .extra import LayerTypeChoice, LayerGroupChoice
 from . import parameters
 
 
-class LayerBindData(BaseMixinData):
-    """
-    Списки связей слоя
-    """
-
-    input: List[str] = []
-    output: List[str] = []
-
-
 class LayerShapeData(BaseMixinData):
     """
     Размерности слоя
@@ -43,7 +34,7 @@ class LayerData(AliasMixinData):
     "Тип слоя"
     group: LayerGroupChoice
     "Группа слоя"
-    bind: LayerBindData = LayerBindData()
+    bind: List[int] = []
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
