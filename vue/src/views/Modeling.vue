@@ -1,9 +1,10 @@
 <template>
 <main class="page-modeling">
     <div class="container">
-      <Toolbar/>
+      <Toolbar :load_model_flag="load_model_flag"></Toolbar>
       <Canvas/>
       <Params/>
+      <ModalWindowLoadModel v-if="load_model_flag"></ModalWindowLoadModel>
     </div>
 </main>
 </template>
@@ -13,6 +14,7 @@
 import Toolbar from "@/components/modeling/Toolbar";
 import Canvas from "@/components/modeling/Canvas";
 import Params from "@/components/modeling/Params";
+import ModalWindowLoadModel from "@/components/modeling/ModalWindowLoadModel";
 import { mapGetters } from "vuex";
 
 export default {
@@ -21,11 +23,13 @@ export default {
     // SimpleFlowchart,
     Toolbar,
     Canvas,
-    Params
+    Params,
+    ModalWindowLoadModel
   },
   data() {
     return {
       dialog: false,
+      load_model_flag: false,
       nodeType: 1,
       nodeLabel: "",
       nodeCategory: ["input", "action", "output"],

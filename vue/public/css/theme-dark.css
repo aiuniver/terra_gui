@@ -154,6 +154,7 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
 }
 .project-modeling-properties > .wrapper > .params-navbar > ul > li.active > span {
 	background-color:#17212B;
+    padding: 0 20px;
 }
 .project-training-properties > .wrapper > .params > .params-container > .params-item.params-config.disabled:before {
     background:rgba(23,33,43,.9);

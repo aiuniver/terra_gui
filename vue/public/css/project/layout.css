@@ -326,18 +326,21 @@ main > .container > .properties > .wrapper .mCSB_container {
 .wrap{
     flex-wrap: wrap;
 }
-.params-container .params-item:first-child {
-    padding: 20px;
-}
+ .layers-form{
+     padding: 15px;
+ }
+/*.params-container .params-item:first-child {*/
+/*    padding: 20px;*/
+/*}*/
 .params-container .params-item:last-child {
     padding: 20px;
 }
 .params-container .params-item.collapsed {
     padding-bottom:0;
 }
-.params-container .params-item > .inner > :not(:last-child) {
-    padding: 10px;
-}
+/*.params-container .params-item > .inner > :not(:last-child) {*/
+/*    padding: 10px;*/
+/*}*/
 .params-container .params-item.collapsed > .inner {
     display:none;
 }

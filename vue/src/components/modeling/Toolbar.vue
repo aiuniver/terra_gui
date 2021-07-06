@@ -2,8 +2,8 @@
 <div class="toolbar project-modeling-toolbar">
     <div class="wrapper">
         <ul class="menu-section models">
-            <li data-type="load">
-                <span title="Загрузить модель" class="icon-model-load"></span>
+            <li data-type="load" @click="load_model_flag = !load_model_flag">
+                <span title="Загрузить модель" class="icon-model-load">{{load_model_flag}}</span>
             </li>
             <li data-type="save_model" disabled="disabled">
                 <span title="Сохранить модель" class="icon-model-save"></span>
@@ -40,7 +40,11 @@
 
 <script>
 export default {
-  name: "Toolbar"
+  name: "Toolbar",
+  props: {
+    load_model_flag: Boolean
+  },
+
 }
 </script>
 
