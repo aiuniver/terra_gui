@@ -355,14 +355,14 @@ class VAEBlock(Layer):
 
     def call(self, inputs):
         # variational encoder output (distributions)
-        if len(K.shape(inputs)) == 4 or len(K.shape(inputs)) == 4:
+        if K.ndim(inputs) == 4 or K.ndim(inputs) == 4:
             mean = self.conv_mean(inputs)
             stddev = self.conv_stddev(inputs)
             if self.roll_up:
                 mean = self.gla_mean(mean)
                 stddev = self.gla_stddev(stddev)
 
-        elif len(K.shape(inputs)) == 2 or len(K.shape(inputs)) == 2:
+        elif K.ndim(inputs) == 2 or K.ndim(inputs) == 2:
             inter = self.inter_dense(inputs)
             mean = self.dense_mean(inter)
             stddev = self.dense_stddev(inter)
