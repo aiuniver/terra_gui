@@ -1,16 +1,11 @@
 from django.urls import path
-
-from . import views as api_views
+from django.conf.urls import include
 
 
 app_name = "apps_api"
 
 urlpatterns = [
-    path("exchange/<name>/", api_views.ExchangeAPIView.as_view(), name="exchange"),
-    path("layers-types/", api_views.LayersTypesAPIView.as_view(), name="layers-types"),
-    path(
-        "datasets-sources/",
-        api_views.DatasetsSourcesAPIView.as_view(),
-        name="datasets-sources",
-    ),
+    path("datasets/", include("apps.api.datasets.urls", namespace="datasets")),
+    path("modeling/", include("apps.api.modeling.urls", namespace="modeling")),
+    path("training/", include("apps.api.training.urls", namespace="training")),
 ]

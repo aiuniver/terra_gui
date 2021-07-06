@@ -131,3 +131,9 @@ VUE_URL = "/"
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
+
+
+# DRF
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apps.api.exceptions.handler",
+}

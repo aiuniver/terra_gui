@@ -1,6 +1,5 @@
 from .exchange import TerraExchange
 
-
 terra_exchange = TerraExchange()
 
 if terra_exchange.project.dataset:
