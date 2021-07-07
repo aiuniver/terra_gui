@@ -181,9 +181,9 @@ class SourceData(BaseMixinData):
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl], **kwargs
+        cls, value: Union[FilePathType, HttpUrl], values
     ) -> Union[FilePathType, HttpUrl]:
-        mode = kwargs.get("values", {}).get("mode")
+        mode = values.get("mode")
         if mode == SourceModeChoice.google_drive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)

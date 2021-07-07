@@ -4,9 +4,11 @@ from pathlib import Path
 from transliterate import slugify
 
 from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
+from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.presets.datasets import DatasetsGroups
 from . import exceptions
+from . import temporary_methods
 
 
 class Exchange:
@@ -30,19 +32,6 @@ class Exchange:
         # Вызываем метод
         return __method(**kwargs)
 
-    def _call_get_datasets_sources(self, path: str) -> list:
-        """
-        Получение списка исходников датасетов
-        """
-        files = FilePathSourcesList()
-        for filename in os.listdir(path):
-            filepath = Path(path, filename)
-            try:
-                files.append({"value": filepath})
-            except Exception:
-                pass
-        return files.list()
-
     def _call_get_datasets_info(self, path: str) -> dict:
         """
         Получение данных для страницы датасетов: датасеты и теги
@@ -64,6 +53,31 @@ class Exchange:
             except Exception:
                 pass
         return info.dict()
+
+    def _call_get_dataset_source(self, mode: str, value: str):
+        """
+        Загрузка исходников датасета
+        """
+        source = SourceData(mode=mode, value=value)
+        temporary_methods.dataset_load(source)
+        # self.dts.load_data(
+        #     name=kwargs.get("name", ""),
+        #     mode=kwargs.get("mode", ""),
+        #     link=kwargs.get("link", ""),
+        # )
+
+    def _call_get_datasets_sources(self, path: str) -> list:
+        """
+        Получение списка исходников датасетов
+        """
+        files = FilePathSourcesList()
+        for filename in os.listdir(path):
+            filepath = Path(path, filename)
+            try:
+                files.append({"value": filepath})
+            except Exception:
+                pass
+        return files.list()
 
 
 agent_exchange = Exchange()
