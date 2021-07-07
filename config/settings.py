@@ -63,7 +63,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "apps.plugins.terra.middleware.TerraProjectMiddleware",
+    "apps.plugins.project.middleware.ProjectMiddleware",
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
@@ -126,14 +126,15 @@ VUE_ROOT = BASE_DIR("vue/dist")
 VUE_URL = "/"
 
 
+# DRF
+
+REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "apps.api.exceptions.handler",
+}
+
+
 # Terra AI
 
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
-
-
-# DRF
-REST_FRAMEWORK = {
-    "EXCEPTION_HANDLER": "apps.api.exceptions.handler",
-}
