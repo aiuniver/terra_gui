@@ -3,10 +3,19 @@ from terra_ai.agent import agent_exchange
 from ..base import BaseAPIView, BaseResponse
 
 
+class InfoAPIView(BaseAPIView):
+    def get(self, request, **kwargs):
+        data = agent_exchange(
+            "get_datasets_info",
+            path=str(request.project.path.datasets.absolute()),
+        )
+        return BaseResponse(data=data)
+
+
 class SourcesAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        sources = agent_exchange(
+        data = agent_exchange(
             "get_datasets_sources",
-            pathdir=str(request.project.path.sources.absolute()),
+            path=str(request.project.path.sources.absolute()),
         )
-        return BaseResponse(data=sources)
+        return BaseResponse(data=data)
