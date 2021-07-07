@@ -3,15 +3,22 @@
     <div class="overlay"></div>
     <div class="inner">
       <div class="header">
-        <div class="title"></div>
-        <div class="close" title="[ESC]"></div>
+        <div class="title">Загрузка модели</div>
+        <div class="close" title="[ESC]" @click="CloseModalWindow"></div>
       </div>
       <div class="container">
         <div class="wrapper">
           <div id="modal-window-load-model" class="modal-window-container">
             <div class="models-data">
               <div class="models-list">
-                <div class="custom-scrollbar-wrapper">
+                <vue-custom-scrollbar
+                    class="scroll-area"
+                    :settings="{
+                      suppressScrollY: false,
+                      suppressScrollX: true,
+                      wheelPropagation: false,
+                    }"
+                >
                   <ul class="loaded-list">
                     <li
                         v-for="item in loaded_list"
@@ -22,7 +29,7 @@
                       <span>{{ item.name }}</span>
                     </li>
                   </ul>
-                </div>
+                </vue-custom-scrollbar>
               </div>
               <div class="model-arch">
                 <div class="wrapper hidden">
@@ -44,8 +51,12 @@
 </template>
 
 <script>
+import vueCustomScrollbar from "vue-custom-scrollbar";
 export default {
   name: "ModalWindowLoadModel",
+  components: {
+    vueCustomScrollbar
+  },
   data: () => ({
     loaded_list: [
       {is_terra: true, name: "mnist"},
@@ -55,7 +66,12 @@ export default {
       {is_terra: false, name: "Custom mnist"},
       {is_terra: false, name: "Custom GG"}
     ]
-  })
+  }),
+  methods: {
+    CloseModalWindow(){
+      this.$emit("CloseModalWindow", false)
+    }
+  }
 }
 </script>
 
