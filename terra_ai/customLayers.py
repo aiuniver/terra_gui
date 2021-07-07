@@ -371,14 +371,14 @@ class VAEBlock(Layer):
                 'input shape VAEBlock is not a vector [batchSize, intermediate_dim] or [batchSize, width, heigth, ch]')
         if self.reg:
             # kl divergence:
-            latent_loss = -0.5 * tf.reduce_sum(1 + stddev
-                                               - K.square(mean)
-                                               - K.exp(stddev), axis=-1)
+            latent_loss = K.mean(-0.5 * K.sum(1 + stddev
+                                              - K.square(mean)
+                                              - K.exp(stddev), axis=-1))
             if self.reg == 'bvae':
                 # use beta to force less usage of vector space:
                 # also try to use <capacity> dimensions of the space:
                 latent_loss = self.beta * K.abs(latent_loss - self.capacity / self.latent_size)
-            self.add_loss(tf.reduce_mean(latent_loss))
+            self.add_loss(latent_loss)
 
         epsilon = K.random_normal(shape=K.shape(mean),
                                   mean=0., stddev=1.)
