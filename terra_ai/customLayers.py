@@ -2,7 +2,7 @@ from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
 from tensorflow.keras import layers
-import tensorflow as tf
+import tensorflow
 
 
 class InstanceNormalization(Layer):
@@ -407,3 +407,176 @@ class VAEBlock(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+class YOLOResBlock(Layer):
+    """YOLOResBlock layer """
+
+    def __init__(self,
+                 filters=32,
+                 num_resblocks=1,
+                 activation='linear',
+                 use_bias=False,
+                 leaky_alpha=0.1,
+                 include_head=True,
+                 first_conv_kernel=(3, 3),
+                 first_conv_strides=(2, 2),
+                 first_conv_padding='valid',
+                 zero_padding=((1, 0), (1, 0)),
+                 **kwargs):
+        super(YOLOResBlock, self).__init__(**kwargs)
+        self.filters = filters
+        self.num_resblocks = num_resblocks
+        self.kernel_regularizer = tensorflow.keras.regularizers.l2(5e-4)
+        self.activation = activation
+        self.use_bias = use_bias
+        self.include_head = include_head
+        self.alpha = leaky_alpha
+        self.strides = first_conv_strides
+        self.kernel = first_conv_kernel
+        self.padding = first_conv_padding
+        self.zero_padding = zero_padding
+
+        if self.include_head:
+            self.zero2d = tensorflow.keras.layers.ZeroPadding2D(padding=self.zero_padding)
+            self.conv_start = tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=self.kernel,
+                                                             strides=self.strides, use_bias=self.use_bias,
+                                                             padding=self.padding, activation=self.activation,
+                                                             kernel_regularizer=self.kernel_regularizer)
+            self.bn_start = tensorflow.keras.layers.BatchNormalization()
+            self.leaky_start = tensorflow.keras.layers.LeakyReLU(alpha=self.alpha)
+        for i in range(self.num_resblocks):
+            setattr(self, f"conv_1_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters // 2, kernel_size=(1, 1),
+                                                                        strides=(1, 1), activation=self.activation,
+                                                                        use_bias=self.use_bias, padding='same',
+                                                                        kernel_regularizer=self.kernel_regularizer))
+            setattr(self, f"conv_2_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3),
+                                                                        strides=(1, 1), activation=self.activation,
+                                                                        use_bias=self.use_bias, padding='same',
+                                                                        kernel_regularizer=self.kernel_regularizer))
+            setattr(self, f"bn_1_{i}", tensorflow.keras.layers.BatchNormalization())
+            setattr(self, f"bn_2_{i}", tensorflow.keras.layers.BatchNormalization())
+            setattr(self, f"leaky_1_{i}", tensorflow.keras.layers.LeakyReLU(alpha=self.alpha))
+            setattr(self, f"leaky_2_{i}", tensorflow.keras.layers.LeakyReLU(alpha=self.alpha))
+            setattr(self, f"add_{i}", tensorflow.keras.layers.Add())
+
+    def call(self, inputs, training=True, **kwargs):
+        if self.include_head:
+            x = self.zero2d(inputs)
+            x = self.conv_start(x)
+            x = self.bn_start(x)
+            x = self.leaky_start(x)
+        else:
+            x = inputs
+        for i in range(self.num_resblocks):
+            y = getattr(self, f"conv_1_{i}")(x)
+            y = getattr(self, f"bn_1_{i}")(y)
+            y = getattr(self, f"leaky_1_{i}")(y)
+            y = getattr(self, f"conv_2_{i}")(y)
+            y = getattr(self, f"bn_2_{i}")(y)
+            y = getattr(self, f"leaky_2_{i}")(y)
+            x = getattr(self, f"add_{i}")([y, x])
+        return x
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'num_resblocks': self.num_resblocks,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'alpha': self.alpha,
+            'include_head': self.include_head,
+            'first_conv_strides': self.strides,
+            'first_conv_kernel': self.kernel,
+            'first_conv_padding': self.padding,
+            'zero_padding': self.zero_padding
+        }
+        base_config = super(YOLOResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class YOLOConvBlock(Layer):
+    """Unet block layer """
+
+    def __init__(self,
+                 filters=32,
+                 num_conv=1,
+                 activation='linear',
+                 use_bias=False,
+                 leaky_alpha=0.1,
+                 first_conv_kernel=(1, 1),
+                 first_conv_strides=(1, 1),
+                 first_conv_padding='same',
+                 **kwargs):
+        super(YOLOConvBlock, self).__init__(**kwargs)
+        self.filters = filters
+        self.num_conv = num_conv
+        self.kernel_regularizer = tensorflow.keras.regularizers.l2(5e-4)
+        self.activation = activation
+        self.use_bias = use_bias
+        self.alpha = leaky_alpha
+        self.strides = first_conv_strides
+        self.kernel = first_conv_kernel
+        self.padding = first_conv_padding
+
+        for i in range(self.num_conv):
+            if i == 0:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=self.kernel,
+                                                                          strides=self.strides,
+                                                                          activation=self.activation,
+                                                                          use_bias=self.use_bias, padding='same',
+                                                                          kernel_regularizer=self.kernel_regularizer))
+            elif i != 0 and i % 2 == 0:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(1, 1),
+                                                                          strides=(1, 1), activation=self.activation,
+                                                                          use_bias=self.use_bias, padding='same',
+                                                                          kernel_regularizer=self.kernel_regularizer))
+            else:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=2 * self.filters, kernel_size=(3, 3),
+                                                                          strides=(1, 1), activation=self.activation,
+                                                                          use_bias=self.use_bias, padding='same',
+                                                                          kernel_regularizer=self.kernel_regularizer))
+            setattr(self, f"bn_{i}", tensorflow.keras.layers.BatchNormalization())
+            setattr(self, f"leaky_{i}", tensorflow.keras.layers.LeakyReLU(alpha=self.alpha))
+
+    def call(self, inputs, training=True, **kwargs):
+        for i in range(self.num_conv):
+            if i == 0:
+                x = getattr(self, f"conv_{i}")(inputs)
+            else:
+                x = getattr(self, f"conv_{i}")(x)
+            x = getattr(self, f"bn_{i}")(x)
+            x = getattr(self, f"leaky_{i}")(x)
+        return x
+
+    def get_config(self):
+        config = {
+            'filters': self.filters,
+            'num_conv': self.num_conv,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'leaky_alpha': self.alpha,
+            'first_conv_strides': self.strides,
+            'first_conv_kernel': self.kernel,
+            'first_conv_padding': self.padding
+        }
+        base_config = super(YOLOConvBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+if __name__ == "__main__":
+    # input = tensorflow.keras.layers.Input(shape=(32, 32, 3))
+    # x = YOLOResBlock(32, 2)(input)
+    # print(x)
+    x = YOLOResBlock(**{"filters": 64, "num_resblocks": 5, 'include_head': True, 'zero_padding': ((2, 2), (2, 2)),
+                        'first_conv_strides': (3, 3), 'first_conv_padding': 'valid', 'first_conv_kernel': (5, 5)})
+    # x = YOLOConvBlock(**{"filters": 64, "num_conv": 5})
+    print(x.compute_output_shape(input_shape=(None, 32, 32, 64)))
+    pass
