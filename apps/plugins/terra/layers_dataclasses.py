@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from terra_ai import customLayers
 import tensorflow
 
+__version__ = 0.024
+
 def check_datatype(in_shape):
     dim = len(in_shape)
     if dim == 1:
@@ -24,6 +26,7 @@ def check_datatype(in_shape):
         msg = f"Error: More than 6 dimensions arrays is not supported! input_shape = {in_shape}"
         sys.exit(msg)
     return result
+
 
 def get_def_parameters_dict(layer_name):
     new_dict = {}
@@ -56,6 +59,11 @@ def get_block_params_from_plan(plan, layers_dict, layer_params, short_plan=False
         layer_type = layers_dict.get(layer[1], None).get(layer[2], None)
         if layer_type:
             def_params = copy.deepcopy(layer_params.get(layer_type, {}).get("main", {}))
+            def_params["kernel_regularizer"] = layer_params.get(layer_type, {}).get("extra", {}).get(
+                "kernel_regularizer", {})
+            def_params["use_bias"] = layer_params.get(layer_type, {}).get("extra", {}).get(
+                "use_bias", {})
+
             if short_plan:
                 for curr_param, val in layer[3].items():
                     def_params[curr_param]['default'] = val
@@ -123,12 +131,12 @@ class PlanLinkLibrary:
             (3, 5, 2, 0, {'alpha': 0.1}, 2, 0)
         ],
         'CustomResBlock': [
-            (1, 1, 3, 0, {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                          'padding': 'same', 'strides': (1, 1)}, 0, 0),
+            (1, 1, 3, 0, {'filters': 32, 'activation': 'linear', 'kernel_size': (3, 3),
+                          'padding': 'same', 'strides': (1, 1), 'use_bias': False}, 0, 0),
             (2, 6, 2, 0, {}, 1, 0),
             (3, 5, 2, 0, {'alpha': 0.1}, 2, 0),
-            (4, 1, 3, 0, {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                          'padding': 'same', 'strides': (1, 1)}, 3, 0),
+            (4, 1, 3, 0, {'filters': 64, 'activation': 'linear', 'kernel_size': (1, 1),
+                          'padding': 'same', 'strides': (1, 1), 'use_bias': False}, 3, 0),
             (5, 6, 2, 0, {}, 4, 0),
             (6, 5, 2, 0, {'alpha': 0.1}, 5, 0),
             (7, 4, 2, 0, {}, 6, [0]),
@@ -2861,6 +2869,8 @@ class PlanLinkLibrary:
         # Custom block
         'CustomUNETBlock': customLayers,
         'VAEBlock': customLayers,
+        'YOLOResBlock': customLayers,
+        'YOLOConvBlock': customLayers,
     }
 
 
@@ -3027,9 +3037,10 @@ class GUILayersDef:
             #  27: 'VGG19',
             28: 'Xception',
             29: 'CustomUNETBlock',
-            # 30:
-            # 31:
-            32: 'VAEBlock'
+            30: 'YOLOResBlock',
+            31: 'YOLOConvBlock',
+            32: 'VAEBlock',
+
         },
         # Custom_Block
         12: {
@@ -3582,13 +3593,13 @@ class GUILayersDef:
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "pointwise_regularizer": {
+                "bias_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
                     "available": regularizer_lh,
                 },
-                "bias_regularizer": {
+                "activity_regularizer": {
                     "type": "str",
                     "default": None,
                     "list": True,
@@ -3598,7 +3609,7 @@ class GUILayersDef:
                     "type": "str",
                     "default": None,
                     "list": True,
-                    "available": regularizer_lh,
+                    "available": constraint_lh,
                 },
                 "pointwise_constraint": {
                     "type": "str",
@@ -4553,7 +4564,7 @@ class GUILayersDef:
                     "type": "float",
                     "default": 0.1
                 }
-            },          
+            },
             'extra': {
                 "noise_shape": {
                     "type": "tensor",
@@ -6277,48 +6288,140 @@ class GUILayersDef:
             },
             'extra': {}
         },
+        'YOLOResBlock': {
+            'main': {
+                "filters": {
+                    "type": "int",
+                    "default": 32
+                },
+                "num_resblocks": {
+                    "type": "int",
+                    "default": 1,
+                }
+            },
+            'extra': {
+                "use_bias": {
+                    "type": "bool",
+                    "default": False
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'linear',
+                    "list": True,
+                    "available": activation_lh,
+                },
+                "leaky_alpha": {
+                    "type": "float",
+                    "default": 0.1,
+                },
+                "first_conv_kernel": {
+                    "type": "tuple",
+                    "default": (3, 3)
+                },
+                "first_conv_strides": {
+                    "type": "tuple",
+                    "default": (2, 2)
+                },
+                "first_conv_padding": {
+                    "type": "str",
+                    "default": "valid",
+                    "list": True,
+                    "available": padding_lh,
+                },
+                "zero_padding": {
+                    "type": "tuple",
+                    "default": ((1, 1), (1, 1))
+                },
+                "include_head": {
+                    "type": "bool",
+                    "default": True
+                },
+            }
+        },
+        'YOLOConvBlock': {
+            'main': {
+                "filters": {
+                    "type": "int",
+                    "default": 32
+                },
+                "num_conv": {
+                    "type": "int",
+                    "default": 1,
+                },
+            },
+            'extra': {
+                "use_bias": {
+                    "type": "bool",
+                    "default": False
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'linear',
+                    "list": True,
+                    "available": activation_lh,
+                },
+                "leaky_alpha": {
+                    "type": "float",
+                    "default": 0.1,
+                },
+                "first_conv_kernel": {
+                    "type": "tuple",
+                    "default": (3, 3)
+                },
+                "first_conv_strides": {
+                    "type": "tuple",
+                    "default": (1, 1)
+                },
+                "first_conv_padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
+                },
+            }
+        },
     }
 
     block_params = {
         'Conv2DBNDrop': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Conv2DBNDrop', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Conv2DBNDrop', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'Conv2DBNLeaky': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Conv2DBNLeaky', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Conv2DBNLeaky', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'CustomResBlock': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('CustomResBlock', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('CustomResBlock', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'Resnet50Block': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Resnet50Block', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('Resnet50Block', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'PSPBlock': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('PSPBlock', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('PSPBlock', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'UNETBlock': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('UNETBlock', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'XceptionBlock': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('XceptionBlock', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('XceptionBlock', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         },
         'InceptionV3block': {
-            'main': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('InceptionV3block', {}),
+            'main': {},
+            'extra': get_block_params_from_plan(PlanLinkLibrary.custom_block_plan.get('InceptionV3block', {}),
                                                layers_dict, layer_params),
-            'extra': {}
         }
     }
 

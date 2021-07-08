@@ -123,6 +123,8 @@ class LayerType(str, Enum):
     ResNet50 = "ResNet50"
     Xception = "Xception"
     Attention = "Attention"
+    YOLOResBlock = "YOLOResBlock"
+    YOLOConvBlock = "YOLOConvBlock"
 
 
 
