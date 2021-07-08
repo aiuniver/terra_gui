@@ -550,11 +550,6 @@ class CustomCallback(keras.callbacks.Callback):
         callback_kwargs = _task_type_defaults_kwargs["callback_kwargs"]
         if metrics:
             callback_kwargs["metrics"] = copy.deepcopy(metrics)
-        if task_type == "classification" or task_type == "segmentation":
-            callback_kwargs["num_classes"] = copy.deepcopy(num_classes)
-            if tags["input_1"]:
-                callback_kwargs["data_tag"] = tags["input_1"]
-
         for option_name, option_value in clbck_options.items():
             if option_name == "show_every_epoch":
                 if option_value:
@@ -582,6 +577,9 @@ class CustomCallback(keras.callbacks.Callback):
                     callback_kwargs["show_final"] = False
 
         if (task_type == "classification") or (task_type == "segmentation"):
+            callback_kwargs["num_classes"] = copy.deepcopy(num_classes)
+            if tags["input_1"]:
+                callback_kwargs["data_tag"] = tags["input_1"]
             callback_kwargs["class_metrics"] = []
             for option_name, option_value in clbck_options.items():
                 if option_name == "plot_loss_for_classes":
