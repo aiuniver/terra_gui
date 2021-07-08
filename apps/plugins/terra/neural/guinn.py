@@ -149,15 +149,12 @@ class GUINN:
         Setting task nn_name
 
         Args:
-            dts_obj (object): setting task_name
+            dts_obj (object): setting dataset
         """
         if not self.model_is_trained:
             self.nn_cleaner()
-            self.DTS = dts_obj
-            self.prepare_dataset()
-        else:
-            self.DTS = dts_obj
-            self.prepare_dataset()
+        self.DTS = dts_obj
+        self.prepare_dataset()
         pass
 
     def show_training_params(self) -> None:
@@ -272,11 +269,10 @@ class GUINN:
                             metric_name = metric_name.name
                         if metric_name == "dice_coef":
                             custom_objects.update({"DiceCoefficient": DiceCoefficient})
-                if custom_objects:
-                    self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False,
-                                            custom_objects=custom_objects)
-                else:
-                    self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False)
+                if not custom_objects:
+                    custom_objects = None
+                self.model = load_model(os.path.join(self.training_path, model_name[0]), compile=False,
+                                        custom_objects=custom_objects)
 
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
@@ -539,8 +535,7 @@ class GUINN:
                         history.history[monitor2][best_epoch_num],
                     )
                     )
-                    & (
-                    not np.isnan(history.history[monitor][i]))
+                    & (not np.isnan(history.history[monitor][i]))
             ):
                 best_epoch_num = i
             elif (
