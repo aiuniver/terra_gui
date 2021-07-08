@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 from pydantic import confloat, BaseModel
 from threading import Thread
 
@@ -21,6 +21,7 @@ class ProgressData(BaseModel):
     message: str = ""
     error: str = ""
     finished: bool = False
+    data: Any
 
     @property
     def success(self) -> bool:
@@ -58,6 +59,7 @@ class ProgressPool:
                 message=kwargs.get("message", __progress.message),
                 error=kwargs.get("error", __progress.error),
                 finished=kwargs.get("finished", __progress.finished),
+                data=kwargs.get("data", __progress.data),
             ),
         )
 
