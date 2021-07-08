@@ -218,11 +218,12 @@ export default {
       if (!this.items.length) {
         const res = {
           method: "get",
-          url: "/api/v1/datasets-sources/?term=",
+          url: "/api/v1/datasets/sources/?term=",
         };
-        const data = await this.$store.dispatch("datasets/axios", res);
+        const { data: data } = await this.$store.dispatch("datasets/axios", res);
+        console.log(data)
         this.items = data.map((item, i) => {
-          return { name: item.value, id: ++i };
+          return { name: item, id: ++i };
         });
       }
     },

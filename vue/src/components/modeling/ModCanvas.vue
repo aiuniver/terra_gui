@@ -17,7 +17,7 @@
 
 <script>
 export default {
-  name: "canvas"
+  name: "ModCanvas"
 }
 </script>
 

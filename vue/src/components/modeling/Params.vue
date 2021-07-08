@@ -71,6 +71,14 @@ export default {
       "Conv3D"
     ]
   }),
+  methods: {
+    focus() {
+
+    },
+    selected() {
+      
+    }
+  }
 
 }
 </script>
