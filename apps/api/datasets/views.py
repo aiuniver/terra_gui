@@ -7,7 +7,7 @@ from .serializers import SourceLoadSerializer
 
 
 class InfoAPIView(BaseAPIView):
-    def get(self, request):
+    def get(self, request, **kwargs):
         data = agent_exchange(
             "datasets_info", path=str(request.project.path.datasets.absolute())
         )
@@ -15,7 +15,7 @@ class InfoAPIView(BaseAPIView):
 
 
 class SourceLoadAPIView(BaseAPIView):
-    def post(self, request):
+    def post(self, request, **kwargs):
         serializer = SourceLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
@@ -26,8 +26,13 @@ class SourceLoadAPIView(BaseAPIView):
             return BaseResponseErrorFields(error)
 
 
+class SourceLoadProgressAPIView(BaseAPIView):
+    def get(self, request, **kwargs):
+        return BaseResponseSuccess(data=agent_exchange("dataset_source_load_progress"))
+
+
 class SourcesAPIView(BaseAPIView):
-    def get(self, request):
+    def get(self, request, **kwargs):
         data = agent_exchange(
             "datasets_sources", path=str(request.project.path.sources.absolute())
         )

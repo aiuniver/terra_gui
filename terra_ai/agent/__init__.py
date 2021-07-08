@@ -7,14 +7,13 @@ from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.presets.datasets import DatasetsGroups
+from .. import progress
+
 from . import exceptions
 from . import temporary_methods
-from . import progress
 
 
 class Exchange:
-    progress = progress.Progress()
-
     def __call__(self, method: str, *args, **kwargs) -> dict:
         # Получаем метод для вызова
         __method_name = f"_call_{method}"
@@ -58,13 +57,13 @@ class Exchange:
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        temporary_methods.dataset_load(source, self.progress("dataset_source_load"))
+        temporary_methods.dataset_source_load(source)
 
-    def _call_dataset_source_load_progress(self):
+    def _call_dataset_source_load_progress(self) -> dict:
         """
         Прогресс загрузки исходников датасета
         """
-        print(self.progress.dataset_source_load)
+        return progress.pool(progress.PoolName.dataset_source_load).dict()
 
     def _call_datasets_sources(self, path: str) -> list:
         """

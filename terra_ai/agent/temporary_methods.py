@@ -1,37 +1,36 @@
 import sys
 import zipfile
 
-from tqdm.asyncio import tqdm
-from time import sleep
+from tqdm import tqdm
 from pathlib import Path
 from pydantic.networks import HttpUrl
 
 from ..data.datasets.creation import SourceData
-from ..threading import threading
+from .. import progress
 
 
-@threading
-def __dataset_load_google_drive(path: Path, progress: callable = None):
-    with zipfile.ZipFile(path) as file_ref:
-        __tqdm = tqdm(file_ref.infolist())
-        for member in __tqdm:
-            try:
+@progress.threading
+def __dataset_source_load_google_drive(path: Path):
+    name = progress.PoolName.dataset_source_load
+    progress.pool.reset(name, message="Загрузка исходников")
+    try:
+        with zipfile.ZipFile(path) as file_ref:
+            __tqdm = tqdm(file_ref.infolist())
+            for member in __tqdm:
                 file_ref.extract(member, ".")
-            except zipfile.error:
-                pass
-            progress(__tqdm.n / __tqdm.total * 100)
-        progress(__tqdm.n / __tqdm.total * 100)
+                progress.pool(name, percent=__tqdm.n / __tqdm.total * 100)
+            progress.pool(name, percent=__tqdm.n / __tqdm.total * 100, finished=True)
+    except Exception as error:
+        progress.pool(name, error=str(error))
 
 
-@threading
-def __dataset_load_url(url: HttpUrl, progress: callable = None):
-    sleep(3)
+@progress.threading
+def __dataset_source_load_url(url: HttpUrl):
     print("URL:", url)
-    sleep(3)
     print("URL:", "stop")
 
 
-def dataset_load(source: SourceData, progress: callable = None):
-    method_name = f"__dataset_load_{source.mode}"
+def dataset_source_load(source: SourceData):
+    method_name = f"__dataset_source_load_{source.mode}"
     method = getattr(sys.modules.get(__name__), method_name)
-    method(source.value, progress)
+    method(source.value)
