@@ -31,205 +31,183 @@
 Предустановки датасетов
 &#34;&#34;&#34;
 
-from enum import Enum
-
-from ..datasets.tags import TagData
-from ..datasets.dataset import DatasetsGroupsList
+from .extra.datasets import Tags
 
 
-class Tags(dict, Enum):
-    images = TagData(alias=&#34;images&#34;, name=&#34;Images&#34;).dict()
-    classification = TagData(alias=&#34;classification&#34;, name=&#34;Classification&#34;).dict()
-    tensorflow_keras = TagData(alias=&#34;tensorflow_keras&#34;, name=&#34;Tensorflow.keras&#34;).dict()
-    text = TagData(alias=&#34;text&#34;, name=&#34;Text&#34;).dict()
-    english = TagData(alias=&#34;english&#34;, name=&#34;English&#34;).dict()
-    russian = TagData(alias=&#34;russian&#34;, name=&#34;Russian&#34;).dict()
-    regression = TagData(alias=&#34;regression&#34;, name=&#34;Regression&#34;).dict()
-    timeseries = TagData(alias=&#34;timeseries&#34;, name=&#34;Timeseries&#34;).dict()
-    terra_ai = TagData(alias=&#34;terra_ai&#34;, name=&#34;Terra AI&#34;).dict()
-    object_detection = TagData(alias=&#34;object_detection&#34;, name=&#34;Object detection&#34;).dict()
-    segmentation = TagData(alias=&#34;segmentation&#34;, name=&#34;Segmentation&#34;).dict()
-    audio = TagData(alias=&#34;audio&#34;, name=&#34;Audio&#34;).dict()
-    smart_home = TagData(alias=&#34;smart_home&#34;, name=&#34;Smart home&#34;).dict()
-    trading = TagData(alias=&#34;trading&#34;, name=&#34;Trading&#34;).dict()
-
-
-DatasetsGroups = DatasetsGroupsList(
-    [
-        {
-            &#34;alias&#34;: &#34;preset&#34;,
-            &#34;name&#34;: &#34;Предустановленные&#34;,
-            &#34;datasets&#34;: [
-                {
-                    &#34;alias&#34;: &#34;mnist&#34;,
-                    &#34;name&#34;: &#34;Mnist&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;fashion_mnist&#34;,
-                    &#34;name&#34;: &#34;Fashion mnist&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;cifar10&#34;,
-                    &#34;name&#34;: &#34;Cifar 10&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;cifar100&#34;,
-                    &#34;name&#34;: &#34;Cifar 100&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;imdb&#34;,
-                    &#34;name&#34;: &#34;IMDB&#34;,
-                    &#34;tags&#34;: [
-                        Tags.text,
-                        Tags.classification,
-                        Tags.english,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;boston_housing&#34;,
-                    &#34;name&#34;: &#34;Boston housing&#34;,
-                    &#34;tags&#34;: [
-                        Tags.text,
-                        Tags.regression,
-                        Tags.english,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;reuters&#34;,
-                    &#34;name&#34;: &#34;Reuters&#34;,
-                    &#34;tags&#34;: [
-                        Tags.text,
-                        Tags.classification,
-                        Tags.english,
-                        Tags.tensorflow_keras,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;sber&#34;,
-                    &#34;name&#34;: &#34;Sber&#34;,
-                    &#34;tags&#34;: [
-                        Tags.timeseries,
-                        Tags.regression,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;cars&#34;,
-                    &#34;name&#34;: &#34;Автомобили&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;cars3&#34;,
-                    &#34;name&#34;: &#34;Автомобили 3&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;aircraft&#34;,
-                    &#34;name&#34;: &#34;Самолеты&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.segmentation,
-                        Tags.object_detection,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;lips&#34;,
-                    &#34;name&#34;: &#34;Губы&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.segmentation,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;diseases&#34;,
-                    &#34;name&#34;: &#34;Заболевания&#34;,
-                    &#34;tags&#34;: [
-                        Tags.images,
-                        Tags.classification,
-                        Tags.russian,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;contracts&#34;,
-                    &#34;name&#34;: &#34;Договоры&#34;,
-                    &#34;tags&#34;: [
-                        Tags.text,
-                        Tags.segmentation,
-                        Tags.russian,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;smart_home&#34;,
-                    &#34;name&#34;: &#34;Умный дом&#34;,
-                    &#34;tags&#34;: [
-                        Tags.audio,
-                        Tags.classification,
-                        Tags.smart_home,
-                        Tags.russian,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;trading&#34;,
-                    &#34;name&#34;: &#34;Трейдинг&#34;,
-                    &#34;tags&#34;: [
-                        Tags.trading,
-                        Tags.timeseries,
-                        Tags.terra_ai,
-                    ],
-                },
-                {
-                    &#34;alias&#34;: &#34;apartments&#34;,
-                    &#34;name&#34;: &#34;Квартиры&#34;,
-                    &#34;tags&#34;: [
-                        Tags.text,
-                        Tags.regression,
-                        Tags.russian,
-                        Tags.terra_ai,
-                    ],
-                },
-            ],
-        },
-        {
-            &#34;alias&#34;: &#34;custom&#34;,
-            &#34;name&#34;: &#34;Собственные&#34;,
-        },
-    ]
-)</code></pre>
+DatasetsGroups = [
+    {
+        &#34;alias&#34;: &#34;preset&#34;,
+        &#34;name&#34;: &#34;Предустановленные&#34;,
+        &#34;datasets&#34;: [
+            {
+                &#34;alias&#34;: &#34;mnist&#34;,
+                &#34;name&#34;: &#34;Mnist&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;fashion_mnist&#34;,
+                &#34;name&#34;: &#34;Fashion mnist&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;cifar10&#34;,
+                &#34;name&#34;: &#34;Cifar 10&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;cifar100&#34;,
+                &#34;name&#34;: &#34;Cifar 100&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;imdb&#34;,
+                &#34;name&#34;: &#34;IMDB&#34;,
+                &#34;tags&#34;: [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.english,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;boston_housing&#34;,
+                &#34;name&#34;: &#34;Boston housing&#34;,
+                &#34;tags&#34;: [
+                    Tags.text,
+                    Tags.regression,
+                    Tags.english,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;reuters&#34;,
+                &#34;name&#34;: &#34;Reuters&#34;,
+                &#34;tags&#34;: [
+                    Tags.text,
+                    Tags.classification,
+                    Tags.english,
+                    Tags.tensorflow_keras,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;sber&#34;,
+                &#34;name&#34;: &#34;Sber&#34;,
+                &#34;tags&#34;: [
+                    Tags.timeseries,
+                    Tags.regression,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;cars&#34;,
+                &#34;name&#34;: &#34;Автомобили&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;cars3&#34;,
+                &#34;name&#34;: &#34;Автомобили 3&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;aircraft&#34;,
+                &#34;name&#34;: &#34;Самолеты&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.segmentation,
+                    Tags.object_detection,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;lips&#34;,
+                &#34;name&#34;: &#34;Губы&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.segmentation,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;diseases&#34;,
+                &#34;name&#34;: &#34;Заболевания&#34;,
+                &#34;tags&#34;: [
+                    Tags.images,
+                    Tags.classification,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;contracts&#34;,
+                &#34;name&#34;: &#34;Договоры&#34;,
+                &#34;tags&#34;: [
+                    Tags.text,
+                    Tags.segmentation,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;smart_home&#34;,
+                &#34;name&#34;: &#34;Умный дом&#34;,
+                &#34;tags&#34;: [
+                    Tags.audio,
+                    Tags.classification,
+                    Tags.smart_home,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;trading&#34;,
+                &#34;name&#34;: &#34;Трейдинг&#34;,
+                &#34;tags&#34;: [
+                    Tags.trading,
+                    Tags.timeseries,
+                    Tags.terra_ai,
+                ],
+            },
+            {
+                &#34;alias&#34;: &#34;apartments&#34;,
+                &#34;name&#34;: &#34;Квартиры&#34;,
+                &#34;tags&#34;: [
+                    Tags.text,
+                    Tags.regression,
+                    Tags.russian,
+                    Tags.terra_ai,
+                ],
+            },
+        ],
+    },
+    {
+        &#34;alias&#34;: &#34;custom&#34;,
+        &#34;name&#34;: &#34;Собственные&#34;,
+    },
+]</code></pre>
 </details>
 </section>
 <section>
