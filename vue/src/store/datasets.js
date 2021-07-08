@@ -57,16 +57,18 @@ export default {
     },
     async get({ commit }) {
       try {
-        const {
-          data: {
-            data: { datasets, tags },
-          },
-        } = await axios.get("/api/v1/datasets/info/");
-        const arr = Object.keys(tags).map((key) => {
-          return { text: tags[key], key, active: false };
+        const { data: { data: [preset, custom] } } = await axios.get("/api/v1/datasets/info/");
+        const { datasets:presetDatasets, tags:presetTags } = preset
+        const { datasets:customDatasets, tags:customTags } = custom
+        const datasets = [...presetDatasets, ...customDatasets]
+        console.log(datasets)
+        let tags = [...presetTags, ...customTags]
+        console.log(tags)
+        tags = tags.map((tag) => {
+          return {active: false, ...tag }
         });
         commit("SET_DATASETS", datasets);
-        commit("SET_TAGS", arr);
+        commit("SET_TAGS", tags);
       } catch (error) {
         console.log(error);
       }
@@ -103,9 +105,10 @@ export default {
       if (!tagsFilter.length) {
         return datasets;
       }
-      return datasets.filter((dataset) => {
-        const index = Object.keys(dataset.tags).filter((tag) => {
-          return tagsFilter.indexOf(tag) !== -1;
+      console.log(tagsFilter)
+      return datasets.filter(({tags}) => {
+        const index = tags.filter(({alias}) => {
+          return tagsFilter.indexOf(alias) !== -1;
         });
         return index.length;
       });

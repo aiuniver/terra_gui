@@ -8,12 +8,9 @@
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
-                <template v-for="({ name, size, tags, date }, key) of datasets">
+                <template v-for="(dataset, key) of datasets">
                   <Card
-                    :name="name"
-                    :size="size"
-                    :tags="tags"
-                    :date="date"
+                    :dataset="dataset"
                     :key="key"
                     @clickCard="click"
                   />

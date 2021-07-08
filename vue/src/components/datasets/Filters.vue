@@ -4,13 +4,13 @@
     <div class="inner">
       <ul>
         <li
-          v-for="({ text, key, active }, i) in tags"
+          v-for="({ name, alias, active }, i) in tags"
           :key="i"
-          @click="click(i, key)"
+          @click="click(i, alias)"
           :class="{active}"
         >
           <span>
-            {{ text }}
+            {{ name }}
           </span>
         </li>
       </ul>
@@ -20,10 +20,10 @@
 
 <script>
 export default {
-  data: () => ({}),
   computed: {
     tags: {
       set(value) {
+        console.log(value)
         this.$store.dispatch("datasets/setTags", value);
       },
       get() {
@@ -42,9 +42,9 @@ export default {
   methods: {
     click(i) {
       this.tags[i].active = !this.tags[i].active;
-      this.tagsFilter = this.tags.reduce((t, { active, key }) => {
+      this.tagsFilter = this.tags.reduce((t, { active, alias }) => {
         if (active) {
-          t.push(key);
+          t.push(alias);
         }
         return t;
       }, []);
