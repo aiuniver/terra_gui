@@ -7,7 +7,7 @@
           v-for="({ text, key, active }, i) in tags"
           :key="i"
           @click="click(i, key)"
-          :class="active ? 'active' : ''"
+          :class="{active}"
         >
           <span>
             {{ text }}
@@ -19,13 +19,9 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
 export default {
   data: () => ({}),
   computed: {
-    ...mapGetters({
-      tagsArr: "datasets/getTagsArr",
-    }),
     tags: {
       set(value) {
         this.$store.dispatch("datasets/setTags", value);
@@ -52,7 +48,6 @@ export default {
         }
         return t;
       }, []);
-      console.log(this.tagsFilter);
     },
   },
 };

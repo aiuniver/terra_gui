@@ -1,5 +1,5 @@
 <template>
-  <div class="dataset-card-item">
+  <div class="dataset-card-item" @click="$emit('clickCard', name)">
     <div class="dataset-card">
       <div class="card-title">{{ name }}</div>
       <div class="card-body">

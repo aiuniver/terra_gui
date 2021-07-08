@@ -3,7 +3,7 @@
     <div class="wrapper">
       <Filters />
       <div class="project-datasets-block datasets">
-        <div class="title">Выберите датасет</div>
+        <div class="title" @click="click('name')">Выберите датасет</div>
         <vue-custom-scrollbar class="scroll-area" :settings="settings">
           <div class="inner">
             <div class="dataset-card-container">
@@ -15,6 +15,7 @@
                     :tags="tags"
                     :date="date"
                     :key="key"
+                    @clickCard="click"
                   />
                 </template>
               </div>
@@ -50,6 +51,11 @@ export default {
       datasets: "datasets/getDatasets",
     }),
   },
+  methods: {
+    click(value){
+      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${value}»`})
+    }
+  }
 };
 </script>
 
