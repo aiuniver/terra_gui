@@ -2,26 +2,9 @@
   <div class="properties">
     <div class="wrapper">
       <div class="params">
-        <vue-custom-scrollbar
-          class="scroll-area"
-          :settings="{
-            suppressScrollY: false,
-            suppressScrollX: true,
-            wheelPropagation: false,
-          }"
-        >
+        <vue-custom-scrollbar class="scroll-area" :settings="scroll">
           <div class="params-container">
-            <div class="params-item dataset-change pa-5">
-              <div class="actions-form">
-                <div class="item prepare"><button>Подготовить</button></div>
-                <div class="item delete">
-                  <button disabled="disabled">Удалить</button>
-                </div>
-                <div class="item change">
-                  <button disabled="disabled">Редактировать</button>
-                </div>
-              </div>
-            </div>
+            <DatasetButton @click="click" />
             <div class="params-item load-dataset-field">
               <form
                 class="inner form-inline-label"
@@ -50,9 +33,8 @@
                       ? 'Выберите файл из Google-диска'
                       : 'Введите URL на архив исходников'
                   "
-                  name="zipcode"
                   :maxItem="10"
-                  placeholder="Please select an option"
+                  placeholder="Please select file"
                   @focus="focus"
                   @selected="selected"
                 >
@@ -130,36 +112,9 @@
                         <label>Теги</label>
                         <input type="text" name="parameters[user_tags]" />
                       </div>
-                      <div class="field-form field-inline">
-                        <label>Train + val + test</label>
-                        <div class="slider-range">
-                          <at-slider v-model="slider"></at-slider>
-                        </div>
-                        <input
-                          type="number"
-                          id="amount1"
-                          name="parameters[train_part]"
-                          data-value-type="number"
-                        />
-                        <input
-                          type="number"
-                          id="amount2"
-                          name="parameters[val_part]"
-                          data-value-type="number"
-                        />
-                        <input
-                          type="number"
-                          id="amount3"
-                          name="parameters[test_part]"
-                          data-value-type="number"
-                        />
-                      </div>
+                      <DatasetSlider />
                       <div class="field-form field-inline field-reverse">
-                        <label
-                          for="parameters[preserve_sequence]"
-                          id="preserve_sequence_label"
-                          >Сохранить последовательность</label
-                        >
+                        <label>Сохранить последовательность</label>
                         <div class="checkout-switch">
                           <input
                             type="checkbox"
@@ -187,7 +142,9 @@
 import { mapGetters } from "vuex";
 import vueCustomScrollbar from "vue-custom-scrollbar";
 import Autocomplete from "@/components/forms/Autocomplete.vue";
-import Layer from "@/components/datasets/Layer.vue";
+import DatasetSlider from "@/components/datasets/params/DatasetSlider.vue";
+import Layer from "./Layer.vue";
+import DatasetButton from "./DatasetButton.vue";
 import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
@@ -195,6 +152,8 @@ export default {
     Autocomplete,
     Layer,
     vueCustomScrollbar,
+    DatasetButton,
+    DatasetSlider
   },
   data: () => ({
     tabGoogle: true,
@@ -203,6 +162,11 @@ export default {
       { id: 1, name: "Option 1" },
       { id: 2, name: "Option 2" },
     ],
+    scroll: {
+      suppressScrollY: false,
+      suppressScrollX: true,
+      wheelPropagation: false,
+    },
     inputs: 1,
     outputs: 1,
     tab: null,
@@ -265,7 +229,10 @@ export default {
     async selected(value) {
       this.name = value.name;
     },
-    click() {
+    click(val) {
+      console.log(val);
+      this.$store.dispatch("messages/setMessage", { error: "text" });
+      this.$store.dispatch("messages/setProgress", 56);
       if (this.$refs.form) {
         const data = serialize(this.$refs.form, {
           hash: true,

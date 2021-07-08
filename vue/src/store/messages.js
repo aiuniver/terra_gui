@@ -1,9 +1,10 @@
 export default {
   namespaced: true,
   state: () => ({
-    color: 'primary',
-    snackbar: false,
-    message: ''
+    color: 'success',
+    message: '',
+    protsessor: 'cpu',
+    progress: 0
   }),
   mutations: {
     SET_COLOR (state, color) {
@@ -12,23 +13,29 @@ export default {
     SET_MESSAGE (state, message) {
       state.message = message
     },
-    SET_SNACKBAR (state, value) {
-      state.snackbar = value
-    }
+    SET_PROTSESSOR (state, protsessor) {
+      state.protsessor = protsessor
+    },
+    SET_PROGRESS (state, progress) {
+      state.progress = progress
+    },
   },
   actions: {
     setMessage ({ commit }, { error, message }) {
-      commit('SET_COLOR', error ? 'red' : 'primary')
+      commit('SET_COLOR', error ? 'error' : 'success')
       commit('SET_MESSAGE', error || message )
-      commit('SET_SNACKBAR', true )
     },
-    setSnackbar ({ commit }, value) {
-      commit('SET_SNACKBAR', value)
-    }
+    setProtsessor ({ commit }, protsessor) {
+      commit('SET_PROTSESSOR', protsessor )
+    },
+    setProgress ({ commit }, progress) {
+      commit('SET_PROGRESS', progress )
+    },
   },
   getters: {
+    getProgress: state => state.progress,
+    getProtsessor: state => state.protsessor,
     getMessage: state => state.message,
-    getSnackbar: state => state.snackbar,
     getColor: state => state.color
   }
 }

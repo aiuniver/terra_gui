@@ -2,7 +2,7 @@ export default [
   {
     path: '/',
     name: 'Home',
-    component: () => import('@/views/Datasets')
+    redirect: '/datasets'
   },
   {
     path: '/datasets',
