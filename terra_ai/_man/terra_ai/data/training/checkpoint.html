@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.9.2" />
-<title>terra_ai.data.training.train API documentation</title>
-<meta name="description" content="Структура данных обучения" />
+<title>terra_ai.data.training.checkpoint API documentation</title>
+<meta name="description" content="Структура данных чекпоинтов" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,47 +19,30 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>terra_ai.data.training.train</code></h1>
+<h1 class="title">Module <code>terra_ai.data.training.checkpoint</code></h1>
 </header>
 <section id="section-intro">
-<h2 id="_1">Структура данных обучения</h2>
+<h2 id="_1">Структура данных чекпоинтов</h2>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
-## Структура данных обучения
+## Структура данных чекпоинтов
 &#34;&#34;&#34;
 
-from pydantic import validator
-from pydantic.types import PositiveInt
-
 from ..mixins import BaseMixinData
-from ..exceptions import ValueNotInListException
-from .optimizer import OptimizerData
-from .outputs import OutputsList
-from .checkpoint import CheckpointData
+from ..types import AliasType
+from .extra import CheckpointIndicatorChoice, CheckpointModeChoice, CheckpointTypeChoice
 
 
-class TrainData(BaseMixinData):
-    &#34;&#34;&#34;
-    Параметры обучения
-    &#34;&#34;&#34;
-
-    batch: PositiveInt = 32
-    epochs: PositiveInt = 20
-    optimizer: OptimizerData
-    outputs: OutputsList
-    checkpoint: CheckpointData
-
-    @validator(&#34;checkpoint&#34;, allow_reuse=True)
-    def _validate_checkpoint_layer(
-        cls, value: CheckpointData, values
-    ) -&gt; CheckpointData:
-        __layers = values.get(&#34;outputs&#34;).ids
-        if value.layer not in __layers:
-            raise ValueNotInListException(value.layer, __layers)
-        return value</code></pre>
+class CheckpointData(BaseMixinData):
+    layer: AliasType
+    type: CheckpointTypeChoice = CheckpointTypeChoice.metrics
+    indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.val
+    mode: CheckpointModeChoice = CheckpointModeChoice.max
+    save_best: bool = True
+    save_weights: bool = False</code></pre>
 </details>
 </section>
 <section>
@@ -71,37 +54,25 @@ class TrainData(BaseMixinData):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.training.train.TrainData"><code class="flex name class">
-<span>class <span class="ident">TrainData</span></span>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData"><code class="flex name class">
+<span>class <span class="ident">CheckpointData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Параметры обучения</p>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class TrainData(BaseMixinData):
-    &#34;&#34;&#34;
-    Параметры обучения
-    &#34;&#34;&#34;
-
-    batch: PositiveInt = 32
-    epochs: PositiveInt = 20
-    optimizer: OptimizerData
-    outputs: OutputsList
-    checkpoint: CheckpointData
-
-    @validator(&#34;checkpoint&#34;, allow_reuse=True)
-    def _validate_checkpoint_layer(
-        cls, value: CheckpointData, values
-    ) -&gt; CheckpointData:
-        __layers = values.get(&#34;outputs&#34;).ids
-        if value.layer not in __layers:
-            raise ValueNotInListException(value.layer, __layers)
-        return value</code></pre>
+<pre><code class="python">class CheckpointData(BaseMixinData):
+    layer: AliasType
+    type: CheckpointTypeChoice = CheckpointTypeChoice.metrics
+    indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.val
+    mode: CheckpointModeChoice = CheckpointModeChoice.max
+    save_best: bool = True
+    save_weights: bool = False</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -111,23 +82,27 @@ class TrainData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.training.train.TrainData.batch"><code class="name">var <span class="ident">batch</span> : pydantic.types.PositiveInt</code></dt>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.indicator"><code class="name">var <span class="ident">indicator</span> : <a title="terra_ai.data.training.extra.CheckpointIndicatorChoice" href="extra.html#terra_ai.data.training.extra.CheckpointIndicatorChoice">CheckpointIndicatorChoice</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.train.TrainData.checkpoint"><code class="name">var <span class="ident">checkpoint</span> : <a title="terra_ai.data.training.checkpoint.CheckpointData" href="checkpoint.html#terra_ai.data.training.checkpoint.CheckpointData">CheckpointData</a></code></dt>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.layer"><code class="name">var <span class="ident">layer</span> : <a title="terra_ai.data.types.AliasType" href="../types.html#terra_ai.data.types.AliasType">AliasType</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.train.TrainData.epochs"><code class="name">var <span class="ident">epochs</span> : pydantic.types.PositiveInt</code></dt>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.mode"><code class="name">var <span class="ident">mode</span> : <a title="terra_ai.data.training.extra.CheckpointModeChoice" href="extra.html#terra_ai.data.training.extra.CheckpointModeChoice">CheckpointModeChoice</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.train.TrainData.optimizer"><code class="name">var <span class="ident">optimizer</span> : <a title="terra_ai.data.training.optimizer.OptimizerData" href="optimizer.html#terra_ai.data.training.optimizer.OptimizerData">OptimizerData</a></code></dt>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.save_best"><code class="name">var <span class="ident">save_best</span> : bool</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.train.TrainData.outputs"><code class="name">var <span class="ident">outputs</span> : <a title="terra_ai.data.training.outputs.OutputsList" href="outputs.html#terra_ai.data.training.outputs.OutputsList">OutputsList</a></code></dt>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.save_weights"><code class="name">var <span class="ident">save_weights</span> : bool</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.checkpoint.CheckpointData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.training.extra.CheckpointTypeChoice" href="extra.html#terra_ai.data.training.extra.CheckpointTypeChoice">CheckpointTypeChoice</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -148,7 +123,7 @@ class TrainData(BaseMixinData):
 <h1>Index</h1>
 <div class="toc">
 <ul>
-<li><a href="#_1">Структура данных обучения</a></li>
+<li><a href="#_1">Структура данных чекпоинтов</a></li>
 </ul>
 </div>
 <ul id="index">
@@ -160,13 +135,14 @@ class TrainData(BaseMixinData):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="terra_ai.data.training.train.TrainData" href="#terra_ai.data.training.train.TrainData">TrainData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.train.TrainData.batch" href="#terra_ai.data.training.train.TrainData.batch">batch</a></code></li>
-<li><code><a title="terra_ai.data.training.train.TrainData.checkpoint" href="#terra_ai.data.training.train.TrainData.checkpoint">checkpoint</a></code></li>
-<li><code><a title="terra_ai.data.training.train.TrainData.epochs" href="#terra_ai.data.training.train.TrainData.epochs">epochs</a></code></li>
-<li><code><a title="terra_ai.data.training.train.TrainData.optimizer" href="#terra_ai.data.training.train.TrainData.optimizer">optimizer</a></code></li>
-<li><code><a title="terra_ai.data.training.train.TrainData.outputs" href="#terra_ai.data.training.train.TrainData.outputs">outputs</a></code></li>
+<h4><code><a title="terra_ai.data.training.checkpoint.CheckpointData" href="#terra_ai.data.training.checkpoint.CheckpointData">CheckpointData</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.indicator" href="#terra_ai.data.training.checkpoint.CheckpointData.indicator">indicator</a></code></li>
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.layer" href="#terra_ai.data.training.checkpoint.CheckpointData.layer">layer</a></code></li>
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.mode" href="#terra_ai.data.training.checkpoint.CheckpointData.mode">mode</a></code></li>
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.save_best" href="#terra_ai.data.training.checkpoint.CheckpointData.save_best">save_best</a></code></li>
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.save_weights" href="#terra_ai.data.training.checkpoint.CheckpointData.save_weights">save_weights</a></code></li>
+<li><code><a title="terra_ai.data.training.checkpoint.CheckpointData.type" href="#terra_ai.data.training.checkpoint.CheckpointData.type">type</a></code></li>
 </ul>
 </li>
 </ul>

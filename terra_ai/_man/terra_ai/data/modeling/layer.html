@@ -31,6 +31,8 @@
 ## Структура данных слоев
 &#34;&#34;&#34;
 
+import json
+
 from typing import Optional, List, Tuple, Any, Union
 from pydantic import validator
 from pydantic.types import PositiveInt
@@ -43,22 +45,13 @@ from .extra import LayerTypeChoice, LayerGroupChoice
 from . import parameters
 
 
-class LayerBindData(BaseMixinData):
-    &#34;&#34;&#34;
-    Списки связей слоя
-    &#34;&#34;&#34;
-
-    input: List[str] = []
-    output: List[str] = []
-
-
 class LayerShapeData(BaseMixinData):
     &#34;&#34;&#34;
     Размерности слоя
     &#34;&#34;&#34;
 
-    input: Tuple[PositiveInt, ...] = ()
-    output: Tuple[PositiveInt, ...] = ()
+    input: Optional[Tuple[PositiveInt, ...]]
+    output: Optional[Tuple[PositiveInt, ...]]
 
 
 class LayerData(AliasMixinData):
@@ -72,16 +65,22 @@ class LayerData(AliasMixinData):
     &#34;Тип слоя&#34;
     group: LayerGroupChoice
     &#34;Группа слоя&#34;
-    bind: LayerBindData = LayerBindData()
+    bind: List[int] = []
     &#34;Связи со слоями&#34;
     shape: LayerShapeData = LayerShapeData()
     &#34;Размерности слоя&#34;
-    location: Optional[List[ConstrainedIntValueGe0]]
+    location: Optional[Tuple[ConstrainedIntValueGe0, ...]]
     &#34;Расположение слоя в сетке модели&#34;
-    position: Optional[List[int]]
+    position: Optional[Tuple[int, ...]]
     &#34;Расположение слоя в сетке модели&#34;
     parameters: Optional[Any]
     &#34;Параметры слоя&#34;
+
+    @property
+    def parameters_dict(self) -&gt; dict:
+        __data = json.loads(self.parameters.main.json())
+        __data.update(json.loads(self.parameters.extra.json()))
+        return __data
 
     @validator(&#34;location&#34;, &#34;position&#34;, allow_reuse=True)
     def _validate_xy(cls, value: list, values) -&gt; list:
@@ -131,52 +130,6 @@ class LayersList(UniqueListMixin):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.modeling.layer.LayerBindData"><code class="flex name class">
-<span>class <span class="ident">LayerBindData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Списки связей слоя</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class LayerBindData(BaseMixinData):
-    &#34;&#34;&#34;
-    Списки связей слоя
-    &#34;&#34;&#34;
-
-    input: List[str] = []
-    output: List[str] = []</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.layer.LayerBindData.input"><code class="name">var <span class="ident">input</span> : List[str]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.layer.LayerBindData.output"><code class="name">var <span class="ident">output</span> : List[str]</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 <dt id="terra_ai.data.modeling.layer.LayerData"><code class="flex name class">
 <span>class <span class="ident">LayerData</span></span>
 <span>(</span><span>**data)</span>
@@ -200,16 +153,22 @@ class LayersList(UniqueListMixin):
     &#34;Тип слоя&#34;
     group: LayerGroupChoice
     &#34;Группа слоя&#34;
-    bind: LayerBindData = LayerBindData()
+    bind: List[int] = []
     &#34;Связи со слоями&#34;
     shape: LayerShapeData = LayerShapeData()
     &#34;Размерности слоя&#34;
-    location: Optional[List[ConstrainedIntValueGe0]]
+    location: Optional[Tuple[ConstrainedIntValueGe0, ...]]
     &#34;Расположение слоя в сетке модели&#34;
-    position: Optional[List[int]]
+    position: Optional[Tuple[int, ...]]
     &#34;Расположение слоя в сетке модели&#34;
     parameters: Optional[Any]
     &#34;Параметры слоя&#34;
+
+    @property
+    def parameters_dict(self) -&gt; dict:
+        __data = json.loads(self.parameters.main.json())
+        __data.update(json.loads(self.parameters.extra.json()))
+        return __data
 
     @validator(&#34;location&#34;, &#34;position&#34;, allow_reuse=True)
     def _validate_xy(cls, value: list, values) -&gt; list:
@@ -243,7 +202,7 @@ class LayersList(UniqueListMixin):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layer.LayerData.bind"><code class="name">var <span class="ident">bind</span> : <a title="terra_ai.data.modeling.layer.LayerBindData" href="#terra_ai.data.modeling.layer.LayerBindData">LayerBindData</a></code></dt>
+<dt id="terra_ai.data.modeling.layer.LayerData.bind"><code class="name">var <span class="ident">bind</span> : List[int]</code></dt>
 <dd>
 <div class="desc"><p>Связи со слоями</p></div>
 </dd>
@@ -251,7 +210,7 @@ class LayersList(UniqueListMixin):
 <dd>
 <div class="desc"><p>Группа слоя</p></div>
 </dd>
-<dt id="terra_ai.data.modeling.layer.LayerData.location"><code class="name">var <span class="ident">location</span> : Union[List[<a title="terra_ai.data.types.ConstrainedIntValue" href="../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>], NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.layer.LayerData.location"><code class="name">var <span class="ident">location</span> : Union[Tuple[<a title="terra_ai.data.types.ConstrainedIntValue" href="../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>, ...], NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Расположение слоя в сетке модели</p></div>
 </dd>
@@ -263,7 +222,7 @@ class LayersList(UniqueListMixin):
 <dd>
 <div class="desc"><p>Параметры слоя</p></div>
 </dd>
-<dt id="terra_ai.data.modeling.layer.LayerData.position"><code class="name">var <span class="ident">position</span> : Union[List[int], NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.layer.LayerData.position"><code class="name">var <span class="ident">position</span> : Union[Tuple[int, ...], NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Расположение слоя в сетке модели</p></div>
 </dd>
@@ -274,6 +233,23 @@ class LayersList(UniqueListMixin):
 <dt id="terra_ai.data.modeling.layer.LayerData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.modeling.extra.LayerTypeChoice" href="extra.html#terra_ai.data.modeling.extra.LayerTypeChoice">LayerTypeChoice</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя</p></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layer.LayerData.parameters_dict"><code class="name">var <span class="ident">parameters_dict</span> : dict</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def parameters_dict(self) -&gt; dict:
+    __data = json.loads(self.parameters.main.json())
+    __data.update(json.loads(self.parameters.extra.json()))
+    return __data</code></pre>
+</details>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -302,8 +278,8 @@ class LayersList(UniqueListMixin):
     Размерности слоя
     &#34;&#34;&#34;
 
-    input: Tuple[PositiveInt, ...] = ()
-    output: Tuple[PositiveInt, ...] = ()</code></pre>
+    input: Optional[Tuple[PositiveInt, ...]]
+    output: Optional[Tuple[PositiveInt, ...]]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -313,11 +289,11 @@ class LayersList(UniqueListMixin):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layer.LayerShapeData.input"><code class="name">var <span class="ident">input</span> : Tuple[pydantic.types.PositiveInt, ...]</code></dt>
+<dt id="terra_ai.data.modeling.layer.LayerShapeData.input"><code class="name">var <span class="ident">input</span> : Union[Tuple[pydantic.types.PositiveInt, ...], NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layer.LayerShapeData.output"><code class="name">var <span class="ident">output</span> : Tuple[pydantic.types.PositiveInt, ...]</code></dt>
+<dt id="terra_ai.data.modeling.layer.LayerShapeData.output"><code class="name">var <span class="ident">output</span> : Union[Tuple[pydantic.types.PositiveInt, ...], NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -399,13 +375,6 @@ class LayersList(UniqueListMixin):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layer.LayerBindData" href="#terra_ai.data.modeling.layer.LayerBindData">LayerBindData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.layer.LayerBindData.input" href="#terra_ai.data.modeling.layer.LayerBindData.input">input</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layer.LayerBindData.output" href="#terra_ai.data.modeling.layer.LayerBindData.output">output</a></code></li>
-</ul>
-</li>
-<li>
 <h4><code><a title="terra_ai.data.modeling.layer.LayerData" href="#terra_ai.data.modeling.layer.LayerData">LayerData</a></code></h4>
 <ul class="two-column">
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.bind" href="#terra_ai.data.modeling.layer.LayerData.bind">bind</a></code></li>
@@ -413,6 +382,7 @@ class LayersList(UniqueListMixin):
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.location" href="#terra_ai.data.modeling.layer.LayerData.location">location</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.name" href="#terra_ai.data.modeling.layer.LayerData.name">name</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.parameters" href="#terra_ai.data.modeling.layer.LayerData.parameters">parameters</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layer.LayerData.parameters_dict" href="#terra_ai.data.modeling.layer.LayerData.parameters_dict">parameters_dict</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.position" href="#terra_ai.data.modeling.layer.LayerData.position">position</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.shape" href="#terra_ai.data.modeling.layer.LayerData.shape">shape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.type" href="#terra_ai.data.modeling.layer.LayerData.type">type</a></code></li>

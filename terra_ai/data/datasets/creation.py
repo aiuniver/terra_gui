@@ -156,6 +156,19 @@ from .tags import TagsList
 from . import parameters
 
 
+class FilePathSourceData(BaseMixinData):
+    value: confilepath(ext="zip")
+
+
+class FilePathSourcesList(UniqueListMixin):
+    class Meta:
+        source = FilePathSourceData
+        identifier = "value"
+
+    def list(self) -> list:
+        return list(map(lambda item: item.value.name, self))
+
+
 class SourceData(BaseMixinData):
     """
     Информация для загрузки исходников датасета
@@ -168,9 +181,9 @@ class SourceData(BaseMixinData):
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl], **kwargs
+        cls, value: Union[FilePathType, HttpUrl], values
     ) -> Union[FilePathType, HttpUrl]:
-        mode = kwargs.get("values", {}).get("mode")
+        mode = values.get("mode")
         if mode == SourceModeChoice.google_drive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)

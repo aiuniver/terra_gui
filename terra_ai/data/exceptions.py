@@ -18,6 +18,8 @@ class ExceptionMessages(str, Enum):
     Base64Extension = "Incorrect base64 string value"
     XY = "%s: Value must be a list with 2 elements, received %s"
     ValueNotInList = "%s: Value must be in list %s"
+    TrdsDirExt = "TRDS dirname must have `.trds` extension, received `%s`"
+    TrdsConfigFileNotFound = "TRDS `%s` has not `%s`"
 
 
 class TerraDataException(ValueError):
@@ -115,5 +117,22 @@ class ValueNotInListException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.ValueNotInList)
                 % (str(__value), str(__items))
+            )
+        )
+
+
+class TrdsDirExtException(TerraDataException):
+    def __init__(self, __dirname: str, *args):
+        super().__init__(
+            ((args[0] if len(args) else ExceptionMessages.TrdsDirExt) % str(__dirname))
+        )
+
+
+class TrdsConfigFileNotFoundException(TerraDataException):
+    def __init__(self, __trds_name: str, __config_name: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.TrdsConfigFileNotFound)
+                % (str(__trds_name), str(__config_name))
             )
         )
