@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.2" />
+<title>terra_ai.data.training.parameters API documentation</title>
+<meta name="description" content="Структура данных для параметров оптимайзера" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>terra_ai.data.training.parameters</code></h1>
+</header>
+<section id="section-intro">
+<h2 id="_1">Структура данных для параметров оптимайзера</h2>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#34;&#34;&#34;
+## Структура данных для параметров оптимайзера
+&#34;&#34;&#34;
+
+import sys
+
+from enum import Enum
+from pydantic.types import PositiveFloat
+
+from ..mixins import BaseMixinData
+from .extra import OptimizerChoice
+from . import optimizers_parameters as ops
+
+
+class OptimizerParametersTypeDefaultData(BaseMixinData):
+    pass
+
+
+class OptimizerParametersTypeMainDefaultData(OptimizerParametersTypeDefaultData):
+    name: OptimizerChoice
+    learning_rate: PositiveFloat = 0.001
+
+
+class OptimizerParametersTypeExtraDefaultData(OptimizerParametersTypeDefaultData):
+    pass
+
+
+class OptimizerParametersTypeMixinData(BaseMixinData):
+    extra: OptimizerParametersTypeExtraDefaultData = (
+        OptimizerParametersTypeExtraDefaultData()
+    )
+
+
+class OptimizerParametersTypeSGDData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.SGD)
+    )
+    extra: ops.SGD.ParametersExtraData = ops.SGD.ParametersExtraData()
+
+
+class OptimizerParametersTypeRMSpropData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.RMSprop)
+    )
+    extra: ops.RMSprop.ParametersExtraData = ops.RMSprop.ParametersExtraData()
+
+
+class OptimizerParametersTypeAdamData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adam)
+    )
+    extra: ops.Adam.ParametersExtraData = ops.Adam.ParametersExtraData()
+
+
+class OptimizerParametersTypeAdadeltaData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adadelta)
+    )
+    extra: ops.Adadelta.ParametersExtraData = ops.Adadelta.ParametersExtraData()
+
+
+class OptimizerParametersTypeAdagradData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adagrad)
+    )
+    extra: ops.Adagrad.ParametersExtraData = ops.Adagrad.ParametersExtraData()
+
+
+class OptimizerParametersTypeAdamaxData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adamax)
+    )
+    extra: ops.Adamax.ParametersExtraData = ops.Adamax.ParametersExtraData()
+
+
+class OptimizerParametersTypeNadamData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Nadam)
+    )
+    extra: ops.Nadam.ParametersExtraData = ops.Nadam.ParametersExtraData()
+
+
+class OptimizerParametersTypeFtrlData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Ftrl)
+    )
+    extra: ops.Ftrl.ParametersExtraData = ops.Ftrl.ParametersExtraData()
+
+
+OptimizerParametersType = Enum(
+    &#34;OptimizerParametersType&#34;,
+    dict(
+        map(
+            lambda item: (item, f&#34;OptimizerParametersType{item}Data&#34;),
+            list(OptimizerChoice),
+        )
+    ),
+    type=str,
+)
+&#34;&#34;&#34;
+Список возможных типов параметров оптимайзера
+&#34;&#34;&#34;
+
+
+OptimizerParametersTypeUnion = tuple(
+    map(
+        lambda item: getattr(sys.modules[__name__], item),
+        OptimizerParametersType,
+    )
+)
+&#34;&#34;&#34;
+Список возможных типов данных для оптимайзера в виде классов
+&#34;&#34;&#34;</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-variables">Global variables</h2>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeUnion"><code class="name">var <span class="ident">OptimizerParametersTypeUnion</span></code></dt>
+<dd>
+<div class="desc"><p>Список возможных типов данных для оптимайзера в виде классов</p></div>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersType</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adadelta"><code class="name">var <span class="ident">OptimizerChoice.Adadelta</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adagrad"><code class="name">var <span class="ident">OptimizerChoice.Adagrad</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adam"><code class="name">var <span class="ident">OptimizerChoice.Adam</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Adamax"><code class="name">var <span class="ident">OptimizerChoice.Adamax</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Ftrl"><code class="name">var <span class="ident">OptimizerChoice.Ftrl</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.Nadam"><code class="name">var <span class="ident">OptimizerChoice.Nadam</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.RMSprop"><code class="name">var <span class="ident">OptimizerChoice.RMSprop</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersType.SGD"><code class="name">var <span class="ident">OptimizerChoice.SGD</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeAdadeltaData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeAdadeltaData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adadelta)
+    )
+    extra: ops.Adadelta.ParametersExtraData = ops.Adadelta.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Adadelta.ParametersExtraData" href="optimizers_parameters/Adadelta.html#terra_ai.data.training.optimizers_parameters.Adadelta.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeAdagradData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeAdagradData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adagrad)
+    )
+    extra: ops.Adagrad.ParametersExtraData = ops.Adagrad.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Adagrad.ParametersExtraData" href="optimizers_parameters/Adagrad.html#terra_ai.data.training.optimizers_parameters.Adagrad.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeAdamData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeAdamData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adam)
+    )
+    extra: ops.Adam.ParametersExtraData = ops.Adam.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Adam.ParametersExtraData" href="optimizers_parameters/Adam.html#terra_ai.data.training.optimizers_parameters.Adam.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeAdamaxData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeAdamaxData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Adamax)
+    )
+    extra: ops.Adamax.ParametersExtraData = ops.Adamax.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData" href="optimizers_parameters/Adamax.html#terra_ai.data.training.optimizers_parameters.Adamax.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeDefaultData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeDefaultData(BaseMixinData):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData">OptimizerParametersTypeExtraDefaultData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeExtraDefaultData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeExtraDefaultData(OptimizerParametersTypeDefaultData):
+    pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeFtrlData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeFtrlData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Ftrl)
+    )
+    extra: ops.Ftrl.ParametersExtraData = ops.Ftrl.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Ftrl.ParametersExtraData" href="optimizers_parameters/Ftrl.html#terra_ai.data.training.optimizers_parameters.Ftrl.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeMainDefaultData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeMainDefaultData(OptimizerParametersTypeDefaultData):
+    name: OptimizerChoice
+    learning_rate: PositiveFloat = 0.001</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.learning_rate"><code class="name">var <span class="ident">learning_rate</span> : pydantic.types.PositiveFloat</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.name"><code class="name">var <span class="ident">name</span> : <a title="terra_ai.data.training.extra.OptimizerChoice" href="extra.html#terra_ai.data.training.extra.OptimizerChoice">OptimizerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeMixinData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeMixinData(BaseMixinData):
+    extra: OptimizerParametersTypeExtraDefaultData = (
+        OptimizerParametersTypeExtraDefaultData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData">OptimizerParametersTypeAdadeltaData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData">OptimizerParametersTypeAdagradData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamData">OptimizerParametersTypeAdamData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData">OptimizerParametersTypeAdamaxData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData">OptimizerParametersTypeFtrlData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeNadamData">OptimizerParametersTypeNadamData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData">OptimizerParametersTypeRMSpropData</a></li>
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeSGDData">OptimizerParametersTypeSGDData</a></li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData">OptimizerParametersTypeExtraDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeNadamData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeNadamData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.Nadam)
+    )
+    extra: ops.Nadam.ParametersExtraData = ops.Nadam.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData" href="optimizers_parameters/Nadam.html#terra_ai.data.training.optimizers_parameters.Nadam.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeRMSpropData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeRMSpropData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.RMSprop)
+    )
+    extra: ops.RMSprop.ParametersExtraData = ops.RMSprop.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData" href="optimizers_parameters/RMSprop.html#terra_ai.data.training.optimizers_parameters.RMSprop.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData"><code class="flex name class">
+<span>class <span class="ident">OptimizerParametersTypeSGDData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerParametersTypeSGDData(OptimizerParametersTypeMixinData):
+    main: OptimizerParametersTypeMainDefaultData = (
+        OptimizerParametersTypeMainDefaultData(name=OptimizerChoice.SGD)
+    )
+    extra: ops.SGD.ParametersExtraData = ops.SGD.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData" href="optimizers_parameters/SGD.html#terra_ai.data.training.optimizers_parameters.SGD.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#_1">Структура данных для параметров оптимайзера</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="terra_ai.data.training" href="index.html">terra_ai.data.training</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-variables">Global variables</a></h3>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeUnion" href="#terra_ai.data.training.parameters.OptimizerParametersTypeUnion">OptimizerParametersTypeUnion</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersType" href="#terra_ai.data.training.parameters.OptimizerParametersType">OptimizerParametersType</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Adadelta" href="#terra_ai.data.training.parameters.OptimizerParametersType.Adadelta">Adadelta</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Adagrad" href="#terra_ai.data.training.parameters.OptimizerParametersType.Adagrad">Adagrad</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Adam" href="#terra_ai.data.training.parameters.OptimizerParametersType.Adam">Adam</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Adamax" href="#terra_ai.data.training.parameters.OptimizerParametersType.Adamax">Adamax</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Ftrl" href="#terra_ai.data.training.parameters.OptimizerParametersType.Ftrl">Ftrl</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.Nadam" href="#terra_ai.data.training.parameters.OptimizerParametersType.Nadam">Nadam</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.RMSprop" href="#terra_ai.data.training.parameters.OptimizerParametersType.RMSprop">RMSprop</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersType.SGD" href="#terra_ai.data.training.parameters.OptimizerParametersType.SGD">SGD</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData">OptimizerParametersTypeAdadeltaData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdadeltaData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData">OptimizerParametersTypeAdagradData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdagradData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamData">OptimizerParametersTypeAdamData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData">OptimizerParametersTypeAdamaxData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeAdamaxData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeDefaultData">OptimizerParametersTypeDefaultData</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeExtraDefaultData">OptimizerParametersTypeExtraDefaultData</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData">OptimizerParametersTypeFtrlData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeFtrlData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData">OptimizerParametersTypeMainDefaultData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.learning_rate" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.learning_rate">learning_rate</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.name" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMainDefaultData.name">name</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData">OptimizerParametersTypeMixinData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeMixinData.extra">extra</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeNadamData">OptimizerParametersTypeNadamData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeNadamData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData">OptimizerParametersTypeRMSpropData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeRMSpropData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData" href="#terra_ai.data.training.parameters.OptimizerParametersTypeSGDData">OptimizerParametersTypeSGDData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.extra" href="#terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.main" href="#terra_ai.data.training.parameters.OptimizerParametersTypeSGDData.main">main</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.2</a>.</p>
+</footer>
+</body>
+</html>
