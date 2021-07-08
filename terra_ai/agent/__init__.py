@@ -9,16 +9,15 @@ from ..data.datasets.creation import FilePathSourcesList
 from ..data.presets.datasets import DatasetsGroups
 from . import exceptions
 from . import temporary_methods
+from . import progress
 
 
 class Exchange:
-    def __call__(self, *args, **kwargs) -> dict:
-        # Проверяем на количество переданных аргументов: должен быть 1
-        if len(args) != 1:
-            raise exceptions.NotOneArgumentException(self.__class__, len(args))
+    progress = progress.Progress()
 
+    def __call__(self, method: str, *args, **kwargs) -> dict:
         # Получаем метод для вызова
-        __method_name = f"_call_{args[0]}"
+        __method_name = f"_call_{method}"
         __method = getattr(self, __method_name, None)
 
         # Проверяем существует ли метод
@@ -59,12 +58,7 @@ class Exchange:
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        temporary_methods.dataset_load(source)
-        # self.dts.load_data(
-        #     name=kwargs.get("name", ""),
-        #     mode=kwargs.get("mode", ""),
-        #     link=kwargs.get("link", ""),
-        # )
+        temporary_methods.dataset_load(source, self.progress("dataset_load"))
 
     def _call_get_datasets_sources(self, path: str) -> list:
         """
