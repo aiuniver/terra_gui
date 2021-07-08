@@ -61,7 +61,7 @@ export default {
           data: {
             data: { datasets, tags },
           },
-        } = await axios.post("/api/v1/exchange/get_datasets_info/");
+        } = await axios.get("/api/v1/datasets/info/");
         const arr = Object.keys(tags).map((key) => {
           return { text: tags[key], key, active: false };
         });

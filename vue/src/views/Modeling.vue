@@ -1,10 +1,10 @@
 <template>
 <main class="page-modeling">
     <div class="container">
-      <Toolbar :load_model_flag="load_model_flag"></Toolbar>
+      <Toolbar :load_model_flag="load_model_flag" @OpenModalWindow="OpenModalWindow"></Toolbar>
       <Canvas/>
       <Params/>
-      <ModalWindowLoadModel v-if="load_model_flag"></ModalWindowLoadModel>
+      <ModalWindowLoadModel v-if="load_model_flag" @CloseModalWindow="OpenModalWindow"></ModalWindowLoadModel>
     </div>
 </main>
 </template>
@@ -106,13 +106,13 @@ export default {
     isColor(type) {
       return this.nodeType !== type ? "text" : "white";
     },
+    OpenModalWindow(flag){
+      this.load_model_flag = flag
+    }
   },
 };
 </script>
 
-<style lang="scss" scoped>
-.sidebar {
-  float: left;
-  width: auto;
-}
+<style>
+@import './../../public/css/project/modeling.css';
 </style>
