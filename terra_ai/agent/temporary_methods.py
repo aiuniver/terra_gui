@@ -1,7 +1,7 @@
 import sys
 import zipfile
 
-from tqdm import tqdm
+from tqdm.asyncio import tqdm
 from time import sleep
 from pathlib import Path
 from pydantic.networks import HttpUrl

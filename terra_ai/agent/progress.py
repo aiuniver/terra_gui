@@ -1,7 +1,15 @@
-from typing import Optional
+from typing import Optional, Dict
+from pydantic import BaseModel
+
+
+class ProgressData(BaseModel):
+    # percent:
+    pass
 
 
 class Progress:
+    __pool: Dict[str, ProgressData] = {}
+
     def __call__(self, method: str, *args, **kwargs) -> Optional[callable]:
         # Получаем метод для вызова
         __method_name = f"_progress_{method}"
@@ -18,5 +26,9 @@ class Progress:
         # Возвращаем метод
         return __method
 
-    def _progress_dataset_load(self, percent: float):
+    @property
+    def dataset_source_load(self):
+        return {}
+
+    def _progress_dataset_source_load(self, percent: float):
         print(percent)

@@ -31,7 +31,7 @@ class Exchange:
         # Вызываем метод
         return __method(**kwargs)
 
-    def _call_get_datasets_info(self, path: str) -> dict:
+    def _call_datasets_info(self, path: str) -> dict:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
@@ -53,14 +53,20 @@ class Exchange:
                 pass
         return info.dict()
 
-    def _call_get_dataset_source(self, mode: str, value: str):
+    def _call_dataset_source_load(self, mode: str, value: str):
         """
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        temporary_methods.dataset_load(source, self.progress("dataset_load"))
+        temporary_methods.dataset_load(source, self.progress("dataset_source_load"))
 
-    def _call_get_datasets_sources(self, path: str) -> list:
+    def _call_dataset_source_load_progress(self):
+        """
+        Прогресс загрузки исходников датасета
+        """
+        print(self.progress.dataset_source_load)
+
+    def _call_datasets_sources(self, path: str) -> list:
         """
         Получение списка исходников датасетов
         """
