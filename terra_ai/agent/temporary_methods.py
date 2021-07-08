@@ -19,7 +19,12 @@ def __dataset_source_load_google_drive(path: Path):
             for member in __tqdm:
                 file_ref.extract(member, ".")
                 progress.pool(name, percent=__tqdm.n / __tqdm.total * 100)
-            progress.pool(name, percent=__tqdm.n / __tqdm.total * 100, finished=True)
+            progress.pool(
+                name,
+                percent=__tqdm.n / __tqdm.total * 100,
+                data={"my": "dict"},
+                finished=True,
+            )
     except Exception as error:
         progress.pool(name, error=str(error))
 
