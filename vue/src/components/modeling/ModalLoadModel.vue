@@ -5,16 +5,27 @@
     </div>
     <div class="row at-row no-gutter">
       <div class="col-16 models-list">
+        <vue-custom-scrollbar class="scroll-area" :settings="settings">
         <ul class="loaded-list">
           <li
-            v-for="(list, i) of lists"
+            v-for="(list, i) of lists[0].models"
             :key="`list_${i}`"
             @click="getModel(list)"
           >
             <i class="icon icon-file-text"></i>
-            <span>{{ list.name }}</span>
+            <span>{{ list.label }}</span>
+          </li>
+          <li
+            v-for="(list, i) of lists[1].models"
+            :key="`list_${i}`"
+            @click="getModel(list)"
+          >
+            <i class="icon icon-file-text"></i>
+            <span>{{ list.label }}</span>
+            <div class="remove"></div>
           </li>
         </ul>
+        </vue-custom-scrollbar>
       </div>
       <div class="col-8">
         <div class="model-arch">
@@ -45,68 +56,23 @@
     </div>
     <div slot="footer"></div>
   </at-modal>
-
-  <!-- <div id="modal-window">
-    <div class="overlay"></div>
-    <div class="inner">
-      <div class="header">
-        <div class="title">Загрузка модели</div>
-        <div class="close" title="[ESC]" @click="CloseModalWindow"></div>
-      </div>
-      <div class="container">
-        <div class="wrapper">
-          <div id="modal-window-load-model" class="modal-window-container">
-            <div class="models-data">
-              <div class="models-list">
-                <vue-custom-scrollbar
-                    class="scroll-area"
-                    :settings="{
-                      suppressScrollY: false,
-                      suppressScrollX: true,
-                      wheelPropagation: false,
-                    }"
-                >
-                  <ul class="loaded-list">
-                    <li
-                        v-for="item in loaded_list"
-                        :key="item.name"
-                        :data-name="item.name"
-                        :data-is_terra="item.is_terra"
-                    >
-                      <span>{{ item.name }}</span>
-                    </li>
-                  </ul>
-                </vue-custom-scrollbar>
-              </div>
-              <div class="model-arch">
-                <div class="wrapper hidden">
-                  <div class="modal-arch-info">
-                    <div class="model-arch-info-param name">Name: <span></span></div>
-                    <div class="model-arch-info-param input_shape">Input shape: <span></span></div>
-                    <div class="model-arch-info-param datatype">Datatype: <span></span></div>
-                  </div>
-                  <div class="model-arch-img"><img src="" alt="" /></div>
-                  <div class="model-save-arch-btn"><button>Загрузить</button></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div> -->
 </template>
 
 <script>
-// import vueCustomScrollbar from "vue-custom-scrollbar";
+import vueCustomScrollbar from "vue-custom-scrollbar";
 import { mapGetters } from "vuex";
 export default {
   name: "ModalWindowLoadModel",
   components: {
-    // vueCustomScrollbar
+    vueCustomScrollbar
   },
   data: () => ({
-    lists: {},
+    lists: [],
+    settings: {
+      suppressScrollY: false,
+      suppressScrollX: true,
+      wheelPropagation: false,
+    },
   }),
   computed: {
     ...mapGetters({}),
@@ -117,7 +83,7 @@ export default {
       get() {
         return this.$store.getters["modeling/getDialog"];
       },
-    },
+    }
   },
   methods: {
     CloseModalWindow() {
@@ -126,12 +92,11 @@ export default {
     async load() {
       const data = await this.$store.dispatch("modeling/loadModel");
       this.lists = data;
-      console.log(data);
     },
     async getModel({ name, is_terra }) {
       const res = {
         method: "get",
-        url: "/api/v1/exchange/get_model_from_list/",
+        url: "/api/v1/modeling/models/",
         data: {
           model_file: name,
           is_terra,
@@ -155,13 +120,20 @@ export default {
 </script>
 
 <style scoped>
+
+.scroll-area {
+  position: relative;
+  margin: auto;
+  height: 300px;
+}
+
 /* modal-window */
 
 .icon {
   font-size: 20px;
 }
 .loaded-list > li {
-  padding: 5px 10px;
+  padding: 7px 10px;
   transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
 .loaded-list > li > i {
@@ -182,4 +154,36 @@ export default {
 .models-list li:hover {
   color: #65b9f4;
 }
+
+.loaded-list > li > .remove {
+	display:block;
+	width:26px;
+	height:26px;
+	margin: -4px 0 0 0;
+	position:relative;
+  float: right;
+	right:4px;
+	cursor:pointer;
+	user-select:none;
+	border-radius:2px;
+	transition:background-color .3s ease-in-out;
+}
+.loaded-list > li > .remove:before {
+	display:block;
+	content:"";
+	width:14px;
+	height:14px;
+	margin:-7px 0 0 -7px;
+	position:relative;
+	left:50%;
+	top:50%;
+	background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+}
+
+.loaded-list > li > .remove:hover{
+	background: rgba(255, 255, 255, .2);
+}
+
 </style>

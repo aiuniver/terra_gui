@@ -7,16 +7,16 @@
     @mouseleave="handleMouseLeave"
     v-bind:class="{ selected: options.selected === id }"
   >
-    <div v-if="type!=='input'"
+    <div v-if="group!=='input'"
       class="node-port node-input"
       @mousedown="inputMouseDown"
       @mouseup="inputMouseUp"
     ></div>
-    <div :class="`node-main ${type}`">
+    <div :class="`node-main ${group}`">
       <div v-text="type"></div>
-      <div v-text="label"></div>
+      <div v-text="name"></div>
     </div>
-    <div v-if="type!=='output'" class="node-port node-output" @mousedown="outputMouseDown"></div>
+    <div v-if="group!=='output'" class="node-port node-output" @mousedown="outputMouseDown"></div>
     <div v-show="show.delete" class="node-delete">&times;</div>
   </div>
 </template>
@@ -27,32 +27,38 @@ export default {
   props: {
     id: {
       type: Number,
-      default: 1000,
-      validator(val) {
-        return typeof val === "number";
-      },
     },
-    x: {
-      type: Number,
-      default: 0,
-      validator(val) {
-        return typeof val === "number";
-      },
-    },
-    y: {
-      type: Number,
-      default: 0,
-      validator(val) {
-        return typeof val === "number";
-      },
+    name: {
+      type: String,
+      default: "Default Name"
     },
     type: {
       type: String,
-      default: "Default",
+      default: "Conv2D",
     },
-    label: {
+    group: {
       type: String,
-      default: "input name",
+      default: "middle"
+    },
+    bind: {
+      type: Array,
+      default: ()=>{return []}
+    },
+    shape: {
+      type: Array,
+      default: ()=>{return [1, 1, 1]}
+    },
+    location: {
+      type: Array,
+      default: ()=>{return null}
+    },
+    position: {
+      type: Array,
+      default: ()=>{return [20, 300]}
+    },
+    parameters: {
+      type: Object,
+      default: ()=>{return {}}
     },
     options: {
       type: Object,
@@ -76,8 +82,8 @@ export default {
   computed: {
     nodeStyle() {
       return {
-        top: this.options.centerY + this.y * this.options.scale + "px", // remove: this.options.offsetTop +
-        left: this.options.centerX + this.x * this.options.scale + "px", // remove: this.options.offsetLeft +
+        top: this.position[1] * this.options.scale + "px", // remove: this.options.offsetTop +
+        left: this.position[0] * this.options.scale + "px", // remove: this.options.offsetLeft +
         transform: `scale(${this.options.scale})`,
       };
     },
@@ -179,6 +185,17 @@ $portSize: 10;
       border: 1px solid white;
       color: white;
     }
+  }
+
+  //Colors of layers from their types
+  .input{
+    background: #FFB054;
+  }
+  .middle{
+    background: #89D764;
+  }
+  .output{
+    background: #8E51F2;
   }
 }
 </style>

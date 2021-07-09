@@ -61,6 +61,6 @@ export default {
 };
 </script>
 
-<style>
-@import "./../../public/css/project/modeling.css";
+<style scoped>
+/*@import "./../../public/css/project/modeling.css";*/
 </style>

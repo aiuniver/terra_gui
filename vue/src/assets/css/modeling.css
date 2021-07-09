@@ -368,37 +368,6 @@
 	vertical-align:top;
 }
 
-.loaded-list > li > .remove {
-	display:block;
-	width:26px;
-	height:26px;
-	margin:-13px 0 0 0;
-	position:absolute;
-	right:4px;
-	top:50%;
-	cursor:pointer;
-	user-select:none;
-	border-radius:2px;
-	transition:background-color .3s ease-in-out;
-}
-.loaded-list > li > .remove:before {
-	display:block;
-	content:"";
-	width:14px;
-	height:14px;
-	margin:-7px 0 0 -7px;
-	position:absolute;
-	left:50%;
-	top:50%;
-	background-position:center;
-    background-repeat:no-repeat;
-    background-size:contain;
-}
-
-.loaded-list > li > .remove:hover{
-	background: rgba(255, 255, 255, .2);
-}
-
 #canvas-nodes > .node > .tools {
 	display:none;
 }
