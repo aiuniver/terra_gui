@@ -514,7 +514,10 @@ class DTS(object):
                 elif 'output' in arr:
                     self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
                     self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[1:]
-                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
+                    if 'object_detection' in self.tags.values():
+                        self.output_datatype[arr[:-3]] = '2D'
+                    else:
+                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
             self.input_datatype = ' '.join(inp_datatype)
 
             pass
