@@ -21,7 +21,7 @@ $brand-color-light          : #78A4F4;
 $brand-color-dark           : #346FC2;
 
 $text-color                 : #FFFFFF;
-$title-color                : #2C405A;
+$title-color                : $text-color;
 
 $bg-color                   : #0e1621;
 $bg-color-base              : #0e1621;
@@ -434,10 +434,10 @@ $loading-bar-bg-color-error     : $color-error;
 $modal-initial-top          : 100px;
 $modal-bg-color             : $color-bg;
 $modal-mask-bg-color        : rgba(0, 0, 0, .5);
-$modal-section-border-color : $grey-100;
+$modal-section-border-color : $color-bg-base;
 
-$modal-header-padding       : 12px 16px;
-$modal-header-font-size     : $font-size-base;
+$modal-header-padding       : 10px 15px;
+$modal-header-font-size     : .875rem;
 $modal-close-font-size      : $font-size-sm;
 $modal-icon-font-size       : 32px;
 

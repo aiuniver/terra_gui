@@ -1,20 +1,21 @@
 <template>
-<main class="page-modeling">
+  <main class="page-modeling">
     <div class="container">
-      <Toolbar :load_model_flag="load_model_flag" @OpenModalWindow="OpenModalWindow"></Toolbar>
-      <Canvas/>
-      <Params/>
-      <ModalWindowLoadModel v-if="load_model_flag" @CloseModalWindow="OpenModalWindow"></ModalWindowLoadModel>
+      <Toolbar @click="click"/>
+      <ModCanvas />
+      <Params />
+      <ModalLoadModel        
+      ></ModalLoadModel>
     </div>
-</main>
+  </main>
 </template>
 
 <script>
 // import SimpleFlowchart from "@/components/flowchart/SimpleFlowchart";
 import Toolbar from "@/components/modeling/Toolbar";
-import Canvas from "@/components/modeling/Canvas";
+import ModCanvas from "@/components/modeling/ModCanvas";
 import Params from "@/components/modeling/Params";
-import ModalWindowLoadModel from "@/components/modeling/ModalWindowLoadModel";
+import ModalLoadModel from "@/components/modeling/ModalLoadModel";
 import { mapGetters } from "vuex";
 
 export default {
@@ -22,13 +23,12 @@ export default {
   components: {
     // SimpleFlowchart,
     Toolbar,
-    Canvas,
+    ModCanvas,
     Params,
-    ModalWindowLoadModel
+    ModalLoadModel,
   },
   data() {
     return {
-      dialog: false,
       load_model_flag: false,
       nodeType: 1,
       nodeLabel: "",
@@ -47,72 +47,20 @@ export default {
     ...mapGetters({
       scene: "data/getData",
     }),
-    drawer: {
-      set(value) {
-        this.$store.dispatch("settings/setDrawer", value);
-      },
-      get() {
-        return this.$store.getters["settings/getDrawer"];
-      },
-    },
   },
   methods: {
     canvasClick(e) {
       console.log("canvas Click, event:", e);
       console.log(e.type);
     },
-    add() {
-      if (this.$refs.form.validate()) {
-        let maxID = Math.max(
-          0,
-          ...this.scene.nodes.map((link) => {
-            return link.id;
-          })
-        );
-        this.scene.nodes.push({
-          id: maxID + 1,
-          x: -400,
-          y: -100,
-          type: this.nodeCategory[this.nodeType],
-          label: this.nodeLabel ? this.nodeLabel : `test${maxID + 1}`,
-        });
-        this.nodeLabel = "";
-        this.dialog = false;
-      }
+    click(e) {
+      console.log(e);
+      this.$store.dispatch('modeling/setDialog', true)
     },
-    cancel() {
-      console.log(this.$refs.form.reset());
-      this.nodeLabel = "";
-      this.dialog = false;
-    },
-    save() {
-      const { nodes, links } = this.scene;
-      console.log({ nodes, links });
-      alert(JSON.stringify({ nodes, links }));
-    },
-    nodeClick(id) {
-      console.log("node click", id);
-      // this.drawer = true
-    },
-    nodeDelete(id) {
-      console.log("node delete", id);
-    },
-    linkBreak(id) {
-      console.log("link break", id);
-    },
-    linkAdded(link) {
-      console.log("new link added:", link);
-    },
-    isColor(type) {
-      return this.nodeType !== type ? "text" : "white";
-    },
-    OpenModalWindow(flag){
-      this.load_model_flag = flag
-    }
   },
 };
 </script>
 
 <style>
-@import './../../public/css/project/modeling.css';
+@import "./../../public/css/project/modeling.css";
 </style>
