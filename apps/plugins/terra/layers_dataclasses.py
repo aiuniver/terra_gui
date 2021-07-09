@@ -5,7 +5,7 @@ from terra_ai import customLayers
 # import keras_contrib
 import tensorflow
 
-__version__ = 0.024
+__version__ = 0.025
 
 
 def check_datatype(in_shape):
@@ -83,13 +83,13 @@ def get_block_params_from_plan(plan, layers_dict, layer_params, short_plan=False
     return get_params
 
 
-def set_block_params_to_plan(plan, block_params, short_plan=False) -> object:
+def set_block_params_to_plan(plan, block_params) -> object:
     """
     Put parameters from model parameters dict to block plan:
-    plan:           ex,     [(1, 1, 3, 0, {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                                            'padding': 'same', 'strides': (2, 2)}, 0, 0),
-                            (2, 6, 2, 0, {}, 1, 0),
-                            (3, 6, 1, 0, {'rate': 0.2}, 2, 0)],
+    plan:           ex,     (1, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
+                            'padding': 'same', 'strides': (2, 2)}, [2]),
+                            (2, "BatchNormalization", {}, [3]),
+                            (3, "Dropout", {'rate': 0.2}, [])],
     default dict:   ex,     {'L1_Conv2D_filters': 32, 'L1_Conv2D_kernel_size': (3, 3),
                             'L1_Conv2D_strides': (2, 2),
                             'L1_Conv2D_padding': 'same',
@@ -99,17 +99,11 @@ def set_block_params_to_plan(plan, block_params, short_plan=False) -> object:
     aux_plan = []
     for layer in plan:
         aux_plan.append(list(layer))
-    # print('aux_plan', aux_plan)
 
     for param, val in block_params.items():
-        print('set_block_params_to_plan__param', val, param, val)
         layer_idx = int(param.split('_')[0][1:])
         def_param = param[len(f"{param.split('_')[0]}_{param.split('_')[1]}_"):]
-        # print(layer_idx, def_param)
-        if short_plan:
-            aux_plan[layer_idx - 1][3][def_param] = val
-        else:
-            aux_plan[layer_idx - 1][4][def_param] = val
+        aux_plan[layer_idx - 1][2][def_param] = val
 
     update_plan = []
     for layer in aux_plan:
@@ -299,6 +293,7 @@ class PlanLinkLibrary:
         "Softmax": tensorflow.keras.layers,
         "ELU": tensorflow.keras.layers,
         "ThresholdedReLU": tensorflow.keras.layers,
+        "Mish": customLayers,
 
         # Layers Optimization
         "Dropout": tensorflow.keras.layers,
@@ -400,6 +395,8 @@ class PlanLinkLibrary:
         'VGG16': tensorflow.keras.applications.vgg16,
         #  'VGG19': tensorflow.keras.applications.vgg19,
         'Xception': tensorflow.keras.applications.xception,
+
+        # Custom terra blocks as subclasses
         'CustomUNETBlock': customLayers,
         'YOLOResBlock': customLayers,
         'YOLOConvBlock': customLayers,
@@ -463,7 +460,8 @@ class GUILayersDef:
             4: "ReLU",
             5: "Softmax",
             6: "ELU",
-            7: "ThresholdedReLU"
+            7: "ThresholdedReLU",
+            8: "Mish",
         },
         # Optimization Layers
         6: {
@@ -568,9 +566,10 @@ class GUILayersDef:
             26: 'VGG16',
             #  27: 'VGG19',
             28: 'Xception',
-            29: 'CustomUNETBlock',
-            30: 'YOLOResBlock',
-            31: 'YOLOConvBlock',
+            29: 'YOLOResBlock',
+            30: 'YOLOConvBlock',
+            31: 'CustomUNETBlock',
+
         },
         # Custom_Block
         12: {
@@ -583,7 +582,12 @@ class GUILayersDef:
             6: 'UNETBlock',
             7: 'XceptionBlock',
             8: 'InceptionV3block'
-        }
+        },
+        # 13: {
+        #     1: 'CustomUNETBlock',
+        #     2: 'YOLOResBlock',
+        #     3: 'YOLOConvBlock',
+        # }
     }
 
     filters_lh = (1, 1024)
@@ -646,7 +650,7 @@ class GUILayersDef:
         # 'ConvLSTM2D',             # added
         # 'ConvLSTM3D',             # added
         # 'Cropping1D',             # added
-        # 'Cropping2D',             # added
+        'Cropping2D',               # added
         # 'Cropping3D',             # added
         'Dense',
         # 'DenseFeatures',
@@ -714,18 +718,17 @@ class GUILayersDef:
     layer_params = {
         # Main Layers
         "Dense": {
-            "main":
-                {
-                    "units": {
-                        "type": "int",
-                        "default": 32},
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "units": {
+                    "type": "int",
+                    "default": 32},
+                "activation": {
+                    "type": "str",
+                    "default": 'relu',
+                    "list": True,
+                    "available": activation_lh,
                 },
+            },
             'extra': {
                 "use_bias": {
                     "type": "bool",
@@ -1047,33 +1050,32 @@ class GUILayersDef:
             }
         },
         "SeparableConv1D": {
-            "main":
-                {
-                    "filters": {
-                        "type": "int",
-                        "default": 32
-                    },
-                    "kernel_size": {
-                        "type": "int",
-                        "default": 3
-                    },
-                    "strides": {
-                        "type": "int",
-                        "default": 1
-                    },
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {
+                    "type": "int",
+                    "default": 32
                 },
+                "kernel_size": {
+                    "type": "int",
+                    "default": 3
+                },
+                "strides": {
+                    "type": "int",
+                    "default": 1
+                },
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'relu',
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
             'extra': {
                 "data_format": {
                     "type": "str",
@@ -1156,33 +1158,32 @@ class GUILayersDef:
             }
         },
         "SeparableConv2D": {
-            "main":
-                {
-                    "filters": {
-                        "type": "int",
-                        "default": 32
-                    },
-                    "kernel_size": {
-                        "type": "tuple",
-                        "default": (3, 3)
-                    },
-                    "strides": {
-                        "type": "tuple",
-                        "default": (1, 1)
-                    },
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
-                    "activation": {
-                        "type": "str",
-                        "default": 'relu',
-                        "list": True,
-                        "available": activation_lh,
-                    },
+            "main": {
+                "filters": {
+                    "type": "int",
+                    "default": 32
                 },
+                "kernel_size": {
+                    "type": "tuple",
+                    "default": (3, 3)
+                },
+                "strides": {
+                    "type": "tuple",
+                    "default": (1, 1)
+                },
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
+                },
+                "activation": {
+                    "type": "str",
+                    "default": 'relu',
+                    "list": True,
+                    "available": activation_lh,
+                },
+            },
             'extra': {
                 "data_format": {
                     "type": "str",
@@ -1714,23 +1715,22 @@ class GUILayersDef:
 
         # DownScaling Layers
         "MaxPooling1D": {
-            "main":
-                {
-                    "pool_size": {
-                        "type": "int",
-                        "default": 2
-                    },
-                    "strides": {
-                        "type": "int",
-                        "default": None
-                    },
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {
+                    "type": "int",
+                    "default": 2
                 },
+                "strides": {
+                    "type": "int",
+                    "default": None
+                },
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
+                },
+            },
             'extra': {
                 "data_format": {
                     "type": "str",
@@ -1795,22 +1795,21 @@ class GUILayersDef:
             }
         },
         "AveragePooling2D": {
-            "main":
-                {
-                    "pool_size": {
-                        "type": "tuple",
-                        "default": (2, 2)
-                    },
-                    "strides": {
-                        "type": "tuple",
-                        "default": None},
-                    "padding": {
-                        "type": "str",
-                        "default": "same",
-                        "list": True,
-                        "available": padding_lh,
-                    },
+            "main": {
+                "pool_size": {
+                    "type": "tuple",
+                    "default": (2, 2)
                 },
+                "strides": {
+                    "type": "tuple",
+                    "default": None},
+                "padding": {
+                    "type": "str",
+                    "default": "same",
+                    "list": True,
+                    "available": padding_lh,
+                },
+            },
             'extra': {
                 "data_format": {
                     "type": "str",
@@ -1886,7 +1885,7 @@ class GUILayersDef:
             'main': {
                 "cropping": {
                     "type": "tuple",
-                    "default": (0, 0),
+                    "default": ((0, 0), (0, 0)),
                 }
             },
             'extra': {
@@ -2085,6 +2084,10 @@ class GUILayersDef:
                     "default": 1.0
                 }
             }
+        },
+        "Mish": {
+            'main': {},
+            'extra': {}
         },
 
         # Optimization Layers
@@ -2490,17 +2493,16 @@ class GUILayersDef:
 
         # Recurrent layers
         "Embedding": {
-            "main":
-                {
-                    "input_dim": {
-                        "type": "int",
-                        "default": None
-                    },
-                    "output_dim": {
-                        "type": "int",
-                        "default": None
-                    },
+            "main": {
+                "input_dim": {
+                    "type": "int",
+                    "default": None
                 },
+                "output_dim": {
+                    "type": "int",
+                    "default": None
+                },
+            },
             'extra': {
                 "embeddings_initializer": {
                     "type": "str",
@@ -2537,21 +2539,20 @@ class GUILayersDef:
             }
         },
         "LSTM": {
-            "main":
-                {
-                    "units": {
-                        "type": "int",
-                        "default": 32
-                    },
-                    "return_sequences": {
-                        "type": "bool",
-                        "default": False,
-                    },
-                    "return_state": {
-                        "type": "bool",
-                        "default": False,
-                    },
+            "main": {
+                "units": {
+                    "type": "int",
+                    "default": 32
                 },
+                "return_sequences": {
+                    "type": "bool",
+                    "default": False,
+                },
+                "return_state": {
+                    "type": "bool",
+                    "default": False,
+                },
+            },
             'extra': {
                 "activation": {
                     "type": "str",
@@ -3789,6 +3790,12 @@ class GUILayersDef:
         },
         'YOLOResBlock': {
             'main': {
+                "mode": {
+                    "type": "str",
+                    "default": 'YOLOv3',
+                    "list": True,
+                    "available": ['YOLOv3', 'YOLOv4'],
+                },
                 "filters": {
                     "type": "int",
                     "default": 32
@@ -3805,33 +3812,15 @@ class GUILayersDef:
                 },
                 "activation": {
                     "type": "str",
-                    "default": 'linear',
+                    "default": 'LeakyReLU',
                     "list": True,
-                    "available": activation_lh,
-                },
-                "leaky_alpha": {
-                    "type": "float",
-                    "default": 0.1,
-                },
-                "first_conv_kernel": {
-                    "type": "tuple",
-                    "default": (3, 3)
-                },
-                "first_conv_strides": {
-                    "type": "tuple",
-                    "default": (2, 2)
-                },
-                "first_conv_padding": {
-                    "type": "str",
-                    "default": "valid",
-                    "list": True,
-                    "available": padding_lh,
-                },
-                "zero_padding": {
-                    "type": "tuple",
-                    "default": ((1, 1), (1, 1))
+                    "available": ['LeakyReLU', 'Mish'],
                 },
                 "include_head": {
+                    "type": "bool",
+                    "default": True
+                },
+                "all_narrow": {
                     "type": "bool",
                     "default": True
                 },
@@ -3839,6 +3828,12 @@ class GUILayersDef:
         },
         'YOLOConvBlock': {
             'main': {
+                "mode": {
+                    "type": "str",
+                    "default": 'YOLOv3',
+                    "list": True,
+                    "available": ['YOLOv3', 'YOLOv4'],
+                },
                 "filters": {
                     "type": "int",
                     "default": 32
@@ -3855,13 +3850,9 @@ class GUILayersDef:
                 },
                 "activation": {
                     "type": "str",
-                    "default": 'linear',
+                    "default": 'LeakyReLU',
                     "list": True,
-                    "available": activation_lh,
-                },
-                "leaky_alpha": {
-                    "type": "float",
-                    "default": 0.1,
+                    "available": ['LeakyReLU', 'Mish'],
                 },
                 "first_conv_kernel": {
                     "type": "tuple",
@@ -3966,6 +3957,8 @@ if __name__ == "__main__":
             print(f"'{k}'", ': ', f"'{v}'", ',', sep='')
         else:
             print(f"'{k}'", ': ', v, ',', sep='')
-    print(LayersDef.custom_block_plan.get(layer, None))
+    # print(LayersDef.custom_block_plan.get(layer, None))
     # print(layers_params.get("Conv2DBNDrop"))
+    x = LayersDef()
+    # print(LayersDef().Dense_defaults)
     pass

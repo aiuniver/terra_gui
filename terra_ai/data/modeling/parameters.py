@@ -6,10 +6,10 @@ import sys
 
 from enum import Enum
 
-from ..mixins import BaseMixinData
-from .extra import LayerTypeChoice
-from .layers_parameters.extra import ActivationChoice
-from . import layers_parameters as lps
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.modeling.extra import LayerTypeChoice
+from terra_ai.data.modeling.layers_parameters.extra import ActivationChoice
+from terra_ai.data.modeling import layers_parameters as lps
 
 
 class ParametersTypeDefaultData(BaseMixinData):

@@ -138,3 +138,5 @@ dmypy.json
 /.idea/modules.xml
 /.idea/misc.xml
 /.idea/.gitignore
+/terra_ai/test short.py
+/object

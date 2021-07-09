@@ -1,3 +1,6 @@
+import copy
+
+import tensorflow
 from tensorflow.keras.layers import Layer, InputSpec
 from tensorflow.keras import initializers, regularizers, constraints
 from tensorflow.keras import backend as K
@@ -285,3 +288,245 @@ class CustomUNETBlock(Layer):
     @classmethod
     def from_config(cls, config):
         return cls(**config)
+
+
+class YOLOResBlock(Layer):
+    """Unet block layer """
+
+    def __init__(self,
+                 mode="YOLOv3",
+                 filters=32,
+                 num_resblocks=1,
+                 activation='leaky_relu',
+                 use_bias=False,
+                 include_heads=True,
+                 all_narrow=False):
+        super(YOLOResBlock, self).__init__()
+        self.mode = mode
+        self.all_narrow = all_narrow
+        self.filters = filters
+        self.num_resblocks = num_resblocks
+        self.kernel_regularizer = tensorflow.keras.regularizers.l2(5e-4)
+        if activation == 'leaky_relu':
+            self.activation = tensorflow.keras.layers.LeakyReLU(alpha=self.alpha)
+        if activation == 'mish':
+            self.activation = Mish()
+        self.use_bias = use_bias
+        self.include_heads = include_heads
+        self.kwargs = {}
+        if self.mode == "YOLOv3":
+            self.kwargs["kernel_regularizer"] = tensorflow.keras.regularizers.l2(5e-4)
+        if self.mode == "YOLOv4":
+            self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(mean=0.0, stddev=0.01)
+
+        if self.include_heads:
+            self.zero2d = tensorflow.keras.layers.ZeroPadding2D(padding=((1, 0), (1, 0)))
+            self.conv_start = tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(3, 3),
+                                                             strides=(2, 2), use_bias=self.use_bias,
+                                                             padding='valid', activation='linear',
+                                                             **self.kwargs)
+            self.bn_start = tensorflow.keras.layers.BatchNormalization()
+            self.activation_start = copy.deepcopy(self.activation)
+
+            if self.mode == "YOLOv4":
+                self.preconv_1 = tensorflow.keras.layers.Conv2D(
+                    filters=self.filters // 2 if self.all_narrow else self.filters, kernel_size=(1, 1),
+                    use_bias=self.use_bias, padding='same', activation='linear', **self.kwargs)
+                self.prebn_1 = tensorflow.keras.layers.BatchNormalization()
+                self.preactivation_1 = copy.deepcopy(self.activation)
+                self.preconv_2 = tensorflow.keras.layers.Conv2D(
+                    filters=self.filters // 2 if self.all_narrow else self.filters, kernel_size=(1, 1),
+                    use_bias=self.use_bias, padding='same', activation='linear', **self.kwargs)
+                self.prebn_2 = tensorflow.keras.layers.BatchNormalization()
+                self.preactivation_2 = copy.deepcopy(self.activation)
+
+        for i in range(self.num_resblocks):
+            setattr(self, f"conv_1_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters // 2, kernel_size=(1, 1),
+                                                   activation='linear', use_bias=self.use_bias,
+                                                   padding='same', **self.kwargs))
+            setattr(self, f"conv_2_{i}",
+                    tensorflow.keras.layers.Conv2D(filters=self.filters // 2 if self.all_narrow else self.filters,
+                                                   kernel_size=(3, 3), activation='linear', use_bias=self.use_bias,
+                                                   padding='same', **self.kwargs))
+            setattr(self, f"bn_1_{i}", tensorflow.keras.layers.BatchNormalization())
+            setattr(self, f"bn_2_{i}", tensorflow.keras.layers.BatchNormalization())
+            setattr(self, f"activ_1_{i}", copy.deepcopy(self.activation))
+            setattr(self, f"activ_2_{i}", copy.deepcopy(self.activation))
+            setattr(self, f"add_{i}", tensorflow.keras.layers.Add())
+
+        if self.include_heads and self.mode == "YOLOv4":
+            self.postconv_1 = tensorflow.keras.layers.Conv2D(
+                filters=self.filters // 2 if self.all_narrow else self.filters, kernel_size=(1, 1),
+                use_bias=self.use_bias, padding='same', activation='linear', **self.kwargs)
+            self.postbn_1 = tensorflow.keras.layers.BatchNormalization()
+            self.postactivation_1 = copy.deepcopy(self.activation)
+            self.concatenate_1 = tensorflow.keras.layers.Concatenate()
+            self.postconv_2 = tensorflow.keras.layers.Conv2D(
+                filters=self.filters, kernel_size=(1, 1), use_bias=self.use_bias, padding='same',
+                activation='linear', **self.kwargs)
+            self.postbn_2 = tensorflow.keras.layers.BatchNormalization()
+            self.postactivation_2 = copy.deepcopy(self.activation)
+
+    def call(self, inputs, training=True, **kwargs):
+        if self.include_heads:
+            x = self.zero2d(inputs)
+            x = self.conv_start(x)
+            x = self.bn_start(x)
+            x = self.activation_start(x)
+            if self.mode == "YOLOv4":
+                x_concat = self.preconv_1(x)
+                x_concat = self.prebn_1(x_concat)
+                x_concat = self.preactivation_1(x_concat)
+                x = self.preconv_2(x)
+                x = self.prebn_2(x)
+                x = self.preactivation_2(x)
+        else:
+            x = inputs
+        for i in range(self.num_resblocks):
+            y = getattr(self, f"conv_1_{i}")(x)
+            y = getattr(self, f"bn_1_{i}")(y)
+            y = getattr(self, f"activ_1_{i}")(y)
+            y = getattr(self, f"conv_2_{i}")(y)
+            y = getattr(self, f"bn_2_{i}")(y)
+            y = getattr(self, f"activ_2_{i}")(y)
+            x = getattr(self, f"add_{i}")([y, x])
+        if self.include_heads and self.mode == "YOLOv4":
+            x = self.postconv_1(x)
+            x = self.postbn_1(x)
+            x = self.postactivation_1(x)
+            x = self.concatenate_1([x, x_concat])
+            x = self.postconv_2(x)
+            x = self.postbn_2(x)
+            x = self.postactivation_2(x)
+        return x
+
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+            'filters': self.filters,
+            'num_resblocks': self.num_resblocks,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'include_head': self.include_head,
+            'all_narrow': self.all_narrow
+        }
+        base_config = super(YOLOResBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class YOLOConvBlock(Layer):
+    """Unet block layer """
+
+    def __init__(self,
+                 mode="YOLOv3",
+                 filters=32,
+                 num_conv=1,
+                 activation='leaky_relu',
+                 use_bias=False,
+                 first_conv_kernel=(1, 1),
+                 first_conv_strides=(1, 1),
+                 first_conv_padding='same'):
+        super(YOLOConvBlock, self).__init__()
+        self.mode = mode
+        self.kwargs = {}
+        if self.mode == "YOLOv3":
+            self.kwargs["kernel_regularizer"] = tensorflow.keras.regularizers.l2(5e-4)
+        if self.mode == "YOLOv4":
+            self.kwargs["kernel_initializer"] = tensorflow.keras.initializers.RandomNormal(mean=0.0, stddev=0.01)
+
+        self.filters = filters
+        self.num_conv = num_conv
+        self.mode = mode
+        self.activation = activation
+        self.use_bias = use_bias
+        self.strides = first_conv_strides
+        self.kernel = first_conv_kernel
+        self.padding = first_conv_padding
+
+        for i in range(self.num_conv):
+            if i == 0:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=self.kernel,
+                                                                          strides=self.strides, activation='linear',
+                                                                          use_bias=self.use_bias, padding=self.padding,
+                                                                          **self.kwargs))
+            elif i != 0 and i % 2 == 0:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=self.filters, kernel_size=(1, 1),
+                                                                          strides=(1, 1), activation='linear',
+                                                                          use_bias=self.use_bias, padding='same',
+                                                                          **self.kwargs))
+            else:
+                setattr(self, f"conv_{i}", tensorflow.keras.layers.Conv2D(filters=2 * self.filters, kernel_size=(3, 3),
+                                                                          strides=(1, 1), activation='linear',
+                                                                          use_bias=self.use_bias, padding='same',
+                                                                          **self.kwargs))
+            setattr(self, f"bn_{i}", tensorflow.keras.layers.BatchNormalization())
+            if self.activation == "leaky_relu":
+                setattr(self, f"leaky_{i}", tensorflow.keras.layers.LeakyReLU(alpha=self.alpha))
+            if self.activation == "mish":
+                setattr(self, f"mish_{i}", Mish())
+
+    def call(self, inputs, training=True, **kwargs):
+        for i in range(self.num_conv):
+            if i == 0:
+                x = getattr(self, f"conv_{i}")(inputs)
+            else:
+                x = getattr(self, f"conv_{i}")(x)
+            x = getattr(self, f"bn_{i}")(x)
+            if self.activation == "leaky_relu":
+                x = getattr(self, f"leaky_{i}")(x)
+            if self.activation == "mish":
+                x = getattr(self, f"mish_{i}")(x)
+        return x
+
+    def get_config(self):
+        config = {
+            'mode': self.mode,
+            'filters': self.filters,
+            'num_conv': self.num_conv,
+            'activation': self.activation,
+            'use_bias': self.use_bias,
+            'first_conv_strides': self.strides,
+            'first_conv_kernel': self.kernel,
+            'first_conv_padding': self.padding
+        }
+        base_config = super(YOLOConvBlock, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
+
+class Mish(Layer):
+    """
+    Mish Activation Function.
+    .. math::
+        mish(x) = x * tanh(softplus(x)) = x * tanh(ln(1 + e^{x}))
+    Shape:
+        - Input: Arbitrary. Use the keyword argument `input_shape`
+        (tuple of integers, does not include the samples axis)
+        when using this layer as the first layer in a model.
+        - Output: Same shape as the input.
+    Examples:
+        - X_input = Input(input_shape)
+        - X = Mish()(X_input)
+    """
+
+    def __init__(self, **kwargs):
+        super(Mish, self).__init__(**kwargs)
+        self.supports_masking = True
+
+    def call(self, inputs, **kwargs):
+        return inputs * K.tanh(K.softplus(inputs))
+
+    def get_config(self):
+        config = super(Mish, self).get_config()
+        return config
+
+    def compute_output_shape(self, input_shape):
+        return input_shape

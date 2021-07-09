@@ -124,6 +124,7 @@ class LayerType(str, Enum):
     Attention = "Attention"
     YOLOResBlock = "YOLOResBlock"
     YOLOConvBlock = "YOLOConvBlock"
+    Mish = "Mish"
 
 
 
