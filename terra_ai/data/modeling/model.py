@@ -2,7 +2,8 @@
 ## Структура данных моделей
 """
 
-from typing import Optional
+from typing import Optional, List
+from pydantic import validator
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
@@ -22,6 +23,8 @@ class ModelDetailsData(BaseMixinData):
     "Размерность входных слоев: `[32,32,3], [128,128,3]`"
     image: Optional[Base64Type]
     "Изображение схемы модели в `base64`"
+    layers: Optional[LayersList]
+    "Список слоев"
 
 
 class ModelData(AliasMixinData):
@@ -31,27 +34,43 @@ class ModelData(AliasMixinData):
 
     name: str
     "Название"
-    file_path: Optional[confilepath(ext="model")]
+    file_path: confilepath(ext="model")
     "Путь к файлу модели"
-    details: ModelDetailsData = ModelDetailsData()
+    details: Optional[ModelDetailsData]
     "Детальная информация о модели"
-    layers: LayersList = LayersList()
-    "Список слоев"
+
+
+class ModelListData(BaseMixinData):
+    """
+    Информация о модели в списке
+    """
+
+    value: confilepath(ext="model")
+    "Путь к файлу модели"
+    label: Optional[str]
+    "Название"
+
+    @validator("label", allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -> str:
+        file_path = values.get("value")
+        if not file_path:
+            return value
+        return file_path.name.split(".model")[0]
 
 
 class ModelsList(UniqueListMixin):
     """
-    Список моделей, основанных на `ModelData`
+    Список моделей, основанных на `ModelListData`
     ```
     class Meta:
-        source = ModelData
-        identifier = "alias"
+        source = ModelListData
+        identifier = "name"
     ```
     """
 
     class Meta:
-        source = ModelData
-        identifier = "alias"
+        source = ModelListData
+        identifier = "label"
 
 
 class ModelsGroupData(AliasMixinData):

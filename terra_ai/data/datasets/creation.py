@@ -158,15 +158,20 @@ from . import parameters
 
 class FilePathSourceData(BaseMixinData):
     value: confilepath(ext="zip")
+    label: Optional[str]
+
+    @validator("label", allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -> str:
+        file_path = values.get("value")
+        if not file_path:
+            return value
+        return file_path.name.split(".zip")[0]
 
 
 class FilePathSourcesList(UniqueListMixin):
     class Meta:
         source = FilePathSourceData
-        identifier = "value"
-
-    def list(self) -> list:
-        return list(map(lambda item: item.value.name, self))
+        identifier = "label"
 
 
 class SourceData(BaseMixinData):

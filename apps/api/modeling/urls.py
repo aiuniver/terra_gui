@@ -5,4 +5,6 @@ from . import views
 
 app_name = "modeling"
 
-urlpatterns = []
+urlpatterns = [
+    path("models/", views.ModelsAPIView.as_view(), name="models"),
+]
