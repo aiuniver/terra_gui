@@ -14,6 +14,7 @@ def threading(method):
 
 class PoolName(str, Enum):
     dataset_source_load = "dataset_source_load"
+    model_load = "model_load"
 
 
 class ProgressData(BaseModel):
@@ -39,6 +40,7 @@ class ProgressData(BaseModel):
 
 class ProgressItems(BaseModel):
     dataset_source_load: ProgressData = ProgressData()
+    model_load: ProgressData = ProgressData()
 
 
 class ProgressPool:

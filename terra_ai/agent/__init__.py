@@ -8,7 +8,7 @@ from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
 
-from ..data.modeling.model import ModelsGroupsList, ModelListData
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData
 
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
@@ -106,6 +106,19 @@ class Exchange:
                 pass
         models.get("custom").models.sort(key=lambda item: item.label)
         return json.loads(models.json())
+
+    def _call_model_load(self, value: str):
+        """
+        Загрузка модели
+        """
+        model = ModelLoadData(value=value)
+        temporary_methods.model_load(model)
+
+    def _call_model_load_progress(self) -> dict:
+        """
+        Прогресс загрузки модели
+        """
+        return progress.pool(progress.PoolName.model_load).dict()
 
 
 agent_exchange = Exchange()

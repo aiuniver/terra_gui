@@ -2,12 +2,21 @@
 ## Структура данных моделей
 """
 
-from typing import Optional, List
+from typing import Optional
 from pydantic import validator
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
 from .layer import LayersList
+
+
+class ModelLoadData(BaseMixinData):
+    """
+    Информация для загрузки модели
+    """
+
+    value: confilepath(ext="model")
+    "Пусть к фалу модели"
 
 
 class ModelDetailsData(BaseMixinData):
