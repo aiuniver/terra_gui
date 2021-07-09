@@ -142,7 +142,8 @@ class DTS(object):
                              'timeseries': {'length': 1,
                                             'y_cols': '',
                                             'scaler': ['No Scaler', 'StandardScaler', 'MinMaxScaler'],
-                                            'task_type': ['timeseries', 'regression']}
+                                            'task_type': ['timeseries', 'regression']},
+                             'object_detection': {}
                              }
 
         return method_parameters[name]
