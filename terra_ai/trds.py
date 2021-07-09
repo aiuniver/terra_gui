@@ -2,14 +2,15 @@ from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, i
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from tensorflow.keras import utils
+from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from time import time
 from PIL import Image
-from librosa import load as librosaload
-import librosa.feature as librosafeature
+from librosa import load as librosa_load
+import librosa.feature as librosa_feature
 import os
 import random
 import matplotlib.pyplot as plt
@@ -40,7 +41,7 @@ class DTS(object):
     def __init__(self, f_folder='', path=mkdtemp(), trds_path='/content/drive/MyDrive/TerraAI/datasets',
                  exch_obj=tr2dj_obj):
 
-        self.version = 0.341
+        self.version = 0.342
         self.Exch = exch_obj
         self.django_flag = False
         if self.Exch.property_of != 'TERRA':
@@ -76,6 +77,7 @@ class DTS(object):
         self.word2vec: dict = {}
         self.df: dict = {}
         self.tsgenerator: dict = {}
+        self.tf_dataset: dict = {}
 
         self.y_cls: np.ndarray = np.array([])
         self.peg: list = []
@@ -140,7 +142,8 @@ class DTS(object):
                              'timeseries': {'length': 1,
                                             'y_cols': '',
                                             'scaler': ['No Scaler', 'StandardScaler', 'MinMaxScaler'],
-                                            'task_type': ['timeseries', 'regression']}
+                                            'task_type': ['timeseries', 'regression']},
+                             'object_detection': {}
                              }
 
         return method_parameters[name]
@@ -512,7 +515,10 @@ class DTS(object):
                 elif 'output' in arr:
                     self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, 'arrays', arr))
                     self.output_shape[arr[:-3]] = self.Y[arr[:-3]]['data'][0].shape[1:]
-                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
+                    if 'object_detection' in self.tags.values():
+                        self.output_datatype[arr[:-3]] = '2D'
+                    else:
+                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]]['data'][0].shape)
             self.input_datatype = ' '.join(inp_datatype)
 
             pass
@@ -581,6 +587,48 @@ class DTS(object):
 
             pass
 
+        def get_train_generator():
+
+            x_train = {}
+            for x_key in self.X.keys():
+                x_train[x_key] = self.X[x_key]['data'][0]
+
+            y_train = {}
+            for y_key in self.Y.keys():
+                y_train[y_key] = self.Y[y_key]['data'][0]
+
+            train_generator = Dataset.from_tensor_slices((x_train, y_train))
+
+            return train_generator
+
+        def get_validation_generator():
+
+            x_val = {}
+            for x_key in self.X.keys():
+                x_val[x_key] = self.X[x_key]['data'][1]
+
+            y_val = {}
+            for y_key in self.Y.keys():
+                y_val[y_key] = self.Y[y_key]['data'][1]
+
+            val_generator = Dataset.from_tensor_slices((x_val, y_val))
+
+            return val_generator
+
+        def get_test_generator():
+
+            x_test = {}
+            for x_key in self.X.keys():
+                x_test[x_key] = self.X[x_key]['data'][2]
+
+            y_test = {}
+            for y_key in self.Y.keys():
+                y_test[y_key] = self.Y[y_key]['data'][2]
+
+            test_generator = Dataset.from_tensor_slices((x_test, y_test))
+
+            return test_generator
+
         if options['dataset_name'] in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing',
                                        'reuters'] and options['source'] != 'custom_dataset':
 
@@ -618,6 +666,10 @@ class DTS(object):
             load_tokenizer()
             load_word2vec()
             load_tsgenerator()
+
+        self.tf_dataset['train'] = get_train_generator()
+        self.tf_dataset['val'] = get_validation_generator()
+        self.tf_dataset['test'] = get_test_generator()
 
         # temp_attributes = ['df', 'peg', 'user_parameters']
         # for item in temp_attributes:
@@ -1316,11 +1368,11 @@ class DTS(object):
             array: np.ndarray = np.array([])
 
             if feature in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
-                array = getattr(librosafeature, feature)(y=section, sr=sr)
+                array = getattr(librosa_feature, feature)(y=section, sr=sr)
             elif feature == 'rms':
-                array = getattr(librosafeature, feature)(y=section)[0]
+                array = getattr(librosa_feature, feature)(y=section)[0]
             elif feature == 'zero_crossing_rate':
-                array = getattr(librosafeature, feature)(y=section)
+                array = getattr(librosa_feature, feature)(y=section)
 
             return array
 
@@ -1387,7 +1439,7 @@ class DTS(object):
                 idx = 0
                 peg_idx = 0
                 for file in progress_bar:
-                    y, sample_rate = librosaload(file)
+                    y, sample_rate = librosa_load(file)
                     while len(y) >= length:
                         sect = y[:length]
                         sect = np.array(sect)
