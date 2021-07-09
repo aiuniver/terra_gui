@@ -1707,6 +1707,8 @@ class DTS(object):
         num_classes = int(data['classes'])
         self.num_classes[f'output_{self.iter}'] = num_classes
         self.task_type[f'output_{self.iter}'] = 'object_detection'
+        self.task_type[f'output_{self.iter+1}'] = 'object_detection'
+        self.task_type[f'output_{self.iter+2}'] = 'object_detection'
 
         # obj.names
         with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
