@@ -15,7 +15,7 @@ class InfoAPIView(BaseAPIView):
 
 
 class SourceLoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
+    def get(self, request, **kwargs):
         serializer = SourceLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)

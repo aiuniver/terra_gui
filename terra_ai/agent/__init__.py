@@ -1,4 +1,5 @@
 import os
+import json
 
 from pathlib import Path
 from transliterate import slugify
@@ -6,9 +7,14 @@ from transliterate import slugify
 from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
-from ..data.presets.datasets import DatasetsGroups
-from .. import progress
 
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData
+
+from ..data.presets.datasets import DatasetsGroups
+from ..data.presets.models import ModelsGroups
+
+from .. import ASSETS_PATH
+from .. import progress
 from . import exceptions
 from . import temporary_methods
 
@@ -76,7 +82,43 @@ class Exchange:
                 files.append({"value": filepath})
             except Exception:
                 pass
-        return files.list()
+        files.sort(key=lambda item: item.label)
+        return json.loads(files.json())
+
+    def _call_models(self, path: str) -> list:
+        """
+        Получение списка моделей
+        """
+        models = ModelsGroupsList(ModelsGroups)
+        models_path = Path(ASSETS_PATH, "models")
+        for filename in os.listdir(models_path):
+            try:
+                models.get("preset").models.append(
+                    {"value": Path(models_path, filename)}
+                )
+            except Exception:
+                pass
+        models.get("preset").models.sort(key=lambda item: item.label)
+        for filename in os.listdir(path):
+            try:
+                models.get("custom").models.append({"value": Path(path, filename)})
+            except Exception:
+                pass
+        models.get("custom").models.sort(key=lambda item: item.label)
+        return json.loads(models.json())
+
+    def _call_model_load(self, value: str):
+        """
+        Загрузка модели
+        """
+        model = ModelLoadData(value=value)
+        temporary_methods.model_load(model)
+
+    def _call_model_load_progress(self) -> dict:
+        """
+        Прогресс загрузки модели
+        """
+        return progress.pool(progress.PoolName.model_load).dict()
 
 
 agent_exchange = Exchange()
