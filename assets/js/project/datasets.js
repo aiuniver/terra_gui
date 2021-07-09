@@ -176,7 +176,7 @@
             if (!this.length) return this;
 
             let task_type_input = ['images', 'text', 'audio', 'dataframe'],
-                data_type_output = ['images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries'],
+                data_type_output = ['images', 'text', 'audio', 'classification', 'segmentation', 'text_segmentation', 'regression', 'timeseries', 'object_detection'],
                 dataset_params;
 
             function componentToHex(c) {
