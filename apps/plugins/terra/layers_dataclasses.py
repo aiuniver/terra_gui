@@ -6290,6 +6290,12 @@ class GUILayersDef:
         },
         'YOLOResBlock': {
             'main': {
+                "mode": {
+                    "type": "str",
+                    "default": 'YOLOv3',
+                    "list": True,
+                    "available": ['YOLOv3', 'YOLOv4'],
+                },
                 "filters": {
                     "type": "int",
                     "default": 32
@@ -6306,33 +6312,15 @@ class GUILayersDef:
                 },
                 "activation": {
                     "type": "str",
-                    "default": 'linear',
+                    "default": 'LeakyReLU',
                     "list": True,
-                    "available": activation_lh,
-                },
-                "leaky_alpha": {
-                    "type": "float",
-                    "default": 0.1,
-                },
-                "first_conv_kernel": {
-                    "type": "tuple",
-                    "default": (3, 3)
-                },
-                "first_conv_strides": {
-                    "type": "tuple",
-                    "default": (2, 2)
-                },
-                "first_conv_padding": {
-                    "type": "str",
-                    "default": "valid",
-                    "list": True,
-                    "available": padding_lh,
-                },
-                "zero_padding": {
-                    "type": "tuple",
-                    "default": ((1, 1), (1, 1))
+                    "available": ['LeakyReLU', 'Mish'],
                 },
                 "include_head": {
+                    "type": "bool",
+                    "default": True
+                },
+                "all_narrow": {
                     "type": "bool",
                     "default": True
                 },
@@ -6340,6 +6328,12 @@ class GUILayersDef:
         },
         'YOLOConvBlock': {
             'main': {
+                "mode": {
+                    "type": "str",
+                    "default": 'YOLOv3',
+                    "list": True,
+                    "available": ['YOLOv3', 'YOLOv4'],
+                },
                 "filters": {
                     "type": "int",
                     "default": 32
@@ -6356,13 +6350,9 @@ class GUILayersDef:
                 },
                 "activation": {
                     "type": "str",
-                    "default": 'linear',
+                    "default": 'LeakyReLU',
                     "list": True,
-                    "available": activation_lh,
-                },
-                "leaky_alpha": {
-                    "type": "float",
-                    "default": 0.1,
+                    "available": ['LeakyReLU', 'Mish'],
                 },
                 "first_conv_kernel": {
                     "type": "tuple",

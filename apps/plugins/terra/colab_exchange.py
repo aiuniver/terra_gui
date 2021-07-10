@@ -384,6 +384,9 @@ class StatesData:
                 "1D": {"layer_type": LayerType.Conv1D, "activation": "linear"},
                 "DIM": {"layer_type": LayerType.Dense, "activation": "linear"},
             },
+            "object_detection": {
+                "2D": {"layer_type": LayerType.Conv2D, "activation": None},
+                },
         }
 
         self.paths_obj = TerraExchangeProject()
@@ -742,14 +745,20 @@ class Exchange(StatesData, GuiExch):
         self.dts = DTS(exch_obj=self, trds_path=self.custom_datasets_path)
         gc.collect()
         self.dts.prepare_dataset(dataset_name=dataset_name, source=source)
+        print('\n self.dts.tags, self.dts.name',self.dts.tags, self.dts.name)
         self._set_dts_name(self.dts.name)
         self.out_data["stop_flag"] = True
         self._set_start_layers()
+        print('\n self.start_layers',self.start_layers)
         return self.dts.tags, self.dts.name, self.start_layers
 
     def _change_output_layer(self, dts_layer_name):
+        print('self.dts.task_type', self.dts.task_type)
+        print('dts_layer_name', dts_layer_name)
         task_type = self.dts.task_type.get(dts_layer_name)
+        print('\ntask_type', task_type)
         dimension = self.dts.output_datatype.get(dts_layer_name)
+        print('\ndimension', dimension)
         layer_type = (
             self.output_layers.get(task_type, {})
             .get(dimension, {})
@@ -770,12 +779,21 @@ class Exchange(StatesData, GuiExch):
             layer_type = LayerType.Dense
             activation = "softmax"
             available = [data["data_name"] for name, data in dts_data.items()]
+            print('available', available)
             for name, data in dts_data.items():
                 index = len(self.start_layers.keys()) + 1
                 data_name = data.get("data_name", "")
+                print('name', name)
                 if location == LayerLocation.output:
+                    print('781')
+                    print('name', name)
+                    print('self.dts.task_type2', self.dts.task_type)
                     layer_type, activation = self._change_output_layer(name)
+                    print('782')
+                    print(' layer_type', layer_type)
                     default_layers_params = self.layers_params.get(layer_type)
+                    print('784')
+
                     out_param_dict = {
                         x: {
                             y: default_layers_params[x].get(y).get("default")
@@ -783,12 +801,17 @@ class Exchange(StatesData, GuiExch):
                         }
                         for x in default_layers_params.keys()
                     }
+                    print('out_param_dict', out_param_dict)
+                    print('self.dts.num_classes', self.dts.num_classes)
                     units = self.dts.num_classes.get(
                         name,
                         self.dts.output_shape.get(name)[-1]
                         if self.dts.output_shape.get(name)
                         else 1,
                     )
+                    if self.dts.task_type.get(name) == 'object_detection':
+                        units = self.dts.output_shape.get(name)[-1] * self.dts.output_shape.get(name)[-2]
+                    print('units', units)
                     if out_param_dict.get("main", {}).get("units", None):
                         out_param_dict["main"]["units"] = units
                     else:
@@ -797,6 +820,7 @@ class Exchange(StatesData, GuiExch):
                     self.output_shape.setdefault(
                         name, list(self.dts.output_shape.get(name, []))
                     )
+                    print('807')
                 else:
                     out_param_dict = {}
                 self.start_layers[index] = {

@@ -152,7 +152,8 @@ class DTS(object):
 
         parameters = {}
         list_of_params = ['images', 'text', 'audio', 'dataframe'] + ['classification', 'segmentation',
-                                                                     'text_segmentation', 'regression', 'timeseries']
+                                                                     'text_segmentation', 'regression', 'timeseries',
+                                                                     'object_detection']
 
         for elem in list_of_params:
             temp = {}

@@ -44,6 +44,7 @@ class TaskType(str, Enum):
     timeseries = "timeseries"
     regression = "regression"
     segmentation = "segmentation"
+    object_detection = "object_detection"
 
 
 class CheckpointIndicatorType(str, Enum):
