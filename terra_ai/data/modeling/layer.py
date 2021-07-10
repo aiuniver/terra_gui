@@ -21,8 +21,26 @@ class LayerShapeData(BaseMixinData):
     Размерности слоя
     """
 
-    input: Optional[Tuple[PositiveInt, ...]]
-    output: Optional[Tuple[PositiveInt, ...]]
+    input: List[Tuple[PositiveInt, ...]] = []
+    output: List[Tuple[PositiveInt, ...]] = []
+
+
+class LayerBindData(BaseMixinData):
+    """
+    Связи слоев сверху и снизу
+    """
+
+    up: List[Optional[ConstrainedIntValueGe0]] = []
+    down: List[ConstrainedIntValueGe0] = []
+
+    @validator("up", allow_reuse=True)
+    def _validate_bind(cls, value):
+        if not value:
+            return value
+        if None in value:
+            value = list(filter(None, value))
+            value.insert(0, None)
+        return value
 
 
 class LayerData(AliasMixinData):
@@ -36,7 +54,7 @@ class LayerData(AliasMixinData):
     "Тип слоя"
     group: LayerGroupChoice
     "Группа слоя"
-    bind: List[int] = []
+    bind: LayerBindData = LayerBindData()
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
@@ -75,6 +93,12 @@ class LayerData(AliasMixinData):
         cls, value: Any, **kwargs
     ) -> Union[parameters.ParametersTypeUnion]:
         return kwargs.get("field").type_(**value)
+
+    @validator("bind", allow_reuse=True)
+    def _validate_bind(cls, value: LayerBindData, values) -> LayerBindData:
+        if values.get("group") == LayerGroupChoice.input:
+            value.up.insert(0, None)
+        return value
 
 
 class LayersList(UniqueListMixin):
