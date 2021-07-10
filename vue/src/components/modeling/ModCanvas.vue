@@ -66,14 +66,14 @@ export default {
             id: 2,
             x: -500,
             y: 50,
-            type: "action",
+            type: "middle",
             label: "test2",
           },
           {
             id: 3,
             x: -800,
             y: 50,
-            type: "action",
+            type: "middle",
             label: "test3",
           },
           {

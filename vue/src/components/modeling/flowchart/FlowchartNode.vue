@@ -48,7 +48,7 @@ export default {
     },
     type: {
       type: String,
-      default: "Default",
+      default: "middle",
     },
     label: {
       type: String,
@@ -179,6 +179,16 @@ $portSize: 10;
       border: 1px solid white;
       color: white;
     }
+  }
+
+  .input{
+    background: #FFB054;
+  }
+  .middle{
+    background: #89D764;
+  }
+  .output{
+    background: #8E51F2;
   }
 }
 </style>
