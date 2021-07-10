@@ -1,5 +1,5 @@
 """
-## Тип слоя `Activation`
+## Тип слоя `Attention`
 """
 
 from ...mixins import BaseMixinData
@@ -7,8 +7,8 @@ from .extra import ActivationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    activation: ActivationChoice = ActivationChoice.relu
+    pass
 
 
 class ParametersExtraData(BaseMixinData):
-    pass
+    use_scale: bool = False

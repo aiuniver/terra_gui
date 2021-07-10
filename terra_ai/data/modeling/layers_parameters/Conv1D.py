@@ -3,6 +3,8 @@
 """
 
 from typing import Optional
+
+from pydantic import validator
 from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
@@ -22,6 +24,11 @@ class ParametersMainData(BaseMixinData):
     strides: PositiveInt = 1
     padding: PaddingAddCausalChoice = PaddingAddCausalChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu
+
+    @validator('activation')
+    def _val_strides(self, value: ActivationChoice):
+        pass
+
 
 
 class ParametersExtraData(BaseMixinData):

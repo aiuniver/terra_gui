@@ -1,13 +1,12 @@
 """
-## Тип слоя `Activation`
+## Тип слоя `Mish`
 """
 
 from ...mixins import BaseMixinData
-from .extra import ActivationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    activation: ActivationChoice = ActivationChoice.relu
+    pass
 
 
 class ParametersExtraData(BaseMixinData):

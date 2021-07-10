@@ -6,6 +6,8 @@ import sys
 
 from enum import Enum
 
+import tensorflow
+
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.modeling.layers_parameters.extra import ActivationChoice
@@ -27,6 +29,7 @@ class ParametersTypeExtraDefaultData(ParametersTypeDefaultData):
 class ParametersTypeMixinData(BaseMixinData):
     main: ParametersTypeMainDefaultData = ParametersTypeMainDefaultData()
     extra: ParametersTypeExtraDefaultData = ParametersTypeExtraDefaultData()
+    module: str = 'tensorflow.keras.layers'
 
 
 class ParametersTypeInputData(ParametersTypeMixinData):
@@ -318,6 +321,39 @@ class ParametersTypeBatchNormalizationData(ParametersTypeMixinData):
     extra: lps.BatchNormalization.ParametersExtraData = (
         lps.BatchNormalization.ParametersExtraData()
     )
+
+class ParametersTypeMishData(ParametersTypeMixinData):
+    main: lps.Mish.ParametersMainData = (
+        lps.Mish.ParametersMainData()
+    )
+    extra: lps.Mish.ParametersExtraData = (
+        lps.Mish.ParametersExtraData()
+    )
+
+class ParametersTypeInstanceNormalizationData(ParametersTypeMixinData):
+    main: lps.InstanceNormalization.ParametersMainData = (
+        lps.InstanceNormalization.ParametersMainData()
+    )
+    extra: lps.InstanceNormalization.ParametersExtraData = (
+        lps.InstanceNormalization.ParametersExtraData()
+    )
+
+class ParametersTypeZeroPadding2DData(ParametersTypeMixinData):
+        main: lps.ZeroPadding2D.ParametersMainData = (
+            lps.ZeroPadding2D.ParametersMainData()
+        )
+        extra: lps.ZeroPadding2D.ParametersExtraData = (
+            lps.ZeroPadding2D.ParametersExtraData()
+        )
+
+class ParametersTypeCropping2DData(ParametersTypeMixinData):
+    main: lps.Cropping2D.ParametersMainData = (
+        lps.Cropping2D.ParametersMainData()
+    )
+    extra: lps.Cropping2D.ParametersExtraData = (
+        lps.Cropping2D.ParametersExtraData()
+    )
+
 
 
 ParametersType = Enum(

@@ -46,4 +46,10 @@ from . import (
     Embedding,
     RepeatVector,
     BatchNormalization,
+    Mish,
+    InstanceNormalization,
+    ZeroPadding2D,
+    Cropping2D,
+    Attention,
+    Normalization
 )
