@@ -14,9 +14,9 @@
       v-for="(node, index) in scene.layers"
       :key="`node${index}`"
       :options="nodeOptions"
-      @linkingStart="linkingStart(index)"
-      @linkingStop="linkingStop(index)"
-      @nodeSelected="nodeSelected(index, $event)">
+      @linkingStart="linkingStart(index+1)"
+      @linkingStop="linkingStop(index+1)"
+      @nodeSelected="nodeSelected(index+1, $event)">
     </flowchart-node>
   </div>
 </template>
