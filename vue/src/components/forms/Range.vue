@@ -20,6 +20,8 @@ export default {
         return val;
       },
       set(val) {
+        // console.log('min', val)
+        this.$emit('set', { min: this.minAngle, max: this.maxAngle })
         val = parseInt(val);
         if (val > this.maxAngle) {
           this.maxAngle = val;
@@ -33,6 +35,8 @@ export default {
         return val;
       },
       set(val) {
+        // console.log('max', val)
+        this.$emit('set', { min:  this.minAngle, max: this.maxAngle })
         val = parseInt(val);
         if (val < this.minAngle) {
           this.minAngle = val;

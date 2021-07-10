@@ -222,8 +222,8 @@ export default {
         };
         const { data: data } = await this.$store.dispatch("datasets/axios", res);
         console.log(data)
-        this.items = data.map((item, i) => {
-          return { name: item, id: ++i };
+        this.items = data.map(({ label }, i) => {
+          return { name: label, id: ++i };
         });
       }
     },

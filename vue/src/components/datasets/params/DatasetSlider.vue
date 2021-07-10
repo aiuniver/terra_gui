@@ -1,11 +1,11 @@
 <template>
-  <div class="field-form field-inline row">
-    <div><label>Train + val + test</label></div>
-    <div><Range /></div>
-    <div class="input">
-      <input type="number" name="parameters[train_part]" />
-      <input type="number" name="parameters[val_part]" />
-      <input type="number" name="parameters[test_part]" />
+  <div class="field-form field-inline align-center row">
+    <div class="col-7 label"><label>Train + val + test</label></div>
+    <div class="col-7"><Range @set="change" /></div>
+    <div class="col-10 input">
+      <input type="number" name="parameters[train_part]" v-model="min"/>
+      <input type="number" name="parameters[val_part]" v-model="delta"/>
+      <input type="number" name="parameters[test_part]" v-model="max"/>
     </div>
   </div>
 </template>
@@ -17,6 +17,19 @@ export default {
   components: {
     Range,
   },
+  data: () => ({
+    min: 10,
+    delta: 10,
+    max: 30
+  }),
+  methods: {
+    change({ min, max }) {
+      console.log( min, max )
+      this.min = min
+      this.delta = max - min
+      this.max = max
+    }
+  }
 };
 </script>
 
@@ -24,6 +37,9 @@ export default {
 .input input {
   max-width: 45px;
   height: 22px;
+  font-size: 0.75rem;
+}
+.label > label {
   font-size: 0.75rem;
 }
 </style>
