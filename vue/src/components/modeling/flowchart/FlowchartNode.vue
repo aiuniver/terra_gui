@@ -13,8 +13,8 @@
       @mouseup="inputMouseUp"
     ></div>
     <div :class="`node-main ${group}`">
-      <div v-text="type"></div>
-      <div v-text="name"></div>
+      <div class="node-naming">{{ name }}: {{ type }}</div>
+      <div class="node-params">parameters</div>
     </div>
     <div v-if="group!=='output'" class="node-port node-output" @mousedown="outputMouseDown"></div>
     <div v-show="show.delete" class="node-delete">&times;</div>
@@ -131,7 +131,7 @@ $portSize: 10;
 .flowchart-node {
   margin: 0;
   width: 160px;
-  height: 40px;
+  height: 42px;
   position: absolute;
   box-sizing: border-box;
   border: none;
@@ -141,11 +141,25 @@ $portSize: 10;
   opacity: 0.9;
   cursor: move;
   transform-origin: top left;
+  background: #17212B;
   .node-main {
+    height: 100%;
     text-align: center;
     border-radius: 5px;
     color: black;
     font-size: 13px;
+    &:hover{
+      color: #FFFFFF;
+      .node-params{
+        color: #2B5278;
+      }
+    }
+  }
+  .node-naming{
+    padding-top: 2px;
+  }
+  .node-params{
+    color: #2B5278;
   }
   .node-port {
     position: absolute;
@@ -190,12 +204,24 @@ $portSize: 10;
   //Colors of layers from their types
   .input{
     background: #FFB054;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #FFB054;
+    }
   }
   .middle{
     background: #89D764;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #89D764;
+    }
   }
   .output{
     background: #8E51F2;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #8E51F2;
+    }
   }
 }
 </style>

@@ -14,9 +14,9 @@
       v-for="(node, index) in scene.layers"
       :key="`node${index}`"
       :options="nodeOptions"
-      @linkingStart="linkingStart(index+1)"
-      @linkingStop="linkingStop(index+1)"
-      @nodeSelected="nodeSelected(index+1, $event)">
+      @linkingStart="linkingStart(index)"
+      @linkingStop="linkingStop(index)"
+      @nodeSelected="nodeSelected(index, $event)">
     </flowchart-node>
   </div>
 </template>
@@ -114,10 +114,8 @@ export default {
     // console.log(22222, this.rootDivOffset);
   },
   methods: {
-    findNodeWithID(id) {
-      return this.scene.layers.find((item) => {
-          return id === item.id
-      })
+    findNodeWithID(index) {
+      return this.scene.layers[index]
     },
     getPortPosition(type, x, y) {
       if (type === 'top') {
@@ -168,10 +166,10 @@ export default {
         this.$emit('linkBreak', deletedLink);
       }
     },
-    nodeSelected(id, e) {
-      this.action.dragging = id;
-      this.action.selected = id;
-      this.$emit('nodeClick', id);
+    nodeSelected(index, e) {
+      this.action.dragging = index;
+      this.action.selected = index;
+      this.$emit('nodeClick', index);
       this.mouse.lastX = e.pageX || e.clientX + document.documentElement.scrollLeft
       this.mouse.lastY = e.pageY || e.clientY + document.documentElement.scrollTop
     },
@@ -180,7 +178,7 @@ export default {
         [this.mouse.x, this.mouse.y] = getMousePosition(this.$el, e);
         [this.draggingLink.mx, this.draggingLink.my] = [this.mouse.x, this.mouse.y];
       }
-      if (this.action.dragging) {
+      if (Number.isInteger(this.action.dragging)) {
         this.mouse.x = e.pageX || e.clientX + document.documentElement.scrollLeft
         this.mouse.y = e.pageY || e.clientY + document.documentElement.scrollTop
         let diffX = this.mouse.x - this.mouse.lastX;
@@ -230,9 +228,7 @@ export default {
       this.$emit('canvasClick', e);
     },
     moveSelectedNode(dx, dy) {
-      let index = this.scene.layers.findIndex((item) => {
-        return item.id === this.action.dragging
-      })
+      let index = this.action.dragging
       let left = this.scene.layers[index].position[0] + dx / this.scene.scale;
       let top = this.scene.layers[index].position[1] + dy / this.scene.scale;
       this.$set(this.scene.layers, index, Object.assign(this.scene.layers[index], {position: [left, top]}));

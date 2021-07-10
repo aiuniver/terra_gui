@@ -96,23 +96,23 @@ export default {
       links: [
         {
           id: 1,
+          from: 0,
+          to: 1,
+        },
+        {
+          id: 2,
           from: 1,
           to: 2,
         },
         {
-          id: 2,
+          id: 3,
           from: 2,
           to: 3,
         },
         {
-          id: 3,
+          id: 4,
           from: 3,
           to: 4,
-        },
-        {
-          id: 4,
-          from: 4,
-          to: 5,
         },
       ],
     },
@@ -121,7 +121,19 @@ export default {
   mutations: {
     SET_DATA(state, value) {
       state.data = [...value];
-    }
+    },
+    SET_LAYERS(state, layers){
+      state.data.layers = layers;
+    },
+    ADD_LAYER(state, layer){
+      state.data.layers.push(layer);
+    },
+    UPDATE_LAYER(state, index, data){
+      state.data.layers[index] = data;
+    },
+    DELETE_LAYER(state, index){
+      state.data.layers.splice(index, 1);
+    },
   },
   actions: {
     get({ commit }) {
@@ -137,8 +149,11 @@ export default {
     },
   },
   getters: {
-    getData({ data }) {
-      return data;
+    getData(state) {
+      return state.data;
+    },
+    getLayer(state, index){
+      return state.data.layers[index]
     },
   }
 };
