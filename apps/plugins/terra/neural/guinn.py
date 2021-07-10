@@ -213,7 +213,7 @@ class GUINN:
                 f'weights_{self.nn_name}_ep_{self.best_epoch_num:002d}_m_{self.best_metric_result:.4f}.last'
             file_path_weights: str = os.path.join(self.training_path, f'{model_weights_name}.h5')
             self.model.save_weights(filepath=file_path_weights)
-            self.Exch.print_2status_bar(('info', f'Weights are saved as {file_path_weights}'))
+            self.Exch.print_2status_bar(('info', f'Веса сохранены как {file_path_weights}'))
         else:
             self.Exch.print_error(("Ошибка", "Сохранение не возможно. Модель не обучена."))
 
@@ -306,10 +306,6 @@ class GUINN:
             self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
             self.Exch.print_2status_bar(('Начало обучения', '...'))
             if self.x_Val['input_1'] is not None:
-                # training = Thread(target=self.tr_thread)
-                # training.start()
-                # training.join()
-                # del training
                 self.history = self.model.fit(
                     self.x_Train,
                     self.y_Train,
@@ -367,10 +363,6 @@ class GUINN:
             # print(self.DTS.classes_colors)
             # print("self.DTS.num_classes", self.DTS.num_classes)
             if self.x_Val['input_1'] is not None:
-                # training = Thread(target=self.tr_thread)
-                # training.start()
-                # training.join()
-                # del training
                 self.history = self.model.fit(
                     self.x_Train,
                     self.y_Train,
@@ -396,10 +388,6 @@ class GUINN:
         self.model_is_trained = True
         self.stop_training = self.callbacks[0].stop_training
 
-        #     msg = f'Модель сохранена на последней эпохе.'
-        #     self.Exch.print_2status_bar(('Обучение завершено пользователем!', msg))
-        #     self.Exch.out_data['stop_flag'] = True
-
         # self.monitor = self.chp_monitor
         # self.best_epoch, self.best_epoch_num, self.stop_epoch = self._search_best_epoch_data(
         #     history=self.history, monitor=self.monitor, monitor2=self.monitor2)
@@ -410,18 +398,6 @@ class GUINN:
         # except RuntimeError:
         #     self.Exch.print_2status_bar(('Внимание!', 'Ошибка сохранения модели.'))
         # self.save_model_weights()
-
-    def tr_thread(self, verbose: int = 0):
-        self.history = self.model.fit(
-            self.x_Train,
-            self.y_Train,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            validation_data=(self.x_Val, self.y_Val),
-            epochs=self.epochs,
-            verbose=verbose,
-            callbacks=self.callbacks
-        )
 
     def nn_cleaner(self, retrain=False) -> None:
         keras.backend.clear_session()

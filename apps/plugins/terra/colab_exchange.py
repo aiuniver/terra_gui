@@ -235,6 +235,16 @@ class StatesData:
                     "cosine_similarity",
                 ],
             },
+            "object_detection": {
+                "losses": [
+                    "yolo_loss",
+                ],
+                "metrics": [
+                    "accuracy",
+                    "binary_accuracy",
+                    "binary_crossentropy",
+                ],
+            },
         }
 
         self.callback_show_options_switches_front = {
@@ -358,6 +368,44 @@ class StatesData:
                 "plot_final": {
                     "type": "bool",
                     "default": True,
+                    "label": "графики в конце",
+                },
+            },
+            "object_detection": {
+                "show_every_epoch": {
+                    "type": "bool",
+                    "default": True,
+                    "label": "каждую эпоху",
+                },
+                "plot_loss_metric": {"type": "bool", "default": True, "label": "loss"},
+                "plot_metric": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики",
+                },
+                "plot_loss_for_classes": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "loss по каждому классу",
+                },
+                "plot_metric_for_classes": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "данные метрики по каждому классу",
+                },
+                "show_best_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "лучшие изображения по метрике",
+                },
+                "show_worst_images": {
+                    "type": "bool",
+                    "default": False,
+                    "label": "худшие изображения по метрике",
+                },
+                "plot_final": {
+                    "type": "bool",
+                    "default": False,
                     "label": "графики в конце",
                 },
             },

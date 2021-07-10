@@ -464,7 +464,7 @@ class CustomCallback(keras.callbacks.Callback):
                 "metrics": ["dice_coef"],
                 "batch_size": 16,
                 "epochs": 20,
-                "shuffle": False,
+                "shuffle": True,
                 "clbck_object": SegmentationCallback,
                 "callback_kwargs": {
                     "metrics": ["dice_coef"],
@@ -502,13 +502,34 @@ class CustomCallback(keras.callbacks.Callback):
                 "metrics": ["mae"],
                 "batch_size": 32,
                 "epochs": 20,
-                "shuffle": False,
+                "shuffle": True,
                 "clbck_object": TimeseriesCallback,
                 "callback_kwargs": {
                     "metrics": ["loss", "mse"],
                     "step": 1,
                     "corr_step": 10,
                     "plot_pred_and_true": True,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "object_detection": {
+                "optimizer_name": "Adam",
+                "loss": "yolo_loss",
+                "metrics": ["accuracy"],
+                "batch_size": 8,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": ObjectdetectionCallback,
+                "callback_kwargs": {
+                    "metrics": ["yolo_loss"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_best": True,
+                    "show_worst": False,
                     "show_final": True,
                     "dataset": self.DTS,
                     "exchange": self.Exch,
@@ -1684,5 +1705,148 @@ class RegressionCallback(BaseCallback):
         if self.show_final:
             plot_data = self.plot_result(output_key=output_key)
             out_data.update({"plots": plot_data})
+
+        return out_data
+
+
+class ObjectdetectionCallback(BaseCallback):
+    """Callback for classification"""
+
+    def __init__(
+            self,
+            metrics=None,
+            step=1,
+            class_metrics=None,
+            data_tag=None,
+            num_classes=2,
+            show_worst=False,
+            show_best=True,
+            show_final=True,
+            dataset=DTS(),
+            exchange=Exchange(),
+    ):
+        """
+        Init for ObjectdetectionCallback callback
+        Args:
+            metrics (list):             список используемых метрик: по умолчанию [], что соответсвует 'loss'
+            class_metrics:              вывод графиков метрик по каждому сегменту: по умолчанию []
+            step int():                 шаг вывода хода обучения, по умолчанию step = 1
+            show_worst (bool):          выводить ли справа отдельно экземпляры, худшие по метрикам, по умолчанию False
+            show_best (bool):           выводить ли справа отдельно экземпляры, лучшие по метрикам, по умолчанию False
+            show_final (bool):          выводить ли в конце обучения график, по умолчанию True
+            dataset (DTS):              экземпляр класса DTS
+        Returns:
+            None
+        """
+        super().__init__()
+        if class_metrics is None:
+            class_metrics = []
+        if metrics is None:
+            metrics = []
+        self.__name__ = "Callback for object_detection"
+        self.step = step
+        self.clbck_metrics = metrics
+        self.class_metrics = class_metrics
+        self.show_worst = show_worst
+        self.show_best = show_best
+        self.show_final = show_final
+        self.dataset = dataset
+        self.Exch = exchange
+        self.data_tag = data_tag
+
+        self.accuracy_metric = [[] for i in range(len(self.clbck_metrics))]
+        self.accuracy_val_metric = [[] for i in range(len(self.clbck_metrics))]
+        self.num_classes = num_classes
+        self.acls_lst = [
+            [[] for i in range(self.num_classes + 1)]
+            for i in range(len(self.clbck_metrics))
+        ]
+
+        pass
+
+    def epoch_end(
+            self,
+            epoch,
+            logs: dict = None,
+            output_key: str = None,
+            y_pred: list = None,
+            y_true: dict = None,
+            loss: str = None,
+            msg_epoch: str = None,
+    ):
+        """
+        Returns:
+            {}:
+        """
+        self.epoch = epoch
+        self.y_pred = y_pred
+        self.y_true = y_true
+        self.loss = loss
+        epoch_table_data = {
+            output_key: {}
+        }
+        out_data = {}
+        for metric_idx in range(len(self.clbck_metrics)):
+            # # проверяем есть ли метрика заданная функцией
+            if not isinstance(self.clbck_metrics[metric_idx], str):
+                metric_name = self.clbck_metrics[metric_idx].name
+                self.clbck_metrics[metric_idx] = metric_name
+
+            if len(self.dataset.Y) > 1:
+                metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
+                val_metric_name = f"val_{metric_name}"
+            else:
+                metric_name = f"{self.clbck_metrics[metric_idx]}"
+                val_metric_name = f"val_{metric_name}"
+            # определяем лучшую метрику для вывода данных при class_metrics='best'
+            if logs[val_metric_name] > self.max_accuracy_value:
+                self.max_accuracy_value = logs[val_metric_name]
+            # собираем в словарь по метрикам
+            self.accuracy_metric[metric_idx].append(logs[metric_name])
+            self.accuracy_val_metric[metric_idx].append(logs[val_metric_name])
+            dm = {metric_name: self.accuracy_metric[metric_idx]}
+            self.history.update(dm)
+            dv = {val_metric_name: self.accuracy_val_metric[metric_idx]}
+            self.history.update(dv)
+
+            epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
+            epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
+            out_data.update({"table": epoch_table_data})
+
+            if self.y_pred is not None:
+                # распознаем и выводим результат по классам
+                # TODO считаем каждую метрику на каждом выходе
+                if metric_name.endswith("accuracy"):
+                    metric_classes = self.evaluate_accuracy(output_key=output_key)
+                elif metric_name.endswith('loss'):
+                    metric_classes = self.evaluate_loss(output_key=output_key)
+                else:
+                    metric_classes = self.evaluate_f1(output_key=output_key)
+
+                # собираем в словарь по метрикам и классам
+                if len(metric_classes):
+                    dclsup = {}
+                    for j in range(self.num_classes):
+                        self.acls_lst[metric_idx][j].append(metric_classes[j])
+                    dcls = {val_metric_name: self.acls_lst[metric_idx]}
+                    dclsup.update(dcls)
+                    self.predict_cls.update(dclsup)
+        if self.step:
+            if (self.epoch % self.step == 0) and (self.step >= 1):
+                plot_data = self.plot_result(output_key)
+                out_data.update({"plots": plot_data})
+
+        return out_data
+
+    def train_end(self, output_key: str = None, x_val: dict = None):
+        self.x_Val = x_val
+        out_data = {}
+        if self.show_final:
+            plot_data = self.plot_result(output_key)
+            out_data.update({"plots": plot_data})
+            if self.data_tag == 'images':
+                if self.show_best or self.show_worst:
+                    images = self.plot_images(output_key=output_key)
+                    out_data.update({"images": images})
 
         return out_data
