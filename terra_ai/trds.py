@@ -28,7 +28,6 @@ from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
 import json
-
 # import cv2
 
 tr2dj_obj = Exchange()
