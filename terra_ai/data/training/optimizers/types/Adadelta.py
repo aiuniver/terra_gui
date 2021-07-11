@@ -4,7 +4,7 @@
 
 from pydantic.types import PositiveFloat
 
-from ...mixins import BaseMixinData
+from ....mixins import BaseMixinData
 
 
 class ParametersExtraData(BaseMixinData):

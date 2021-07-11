@@ -2,17 +2,18 @@ from enum import Enum
 
 from ...mixins import BaseMixinData
 from ..extra import ArchitectureChoice
+from . import types
 
 
 class ArchitectureBaseData(BaseMixinData):
     pass
 
 
-class ArchitectureBasicData(ArchitectureBaseData):
+class ArchitectureBasicData(ArchitectureBaseData, types.Basic.ParametersData):
     pass
 
 
-class ArchitectureYoloData(ArchitectureBaseData):
+class ArchitectureYoloData(ArchitectureBaseData, types.Yolo.ParametersData):
     pass
 
 

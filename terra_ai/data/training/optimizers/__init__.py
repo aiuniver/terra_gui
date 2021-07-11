@@ -8,16 +8,7 @@ from pydantic.types import PositiveFloat
 from ...mixins import BaseMixinData
 from ..extra import OptimizerChoice
 
-from . import (
-    SGD,
-    RMSprop,
-    Adam,
-    Adadelta,
-    Adagrad,
-    Adamax,
-    Nadam,
-    Ftrl,
-)
+from . import types
 
 
 class OptimizerMainDefaultData(BaseMixinData):
@@ -35,42 +26,42 @@ class OptimizerBaseData(BaseMixinData):
 
 class OptimizerSGDData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: SGD.ParametersExtraData = SGD.ParametersExtraData()
+    extra: types.SGD.ParametersExtraData = types.SGD.ParametersExtraData()
 
 
 class OptimizerRMSpropData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: RMSprop.ParametersExtraData = RMSprop.ParametersExtraData()
+    extra: types.RMSprop.ParametersExtraData = types.RMSprop.ParametersExtraData()
 
 
 class OptimizerAdamData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Adam.ParametersExtraData = Adam.ParametersExtraData()
+    extra: types.Adam.ParametersExtraData = types.Adam.ParametersExtraData()
 
 
 class OptimizerAdadeltaData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Adadelta.ParametersExtraData = Adadelta.ParametersExtraData()
+    extra: types.Adadelta.ParametersExtraData = types.Adadelta.ParametersExtraData()
 
 
 class OptimizerAdagradData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Adagrad.ParametersExtraData = Adagrad.ParametersExtraData()
+    extra: types.Adagrad.ParametersExtraData = types.Adagrad.ParametersExtraData()
 
 
 class OptimizerAdamaxData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Adamax.ParametersExtraData = Adamax.ParametersExtraData()
+    extra: types.Adamax.ParametersExtraData = types.Adamax.ParametersExtraData()
 
 
 class OptimizerNadamData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Nadam.ParametersExtraData = Nadam.ParametersExtraData()
+    extra: types.Nadam.ParametersExtraData = types.Nadam.ParametersExtraData()
 
 
 class OptimizerFtrlData(OptimizerBaseData):
     main: OptimizerMainDefaultData = OptimizerMainDefaultData()
-    extra: Ftrl.ParametersExtraData = Ftrl.ParametersExtraData()
+    extra: types.Ftrl.ParametersExtraData = types.Ftrl.ParametersExtraData()
 
 
 Optimizer = Enum(

@@ -2,8 +2,8 @@
 ## Оптимайзер `Ftrl`
 """
 
-from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGe0, ConstrainedFloatValueLe0
+from ....mixins import BaseMixinData
+from ....types import ConstrainedFloatValueGe0, ConstrainedFloatValueLe0
 
 
 class ParametersExtraData(BaseMixinData):
