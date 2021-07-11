@@ -528,7 +528,7 @@ class CustomCallback(keras.callbacks.Callback):
                     "class_metrics": [],
                     "num_classes": 2,
                     "data_tag": "images",
-                    "show_best": True,
+                    "show_best": False,
                     "show_worst": False,
                     "show_final": True,
                     "dataset": self.DTS,
@@ -597,7 +597,7 @@ class CustomCallback(keras.callbacks.Callback):
                 else:
                     callback_kwargs["show_final"] = False
 
-        if (task_type == "classification") or (task_type == "segmentation"):
+        if (task_type == "classification") or (task_type == "segmentation") or (task_type == "object_detection"):
             callback_kwargs["num_classes"] = copy.deepcopy(num_classes)
             if tags["input_1"]:
                 callback_kwargs["data_tag"] = tags["input_1"]
@@ -1813,24 +1813,6 @@ class ObjectdetectionCallback(BaseCallback):
             epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
             out_data.update({"table": epoch_table_data})
 
-            if self.y_pred is not None:
-                # распознаем и выводим результат по классам
-                # TODO считаем каждую метрику на каждом выходе
-                if metric_name.endswith("accuracy"):
-                    metric_classes = self.evaluate_accuracy(output_key=output_key)
-                elif metric_name.endswith('loss'):
-                    metric_classes = self.evaluate_loss(output_key=output_key)
-                else:
-                    metric_classes = self.evaluate_f1(output_key=output_key)
-
-                # собираем в словарь по метрикам и классам
-                if len(metric_classes):
-                    dclsup = {}
-                    for j in range(self.num_classes):
-                        self.acls_lst[metric_idx][j].append(metric_classes[j])
-                    dcls = {val_metric_name: self.acls_lst[metric_idx]}
-                    dclsup.update(dcls)
-                    self.predict_cls.update(dclsup)
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 plot_data = self.plot_result(output_key)

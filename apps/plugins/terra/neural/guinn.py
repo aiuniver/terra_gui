@@ -260,8 +260,6 @@ class GUINN:
             try:
                 list_files = os.listdir(self.training_path)
                 model_name = [x for x in list_files if x.endswith("last.h5")]
-                # if len(model_name) > 1:
-                #     self.Exch.print_error(("Ошибка", "в папке обучения находится больше одной сохраненной модели"))
                 custom_objects = {}
                 for output_key in self.metrics.keys():
                     for metric_name in self.metrics[output_key]:
@@ -277,7 +275,7 @@ class GUINN:
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
             except Exception:
-                self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))  # self.Exch.print_error
+                self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))
                 print("Ошибка загрузки модели!!!")
 
             if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
@@ -297,93 +295,13 @@ class GUINN:
             self.model.stop_training = False
             self.stop_training = False
             self.model_is_trained = False
-            self.Exch.print_2status_bar(('Компиляция модели', '...'))
-            self.set_custom_metrics()
-            self.model.compile(loss=self.loss,
-                               optimizer=self.optimizer,
-                               metrics=self.metrics
-                               )
-            self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-            self.Exch.print_2status_bar(('Начало обучения', '...'))
-            if self.x_Val['input_1'] is not None:
-                self.history = self.model.fit(
-                    self.x_Train,
-                    self.y_Train,
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    validation_data=(self.x_Val, self.y_Val),
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    callbacks=self.callbacks
-                )
-            else:
-                self.history = self.model.fit(
-                    self.x_Train,
-                    self.y_Train,
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    validation_split=0.2,
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    callbacks=self.callbacks
-                )
+            self.base_fit(verbose=0, retrain=True)
+
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
-            self.set_custom_metrics()
-            self.Exch.print_2status_bar(('Компиляция модели', '...'))
-            self.model.compile(loss=self.loss,
-                               optimizer=self.optimizer,
-                               metrics=self.metrics
-                               )
-            self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
-                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-                                     model_name=self.nn_name)
-            self.callbacks = [clsclbk]
-            self.callbacks.append(keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
-                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
-                monitor=self.chp_monitor, mode=self.chp_mode))
-            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
-            self.Exch.print_2status_bar(('Начало обучения', '...'))
-            # print("self.x_Train", self.x_Train)
-            # print("self.x_Train shape", self.x_Train["input_1"].shape)
-            # print("self.y_Train", self.y_Train)
-            # print("self.y_Train shape", self.y_Train["output_1"].shape)
-            # print("self.x_Val", self.x_Val)
-            # print("self.x_Val shape", self.x_Val["input_1"].shape)
-            # print("self.y_Val", self.y_Val)
-            # print("self.y_Val shape", self.y_Val["output_1"].shape)
-            # print(self.DTS.one_hot_encoding)
-            # print(self.DTS.scaler)
-            # print(self.DTS.classes_names)
-            # print(self.DTS.classes_colors)
-            # print("self.DTS.num_classes", self.DTS.num_classes)
-            if self.x_Val['input_1'] is not None:
-                self.history = self.model.fit(
-                    self.x_Train,
-                    self.y_Train,
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    validation_data=(self.x_Val, self.y_Val),
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    callbacks=self.callbacks
-                )
-            else:
-                self.history = self.model.fit(
-                    self.x_Train,
-                    self.y_Train,
-                    batch_size=self.batch_size,
-                    shuffle=self.shuffle,
-                    validation_split=0.2,
-                    epochs=self.epochs,
-                    verbose=verbose,
-                    callbacks=self.callbacks
-                )
+            self.base_fit(verbose=0, retrain=False)
+
             self.sum_epoch += self.epochs
         self.model_is_trained = True
         self.stop_training = self.callbacks[0].stop_training
@@ -510,7 +428,7 @@ class GUINN:
                         history.history[monitor2][i],
                         history.history[monitor2][best_epoch_num],
                     )
-                    )
+            )
                     & (not np.isnan(history.history[monitor][i]))
             ):
                 best_epoch_num = i
@@ -531,3 +449,50 @@ class GUINN:
         for key, val in history.history.items():
             best_epoch.update({key: history.history[key][best_epoch_num]})
         return best_epoch, best_epoch_num + 1, early_stop_epoch
+
+    def base_fit(self, verbose=0, retrain=False) -> None:
+
+        self.Exch.print_2status_bar(('Компиляция модели', '...'))
+        self.set_custom_metrics()
+        self.model.compile(loss=self.loss,
+                           optimizer=self.optimizer,
+                           metrics=self.metrics
+                           )
+        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
+        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        if not retrain:
+            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
+            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
+                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
+                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
+                                     model_name=self.nn_name)
+            self.callbacks = [clsclbk]
+            self.callbacks.append(keras.callbacks.ModelCheckpoint(
+                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
+                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
+                monitor=self.chp_monitor, mode=self.chp_mode))
+            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+
+        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        if self.x_Val['input_1'] is not None:
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_data=(self.x_Val, self.y_Val),
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
+        else:
+            self.history = self.model.fit(
+                self.x_Train,
+                self.y_Train,
+                batch_size=self.batch_size,
+                shuffle=self.shuffle,
+                validation_split=0.2,
+                epochs=self.epochs,
+                verbose=verbose,
+                callbacks=self.callbacks
+            )
