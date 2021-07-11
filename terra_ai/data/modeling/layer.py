@@ -2,7 +2,9 @@
 ## Структура данных слоев
 """
 
-from typing import Optional, List, Tuple, Any, Union
+import json
+
+from typing import Optional, List, Tuple, Any
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
@@ -10,17 +12,8 @@ from pydantic.errors import EnumMemberError
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
+from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
-from . import parameters
-
-
-class LayerBindData(BaseMixinData):
-    """
-    Списки связей слоя
-    """
-
-    input: List[str] = []
-    output: List[str] = []
 
 
 class LayerShapeData(BaseMixinData):
@@ -28,8 +21,26 @@ class LayerShapeData(BaseMixinData):
     Размерности слоя
     """
 
-    input: Tuple[PositiveInt, ...] = ()
-    output: Tuple[PositiveInt, ...] = ()
+    input: List[Tuple[PositiveInt, ...]] = []
+    output: List[Tuple[PositiveInt, ...]] = []
+
+
+class LayerBindData(BaseMixinData):
+    """
+    Связи слоев сверху и снизу
+    """
+
+    up: List[Optional[ConstrainedIntValueGe0]] = []
+    down: List[ConstrainedIntValueGe0] = []
+
+    @validator("up", allow_reuse=True)
+    def _validate_bind(cls, value):
+        if not value:
+            return value
+        if None in value:
+            value = list(filter(None, value))
+            value.insert(0, None)
+        return value
 
 
 class LayerData(AliasMixinData):
@@ -47,12 +58,18 @@ class LayerData(AliasMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
-    location: Optional[List[ConstrainedIntValueGe0]]
+    location: Optional[Tuple[ConstrainedIntValueGe0, ...]]
     "Расположение слоя в сетке модели"
-    position: Optional[List[int]]
+    position: Optional[Tuple[int, ...]]
     "Расположение слоя в сетке модели"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры слоя"
+
+    @property
+    def parameters_dict(self) -> dict:
+        __data = json.loads(self.parameters.main.json())
+        __data.update(json.loads(self.parameters.extra.json()))
+        return __data
 
     @validator("location", "position", allow_reuse=True)
     def _validate_xy(cls, value: list, values) -> list:
@@ -62,20 +79,26 @@ class LayerData(AliasMixinData):
             raise XYException(values.get("alias"), value)
         return value
 
-    @validator("type", allow_reuse=True, pre=True)
-    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
-        if not hasattr(LayerTypeChoice, value):
-            raise EnumMemberError(enum_values=list(LayerTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.ParametersType, value))
-        cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
+    @validator("bind", allow_reuse=True)
+    def _validate_bind(cls, value: LayerBindData, values) -> LayerBindData:
+        if values.get("group") == LayerGroupChoice.input:
+            value.up.insert(0, None)
         return value
 
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.ParametersTypeUnion]:
-        return kwargs.get("field").type_(**value)
+    @validator("type", pre=True)
+    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
+        if value not in list(LayerTypeChoice):
+            raise EnumMemberError(enum_values=list(LayerTypeChoice))
+        name = (
+            value if isinstance(value, LayerTypeChoice) else LayerTypeChoice(value)
+        ).name
+        type_ = getattr(layers, getattr(layers.Layer, name))
+        cls.__fields__["parameters"].type_ = type_
+        return value
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class LayersList(UniqueListMixin):

@@ -61,4 +61,3 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
-    Object_detection = "Object_detection"
