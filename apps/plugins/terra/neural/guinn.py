@@ -8,7 +8,7 @@ import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 from apps.plugins.terra.neural.customcallback import CustomCallback
-from apps.plugins.terra.neural.customlosses import DiceCoefficient
+from apps.plugins.terra.neural.customlosses import DiceCoefficient, yolo_loss
 
 __version__ = 0.06
 
@@ -295,12 +295,12 @@ class GUINN:
             self.model.stop_training = False
             self.stop_training = False
             self.model_is_trained = False
-            self.base_fit(verbose=0, retrain=True)
+            self.basemodel_fit(verbose=0, retrain=True)
 
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
-            self.base_fit(verbose=0, retrain=False)
+            self.basemodel_fit(verbose=0, retrain=False)
 
             self.sum_epoch += self.epochs
         self.model_is_trained = True
@@ -450,7 +450,7 @@ class GUINN:
             best_epoch.update({key: history.history[key][best_epoch_num]})
         return best_epoch, best_epoch_num + 1, early_stop_epoch
 
-    def base_fit(self, verbose=0, retrain=False) -> None:
+    def basemodel_fit(self, verbose=0, retrain=False) -> None:
 
         self.Exch.print_2status_bar(('Компиляция модели', '...'))
         self.set_custom_metrics()
@@ -496,3 +496,57 @@ class GUINN:
                 verbose=verbose,
                 callbacks=self.callbacks
             )
+
+    def yolomodel_fit(self, verbose=0, retrain=False, num_classes=2) -> None:
+        def create_model(
+                input_shape,
+                num_anchors,
+                use_weights=False,
+                weights_path='yolo.h5'
+        ):
+            """
+                Функция создания полной модели
+                    Входные параметры:
+                      input_shape - размерность входного изображения для модели YOLO
+                      num_anchors - общее количество анкоров
+                      use_weights - использовать ли предобученные веса
+                      weights_path - путь к сохраненным весам модели
+            """
+            w, h = input_shape  # Получаем ширину и высоту входного изображения
+            inputs = keras.layers.Input(shape=(w, h, 3))  # Создаем входной слой модели, добавляя размерность для
+            # глубины цвета
+
+            # Создаем три входных слоя y_true с размерностями ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6) и (None,
+            # 52, 52, 3, 6)) 2 и 3 параметры (13, 13) указывают размерность сетки, на которую условно будет разбито
+            # исходное изображение каждый уровень сетки отвечает за обнаружение объектов различных размеров (13 -
+            # крупных, 26 - средних, 52 - мелких) 4 параметр - количество анкоров на каждый уровень сетки 5 параметр
+            # - 4 параметра описывающие параметры анкора (координаты центра, ширина и высота) + вероятность
+            # обнаружения объекта + OHE номер класса
+            y_true = [
+                keras.layers.Input(
+                    shape=(w // 32, h // 32, num_anchors // 3, num_classes + 5))]  # Уровень сетки 13х13 (416/32)
+            y_true.append(
+                keras.layers.Input(
+                    shape=(w // 16, h // 16, num_anchors // 3, num_classes + 5)))  # Уровень сетки 26х26 (416/26)
+            y_true.append(
+                keras.layers.Input(
+                    shape=(w // 8, h // 8, num_anchors // 3, num_classes + 5)))  # Уровень сетки 52х52 (416/8)
+
+            model_yolo = self.model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
+            print('Создана модель YOLOv3. Количество классов: {}.'.format(
+                num_classes))  # Выводим сообщение о создании модели
+
+            # Если установлен флаг загрузки весов
+            if use_weights:
+                model_yolo.load_weights(weights_path, by_name=False,
+                                        skip_mismatch=False)  # Загружаем предобученные веса
+                print('Загружены веса из файла {}.'.format(weights_path))  # Выводим сообщение о загруженных весах
+
+            # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
+            # На вход слоя подается:
+            #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
+            #   - y_true (оригинальные данные из обучающей выборки)
+            outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
+                                          arguments={'num_anchors': num_anchors})([*model_yolo.output, *y_true])
+
+            return keras.models.Model([inputs, *y_true], outputs)  # Возвращаем модель
