@@ -30,6 +30,7 @@ import "vue-custom-scrollbar/dist/vueScrollbar.css";
 import Filters from "@/components/datasets/Filters.vue";
 import { mapGetters } from "vuex";
 import Card from "@/components/datasets/Card";
+
 export default {
   components: {
     Card,

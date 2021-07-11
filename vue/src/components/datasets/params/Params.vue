@@ -255,7 +255,7 @@ export default {
 .scroll-area {
   position: relative;
   width: 100%;
-  height: 600px;
+  height: calc(100vh - 152px);
 }
 button {
   font-size: 0.875rem;
