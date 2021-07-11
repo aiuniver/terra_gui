@@ -124,7 +124,7 @@ export default {
 .scroll-area {
   position: relative;
   margin: auto;
-  height: 300px;
+  height: 350px;
 }
 
 /* modal-window */
@@ -184,6 +184,60 @@ export default {
 
 .loaded-list > li > .remove:hover{
 	background: rgba(255, 255, 255, .2);
+}
+.model-arch{
+  padding: 5px;
+}
+.model-save-arch-btn{
+  padding-top: 20px;
+}
+.modal-arch-info{
+  padding-left: 10px;
+}
+.model-arch-img{
+  padding: 5px;
+}
+.modal-arch-info > div{
+  color: #A7BED3;
+}
+.modal-arch-info > div > span{
+  color: #FFFFFF;
+  font-size: .85rem;
+}
+
+.close{
+  width: 44px;
+  height: 44px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  cursor: pointer;
+}
+.close:after {
+  display: block;
+  content: '';
+  width: 40%;
+  height: 2px;
+  margin: -1px 0 0 0;
+  position: absolute;
+  left: 30%;
+  top: 50%;
+  border-radius: 1px;
+  background-color: #A7BED3;
+  transform: rotate(45deg);
+}
+.close:before{
+  display: block;
+  content: '';
+  width: 40%;
+  height: 2px;
+  margin: -1px 0 0 0;
+  position: absolute;
+  left: 30%;
+  top: 50%;
+  border-radius: 1px;
+  transform: rotate(-45deg);
+  background-color: #A7BED3;
 }
 
 </style>

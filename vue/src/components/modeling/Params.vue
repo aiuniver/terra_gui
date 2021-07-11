@@ -84,5 +84,11 @@ export default {
 </script>
 
 <style scoped>
+.params-actions{
+  padding: 20px 10px;
+}
+.dropdown{
+  padding: 10px 0;
+}
 
 </style>
