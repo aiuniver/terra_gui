@@ -4,7 +4,7 @@
 
 import json
 
-from typing import Optional, List, Tuple, Any, Union
+from typing import Optional, List, Tuple, Any
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
@@ -12,8 +12,8 @@ from pydantic.errors import EnumMemberError
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
+from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
-from . import parameters
 
 
 class LayerShapeData(BaseMixinData):
@@ -62,7 +62,7 @@ class LayerData(AliasMixinData):
     "Расположение слоя в сетке модели"
     position: Optional[Tuple[int, ...]]
     "Расположение слоя в сетке модели"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры слоя"
 
     @property
@@ -79,26 +79,26 @@ class LayerData(AliasMixinData):
             raise XYException(values.get("alias"), value)
         return value
 
-    @validator("type", allow_reuse=True, pre=True)
-    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
-        if not hasattr(LayerTypeChoice, value):
-            raise EnumMemberError(enum_values=list(LayerTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.ParametersType, value))
-        cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
-        return value
-
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.ParametersTypeUnion]:
-        return kwargs.get("field").type_(**value)
-
     @validator("bind", allow_reuse=True)
     def _validate_bind(cls, value: LayerBindData, values) -> LayerBindData:
         if values.get("group") == LayerGroupChoice.input:
             value.up.insert(0, None)
         return value
+
+    @validator("type", pre=True)
+    def _validate_type(cls, value: LayerTypeChoice) -> LayerTypeChoice:
+        if value not in list(LayerTypeChoice):
+            raise EnumMemberError(enum_values=list(LayerTypeChoice))
+        name = (
+            value if isinstance(value, LayerTypeChoice) else LayerTypeChoice(value)
+        ).name
+        type_ = getattr(layers, getattr(layers.Layer, name))
+        cls.__fields__["parameters"].type_ = type_
+        return value
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class LayersList(UniqueListMixin):

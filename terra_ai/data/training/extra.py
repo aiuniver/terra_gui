@@ -5,6 +5,11 @@
 from enum import Enum
 
 
+class ArchitectureChoice(str, Enum):
+    Basic = "Базовая"
+    Yolo = "Yolo"
+
+
 class CheckpointIndicatorChoice(str, Enum):
     val = "val"
     train = "train"

@@ -183,7 +183,7 @@ from transliterate import slugify
 
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
-from ..presets.extra.datasets import Tags
+from ..presets import datasets as presets_datasets
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from .tags import TagsList
 
@@ -208,7 +208,7 @@ class CustomDataset(BaseMixinData):
         tags = []
         for name in __tags:
             alias = slugify(name, language_code="ru")
-            __tag = getattr(Tags, alias, None)
+            __tag = getattr(presets_datasets.Tags, alias, None)
             tags.append(__tag.value if __tag else {"name": name, "alias": alias})
         return TagsList(tags)
 
