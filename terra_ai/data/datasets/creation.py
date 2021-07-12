@@ -6,26 +6,26 @@
 In [1]: from terra_ai.data.datasets.creation import SourceData
 
 In [2]: source = {
-   ...:     "mode": "google_drive",
+   ...:     "mode": "GoogleDrive",
    ...:     "value": "source.zip",
    ...: }
 
 In [3]: data = SourceData(**source)
 
 In [4]: data
-Out[4]: SourceData(mode=<SourceModeChoice.google_drive: 'google_drive'>, value=PosixPath('source.zip'))
+Out[4]: SourceData(mode=<SourceModeChoice.GoogleDrive: 'GoogleDrive'>, value=PosixPath('source.zip'))
 
 In [5]: data.dict()
 Out[5]:
-{'mode': <SourceModeChoice.google_drive: 'google_drive'>,
+{'mode': <SourceModeChoice.GoogleDrive: 'GoogleDrive'>,
  'value': PosixPath('source.zip')}
 
 In [6]: data.json()
-Out[6]: '{"mode": "google_drive", "value": "source.zip"}'
+Out[6]: '{"mode": "GoogleDrive", "value": "source.zip"}'
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 {
-  "mode": "google_drive",
+  "mode": "GoogleDrive",
   "value": "source.zip"
 }
 ```
@@ -189,10 +189,10 @@ class SourceData(BaseMixinData):
         cls, value: Union[FilePathType, HttpUrl], values
     ) -> Union[FilePathType, HttpUrl]:
         mode = values.get("mode")
-        if mode == SourceModeChoice.google_drive:
+        if mode == SourceModeChoice.GoogleDrive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)
-        if mode == SourceModeChoice.url:
+        if mode == SourceModeChoice.URL:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
         return value

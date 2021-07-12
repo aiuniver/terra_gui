@@ -1,5 +1,6 @@
 from ....mixins import BaseMixinData
+from ...outputs import OutputsList
 
 
 class ParametersData(BaseMixinData):
-    pass
+    outputs: OutputsList = OutputsList()
