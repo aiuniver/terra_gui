@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional, Any
-from pydantic import confloat, BaseModel
+from pydantic import BaseModel
 from threading import Thread
+
+from ..data.types import ConstrainedFloatValueGe0Le100
 
 
 def threading(method):
@@ -18,7 +20,7 @@ class PoolName(str, Enum):
 
 
 class ProgressData(BaseModel):
-    percent: confloat(ge=0, le=100) = 0
+    percent: ConstrainedFloatValueGe0Le100 = 0
     message: str = ""
     error: str = ""
     finished: bool = False

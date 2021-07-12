@@ -46,7 +46,9 @@ class ExceptionMessages(str, Enum):
     FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
     Base64Extension = &#34;Incorrect base64 string value&#34;
     XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;
-    TaskGroup = &#34;%s: Value must be in list %s&#34;
+    ValueNotInList = &#34;%s: Value must be in list %s&#34;
+    TrdsDirExt = &#34;TRDS dirname must have `.trds` extension, received `%s`&#34;
+    TrdsConfigFileNotFound = &#34;TRDS `%s` has not `%s`&#34;
 
 
 class TerraDataException(ValueError):
@@ -138,12 +140,29 @@ class XYException(TerraDataException):
         )
 
 
-class TaskGroupException(TerraDataException):
+class ValueNotInListException(TerraDataException):
     def __init__(self, __value: Any, __items: Any, *args):
         super().__init__(
             (
-                (args[0] if len(args) else ExceptionMessages.TaskGroup)
+                (args[0] if len(args) else ExceptionMessages.ValueNotInList)
                 % (str(__value), str(__items))
+            )
+        )
+
+
+class TrdsDirExtException(TerraDataException):
+    def __init__(self, __dirname: str, *args):
+        super().__init__(
+            ((args[0] if len(args) else ExceptionMessages.TrdsDirExt) % str(__dirname))
+        )
+
+
+class TrdsConfigFileNotFoundException(TerraDataException):
+    def __init__(self, __trds_name: str, __config_name: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.TrdsConfigFileNotFound)
+                % (str(__trds_name), str(__config_name))
             )
         )</code></pre>
 </details>
@@ -229,7 +248,9 @@ class TaskGroupException(TerraDataException):
     FilePathExtension = &#39;%s: File must have &#34;%s&#34; extension&#39;
     Base64Extension = &#34;Incorrect base64 string value&#34;
     XY = &#34;%s: Value must be a list with 2 elements, received %s&#34;
-    TaskGroup = &#34;%s: Value must be in list %s&#34;</code></pre>
+    ValueNotInList = &#34;%s: Value must be in list %s&#34;
+    TrdsDirExt = &#34;TRDS dirname must have `.trds` extension, received `%s`&#34;
+    TrdsConfigFileNotFound = &#34;TRDS `%s` has not `%s`&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -258,11 +279,15 @@ class TaskGroupException(TerraDataException):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.TaskGroup"><code class="name">var <span class="ident">TaskGroup</span></code></dt>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue"><code class="name">var <span class="ident">TerraDataValue</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue"><code class="name">var <span class="ident">TerraDataValue</span></code></dt>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.TrdsConfigFileNotFound"><code class="name">var <span class="ident">TrdsConfigFileNotFound</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.TrdsDirExt"><code class="name">var <span class="ident">TrdsDirExt</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -271,6 +296,10 @@ class TaskGroupException(TerraDataException):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier"><code class="name">var <span class="ident">UniqueListUndefinedIdentifier</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.ValueNotInList"><code class="name">var <span class="ident">ValueNotInList</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -371,33 +400,6 @@ class TaskGroupException(TerraDataException):
 </dd>
 </dl>
 </dd>
-<dt id="terra_ai.data.exceptions.TaskGroupException"><code class="flex name class">
-<span>class <span class="ident">TaskGroupException</span></span>
-<span>(</span><span>_TaskGroupException__value: Any, _TaskGroupException__items: Any, *args)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TaskGroupException(TerraDataException):
-    def __init__(self, __value: Any, __items: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.TaskGroup)
-                % (str(__value), str(__items))
-            )
-        )</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
-<li>builtins.ValueError</li>
-<li>builtins.Exception</li>
-<li>builtins.BaseException</li>
-</ul>
-</dd>
 <dt id="terra_ai.data.exceptions.TerraDataException"><code class="flex name class">
 <span>class <span class="ident">TerraDataException</span></span>
 <span>(</span><span>*args, **kwargs)</span>
@@ -421,10 +423,12 @@ class TaskGroupException(TerraDataException):
 <ul class="hlist">
 <li><a title="terra_ai.data.exceptions.Base64Exception" href="#terra_ai.data.exceptions.Base64Exception">Base64Exception</a></li>
 <li><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></li>
-<li><a title="terra_ai.data.exceptions.TaskGroupException" href="#terra_ai.data.exceptions.TaskGroupException">TaskGroupException</a></li>
 <li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
+<li><a title="terra_ai.data.exceptions.TrdsConfigFileNotFoundException" href="#terra_ai.data.exceptions.TrdsConfigFileNotFoundException">TrdsConfigFileNotFoundException</a></li>
+<li><a title="terra_ai.data.exceptions.TrdsDirExtException" href="#terra_ai.data.exceptions.TrdsDirExtException">TrdsDirExtException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></li>
 <li><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></li>
+<li><a title="terra_ai.data.exceptions.ValueNotInListException" href="#terra_ai.data.exceptions.ValueNotInListException">ValueNotInListException</a></li>
 <li><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></li>
 <li><a title="terra_ai.data.exceptions.XYException" href="#terra_ai.data.exceptions.XYException">XYException</a></li>
 </ul>
@@ -466,6 +470,57 @@ class TaskGroupException(TerraDataException):
 <div class="desc"></div>
 </dd>
 </dl>
+</dd>
+<dt id="terra_ai.data.exceptions.TrdsConfigFileNotFoundException"><code class="flex name class">
+<span>class <span class="ident">TrdsConfigFileNotFoundException</span></span>
+<span>(</span><span>_TrdsConfigFileNotFoundException__trds_name: str, _TrdsConfigFileNotFoundException__config_name: str, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TrdsConfigFileNotFoundException(TerraDataException):
+    def __init__(self, __trds_name: str, __config_name: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.TrdsConfigFileNotFound)
+                % (str(__trds_name), str(__config_name))
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.exceptions.TrdsDirExtException"><code class="flex name class">
+<span>class <span class="ident">TrdsDirExtException</span></span>
+<span>(</span><span>_TrdsDirExtException__dirname: str, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TrdsDirExtException(TerraDataException):
+    def __init__(self, __dirname: str, *args):
+        super().__init__(
+            ((args[0] if len(args) else ExceptionMessages.TrdsDirExt) % str(__dirname))
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
 </dd>
 <dt id="terra_ai.data.exceptions.UniqueListIdentifierException"><code class="flex name class">
 <span>class <span class="ident">UniqueListIdentifierException</span></span>
@@ -514,6 +569,33 @@ class TaskGroupException(TerraDataException):
                     else ExceptionMessages.UniqueListUndefinedIdentifier
                 )
                 % str(__source)
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.exceptions.ValueNotInListException"><code class="flex name class">
+<span>class <span class="ident">ValueNotInListException</span></span>
+<span>(</span><span>_ValueNotInListException__value: Any, _ValueNotInListException__items: Any, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ValueNotInListException(TerraDataException):
+    def __init__(self, __value: Any, __items: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.ValueNotInList)
+                % (str(__value), str(__items))
             )
         )</code></pre>
 </details>
@@ -622,10 +704,12 @@ class TaskGroupException(TerraDataException):
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension" href="#terra_ai.data.exceptions.ExceptionMessages.FilePathExtension">FilePathExtension</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ListEmpty" href="#terra_ai.data.exceptions.ExceptionMessages.ListEmpty">ListEmpty</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartTotal" href="#terra_ai.data.exceptions.ExceptionMessages.PartTotal">PartTotal</a></code></li>
-<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TaskGroup" href="#terra_ai.data.exceptions.ExceptionMessages.TaskGroup">TaskGroup</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TerraDataValue" href="#terra_ai.data.exceptions.ExceptionMessages.TerraDataValue">TerraDataValue</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TrdsConfigFileNotFound" href="#terra_ai.data.exceptions.ExceptionMessages.TrdsConfigFileNotFound">TrdsConfigFileNotFound</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.TrdsDirExt" href="#terra_ai.data.exceptions.ExceptionMessages.TrdsDirExt">TrdsDirExt</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListIdentifier">UniqueListIdentifier</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier" href="#terra_ai.data.exceptions.ExceptionMessages.UniqueListUndefinedIdentifier">UniqueListUndefinedIdentifier</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ValueNotInList" href="#terra_ai.data.exceptions.ExceptionMessages.ValueNotInList">ValueNotInList</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ValueType" href="#terra_ai.data.exceptions.ExceptionMessages.ValueType">ValueType</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.XY" href="#terra_ai.data.exceptions.ExceptionMessages.XY">XY</a></code></li>
 </ul>
@@ -646,9 +730,6 @@ class TaskGroupException(TerraDataException):
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.exceptions.TaskGroupException" href="#terra_ai.data.exceptions.TaskGroupException">TaskGroupException</a></code></h4>
-</li>
-<li>
 <h4><code><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></code></h4>
 </li>
 <li>
@@ -658,10 +739,19 @@ class TaskGroupException(TerraDataException):
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.exceptions.TrdsConfigFileNotFoundException" href="#terra_ai.data.exceptions.TrdsConfigFileNotFoundException">TrdsConfigFileNotFoundException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.TrdsDirExtException" href="#terra_ai.data.exceptions.TrdsDirExtException">TrdsDirExtException</a></code></h4>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.exceptions.UniqueListIdentifierException" href="#terra_ai.data.exceptions.UniqueListIdentifierException">UniqueListIdentifierException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.UniqueListUndefinedIdentifierException" href="#terra_ai.data.exceptions.UniqueListUndefinedIdentifierException">UniqueListUndefinedIdentifierException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.ValueNotInListException" href="#terra_ai.data.exceptions.ValueNotInListException">ValueNotInListException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.ValueTypeException" href="#terra_ai.data.exceptions.ValueTypeException">ValueTypeException</a></code></h4>

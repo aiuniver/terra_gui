@@ -318,7 +318,25 @@ from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
-from . import parameters
+from . import creations
+
+
+class FilePathSourceData(BaseMixinData):
+    value: confilepath(ext=&#34;zip&#34;)
+    label: Optional[str]
+
+    @validator(&#34;label&#34;, allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -&gt; str:
+        file_path = values.get(&#34;value&#34;)
+        if not file_path:
+            return value
+        return file_path.name.split(&#34;.zip&#34;)[0]
+
+
+class FilePathSourcesList(UniqueListMixin):
+    class Meta:
+        source = FilePathSourceData
+        identifier = &#34;label&#34;
 
 
 class SourceData(BaseMixinData):
@@ -333,9 +351,9 @@ class SourceData(BaseMixinData):
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl], **kwargs
+        cls, value: Union[FilePathType, HttpUrl], values
     ) -&gt; Union[FilePathType, HttpUrl]:
-        mode = kwargs.get(&#34;values&#34;, {}).get(&#34;mode&#34;)
+        mode = values.get(&#34;mode&#34;)
         if mode == SourceModeChoice.google_drive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)
@@ -391,23 +409,27 @@ class CreationInputData(AliasMixinData):
     &#34;Название&#34;
     type: LayerInputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Any]
+    parameters: Any
     &#34;Параметры. Тип данных будет зависеть от выбранного типа `type`&#34;
 
-    @validator(&#34;type&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;type&#34;, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -&gt; LayerInputTypeChoice:
-        if not hasattr(LayerInputTypeChoice, value):
+        if value not in list(LayerInputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerInputTypeChoice)
+            else LayerInputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.input, getattr(creations.layers.input.Layer, name)
+        )
         cls.__fields__[&#34;parameters&#34;].type_ = type_
-        cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -&gt; Union[parameters.LayerInputDatatypeUnion]:
-        return kwargs.get(&#34;field&#34;).type_(**value)
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})
 
 
 class CreationOutputData(AliasMixinData):
@@ -419,23 +441,27 @@ class CreationOutputData(AliasMixinData):
     &#34;Название&#34;
     type: LayerOutputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Any]
+    parameters: Any
     &#34;Параметры. Тип данных будет зависеть от выбранного типа `type`&#34;
 
-    @validator(&#34;type&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;type&#34;, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -&gt; LayerOutputTypeChoice:
-        if not hasattr(LayerOutputTypeChoice, value):
+        if value not in list(LayerOutputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerOutputTypeChoice)
+            else LayerOutputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.output, getattr(creations.layers.output.Layer, name)
+        )
         cls.__fields__[&#34;parameters&#34;].type_ = type_
-        cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -&gt; Union[parameters.LayerOutputDatatypeUnion]:
-        return kwargs.get(&#34;field&#34;).type_(**value)
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):
@@ -726,23 +752,27 @@ def total(self) -&gt; float:
     &#34;Название&#34;
     type: LayerInputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Any]
+    parameters: Any
     &#34;Параметры. Тип данных будет зависеть от выбранного типа `type`&#34;
 
-    @validator(&#34;type&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;type&#34;, pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -&gt; LayerInputTypeChoice:
-        if not hasattr(LayerInputTypeChoice, value):
+        if value not in list(LayerInputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerInputTypeChoice)
+            else LayerInputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.input, getattr(creations.layers.input.Layer, name)
+        )
         cls.__fields__[&#34;parameters&#34;].type_ = type_
-        cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -&gt; Union[parameters.LayerInputDatatypeUnion]:
-        return kwargs.get(&#34;field&#34;).type_(**value)</code></pre>
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -757,7 +787,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Название</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationInputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[Any, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationInputData.parameters"><code class="name">var <span class="ident">parameters</span> : Any</code></dt>
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <code>type</code></p></div>
 </dd>
@@ -845,23 +875,27 @@ def total(self) -&gt; float:
     &#34;Название&#34;
     type: LayerOutputTypeChoice
     &#34;Тип данных&#34;
-    parameters: Optional[Any]
+    parameters: Any
     &#34;Параметры. Тип данных будет зависеть от выбранного типа `type`&#34;
 
-    @validator(&#34;type&#34;, allow_reuse=True, pre=True)
+    @validator(&#34;type&#34;, pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -&gt; LayerOutputTypeChoice:
-        if not hasattr(LayerOutputTypeChoice, value):
+        if value not in list(LayerOutputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerOutputTypeChoice)
+            else LayerOutputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.output, getattr(creations.layers.output.Layer, name)
+        )
         cls.__fields__[&#34;parameters&#34;].type_ = type_
-        cls.__fields__[&#34;parameters&#34;].required = True
         return value
 
-    @validator(&#34;parameters&#34;, allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -&gt; Union[parameters.LayerOutputDatatypeUnion]:
-        return kwargs.get(&#34;field&#34;).type_(**value)</code></pre>
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -876,7 +910,7 @@ def total(self) -&gt; float:
 <dd>
 <div class="desc"><p>Название</p></div>
 </dd>
-<dt id="terra_ai.data.datasets.creation.CreationOutputData.parameters"><code class="name">var <span class="ident">parameters</span> : Union[Any, NoneType]</code></dt>
+<dt id="terra_ai.data.datasets.creation.CreationOutputData.parameters"><code class="name">var <span class="ident">parameters</span> : Any</code></dt>
 <dd>
 <div class="desc"><p>Параметры. Тип данных будет зависеть от выбранного типа <code>type</code></p></div>
 </dd>
@@ -943,6 +977,118 @@ def total(self) -&gt; float:
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.datasets.creation.FilePathSourceData"><code class="flex name class">
+<span>class <span class="ident">FilePathSourceData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FilePathSourceData(BaseMixinData):
+    value: confilepath(ext=&#34;zip&#34;)
+    label: Optional[str]
+
+    @validator(&#34;label&#34;, allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -&gt; str:
+        file_path = values.get(&#34;value&#34;)
+        if not file_path:
+            return value
+        return file_path.name.split(&#34;.zip&#34;)[0]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.creation.FilePathSourceData.label"><code class="name">var <span class="ident">label</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.creation.FilePathSourceData.value"><code class="name">var <span class="ident">value</span> : <a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.datasets.creation.FilePathSourcesList"><code class="flex name class">
+<span>class <span class="ident">FilePathSourcesList</span></span>
+<span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Уникальный список, состоящий из <code>BaseModel</code>, идентификатор которого определяется в <code>Meta</code></p>
+<pre><code>class SomeData(AliasMixinData):
+    name: str
+
+class SomeUniqueList(UniqueListMixin):
+    class Meta:
+        source = SomeData
+        identifier = &quot;alias&quot;
+
+some_unique_list = SomeUniqueList(
+    [
+        {
+            &quot;alias&quot;: &quot;some_alias&quot;,
+            &quot;name&quot;: &quot;Some name&quot;,
+        },
+        {
+            &quot;alias&quot;: &quot;some_second_alias&quot;,
+            &quot;name&quot;: &quot;Some second name&quot;,
+        }
+    ]
+)
+
+&gt;&gt; some_unique_list
+[SomeData(alias='some_alias', name='Some name'), SomeData(alias='some_second_alias', name='Some second name')]
+
+&gt;&gt; type(some_unique_list)
+&lt;class '__main__.SomeUniqueList'&gt;
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FilePathSourcesList(UniqueListMixin):
+    class Meta:
+        source = FilePathSourceData
+        identifier = &#34;label&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></li>
+<li>builtins.list</li>
+<li>typing.Generic</li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.UniqueListMixin" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin">UniqueListMixin</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.Meta" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.Meta">Meta</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.append" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.append">append</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.dict" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.dict">dict</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.get" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.get">get</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.ids" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.ids">ids</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.insert" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.insert">insert</a></code></li>
+<li><code><a title="terra_ai.data.mixins.UniqueListMixin.json" href="../mixins.html#terra_ai.data.mixins.UniqueListMixin.json">json</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.datasets.creation.SourceData"><code class="flex name class">
 <span>class <span class="ident">SourceData</span></span>
 <span>(</span><span>**data)</span>
@@ -967,9 +1113,9 @@ def total(self) -&gt; float:
 
     @validator(&#34;value&#34;, allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl], **kwargs
+        cls, value: Union[FilePathType, HttpUrl], values
     ) -&gt; Union[FilePathType, HttpUrl]:
-        mode = kwargs.get(&#34;values&#34;, {}).get(&#34;mode&#34;)
+        mode = values.get(&#34;mode&#34;)
         if mode == SourceModeChoice.google_drive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)
@@ -1073,6 +1219,16 @@ def total(self) -&gt; float:
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.creation.CreationOutputsList" href="#terra_ai.data.datasets.creation.CreationOutputsList">CreationOutputsList</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.datasets.creation.FilePathSourceData" href="#terra_ai.data.datasets.creation.FilePathSourceData">FilePathSourceData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.datasets.creation.FilePathSourceData.label" href="#terra_ai.data.datasets.creation.FilePathSourceData.label">label</a></code></li>
+<li><code><a title="terra_ai.data.datasets.creation.FilePathSourceData.value" href="#terra_ai.data.datasets.creation.FilePathSourceData.value">value</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.datasets.creation.FilePathSourcesList" href="#terra_ai.data.datasets.creation.FilePathSourcesList">FilePathSourcesList</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.creation.SourceData" href="#terra_ai.data.datasets.creation.SourceData">SourceData</a></code></h4>

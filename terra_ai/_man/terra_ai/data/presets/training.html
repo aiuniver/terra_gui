@@ -31,111 +31,155 @@
 Предустановки обучения
 &#34;&#34;&#34;
 
-from ..presets.extra.training import TasksGroupsList
-from ..training.extra import TaskChoice, LossChoice, MetricChoice
+from enum import Enum
 
 
-TasksGroups = TasksGroupsList(
-    [
-        {
-            &#34;alias&#34;: TaskChoice.classification.value,
-            &#34;losses&#34;: [
-                LossChoice.categorical_crossentropy.value,
-                LossChoice.binary_crossentropy.value,
-                LossChoice.mse.value,
-                LossChoice.squared_hinge.value,
-                LossChoice.hinge.value,
-                LossChoice.categorical_hinge.value,
-                LossChoice.sparse_categorical_crossentropy.value,
-                LossChoice.kl_divergence.value,
-                LossChoice.poisson.value,
-            ],
-            &#34;metrics&#34;: [
-                MetricChoice.accuracy.value,
-                MetricChoice.binary_accuracy.value,
-                MetricChoice.binary_crossentropy.value,
-                MetricChoice.categorical_accuracy.value,
-                MetricChoice.categorical_crossentropy.value,
-                MetricChoice.sparse_categorical_accuracy.value,
-                MetricChoice.sparse_categorical_crossentropy.value,
-                MetricChoice.top_k_categorical_accuracy.value,
-                MetricChoice.sparse_top_k_categorical_accuracy.value,
-                MetricChoice.hinge.value,
-                MetricChoice.kullback_leibler_divergence.value,
-                MetricChoice.poisson.value,
-            ],
-        },
-        {
-            &#34;alias&#34;: TaskChoice.segmentation.value,
-            &#34;losses&#34;: [
-                LossChoice.categorical_crossentropy.value,
-                LossChoice.binary_crossentropy.value,
-                LossChoice.squared_hinge.value,
-                LossChoice.hinge.value,
-                LossChoice.categorical_hinge.value,
-                LossChoice.sparse_categorical_crossentropy.value,
-                LossChoice.kl_divergence.value,
-                LossChoice.poisson.value,
-            ],
-            &#34;metrics&#34;: [
-                MetricChoice.dice_coef.value,
-                MetricChoice.mean_io_u.value,
-                MetricChoice.accuracy.value,
-                MetricChoice.binary_accuracy.value,
-                MetricChoice.binary_crossentropy.value,
-                MetricChoice.categorical_accuracy.value,
-                MetricChoice.categorical_crossentropy.value,
-                MetricChoice.sparse_categorical_accuracy.value,
-                MetricChoice.sparse_categorical_crossentropy.value,
-                MetricChoice.top_k_categorical_accuracy.value,
-                MetricChoice.sparse_top_k_categorical_accuracy.value,
-                MetricChoice.hinge.value,
-                MetricChoice.kullback_leibler_divergence.value,
-                MetricChoice.poisson.value,
-            ],
-        },
-        {
-            &#34;alias&#34;: TaskChoice.regression.value,
-            &#34;losses&#34;: [
-                LossChoice.mse.value,
-                LossChoice.mae.value,
-                LossChoice.mape.value,
-                LossChoice.msle.value,
-                LossChoice.log_cosh.value,
-                LossChoice.cosine_similarity.value,
-            ],
-            &#34;metrics&#34;: [
-                MetricChoice.accuracy.value,
-                MetricChoice.mae.value,
-                MetricChoice.mse.value,
-                MetricChoice.mape.value,
-                MetricChoice.msle.value,
-                MetricChoice.logcosh.value,
-                MetricChoice.cosine_similarity.value,
-            ],
-        },
-        {
-            &#34;alias&#34;: TaskChoice.timeseries.value,
-            &#34;losses&#34;: [
-                LossChoice.mse.value,
-                LossChoice.mae.value,
-                LossChoice.mape.value,
-                LossChoice.msle.value,
-                LossChoice.log_cosh.value,
-                LossChoice.cosine_similarity.value,
-            ],
-            &#34;metrics&#34;: [
-                MetricChoice.accuracy.value,
-                MetricChoice.mae.value,
-                MetricChoice.mse.value,
-                MetricChoice.mape.value,
-                MetricChoice.msle.value,
-                MetricChoice.logcosh.value,
-                MetricChoice.cosine_similarity.value,
-            ],
-        },
-    ]
-)</code></pre>
+class Task(str, Enum):
+    classification = &#34;classification&#34;
+    segmentation = &#34;segmentation&#34;
+    regression = &#34;regression&#34;
+    timeseries = &#34;timeseries&#34;
+
+
+class Loss(str, Enum):
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    mse = &#34;mse&#34;
+    squared_hinge = &#34;squared_hinge&#34;
+    hinge = &#34;hinge&#34;
+    categorical_hinge = &#34;categorical_hinge&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    kl_divergence = &#34;kl_divergence&#34;
+    poisson = &#34;poisson&#34;
+    mae = &#34;mae&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    log_cosh = &#34;log_cosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;
+
+
+class Metric(str, Enum):
+    accuracy = &#34;accuracy&#34;
+    binary_accuracy = &#34;binary_accuracy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    categorical_accuracy = &#34;categorical_accuracy&#34;
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    sparse_categorical_accuracy = &#34;sparse_categorical_accuracy&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    top_k_categorical_accuracy = &#34;top_k_categorical_accuracy&#34;
+    sparse_top_k_categorical_accuracy = &#34;sparse_top_k_categorical_accuracy&#34;
+    hinge = &#34;hinge&#34;
+    kullback_leibler_divergence = &#34;kullback_leibler_divergence&#34;
+    poisson = &#34;poisson&#34;
+    dice_coef = &#34;dice_coef&#34;
+    mean_io_u = &#34;mean_io_u&#34;
+    mae = &#34;mae&#34;
+    mse = &#34;mse&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    logcosh = &#34;logcosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;
+
+
+TasksGroups = [
+    {
+        &#34;alias&#34;: Task.classification,
+        &#34;losses&#34;: [
+            Loss.categorical_crossentropy,
+            Loss.binary_crossentropy,
+            Loss.mse,
+            Loss.squared_hinge,
+            Loss.hinge,
+            Loss.categorical_hinge,
+            Loss.sparse_categorical_crossentropy,
+            Loss.kl_divergence,
+            Loss.poisson,
+        ],
+        &#34;metrics&#34;: [
+            Metric.accuracy,
+            Metric.binary_accuracy,
+            Metric.binary_crossentropy,
+            Metric.categorical_accuracy,
+            Metric.categorical_crossentropy,
+            Metric.sparse_categorical_accuracy,
+            Metric.sparse_categorical_crossentropy,
+            Metric.top_k_categorical_accuracy,
+            Metric.sparse_top_k_categorical_accuracy,
+            Metric.hinge,
+            Metric.kullback_leibler_divergence,
+            Metric.poisson,
+        ],
+    },
+    {
+        &#34;alias&#34;: Task.segmentation,
+        &#34;losses&#34;: [
+            Loss.categorical_crossentropy,
+            Loss.binary_crossentropy,
+            Loss.squared_hinge,
+            Loss.hinge,
+            Loss.categorical_hinge,
+            Loss.sparse_categorical_crossentropy,
+            Loss.kl_divergence,
+            Loss.poisson,
+        ],
+        &#34;metrics&#34;: [
+            Metric.dice_coef,
+            Metric.mean_io_u,
+            Metric.accuracy,
+            Metric.binary_accuracy,
+            Metric.binary_crossentropy,
+            Metric.categorical_accuracy,
+            Metric.categorical_crossentropy,
+            Metric.sparse_categorical_accuracy,
+            Metric.sparse_categorical_crossentropy,
+            Metric.top_k_categorical_accuracy,
+            Metric.sparse_top_k_categorical_accuracy,
+            Metric.hinge,
+            Metric.kullback_leibler_divergence,
+            Metric.poisson,
+        ],
+    },
+    {
+        &#34;alias&#34;: Task.regression,
+        &#34;losses&#34;: [
+            Loss.mse,
+            Loss.mae,
+            Loss.mape,
+            Loss.msle,
+            Loss.log_cosh,
+            Loss.cosine_similarity,
+        ],
+        &#34;metrics&#34;: [
+            Metric.accuracy,
+            Metric.mae,
+            Metric.mse,
+            Metric.mape,
+            Metric.msle,
+            Metric.logcosh,
+            Metric.cosine_similarity,
+        ],
+    },
+    {
+        &#34;alias&#34;: Task.timeseries,
+        &#34;losses&#34;: [
+            Loss.mse,
+            Loss.mae,
+            Loss.mape,
+            Loss.msle,
+            Loss.log_cosh,
+            Loss.cosine_similarity,
+        ],
+        &#34;metrics&#34;: [
+            Metric.accuracy,
+            Metric.mae,
+            Metric.mse,
+            Metric.mape,
+            Metric.msle,
+            Metric.logcosh,
+            Metric.cosine_similarity,
+        ],
+    },
+]</code></pre>
 </details>
 </section>
 <section>
@@ -145,6 +189,262 @@ TasksGroups = TasksGroupsList(
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="terra_ai.data.presets.training.Loss"><code class="flex name class">
+<span>class <span class="ident">Loss</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Loss(str, Enum):
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    mse = &#34;mse&#34;
+    squared_hinge = &#34;squared_hinge&#34;
+    hinge = &#34;hinge&#34;
+    categorical_hinge = &#34;categorical_hinge&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    kl_divergence = &#34;kl_divergence&#34;
+    poisson = &#34;poisson&#34;
+    mae = &#34;mae&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    log_cosh = &#34;log_cosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.presets.training.Loss.binary_crossentropy"><code class="name">var <span class="ident">binary_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.categorical_crossentropy"><code class="name">var <span class="ident">categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.categorical_hinge"><code class="name">var <span class="ident">categorical_hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.cosine_similarity"><code class="name">var <span class="ident">cosine_similarity</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.hinge"><code class="name">var <span class="ident">hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.kl_divergence"><code class="name">var <span class="ident">kl_divergence</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.log_cosh"><code class="name">var <span class="ident">log_cosh</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.mae"><code class="name">var <span class="ident">mae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.mape"><code class="name">var <span class="ident">mape</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.mse"><code class="name">var <span class="ident">mse</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.msle"><code class="name">var <span class="ident">msle</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.poisson"><code class="name">var <span class="ident">poisson</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.sparse_categorical_crossentropy"><code class="name">var <span class="ident">sparse_categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Loss.squared_hinge"><code class="name">var <span class="ident">squared_hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric"><code class="flex name class">
+<span>class <span class="ident">Metric</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Metric(str, Enum):
+    accuracy = &#34;accuracy&#34;
+    binary_accuracy = &#34;binary_accuracy&#34;
+    binary_crossentropy = &#34;binary_crossentropy&#34;
+    categorical_accuracy = &#34;categorical_accuracy&#34;
+    categorical_crossentropy = &#34;categorical_crossentropy&#34;
+    sparse_categorical_accuracy = &#34;sparse_categorical_accuracy&#34;
+    sparse_categorical_crossentropy = &#34;sparse_categorical_crossentropy&#34;
+    top_k_categorical_accuracy = &#34;top_k_categorical_accuracy&#34;
+    sparse_top_k_categorical_accuracy = &#34;sparse_top_k_categorical_accuracy&#34;
+    hinge = &#34;hinge&#34;
+    kullback_leibler_divergence = &#34;kullback_leibler_divergence&#34;
+    poisson = &#34;poisson&#34;
+    dice_coef = &#34;dice_coef&#34;
+    mean_io_u = &#34;mean_io_u&#34;
+    mae = &#34;mae&#34;
+    mse = &#34;mse&#34;
+    mape = &#34;mape&#34;
+    msle = &#34;msle&#34;
+    logcosh = &#34;logcosh&#34;
+    cosine_similarity = &#34;cosine_similarity&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.presets.training.Metric.accuracy"><code class="name">var <span class="ident">accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.binary_accuracy"><code class="name">var <span class="ident">binary_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.binary_crossentropy"><code class="name">var <span class="ident">binary_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.categorical_accuracy"><code class="name">var <span class="ident">categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.categorical_crossentropy"><code class="name">var <span class="ident">categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.cosine_similarity"><code class="name">var <span class="ident">cosine_similarity</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.dice_coef"><code class="name">var <span class="ident">dice_coef</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.hinge"><code class="name">var <span class="ident">hinge</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.kullback_leibler_divergence"><code class="name">var <span class="ident">kullback_leibler_divergence</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.logcosh"><code class="name">var <span class="ident">logcosh</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.mae"><code class="name">var <span class="ident">mae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.mape"><code class="name">var <span class="ident">mape</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.mean_io_u"><code class="name">var <span class="ident">mean_io_u</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.mse"><code class="name">var <span class="ident">mse</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.msle"><code class="name">var <span class="ident">msle</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.poisson"><code class="name">var <span class="ident">poisson</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.sparse_categorical_accuracy"><code class="name">var <span class="ident">sparse_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.sparse_categorical_crossentropy"><code class="name">var <span class="ident">sparse_categorical_crossentropy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.sparse_top_k_categorical_accuracy"><code class="name">var <span class="ident">sparse_top_k_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Metric.top_k_categorical_accuracy"><code class="name">var <span class="ident">top_k_categorical_accuracy</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.presets.training.Task"><code class="flex name class">
+<span>class <span class="ident">Task</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Task(str, Enum):
+    classification = &#34;classification&#34;
+    segmentation = &#34;segmentation&#34;
+    regression = &#34;regression&#34;
+    timeseries = &#34;timeseries&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.presets.training.Task.classification"><code class="name">var <span class="ident">classification</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Task.regression"><code class="name">var <span class="ident">regression</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Task.segmentation"><code class="name">var <span class="ident">segmentation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.presets.training.Task.timeseries"><code class="name">var <span class="ident">timeseries</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -156,6 +456,63 @@ TasksGroups = TasksGroupsList(
 <li><h3>Super-module</h3>
 <ul>
 <li><code><a title="terra_ai.data.presets" href="index.html">terra_ai.data.presets</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="terra_ai.data.presets.training.Loss" href="#terra_ai.data.presets.training.Loss">Loss</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.presets.training.Loss.binary_crossentropy" href="#terra_ai.data.presets.training.Loss.binary_crossentropy">binary_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.categorical_crossentropy" href="#terra_ai.data.presets.training.Loss.categorical_crossentropy">categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.categorical_hinge" href="#terra_ai.data.presets.training.Loss.categorical_hinge">categorical_hinge</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.cosine_similarity" href="#terra_ai.data.presets.training.Loss.cosine_similarity">cosine_similarity</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.hinge" href="#terra_ai.data.presets.training.Loss.hinge">hinge</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.kl_divergence" href="#terra_ai.data.presets.training.Loss.kl_divergence">kl_divergence</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.log_cosh" href="#terra_ai.data.presets.training.Loss.log_cosh">log_cosh</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.mae" href="#terra_ai.data.presets.training.Loss.mae">mae</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.mape" href="#terra_ai.data.presets.training.Loss.mape">mape</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.mse" href="#terra_ai.data.presets.training.Loss.mse">mse</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.msle" href="#terra_ai.data.presets.training.Loss.msle">msle</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.poisson" href="#terra_ai.data.presets.training.Loss.poisson">poisson</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.sparse_categorical_crossentropy" href="#terra_ai.data.presets.training.Loss.sparse_categorical_crossentropy">sparse_categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Loss.squared_hinge" href="#terra_ai.data.presets.training.Loss.squared_hinge">squared_hinge</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.presets.training.Metric" href="#terra_ai.data.presets.training.Metric">Metric</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.presets.training.Metric.accuracy" href="#terra_ai.data.presets.training.Metric.accuracy">accuracy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.binary_accuracy" href="#terra_ai.data.presets.training.Metric.binary_accuracy">binary_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.binary_crossentropy" href="#terra_ai.data.presets.training.Metric.binary_crossentropy">binary_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.categorical_accuracy" href="#terra_ai.data.presets.training.Metric.categorical_accuracy">categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.categorical_crossentropy" href="#terra_ai.data.presets.training.Metric.categorical_crossentropy">categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.cosine_similarity" href="#terra_ai.data.presets.training.Metric.cosine_similarity">cosine_similarity</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.dice_coef" href="#terra_ai.data.presets.training.Metric.dice_coef">dice_coef</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.hinge" href="#terra_ai.data.presets.training.Metric.hinge">hinge</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.kullback_leibler_divergence" href="#terra_ai.data.presets.training.Metric.kullback_leibler_divergence">kullback_leibler_divergence</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.logcosh" href="#terra_ai.data.presets.training.Metric.logcosh">logcosh</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.mae" href="#terra_ai.data.presets.training.Metric.mae">mae</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.mape" href="#terra_ai.data.presets.training.Metric.mape">mape</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.mean_io_u" href="#terra_ai.data.presets.training.Metric.mean_io_u">mean_io_u</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.mse" href="#terra_ai.data.presets.training.Metric.mse">mse</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.msle" href="#terra_ai.data.presets.training.Metric.msle">msle</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.poisson" href="#terra_ai.data.presets.training.Metric.poisson">poisson</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.sparse_categorical_accuracy" href="#terra_ai.data.presets.training.Metric.sparse_categorical_accuracy">sparse_categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.sparse_categorical_crossentropy" href="#terra_ai.data.presets.training.Metric.sparse_categorical_crossentropy">sparse_categorical_crossentropy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.sparse_top_k_categorical_accuracy" href="#terra_ai.data.presets.training.Metric.sparse_top_k_categorical_accuracy">sparse_top_k_categorical_accuracy</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Metric.top_k_categorical_accuracy" href="#terra_ai.data.presets.training.Metric.top_k_categorical_accuracy">top_k_categorical_accuracy</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.presets.training.Task" href="#terra_ai.data.presets.training.Task">Task</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.presets.training.Task.classification" href="#terra_ai.data.presets.training.Task.classification">classification</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Task.regression" href="#terra_ai.data.presets.training.Task.regression">regression</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Task.segmentation" href="#terra_ai.data.presets.training.Task.segmentation">segmentation</a></code></li>
+<li><code><a title="terra_ai.data.presets.training.Task.timeseries" href="#terra_ai.data.presets.training.Task.timeseries">timeseries</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>

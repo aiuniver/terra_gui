@@ -31,22 +31,75 @@
 ## Структура данных обучения
 &#34;&#34;&#34;
 
+from typing import Any
+from pydantic import validator
 from pydantic.types import PositiveInt
+from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData
-from .optimizer import OptimizerData
-from .outputs import OutputsList
+from . import optimizers
+from . import architectures
+from .extra import OptimizerChoice, ArchitectureChoice
+
+
+class OptimizerData(BaseMixinData):
+    type: OptimizerChoice
+    parameters: Any
+
+    @validator(&#34;type&#34;, pre=True)
+    def _validate_type(cls, value: OptimizerChoice) -&gt; OptimizerChoice:
+        if value not in list(OptimizerChoice):
+            raise EnumMemberError(enum_values=list(OptimizerChoice))
+        name = (
+            value if isinstance(value, OptimizerChoice) else OptimizerChoice(value)
+        ).name
+        type_ = getattr(optimizers, getattr(optimizers.Optimizer, name))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
+        return value
+
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})
+
+
+class ArchitectureData(BaseMixinData):
+    type: ArchitectureChoice
+    parameters: Any
+
+    @validator(&#34;type&#34;, pre=True)
+    def _validate_type(cls, value: ArchitectureChoice) -&gt; ArchitectureChoice:
+        if value not in list(ArchitectureChoice):
+            raise EnumMemberError(enum_values=list(ArchitectureChoice))
+        name = (
+            value
+            if isinstance(value, ArchitectureChoice)
+            else ArchitectureChoice(value)
+        ).name
+        type_ = getattr(architectures, getattr(architectures.Architecture, name))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
+        return value
+
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})
 
 
 class TrainData(BaseMixinData):
-    &#34;&#34;&#34;
-    Параметры обучения
-    &#34;&#34;&#34;
-
     batch: PositiveInt = 32
     epochs: PositiveInt = 20
-    optimizer: OptimizerData
-    outputs: OutputsList</code></pre>
+    optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
+    architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
+    # outputs: OutputsList
+    # checkpoint: CheckpointData
+
+    # @validator(&#34;checkpoint&#34;, allow_reuse=True)
+    # def _validate_checkpoint_layer(
+    #     cls, value: CheckpointData, values
+    # ) -&gt; CheckpointData:
+    #     __layers = values.get(&#34;outputs&#34;).ids
+    #     if value.layer not in __layers:
+    #         raise ValueNotInListException(value.layer, __layers)
+    #     return value</code></pre>
 </details>
 </section>
 <section>
@@ -58,27 +111,38 @@ class TrainData(BaseMixinData):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="terra_ai.data.training.train.TrainData"><code class="flex name class">
-<span>class <span class="ident">TrainData</span></span>
+<dt id="terra_ai.data.training.train.ArchitectureData"><code class="flex name class">
+<span>class <span class="ident">ArchitectureData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Параметры обучения</p>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
 <p>Create a new model by parsing and validating input data from keyword arguments.</p>
 <p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class TrainData(BaseMixinData):
-    &#34;&#34;&#34;
-    Параметры обучения
-    &#34;&#34;&#34;
+<pre><code class="python">class ArchitectureData(BaseMixinData):
+    type: ArchitectureChoice
+    parameters: Any
 
-    batch: PositiveInt = 32
-    epochs: PositiveInt = 20
-    optimizer: OptimizerData
-    outputs: OutputsList</code></pre>
+    @validator(&#34;type&#34;, pre=True)
+    def _validate_type(cls, value: ArchitectureChoice) -&gt; ArchitectureChoice:
+        if value not in list(ArchitectureChoice):
+            raise EnumMemberError(enum_values=list(ArchitectureChoice))
+        name = (
+            value
+            if isinstance(value, ArchitectureChoice)
+            else ArchitectureChoice(value)
+        ).name
+        type_ = getattr(architectures, getattr(architectures.Architecture, name))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
+        return value
+
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -88,6 +152,111 @@ class TrainData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.training.train.ArchitectureData.parameters"><code class="name">var <span class="ident">parameters</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.train.ArchitectureData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.training.extra.ArchitectureChoice" href="extra.html#terra_ai.data.training.extra.ArchitectureChoice">ArchitectureChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.train.OptimizerData"><code class="flex name class">
+<span>class <span class="ident">OptimizerData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class OptimizerData(BaseMixinData):
+    type: OptimizerChoice
+    parameters: Any
+
+    @validator(&#34;type&#34;, pre=True)
+    def _validate_type(cls, value: OptimizerChoice) -&gt; OptimizerChoice:
+        if value not in list(OptimizerChoice):
+            raise EnumMemberError(enum_values=list(OptimizerChoice))
+        name = (
+            value if isinstance(value, OptimizerChoice) else OptimizerChoice(value)
+        ).name
+        type_ = getattr(optimizers, getattr(optimizers.Optimizer, name))
+        cls.__fields__[&#34;parameters&#34;].type_ = type_
+        return value
+
+    @validator(&#34;parameters&#34;, always=True)
+    def _validate_parameters(cls, value: Any, values, field) -&gt; Any:
+        return field.type_(**value or {})</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.train.OptimizerData.parameters"><code class="name">var <span class="ident">parameters</span> : Any</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.training.train.OptimizerData.type"><code class="name">var <span class="ident">type</span> : <a title="terra_ai.data.training.extra.OptimizerChoice" href="extra.html#terra_ai.data.training.extra.OptimizerChoice">OptimizerChoice</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.training.train.TrainData"><code class="flex name class">
+<span>class <span class="ident">TrainData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TrainData(BaseMixinData):
+    batch: PositiveInt = 32
+    epochs: PositiveInt = 20
+    optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
+    architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.training.train.TrainData.architecture"><code class="name">var <span class="ident">architecture</span> : <a title="terra_ai.data.training.train.ArchitectureData" href="#terra_ai.data.training.train.ArchitectureData">ArchitectureData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.training.train.TrainData.batch"><code class="name">var <span class="ident">batch</span> : pydantic.types.PositiveInt</code></dt>
 <dd>
 <div class="desc"></div>
@@ -96,11 +265,7 @@ class TrainData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.train.TrainData.optimizer"><code class="name">var <span class="ident">optimizer</span> : <a title="terra_ai.data.training.optimizer.OptimizerData" href="optimizer.html#terra_ai.data.training.optimizer.OptimizerData">OptimizerData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.train.TrainData.outputs"><code class="name">var <span class="ident">outputs</span> : <a title="terra_ai.data.training.outputs.OutputsList" href="outputs.html#terra_ai.data.training.outputs.OutputsList">OutputsList</a></code></dt>
+<dt id="terra_ai.data.training.train.TrainData.optimizer"><code class="name">var <span class="ident">optimizer</span> : <a title="terra_ai.data.training.train.OptimizerData" href="#terra_ai.data.training.train.OptimizerData">OptimizerData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -133,12 +298,26 @@ class TrainData(BaseMixinData):
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
+<h4><code><a title="terra_ai.data.training.train.ArchitectureData" href="#terra_ai.data.training.train.ArchitectureData">ArchitectureData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.train.ArchitectureData.parameters" href="#terra_ai.data.training.train.ArchitectureData.parameters">parameters</a></code></li>
+<li><code><a title="terra_ai.data.training.train.ArchitectureData.type" href="#terra_ai.data.training.train.ArchitectureData.type">type</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.training.train.OptimizerData" href="#terra_ai.data.training.train.OptimizerData">OptimizerData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.training.train.OptimizerData.parameters" href="#terra_ai.data.training.train.OptimizerData.parameters">parameters</a></code></li>
+<li><code><a title="terra_ai.data.training.train.OptimizerData.type" href="#terra_ai.data.training.train.OptimizerData.type">type</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.training.train.TrainData" href="#terra_ai.data.training.train.TrainData">TrainData</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.training.train.TrainData.architecture" href="#terra_ai.data.training.train.TrainData.architecture">architecture</a></code></li>
 <li><code><a title="terra_ai.data.training.train.TrainData.batch" href="#terra_ai.data.training.train.TrainData.batch">batch</a></code></li>
 <li><code><a title="terra_ai.data.training.train.TrainData.epochs" href="#terra_ai.data.training.train.TrainData.epochs">epochs</a></code></li>
 <li><code><a title="terra_ai.data.training.train.TrainData.optimizer" href="#terra_ai.data.training.train.TrainData.optimizer">optimizer</a></code></li>
-<li><code><a title="terra_ai.data.training.train.TrainData.outputs" href="#terra_ai.data.training.train.TrainData.outputs">outputs</a></code></li>
 </ul>
 </li>
 </ul>
