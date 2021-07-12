@@ -153,20 +153,25 @@ from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
-from . import parameters
+from . import creations
 
 
 class FilePathSourceData(BaseMixinData):
     value: confilepath(ext="zip")
+    label: Optional[str]
+
+    @validator("label", allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -> str:
+        file_path = values.get("value")
+        if not file_path:
+            return value
+        return file_path.name.split(".zip")[0]
 
 
 class FilePathSourcesList(UniqueListMixin):
     class Meta:
         source = FilePathSourceData
-        identifier = "value"
-
-    def list(self) -> list:
-        return list(map(lambda item: item.value.name, self))
+        identifier = "label"
 
 
 class SourceData(BaseMixinData):
@@ -239,23 +244,27 @@ class CreationInputData(AliasMixinData):
     "Название"
     type: LayerInputTypeChoice
     "Тип данных"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", allow_reuse=True, pre=True)
+    @validator("type", pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-        if not hasattr(LayerInputTypeChoice, value):
+        if value not in list(LayerInputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerInputTypeChoice)
+            else LayerInputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.input, getattr(creations.layers.input.Layer, name)
+        )
         cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.LayerInputDatatypeUnion]:
-        return kwargs.get("field").type_(**value)
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class CreationOutputData(AliasMixinData):
@@ -267,23 +276,27 @@ class CreationOutputData(AliasMixinData):
     "Название"
     type: LayerOutputTypeChoice
     "Тип данных"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", allow_reuse=True, pre=True)
+    @validator("type", pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-        if not hasattr(LayerOutputTypeChoice, value):
+        if value not in list(LayerOutputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerOutputTypeChoice)
+            else LayerOutputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.output, getattr(creations.layers.output.Layer, name)
+        )
         cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.LayerOutputDatatypeUnion]:
-        return kwargs.get("field").type_(**value)
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):

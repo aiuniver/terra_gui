@@ -2,4 +2,4 @@
 Предустановки
 """
 
-from . import datasets, models, training, extra
+from . import datasets, models, training
