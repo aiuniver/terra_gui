@@ -138,3 +138,4 @@ dmypy.json
 /.idea/terra_gui.iml
 /.idea/vcs.xml
 /.idea/.gitignore
+/terra_ai/test.py
