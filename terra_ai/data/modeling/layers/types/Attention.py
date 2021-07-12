@@ -2,8 +2,7 @@
 ## Тип слоя `Attention`
 """
 
-from ...mixins import BaseMixinData
-from .extra import ActivationChoice
+from ....mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):

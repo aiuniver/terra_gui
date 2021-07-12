@@ -2,12 +2,8 @@
 ## Тип слоя `Resizing`
 """
 
-from typing import Optional
-from pydantic.types import PositiveFloat
-
-from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGe0Le1
-from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice, ResizingInterpolationChoice
+from ....mixins import BaseMixinData
+from .extra import ResizingInterpolationChoice
 
 
 class ParametersMainData(BaseMixinData):

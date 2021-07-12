@@ -2,8 +2,8 @@
 ## Тип слоя `Average`
 """
 
-from ...mixins import BaseMixinData
-from .extra import ActivationChoice
+from ....mixins import BaseMixinData
+from ..extra import ActivationChoice
 
 
 class ParametersMainData(BaseMixinData):
