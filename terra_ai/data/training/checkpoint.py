@@ -9,8 +9,8 @@ from .extra import CheckpointIndicatorChoice, CheckpointModeChoice, CheckpointTy
 
 class CheckpointData(BaseMixinData):
     layer: AliasType
-    type: CheckpointTypeChoice = CheckpointTypeChoice.metrics
-    indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.val
-    mode: CheckpointModeChoice = CheckpointModeChoice.max
+    type: CheckpointTypeChoice = CheckpointTypeChoice.Metrics
+    indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.Val
+    mode: CheckpointModeChoice = CheckpointModeChoice.Max
     save_best: bool = True
     save_weights: bool = False
