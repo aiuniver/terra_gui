@@ -3,6 +3,9 @@
 """
 
 from enum import Enum
+from typing import List
+
+from ..mixins import BaseMixinData, UniqueListMixin
 
 
 class ArchitectureChoice(str, Enum):
@@ -11,18 +14,18 @@ class ArchitectureChoice(str, Enum):
 
 
 class CheckpointIndicatorChoice(str, Enum):
-    val = "val"
-    train = "train"
+    Val = "Val"
+    Train = "Train"
 
 
 class CheckpointModeChoice(str, Enum):
-    min = "min"
-    max = "max"
+    Min = "Min"
+    Max = "Max"
 
 
 class CheckpointTypeChoice(str, Enum):
-    metrics = "metrics"
-    loss = "loss"
+    Metrics = "Metrics"
+    Loss = "Loss"
 
 
 class OptimizerChoice(str, Enum):
@@ -44,40 +47,52 @@ class TaskChoice(str, Enum):
 
 
 class LossChoice(str, Enum):
-    categorical_crossentropy = "Categorical crossentropy"
-    binary_crossentropy = "Binary crossentropy"
-    mse = "MSE"
-    squared_hinge = "Squared hinge"
-    hinge = "hinge"
-    categorical_hinge = "Categorical hinge"
-    sparse_categorical_crossentropy = "Sparse categorical crossentropy"
-    kl_divergence = "Kullback-Leibler divergence"
-    poisson = "Poisson"
-    mae = "MAE"
-    mape = "Mape"
-    msle = "MSLE"
-    log_cosh = "Log cosh"
-    cosine_similarity = "Cosine similarity"
+    CategoricalCrossentropy = "CategoricalCrossentropy"
+    BinaryCrossentropy = "BinaryCrossentropy"
+    MSE = "MSE"
+    SquaredHinge = "SquaredHinge"
+    Hinge = "Hinge"
+    CategoricalHinge = "CategoricalHinge"
+    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    Poisson = "Poisson"
+    MAE = "MAE"
+    Mape = "Mape"
+    MSLE = "MSLE"
+    LogCosh = "LogCosh"
+    CosineSimilarity = "CosineSimilarity"
 
 
 class MetricChoice(str, Enum):
-    accuracy = "Accuracy"
-    binary_accuracy = "Binary accuracy"
-    binary_crossentropy = "Binary crossentropy"
-    categorical_accuracy = "Categorical accuracy"
-    categorical_crossentropy = "Categorical crossentropy"
-    sparse_categorical_accuracy = "Sparse categorical accuracy"
-    sparse_categorical_crossentropy = "Sparse categorical crossentropy"
-    top_k_categorical_accuracy = "Top K categorical accuracy"
-    sparse_top_k_categorical_accuracy = "Sparse top K categorical accuracy"
-    hinge = "Hinge"
-    kullback_leibler_divergence = "Kullback-Leibler divergence"
-    poisson = "Poisson"
-    dice_coef = "Dice coef"
-    mean_io_u = "Mean IO U"
-    mae = "MAE"
-    mse = "MSE"
-    mape = "Mape"
-    msle = "MSLE"
-    logcosh = "Log cosh"
-    cosine_similarity = "Cosine similarity"
+    Accuracy = "Accuracy"
+    BinaryAccuracy = "BinaryAccuracy"
+    BinaryCrossentropy = "BinaryCrossentropy"
+    CategoricalAccuracy = "CategoricalAccuracy"
+    CategoricalCrossentropy = "CategoricalCrossentropy"
+    SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
+    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
+    SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    Hinge = "Hinge"
+    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    Poisson = "Poisson"
+    DiceCoef = "DiceCoef"
+    MeanIOU = "MeanIOU"
+    MAE = "MAE"
+    MSE = "MSE"
+    Mape = "Mape"
+    MSLE = "MSLE"
+    LogCosh = "LogCosh"
+    CosineSimilarity = "CosineSimilarity"
+
+
+class TaskGroupData(BaseMixinData):
+    task: TaskChoice
+    losses: List[LossChoice] = []
+    metrics: List[MetricChoice] = []
+
+
+class TasksGroupsList(UniqueListMixin):
+    class Meta:
+        source = TaskGroupData
+        identifier = "task"
