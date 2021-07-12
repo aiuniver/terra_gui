@@ -5,7 +5,7 @@
 from typing import Optional
 from pydantic.types import PositiveFloat, PositiveInt
 
-from .extra import ModuleChoise, ModuleTypeChoice
+from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
 from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
@@ -31,5 +31,5 @@ class ParametersExtraData(BaseMixinData):
 class LayerConfig(BaseMixinData):
     num_uplinks: PositiveInt = 1
     input_dimension: ConstrainedIntValueGe2 = 2
-    module: ModuleChoise = ModuleChoise.terra_custom_layers
+    module: ModuleChoice = ModuleChoice.terra_custom_layers
     module_type: ModuleTypeChoice = ModuleTypeChoice.terra_layer

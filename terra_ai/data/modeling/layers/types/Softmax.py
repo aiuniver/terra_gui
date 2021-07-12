@@ -3,7 +3,7 @@
 """
 from pydantic import PositiveInt
 
-from .extra import ModuleChoise, ModuleTypeChoice
+from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ....types import ConstrainedIntValueGe2
 
@@ -19,5 +19,5 @@ class ParametersExtraData(BaseMixinData):
 class LayerConfig(BaseMixinData):
     num_uplinks: PositiveInt = 1
     input_dimension: ConstrainedIntValueGe2 = 2
-    module: ModuleChoise = ModuleChoise.tensorflow_keras_layers
+    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
     module_type: ModuleTypeChoice = ModuleTypeChoice.keras

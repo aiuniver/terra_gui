@@ -5,7 +5,7 @@
 from typing import Tuple, Optional
 from pydantic.types import PositiveInt
 
-from .extra import ModuleChoise, ModuleTypeChoice
+from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import (
     PaddingChoice,
@@ -49,5 +49,5 @@ class LayerConfig(BaseMixinData):
 class LayerConfig(BaseMixinData):
     num_uplinks: PositiveInt = 1
     input_dimension: ConstrainedIntValueGe5 = 5
-    module: ModuleChoise = ModuleChoise.tensorflow_keras_layers
+    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
