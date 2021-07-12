@@ -10,6 +10,7 @@ export default {
     tagsFilter: [],
     id: null,
     dialog: false,
+    full: false
   }),
   mutations: {
     SET_DATASETS(state, value) {
@@ -23,6 +24,9 @@ export default {
     },
     SET_TAGS_FILTER(state, value) {
       state.tagsFilter = value;
+    },
+    SET_FULL(state, value) {
+      state.full = value;
     },
   },
   actions: {
@@ -90,10 +94,16 @@ export default {
     setTagsFilter({ commit }, value) {
       commit("SET_TAGS_FILTER", value);
     },
+    setFull({ commit }, value) {
+      commit("SET_FULL", value);
+    },
   },
   getters: {
     getSettings() {
       return inputs;
+    },
+    getFull({ full }) {
+      return full;
     },
     getTags({ tags }) {
       return tags;

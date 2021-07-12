@@ -229,7 +229,7 @@
 }
 
 .row {
-    margin:0 -5px -20px -5px;
+    /* margin:0 -5px -20px -5px; */
     display:-webkit-box;
     display:-moz-box;
     display:-ms-flexbox;

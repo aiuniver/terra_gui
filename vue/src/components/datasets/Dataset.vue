@@ -63,4 +63,7 @@ export default {
   width: 100%;
   height: 400px;
 }
+.board {
+  border-right: black solid 1px;
+}
 </style>

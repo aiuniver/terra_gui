@@ -1,5 +1,5 @@
 const proxy = {
-  bondrogeen: 'http://192.168.1.47:8000/',
+  bond_rogeen: 'http://192.168.1.47:8000/',
   MacBookPro: 'http://localhost:8001/'
 }
 module.exports = {

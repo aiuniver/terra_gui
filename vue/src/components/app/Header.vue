@@ -13,7 +13,7 @@
         Название задачи / Название эксперимента
     </div>
     <div class="user flexbox-right-nowrap">
-        <div class="item project project-new" data-type="project_new">
+        <div class="item project project-new" @click="full=!full">
             <div class="icon" title="Создать новый проект"><i class="icon-project-new"></i></div>
         </div>
         <div class="item project project-save" data-type="project_save">
@@ -35,3 +35,18 @@
     </div>
 </header>
 </template>
+
+<script>
+export default {
+    computed: {
+        full: {
+            set(val) {
+                this.$store.dispatch('datasets/setFull', val)
+            },
+            get() {
+                return this.$store.getters['datasets/getFull']
+            }
+        }
+    }
+}
+</script>
