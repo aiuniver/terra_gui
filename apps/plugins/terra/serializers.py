@@ -8,8 +8,8 @@ class DatasetSourceNumLinksSerializers(serializers.Serializer):
 
 
 class DatasetSourceSerializers(serializers.Serializer):
-    MODE_GOOGLE_DRIVE = "google_drive"
-    MODE_URL = "url"
+    MODE_GOOGLE_DRIVE = "GoogleDrive"
+    MODE_URL = "URL"
     MODE_CHOICES = ((MODE_GOOGLE_DRIVE, "Google drive"), (MODE_URL, "URL-ссылка"))
 
     mode = serializers.ChoiceField(choices=MODE_CHOICES)
