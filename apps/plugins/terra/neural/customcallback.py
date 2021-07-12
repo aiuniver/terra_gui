@@ -517,7 +517,7 @@ class CustomCallback(keras.callbacks.Callback):
             "object_detection": {
                 "optimizer_name": "Adam",
                 "loss": "yolo_loss",
-                "metrics": ["accuracy"],
+                "metrics": [],
                 "batch_size": 8,
                 "epochs": 20,
                 "shuffle": True,
@@ -656,21 +656,23 @@ class CustomCallback(keras.callbacks.Callback):
     def prepare_params(self):
 
         for _key in self.clbck_params.keys():
-            self.metrics.append(self.clbck_params[_key]["metrics"])
-            self.loss.append(self.clbck_params[_key]["loss"])
-            self.task_name.append(self.clbck_params[_key]["task"])
-            self.num_classes.append(self.clbck_params.setdefault(_key)["num_classes"])
-            self.y_Scaler.append(self.DTS.scaler.setdefault(_key))
-            self.tokenizer.append(self.DTS.tokenizer.setdefault(_key))
-            self.one_hot_encoding.append(self.DTS.one_hot_encoding.setdefault(_key))
-            initialized_callback = self.prepare_callbacks(
-                task_type=self.clbck_params[_key]["task"].value,
-                metrics=self.clbck_params[_key]["metrics"],
-                num_classes=self.clbck_params.setdefault(_key)["num_classes"],
-                clbck_options=self.clbck_params[_key]["callbacks"],
-                tags=self.DTS.tags,
-            )
-            self.callbacks.append(initialized_callback)
+            if (_key == 'output_1' and self.clbck_params[_key]["task"] == 'object_detection') \
+                    or (self.clbck_params[_key]["task"] != 'object_detection'):
+                self.metrics.append(self.clbck_params[_key]["metrics"])
+                self.loss.append(self.clbck_params[_key]["loss"])
+                self.task_name.append(self.clbck_params[_key]["task"])
+                self.num_classes.append(self.clbck_params.setdefault(_key)["num_classes"])
+                self.y_Scaler.append(self.DTS.scaler.setdefault(_key))
+                self.tokenizer.append(self.DTS.tokenizer.setdefault(_key))
+                self.one_hot_encoding.append(self.DTS.one_hot_encoding.setdefault(_key))
+                initialized_callback = self.prepare_callbacks(
+                    task_type=self.clbck_params[_key]["task"].value,
+                    metrics=self.clbck_params[_key]["metrics"],
+                    num_classes=self.clbck_params.setdefault(_key)["num_classes"],
+                    clbck_options=self.clbck_params[_key]["callbacks"],
+                    tags=self.DTS.tags,
+                )
+                self.callbacks.append(initialized_callback)
 
     def _estimate_step(self, current, start, now):
         if current:
@@ -772,8 +774,8 @@ class CustomCallback(keras.callbacks.Callback):
             "summary": "",
         }
         out_plots_data = {}
-        if self.x_Val["input_1"] is not None:
-            self.y_pred = self.model.predict(self.x_Val)
+        if self.x_Val.get("input_1") is not None:
+            self.y_pred = self.model.predict(self.x_Val, batch_size=self.batch_size)
         else:
             self.y_pred = copy.copy(self.y_true)
         if isinstance(self.y_pred, list):
@@ -1792,12 +1794,12 @@ class ObjectdetectionCallback(BaseCallback):
                 metric_name = self.clbck_metrics[metric_idx].name
                 self.clbck_metrics[metric_idx] = metric_name
 
-            if len(self.dataset.Y) > 1:
-                metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
-                val_metric_name = f"val_{metric_name}"
-            else:
-                metric_name = f"{self.clbck_metrics[metric_idx]}"
-                val_metric_name = f"val_{metric_name}"
+            # if len(self.dataset.Y) > 1:
+            #     metric_name = f'{output_key}_{self.clbck_metrics[metric_idx]}'
+            #     val_metric_name = f"val_{metric_name}"
+            # else:
+            metric_name = f"{self.clbck_metrics[metric_idx]}"
+            val_metric_name = f"val_{metric_name}"
             # определяем лучшую метрику для вывода данных при class_metrics='best'
             if logs[val_metric_name] > self.max_accuracy_value:
                 self.max_accuracy_value = logs[val_metric_name]

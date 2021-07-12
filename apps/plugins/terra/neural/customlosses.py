@@ -142,17 +142,17 @@ def yolo_loss(
 
         # Считаем ошибку в определении координат центра объекта
         # Получаем координаты центра объекта из спредиктенного значения
-        pred_xy = (K.sigmoid(feats[..., :2]) + grid) / K.cast(grid_shape[::-1], K.dtype(feats))
+        pred_xy = (K.sigmoid(feats[..., :2]) + grid) / K.cast(grid_shape[..., ::-1], K.dtype(feats))
         # Производим обратные вычесления для оригинальных значений из y_true для координат центра объекта
         true_xy = y_true[l][..., :2] * grid_shapes[l][::-1] - grid  # Реальные координаты центра bounding_box
         box_loss_scale = 2 - y_true[l][..., 2:3] * y_true[l][..., 3:4]  # чем больше бокс, тем меньше ошибка
-        # binary_crossentropy для истинного значения и спредиктенного (obect_mask для подсчета только требуемого
+        # binary_crossentropy для истинного значения и спредиктенного (object_mask для подсчета только требуемого
         # значения)
         xy_loss = object_mask * box_loss_scale * K.binary_crossentropy(true_xy, feats[..., 0:2], from_logits=True)
 
         # Считаем ошибку в определении координат ширины и высоты
         # Получаем значения ширины и высоты изображения из спредиктенного значения
-        pred_wh = K.exp(feats[..., 2:4]) * anchors_tensor / K.cast(input_shape[::-1], K.dtype(feats))
+        pred_wh = K.exp(feats[..., 2:4]) * anchors_tensor / K.cast(input_shape[..., ::-1], K.dtype(feats))
         # Производим обратные вычесления для оригинальных значений из y_true для ширины и высоты объекта
         true_wh = K.log(y_true[l][..., 2:4] / anchors[anchor_mask[l]] * input_shape[::-1])
         # Оставляем значение высоты и ширины только у тех элементов, где object_mask = 1
@@ -178,7 +178,7 @@ def yolo_loss(
         def loop_body(
                 b,
                 ignore_mask,
-                ):
+        ):
             # в true_box запишутся первые 4 параметра (центр, высота и ширина объекта) того элемента,
             # значение которого в object_mask_bool равно True
             true_box = tf.boolean_mask(y_true[l][b, ..., 0:4], object_mask_bool[b, ..., 0])

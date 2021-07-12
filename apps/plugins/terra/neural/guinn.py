@@ -176,7 +176,8 @@ class GUINN:
               f'loss = {self.loss}, metrics = {self.metrics} \n'
 
         # TODO: change to print_2status_bar then remove debug_mode
-        self.Exch.show_text_data(msg)
+        # self.Exch.show_text_data(msg)
+        print(msg)
         pass
 
     def save_nnmodel(self) -> None:
@@ -227,21 +228,57 @@ class GUINN:
             None
         """
         self.Exch.print_2status_bar(('Поготовка датасета', '...'))
-        for input_key in self.DTS.X.keys():
+        if self.DTS.task_type.get('output_1') == 'object_detection': #Заглушка
+            for input_key in self.DTS.X.keys():
 
-            self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
-            if self.DTS.X[input_key]['data'][1] is not None:
-                self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-            if self.DTS.X[input_key]['data'][2] is not None:
-                self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
+                self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
+                if self.DTS.X[input_key]['data'][1] is not None:
+                    self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
+                if self.DTS.X[input_key]['data'][2] is not None:
+                    self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
 
-        for output_key in self.DTS.Y.keys():
+            for output_key in self.DTS.Y.keys():
+                if output_key == 'output_1':
+                    self.x_Train.update({'input_2': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_2': self.DTS.Y[output_key]['data'][1]})
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_2': self.DTS.Y[output_key]['data'][2]})
 
-            self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
-            if self.DTS.Y[output_key]['data'][1] is not None:
-                self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
-            if self.DTS.Y[output_key]['data'][2] is not None:
-                self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
+                    self.y_Train.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][0].shape)})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.y_Val.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][1].shape)})
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.y_Test.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][2].shape)})
+                elif output_key == 'output_2':
+                    self.x_Train.update({'input_3': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_3': self.DTS.Y[output_key]['data'][1]})
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_3': self.DTS.Y[output_key]['data'][2]})
+                elif output_key == 'output_3':
+                    self.x_Train.update({'input_4': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_4': self.DTS.Y[output_key]['data'][1]})
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_4': self.DTS.Y[output_key]['data'][2]})
+
+        else:
+            for input_key in self.DTS.X.keys():
+
+                self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
+                if self.DTS.X[input_key]['data'][1] is not None:
+                    self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
+                if self.DTS.X[input_key]['data'][2] is not None:
+                    self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
+
+            for output_key in self.DTS.Y.keys():
+
+                self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
+                if self.DTS.Y[output_key]['data'][1] is not None:
+                    self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
+                if self.DTS.Y[output_key]['data'][2] is not None:
+                    self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         self.Exch.print_2status_bar(('Поготовка датасета', 'выполнена'))
         pass
 
@@ -256,6 +293,10 @@ class GUINN:
         Return:
             None
         """
+        self.show_training_params()
+        print("self.DTS.X", self.DTS.X)
+        print("self.DTS.Y", self.DTS.Y)
+
         if self.model_is_trained:
             try:
                 list_files = os.listdir(self.training_path)
@@ -300,7 +341,10 @@ class GUINN:
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
-            self.basemodel_fit(verbose=0, retrain=False)
+            if self.DTS.task_type.get('output_1') == 'object_detection':
+                self.yolomodel_fit(verbose=1, retrain=False)
+            else:
+                self.basemodel_fit(verbose=0, retrain=False)
 
             self.sum_epoch += self.epochs
         self.model_is_trained = True
@@ -497,23 +541,29 @@ class GUINN:
                 callbacks=self.callbacks
             )
 
-    def yolomodel_fit(self, verbose=0, retrain=False, num_classes=2) -> None:
+    def yolomodel_fit(self, verbose=0, retrain=False) -> None:
+        # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
+        # данные значения коррелируются с размерностью входного изображения input_shape
+        anchors = np.array(
+            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
+        num_anchors = len(anchors)  # Сохраняем количество анкоров
+
         def create_model(
                 input_shape,
-                num_anchors,
-                use_weights=False,
-                weights_path='yolo.h5'
+                num_anchor,
+                model,
+                num_classes,
         ):
             """
                 Функция создания полной модели
                     Входные параметры:
                       input_shape - размерность входного изображения для модели YOLO
                       num_anchors - общее количество анкоров
-                      use_weights - использовать ли предобученные веса
-                      weights_path - путь к сохраненным весам модели
+                      model - спроектированная модель
+                      num_classes - количесво классов
             """
-            w, h = input_shape  # Получаем ширину и высоту входного изображения
-            inputs = keras.layers.Input(shape=(w, h, 3))  # Создаем входной слой модели, добавляя размерность для
+            w, h, ch = input_shape  # Получаем ширину и высоту и глубину входного изображения
+            # inputs = keras.layers.Input(shape=(w, h, ch))  # Создаем входной слой модели, добавляя размерность для
             # глубины цвета
 
             # Создаем три входных слоя y_true с размерностями ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6) и (None,
@@ -523,30 +573,58 @@ class GUINN:
             # - 4 параметра описывающие параметры анкора (координаты центра, ширина и высота) + вероятность
             # обнаружения объекта + OHE номер класса
             y_true = [
-                keras.layers.Input(
-                    shape=(w // 32, h // 32, num_anchors // 3, num_classes + 5))]  # Уровень сетки 13х13 (416/32)
-            y_true.append(
-                keras.layers.Input(
-                    shape=(w // 16, h // 16, num_anchors // 3, num_classes + 5)))  # Уровень сетки 26х26 (416/26)
-            y_true.append(
-                keras.layers.Input(
-                    shape=(w // 8, h // 8, num_anchors // 3, num_classes + 5)))  # Уровень сетки 52х52 (416/8)
+                keras.layers.Input(shape=(w // 32, h // 32, num_anchor // 3, num_classes + 5), name="input_2"),
+                keras.layers.Input(shape=(w // 16, h // 16, num_anchor // 3, num_classes + 5), name="input_3"),
+                keras.layers.Input(shape=(w // 8, h // 8, num_anchor // 3, num_classes + 5), name="input_4")
+            ]
 
-            model_yolo = self.model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
-            print('Создана модель YOLOv3. Количество классов: {}.'.format(
+            model_yolo = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
+            print('Создана модель YOLO. Количество классов: {}.'.format(
                 num_classes))  # Выводим сообщение о создании модели
-
-            # Если установлен флаг загрузки весов
-            if use_weights:
-                model_yolo.load_weights(weights_path, by_name=False,
-                                        skip_mismatch=False)  # Загружаем предобученные веса
-                print('Загружены веса из файла {}.'.format(weights_path))  # Выводим сообщение о загруженных весах
-
+            print('model_yolo.summary()', model_yolo.summary())
             # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
             # На вход слоя подается:
             #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
             #   - y_true (оригинальные данные из обучающей выборки)
             outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-                                          arguments={'num_anchors': num_anchors})([*model_yolo.output, *y_true])
+                                          arguments={'num_anchors': num_anchor})([*model_yolo.output, *y_true])
 
-            return keras.models.Model([inputs, *y_true], outputs)  # Возвращаем модель
+            return keras.models.Model([model_yolo.input, *y_true], outputs)  # Возвращаем модель
+
+        # Создаем модель
+        model_YOLO = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
+                                  num_classes=self.DTS.num_classes['output_1'])
+        print(model_YOLO.summary())
+
+        # Компилируем модель
+        self.Exch.print_2status_bar(('Компиляция модели', '...'))
+        # self.set_custom_metrics()
+        model_YOLO.compile(optimizer=self.optimizer,
+                           loss={'yolo_loss': lambda y_true, y_pred: y_pred})
+        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
+        self.Exch.print_2status_bar(('Начало обучения', '...'))
+
+        if not retrain:
+            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
+            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
+                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
+                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
+                                     model_name=self.nn_name)
+            self.callbacks = [clsclbk]
+            self.callbacks.append(keras.callbacks.ModelCheckpoint(
+                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
+                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
+                monitor=self.chp_monitor, mode=self.chp_mode))
+            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+
+        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        self.history = model_YOLO.fit(
+            self.x_Train,
+            self.y_Train,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            validation_data=(self.x_Val, self.y_Val),
+            epochs=self.epochs,
+            verbose=verbose,
+            callbacks=self.callbacks
+        )
