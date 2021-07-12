@@ -4,8 +4,8 @@
 
 from typing import Optional
 
-from ...mixins import BaseMixinData
-from .extra import DataFormatChoice
+from ....mixins import BaseMixinData
+from ..extra import DataFormatChoice
 
 
 class ParametersMainData(BaseMixinData):

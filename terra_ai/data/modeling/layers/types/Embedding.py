@@ -5,7 +5,7 @@
 from typing import Optional
 from pydantic.types import PositiveInt
 
-from ...mixins import BaseMixinData
+from ....mixins import BaseMixinData
 from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 

@@ -2,7 +2,7 @@
 ## Тип слоя `Softmax`
 """
 
-from ...mixins import BaseMixinData
+from ....mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):

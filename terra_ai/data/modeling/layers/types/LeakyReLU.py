@@ -2,8 +2,8 @@
 ## Тип слоя `LeakyReLU`
 """
 
-from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGe0
+from ....mixins import BaseMixinData
+from ....types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):

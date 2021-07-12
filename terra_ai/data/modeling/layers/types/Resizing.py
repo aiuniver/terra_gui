@@ -3,7 +3,7 @@
 """
 
 from ....mixins import BaseMixinData
-from .extra import ResizingInterpolationChoice
+from ..extra import ResizingInterpolationChoice
 
 
 class ParametersMainData(BaseMixinData):

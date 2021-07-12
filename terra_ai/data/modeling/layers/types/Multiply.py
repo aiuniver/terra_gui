@@ -2,7 +2,7 @@
 ## Тип слоя `Multiply`
 """
 
-from ...mixins import BaseMixinData
+from ....mixins import BaseMixinData
 
 
 class ParametersMainData(BaseMixinData):

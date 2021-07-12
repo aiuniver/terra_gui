@@ -4,8 +4,8 @@
 
 from typing import Optional
 
-from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGe0
+from ....mixins import BaseMixinData
+from ....types import ConstrainedFloatValueGe0
 
 
 class ParametersMainData(BaseMixinData):

@@ -5,8 +5,8 @@
 from typing import Tuple, Optional
 from pydantic.types import PositiveInt
 
-from ...mixins import BaseMixinData
-from .extra import (
+from ....mixins import BaseMixinData
+from ..extra import (
     PaddingChoice,
     ActivationChoice,
     DataFormatChoice,

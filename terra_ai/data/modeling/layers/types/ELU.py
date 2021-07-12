@@ -2,8 +2,8 @@
 ## Тип слоя `ELU`
 """
 
-from ...mixins import BaseMixinData
-from ...types import ConstrainedFloatValueGe0Le1
+from ....mixins import BaseMixinData
+from ....types import ConstrainedFloatValueGe0Le1
 
 
 class ParametersMainData(BaseMixinData):

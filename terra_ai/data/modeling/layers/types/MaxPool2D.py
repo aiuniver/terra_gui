@@ -7,8 +7,8 @@ from typing import Optional, Tuple
 from pydantic import validator
 from pydantic.types import PositiveInt
 
-from ...mixins import BaseMixinData
-from .extra import PaddingChoice, DataFormatChoice
+from ....mixins import BaseMixinData
+from ..extra import PaddingChoice, DataFormatChoice
 
 
 class ParametersMainData(BaseMixinData):

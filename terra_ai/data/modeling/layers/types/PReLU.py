@@ -5,8 +5,8 @@
 from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
-from ...mixins import BaseMixinData
-from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice
+from ....mixins import BaseMixinData
+from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 
 class ParametersMainData(BaseMixinData):
