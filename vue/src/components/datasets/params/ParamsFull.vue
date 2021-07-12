@@ -3,7 +3,9 @@
     <div class="col-24">
       <div class="row">
         <div class="col-4">Test</div>
-        <div class="col-20">Test</div>
+        <div class="col-20">
+          <CardFile />
+        </div>
       </div>
     </div>
     <div class="col-8 d-flex"><CardFormInput /></div>
@@ -14,12 +16,14 @@
 <script>
 import { mapGetters } from "vuex";
 import CardFormInput from '@/components/datasets/CardFormInput.vue'
+import CardFile from '@/components/datasets/CardFile.vue'
 // /home/bondrogeen/github/terra/vue/src/components/datasets/CardFormInput.vue
 // import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
   components: {
-    CardFormInput
+    CardFormInput,
+    CardFile
   },
   data: () => ({}),
   computed: {

@@ -1,40 +1,39 @@
 <template>
-  <div class="flowchart-container" 
-    @mousemove="handleMove" 
+  <div
+    class="flowchart-container"
+    @mousemove="handleMove"
     @mouseup="handleUp"
-    @mousedown="handleDown">
+    @mousedown="handleDown"
+  >
     <svg width="100%" :height="`${height}px`">
-      <flowchart-link v-bind.sync="link" 
+      <flowchart-link
+        v-bind.sync="link"
         v-for="(link, index) in lines"
         :key="`link${index}`"
-        @deleteLink="linkDelete(link.id)">
-      </flowchart-link>
+        @deleteLink="linkDelete(link.id)"
+      ></flowchart-link>
     </svg>
-    <flowchart-node v-bind.sync="node" 
+    <flowchart-node
+      v-bind.sync="node"
       v-for="(node, index) in scene.layers"
       :key="`node${index}`"
       :options="nodeOptions"
       @linkingStart="linkingStart(index)"
       @linkingStop="linkingStop(index)"
-      @nodeSelected="nodeSelected(index, $event)">
+      @nodeSelected="nodeSelected(index, $event)"
+    >
     </flowchart-node>
   </div>
 </template>
 
 <script>
-import FlowchartLink from './FlowchartLink.vue';
-import FlowchartNode from './FlowchartNode.vue';
-import { getMousePosition } from '@/assets/utilty/position';
+import FlowchartLink from "./FlowchartLink.vue";
+import FlowchartNode from "./FlowchartNode.vue";
+import { getMousePosition } from "@/assets/utilty/position";
 
 export default {
-  name: 'VueFlowchart',
+  name: "VueFlowchart",
   props: {
-    scene: {
-      type: Object,
-      default() {
-        return this.$store.getters["data/getData"]
-      }
-    },
     height: {
       type: Number,
       default: 1000,
@@ -57,7 +56,7 @@ export default {
       draggingLink: null,
       rootDivOffset: {
         top: 0,
-        left: 0
+        left: 0,
       },
     };
   },
@@ -66,6 +65,14 @@ export default {
     FlowchartNode,
   },
   computed: {
+    scene: {
+      set(val) {
+        this.$store.dispatch("data/setData", val);
+      },
+      get() {
+        return this.$store.getters["data/getData"];
+      },
+    },
     nodeOptions() {
       return {
         centerY: this.scene.centerY,
@@ -74,39 +81,39 @@ export default {
         offsetTop: this.rootDivOffset.top,
         offsetLeft: this.rootDivOffset.left,
         selected: this.action.selected,
-      }
+      };
     },
     lines() {
       const lines = this.scene.links.map((link) => {
-        const fromNode = this.findNodeWithID(link.from)
-        const toNode = this.findNodeWithID(link.to)
+        const fromNode = this.findNodeWithID(link.from);
+        const toNode = this.findNodeWithID(link.to);
         let x, y, cy, cx, ex, ey;
         x = fromNode.position[0];
         y = fromNode.position[1];
-        [cx, cy] = this.getPortPosition('bottom', x, y);
+        [cx, cy] = this.getPortPosition("bottom", x, y);
         x = toNode.position[0];
         y = toNode.position[1];
-        [ex, ey] = this.getPortPosition('top', x, y);
-        return { 
-          start: [cx, cy], 
+        [ex, ey] = this.getPortPosition("top", x, y);
+        return {
+          start: [cx, cy],
           end: [ex, ey],
           id: link.id,
         };
-      })
+      });
       if (this.draggingLink) {
         let x, y, cy, cx;
-        const fromNode = this.findNodeWithID(this.draggingLink.from)
+        const fromNode = this.findNodeWithID(this.draggingLink.from);
         x = fromNode.position[0];
         y = fromNode.position[1];
-        [cx, cy] = this.getPortPosition('bottom', x, y);
-        // push temp dragging link, mouse cursor postion = link end postion 
-        lines.push({ 
-          start: [cx, cy], 
+        [cx, cy] = this.getPortPosition("bottom", x, y);
+        // push temp dragging link, mouse cursor postion = link end postion
+        lines.push({
+          start: [cx, cy],
           end: [this.draggingLink.mx, this.draggingLink.my],
-        })
+        });
       }
       return lines;
-    }
+    },
   },
   mounted() {
     this.rootDivOffset.top = this.$el ? this.$el.offsetTop : 0;
@@ -115,13 +122,12 @@ export default {
   },
   methods: {
     findNodeWithID(index) {
-      return this.scene.layers[index]
+      return this.scene.layers[index];
     },
     getPortPosition(type, x, y) {
-      if (type === 'top') {
+      if (type === "top") {
         return [x + 80, y];
-      }
-      else if (type === 'bottom') {
+      } else if (type === "bottom") {
         return [x + 80, y + 40];
       }
     },
@@ -139,48 +145,58 @@ export default {
         // check link existence
         const existed = this.scene.links.find((link) => {
           return link.from === this.draggingLink.from && link.to === index;
-        })
+        });
         if (!existed) {
-          let maxID = Math.max(0, ...this.scene.links.map((link) => {
-            return link.id
-          }))
+          let maxID = Math.max(
+            0,
+            ...this.scene.links.map((link) => {
+              return link.id;
+            })
+          );
           const newLink = {
             id: maxID + 1,
             from: this.draggingLink.from,
             to: index,
           };
-          this.scene.links.push(newLink)
-          this.$emit('linkAdded', newLink)
+          this.scene.links.push(newLink);
+          this.$emit("linkAdded", newLink);
         }
       }
-      this.draggingLink = null
+      this.draggingLink = null;
     },
     linkDelete(id) {
       const deletedLink = this.scene.links.find((item) => {
-          return item.id === id;
+        return item.id === id;
       });
       if (deletedLink) {
         this.scene.links = this.scene.links.filter((item) => {
-            return item.id !== id;
+          return item.id !== id;
         });
-        this.$emit('linkBreak', deletedLink);
+        this.$emit("linkBreak", deletedLink);
       }
     },
     nodeSelected(index, e) {
       this.action.dragging = index;
       this.action.selected = index;
-      this.$emit('nodeClick', index);
-      this.mouse.lastX = e.pageX || e.clientX + document.documentElement.scrollLeft
-      this.mouse.lastY = e.pageY || e.clientY + document.documentElement.scrollTop
+      this.$emit("nodeClick", index);
+      this.mouse.lastX =
+        e.pageX || e.clientX + document.documentElement.scrollLeft;
+      this.mouse.lastY =
+        e.pageY || e.clientY + document.documentElement.scrollTop;
     },
     handleMove(e) {
       if (this.action.linking) {
         [this.mouse.x, this.mouse.y] = getMousePosition(this.$el, e);
-        [this.draggingLink.mx, this.draggingLink.my] = [this.mouse.x, this.mouse.y];
+        [this.draggingLink.mx, this.draggingLink.my] = [
+          this.mouse.x,
+          this.mouse.y,
+        ];
       }
       if (Number.isInteger(this.action.dragging)) {
-        this.mouse.x = e.pageX || e.clientX + document.documentElement.scrollLeft
-        this.mouse.y = e.pageY || e.clientY + document.documentElement.scrollTop
+        this.mouse.x =
+          e.pageX || e.clientX + document.documentElement.scrollLeft;
+        this.mouse.y =
+          e.pageY || e.clientY + document.documentElement.scrollTop;
         let diffX = this.mouse.x - this.mouse.lastX;
         let diffY = this.mouse.y - this.mouse.lastY;
 
@@ -205,10 +221,16 @@ export default {
     handleUp(e) {
       const target = e.target || e.srcElement;
       if (this.$el.contains(target)) {
-        if (typeof target.className !== 'string' || target.className.indexOf('node-input') < 0) {
+        if (
+          typeof target.className !== "string" ||
+          target.className.indexOf("node-input") < 0
+        ) {
           this.draggingLink = null;
         }
-        if (typeof target.className === 'string' && target.className.indexOf('node-delete') > -1) {
+        if (
+          typeof target.className === "string" &&
+          target.className.indexOf("node-delete") > -1
+        ) {
           // console.log('delete2', this.action.dragging);
           this.nodeDelete(this.action.dragging);
         }
@@ -220,37 +242,44 @@ export default {
     handleDown(e) {
       const target = e.target || e.srcElement;
       // console.log('for scroll', target, e.keyCode, e.which)
-      if ((target === this.$el || target.matches('svg, svg *')) && e.which === 1) {
+      if (
+        (target === this.$el || target.matches("svg, svg *")) &&
+        e.which === 1
+      ) {
         this.action.scrolling = true;
         [this.mouse.lastX, this.mouse.lastY] = getMousePosition(this.$el, e);
         this.action.selected = null; // deselectAll
       }
-      this.$emit('canvasClick', e);
+      this.$emit("canvasClick", e);
     },
     moveSelectedNode(dx, dy) {
-      let index = this.action.dragging
+      let index = this.action.dragging;
       let left = this.scene.layers[index].position[0] + dx / this.scene.scale;
       let top = this.scene.layers[index].position[1] + dy / this.scene.scale;
-      this.$set(this.scene.layers, index, Object.assign(this.scene.layers[index], {position: [left, top]}));
+      this.$set(
+        this.scene.layers,
+        index,
+        Object.assign(this.scene.layers[index], { position: [left, top] })
+      );
     },
     nodeDelete(id) {
       this.scene.layers = this.scene.layers.filter((node) => {
         return node.id !== id;
-      })
+      });
       this.scene.links = this.scene.links.filter((link) => {
-        return link.from !== id && link.to !== id
-      })
-      this.$emit('nodeDelete', id)
-    }
+        return link.from !== id && link.to !== id;
+      });
+      this.$emit("nodeDelete", id);
+    },
   },
-}
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped lang="scss">
 .flowchart-container {
   margin: 0;
-  background: #17212B;
+  background: #17212b;
   //17212B
   position: relative;
   overflow: hidden;

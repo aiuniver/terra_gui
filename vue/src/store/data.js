@@ -136,16 +136,8 @@ export default {
     },
   },
   actions: {
-    get({ commit }) {
-      console.log(commit);
-      // try {
-      //   const { data } = await axios.get(
-      //     "https://60d20d1f5b017400178f5047.mockapi.io/api/v1/datasets"
-      //   );
-      //   commit("SET_DATASETS", data);
-      // } catch (error) {
-      //   console.log(error);
-      // }
+    setData ({ commit }, data) {
+      commit("SET_DATA", data);
     },
   },
   getters: {
