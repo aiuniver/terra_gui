@@ -1,3 +1,6 @@
+from terra_ai.data.datasets.extra import SourceModeChoice
+from terra_ai.data.datasets.creation import SourceData
+
 from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
@@ -32,7 +35,7 @@ import json
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.004
+__version__ = 1.005
 
 
 class CreateDTS(object):
@@ -110,15 +113,11 @@ class CreateDTS(object):
 
         return datatype[len(shape)]
 
-    def load_data(self, mode: str, path: str):
+    def load_data(self, strict_object):
 
-        if mode == 'terra':
-            self.dataloader.load_from_terra(name=path)
-        elif mode == 'url':
-            self.dataloader.load_from_url(link=path)
-        elif mode == 'google':
-            self.dataloader.load_from_google(name=path)
-        self.zip_params = {'mode': mode, 'path': path}
+        self.dataloader.load_data(strict_object=strict_object)
+
+        self.zip_params = json.loads(strict_object.json())
         self.file_folder = self.dataloader.file_folder
 
         pass
@@ -614,6 +613,17 @@ class Dataloader(object):
 
         pass
 
+    def load_data(self, strict_object):
+
+        if strict_object.mode == SourceModeChoice.terra:
+            self.load_from_terra(strict_object.value)
+        elif strict_object.mode == SourceModeChoice.url:
+            self.load_from_url(strict_object.value)
+        elif strict_object.mode == SourceModeChoice.google_drive:
+            self.load_from_google(strict_object.value)
+
+        pass
+
     def load_from_terra(self, name: str):
 
         file_folder = None
@@ -665,10 +675,10 @@ class Dataloader(object):
 
         pass
 
-    def load_from_google(self, name: str):
+    def load_from_google(self, filepath: str):
 
-        filepath = os.path.join(self.trds_path, 'sources', name)
-        name = name[:name.rfind('.')]
+        zip_name = str(filepath).split('/')[-1]
+        name = zip_name[:zip_name.rfind('.')]
         file_folder = os.path.join(self.save_path, name)
         shutil.unpack_archive(filepath, file_folder)
         self.file_folder = str(file_folder)
@@ -1406,12 +1416,7 @@ class PrepareDTS(object):
                         self.createarray.txt_list = json.load(txt)
 
                 self.dataloader = Dataloader()
-                if self.zip_params['mode'] == 'terra':
-                    self.dataloader.load_from_terra(name=self.zip_params['path'])
-                elif self.zip_params['mode'] == 'url':
-                    self.dataloader.load_from_url(link=self.zip_params['path'])
-                elif self.zip_params['mode'] == 'google':
-                    self.dataloader.load_from_google(name=self.zip_params['path'])
+                self.dataloader.load_data(strict_object=SourceData(**self.zip_params))
 
                 with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'sequence.json'),
                           'r') as cfg:
