@@ -1,0 +1,28 @@
+"""
+## Тип слоя `Resizing`
+"""
+
+from typing import Optional
+from pydantic.types import PositiveFloat
+
+from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1
+from .extra import InitializerChoice, RegularizerChoice, ConstraintChoice, ResizingInterpolationChoice
+
+
+class ParametersMainData(BaseMixinData):
+    height: int = 224
+    width: int = 224
+
+
+class ParametersExtraData(BaseMixinData):
+    interpolation: ResizingInterpolationChoice = ResizingInterpolationChoice.bilinear
+
+
+class LayerConfig(BaseMixinData):
+    num_uplinks: int or str or list = 1
+    input_dimension: int or str = '2+'
+    module: str = 'tensorflow.keras.layers.experimental.preprocessing'
+    module_type: str = 'keras'
+
+

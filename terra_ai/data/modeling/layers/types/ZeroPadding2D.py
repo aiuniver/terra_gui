@@ -1,19 +1,16 @@
 """
-## Тип слоя `AveragePooling2D`
+## Тип слоя `ZeroPadding2D`
 """
 
 from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
-from .extra import PaddingChoice, DataFormatChoice
+from .extra import DataFormatChoice, InterpolationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    pool_size: Tuple[PositiveInt, PositiveInt] = (2, 2)
-    # strides: Optional[PositiveInt]
-    strides: Optional[Tuple[PositiveInt, PositiveInt]]
-    padding: PaddingChoice = PaddingChoice.same
+    padding: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]] = ((1, 1), (1, 1))
 
 
 class ParametersExtraData(BaseMixinData):
@@ -21,7 +18,7 @@ class ParametersExtraData(BaseMixinData):
 
 
 class LayerConfig(BaseMixinData):
-    num_uplinks: int or str or list = 1
+    num_uplinks: int or str or list  = 1
     input_dimension: int or str = 4
     module: str = 'tensorflow.keras.layers'
     module_type: str = 'keras'

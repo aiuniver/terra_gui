@@ -1,19 +1,16 @@
 """
-## Тип слоя `AveragePooling2D`
+## Тип слоя `Cropping2D`
 """
 
 from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
-from .extra import PaddingChoice, DataFormatChoice
+from .extra import DataFormatChoice, InterpolationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    pool_size: Tuple[PositiveInt, PositiveInt] = (2, 2)
-    # strides: Optional[PositiveInt]
-    strides: Optional[Tuple[PositiveInt, PositiveInt]]
-    padding: PaddingChoice = PaddingChoice.same
+    cropping: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]] = ((0, 0), (0, 0))
 
 
 class ParametersExtraData(BaseMixinData):

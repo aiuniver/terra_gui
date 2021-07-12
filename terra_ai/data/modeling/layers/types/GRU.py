@@ -5,9 +5,9 @@
 from typing import Optional
 from pydantic.types import PositiveInt
 
-from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1
-from ..extra import (
+from ...mixins import BaseMixinData
+from ...types import ConstrainedFloatValueGe0Le1
+from .extra import (
     ActivationChoice,
     InitializerChoice,
     RegularizerChoice,
@@ -42,3 +42,10 @@ class ParametersExtraData(BaseMixinData):
     unroll: bool = False
     time_major: bool = False
     reset_after: bool = True
+
+
+class LayerConfig(BaseMixinData):
+    num_uplinks: int or str or list = 1
+    input_dimension: int or str = 3
+    module: str = 'tensorflow.keras.layers'
+    module_type: str = 'keras'

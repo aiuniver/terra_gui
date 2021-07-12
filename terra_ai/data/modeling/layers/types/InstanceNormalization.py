@@ -16,14 +16,11 @@ class ParametersMainData(BaseMixinData):
 
 class ParametersExtraData(BaseMixinData):
     axis: int = -1
-    momentum: ConstrainedFloatValueGe0Le1 = 0.99
     epsilon: PositiveFloat = 0.001
     center: bool = True
     scale: bool = True
     beta_initializer: InitializerChoice = InitializerChoice.zeros
     gamma_initializer: InitializerChoice = InitializerChoice.ones
-    moving_mean_initializer: InitializerChoice = InitializerChoice.zeros
-    moving_variance_initializer: InitializerChoice = InitializerChoice.ones
     beta_regularizer: Optional[RegularizerChoice]
     gamma_regularizer: Optional[RegularizerChoice]
     beta_constraint: Optional[ConstraintChoice]
@@ -33,5 +30,5 @@ class ParametersExtraData(BaseMixinData):
 class LayerConfig(BaseMixinData):
     num_uplinks: int or str or list = 1
     input_dimension: int or str = '2+'
-    module: str = 'tensorflow.keras.layers'
-    module_type: str = 'keras'
+    module: str = 'customLayers'
+    module_type: str = 'terra_layer'

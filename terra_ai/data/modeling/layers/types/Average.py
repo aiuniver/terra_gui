@@ -1,16 +1,17 @@
 """
-## Тип слоя `Concatenate`
+## Тип слоя `Average`
 """
 
 from ...mixins import BaseMixinData
+from .extra import ActivationChoice
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    activation: ActivationChoice = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
-    axis: int = -1
+    pass
 
 
 class LayerConfig(BaseMixinData):

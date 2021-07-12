@@ -1,5 +1,5 @@
 """
-## Тип слоя `Concatenate`
+## Тип слоя `Mish`
 """
 
 from ...mixins import BaseMixinData
@@ -10,11 +10,11 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    axis: int = -1
+    pass
 
 
 class LayerConfig(BaseMixinData):
-    num_uplinks: int or str or list = '2+'
+    num_uplinks: int or str or list = 1
     input_dimension: int or str = '2+'
-    module: str = 'tensorflow.keras.layers'
-    module_type: str = 'keras'
+    module: str = 'customLayers'
+    module_type: str = 'terra_layer'

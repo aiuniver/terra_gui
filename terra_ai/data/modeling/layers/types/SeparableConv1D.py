@@ -5,8 +5,8 @@
 from typing import Optional
 from pydantic.types import PositiveInt
 
-from ....mixins import BaseMixinData
-from ..extra import (
+from ...mixins import BaseMixinData
+from .extra import (
     PaddingAddCausalChoice,
     ActivationChoice,
     DataFormatChoice,
@@ -17,11 +17,11 @@ from ..extra import (
 
 
 class ParametersMainData(BaseMixinData):
-    filters: PositiveInt
-    kernel_size: PositiveInt
+    filters: PositiveInt = 32
+    kernel_size: PositiveInt = 3
     strides: PositiveInt = 1
-    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
@@ -39,3 +39,10 @@ class ParametersExtraData(BaseMixinData):
     depthwise_constraint: Optional[ConstraintChoice]
     pointwise_constraint: Optional[ConstraintChoice]
     bias_constraint: Optional[ConstraintChoice]
+
+
+class LayerConfig(BaseMixinData):
+    num_uplinks: int or str or list = 1
+    input_dimension: int or str = 3
+    module: str = 'tensorflow.keras.layers'
+    module_type: str = 'keras'

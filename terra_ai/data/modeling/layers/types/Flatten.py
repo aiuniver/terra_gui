@@ -4,8 +4,8 @@
 
 from typing import Optional
 
-from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice
+from ...mixins import BaseMixinData
+from .extra import DataFormatChoice
 
 
 class ParametersMainData(BaseMixinData):
@@ -13,4 +13,11 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
+
+
+class LayerConfig(BaseMixinData):
+    num_uplinks: int or str or list = 1
+    input_dimension: int or str = '2+'
+    module: str = 'tensorflow.keras.layers'
+    module_type: str = 'keras'
