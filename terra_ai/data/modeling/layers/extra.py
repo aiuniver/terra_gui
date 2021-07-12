@@ -86,3 +86,14 @@ class ResizingInterpolationChoice(str, Enum):
     lanczos3 = "lanczos3"
     gaussian = "gaussian"
     mitchellcubic = "mitchellcubic"
+
+
+class ModuleChoise(str, Enum):
+    tensorflow_keras_layers = "tensorflow.keras.layers"
+    terra_custom_layers = "customLayers"
+    tensorflow_keras_layers_preprocessing = 'tensorflow.keras.layers.experimental.preprocessing'
+
+
+class ModuleTypeChoice(str, Enum):
+    keras = "keras"
+    terra_layer = "terra_layer"

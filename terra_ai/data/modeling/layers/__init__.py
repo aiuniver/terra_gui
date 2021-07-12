@@ -405,7 +405,7 @@ class ParametersTypeInstanceNormalizationData(LayerMixinData):
 
 class ParametersTypeZeroPadding2DData(LayerMixinData):
     main: types.ZeroPadding2D.ParametersMainData = (
-        types.ZeroPadding2D.ParametersMainData()
+        types.ZeroPadding2D.ParametersMainData(padding=((1, 1), (1, 1)))
     )
     extra: types.ZeroPadding2D.ParametersExtraData = (
         types.ZeroPadding2D.ParametersExtraData()
@@ -415,7 +415,7 @@ class ParametersTypeZeroPadding2DData(LayerMixinData):
 
 class ParametersTypeCropping2DData(LayerMixinData):
     main: types.Cropping2D.ParametersMainData = (
-        types.Cropping2D.ParametersMainData()
+        types.Cropping2D.ParametersMainData(cropping=((0, 0), (0, 0)))
     )
     extra: types.Cropping2D.ParametersExtraData = (
         types.Cropping2D.ParametersExtraData()
