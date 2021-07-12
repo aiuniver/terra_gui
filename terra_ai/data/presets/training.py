@@ -6,148 +6,148 @@ from enum import Enum
 
 
 class Task(str, Enum):
-    classification = "classification"
-    segmentation = "segmentation"
-    regression = "regression"
-    timeseries = "timeseries"
+    Classification = "Classification"
+    Segmentation = "Segmentation"
+    Regression = "Regression"
+    Timeseries = "Timeseries"
 
 
 class Loss(str, Enum):
-    categorical_crossentropy = "categorical_crossentropy"
-    binary_crossentropy = "binary_crossentropy"
-    mse = "mse"
-    squared_hinge = "squared_hinge"
-    hinge = "hinge"
-    categorical_hinge = "categorical_hinge"
-    sparse_categorical_crossentropy = "sparse_categorical_crossentropy"
-    kl_divergence = "kl_divergence"
-    poisson = "poisson"
-    mae = "mae"
-    mape = "mape"
-    msle = "msle"
-    log_cosh = "log_cosh"
-    cosine_similarity = "cosine_similarity"
+    CategoricalCrossentropy = "CategoricalCrossentropy"
+    BinaryCrossentropy = "BinaryCrossentropy"
+    MSE = "MSE"
+    SquaredHinge = "SquaredHinge"
+    Hinge = "Hinge"
+    CategoricalHinge = "CategoricalHinge"
+    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    Poisson = "Poisson"
+    MAE = "MAE"
+    Mape = "Mape"
+    MSLE = "MSLE"
+    LogCosh = "LogCosh"
+    CosineSimilarity = "CosineSimilarity"
 
 
 class Metric(str, Enum):
-    accuracy = "accuracy"
-    binary_accuracy = "binary_accuracy"
-    binary_crossentropy = "binary_crossentropy"
-    categorical_accuracy = "categorical_accuracy"
-    categorical_crossentropy = "categorical_crossentropy"
-    sparse_categorical_accuracy = "sparse_categorical_accuracy"
-    sparse_categorical_crossentropy = "sparse_categorical_crossentropy"
-    top_k_categorical_accuracy = "top_k_categorical_accuracy"
-    sparse_top_k_categorical_accuracy = "sparse_top_k_categorical_accuracy"
-    hinge = "hinge"
-    kullback_leibler_divergence = "kullback_leibler_divergence"
-    poisson = "poisson"
-    dice_coef = "dice_coef"
-    mean_io_u = "mean_io_u"
-    mae = "mae"
-    mse = "mse"
-    mape = "mape"
-    msle = "msle"
-    logcosh = "logcosh"
-    cosine_similarity = "cosine_similarity"
+    Accuracy = "Accuracy"
+    BinaryAccuracy = "BinaryAccuracy"
+    BinaryCrossentropy = "BinaryCrossentropy"
+    CategoricalAccuracy = "CategoricalAccuracy"
+    CategoricalCrossentropy = "CategoricalCrossentropy"
+    SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
+    SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
+    TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
+    SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
+    Hinge = "Hinge"
+    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    Poisson = "Poisson"
+    DiceCoef = "DiceCoef"
+    MeanIOU = "MeanIOU"
+    MAE = "MAE"
+    MSE = "MSE"
+    Mape = "Mape"
+    MSLE = "MSLE"
+    LogCosh = "LogCosh"
+    CosineSimilarity = "CosineSimilarity"
 
 
 TasksGroups = [
     {
-        "alias": Task.classification,
+        "task": Task.Classification,
         "losses": [
-            Loss.categorical_crossentropy,
-            Loss.binary_crossentropy,
-            Loss.mse,
-            Loss.squared_hinge,
-            Loss.hinge,
-            Loss.categorical_hinge,
-            Loss.sparse_categorical_crossentropy,
-            Loss.kl_divergence,
-            Loss.poisson,
+            Loss.CategoricalCrossentropy,
+            Loss.BinaryCrossentropy,
+            Loss.MSE,
+            Loss.SquaredHinge,
+            Loss.Hinge,
+            Loss.CategoricalHinge,
+            Loss.SparseCategoricalCrossentropy,
+            Loss.KullbackLeiblerDivergence,
+            Loss.Poisson,
         ],
         "metrics": [
-            Metric.accuracy,
-            Metric.binary_accuracy,
-            Metric.binary_crossentropy,
-            Metric.categorical_accuracy,
-            Metric.categorical_crossentropy,
-            Metric.sparse_categorical_accuracy,
-            Metric.sparse_categorical_crossentropy,
-            Metric.top_k_categorical_accuracy,
-            Metric.sparse_top_k_categorical_accuracy,
-            Metric.hinge,
-            Metric.kullback_leibler_divergence,
-            Metric.poisson,
+            Metric.Accuracy,
+            Metric.BinaryAccuracy,
+            Metric.BinaryCrossentropy,
+            Metric.CategoricalAccuracy,
+            Metric.CategoricalCrossentropy,
+            Metric.SparseCategoricalAccuracy,
+            Metric.SparseCategoricalCrossentropy,
+            Metric.TopKCategoricalAccuracy,
+            Metric.SparseTopKCategoricalAccuracy,
+            Metric.Hinge,
+            Metric.KullbackLeiblerDivergence,
+            Metric.Poisson,
         ],
     },
     {
-        "alias": Task.segmentation,
+        "task": Task.Segmentation,
         "losses": [
-            Loss.categorical_crossentropy,
-            Loss.binary_crossentropy,
-            Loss.squared_hinge,
-            Loss.hinge,
-            Loss.categorical_hinge,
-            Loss.sparse_categorical_crossentropy,
-            Loss.kl_divergence,
-            Loss.poisson,
+            Loss.CategoricalCrossentropy,
+            Loss.BinaryCrossentropy,
+            Loss.SquaredHinge,
+            Loss.Hinge,
+            Loss.CategoricalHinge,
+            Loss.SparseCategoricalCrossentropy,
+            Loss.KullbackLeiblerDivergence,
+            Loss.Poisson,
         ],
         "metrics": [
-            Metric.dice_coef,
-            Metric.mean_io_u,
-            Metric.accuracy,
-            Metric.binary_accuracy,
-            Metric.binary_crossentropy,
-            Metric.categorical_accuracy,
-            Metric.categorical_crossentropy,
-            Metric.sparse_categorical_accuracy,
-            Metric.sparse_categorical_crossentropy,
-            Metric.top_k_categorical_accuracy,
-            Metric.sparse_top_k_categorical_accuracy,
-            Metric.hinge,
-            Metric.kullback_leibler_divergence,
-            Metric.poisson,
+            Metric.DiceCoef,
+            Metric.MeanIOU,
+            Metric.Accuracy,
+            Metric.BinaryAccuracy,
+            Metric.BinaryCrossentropy,
+            Metric.CategoricalAccuracy,
+            Metric.CategoricalCrossentropy,
+            Metric.SparseCategoricalAccuracy,
+            Metric.SparseCategoricalCrossentropy,
+            Metric.TopKCategoricalAccuracy,
+            Metric.SparseTopKCategoricalAccuracy,
+            Metric.Hinge,
+            Metric.KullbackLeiblerDivergence,
+            Metric.Poisson,
         ],
     },
     {
-        "alias": Task.regression,
+        "task": Task.Regression,
         "losses": [
-            Loss.mse,
-            Loss.mae,
-            Loss.mape,
-            Loss.msle,
-            Loss.log_cosh,
-            Loss.cosine_similarity,
+            Loss.MSE,
+            Loss.MAE,
+            Loss.Mape,
+            Loss.MSLE,
+            Loss.LogCosh,
+            Loss.CosineSimilarity,
         ],
         "metrics": [
-            Metric.accuracy,
-            Metric.mae,
-            Metric.mse,
-            Metric.mape,
-            Metric.msle,
-            Metric.logcosh,
-            Metric.cosine_similarity,
+            Metric.Accuracy,
+            Metric.MAE,
+            Metric.MSE,
+            Metric.Mape,
+            Metric.MSLE,
+            Metric.LogCosh,
+            Metric.CosineSimilarity,
         ],
     },
     {
-        "alias": Task.timeseries,
+        "task": Task.Timeseries,
         "losses": [
-            Loss.mse,
-            Loss.mae,
-            Loss.mape,
-            Loss.msle,
-            Loss.log_cosh,
-            Loss.cosine_similarity,
+            Loss.MSE,
+            Loss.MAE,
+            Loss.Mape,
+            Loss.MSLE,
+            Loss.LogCosh,
+            Loss.CosineSimilarity,
         ],
         "metrics": [
-            Metric.accuracy,
-            Metric.mae,
-            Metric.mse,
-            Metric.mape,
-            Metric.msle,
-            Metric.logcosh,
-            Metric.cosine_similarity,
+            Metric.Accuracy,
+            Metric.MAE,
+            Metric.MSE,
+            Metric.Mape,
+            Metric.MSLE,
+            Metric.LogCosh,
+            Metric.CosineSimilarity,
         ],
     },
 ]

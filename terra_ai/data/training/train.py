@@ -60,14 +60,3 @@ class TrainData(BaseMixinData):
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
-    # outputs: OutputsList
-    # checkpoint: CheckpointData
-
-    # @validator("checkpoint", allow_reuse=True)
-    # def _validate_checkpoint_layer(
-    #     cls, value: CheckpointData, values
-    # ) -> CheckpointData:
-    #     __layers = values.get("outputs").ids
-    #     if value.layer not in __layers:
-    #         raise ValueNotInListException(value.layer, __layers)
-    #     return value
