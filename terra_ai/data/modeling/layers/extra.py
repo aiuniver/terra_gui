@@ -3,6 +3,11 @@
 """
 
 from enum import Enum
+from dataclasses import dataclass
+
+from pydantic.types import PositiveInt
+
+from ...types import ConstrainedIntValueGe0
 
 
 class PaddingChoice(str, Enum):
@@ -91,9 +96,19 @@ class ResizingInterpolationChoice(str, Enum):
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
     terra_custom_layers = "customLayers"
-    tensorflow_keras_layers_preprocessing = 'tensorflow.keras.layers.experimental.preprocessing'
+    tensorflow_keras_layers_preprocessing = (
+        "tensorflow.keras.layers.experimental.preprocessing"
+    )
 
 
 class ModuleTypeChoice(str, Enum):
     keras = "keras"
     terra_layer = "terra_layer"
+
+
+@dataclass
+class LayerConfigData:
+    num_uplinks: PositiveInt
+    input_dimension: ConstrainedIntValueGe0
+    module: ModuleChoice
+    module_type: ModuleTypeChoice

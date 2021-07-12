@@ -30,13 +30,11 @@ class LayerConfigDefaultData(LayerDefaultData):
 class LayerMixinData(BaseMixinData):
     main: LayerMainDefaultData = LayerMainDefaultData()
     extra: LayerExtraDefaultData = LayerExtraDefaultData()
-    config: LayerConfigDefaultData = LayerConfigDefaultData()
 
 
 class LayerInputData(LayerMixinData):
     main: types.Input.ParametersMainData = types.Input.ParametersMainData()
     extra: types.Input.ParametersExtraData = types.Input.ParametersExtraData()
-    config: types.Input.LayerConfig = types.Input.LayerConfig()
 
 
 class LayerConv1DData(LayerMixinData):
@@ -44,7 +42,6 @@ class LayerConv1DData(LayerMixinData):
         filters=32, kernel_size=5
     )
     extra: types.Conv1D.ParametersExtraData = types.Conv1D.ParametersExtraData()
-    config: types.Conv1D.LayerConfig = types.Conv1D.LayerConfig()
 
 
 class LayerConv2DData(LayerMixinData):
@@ -320,7 +317,9 @@ class LayerGlobalAveragePooling1DData(LayerMixinData):
     extra: types.GlobalAveragePooling1D.ParametersExtraData = (
         types.GlobalAveragePooling1D.ParametersExtraData()
     )
-    config: types.GlobalAveragePooling1D.LayerConfig = types.GlobalAveragePooling1D.LayerConfig()
+    config: types.GlobalAveragePooling1D.LayerConfig = (
+        types.GlobalAveragePooling1D.LayerConfig()
+    )
 
 
 class LayerGlobalAveragePooling2DData(LayerMixinData):
@@ -330,7 +329,9 @@ class LayerGlobalAveragePooling2DData(LayerMixinData):
     extra: types.GlobalAveragePooling2D.ParametersExtraData = (
         types.GlobalAveragePooling2D.ParametersExtraData()
     )
-    config: types.GlobalAveragePooling2D.LayerConfig = types.GlobalAveragePooling2D.LayerConfig()
+    config: types.GlobalAveragePooling2D.LayerConfig = (
+        types.GlobalAveragePooling2D.LayerConfig()
+    )
 
 
 class LayerGlobalAveragePooling3DData(LayerMixinData):
@@ -340,7 +341,9 @@ class LayerGlobalAveragePooling3DData(LayerMixinData):
     extra: types.GlobalAveragePooling3D.ParametersExtraData = (
         types.GlobalAveragePooling3D.ParametersExtraData()
     )
-    config: types.GlobalAveragePooling3D.LayerConfig = types.GlobalAveragePooling3D.LayerConfig()
+    config: types.GlobalAveragePooling3D.LayerConfig = (
+        types.GlobalAveragePooling3D.LayerConfig()
+    )
 
 
 class LayerGRUData(LayerMixinData):
@@ -380,16 +383,14 @@ class LayerBatchNormalizationData(LayerMixinData):
     extra: types.BatchNormalization.ParametersExtraData = (
         types.BatchNormalization.ParametersExtraData()
     )
-    config: types.BatchNormalization.LayerConfig = types.BatchNormalization.LayerConfig()
+    config: types.BatchNormalization.LayerConfig = (
+        types.BatchNormalization.LayerConfig()
+    )
 
 
 class ParametersTypeMishData(LayerMixinData):
-    main: types.Mish.ParametersMainData = (
-        types.Mish.ParametersMainData()
-    )
-    extra: types.Mish.ParametersExtraData = (
-        types.Mish.ParametersExtraData()
-    )
+    main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
+    extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()
     config: types.Mish.LayerConfig = types.Mish.LayerConfig()
 
 
@@ -400,7 +401,9 @@ class ParametersTypeInstanceNormalizationData(LayerMixinData):
     extra: types.InstanceNormalization.ParametersExtraData = (
         types.InstanceNormalization.ParametersExtraData()
     )
-    config: types.InstanceNormalization.LayerConfig = types.InstanceNormalization.LayerConfig()
+    config: types.InstanceNormalization.LayerConfig = (
+        types.InstanceNormalization.LayerConfig()
+    )
 
 
 class ParametersTypeZeroPadding2DData(LayerMixinData):
@@ -414,32 +417,22 @@ class ParametersTypeZeroPadding2DData(LayerMixinData):
 
 
 class ParametersTypeCropping2DData(LayerMixinData):
-    main: types.Cropping2D.ParametersMainData = (
-        types.Cropping2D.ParametersMainData(cropping=((0, 0), (0, 0)))
+    main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
+        cropping=((1, 1), (1, 1))
     )
-    extra: types.Cropping2D.ParametersExtraData = (
-        types.Cropping2D.ParametersExtraData()
-    )
+    extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()
     config: types.Cropping2D.LayerConfig = types.Cropping2D.LayerConfig()
 
 
 class ParametersTypeAttentionData(LayerMixinData):
-    main: types.Attention.ParametersMainData = (
-        types.Attention.ParametersMainData()
-    )
-    extra: types.Attention.ParametersExtraData = (
-        types.Attention.ParametersExtraData()
-    )
+    main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
+    extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()
     config: types.Attention.LayerConfig = types.Attention.LayerConfig()
 
 
 class ParametersTypeAverageData(LayerMixinData):
-    main: types.Average.ParametersMainData = (
-        types.Average.ParametersMainData()
-    )
-    extra: types.Average.ParametersExtraData = (
-        types.Average.ParametersExtraData()
-    )
+    main: types.Average.ParametersMainData = types.Average.ParametersMainData()
+    extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()
     config: types.Average.LayerConfig = types.Average.LayerConfig()
 
 
@@ -454,22 +447,14 @@ class ParametersTypeThresholdedReLUData(LayerMixinData):
 
 
 class ParametersTypeRescalingData(LayerMixinData):
-    main: types.Rescaling.ParametersMainData = (
-        types.Rescaling.ParametersMainData()
-    )
-    extra: types.Rescaling.ParametersExtraData = (
-        types.Rescaling.ParametersExtraData()
-    )
+    main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
+    extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()
     config: types.Rescaling.LayerConfig = types.Rescaling.LayerConfig()
 
 
 class ParametersTypeResizingData(LayerMixinData):
-    main: types.Resizing.ParametersMainData = (
-        types.Resizing.ParametersMainData()
-    )
-    extra: types.Resizing.ParametersExtraData = (
-        types.Resizing.ParametersExtraData()
-    )
+    main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
+    extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()
     config: types.Resizing.LayerConfig = types.Resizing.LayerConfig()
 
 
