@@ -86,12 +86,6 @@ class LayerType(str, Enum):
     Flatten = "Flatten"
     Concatenate = "Concatenate"
     Reshape = "Reshape"
-    sigmoid = "sigmoid"
-    softmax = "softmax"
-    tanh = "tanh"
-    relu = "relu"
-    elu = "elu"
-    selu = "selu"
     PReLU = "PReLU"
     GlobalMaxPooling1D = "GlobalMaxPooling1D"
     GlobalMaxPooling2D = "GlobalMaxPooling2D"
@@ -102,6 +96,33 @@ class LayerType(str, Enum):
     Embedding = "Embedding"
     RepeatVector = "RepeatVector"
     BatchNormalization = "BatchNormalization"
+    InstanceNormalization = "InstanceNormalization"
+    Activation = "Activation"
+    ReLU = "ReLU"
+    Softmax = "Softmax"
+    ELU = "ELU"
+    ThresholdedReLU = "ThresholdedReLU"
+    Average = "Average"
+    Rescaling = "Rescaling"
+    Resizing = "Resizing"
+    ZeroPadding2D = "ZeroPadding2D"
+    Normalization = "Normalization"
+    Cropping2D = "Cropping2D"
+    VGG16 = "VGG16"
+    CustomUNETBlock = "CustomUNETBlock"
+    Conv2DBNDrop = "Conv2DBNDrop"
+    Conv2DBNLeaky = 'Conv2DBNLeaky'
+    CustomResBlock = 'CustomResBlock'
+    Resnet50Block = 'Resnet50Block'
+    PSPBlock = 'PSPBlock'
+    UNETBlock = 'UNETBlock'
+    XceptionBlock = 'XceptionBlock'
+    InceptionV3block = 'InceptionV3block'
+    InceptionV3 = "InceptionV3"
+    ResNet50 = "ResNet50"
+    Xception = "Xception"
+    Attention = "Attention"
+
 
 
 class OptimizerParams(pydantic.BaseModel):

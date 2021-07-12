@@ -946,6 +946,16 @@
                     let inner = container.children(".inner");
                     if (!Object.keys(params).length) return;
                     for (let name in params) {
+                        if (params[name].type === "tuple"){
+                            let tuple_value = [];
+                            for (let i in params[name].default) {
+                                tuple_value.push(typeof params[name].default[i] === "object"
+                                    ? `(${params[name].default[i]})`
+                                    : `${params[name].default[i]}`
+                                );
+                            }
+                            params[name].default = tuple_value;
+                        }
                         let param = $.extend(true, {}, params[name]);
                         param.label = name;
                         if (data[name] !== undefined) param.default = data[name];
