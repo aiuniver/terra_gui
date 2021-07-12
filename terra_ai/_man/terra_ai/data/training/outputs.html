@@ -31,83 +31,16 @@
 ## Структура данных параметров `output`-слоев
 &#34;&#34;&#34;
 
-import sys
-
-from enum import Enum
 from typing import List, Optional, Any, Union
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import UniqueListMixin, AliasMixinData, BaseMixinData
+from ..mixins import UniqueListMixin, AliasMixinData
 from ..presets.training import TasksGroups
-from ..exceptions import TaskGroupException
+from ..exceptions import ValueNotInListException
 from .extra import TaskChoice, LossChoice, MetricChoice
-
-
-class TaskCallbacksTypeclassificationData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_loss_for_classes: bool = True
-    plot_metric_for_classes: bool = True
-    show_best_images: bool = True
-    show_worst_images: bool = False
-    plot_final: bool = True
-
-
-class TaskCallbacksTypesegmentationData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_loss_for_classes: bool = True
-    plot_metric_for_classes: bool = True
-    show_best_images: bool = True
-    show_worst_images: bool = False
-    plot_final: bool = True
-
-
-class TaskCallbacksTyperegressionData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_scatter: bool = True
-    plot_final: bool = True
-
-
-class TaskCallbacksTypetimeseriesData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_autocorrelation: bool = True
-    plot_pred_and_true: bool = True
-    plot_final: bool = True
-
-
-TaskCallbacksType = Enum(
-    &#34;TaskCallbacksType&#34;,
-    dict(
-        map(
-            lambda item: (item, f&#34;TaskCallbacksType{item}Data&#34;),
-            list(TaskChoice),
-        )
-    ),
-    type=str,
-)
-&#34;&#34;&#34;
-Список возможных колбэков в таске
-&#34;&#34;&#34;
-
-
-TaskCallbacksTypeUnion = tuple(
-    map(
-        lambda item: getattr(sys.modules.get(__name__), item),
-        TaskCallbacksType,
-    )
-)
-&#34;&#34;&#34;
-Список возможных колбэков в таске в виде классов
-&#34;&#34;&#34;
+from . import callbacks
 
 
 class OutputData(AliasMixinData):
@@ -131,7 +64,7 @@ class OutputData(AliasMixinData):
         __task = values.get(&#34;task&#34;)
         __losses = TasksGroups.get(__task).losses
         if value.value not in __losses:
-            raise TaskGroupException(value.value, __losses)
+            raise ValueNotInListException(value.value, __losses)
         return value
 
     @validator(&#34;metrics&#34;, allow_reuse=True)
@@ -140,20 +73,22 @@ class OutputData(AliasMixinData):
         __metrics = TasksGroups.get(__task).metrics
         __value = list(map(lambda item: item.value, value))
         if list(set(__value) - set(__metrics)):
-            raise TaskGroupException(__value, __metrics)
+            raise ValueNotInListException(__value, __metrics)
         return value
 
     @validator(&#34;task&#34;, allow_reuse=True, pre=True)
     def _validate_task(cls, value: TaskChoice) -&gt; TaskChoice:
         if not hasattr(TaskChoice, value):
             raise EnumMemberError(enum_values=list(TaskChoice))
-        type_ = getattr(sys.modules.get(__name__), getattr(TaskCallbacksType, value))
+        type_ = getattr(callbacks, getattr(callbacks.TaskCallbacksType, value))
         cls.__fields__[&#34;callbacks&#34;].type_ = type_
         cls.__fields__[&#34;callbacks&#34;].required = True
         return value
 
     @validator(&#34;callbacks&#34;, allow_reuse=True)
-    def _validate_callbacks(cls, value: Any, **kwargs) -&gt; Union[TaskCallbacksTypeUnion]:
+    def _validate_callbacks(
+        cls, value: Any, **kwargs
+    ) -&gt; Union[callbacks.TaskCallbacksTypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)
 
 
@@ -170,13 +105,6 @@ class OutputsList(UniqueListMixin):
 <section>
 </section>
 <section>
-<h2 class="section-title" id="header-variables">Global variables</h2>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeUnion"><code class="name">var <span class="ident">TaskCallbacksTypeUnion</span></code></dt>
-<dd>
-<div class="desc"><p>Список возможных колбэков в таске в виде классов</p></div>
-</dd>
-</dl>
 </section>
 <section>
 </section>
@@ -216,7 +144,7 @@ class OutputsList(UniqueListMixin):
         __task = values.get(&#34;task&#34;)
         __losses = TasksGroups.get(__task).losses
         if value.value not in __losses:
-            raise TaskGroupException(value.value, __losses)
+            raise ValueNotInListException(value.value, __losses)
         return value
 
     @validator(&#34;metrics&#34;, allow_reuse=True)
@@ -225,20 +153,22 @@ class OutputsList(UniqueListMixin):
         __metrics = TasksGroups.get(__task).metrics
         __value = list(map(lambda item: item.value, value))
         if list(set(__value) - set(__metrics)):
-            raise TaskGroupException(__value, __metrics)
+            raise ValueNotInListException(__value, __metrics)
         return value
 
     @validator(&#34;task&#34;, allow_reuse=True, pre=True)
     def _validate_task(cls, value: TaskChoice) -&gt; TaskChoice:
         if not hasattr(TaskChoice, value):
             raise EnumMemberError(enum_values=list(TaskChoice))
-        type_ = getattr(sys.modules.get(__name__), getattr(TaskCallbacksType, value))
+        type_ = getattr(callbacks, getattr(callbacks.TaskCallbacksType, value))
         cls.__fields__[&#34;callbacks&#34;].type_ = type_
         cls.__fields__[&#34;callbacks&#34;].required = True
         return value
 
     @validator(&#34;callbacks&#34;, allow_reuse=True)
-    def _validate_callbacks(cls, value: Any, **kwargs) -&gt; Union[TaskCallbacksTypeUnion]:
+    def _validate_callbacks(
+        cls, value: Any, **kwargs
+    ) -&gt; Union[callbacks.TaskCallbacksTypeUnion]:
         return kwargs.get(&#34;field&#34;).type_(**value)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -320,300 +250,6 @@ class OutputsList(UniqueListMixin):
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksType"><code class="flex name class">
-<span>class <span class="ident">TaskCallbacksType</span></span>
-<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>An enumeration.</p></div>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>builtins.str</li>
-<li>enum.Enum</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksType.classification"><code class="name">var <span class="ident">TaskChoice.classification</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksType.regression"><code class="name">var <span class="ident">TaskChoice.regression</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksType.segmentation"><code class="name">var <span class="ident">TaskChoice.segmentation</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksType.timeseries"><code class="name">var <span class="ident">TaskChoice.timeseries</span></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData"><code class="flex name class">
-<span>class <span class="ident">TaskCallbacksTypeclassificationData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TaskCallbacksTypeclassificationData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_loss_for_classes: bool = True
-    plot_metric_for_classes: bool = True
-    show_best_images: bool = True
-    show_worst_images: bool = False
-    plot_final: bool = True</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_final"><code class="name">var <span class="ident">plot_final</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_for_classes"><code class="name">var <span class="ident">plot_loss_for_classes</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_metric"><code class="name">var <span class="ident">plot_loss_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric"><code class="name">var <span class="ident">plot_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric_for_classes"><code class="name">var <span class="ident">plot_metric_for_classes</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_best_images"><code class="name">var <span class="ident">show_best_images</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_every_epoch"><code class="name">var <span class="ident">show_every_epoch</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_worst_images"><code class="name">var <span class="ident">show_worst_images</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData"><code class="flex name class">
-<span>class <span class="ident">TaskCallbacksTyperegressionData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TaskCallbacksTyperegressionData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_scatter: bool = True
-    plot_final: bool = True</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_final"><code class="name">var <span class="ident">plot_final</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_loss_metric"><code class="name">var <span class="ident">plot_loss_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_metric"><code class="name">var <span class="ident">plot_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_scatter"><code class="name">var <span class="ident">plot_scatter</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.show_every_epoch"><code class="name">var <span class="ident">show_every_epoch</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData"><code class="flex name class">
-<span>class <span class="ident">TaskCallbacksTypesegmentationData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TaskCallbacksTypesegmentationData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_loss_for_classes: bool = True
-    plot_metric_for_classes: bool = True
-    show_best_images: bool = True
-    show_worst_images: bool = False
-    plot_final: bool = True</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_final"><code class="name">var <span class="ident">plot_final</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_for_classes"><code class="name">var <span class="ident">plot_loss_for_classes</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_metric"><code class="name">var <span class="ident">plot_loss_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric"><code class="name">var <span class="ident">plot_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric_for_classes"><code class="name">var <span class="ident">plot_metric_for_classes</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_best_images"><code class="name">var <span class="ident">show_best_images</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_every_epoch"><code class="name">var <span class="ident">show_every_epoch</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_worst_images"><code class="name">var <span class="ident">show_worst_images</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData"><code class="flex name class">
-<span>class <span class="ident">TaskCallbacksTypetimeseriesData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class TaskCallbacksTypetimeseriesData(BaseMixinData):
-    show_every_epoch: bool = True
-    plot_loss_metric: bool = True
-    plot_metric: bool = True
-    plot_autocorrelation: bool = True
-    plot_pred_and_true: bool = True
-    plot_final: bool = True</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_autocorrelation"><code class="name">var <span class="ident">plot_autocorrelation</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_final"><code class="name">var <span class="ident">plot_final</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_loss_metric"><code class="name">var <span class="ident">plot_loss_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_metric"><code class="name">var <span class="ident">plot_metric</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_pred_and_true"><code class="name">var <span class="ident">plot_pred_and_true</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.show_every_epoch"><code class="name">var <span class="ident">show_every_epoch</span> : bool</code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 </dl>
 </section>
 </article>
@@ -630,11 +266,6 @@ class OutputsList(UniqueListMixin):
 <li><code><a title="terra_ai.data.training" href="index.html">terra_ai.data.training</a></code></li>
 </ul>
 </li>
-<li><h3><a href="#header-variables">Global variables</a></h3>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeUnion" href="#terra_ai.data.training.outputs.TaskCallbacksTypeUnion">TaskCallbacksTypeUnion</a></code></li>
-</ul>
-</li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
@@ -649,62 +280,6 @@ class OutputsList(UniqueListMixin):
 </li>
 <li>
 <h4><code><a title="terra_ai.data.training.outputs.OutputsList" href="#terra_ai.data.training.outputs.OutputsList">OutputsList</a></code></h4>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.training.outputs.TaskCallbacksType" href="#terra_ai.data.training.outputs.TaskCallbacksType">TaskCallbacksType</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksType.classification" href="#terra_ai.data.training.outputs.TaskCallbacksType.classification">classification</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksType.regression" href="#terra_ai.data.training.outputs.TaskCallbacksType.regression">regression</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksType.segmentation" href="#terra_ai.data.training.outputs.TaskCallbacksType.segmentation">segmentation</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksType.timeseries" href="#terra_ai.data.training.outputs.TaskCallbacksType.timeseries">timeseries</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData">TaskCallbacksTypeclassificationData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_final" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_final">plot_final</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_for_classes" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_for_classes">plot_loss_for_classes</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_loss_metric">plot_loss_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric">plot_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric_for_classes" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.plot_metric_for_classes">plot_metric_for_classes</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_best_images" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_best_images">show_best_images</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_every_epoch" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_every_epoch">show_every_epoch</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_worst_images" href="#terra_ai.data.training.outputs.TaskCallbacksTypeclassificationData.show_worst_images">show_worst_images</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData">TaskCallbacksTyperegressionData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_final" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_final">plot_final</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_loss_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_loss_metric">plot_loss_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_metric">plot_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_scatter" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.plot_scatter">plot_scatter</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.show_every_epoch" href="#terra_ai.data.training.outputs.TaskCallbacksTyperegressionData.show_every_epoch">show_every_epoch</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData">TaskCallbacksTypesegmentationData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_final" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_final">plot_final</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_for_classes" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_for_classes">plot_loss_for_classes</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_loss_metric">plot_loss_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric">plot_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric_for_classes" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.plot_metric_for_classes">plot_metric_for_classes</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_best_images" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_best_images">show_best_images</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_every_epoch" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_every_epoch">show_every_epoch</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_worst_images" href="#terra_ai.data.training.outputs.TaskCallbacksTypesegmentationData.show_worst_images">show_worst_images</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData">TaskCallbacksTypetimeseriesData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_autocorrelation" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_autocorrelation">plot_autocorrelation</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_final" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_final">plot_final</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_loss_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_loss_metric">plot_loss_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_metric" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_metric">plot_metric</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_pred_and_true" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.plot_pred_and_true">plot_pred_and_true</a></code></li>
-<li><code><a title="terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.show_every_epoch" href="#terra_ai.data.training.outputs.TaskCallbacksTypetimeseriesData.show_every_epoch">show_every_epoch</a></code></li>
-</ul>
 </li>
 </ul>
 </li>

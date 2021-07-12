@@ -32,10 +32,20 @@
 &#34;&#34;&#34;
 
 from typing import Optional
+from pydantic import validator
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
 from .layer import LayersList
+
+
+class ModelLoadData(BaseMixinData):
+    &#34;&#34;&#34;
+    Информация для загрузки модели
+    &#34;&#34;&#34;
+
+    value: confilepath(ext=&#34;model&#34;)
+    &#34;Пусть к фалу модели&#34;
 
 
 class ModelDetailsData(BaseMixinData):
@@ -51,6 +61,8 @@ class ModelDetailsData(BaseMixinData):
     &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
     image: Optional[Base64Type]
     &#34;Изображение схемы модели в `base64`&#34;
+    layers: Optional[LayersList]
+    &#34;Список слоев&#34;
 
 
 class ModelData(AliasMixinData):
@@ -60,27 +72,43 @@ class ModelData(AliasMixinData):
 
     name: str
     &#34;Название&#34;
-    file_path: Optional[confilepath(ext=&#34;model&#34;)]
+    file_path: confilepath(ext=&#34;model&#34;)
     &#34;Путь к файлу модели&#34;
-    details: ModelDetailsData = ModelDetailsData()
+    details: Optional[ModelDetailsData]
     &#34;Детальная информация о модели&#34;
-    layers: LayersList = LayersList()
-    &#34;Список слоев&#34;
+
+
+class ModelListData(BaseMixinData):
+    &#34;&#34;&#34;
+    Информация о модели в списке
+    &#34;&#34;&#34;
+
+    value: confilepath(ext=&#34;model&#34;)
+    &#34;Путь к файлу модели&#34;
+    label: Optional[str]
+    &#34;Название&#34;
+
+    @validator(&#34;label&#34;, allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -&gt; str:
+        file_path = values.get(&#34;value&#34;)
+        if not file_path:
+            return value
+        return file_path.name.split(&#34;.model&#34;)[0]
 
 
 class ModelsList(UniqueListMixin):
     &#34;&#34;&#34;
-    Список моделей, основанных на `ModelData`
+    Список моделей, основанных на `ModelListData`
     ```
     class Meta:
-        source = ModelData
-        identifier = &#34;alias&#34;
+        source = ModelListData
+        identifier = &#34;name&#34;
     ```
     &#34;&#34;&#34;
 
     class Meta:
-        source = ModelData
-        identifier = &#34;alias&#34;
+        source = ModelListData
+        identifier = &#34;label&#34;
 
 
 class ModelsGroupData(AliasMixinData):
@@ -135,12 +163,10 @@ class ModelsGroupsList(UniqueListMixin):
 
     name: str
     &#34;Название&#34;
-    file_path: Optional[confilepath(ext=&#34;model&#34;)]
+    file_path: confilepath(ext=&#34;model&#34;)
     &#34;Путь к файлу модели&#34;
-    details: ModelDetailsData = ModelDetailsData()
-    &#34;Детальная информация о модели&#34;
-    layers: LayersList = LayersList()
-    &#34;Список слоев&#34;</code></pre>
+    details: Optional[ModelDetailsData]
+    &#34;Детальная информация о модели&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -151,17 +177,13 @@ class ModelsGroupsList(UniqueListMixin):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.model.ModelData.details"><code class="name">var <span class="ident">details</span> : <a title="terra_ai.data.modeling.model.ModelDetailsData" href="#terra_ai.data.modeling.model.ModelDetailsData">ModelDetailsData</a></code></dt>
+<dt id="terra_ai.data.modeling.model.ModelData.details"><code class="name">var <span class="ident">details</span> : Union[<a title="terra_ai.data.modeling.model.ModelDetailsData" href="#terra_ai.data.modeling.model.ModelDetailsData">ModelDetailsData</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Детальная информация о модели</p></div>
 </dd>
-<dt id="terra_ai.data.modeling.model.ModelData.file_path"><code class="name">var <span class="ident">file_path</span> : Union[<a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a>, NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.model.ModelData.file_path"><code class="name">var <span class="ident">file_path</span> : <a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a></code></dt>
 <dd>
 <div class="desc"><p>Путь к файлу модели</p></div>
-</dd>
-<dt id="terra_ai.data.modeling.model.ModelData.layers"><code class="name">var <span class="ident">layers</span> : <a title="terra_ai.data.modeling.layer.LayersList" href="layer.html#terra_ai.data.modeling.layer.LayersList">LayersList</a></code></dt>
-<dd>
-<div class="desc"><p>Список слоев</p></div>
 </dd>
 <dt id="terra_ai.data.modeling.model.ModelData.name"><code class="name">var <span class="ident">name</span> : str</code></dt>
 <dd>
@@ -201,7 +223,9 @@ class ModelsGroupsList(UniqueListMixin):
     input_shape: Optional[str]
     &#34;Размерность входных слоев: `[32,32,3], [128,128,3]`&#34;
     image: Optional[Base64Type]
-    &#34;Изображение схемы модели в `base64`&#34;</code></pre>
+    &#34;Изображение схемы модели в `base64`&#34;
+    layers: Optional[LayersList]
+    &#34;Список слоев&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -219,6 +243,10 @@ class ModelsGroupsList(UniqueListMixin):
 <dd>
 <div class="desc"><p>Размерность входных слоев: <code>[32,32,3], [128,128,3]</code></p></div>
 </dd>
+<dt id="terra_ai.data.modeling.model.ModelDetailsData.layers"><code class="name">var <span class="ident">layers</span> : Union[<a title="terra_ai.data.modeling.layer.LayersList" href="layer.html#terra_ai.data.modeling.layer.LayersList">LayersList</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Список слоев</p></div>
+</dd>
 <dt id="terra_ai.data.modeling.model.ModelDetailsData.name"><code class="name">var <span class="ident">name</span> : Union[<a title="terra_ai.data.types.AliasType" href="../types.html#terra_ai.data.types.AliasType">AliasType</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Название модели: <code>rasposnavanie_avtomobiley</code></p></div>
@@ -226,6 +254,103 @@ class ModelsGroupsList(UniqueListMixin):
 <dt id="terra_ai.data.modeling.model.ModelDetailsData.type"><code class="name">var <span class="ident">type</span> : Union[str, NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Тип модели: <code>2D</code></p></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.model.ModelListData"><code class="flex name class">
+<span>class <span class="ident">ModelListData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Информация о модели в списке</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelListData(BaseMixinData):
+    &#34;&#34;&#34;
+    Информация о модели в списке
+    &#34;&#34;&#34;
+
+    value: confilepath(ext=&#34;model&#34;)
+    &#34;Путь к файлу модели&#34;
+    label: Optional[str]
+    &#34;Название&#34;
+
+    @validator(&#34;label&#34;, allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -&gt; str:
+        file_path = values.get(&#34;value&#34;)
+        if not file_path:
+            return value
+        return file_path.name.split(&#34;.model&#34;)[0]</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.model.ModelListData.label"><code class="name">var <span class="ident">label</span> : Union[str, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Название</p></div>
+</dd>
+<dt id="terra_ai.data.modeling.model.ModelListData.value"><code class="name">var <span class="ident">value</span> : <a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a></code></dt>
+<dd>
+<div class="desc"><p>Путь к файлу модели</p></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.model.ModelLoadData"><code class="flex name class">
+<span>class <span class="ident">ModelLoadData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Информация для загрузки модели</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelLoadData(BaseMixinData):
+    &#34;&#34;&#34;
+    Информация для загрузки модели
+    &#34;&#34;&#34;
+
+    value: confilepath(ext=&#34;model&#34;)
+    &#34;Пусть к фалу модели&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.model.ModelLoadData.value"><code class="name">var <span class="ident">value</span> : <a title="terra_ai.data.types.FilePathType" href="../types.html#terra_ai.data.types.FilePathType">FilePathType</a></code></dt>
+<dd>
+<div class="desc"><p>Пусть к фалу модели</p></div>
 </dd>
 </dl>
 <h3>Inherited members</h3>
@@ -338,10 +463,10 @@ class ModelsGroupsList(UniqueListMixin):
 <span>(</span><span>data: Union[List[Union[dict, <a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a>]], NoneType] = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Список моделей, основанных на <code><a title="terra_ai.data.modeling.model.ModelData" href="#terra_ai.data.modeling.model.ModelData">ModelData</a></code></p>
+<div class="desc"><p>Список моделей, основанных на <code><a title="terra_ai.data.modeling.model.ModelListData" href="#terra_ai.data.modeling.model.ModelListData">ModelListData</a></code></p>
 <pre><code>class Meta:
-    source = ModelData
-    identifier = &quot;alias&quot;
+    source = ModelListData
+    identifier = &quot;name&quot;
 </code></pre></div>
 <details class="source">
 <summary>
@@ -349,17 +474,17 @@ class ModelsGroupsList(UniqueListMixin):
 </summary>
 <pre><code class="python">class ModelsList(UniqueListMixin):
     &#34;&#34;&#34;
-    Список моделей, основанных на `ModelData`
+    Список моделей, основанных на `ModelListData`
     ```
     class Meta:
-        source = ModelData
-        identifier = &#34;alias&#34;
+        source = ModelListData
+        identifier = &#34;name&#34;
     ```
     &#34;&#34;&#34;
 
     class Meta:
-        source = ModelData
-        identifier = &#34;alias&#34;</code></pre>
+        source = ModelListData
+        identifier = &#34;label&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -405,7 +530,6 @@ class ModelsGroupsList(UniqueListMixin):
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.model.ModelData.details" href="#terra_ai.data.modeling.model.ModelData.details">details</a></code></li>
 <li><code><a title="terra_ai.data.modeling.model.ModelData.file_path" href="#terra_ai.data.modeling.model.ModelData.file_path">file_path</a></code></li>
-<li><code><a title="terra_ai.data.modeling.model.ModelData.layers" href="#terra_ai.data.modeling.model.ModelData.layers">layers</a></code></li>
 <li><code><a title="terra_ai.data.modeling.model.ModelData.name" href="#terra_ai.data.modeling.model.ModelData.name">name</a></code></li>
 </ul>
 </li>
@@ -414,8 +538,22 @@ class ModelsGroupsList(UniqueListMixin):
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.model.ModelDetailsData.image" href="#terra_ai.data.modeling.model.ModelDetailsData.image">image</a></code></li>
 <li><code><a title="terra_ai.data.modeling.model.ModelDetailsData.input_shape" href="#terra_ai.data.modeling.model.ModelDetailsData.input_shape">input_shape</a></code></li>
+<li><code><a title="terra_ai.data.modeling.model.ModelDetailsData.layers" href="#terra_ai.data.modeling.model.ModelDetailsData.layers">layers</a></code></li>
 <li><code><a title="terra_ai.data.modeling.model.ModelDetailsData.name" href="#terra_ai.data.modeling.model.ModelDetailsData.name">name</a></code></li>
 <li><code><a title="terra_ai.data.modeling.model.ModelDetailsData.type" href="#terra_ai.data.modeling.model.ModelDetailsData.type">type</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.model.ModelListData" href="#terra_ai.data.modeling.model.ModelListData">ModelListData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.model.ModelListData.label" href="#terra_ai.data.modeling.model.ModelListData.label">label</a></code></li>
+<li><code><a title="terra_ai.data.modeling.model.ModelListData.value" href="#terra_ai.data.modeling.model.ModelListData.value">value</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.model.ModelLoadData" href="#terra_ai.data.modeling.model.ModelLoadData">ModelLoadData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.model.ModelLoadData.value" href="#terra_ai.data.modeling.model.ModelLoadData.value">value</a></code></li>
 </ul>
 </li>
 <li>
