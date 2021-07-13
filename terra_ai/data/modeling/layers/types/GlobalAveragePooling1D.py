@@ -1,9 +1,7 @@
 """
 ## Тип слоя `GlobalAveragePooling1D`
 """
-from pydantic import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import DataFormatChoice
 

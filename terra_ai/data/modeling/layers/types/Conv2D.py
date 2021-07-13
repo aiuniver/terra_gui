@@ -5,7 +5,6 @@
 from typing import Tuple, Optional
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import (
     PaddingChoice,
@@ -15,7 +14,6 @@ from ..extra import (
     RegularizerChoice,
     ConstraintChoice,
 )
-from ....types import ConstrainedIntValueGe4
 
 
 # class LayerConfig(BaseMixinData):

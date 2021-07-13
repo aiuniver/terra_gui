@@ -5,7 +5,6 @@
 from typing import Optional
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import (
     ActivationChoice,
@@ -13,7 +12,6 @@ from ..extra import (
     RegularizerChoice,
     ConstraintChoice,
 )
-from ....types import ConstrainedIntValueGe2
 
 
 # class LayerConfig(BaseMixinData):

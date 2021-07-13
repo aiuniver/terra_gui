@@ -5,7 +5,6 @@
 from typing import Optional
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
 from ..extra import (

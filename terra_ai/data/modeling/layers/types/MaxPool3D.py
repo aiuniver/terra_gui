@@ -6,7 +6,7 @@ from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import PaddingChoice, DataFormatChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import PaddingChoice, DataFormatChoice
 
 
 # class LayerConfig(BaseMixinData):

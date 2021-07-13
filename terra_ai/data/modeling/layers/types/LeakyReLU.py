@@ -1,11 +1,9 @@
 """
 ## Тип слоя `LeakyReLU`
 """
-from pydantic import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0, ConstrainedIntValueGe2
+from ....types import ConstrainedFloatValueGe0
 
 
 # class LayerConfig(BaseMixinData):

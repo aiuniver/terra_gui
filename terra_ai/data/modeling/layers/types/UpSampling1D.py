@@ -4,7 +4,6 @@
 
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 
 

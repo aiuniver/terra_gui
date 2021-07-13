@@ -6,13 +6,7 @@ from typing import Optional
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import (
-    InitializerChoice,
-    RegularizerChoice,
-    ConstraintChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
-)
+from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 # class LayerConfig(BaseMixinData):
 #     num_uplinks: PositiveInt = 1

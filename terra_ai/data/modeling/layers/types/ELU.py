@@ -1,11 +1,9 @@
 """
 ## Тип слоя `ELU`
 """
-from pydantic import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
+from ....types import ConstrainedFloatValueGe0Le1
 
 
 # class LayerConfig(BaseMixinData):

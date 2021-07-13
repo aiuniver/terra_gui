@@ -1,12 +1,9 @@
 """
 ## Тип слоя `Activation`
 """
-from pydantic.types import PositiveInt, ConstrainedInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice, LayerConfigData
 from ....mixins import BaseMixinData
 from ..extra import ActivationChoice
-from ....types import ConstrainedIntValueGe2
 
 
 # LayerConfig = LayerConfigData(

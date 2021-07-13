@@ -3,7 +3,6 @@
 """
 
 from ....mixins import BaseMixinData
-from ..extra import ModuleChoice, ModuleTypeChoice, LayerConfigData
 
 
 # LayerConfig = LayerConfigData(

@@ -3,11 +3,9 @@
 """
 
 from typing import Optional
-from pydantic.types import PositiveFloat, PositiveInt
+from pydantic.types import PositiveFloat
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
 from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 

@@ -1,10 +1,9 @@
 """
 ## Тип слоя `Average`
 """
-from ..extra import ModuleChoice, ModuleTypeChoice
+
 from ....mixins import BaseMixinData
 from ..extra import ActivationChoice
-from ....types import ConstrainedIntValueGe2
 
 
 # class LayerConfig(BaseMixinData):

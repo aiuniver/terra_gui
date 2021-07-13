@@ -1,9 +1,8 @@
 """
 ## Тип слоя `Add`
 """
-from ..extra import ModuleChoice, ModuleTypeChoice
+
 from ....mixins import BaseMixinData
-from ....types import ConstrainedIntValueGe2
 
 
 # class LayerConfig(BaseMixinData):

@@ -2,18 +2,7 @@
 ## Тип слоя `Rescaling`
 """
 
-from typing import Optional
-from pydantic.types import PositiveFloat, PositiveInt
-
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
-from ..extra import (
-    InitializerChoice,
-    RegularizerChoice,
-    ConstraintChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
-)
 
 
 # class LayerConfig(BaseMixinData):

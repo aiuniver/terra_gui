@@ -2,13 +2,7 @@
 ## Тип слоя `ThresholdedReLU`
 """
 
-from typing import Optional, Tuple
-from pydantic.types import PositiveInt
-
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
-from ....types import ConstrainedIntValueGe2
 
 
 # class LayerConfig(BaseMixinData):

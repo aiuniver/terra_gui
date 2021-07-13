@@ -2,10 +2,9 @@
 ## Тип слоя `UpSampling3D`
 """
 
-from typing import Optional, Tuple
+from typing import Tuple
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import DataFormatChoice
 

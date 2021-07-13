@@ -12,8 +12,6 @@ from ..extra import (
     InitializerChoice,
     RegularizerChoice,
     ConstraintChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
 )
 
 

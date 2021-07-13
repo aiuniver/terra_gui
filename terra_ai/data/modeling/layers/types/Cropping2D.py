@@ -2,12 +2,11 @@
 ## Тип слоя `Cropping2D`
 """
 
-from typing import Optional, Tuple
+from typing import Tuple
 from pydantic.types import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice, InterpolationChoice
+from ..extra import DataFormatChoice
 
 
 # class LayerConfig(BaseMixinData):

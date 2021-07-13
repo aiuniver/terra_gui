@@ -3,17 +3,11 @@
 """
 
 from typing import Optional
-from pydantic.types import PositiveFloat, PositiveInt
+from pydantic.types import PositiveFloat
 
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
-from ..extra import (
-    InitializerChoice,
-    RegularizerChoice,
-    ConstraintChoice,
-    ModuleChoice,
-    ModuleTypeChoice,
-)
+from ....types import ConstrainedFloatValueGe0Le1
+from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
 
 
 # class LayerConfig(BaseMixinData):

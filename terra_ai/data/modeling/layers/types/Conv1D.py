@@ -24,12 +24,9 @@ LayerConfig = LayerConfigData(
     **{
         "num_uplinks": {
             "value": ("44", "4"),
-            "validation": LayerValidationMethodChoice.dependence2list,
+            "validation": LayerValidationMethodChoice.dependence_tuple2,
         },
-        "input_dimension": {
-            "value": "3",
-            "validation": LayerValidationMethodChoice.fixed,
-        },
+        "input_dimension": 4,
         "module": ModuleChoice.tensorflow_keras_layers,
         "module_type": ModuleTypeChoice.keras,
     }

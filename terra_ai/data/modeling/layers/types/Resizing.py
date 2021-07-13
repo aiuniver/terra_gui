@@ -1,14 +1,11 @@
 """
 ## Тип слоя `Resizing`
 """
-from typing import Optional
 
 from pydantic import PositiveInt
 
-from ..extra import ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
 from ..extra import ResizingInterpolationChoice
-from ....types import ConstrainedIntValueGe2
 
 
 # class LayerConfig(BaseMixinData):
