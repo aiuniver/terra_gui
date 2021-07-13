@@ -90,10 +90,10 @@ export default {
         let x, y, cy, cx, ex, ey;
         x = fromNode.position[0];
         y = fromNode.position[1];
-        [cx, cy] = this.getPortPosition("bottom", x, y);
+        [cx, cy] = this.getPortPosition("bottom", fromNode, x, y);
         x = toNode.position[0];
         y = toNode.position[1];
-        [ex, ey] = this.getPortPosition("top", x, y);
+        [ex, ey] = this.getPortPosition("top", toNode, x, y);
         return {
           start: [cx, cy],
           end: [ex, ey],
@@ -105,7 +105,7 @@ export default {
         const fromNode = this.findNodeWithID(this.draggingLink.from);
         x = fromNode.position[0];
         y = fromNode.position[1];
-        [cx, cy] = this.getPortPosition("bottom", x, y);
+        [cx, cy] = this.getPortPosition("bottom", fromNode, x, y);
         // push temp dragging link, mouse cursor postion = link end postion
         lines.push({
           start: [cx, cy],
@@ -126,11 +126,13 @@ export default {
         return item.id === id
       })
     },
-    getPortPosition(type, x, y) {
+    getPortPosition(type, layer, x, y) {
+      let fontSize = 11
+      let nodeMid = ((layer.name.length + layer.type.length)*fontSize)/2;
       if (type === "top") {
-        return [x + 80, y];
+        return [x + nodeMid, y];
       } else if (type === "bottom") {
-        return [x + 80, y + 40];
+        return [x + nodeMid, y + 40];
       }
     },
     linkingStart(id) {

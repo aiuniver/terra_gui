@@ -19,7 +19,7 @@ export default {
         },
         {
           id: 2,
-          name: "vtoroy",
+          name: "Длинное имя дададада",
           type: "Conv1D",
           group: "middle",
           bind: [3],
@@ -128,24 +128,29 @@ export default {
     ADD_LAYER(state, layer){
       state.data.layers.push(layer);
     },
-    UPDATE_LAYER(state, index, data){
-      state.data.layers[index] = data;
-    },
-    DELETE_LAYER(state, index){
-      state.data.layers.splice(index, 1);
-    },
+    // UPDATE_LAYER(state, index, data){
+    //   state.data.layers[index] = data;
+    // },
+    // DELETE_LAYER(state, index){
+    //   state.data.layers.splice(index, 1);
+    // },
   },
   actions: {
     setData ({ commit }, data) {
       commit("SET_DATA", data);
     },
+    addLayer({ commit, state }, layer){
+      let maxId = Math.max(...state.data.layers.map(item => item.id), 0);
+      layer.id = maxId + 1
+      commit("ADD_LAYER", layer);
+    }
   },
   getters: {
     getData(state) {
       return state.data;
     },
-    getLayer(state, index){
-      return state.data.layers[index]
-    },
+    // getLayer(state, index){
+    //   return state.data.layers[index]
+    // },
   }
 };
