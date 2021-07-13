@@ -3,12 +3,12 @@
 """
 
 from enum import Enum
-from typing import List, Union
-
+from typing import Union, Tuple
+from pydantic import validator
 from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
-from ...types import ConstrainedIntValueGe2
+from ...exceptions import LayerValueConfigException
 
 
 class PaddingChoice(str, Enum):
@@ -107,13 +107,29 @@ class ModuleTypeChoice(str, Enum):
     terra_layer = "terra_layer"
 
 
-class DimModeTypeChoice(str, Enum):
+class LayerValidationMethodChoice(str, Enum):
     fixed = "fixed"
     minimal = "minimal"
+    dependence2list = "dependence2list"
+
+
+class LayerValueConfig(BaseMixinData):
+    value: Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]
+    validation: LayerValidationMethodChoice
+
+    @validator("validation")
+    def _validate_validation(
+        cls, value: LayerValidationMethodChoice, values
+    ) -> LayerValidationMethodChoice:
+        __value = values.get("value")
+        if value == LayerValidationMethodChoice.dependence2list:
+            if not (isinstance(__value, tuple) and len(__value) == 2):
+                raise LayerValueConfigException(value, __value)
+        return value
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: Union[PositiveInt, List[PositiveInt]]
-    input_dimension: ConstrainedIntValueGe2
+    num_uplinks: LayerValueConfig
+    input_dimension: LayerValueConfig
     module: ModuleChoice
     module_type: ModuleTypeChoice

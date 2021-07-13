@@ -18,6 +18,13 @@ from ..extra import (
 from ....types import ConstrainedIntValueGe5
 
 
+# class LayerConfig(BaseMixinData):
+#     num_uplinks: PositiveInt = 1
+#     input_dimension: ConstrainedIntValueGe5 = 5
+#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
+#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+
+
 class ParametersMainData(BaseMixinData):
     filters: PositiveInt
     kernel_size: Tuple[PositiveInt, PositiveInt, PositiveInt]
@@ -38,16 +45,3 @@ class ParametersExtraData(BaseMixinData):
     activity_regularizer: Optional[RegularizerChoice]
     kernel_constraint: Optional[ConstraintChoice]
     bias_constraint: Optional[ConstraintChoice]
-
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: int or str or list = 1
-    input_dimension: int or str = '5+'
-    module: str = 'tensorflow.keras.layers'
-    module_type: str = 'keras'
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: PositiveInt = 1
-    input_dimension: ConstrainedIntValueGe5 = 5
-    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-    module_type: ModuleTypeChoice = ModuleTypeChoice.keras

@@ -11,8 +11,17 @@ from ..extra import (
     ActivationChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice, ModuleChoice, ModuleTypeChoice,
+    ConstraintChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
 )
+
+
+# class LayerConfig(BaseMixinData):
+#     num_uplinks: PositiveInt = 1
+#     input_dimension: PositiveInt = 3
+#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
+#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
 
 
 class ParametersMainData(BaseMixinData):
@@ -42,10 +51,3 @@ class ParametersExtraData(BaseMixinData):
     unroll: bool = False
     time_major: bool = False
     reset_after: bool = True
-
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: PositiveInt = 1
-    input_dimension: PositiveInt = 3
-    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-    module_type: ModuleTypeChoice = ModuleTypeChoice.keras

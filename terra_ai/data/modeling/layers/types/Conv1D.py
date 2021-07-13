@@ -16,14 +16,23 @@ from ..extra import (
     ConstraintChoice,
     ModuleChoice,
     ModuleTypeChoice,
+    LayerValidationMethodChoice,
 )
 
 
 LayerConfig = LayerConfigData(
-    num_uplinks=1,
-    input_dimension=3,
-    module=ModuleChoice.tensorflow_keras_layers,
-    module_type=ModuleTypeChoice.keras,
+    **{
+        "num_uplinks": {
+            "value": ("44", "4"),
+            "validation": LayerValidationMethodChoice.dependence2list,
+        },
+        "input_dimension": {
+            "value": "3",
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
 )
 
 

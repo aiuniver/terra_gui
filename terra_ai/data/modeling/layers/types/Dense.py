@@ -16,6 +16,13 @@ from ..extra import (
 from ....types import ConstrainedIntValueGe2
 
 
+# class LayerConfig(BaseMixinData):
+#     num_uplinks: PositiveInt = 1
+#     input_dimension: ConstrainedIntValueGe2 = 2
+#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
+#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+
+
 class ParametersMainData(BaseMixinData):
     units: PositiveInt
     activation: Optional[ActivationChoice] = ActivationChoice.relu
@@ -30,10 +37,3 @@ class ParametersExtraData(BaseMixinData):
     activity_regularizer: Optional[RegularizerChoice]
     kernel_constraint: Optional[ConstraintChoice]
     bias_constraint: Optional[ConstraintChoice]
-
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: PositiveInt = 1
-    input_dimension: ConstrainedIntValueGe2 = 2
-    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-    module_type: ModuleTypeChoice = ModuleTypeChoice.keras

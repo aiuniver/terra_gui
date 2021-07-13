@@ -7,7 +7,20 @@ from pydantic.types import PositiveFloat, PositiveInt
 
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe2
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    InitializerChoice,
+    RegularizerChoice,
+    ConstraintChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
+
+
+# class LayerConfig(BaseMixinData):
+#     num_uplinks: PositiveInt = 1
+#     input_dimension: ConstrainedIntValueGe2 = 2
+#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
+#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
 
 
 class ParametersMainData(BaseMixinData):
@@ -28,10 +41,3 @@ class ParametersExtraData(BaseMixinData):
     gamma_regularizer: Optional[RegularizerChoice]
     beta_constraint: Optional[ConstraintChoice]
     gamma_constraint: Optional[ConstraintChoice]
-
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: PositiveInt = 1
-    input_dimension: ConstrainedIntValueGe2 = 2
-    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-    module_type: ModuleTypeChoice = ModuleTypeChoice.keras

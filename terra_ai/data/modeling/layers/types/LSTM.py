@@ -16,6 +16,13 @@ from ..extra import (
 )
 
 
+# class LayerConfig(BaseMixinData):
+#     num_uplinks: PositiveInt = 1
+#     input_dimension: PositiveInt = 3
+#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
+#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+
+
 class ParametersMainData(BaseMixinData):
     units: PositiveInt
     return_sequences: bool = False
@@ -43,10 +50,3 @@ class ParametersExtraData(BaseMixinData):
     stateful: bool = False
     time_major: bool = False
     unroll: bool = False
-
-
-class LayerConfig(BaseMixinData):
-    num_uplinks: PositiveInt = 1
-    input_dimension: PositiveInt = 3
-    module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-    module_type: ModuleTypeChoice = ModuleTypeChoice.keras
