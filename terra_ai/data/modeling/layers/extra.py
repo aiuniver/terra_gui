@@ -123,8 +123,16 @@ class LayerValueConfig(BaseMixinData):
         cls, value: LayerValidationMethodChoice, values
     ) -> LayerValidationMethodChoice:
         __value = values.get("value")
+        if not __value:
+            return value
         if value == LayerValidationMethodChoice.dependence_tuple2:
             if not (isinstance(__value, tuple) and len(__value) == 2):
+                raise LayerValueConfigException(value, __value)
+        if value in [
+            LayerValidationMethodChoice.fixed,
+            LayerValidationMethodChoice.minimal,
+        ]:
+            if not isinstance(__value, int):
                 raise LayerValueConfigException(value, __value)
         return value
 
