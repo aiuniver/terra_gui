@@ -115,7 +115,7 @@ class DimModeTypeChoice(str, Enum):
 
 # @dataclass
 class LayerConfigData(BaseMixinData):
-    num_uplinks: PositiveInt
+    num_uplinks: List[PositiveInt, ...]
     num_uplinks_mode: DimModeTypeChoice
     input_dimension: ConstrainedIntValueGe2
     input_dim_mode: DimModeTypeChoice

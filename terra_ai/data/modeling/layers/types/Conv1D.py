@@ -22,7 +22,7 @@ from ..extra import (
 LayerConfig = LayerConfigData(
     num_uplinks=1,
     num_uplinks_mode=DimModeTypeChoice.fixed,
-    input_dimension=3,
+    input_dimension=[3],
     input_dim_mode=DimModeTypeChoice.minimal,
     module=ModuleChoice.tensorflow_keras_layers,
     module_type=ModuleTypeChoice.keras,
