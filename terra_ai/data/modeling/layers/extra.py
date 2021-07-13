@@ -3,13 +3,12 @@
 """
 
 from enum import Enum
-from dataclasses import dataclass
-from typing import List
+from typing import List, Union
 
 from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
-from ...types import ConstrainedIntValueGe0, ConstrainedIntValueGe2
+from ...types import ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
@@ -113,11 +112,8 @@ class DimModeTypeChoice(str, Enum):
     minimal = "minimal"
 
 
-# @dataclass
 class LayerConfigData(BaseMixinData):
-    num_uplinks: List[PositiveInt, ...]
-    num_uplinks_mode: DimModeTypeChoice
+    num_uplinks: Union[PositiveInt, List[PositiveInt]]
     input_dimension: ConstrainedIntValueGe2
-    input_dim_mode: DimModeTypeChoice
     module: ModuleChoice
     module_type: ModuleTypeChoice
