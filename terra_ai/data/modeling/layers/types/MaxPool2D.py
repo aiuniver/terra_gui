@@ -6,14 +6,23 @@ from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import PaddingChoice, DataFormatChoice
+from ..extra import PaddingChoice, DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, \
+    ModuleTypeChoice
 
-
-# class LayerConfig(BaseMixinData):
-#     num_uplinks: PositiveInt = 1
-#     input_dimension: PositiveInt = 4
-#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 4,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

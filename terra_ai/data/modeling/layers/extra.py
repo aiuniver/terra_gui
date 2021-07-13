@@ -62,16 +62,13 @@ class ConstraintChoice(str, Enum):
 
 
 class ActivationChoice(str, Enum):
-    deserialize = "deserialize"
     elu = "elu"
     exponential = "exponential"
     gelu = "gelu"
-    get = "get"
     hard_sigmoid = "hard_sigmoid"
     linear = "linear"
     relu = "relu"
     selu = "selu"
-    serialize = "serialize"
     sigmoid = "sigmoid"
     softmax = "softmax"
     softplus = "softplus"
@@ -133,12 +130,13 @@ class LayerValueConfig(BaseMixinData):
             LayerValidationMethodChoice.minimal,
         ]:
             if not isinstance(__value, int):
+                print(__value)
                 raise LayerValueConfigException(value, __value)
         return value
 
 
 class LayerConfigData(BaseMixinData):
     num_uplinks: Optional[LayerValueConfig]
-    input_dimension: ConstrainedIntValueGe2
+    input_dimension: Optional[LayerValueConfig]
     module: ModuleChoice
     module_type: ModuleTypeChoice

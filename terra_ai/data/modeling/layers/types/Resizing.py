@@ -5,14 +5,23 @@
 from pydantic import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import ResizingInterpolationChoice
+from ..extra import ResizingInterpolationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, \
+    ModuleTypeChoice
 
-
-# class LayerConfig(BaseMixinData):
-#     num_uplinks: PositiveInt = 1
-#     input_dimension: ConstrainedIntValueGe2 = 2
-#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers_preprocessing
-#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 4,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers_preprocessing,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

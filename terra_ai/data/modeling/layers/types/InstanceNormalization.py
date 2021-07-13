@@ -6,14 +6,23 @@ from typing import Optional
 from pydantic.types import PositiveFloat
 
 from ....mixins import BaseMixinData
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
+from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice, LayerConfigData, \
+    LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
-
-# class LayerConfig(BaseMixinData):
-#     num_uplinks: PositiveInt = 1
-#     input_dimension: ConstrainedIntValueGe2 = 2
-#     module: ModuleChoice = ModuleChoice.terra_custom_layers
-#     module_type: ModuleTypeChoice = ModuleTypeChoice.terra_layer
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.terra_custom_layers,
+        "module_type": ModuleTypeChoice.terra_layer,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

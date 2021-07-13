@@ -23,10 +23,13 @@ from ..extra import (
 LayerConfig = LayerConfigData(
     **{
         "num_uplinks": {
-            "value": ("44", "4"),
-            "validation": LayerValidationMethodChoice.dependence_tuple2,
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
         },
-        "input_dimension": 4,
+        "input_dimension": {
+            "value": 3,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
         "module": ModuleChoice.tensorflow_keras_layers,
         "module_type": ModuleTypeChoice.keras,
     }

@@ -3,14 +3,22 @@
 """
 
 from ....mixins import BaseMixinData
-from ..extra import ActivationChoice
+from ..extra import ActivationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
-
-# class LayerConfig(BaseMixinData):
-#     num_uplinks: ConstrainedIntValueGe2 = 2
-#     input_dimension: ConstrainedIntValueGe2 = 2
-#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "input_dimension": {
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

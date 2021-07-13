@@ -3,17 +3,22 @@
 """
 
 from ....mixins import BaseMixinData
-from ..extra import ActivationChoice
+from ..extra import ActivationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
-
-# LayerConfig = LayerConfigData(
-#     num_uplinks=1,
-#     num_uplinks_mode=DimModeTypeChoice.fixed,
-#     input_dimension=2,
-#     input_dim_mode=DimModeTypeChoice.minimal,
-#     module=ModuleChoice.tensorflow_keras_layers,
-#     module_type=ModuleTypeChoice.keras,
-# )
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

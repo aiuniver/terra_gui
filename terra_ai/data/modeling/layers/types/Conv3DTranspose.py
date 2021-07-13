@@ -12,15 +12,23 @@ from ..extra import (
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice,
+    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
 )
 
-
-# class LayerConfig(BaseMixinData):
-#     num_uplinks: PositiveInt = 1
-#     input_dimension: PositiveInt = 5
-#     module: ModuleChoice = ModuleChoice.tensorflow_keras_layers
-#     module_type: ModuleTypeChoice = ModuleTypeChoice.keras
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 5,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):
