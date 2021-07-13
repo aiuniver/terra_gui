@@ -4,10 +4,12 @@
 
 from enum import Enum
 from dataclasses import dataclass
+from typing import List
 
 from pydantic.types import PositiveInt
 
-from ...types import ConstrainedIntValueGe0
+from ...mixins import BaseMixinData
+from ...types import ConstrainedIntValueGe0, ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
@@ -106,9 +108,16 @@ class ModuleTypeChoice(str, Enum):
     terra_layer = "terra_layer"
 
 
-@dataclass
-class LayerConfigData:
+class DimModeTypeChoice(str, Enum):
+    fixed = "fixed"
+    minimal = "minimal"
+
+
+# @dataclass
+class LayerConfigData(BaseMixinData):
     num_uplinks: PositiveInt
-    input_dimension: ConstrainedIntValueGe0
+    num_uplinks_mode: DimModeTypeChoice
+    input_dimension: ConstrainedIntValueGe2
+    input_dim_mode: DimModeTypeChoice
     module: ModuleChoice
     module_type: ModuleTypeChoice

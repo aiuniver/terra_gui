@@ -3,7 +3,7 @@
 """
 
 from typing import Optional
-from pydantic.types import PositiveInt
+from pydantic.types import PositiveInt, List
 
 from ....mixins import BaseMixinData
 from ..extra import (
@@ -15,13 +15,15 @@ from ..extra import (
     RegularizerChoice,
     ConstraintChoice,
     ModuleChoice,
-    ModuleTypeChoice,
+    ModuleTypeChoice, DimModeTypeChoice,
 )
 
 
 LayerConfig = LayerConfigData(
     num_uplinks=1,
+    num_uplinks_mode=DimModeTypeChoice.fixed,
     input_dimension=3,
+    input_dim_mode=DimModeTypeChoice.minimal,
     module=ModuleChoice.tensorflow_keras_layers,
     module_type=ModuleTypeChoice.keras,
 )
