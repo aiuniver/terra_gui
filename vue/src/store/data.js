@@ -96,23 +96,23 @@ export default {
       links: [
         {
           id: 1,
-          from: 0,
-          to: 1,
-        },
-        {
-          id: 2,
           from: 1,
           to: 2,
         },
         {
-          id: 3,
+          id: 2,
           from: 2,
           to: 3,
         },
         {
-          id: 4,
+          id: 3,
           from: 3,
           to: 4,
+        },
+        {
+          id: 4,
+          from: 4,
+          to: 5,
         },
       ],
     },

@@ -18,9 +18,9 @@
       v-for="(node, index) in scene.layers"
       :key="`node${index}`"
       :options="nodeOptions"
-      @linkingStart="linkingStart(index)"
-      @linkingStop="linkingStop(index)"
-      @nodeSelected="nodeSelected(index, $event)"
+      @linkingStart="linkingStart(node.id)"
+      @linkingStop="linkingStop(node.id)"
+      @nodeSelected="nodeSelected(node.id, $event)"
     >
     </flowchart-node>
   </div>
@@ -121,8 +121,10 @@ export default {
     // console.log(22222, this.rootDivOffset);
   },
   methods: {
-    findNodeWithID(index) {
-      return this.scene.layers[index];
+    findNodeWithID(id) {
+      return this.scene.layers.find((item) => {
+        return item.id === id
+      })
     },
     getPortPosition(type, x, y) {
       if (type === "top") {
@@ -131,20 +133,20 @@ export default {
         return [x + 80, y + 40];
       }
     },
-    linkingStart(index) {
+    linkingStart(id) {
       this.action.linking = true;
       this.draggingLink = {
-        from: index,
+        from: id,
         mx: 0,
         my: 0,
       };
     },
-    linkingStop(index) {
+    linkingStop(id) {
       // add new Link
-      if (this.draggingLink && this.draggingLink.from !== index) {
+      if (this.draggingLink && this.draggingLink.from !== id) {
         // check link existence
         const existed = this.scene.links.find((link) => {
-          return link.from === this.draggingLink.from && link.to === index;
+          return link.from === this.draggingLink.from && link.to === id;
         });
         if (!existed) {
           let maxID = Math.max(
@@ -156,7 +158,7 @@ export default {
           const newLink = {
             id: maxID + 1,
             from: this.draggingLink.from,
-            to: index,
+            to: id,
           };
           this.scene.links.push(newLink);
           this.$emit("linkAdded", newLink);
@@ -175,10 +177,10 @@ export default {
         this.$emit("linkBreak", deletedLink);
       }
     },
-    nodeSelected(index, e) {
-      this.action.dragging = index;
-      this.action.selected = index;
-      this.$emit("nodeClick", index);
+    nodeSelected(id, e) {
+      this.action.dragging = id;
+      this.action.selected = id;
+      this.$emit("nodeClick", id);
       this.mouse.lastX =
         e.pageX || e.clientX + document.documentElement.scrollLeft;
       this.mouse.lastY =
@@ -253,7 +255,10 @@ export default {
       this.$emit("canvasClick", e);
     },
     moveSelectedNode(dx, dy) {
-      let index = this.action.dragging;
+      let layer = this.scene.layers.find((item) => {
+        return item.id === this.action.dragging;
+      })
+      let index = this.scene.layers.indexOf(layer);
       let left = this.scene.layers[index].position[0] + dx / this.scene.scale;
       let top = this.scene.layers[index].position[1] + dy / this.scene.scale;
       this.$set(
