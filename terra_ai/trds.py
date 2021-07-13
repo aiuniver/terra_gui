@@ -35,7 +35,7 @@ import json
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.005
+__version__ = 1.006
 
 
 class CreateDTS(object):
@@ -44,14 +44,13 @@ class CreateDTS(object):
                  exch_obj=tr2dj_obj):
 
         self.Exch = exch_obj
-        self.django_flag = False
+        self.django_flag: bool = False
         if self.Exch.property_of != 'TERRA':
             self.django_flag = True
 
         self.dataloader = Dataloader()
         self.createarray = None
 
-        self.django_flag: bool = False
         self.trds_path: str = trds_path
         self.file_folder: str = ''
 
@@ -168,9 +167,15 @@ class CreateDTS(object):
         for key in self.instructions['outputs'].keys():
             array = getattr(self.createarray, f'create_{self.tags[key]}')(
                 self.instructions['outputs'][key]['instructions'][0], **self.instructions['outputs'][key]['parameters'])
-            self.output_shape[key] = array.shape
-            self.output_dtype[key] = str(array.dtype)
-            self.output_datatype[key] = self._set_datatype(array.shape)
+            if isinstance(array, tuple):
+                for i in range(len(array)):
+                    self.output_shape[key.replace(key[-1], str(int(key[-1])+i))] = array[i].shape
+                    self.output_dtype[key.replace(key[-1], str(int(key[-1])+i))] = str(array[i].dtype)
+                    self.output_datatype[key.replace(key[-1], str(int(key[-1])+i))] = self._set_datatype(array[i].shape)
+            else:
+                self.output_shape[key] = array.shape
+                self.output_dtype[key] = str(array.dtype)
+                self.output_datatype[key] = self._set_datatype(array.shape)
 
         # Разделение на три выборки
         self.split_sequence['train'] = []
@@ -222,14 +227,33 @@ class CreateDTS(object):
                 self.X['test'][key] = np.array(x)[self.split_sequence['test']]
 
             for key in self.instructions['outputs'].keys():
-                y: list = []
-                for i in range(self.limit):
-                    y.append(getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][i],
-                        **self.instructions['outputs'][key]['parameters']))
-                self.Y['train'][key] = np.array(y)[self.split_sequence['train']]
-                self.Y['val'][key] = np.array(y)[self.split_sequence['val']]
-                self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
+                if 'object_detection' in self.tags.values():
+                    y_1: list = []
+                    y_2: list = []
+                    y_3: list = []
+                    for i in range(self.limit):
+                        arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
+                                         self.instructions['outputs'][key]['instructions'][i],
+                                         **self.instructions['outputs'][key]['parameters'])
+                        y_1.append(arrays[0])
+                        y_2.append(arrays[1])
+                        y_3.append(arrays[2])
+
+                    splits = ['train', 'val', 'test']
+                    for spl_seq in splits:
+                        for i in range(len(splits)):
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])))] = np.array(y_1)[self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+1))] = np.array(y_2)[self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+2))] = np.array(y_3)[self.split_sequence[spl_seq]]
+                else:
+                    y: list = []
+                    for i in range(self.limit):
+                        y.append(getattr(self.createarray, f"create_{self.tags[key]}")(
+                            self.instructions['outputs'][key]['instructions'][i],
+                            **self.instructions['outputs'][key]['parameters']))
+                    self.Y['train'][key] = np.array(y)[self.split_sequence['train']]
+                    self.Y['val'][key] = np.array(y)[self.split_sequence['val']]
+                    self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
 
             for sample in self.X.keys():
                 os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
@@ -293,10 +317,17 @@ class CreateDTS(object):
         peg_idx = 0
         self.peg.append(0)
         if options['folder_name']:
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-                instr.append(os.path.join(options['folder_name'], file_name))
-                peg_idx += 1
-                y_cls.append(cls_idx)
+            if 'object_detection' in self.tags.values():
+                for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
+                    if 'txt' not in file_name:
+                        instr.append(os.path.join(options['folder_name'], file_name))
+                        peg_idx += 1
+                        y_cls.append(cls_idx)
+            else:
+                for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
+                    instr.append(os.path.join(options['folder_name'], file_name))
+                    peg_idx += 1
+                    y_cls.append(cls_idx)
             self.peg.append(peg_idx)
         else:
             tree = os.walk(self.file_folder)
@@ -493,6 +524,52 @@ class CreateDTS(object):
 
         return instructions
 
+    def instructions_object_detection(self, **options):
+
+        data = {}
+        instructions = {}
+        parameters = {}
+        class_names = []
+
+        # obj.data
+        with open(os.path.join(self.file_folder, 'obj.data'), 'r') as dt:
+            d = dt.read()
+        for elem in d.split('\n'):
+            if elem:
+                elem = elem.split(' = ')
+                data[elem[0]] = elem[1]
+
+        for key, value in self.tags.items():
+            if value == 'images':
+                parameters['height'] = self.user_parameters[key]['height']
+                parameters['width'] = self.user_parameters[key]['width']
+                parameters['num_classes'] = int(data['classes'])
+
+        # obj.names
+        with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
+            names = dt.read()
+        for elem in names.split('\n'):
+            if elem:
+                class_names.append(elem)
+
+        for i in range(3):
+            self.classes_names[f'{self.mode}_{self.iter+i}'] = class_names
+            self.num_classes[f'{self.mode}_{self.iter+i}'] = int(data['classes'])
+
+        # list of txt
+        txt_list = []
+        with open(os.path.join(self.file_folder, data["train"].split("/")[-1]), 'r') as dt:
+            images = dt.read()
+        for elem in sorted(images.split('\n')):
+            if elem:
+                idx = elem.rfind('.')
+                elem = elem.replace(elem[idx:], '.txt')
+                txt_list.append(os.path.join(*elem.split('/')[1:]))
+        instructions['instructions'] = txt_list
+        instructions['parameters'] = parameters
+
+        return instructions
+
     def instructions_text_segmentation(self, **options):
 
         """
@@ -615,7 +692,7 @@ class Dataloader(object):
 
     def load_data(self, strict_object):
 
-        if strict_object.mode == SourceModeChoice.terra:
+        if strict_object.mode == 'terra': #SourceModeChoice.terra:
             self.load_from_terra(strict_object.value)
         elif strict_object.mode == SourceModeChoice.url:
             self.load_from_url(strict_object.value)
@@ -854,6 +931,80 @@ class CreateArray(object):
     def create_timeseries(self):
 
         pass
+
+    def create_object_detection(self, txt_path: str, **options):
+
+        """
+
+        Args:
+            txt_path: str
+                Путь к файлу
+            **options: Параметры сегментации:
+                height: int
+                    Высота изображения.
+                width: int
+                    Ширина изображения.
+                num_classes: tuple
+                    Количество классов.
+
+        Returns:
+            array: np.ndarray
+                Массивы в трёх выходах.
+
+        """
+
+        height: int = options['height']
+        width: int = options['width']
+        num_classes: int = options['num_classes']
+
+        with open(os.path.join(self.file_folder, txt_path), 'r') as txt:
+            bb_file = txt.read()
+        real_boxes = []
+        for elem in bb_file.split('\n'):
+            tmp = []
+            if elem:
+                for num in elem.split(' '):
+                    tmp.append(float(num))
+                real_boxes.append(tmp)
+        real_boxes = np.array(real_boxes)
+        real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
+        anchors = np.array(
+            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
+        num_layers = 3
+        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+
+        real_boxes = np.array(real_boxes, dtype='float32')
+        input_shape = np.array((height, width), dtype='int32')
+
+        boxes_wh = real_boxes[..., 2:4] * input_shape
+
+        cells = [13, 26, 52]
+        y_true = [np.zeros((cells[n], cells[n], len(anchor_mask[n]), 5 + num_classes), dtype='float32') for n in
+                  range(num_layers)]
+        box_area = boxes_wh[:, 0] * boxes_wh[:, 1]
+
+        anchor_area = anchors[:, 0] * anchors[:, 1]
+        for r in range(len(real_boxes)):
+            correct_anchors = []
+            for anchor in anchors:
+                correct_anchors.append([min(anchor[0], boxes_wh[r][0]), min(anchor[1], boxes_wh[r][1])])
+            correct_anchors = np.array(correct_anchors)
+            correct_anchors_area = correct_anchors[:, 0] * correct_anchors[:, 1]
+            iou = correct_anchors_area / (box_area[r] + anchor_area - correct_anchors_area)
+            best_anchor = np.argmax(iou, axis=-1)
+
+            for m in range(num_layers):
+                if best_anchor in anchor_mask[m]:
+                    h = np.floor(real_boxes[r, 0] * cells[m]).astype('int32')
+                    j = np.floor(real_boxes[r, 1] * cells[m]).astype('int32')
+                    k = anchor_mask[m].index(int(best_anchor))
+                    c = real_boxes[r, 4].astype('int32')
+                    y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
+                    y_true[m][j, h, k, 4] = 1
+                    y_true[m][j, h, k, 5 + c] = 1
+                    break
+
+        return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
 
     def create_scaler(self):
 
