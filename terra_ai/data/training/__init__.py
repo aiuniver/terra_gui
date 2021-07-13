@@ -2,4 +2,4 @@
 ## Структура данных для работы с обучением
 """
 
-from . import callbacks, checkpoint, extra, outputs, train, architectures, optimizers
+from . import architectures, callbacks, checkpoint, optimizers, extra, outputs, train
