@@ -17,7 +17,7 @@
       <div class="node-params">parameters</div>
     </div>
     <div v-if="group!=='output'" class="node-port node-output" @mousedown="outputMouseDown"></div>
-    <div v-show="show.delete" class="node-delete">&times;</div>
+    <div v-show="show.delete && group === 'middle'" class="node-delete">&times;</div>
   </div>
 </template>
 
@@ -205,12 +205,24 @@ $portSize: 10;
 
   .input{
     background: #FFB054;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #FFB054;
+    }
   }
   .middle{
     background: #89D764;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #89D764;
+    }
   }
   .output{
     background: #8E51F2;
+    &:hover{
+      background: none;
+      box-shadow: 0 0 0 1.5pt #8E51F2;
+    }
   }
 }
 </style>
