@@ -17,6 +17,7 @@ ConstrainedIntValueGe0 = conint(ge=0)
 ConstrainedFloatValueGe0 = confloat(ge=0)
 ConstrainedFloatValueLe0 = confloat(le=0)
 ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
+ConstrainedFloatValueGe0Le100 = confloat(ge=0, le=100)
 
 
 class AliasType(str):

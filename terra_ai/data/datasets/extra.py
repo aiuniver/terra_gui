@@ -10,10 +10,12 @@ class SourceModeChoice(str, Enum):
     Метод загрузки исходных данных для создания датасета
     """
 
-    google_drive = "google_drive"
+    GoogleDrive = "GoogleDrive"
     "Использовать путь к архиву в папке Google-диска"
-    url = "url"
+    URL = "URL"
     "Использовать ссылку на архив"
+    Terra = "Terra"
+    "Terra"
 
 
 class LayerPrepareMethodChoice(str, Enum):

@@ -10,11 +10,11 @@ __pycache__/
 .Python
 build/
 develop-eggs/
-dist/
+# dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/
 lib64/
 parts/
 sdist/
@@ -132,3 +132,4 @@ dmypy.json
 /TerraAI/
 
 /staticfiles/
+node_modules/

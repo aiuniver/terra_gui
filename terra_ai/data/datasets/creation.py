@@ -6,26 +6,26 @@
 In [1]: from terra_ai.data.datasets.creation import SourceData
 
 In [2]: source = {
-   ...:     "mode": "google_drive",
+   ...:     "mode": "GoogleDrive",
    ...:     "value": "source.zip",
    ...: }
 
 In [3]: data = SourceData(**source)
 
 In [4]: data
-Out[4]: SourceData(mode=<SourceModeChoice.google_drive: 'google_drive'>, value=PosixPath('source.zip'))
+Out[4]: SourceData(mode=<SourceModeChoice.GoogleDrive: 'GoogleDrive'>, value=PosixPath('source.zip'))
 
 In [5]: data.dict()
 Out[5]:
-{'mode': <SourceModeChoice.google_drive: 'google_drive'>,
+{'mode': <SourceModeChoice.GoogleDrive: 'GoogleDrive'>,
  'value': PosixPath('source.zip')}
 
 In [6]: data.json()
-Out[6]: '{"mode": "google_drive", "value": "source.zip"}'
+Out[6]: '{"mode": "GoogleDrive", "value": "source.zip"}'
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 {
-  "mode": "google_drive",
+  "mode": "GoogleDrive",
   "value": "source.zip"
 }
 ```
@@ -153,20 +153,25 @@ from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
-from . import parameters
+from . import creations
 
 
 class FilePathSourceData(BaseMixinData):
     value: confilepath(ext="zip")
+    label: Optional[str]
+
+    @validator("label", allow_reuse=True, always=True)
+    def _validate_label(cls, value: str, values) -> str:
+        file_path = values.get("value")
+        if not file_path:
+            return value
+        return file_path.name.split(".zip")[0]
 
 
 class FilePathSourcesList(UniqueListMixin):
     class Meta:
         source = FilePathSourceData
-        identifier = "value"
-
-    def list(self) -> list:
-        return list(map(lambda item: item.value.name, self))
+        identifier = "label"
 
 
 class SourceData(BaseMixinData):
@@ -184,10 +189,10 @@ class SourceData(BaseMixinData):
         cls, value: Union[FilePathType, HttpUrl], values
     ) -> Union[FilePathType, HttpUrl]:
         mode = values.get("mode")
-        if mode == SourceModeChoice.google_drive:
+        if mode == SourceModeChoice.GoogleDrive:
             if not isinstance(value, Path):
                 raise ValueTypeException(value, FilePathType)
-        if mode == SourceModeChoice.url:
+        if mode == SourceModeChoice.URL:
             if not isinstance(value, HttpUrl):
                 raise ValueTypeException(value, HttpUrl)
         return value
@@ -239,23 +244,27 @@ class CreationInputData(AliasMixinData):
     "Название"
     type: LayerInputTypeChoice
     "Тип данных"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", allow_reuse=True, pre=True)
+    @validator("type", pre=True)
     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-        if not hasattr(LayerInputTypeChoice, value):
+        if value not in list(LayerInputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerInputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerInputTypeChoice)
+            else LayerInputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.input, getattr(creations.layers.input.Layer, name)
+        )
         cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.LayerInputDatatypeUnion]:
-        return kwargs.get("field").type_(**value)
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class CreationOutputData(AliasMixinData):
@@ -267,23 +276,27 @@ class CreationOutputData(AliasMixinData):
     "Название"
     type: LayerOutputTypeChoice
     "Тип данных"
-    parameters: Optional[Any]
+    parameters: Any
     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
 
-    @validator("type", allow_reuse=True, pre=True)
+    @validator("type", pre=True)
     def _validate_type(cls, value: LayerOutputTypeChoice) -> LayerOutputTypeChoice:
-        if not hasattr(LayerOutputTypeChoice, value):
+        if value not in list(LayerOutputTypeChoice):
             raise EnumMemberError(enum_values=list(LayerOutputTypeChoice))
-        type_ = getattr(parameters, getattr(parameters.LayerOutputDatatype, value))
+        name = (
+            value
+            if isinstance(value, LayerOutputTypeChoice)
+            else LayerOutputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.output, getattr(creations.layers.output.Layer, name)
+        )
         cls.__fields__["parameters"].type_ = type_
-        cls.__fields__["parameters"].required = True
         return value
 
-    @validator("parameters", allow_reuse=True)
-    def _validate_parameters(
-        cls, value: Any, **kwargs
-    ) -> Union[parameters.LayerOutputDatatypeUnion]:
-        return kwargs.get("field").type_(**value)
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):

@@ -14,13 +14,42 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+import mimetypes
+import posixpath
+
+from pathlib import Path
+
 from django.urls import path
+from django.http import HttpResponseNotModified, FileResponse
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
+from django.utils._os import safe_join
+from django.utils.http import http_date
+from django.views.static import was_modified_since
+
+
+def static_view(request, path, document_root=None):
+    path = posixpath.normpath(path).lstrip("/")
+    fullpath = Path(safe_join(document_root, path))
+    if fullpath.is_dir():
+        return static_view(request, "index.html", document_root=document_root)
+    if not fullpath.exists():
+        return static_view(request, "index.html", document_root=document_root)
+    statobj = fullpath.stat()
+    if not was_modified_since(
+        request.META.get("HTTP_IF_MODIFIED_SINCE"), statobj.st_mtime, statobj.st_size
+    ):
+        return HttpResponseNotModified()
+    content_type, encoding = mimetypes.guess_type(str(fullpath))
+    content_type = content_type or "application/octet-stream"
+    response = FileResponse(fullpath.open("rb"), content_type=content_type)
+    response.headers["Last-Modified"] = http_date(statobj.st_mtime)
+    if encoding:
+        response.headers["Content-Encoding"] = encoding
+    return response
 
 
 urlpatterns = [
     path("api/v1/", include("apps.api.urls", namespace="apps_api")),
-    path("project/", include("apps.project.urls", namespace="apps_project")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.VUE_URL, view=static_view, document_root=settings.VUE_ROOT)
