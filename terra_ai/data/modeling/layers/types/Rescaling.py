@@ -1,9 +1,8 @@
 """
-## Тип слоя `ELU`
+## Тип слоя `Rescaling`
 """
 from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1
 
 LayerConfig = LayerConfigData(
     **{
@@ -15,15 +14,16 @@ LayerConfig = LayerConfigData(
             "value": 2,
             "validation": LayerValidationMethodChoice.minimal,
         },
-        "module": ModuleChoice.tensorflow_keras_layers,
+        "module": ModuleChoice.tensorflow_keras_layers_preprocessing,
         "module_type": ModuleTypeChoice.keras,
     }
 )
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    scale: float = 1.0
+    offset: float = 0.0
 
 
 class ParametersExtraData(BaseMixinData):
-    alpha: ConstrainedFloatValueGe0Le1 = 1
+    pass

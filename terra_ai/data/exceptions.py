@@ -20,6 +20,9 @@ class ExceptionMessages(str, Enum):
     ValueNotInList = "%s: Value must be in list %s"
     TrdsDirExt = "TRDS dirname must have `.trds` extension, received `%s`"
     TrdsConfigFileNotFound = "TRDS `%s` has not `%s`"
+    LayerValueConfig = (
+        "Validation method `%s` and value `%s` with type `%s` are mismatch"
+    )
 
 
 class TerraDataException(ValueError):
@@ -134,5 +137,15 @@ class TrdsConfigFileNotFoundException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.TrdsConfigFileNotFound)
                 % (str(__trds_name), str(__config_name))
+            )
+        )
+
+
+class LayerValueConfigException(TerraDataException):
+    def __init__(self, __validator: str, __value: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.LayerValueConfig)
+                % (str(__validator), str(__value), str(type(__value)))
             )
         )

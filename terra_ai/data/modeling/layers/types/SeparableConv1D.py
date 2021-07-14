@@ -12,7 +12,22 @@ from ..extra import (
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice,
+    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+)
+
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 3,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
 )
 
 
@@ -20,8 +35,8 @@ class ParametersMainData(BaseMixinData):
     filters: PositiveInt
     kernel_size: PositiveInt
     strides: PositiveInt = 1
-    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):

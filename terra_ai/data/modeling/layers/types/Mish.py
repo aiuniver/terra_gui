@@ -1,9 +1,8 @@
 """
-## Тип слоя `ELU`
+## Тип слоя `Mish`
 """
 from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1
 
 LayerConfig = LayerConfigData(
     **{
@@ -15,8 +14,8 @@ LayerConfig = LayerConfigData(
             "value": 2,
             "validation": LayerValidationMethodChoice.minimal,
         },
-        "module": ModuleChoice.tensorflow_keras_layers,
-        "module_type": ModuleTypeChoice.keras,
+        "module": ModuleChoice.terra_custom_layers,
+        "module_type": ModuleTypeChoice.terra_layer,
     }
 )
 
@@ -26,4 +25,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    alpha: ConstrainedFloatValueGe0Le1 = 1
+    pass

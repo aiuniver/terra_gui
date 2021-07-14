@@ -1,15 +1,14 @@
 """
-## Тип слоя `ELU`
+## Тип слоя `Attention`
 """
 from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1
 
 LayerConfig = LayerConfigData(
     **{
         "num_uplinks": {
-            "value": 1,
-            "validation": LayerValidationMethodChoice.fixed,
+            "value": (2, 3),
+            "validation": LayerValidationMethodChoice.dependence_tuple2,
         },
         "input_dimension": {
             "value": 2,
@@ -26,4 +25,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    alpha: ConstrainedFloatValueGe0Le1 = 1
+    use_scale: bool = False
