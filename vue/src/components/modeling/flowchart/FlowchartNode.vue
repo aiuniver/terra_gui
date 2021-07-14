@@ -81,9 +81,11 @@ export default {
   mounted() {},
   computed: {
     nodeStyle() {
+      let fontSize = 11
       return {
         top: this.position[1] * this.options.scale + "px", // remove: this.options.offsetTop +
         left: this.position[0] * this.options.scale + "px", // remove: this.options.offsetLeft +
+        width: ((this.name.length + this.type.length)*fontSize).toString() + "px",
         transform: `scale(${this.options.scale})`,
       };
     },

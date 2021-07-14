@@ -41,6 +41,16 @@ export default {
       rules: {
         length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
       },
+      middleLayer: {
+        name: "nameeee",
+        type: "Conv1D",
+        group: "middle",
+        bind: [3],
+        shape: [1, 1, 1],
+        location: null,
+        position: [100, 100],
+        parameters: {}
+      }
     };
   },
   computed: {
@@ -55,7 +65,15 @@ export default {
     },
     click(e) {
       console.log(e);
-      this.$store.dispatch('modeling/setDialog', true)
+      switch (e){
+        case "load":
+          this.$store.dispatch('modeling/setDialog', true)
+          break
+        case "middle":
+          this.$store.dispatch('data/addLayer', Object.assign({}, this.middleLayer));
+          break
+      }
+
     },
   },
 };

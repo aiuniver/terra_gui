@@ -52,7 +52,6 @@ export default {
         const {
           data: { data },
         } = await axios.post("/api/v1/exchange/load_dataset/", res);
-        console.log(data);
         commit("SET_SETTINGS", data);
         return data;
       } catch (error) {
@@ -65,9 +64,7 @@ export default {
         const { datasets:presetDatasets, tags:presetTags } = preset
         const { datasets:customDatasets, tags:customTags } = custom
         const datasets = [...presetDatasets, ...customDatasets]
-        console.log(datasets)
         let tags = [...presetTags, ...customTags]
-        console.log(tags)
         tags = tags.map((tag) => {
           return {active: false, ...tag }
         });
