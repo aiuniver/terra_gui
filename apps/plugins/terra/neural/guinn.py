@@ -296,7 +296,7 @@ class GUINN:
         self.show_training_params()
         print("self.DTS.X", self.DTS.X)
         print("self.DTS.Y", self.DTS.Y)
-
+        print("self.DTS.classes_names", self.DTS.classes_names)
         if self.model_is_trained:
             try:
                 list_files = os.listdir(self.training_path)
