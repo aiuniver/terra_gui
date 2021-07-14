@@ -371,12 +371,60 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 ```
 &#34;&#34;&#34;
 
+import json
+from pathlib import Path
 from datetime import datetime
 from typing import Optional
+from pydantic import validator, DirectoryPath
+from transliterate import slugify
 
-from ..mixins import AliasMixinData, UniqueListMixin
+from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
+from ..presets.extra.datasets import Tags
+from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from .tags import TagsList
+
+
+class CustomDataset(BaseMixinData):
+    &#34;&#34;&#34;
+    Пользовательский датасет
+    &#34;&#34;&#34;
+
+    path: DirectoryPath
+    config: Optional[dict] = {}
+
+    @property
+    def tags(self) -&gt; TagsList:
+        __tags = list(
+            filter(
+                None,
+                list(self.config.get(&#34;tags&#34;).values())
+                + list(self.config.get(&#34;user_tags&#34;)),
+            )
+        )
+        tags = []
+        for name in __tags:
+            alias = slugify(name, language_code=&#34;ru&#34;)
+            __tag = getattr(Tags, alias, None)
+            tags.append(__tag.value if __tag else {&#34;name&#34;: name, &#34;alias&#34;: alias})
+        return TagsList(tags)
+
+    @validator(&#34;path&#34;)
+    def _validate_path(cls, value: DirectoryPath) -&gt; DirectoryPath:
+        if not str(value).endswith(&#34;.trds&#34;):
+            raise TrdsDirExtException(value.name)
+        return value
+
+    @validator(&#34;config&#34;, always=True)
+    def _validate_config(cls, value: dict, values) -&gt; dict:
+        config_path = Path(values.get(&#34;path&#34;), &#34;config.json&#34;)
+        if not config_path.is_file():
+            raise TrdsConfigFileNotFoundException(
+                values.get(&#34;path&#34;).name, config_path.name
+            )
+        with open(config_path, &#34;r&#34;) as config_ref:
+            value = json.load(config_ref)
+        return value
 
 
 class DatasetData(AliasMixinData):
@@ -426,7 +474,7 @@ class DatasetsGroupData(AliasMixinData):
 
     def dict(self, **kwargs):
         data = super().dict()
-        data.update({&#34;tags&#34;: self.tags})
+        data.update({&#34;tags&#34;: self.tags.dict()})
         return data
 
 
@@ -454,6 +502,112 @@ class DatasetsGroupsList(UniqueListMixin):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
+<dt id="terra_ai.data.datasets.dataset.CustomDataset"><code class="flex name class">
+<span>class <span class="ident">CustomDataset</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Пользовательский датасет</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class CustomDataset(BaseMixinData):
+    &#34;&#34;&#34;
+    Пользовательский датасет
+    &#34;&#34;&#34;
+
+    path: DirectoryPath
+    config: Optional[dict] = {}
+
+    @property
+    def tags(self) -&gt; TagsList:
+        __tags = list(
+            filter(
+                None,
+                list(self.config.get(&#34;tags&#34;).values())
+                + list(self.config.get(&#34;user_tags&#34;)),
+            )
+        )
+        tags = []
+        for name in __tags:
+            alias = slugify(name, language_code=&#34;ru&#34;)
+            __tag = getattr(Tags, alias, None)
+            tags.append(__tag.value if __tag else {&#34;name&#34;: name, &#34;alias&#34;: alias})
+        return TagsList(tags)
+
+    @validator(&#34;path&#34;)
+    def _validate_path(cls, value: DirectoryPath) -&gt; DirectoryPath:
+        if not str(value).endswith(&#34;.trds&#34;):
+            raise TrdsDirExtException(value.name)
+        return value
+
+    @validator(&#34;config&#34;, always=True)
+    def _validate_config(cls, value: dict, values) -&gt; dict:
+        config_path = Path(values.get(&#34;path&#34;), &#34;config.json&#34;)
+        if not config_path.is_file():
+            raise TrdsConfigFileNotFoundException(
+                values.get(&#34;path&#34;).name, config_path.name
+            )
+        with open(config_path, &#34;r&#34;) as config_ref:
+            value = json.load(config_ref)
+        return value</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.dataset.CustomDataset.config"><code class="name">var <span class="ident">config</span> : Union[dict, NoneType]</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.CustomDataset.path"><code class="name">var <span class="ident">path</span> : pydantic.types.DirectoryPath</code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.dataset.CustomDataset.tags"><code class="name">var <span class="ident">tags</span> : <a title="terra_ai.data.datasets.tags.TagsList" href="tags.html#terra_ai.data.datasets.tags.TagsList">TagsList</a></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def tags(self) -&gt; TagsList:
+    __tags = list(
+        filter(
+            None,
+            list(self.config.get(&#34;tags&#34;).values())
+            + list(self.config.get(&#34;user_tags&#34;)),
+        )
+    )
+    tags = []
+    for name in __tags:
+        alias = slugify(name, language_code=&#34;ru&#34;)
+        __tag = getattr(Tags, alias, None)
+        tags.append(__tag.value if __tag else {&#34;name&#34;: name, &#34;alias&#34;: alias})
+    return TagsList(tags)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.mixins.BaseMixinData" href="../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.mixins.BaseMixinData.dict" href="../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.datasets.dataset.DatasetData"><code class="flex name class">
 <span>class <span class="ident">DatasetData</span></span>
 <span>(</span><span>**data)</span>
@@ -544,7 +698,7 @@ class DatasetsGroupsList(UniqueListMixin):
 
     def dict(self, **kwargs):
         data = super().dict()
-        data.update({&#34;tags&#34;: self.tags})
+        data.update({&#34;tags&#34;: self.tags.dict()})
         return data</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -690,6 +844,77 @@ def tags(self) -&gt; TagsList:
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.datasets.dataset.Tags"><code class="flex name class">
+<span>class <span class="ident">Tags</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.dict</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.datasets.dataset.Tags.audio"><code class="name">var <span class="ident">audio</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.classification"><code class="name">var <span class="ident">classification</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.english"><code class="name">var <span class="ident">english</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.images"><code class="name">var <span class="ident">images</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.object_detection"><code class="name">var <span class="ident">object_detection</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.regression"><code class="name">var <span class="ident">regression</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.russian"><code class="name">var <span class="ident">russian</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.segmentation"><code class="name">var <span class="ident">segmentation</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.smart_home"><code class="name">var <span class="ident">smart_home</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.tensorflow_keras"><code class="name">var <span class="ident">tensorflow_keras</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.terra_ai"><code class="name">var <span class="ident">terra_ai</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.text"><code class="name">var <span class="ident">text</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.timeseries"><code class="name">var <span class="ident">timeseries</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.datasets.dataset.Tags.trading"><code class="name">var <span class="ident">trading</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
 </dl>
 </section>
 </article>
@@ -713,6 +938,14 @@ def tags(self) -&gt; TagsList:
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
+<h4><code><a title="terra_ai.data.datasets.dataset.CustomDataset" href="#terra_ai.data.datasets.dataset.CustomDataset">CustomDataset</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.datasets.dataset.CustomDataset.config" href="#terra_ai.data.datasets.dataset.CustomDataset.config">config</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.CustomDataset.path" href="#terra_ai.data.datasets.dataset.CustomDataset.path">path</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.CustomDataset.tags" href="#terra_ai.data.datasets.dataset.CustomDataset.tags">tags</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.datasets.dataset.DatasetData" href="#terra_ai.data.datasets.dataset.DatasetData">DatasetData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.datasets.dataset.DatasetData.date" href="#terra_ai.data.datasets.dataset.DatasetData.date">date</a></code></li>
@@ -734,6 +967,25 @@ def tags(self) -&gt; TagsList:
 </li>
 <li>
 <h4><code><a title="terra_ai.data.datasets.dataset.DatasetsList" href="#terra_ai.data.datasets.dataset.DatasetsList">DatasetsList</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.datasets.dataset.Tags" href="#terra_ai.data.datasets.dataset.Tags">Tags</a></code></h4>
+<ul class="two-column">
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.audio" href="#terra_ai.data.datasets.dataset.Tags.audio">audio</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.classification" href="#terra_ai.data.datasets.dataset.Tags.classification">classification</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.english" href="#terra_ai.data.datasets.dataset.Tags.english">english</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.images" href="#terra_ai.data.datasets.dataset.Tags.images">images</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.object_detection" href="#terra_ai.data.datasets.dataset.Tags.object_detection">object_detection</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.regression" href="#terra_ai.data.datasets.dataset.Tags.regression">regression</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.russian" href="#terra_ai.data.datasets.dataset.Tags.russian">russian</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.segmentation" href="#terra_ai.data.datasets.dataset.Tags.segmentation">segmentation</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.smart_home" href="#terra_ai.data.datasets.dataset.Tags.smart_home">smart_home</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.tensorflow_keras" href="#terra_ai.data.datasets.dataset.Tags.tensorflow_keras">tensorflow_keras</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.terra_ai" href="#terra_ai.data.datasets.dataset.Tags.terra_ai">terra_ai</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.text" href="#terra_ai.data.datasets.dataset.Tags.text">text</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.timeseries" href="#terra_ai.data.datasets.dataset.Tags.timeseries">timeseries</a></code></li>
+<li><code><a title="terra_ai.data.datasets.dataset.Tags.trading" href="#terra_ai.data.datasets.dataset.Tags.trading">trading</a></code></li>
+</ul>
 </li>
 </ul>
 </li>

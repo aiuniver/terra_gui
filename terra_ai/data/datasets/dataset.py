@@ -174,12 +174,60 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 ```
 """
 
+import json
+from pathlib import Path
 from datetime import datetime
 from typing import Optional
+from pydantic import validator, DirectoryPath
+from transliterate import slugify
 
-from ..mixins import AliasMixinData, UniqueListMixin
+from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
+from ..presets import datasets as presets_datasets
+from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from .tags import TagsList
+
+
+class CustomDataset(BaseMixinData):
+    """
+    Пользовательский датасет
+    """
+
+    path: DirectoryPath
+    config: Optional[dict] = {}
+
+    @property
+    def tags(self) -> TagsList:
+        __tags = list(
+            filter(
+                None,
+                list(self.config.get("tags").values())
+                + list(self.config.get("user_tags")),
+            )
+        )
+        tags = []
+        for name in __tags:
+            alias = slugify(name, language_code="ru")
+            __tag = getattr(presets_datasets.Tags, alias, None)
+            tags.append(__tag.value if __tag else {"name": name, "alias": alias})
+        return TagsList(tags)
+
+    @validator("path")
+    def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
+        if not str(value).endswith(".trds"):
+            raise TrdsDirExtException(value.name)
+        return value
+
+    @validator("config", always=True)
+    def _validate_config(cls, value: dict, values) -> dict:
+        config_path = Path(values.get("path"), "config.json")
+        if not config_path.is_file():
+            raise TrdsConfigFileNotFoundException(
+                values.get("path").name, config_path.name
+            )
+        with open(config_path, "r") as config_ref:
+            value = json.load(config_ref)
+        return value
 
 
 class DatasetData(AliasMixinData):
@@ -229,7 +277,7 @@ class DatasetsGroupData(AliasMixinData):
 
     def dict(self, **kwargs):
         data = super().dict()
-        data.update({"tags": self.tags})
+        data.update({"tags": self.tags.dict()})
         return data
 
 
