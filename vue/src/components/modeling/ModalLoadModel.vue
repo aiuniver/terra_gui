@@ -6,25 +6,25 @@
     <div class="row at-row no-gutter">
       <div class="col-16 models-list">
         <vue-custom-scrollbar class="scroll-area" :settings="settings">
-        <ul class="loaded-list">
-          <li
-            v-for="(list, i) of lists[0].models"
-            :key="`list_${i}`"
-            @click="getModel(list)"
-          >
-            <i class="icon icon-file-text"></i>
-            <span>{{ list.label }}</span>
-          </li>
-          <li
-            v-for="(list, i) of lists[1].models"
-            :key="`list_${i}`"
-            @click="getModel(list)"
-          >
-            <i class="icon icon-file-text"></i>
-            <span>{{ list.label }}</span>
-            <div class="remove"></div>
-          </li>
-        </ul>
+          <ul class="loaded-list">
+            <li
+              v-for="(list, i) of preset"
+              :key="`list_${i}`"
+              @click="getModel(list)"
+            >
+              <i class="icon icon-file-text"></i>
+              <span>{{ list.label }}</span>
+            </li>
+            <li
+              v-for="(list, i) of custom"
+              :key="`list_${i}`"
+              @click="getModel(list)"
+            >
+              <i class="icon icon-file-text"></i>
+              <span>{{ list.label }}</span>
+              <div class="remove"></div>
+            </li>
+          </ul>
         </vue-custom-scrollbar>
       </div>
       <div class="col-8">
@@ -64,7 +64,7 @@ import { mapGetters } from "vuex";
 export default {
   name: "ModalWindowLoadModel",
   components: {
-    vueCustomScrollbar
+    vueCustomScrollbar,
   },
   data: () => ({
     lists: [],
@@ -76,6 +76,12 @@ export default {
   }),
   computed: {
     ...mapGetters({}),
+    preset() {
+      return this.lists[0]?.models || []
+    },
+    custom() {
+      return this.lists[1]?.models || []
+    },
     dialog: {
       set(value) {
         this.$store.dispatch("modeling/setDialog", value);
@@ -83,7 +89,7 @@ export default {
       get() {
         return this.$store.getters["modeling/getDialog"];
       },
-    }
+    },
   },
   methods: {
     CloseModalWindow() {
@@ -91,6 +97,7 @@ export default {
     },
     async load() {
       const data = await this.$store.dispatch("modeling/loadModel");
+      console.log(data)
       this.lists = data;
     },
     async getModel({ name, is_terra }) {
@@ -120,7 +127,6 @@ export default {
 </script>
 
 <style scoped>
-
 .scroll-area {
   position: relative;
   margin: auto;
@@ -156,56 +162,56 @@ export default {
 }
 
 .loaded-list > li > .remove {
-	display:block;
-	width:26px;
-	height:26px;
-	margin: -4px 0 0 0;
-	position:relative;
+  display: block;
+  width: 26px;
+  height: 26px;
+  margin: -4px 0 0 0;
+  position: relative;
   float: right;
-	right:4px;
-	cursor:pointer;
-	user-select:none;
-	border-radius:2px;
-	transition:background-color .3s ease-in-out;
+  right: 4px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 2px;
+  transition: background-color 0.3s ease-in-out;
 }
 .loaded-list > li > .remove:before {
-	display:block;
-	content:"";
-	width:14px;
-	height:14px;
-	margin:-7px 0 0 -7px;
-	position:relative;
-	left:50%;
-	top:50%;
-	background-position:center;
-  background-repeat:no-repeat;
-  background-size:contain;
+  display: block;
+  content: "";
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  position: relative;
+  left: 50%;
+  top: 50%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
 }
 
-.loaded-list > li > .remove:hover{
-	background: rgba(255, 255, 255, .2);
+.loaded-list > li > .remove:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
-.model-arch{
+.model-arch {
   padding: 5px;
 }
-.model-save-arch-btn{
+.model-save-arch-btn {
   padding-top: 20px;
 }
-.modal-arch-info{
+.modal-arch-info {
   padding-left: 10px;
 }
-.model-arch-img{
+.model-arch-img {
   padding: 5px;
 }
-.modal-arch-info > div{
-  color: #A7BED3;
+.modal-arch-info > div {
+  color: #a7bed3;
 }
-.modal-arch-info > div > span{
-  color: #FFFFFF;
-  font-size: .85rem;
+.modal-arch-info > div > span {
+  color: #ffffff;
+  font-size: 0.85rem;
 }
 
-.close{
+.close {
   width: 44px;
   height: 44px;
   position: absolute;
@@ -215,7 +221,7 @@ export default {
 }
 .close:after {
   display: block;
-  content: '';
+  content: "";
   width: 40%;
   height: 2px;
   margin: -1px 0 0 0;
@@ -223,12 +229,12 @@ export default {
   left: 30%;
   top: 50%;
   border-radius: 1px;
-  background-color: #A7BED3;
+  background-color: #a7bed3;
   transform: rotate(45deg);
 }
-.close:before{
+.close:before {
   display: block;
-  content: '';
+  content: "";
   width: 40%;
   height: 2px;
   margin: -1px 0 0 0;
@@ -237,7 +243,6 @@ export default {
   top: 50%;
   border-radius: 1px;
   transform: rotate(-45deg);
-  background-color: #A7BED3;
+  background-color: #a7bed3;
 }
-
 </style>
