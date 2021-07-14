@@ -34,7 +34,7 @@ export default {
     },
     type: {
       type: String,
-      default: "Conv2D",
+      default: "middle",
     },
     group: {
       type: String,
@@ -201,27 +201,15 @@ $portSize: 10;
     }
   }
 
-  //Colors of layers from their types
   .input{
     background: #FFB054;
-    &:hover{
-      background: none;
-      box-shadow: 0 0 0 1.5pt #FFB054;
-    }
   }
   .middle{
     background: #89D764;
-    &:hover{
-      background: none;
-      box-shadow: 0 0 0 1.5pt #89D764;
-    }
   }
   .output{
     background: #8E51F2;
-    &:hover{
-      background: none;
-      box-shadow: 0 0 0 1.5pt #8E51F2;
-    }
   }
 }
 </style>
+
