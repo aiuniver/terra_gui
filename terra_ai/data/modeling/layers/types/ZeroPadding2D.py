@@ -1,5 +1,5 @@
 """
-## Тип слоя `UpSampling3D`
+## Тип слоя `ZeroPadding2D`
 """
 
 from typing import Tuple
@@ -15,7 +15,7 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 5,
+            "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
         "module": ModuleChoice.tensorflow_keras_layers,
@@ -25,7 +25,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (2, 2, 2)
+    padding: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]]
 
 
 class ParametersExtraData(BaseMixinData):

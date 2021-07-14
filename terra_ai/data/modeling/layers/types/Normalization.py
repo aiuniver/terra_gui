@@ -1,12 +1,11 @@
 """
-## Тип слоя `UpSampling3D`
+## Тип слоя `Normalization`
 """
 
-from typing import Tuple
-from pydantic.types import PositiveInt
+from typing import Optional
 
+from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
 LayerConfig = LayerConfigData(
     **{
@@ -15,8 +14,8 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 5,
-            "validation": LayerValidationMethodChoice.fixed,
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
         },
         "module": ModuleChoice.tensorflow_keras_layers,
         "module_type": ModuleTypeChoice.keras,
@@ -25,8 +24,10 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (2, 2, 2)
+    pass
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: DataFormatChoice = DataFormatChoice.channels_last
+    axis: int = -1
+    mean: Optional[float] = None
+    variance: Optional[float] = None

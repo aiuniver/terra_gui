@@ -1,12 +1,12 @@
 """
-## Тип слоя `UpSampling3D`
+## Тип слоя `Resizing`
 """
 
-from typing import Tuple
-from pydantic.types import PositiveInt
+from pydantic import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import ResizingInterpolationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, \
+    ModuleTypeChoice
 
 LayerConfig = LayerConfigData(
     **{
@@ -15,18 +15,19 @@ LayerConfig = LayerConfigData(
             "validation": LayerValidationMethodChoice.fixed,
         },
         "input_dimension": {
-            "value": 5,
+            "value": 4,
             "validation": LayerValidationMethodChoice.fixed,
         },
-        "module": ModuleChoice.tensorflow_keras_layers,
+        "module": ModuleChoice.tensorflow_keras_layers_preprocessing,
         "module_type": ModuleTypeChoice.keras,
     }
 )
 
 
 class ParametersMainData(BaseMixinData):
-    size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (2, 2, 2)
+    height: PositiveInt = 224
+    width: PositiveInt = 224
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: DataFormatChoice = DataFormatChoice.channels_last
+    interpolation: ResizingInterpolationChoice = ResizingInterpolationChoice.bilinear

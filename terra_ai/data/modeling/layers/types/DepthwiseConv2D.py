@@ -12,20 +12,35 @@ from ..extra import (
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice,
+    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+)
+
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 4,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
 )
 
 
 class ParametersMainData(BaseMixinData):
     kernel_size: Tuple[PositiveInt, PositiveInt]
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
-    padding: PaddingChoice = PaddingChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingChoice = PaddingChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
     depth_multiplier: PositiveInt = 1
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt] = (1, 1)
     use_bias: bool = True
     depthwise_initializer: InitializerChoice = InitializerChoice.glorot_uniform

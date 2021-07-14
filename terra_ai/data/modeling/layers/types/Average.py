@@ -1,15 +1,15 @@
 """
-## Тип слоя `ELU`
+## Тип слоя `Average`
 """
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+
 from ....mixins import BaseMixinData
-from ....types import ConstrainedFloatValueGe0Le1
+from ..extra import ActivationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
 
 LayerConfig = LayerConfigData(
     **{
         "num_uplinks": {
-            "value": 1,
-            "validation": LayerValidationMethodChoice.fixed,
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
         },
         "input_dimension": {
             "value": 2,
@@ -22,8 +22,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    pass
+    activation: ActivationChoice = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
-    alpha: ConstrainedFloatValueGe0Le1 = 1
+    pass

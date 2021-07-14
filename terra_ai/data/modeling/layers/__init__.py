@@ -23,6 +23,10 @@ class LayerExtraDefaultData(LayerDefaultData):
     pass
 
 
+class LayerConfigDefaultData(LayerDefaultData):
+    pass
+
+
 class LayerMixinData(BaseMixinData):
     main: LayerMainDefaultData = LayerMainDefaultData()
     extra: LayerExtraDefaultData = LayerExtraDefaultData()
@@ -312,7 +316,7 @@ class LayerLSTMData(LayerMixinData):
 
 class LayerEmbeddingData(LayerMixinData):
     main: types.Embedding.ParametersMainData = types.Embedding.ParametersMainData(
-        input_dim=1000, output_dim=64
+        input_dim=20000, output_dim=64
     )
     extra: types.Embedding.ParametersExtraData = types.Embedding.ParametersExtraData()
 
@@ -333,6 +337,65 @@ class LayerBatchNormalizationData(LayerMixinData):
     extra: types.BatchNormalization.ParametersExtraData = (
         types.BatchNormalization.ParametersExtraData()
     )
+
+
+class ParametersTypeMishData(LayerMixinData):
+    main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
+    extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()
+
+
+class ParametersTypeInstanceNormalizationData(LayerMixinData):
+    main: types.InstanceNormalization.ParametersMainData = (
+        types.InstanceNormalization.ParametersMainData()
+    )
+    extra: types.InstanceNormalization.ParametersExtraData = (
+        types.InstanceNormalization.ParametersExtraData()
+    )
+
+
+class ParametersTypeZeroPadding2DData(LayerMixinData):
+    main: types.ZeroPadding2D.ParametersMainData = (
+        types.ZeroPadding2D.ParametersMainData(padding=((1, 1), (1, 1)))
+    )
+    extra: types.ZeroPadding2D.ParametersExtraData = (
+        types.ZeroPadding2D.ParametersExtraData()
+    )
+
+
+class ParametersTypeCropping2DData(LayerMixinData):
+    main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
+        cropping=((1, 1), (1, 1))
+    )
+    extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()
+
+
+class ParametersTypeAttentionData(LayerMixinData):
+    main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
+    extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()
+
+
+class ParametersTypeAverageData(LayerMixinData):
+    main: types.Average.ParametersMainData = types.Average.ParametersMainData()
+    extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()
+
+
+class ParametersTypeThresholdedReLUData(LayerMixinData):
+    main: types.ThresholdedReLU.ParametersMainData = (
+        types.ThresholdedReLU.ParametersMainData()
+    )
+    extra: types.ThresholdedReLU.ParametersExtraData = (
+        types.ThresholdedReLU.ParametersExtraData()
+    )
+
+
+class ParametersTypeRescalingData(LayerMixinData):
+    main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
+    extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()
+
+
+class ParametersTypeResizingData(LayerMixinData):
+    main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
+    extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()
 
 
 Layer = Enum(

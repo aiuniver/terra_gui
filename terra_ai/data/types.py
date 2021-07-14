@@ -14,6 +14,7 @@ from .exceptions import AliasException, Base64Exception, FilePathExtensionExcept
 
 
 ConstrainedIntValueGe0 = conint(ge=0)
+ConstrainedIntValueGe2 = conint(ge=2)
 ConstrainedFloatValueGe0 = confloat(ge=0)
 ConstrainedFloatValueLe0 = confloat(le=0)
 ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
