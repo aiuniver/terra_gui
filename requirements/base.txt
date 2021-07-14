@@ -10,3 +10,4 @@ pydantic>=1.8.2
 cairosvg==2.5.2
 PyYAML~=5.4.1
 transliterate==1.10.2
+imgaug==0.4.0
