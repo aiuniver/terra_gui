@@ -1,9 +1,12 @@
-from .base import TerraBaseException, TerraBaseMessages
+from enum import Enum
+
+from .base import TerraBaseException
 
 
-class DatasetsMessages(TerraBaseMessages):
+class DatasetsMessages(str, Enum):
     pass
 
 
 class DatasetsException(TerraBaseException):
-    pass
+    class Meta:
+        message: str = "Undefined error of datasets"

@@ -1,9 +1,12 @@
-from .base import TerraBaseException, TerraBaseMessages
+from enum import Enum
+
+from .base import TerraBaseException
 
 
-class ModelingMessages(TerraBaseMessages):
+class ModelingMessages(str, Enum):
     pass
 
 
 class ModelingException(TerraBaseException):
-    pass
+    class Meta:
+        message: str = "Undefined error of modeling"
