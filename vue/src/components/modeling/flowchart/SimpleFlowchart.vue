@@ -7,14 +7,14 @@
   >
     <svg width="100%" :height="`${height}px`">
       <flowchart-link
-        v-bind.sync="link"
+        v-bind="link"
         v-for="(link, index) in lines"
         :key="`link${index}`"
         @deleteLink="linkDelete(link.id)"
       ></flowchart-link>
     </svg>
     <flowchart-node
-      v-bind.sync="node"
+      v-bind="node"
       v-for="(node, index) in scene.layers"
       :key="`node${index}`"
       :options="nodeOptions"

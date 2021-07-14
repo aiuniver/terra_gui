@@ -1,8 +1,12 @@
 <template>
   <div class="card">
-    <div class="cord__body icon-model-load"></div>
+    <div class="cord__body icon-model-load">
+      <div class="card__body--image">
+        <img  width="100%" src="/imgs/bmw.jpg" alt="images">
+      </div>
+    </div>
     <div class="card__footer">
-      <span> Text footer item</span>
+      <span> Sloy</span>
     </div>
   </div>
 </template>
@@ -40,10 +44,15 @@ export default {
   background-color: #17212b;
   transition: all 0.3s;
   transition: all 0.3s;
+  margin: 10px;
 
   &:not(.card--no-hover):hover {
     border-color: $card-border-color-hover;
     box-shadow: 1px 0 16px 0 $shadow-color;
+  }
+
+  &__body--image {
+    margin-top: 20px;
   }
 
   &__footer {
@@ -53,6 +62,7 @@ export default {
     background-color: #242f3d;
     width: 100%;
     span {
+      padding: 5px 10px;;
 
     }
   }
