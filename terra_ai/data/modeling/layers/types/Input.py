@@ -10,7 +10,10 @@ from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
     **{
-        "num_uplinks": None,
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
         "input_dimension": {
             "value": 2,
             "validation": LayerValidationMethodChoice.minimal,

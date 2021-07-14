@@ -112,7 +112,7 @@ class LayerValidationMethodChoice(str, Enum):
 
 
 class LayerValueConfig(BaseMixinData):
-    value: Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]
+    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
     validation: LayerValidationMethodChoice
 
     @validator("validation")
@@ -129,14 +129,14 @@ class LayerValueConfig(BaseMixinData):
             LayerValidationMethodChoice.fixed,
             LayerValidationMethodChoice.minimal,
         ]:
-            if not isinstance(__value, int):
+            if __value and not isinstance(__value, int):
                 print(__value)
                 raise LayerValueConfigException(value, __value)
         return value
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: Optional[LayerValueConfig]
-    input_dimension: Optional[LayerValueConfig]
+    num_uplinks: LayerValueConfig
+    input_dimension: LayerValueConfig
     module: ModuleChoice
     module_type: ModuleTypeChoice
