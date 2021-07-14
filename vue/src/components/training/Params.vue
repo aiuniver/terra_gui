@@ -5,7 +5,7 @@
         <form class="params-container">
           <div class="params-item params-config">
             <div class="inner settings">
-              <div class="params-item params-optimizer">
+              <div class="params-item params-optimizer pa-3">
                 <div class="inner">
                   <div class="field-form field-inline">
                     <Autocomplete
@@ -58,6 +58,59 @@
 
               <at-collapse>
                 <at-collapse-item class="mt-3" title="Параметры оптимизатора">
+                  <div class="form-inline-label">
+                    <div class="field-form field-inline field-reverse">
+                      <label for="field_form-optimizer[params][extra][beta_1]"
+                        >Beta 1</label
+                      >
+                      <input
+                        type="number"
+                        id="field_form-optimizer[params][extra][beta_1]"
+                        name="optimizer[params][extra][beta_1]"
+                        value="0.9"
+                        data-value-type="number"
+                      />
+                    </div>
+                    <div class="field-form field-inline field-reverse">
+                      <label for="field_form-optimizer[params][extra][beta_2]"
+                        >Beta 2</label
+                      >
+                      <input
+                        type="number"
+                        id="field_form-optimizer[params][extra][beta_2]"
+                        name="optimizer[params][extra][beta_2]"
+                        value="0.999"
+                        data-value-type="number"
+                      />
+                    </div>
+                    <div class="field-form field-inline field-reverse">
+                      <label for="field_form-optimizer[params][extra][epsilon]"
+                        >Epsilon</label
+                      >
+                      <input
+                        type="number"
+                        id="field_form-optimizer[params][extra][epsilon]"
+                        name="optimizer[params][extra][epsilon]"
+                        value="1e-7"
+                        data-value-type="number"
+                      />
+                    </div>
+                    <div class="field-form field-inline field-reverse">
+                      <label for="field_form-optimizer[params][extra][amsgrad]"
+                        >Amsgrad</label
+                      >
+                      <div class="checkout-switch">
+                        <input
+                          type="checkbox"
+                          id="field_form-optimizer[params][extra][amsgrad]"
+                          name="optimizer[params][extra][amsgrad]"
+                          data-value-type="boolean"
+                          data-unchecked-value="false"
+                        />
+                        <span class="switcher"></span>
+                      </div>
+                    </div>
+                  </div>
                 </at-collapse-item>
 
                 <at-collapse-item class="mt-3" title="Параметры выходных слоев">
@@ -116,7 +169,7 @@
             </div>
           </div>
 
-          <div class="params-item params-actions">
+          <div class="params-item params-actions pa-3">
             <div class="inner actions">
               <div class="actions-form">
                 <div class="item training">
@@ -164,4 +217,9 @@ export default {
 </script>
 
 <style scoped>
+.form-inline-label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
 </style>

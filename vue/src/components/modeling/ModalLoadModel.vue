@@ -128,7 +128,7 @@ export default {
 
 <style scoped>
 .scroll-area {
-  position: relative;
+  /* position: relative; */
   margin: auto;
   height: 350px;
 }
