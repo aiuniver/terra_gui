@@ -1,9 +1,12 @@
-from .base import TerraBaseException, TerraBaseMessages
+from enum import Enum
+
+from .base import TerraBaseException
 
 
-class TrainingMessages(TerraBaseMessages):
+class TrainingMessages(str, Enum):
     pass
 
 
 class TrainingException(TerraBaseException):
-    pass
+    class Meta:
+        message: str = "Undefined error of training"
