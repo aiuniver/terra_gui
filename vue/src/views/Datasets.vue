@@ -2,12 +2,12 @@
   <main class="page-datasets">
     <div class="container">
       <div class="row">
-        <div :class="full ? 'col-18' : 'col-3'">
+        <div :class="full ? 'col-3' : 'col-18'">
           <Dataset />
         </div>
-        <div :class="full ? 'col-6' : 'col-21'">
-          <Params v-if="full" />
-          <ParamsFull v-else />
+        <div :class="full ? 'col-21' : 'col-6'">
+          <ParamsFull v-if="full" />
+          <Params v-else />
         </div>
       </div>
     </div>
