@@ -2,17 +2,14 @@
   <div class="toolbar project-training-toolbar">
     <div class="wrapper">
       <ul class="menu-section">
-        <li data-type="charts" disabled="disabled">
-          <span title="Графики" class="icon-training-charts"></span>
-        </li>
-        <li data-type="scatters" disabled="disabled">
-          <span title="Скаттеры" class="icon-training-scatters"></span>
-        </li>
-        <li data-type="images" disabled="disabled">
-          <span title="Изображения" class="icon-training-images"></span>
-        </li>
-        <li data-type="texts" disabled="disabled">
-          <span title="Текст" class="icon-training-texts"></span>
+        <li
+          v-for="({ title, active, disabled, icon }, index) of items"
+          :key="'items_' + index"
+          :class="{ active: active }"
+          :disabled="disabled"
+          @click="click(index, active)"
+        >
+          <span :title="title" :class="icon"></span>
         </li>
       </ul>
     </div>
@@ -20,11 +17,24 @@
 </template>
 
 <script>
+import { mapGetters } from "vuex";
 export default {
-  name: "Toolbar"
-}
+  name: "Toolbar",
+  data: () => ({}),
+  computed: {
+    ...mapGetters({
+      items: "trainings/getToolbar",
+    }),
+  },
+  methods: {
+    click(index, active) {
+      if (!this.items[index].disabled) {
+        this.items[index].active = !active;
+      }
+    },
+  },
+};
 </script>
 
 <style scoped>
-
 </style>

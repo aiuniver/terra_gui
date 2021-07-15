@@ -2,6 +2,7 @@ import messages from "./messages";
 import modeling from "./modeling";
 import datasets from "./datasets";
 import settings from "./settings";
+import trainings from "./trainings";
 import data from "./data";
 
 export default {
@@ -10,6 +11,7 @@ export default {
     modeling,
     datasets,
     data,
-    settings
+    settings,
+    trainings
   },
 };

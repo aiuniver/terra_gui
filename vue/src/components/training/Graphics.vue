@@ -1,33 +1,19 @@
 <template>
-<div class="board">
-        <div class="graphics">
-          <div class="wrapper">
-            <div class="tabs-content">
-              <div class="inner">
-                <div class="tabs-item graphics custom-scrollbar-wrapper">
+  <div class="board">
+    <div class="graphics">
+      <div class="wrapper">
+        <div class="tabs-content">
+          <div class="inner">
+            <div class="tabs-item graphics">
+              <div
+                class="mCustomScrollBox mCS-light mCSB_vertical mCSB_outside"
+              >
+                <div class="mCSB_container">
                   <div class="tab-container">
-                    <div class="charts hidden">
-                      <div class="category-title">Графики</div>
-                      <div class="content">
-                        <div class="inner"></div>
-                      </div>
-                    </div>
-                    <div class="scatters hidden">
-                      <div class="category-title">Скаттеры</div>
-                      <div class="content">
-                        <div class="inner"></div>
-                      </div>
-                    </div>
-                    <div class="images hidden">
-                      <div class="category-title">Изображения</div>
-                      <div class="content"></div>
-                    </div>
-                    <div class="texts hidden">
-                      <div class="category-title">Текст</div>
-                      <div class="content">
-                        <div class="inner"></div>
-                      </div>
-                    </div>
+                    <Chars v-if="chars" />
+                    <Scatters  v-if="scatters" />
+                    <Images  v-if="images" />
+                    <Texts  v-if="texts" />
                   </div>
                 </div>
               </div>
@@ -35,14 +21,35 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
 </template>
 
 <script>
+import { mapGetters } from "vuex";
+import Images from "./main/images/Images.vue";
+import Texts from "./main/texts/Texts.vue";
+import Scatters from "./main/Scatters.vue";
+import Chars from "./main/Chars.vue";
+
 export default {
-  name: "Graphics"
-}
+  name: "Graphics",
+  components: {
+    Images,
+    Texts,
+    Scatters,
+    Chars,
+  },
+  computed: {
+    ...mapGetters({
+      chars: "trainings/getToolbarChars",
+      scatters: "trainings/getToolbarScatters",
+      images: "trainings/getToolbarImages",
+      texts: "trainings/getToolbarTexts",
+    }),
+  },
+};
 </script>
 
 <style scoped>
-
 </style>
