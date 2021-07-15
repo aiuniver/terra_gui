@@ -18,7 +18,7 @@ from .data import (
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
 from . import serializers as terra_serializers
-
+from .test_data import TRAINDATA
 
 DEFAULT_MODEL_NAME = "NoName"
 
@@ -466,10 +466,13 @@ class TerraExchange:
             return response
 
         model = response.data.get("model", "")
+
+        training_data_strict = TRAINDATA
+
         colab_exchange.start_training(
             model=model,
             pathname=self.project.dir.training,
-            **training_data,
+            **training_data_strict,
         )
         self._update_in_training_flag()
         self.project.autosave()
