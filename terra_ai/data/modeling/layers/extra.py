@@ -112,7 +112,7 @@ class LayerValidationMethodChoice(str, Enum):
 
 
 class LayerValueConfig(BaseMixinData):
-    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    value: Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]
     validation: LayerValidationMethodChoice
 
     @validator("validation")
@@ -136,7 +136,7 @@ class LayerValueConfig(BaseMixinData):
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: LayerValueConfig
+    num_uplinks: Optional[LayerValueConfig]
     input_dimension: LayerValueConfig
     module: ModuleChoice
     module_type: ModuleTypeChoice
