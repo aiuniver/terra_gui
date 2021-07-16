@@ -5,6 +5,14 @@
 from enum import Enum
 
 
+class ReferenceTypeChoice(str, Enum):
+    block = "block"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ReferenceTypeChoice))
+
+
 class LayerGroupChoice(str, Enum):
     input = "input"
     middle = "middle"
