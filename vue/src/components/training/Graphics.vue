@@ -1,36 +1,31 @@
 <template>
   <div class="board">
-    <div class="graphics">
-      <div class="wrapper">
-        <div class="tabs-content">
-          <div class="inner">
-            <div class="tabs-item graphics">
-              <div
-                class="mCustomScrollBox mCS-light mCSB_vertical mCSB_outside"
-              >
-                <div class="mCSB_container">
-                  <div class="tab-container">
-                    <Chars v-if="chars" />
-                    <Scatters  v-if="scatters" />
-                    <Images  v-if="images" />
-                    <Texts  v-if="texts" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <vue-custom-scrollbar
+      class="scroll-area"
+      :settings="{
+        suppressScrollY: false,
+        suppressScrollX: true,
+        wheelPropagation: false,
+      }"
+    >
+      <div class="tab-container">
+        <Chars v-if="chars" />
+        <Scatters v-if="scatters" />
+        <Images v-if="images" />
+        <Texts v-if="texts" />
       </div>
-    </div>
+    </vue-custom-scrollbar>
   </div>
 </template>
 
 <script>
+import vueCustomScrollbar from "vue-custom-scrollbar";
+import "vue-custom-scrollbar/dist/vueScrollbar.css";
 import { mapGetters } from "vuex";
-import Images from "./main/images/Images.vue";
-import Texts from "./main/texts/Texts.vue";
+import Images from "./main/images/index.vue";
+import Texts from "./main/texts/index.vue";
 import Scatters from "./main/Scatters.vue";
-import Chars from "./main/Chars.vue";
+import Chars from "./main/chars/index.vue";
 
 export default {
   name: "Graphics",
@@ -39,6 +34,7 @@ export default {
     Texts,
     Scatters,
     Chars,
+    vueCustomScrollbar,
   },
   computed: {
     ...mapGetters({
@@ -52,4 +48,15 @@ export default {
 </script>
 
 <style scoped>
+.scroll-area {
+  position: relative;
+  width: 100%;
+  height: 800px;
+}
+.tab-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
 </style>
