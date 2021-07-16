@@ -1,5 +1,5 @@
-import temp from "./tempTraining";
-console.log(temp)
+import temp from "./temp/tempTraining";
+import axios from "axios";
 export default {
   namespaced: true,
   state: () => ({
@@ -40,8 +40,21 @@ export default {
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },
+    async data() {
+      try {
+        const { data } = await axios.post("/api/v1/exchange/get_data/", {});
+        // commit("SET_SETTINGS", data);
+        console.log(data)
+        return data;
+      } catch (error) {
+        console.log(error);
+      }
+    },
   },
   getters: {
+    getData () {
+      return 0
+    },
     getToolbar({ toolbar }) {
       return toolbar;
     },

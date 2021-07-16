@@ -27,7 +27,6 @@ export default {
 .charts {
   margin-bottom: 20px;
   &__title {
-    margin-bottom: 20px;
   }
   &__content {
     margin-top: 10px;

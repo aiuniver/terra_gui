@@ -29,6 +29,9 @@ export default {
   methods: {
 
   },
+  created() {
+    console.log(this.$store.dispatch('trainings/data'))
+  }
 };
 </script>
 

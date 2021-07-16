@@ -4,7 +4,7 @@
     <div class="texts__content">
       <div class="inner">
         <div class="epochs">
-          <Table :epochs="tables.epochs" :summary="tables.summary" />
+          <Table :epochs="epochs" :summary="summary" />
         </div>
       </div>
     </div>
@@ -22,7 +22,13 @@ export default {
   computed: {
     ...mapGetters({
       tables: 'trainings/getTexts'
-    })
+    }),
+    epochs() {
+      return this.tables.epochs || []
+    },
+    summary() {
+      return this.tables.summary || ''
+    }
   }
 }
 </script>

@@ -20,13 +20,6 @@ export default {
     Plotly,
   },
   data: () => ({
-    // data: [
-    //   {
-    //     x: [1, 2, 3, 4],
-    //     y: [10, 15, 13, 17],
-    //     type: "scatter",
-    //   },
-    // ],
     defLayout: {
       autosize: true,
       margin: {
@@ -76,13 +69,15 @@ export default {
   computed: {
     layout() {
       const layout = this.defLayout;
+      if (this.char) {
       layout.title.text = this.char.title || "";
       layout.xaxis.title = this.char.xaxis.title || "";
       layout.yaxis.title = this.char.yaxis.title || "";
+      }
       return layout;
     },
     data() {
-      const data = this.char.list;
+      const data = this.char.list || [];
       return data;
     },
   },

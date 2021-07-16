@@ -23,7 +23,6 @@ export default {
   computed: {
     tags: {
       set(value) {
-        console.log(value)
         this.$store.dispatch("datasets/setTags", value);
       },
       get() {

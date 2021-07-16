@@ -1,5 +1,5 @@
 import axios from "axios";
-import inputs from "@/json";
+import inputs from "./temp/json";
 export default {
   namespaced: true,
   state: () => ({
