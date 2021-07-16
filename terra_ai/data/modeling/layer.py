@@ -14,6 +14,7 @@ from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
 from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
+from .types import ReferenceLayerType
 
 
 class LayerShapeData(BaseMixinData):
@@ -64,6 +65,8 @@ class LayerData(AliasMixinData):
     "Расположение слоя в сетке модели"
     parameters: Any
     "Параметры слоя"
+    reference: Optional[ReferenceLayerType]
+    "Ссылка на блок, описанный в модели в поле `references`"
 
     @property
     def parameters_dict(self) -> dict:

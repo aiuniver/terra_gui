@@ -23,6 +23,7 @@ class ExceptionMessages(str, Enum):
     LayerValueConfig = (
         "Validation method `%s` and value `%s` with type `%s` are mismatch"
     )
+    IncorrectReferenceName = "Reference name `%s` is not value, must be `%s`"
 
 
 class TerraDataException(ValueError):
@@ -147,5 +148,15 @@ class LayerValueConfigException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.LayerValueConfig)
                 % (str(__validator), str(__value), str(type(__value)))
+            )
+        )
+
+
+class IncorrectReferenceNameException(TerraDataException):
+    def __init__(self, __value: str, __regex: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.IncorrectReferenceName)
+                % (str(__value), str(__regex))
             )
         )
