@@ -87,6 +87,7 @@ export default {
       const lines = this.scene.links.map((link) => {
         const fromNode = this.findNodeWithID(link.from);
         const toNode = this.findNodeWithID(link.to);
+        console.log(fromNode)
         let x, y, cy, cx, ex, ey;
         x = fromNode.position[0];
         y = fromNode.position[1];
@@ -129,13 +130,20 @@ export default {
     getPortPosition(type, layer, x, y) {
       let fontSize = 11
       let nodeMid = ((layer.name.length + layer.type.length)*fontSize)/2;
+      // console.log(nodeMid)
+
       if (type === "top") {
         return [x + nodeMid, y];
       } else if (type === "bottom") {
         return [x + nodeMid, y + 40];
-      }
+      } else if (type === "left") {
+        return [x + nodeMid, y + 40];
+      } else if (type === "right") {
+        return [x + nodeMid, y + 40];
+      } 
     },
     linkingStart(id) {
+      console.log(id)
       this.action.linking = true;
       this.draggingLink = {
         from: id,
@@ -197,10 +205,8 @@ export default {
         ];
       }
       if (Number.isInteger(this.action.dragging)) {
-        this.mouse.x =
-          e.pageX || e.clientX + document.documentElement.scrollLeft;
-        this.mouse.y =
-          e.pageY || e.clientY + document.documentElement.scrollTop;
+        this.mouse.x = e.pageX || e.clientX + document.documentElement.scrollLeft;
+        this.mouse.y = e.pageY || e.clientY + document.documentElement.scrollTop;
         let diffX = this.mouse.x - this.mouse.lastX;
         let diffY = this.mouse.y - this.mouse.lastY;
 
@@ -225,16 +231,10 @@ export default {
     handleUp(e) {
       const target = e.target || e.srcElement;
       if (this.$el.contains(target)) {
-        if (
-          typeof target.className !== "string" ||
-          target.className.indexOf("node-input") < 0
-        ) {
+        if (typeof target.className !== "string" || target.className.indexOf("node-input") < 0 ) {
           this.draggingLink = null;
         }
-        if (
-          typeof target.className === "string" &&
-          target.className.indexOf("node-delete") > -1
-        ) {
+        if (typeof target.className === "string" && target.className.indexOf("node-delete") > -1) {
           // console.log('delete2', this.action.dragging);
           this.nodeDelete(this.action.dragging);
         }
@@ -246,10 +246,7 @@ export default {
     handleDown(e) {
       const target = e.target || e.srcElement;
       // console.log('for scroll', target, e.keyCode, e.which)
-      if (
-        (target === this.$el || target.matches("svg, svg *")) &&
-        e.which === 1
-      ) {
+      if ((target === this.$el || target.matches("svg, svg *")) && e.which === 1) {
         this.action.scrolling = true;
         [this.mouse.lastX, this.mouse.lastY] = getMousePosition(this.$el, e);
         this.action.selected = null; // deselectAll

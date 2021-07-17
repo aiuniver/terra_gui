@@ -16,6 +16,8 @@
       <div class="node-naming">{{ name }}: {{ type }}</div>
       <div class="node-params">parameters</div>
     </div>
+    <div class="node-port node-left" @mousedown="outputMouseDown"></div>
+    <div class="node-port node-right" @mousedown="outputMouseDown"></div>
     <div v-if="group!=='output'" class="node-port node-output" @mousedown="outputMouseDown"></div>
     <div v-show="show.delete && group === 'middle'" class="node-delete">&times;</div>
   </div>
@@ -167,7 +169,6 @@ $portSize: 10;
     position: absolute;
     width: #{$portSize}px;
     height: #{$portSize}px;
-    left: 50%;
     transform: translate(-50%);
     border: 1px solid #ccc;
     border-radius: 100px;
@@ -179,9 +180,19 @@ $portSize: 10;
   }
   .node-input {
     top: -7px;
+    left: 50%;
   }
   .node-output {
     bottom: -7px;
+    left: 50%;
+  }
+  .node-left {
+    left: 0px;
+    top: 15px;
+  }
+  .node-right {
+    right: -10px;
+    top: 15px;
   }
   .node-delete {
     position: absolute;

@@ -2,7 +2,7 @@
   <main class="page-modeling">
     <div class="container">
       <Toolbar @click="click"/>
-      <ModCanvas />
+      <ModCanvas2 />
       <Params />
       <ModalLoadModel        
       ></ModalLoadModel>
@@ -13,7 +13,7 @@
 <script>
 // import SimpleFlowchart from "@/components/flowchart/SimpleFlowchart";
 import Toolbar from "@/components/modeling/Toolbar";
-import ModCanvas from "@/components/modeling/ModCanvas";
+import ModCanvas2 from "@/components/modeling/ModCanvas2";
 import Params from "@/components/modeling/Params";
 import ModalLoadModel from "@/components/modeling/ModalLoadModel";
 import { mapGetters } from "vuex";
@@ -23,7 +23,7 @@ export default {
   components: {
     // SimpleFlowchart,
     Toolbar,
-    ModCanvas,
+    ModCanvas2,
     Params,
     ModalLoadModel,
   },
