@@ -9,7 +9,8 @@ from typing import Any
 class ExceptionMessages(str, Enum):
     TerraDataValue = "%s: Value error"
     ValueType = "%s: Value must be a %s"
-    AliasException = '%s: It is allowed to use only lowercase latin characters, numbers and the "_" sign, must always begin with a latin character'
+    AliasException = '%s: It is allowed to use only lowercase latin characters, numbers and the "_" sign, ' \
+                     'must always begin with a latin character'
     UniqueListIdentifier = 'Identifier "%s" is undefined as attribute of %s'
     UniqueListUndefinedIdentifier = 'Identifier is undefined in "%s"'
     PartTotal = "%s: Sum of all properties must by 1"

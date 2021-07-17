@@ -339,12 +339,12 @@ class LayerBatchNormalizationData(LayerMixinData):
     )
 
 
-class ParametersTypeMishData(LayerMixinData):
+class LayerMishData(LayerMixinData):
     main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
     extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()
 
 
-class ParametersTypeInstanceNormalizationData(LayerMixinData):
+class LayerInstanceNormalizationData(LayerMixinData):
     main: types.InstanceNormalization.ParametersMainData = (
         types.InstanceNormalization.ParametersMainData()
     )
@@ -353,7 +353,7 @@ class ParametersTypeInstanceNormalizationData(LayerMixinData):
     )
 
 
-class ParametersTypeZeroPadding2DData(LayerMixinData):
+class LayerZeroPadding2DData(LayerMixinData):
     main: types.ZeroPadding2D.ParametersMainData = (
         types.ZeroPadding2D.ParametersMainData(padding=((1, 1), (1, 1)))
     )
@@ -362,24 +362,24 @@ class ParametersTypeZeroPadding2DData(LayerMixinData):
     )
 
 
-class ParametersTypeCropping2DData(LayerMixinData):
+class LayerCropping2DData(LayerMixinData):
     main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
-        cropping=((1, 1), (1, 1))
+        cropping=((0, 0), (0, 0))
     )
     extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()
 
 
-class ParametersTypeAttentionData(LayerMixinData):
+class LayerAttentionData(LayerMixinData):
     main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
     extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()
 
 
-class ParametersTypeAverageData(LayerMixinData):
+class LayerAverageData(LayerMixinData):
     main: types.Average.ParametersMainData = types.Average.ParametersMainData()
     extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()
 
 
-class ParametersTypeThresholdedReLUData(LayerMixinData):
+class LayerThresholdedReLUData(LayerMixinData):
     main: types.ThresholdedReLU.ParametersMainData = (
         types.ThresholdedReLU.ParametersMainData()
     )
@@ -388,14 +388,59 @@ class ParametersTypeThresholdedReLUData(LayerMixinData):
     )
 
 
-class ParametersTypeRescalingData(LayerMixinData):
+class LayerRescalingData(LayerMixinData):
     main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
     extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()
 
 
-class ParametersTypeResizingData(LayerMixinData):
+class LayerResizingData(LayerMixinData):
     main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
     extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()
+
+
+class LayerInceptionV3Data(LayerMixinData):
+    main: types.InceptionV3.ParametersMainData = types.InceptionV3.ParametersMainData()
+    extra: types.InceptionV3.ParametersExtraData = types.InceptionV3.ParametersExtraData()
+
+
+class LayerXceptionData(LayerMixinData):
+    main: types.Xception.ParametersMainData = types.Xception.ParametersMainData()
+    extra: types.Xception.ParametersExtraData = types.Xception.ParametersExtraData()
+
+
+class LayerVGG16Data(LayerMixinData):
+    main: types.VGG16.ParametersMainData = types.VGG16.ParametersMainData()
+    extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()
+
+
+class LayerResNet50Data(LayerMixinData):
+    main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
+    extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()
+
+
+class LayerCustomUNETBlockData(LayerMixinData):
+    main: types.CustomUNETBlock.ParametersMainData = types.CustomUNETBlock.ParametersMainData()
+    extra: types.CustomUNETBlock.ParametersExtraData = types.CustomUNETBlock.ParametersExtraData()
+
+
+class LayerYOLOResBlockData(LayerMixinData):
+    main: types.YOLOResBlock.ParametersMainData = types.YOLOResBlock.ParametersMainData()
+    extra: types.YOLOResBlock.ParametersExtraData = types.YOLOResBlock.ParametersExtraData()
+
+
+class LayerYOLOConvBlockData(LayerMixinData):
+    main: types.YOLOConvBlock.ParametersMainData = types.YOLOConvBlock.ParametersMainData()
+    extra: types.YOLOConvBlock.ParametersExtraData = types.YOLOConvBlock.ParametersExtraData()
+
+
+class LayerVAEBlockData(LayerMixinData):
+    main: types.VAEBlock.ParametersMainData = types.VAEBlock.ParametersMainData()
+    extra: types.VAEBlock.ParametersExtraData = types.VAEBlock.ParametersExtraData()
+
+
+class LayerCustomBlockData(LayerMixinData):
+    main: types.CustomBlock.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.CustomBlock.ParametersExtraData = types.CustomBlock.ParametersExtraData()
 
 
 Layer = Enum(

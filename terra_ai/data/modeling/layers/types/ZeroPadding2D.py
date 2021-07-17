@@ -7,6 +7,7 @@ from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
 from ..extra import DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ....types import ConstrainedIntValueGe0
 
 LayerConfig = LayerConfigData(
     **{
@@ -25,7 +26,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    padding: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]]
+    padding: Tuple[Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+                   Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0]]
 
 
 class ParametersExtraData(BaseMixinData):
