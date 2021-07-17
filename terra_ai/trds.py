@@ -2,6 +2,7 @@ from terra_ai.data.datasets.extra import SourceModeChoice
 from terra_ai.data.datasets.creation import SourceData
 
 from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
+from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
@@ -31,11 +32,12 @@ from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
 import json
-# import cv2
+import imgaug.augmenters as iaa
+import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.006
+__version__ = 1.007
 
 
 class CreateDTS(object):
@@ -96,6 +98,7 @@ class CreateDTS(object):
         self.iter: int = 0
         self.mode: str = ''
         self.split_sequence: dict = {}
+        self.temporary: dict = {}
 
         pass
 
@@ -316,41 +319,60 @@ class CreateDTS(object):
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
-        if options['folder_name']:
-            if 'object_detection' in self.tags.values():
-                for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-                    if 'txt' not in file_name:
-                        instr.append(os.path.join(options['folder_name'], file_name))
-                        peg_idx += 1
-                        y_cls.append(cls_idx)
-            else:
-                for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
+        if 'object_detection' in self.tags.values():
+            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
+                if 'txt' not in file_name:
                     instr.append(os.path.join(options['folder_name'], file_name))
                     peg_idx += 1
                     y_cls.append(cls_idx)
-            self.peg.append(peg_idx)
         else:
-            tree = os.walk(self.file_folder)
-            for directory, folder, file_name in sorted(tree):
-                if bool(file_name) is not False:
-                    folder_name = directory.split(os.path.sep)[-1]
+            path = self.file_folder
+            if options['folder_name']:
+                path = os.path.join(self.file_folder, options['folder_name'])
+            for directory, folder, file_name in sorted(os.walk(path)):
+                if file_name:
+                    file_folder = directory.replace(self.file_folder, '')[1:]
                     for name in sorted(file_name):
-                        instr.append(os.path.join(folder_name, name))
+                        instr.append(os.path.join(file_folder, name))
                         peg_idx += 1
                         y_cls.append(cls_idx)
                     cls_idx += 1
                     self.peg.append(peg_idx)
-                else:
-                    continue
         instructions['instructions'] = instr
         instructions['parameters'] = options
         self.y_cls = y_cls
 
         return instructions
 
-    def instructions_video(self):
+    def instructions_video(self, **options):
 
-        pass
+        instructions: dict = {}
+        instr: list = []
+        y_cls: list = []
+        cls_idx = 0
+        peg_idx = 0
+        self.peg.append(0)
+
+        path = self.file_folder
+        if options['folder_name']:
+            path = os.path.join(self.file_folder, options['folder_name'])
+        for directory, folder, file_name in sorted(os.walk(path)):
+            if file_name:
+                file_folder = directory.replace(self.file_folder, '')[1:]
+                for name in sorted(file_name):
+                    instr.append(os.path.join(file_folder, name))
+                    peg_idx += 1
+                    if options['class_mode'] == 'По каждому кадру':
+                        y_cls.append(np.full((options['max_frames'], 1), cls_idx).tolist())
+                    else:
+                        y_cls.append(cls_idx)
+                cls_idx += 1
+                self.peg.append(peg_idx)
+        instructions['instructions'] = instr
+        instructions['parameters'] = options
+        self.y_cls = y_cls
+
+        return instructions
 
     def instructions_text(self, **options):
 
@@ -489,6 +511,9 @@ class CreateDTS(object):
                 self.classes_names[f'{self.mode}_{self.iter}'] = sorted(os.listdir(self.file_folder)) if not \
                     self.user_parameters[key]['folder_name'] else list(self.user_parameters[key]['folder_name'].split())
                 self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
+            elif value in ['dataframe']:
+                self.classes_names[f'{self.mode}_{self.iter}'] = self.temporary['classes_names']
+                self.num_classes[f'{self.mode}_{self.iter}'] = self.temporary['num_classes']
 
         instructions: dict = {'parameters': {'num_classes': len(np.unique(self.y_cls)),
                                              'one_hot_encoding': options['one_hot_encoding']},
@@ -692,11 +717,11 @@ class Dataloader(object):
 
     def load_data(self, strict_object):
 
-        if strict_object.mode == 'terra': #SourceModeChoice.terra:
+        if strict_object.mode == SourceModeChoice.Terra:
             self.load_from_terra(strict_object.value)
-        elif strict_object.mode == SourceModeChoice.url:
+        elif strict_object.mode == SourceModeChoice.URL:
             self.load_from_url(strict_object.value)
-        elif strict_object.mode == SourceModeChoice.google_drive:
+        elif strict_object.mode == SourceModeChoice.GoogleDrive:
             self.load_from_google(strict_object.value)
 
         pass
@@ -772,6 +797,7 @@ class CreateArray(object):
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
+        self.augmentation: dict = {}
 
         self.file_folder = None
         self.txt_list: dict = {}
@@ -789,9 +815,90 @@ class CreateArray(object):
 
         return array
 
-    def create_video(self):
+    def create_video(self, video_path, **options) -> np.ndarray:
 
-        pass
+        """
+
+        Args:
+            video_path: str
+                Путь к файлу
+            **options: Параметры сегментации:
+                height: int
+                    Высота кадра.
+                width: int
+                    Ширина кадра.
+                max_frames: int
+                    Максимальное количество кадров.
+                mode: str
+                    Режим обработки кадра (Сохранить пропорции, Растянуть).
+                x_len: int
+                    Длина окна выборки.
+                step: int
+                    Шаг окна выборки.
+
+        Returns:
+            array: np.ndarray
+                Массив видео.
+
+        """
+
+        def resize_frame(one_frame, original_shape, target_shape, mode):
+
+            resized = None
+
+            if mode == 'Растянуть':
+                resized = resize_layer(one_frame[None, ...])
+                resized = resized.numpy().squeeze().astype('uint8')
+            elif mode == 'Сохранить пропорции':
+                # height
+                resized = one_frame.copy()
+                if original_shape[0] > target_shape[0]:
+                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+                else:
+                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3), dtype='uint8')
+                    resized = np.concatenate((black_bar, resized))
+                    resized = np.concatenate((resized, black_bar))
+                # width
+                if original_shape[1] > target_shape[1]:
+                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+                else:
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3), dtype='uint8')
+                    resized = np.concatenate((black_bar, resized), axis=1)
+                    resized = np.concatenate((resized, black_bar), axis=1)
+
+            # resized = resized.numpy().squeeze()
+
+            return resized
+
+        array = []
+        shape = (options['height'], options['width'])
+        resize_layer = Resizing(*shape)
+
+        cap = cv2.VideoCapture(os.path.join(self.file_folder, video_path))
+        height = int(cap.get(4))
+        width = int(cap.get(3))
+        # fps = int(cap.get(5))
+        frame_count = int(cap.get(7))
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                if shape != (height, width):
+                    frame = resize_frame(frame, (height, width), shape, options['mode'])
+                frame = frame[:, :, [2, 1, 0]]
+                array.append(frame)
+                if len(array) == options['max_frames']:
+                    break
+        finally:
+            cap.release()
+
+        array = np.array(array)
+        if frame_count < options['max_frames']:
+            add_frames = np.zeros((options['max_frames'] - frame_count, *shape, 3), dtype='uint8')
+            array = np.concatenate((array, add_frames), axis=0)
+
+        return array
 
     def create_text(self, sample: dict, **options):
 
