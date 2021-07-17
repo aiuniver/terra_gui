@@ -92,6 +92,12 @@ class ResizingInterpolationChoice(str, Enum):
     mitchellcubic = "mitchellcubic"
 
 
+class SpaceToDepthDataFormatChoice(str, Enum):
+    NHWC = "NHWC"
+    NCHW = "NCHW"
+    NCHW_VECT_C = "NCHW_VECT_C"
+
+
 class PretrainedModelWeightsChoice(str, Enum):
     imagenet = "imagenet"
 
@@ -122,6 +128,7 @@ class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
     terra_custom_layers = "customLayers"
     tensorflow_keras_layers_preprocessing = "tensorflow.keras.layers.experimental.preprocessing"
+    tensorflow_nn = "tensorflow.nn"
     inception_v3 = "tensorflow.keras.applications.inception_v3"
     xception = "tensorflow.keras.applications.xception"
     vgg16 = "tensorflow.keras.applications.vgg16"

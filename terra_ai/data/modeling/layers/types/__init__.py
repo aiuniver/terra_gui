@@ -135,4 +135,5 @@ from . import (
     YOLOConvBlock,
     VAEBlock,
     CustomBlock,
+    space_to_depth,
 )

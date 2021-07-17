@@ -443,6 +443,11 @@ class LayerCustomBlockData(LayerMixinData):
     extra: types.CustomBlock.ParametersExtraData = types.CustomBlock.ParametersExtraData()
 
 
+class Layerspace_to_depthData(LayerMixinData):
+    main: types.space_to_depth.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.space_to_depth.ParametersExtraData = types.CustomBlock.ParametersExtraData()
+
+
 Layer = Enum(
     "Layer",
     dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),
