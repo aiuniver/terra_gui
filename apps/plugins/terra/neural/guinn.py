@@ -4,6 +4,7 @@ import numpy as np
 import os
 import gc
 # import copy
+import tensorflow as tf
 import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model
@@ -46,7 +47,7 @@ class GUINN:
         self.y_Val: dict = {}
         self.x_Test: dict = {}
         self.y_Test: dict = {}
-
+        self.y_Val_bbox: list = []
         """
         For model settings
         """
@@ -104,7 +105,7 @@ class GUINN:
                 pass
 
     def set_chp_monitor(self) -> None:
-        if len(self.x_Train) > 1:
+        if len(self.x_Train) > 1 and self.DTS.task_type.get('output_1') != 'object_detection':
             if self.chp_indicator == 'train':
                 self.chp_monitor = f'{self.chp_monitors["output"]}_{self.chp_monitors["out_monitor"]}'
             else:
@@ -242,6 +243,7 @@ class GUINN:
                     self.x_Train.update({'input_2': self.DTS.Y[output_key]['data'][0]})
                     if self.DTS.Y[output_key]['data'][1] is not None:
                         self.x_Val.update({'input_2': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
                     if self.DTS.Y[output_key]['data'][2] is not None:
                         self.x_Test.update({'input_2': self.DTS.Y[output_key]['data'][2]})
 
@@ -254,12 +256,14 @@ class GUINN:
                     self.x_Train.update({'input_3': self.DTS.Y[output_key]['data'][0]})
                     if self.DTS.Y[output_key]['data'][1] is not None:
                         self.x_Val.update({'input_3': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
                     if self.DTS.Y[output_key]['data'][2] is not None:
                         self.x_Test.update({'input_3': self.DTS.Y[output_key]['data'][2]})
                 elif output_key == 'output_3':
                     self.x_Train.update({'input_4': self.DTS.Y[output_key]['data'][0]})
                     if self.DTS.Y[output_key]['data'][1] is not None:
                         self.x_Val.update({'input_4': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
                     if self.DTS.Y[output_key]['data'][2] is not None:
                         self.x_Test.update({'input_4': self.DTS.Y[output_key]['data'][2]})
 
@@ -294,9 +298,9 @@ class GUINN:
             None
         """
         self.show_training_params()
-        print("self.DTS.X", self.DTS.X)
-        print("self.DTS.Y", self.DTS.Y)
-        print("self.DTS.classes_names", self.DTS.classes_names)
+        # print("self.DTS.X", self.DTS.X)
+        # print("self.DTS.Y", self.DTS.Y)
+        print("\nself.DTS.classes_names", self.DTS.classes_names)
         if self.model_is_trained:
             try:
                 list_files = os.listdir(self.training_path)
@@ -336,7 +340,10 @@ class GUINN:
             self.model.stop_training = False
             self.stop_training = False
             self.model_is_trained = False
-            self.basemodel_fit(verbose=0, retrain=True)
+            if self.DTS.task_type.get('output_1') == 'object_detection':
+                self.yolomodel_fit(verbose=1, retrain=False)
+            else:
+                self.basemodel_fit(verbose=0, retrain=True)
 
         else:
             self.model = nnmodel
@@ -548,6 +555,7 @@ class GUINN:
             [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
         num_anchors = len(anchors)  # Сохраняем количество анкоров
 
+        @tf.autograph.experimental.do_not_convert
         def create_model(
                 input_shape,
                 num_anchor,
@@ -607,7 +615,7 @@ class GUINN:
         if not retrain:
             self.Exch.print_2status_bar(('Добавление колбэков', '...'))
             clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
+                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val_bbox,
                                      batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
                                      model_name=self.nn_name)
             self.callbacks = [clsclbk]

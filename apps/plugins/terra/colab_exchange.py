@@ -395,7 +395,7 @@ class StatesData:
                 },
                 "show_best_images": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "лучшие изображения по метрике",
                 },
                 "show_worst_images": {
@@ -405,7 +405,7 @@ class StatesData:
                 },
                 "plot_final": {
                     "type": "bool",
-                    "default": False,
+                    "default": True,
                     "label": "графики в конце",
                 },
             },

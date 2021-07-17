@@ -2,6 +2,8 @@ import base64
 import copy
 import os
 import tempfile
+import colorsys
+from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
 import tensorflow as tf
 
@@ -523,7 +525,7 @@ class CustomCallback(keras.callbacks.Callback):
                 "shuffle": True,
                 "clbck_object": ObjectdetectionCallback,
                 "callback_kwargs": {
-                    "metrics": ["yolo_loss"],
+                    "metrics": ["loss"],
                     "step": 1,
                     "class_metrics": [],
                     "num_classes": 2,
@@ -648,13 +650,14 @@ class CustomCallback(keras.callbacks.Callback):
                         callback_kwargs['plot_pred_and_true'] = True
                     else:
                         callback_kwargs['plot_pred_and_true'] = False
-
+        print("callback_kwargs", callback_kwargs)
         clbck_object = _task_type_defaults_kwargs['clbck_object']
         initialized_callback = clbck_object(**callback_kwargs)
         return initialized_callback
 
     def prepare_params(self):
-
+        print("self.clbck_params", self.clbck_params)
+        print("self.DTS.tags", self.DTS.tags)
         for _key in self.clbck_params.keys():
             if (_key == 'output_1' and self.clbck_params[_key]["task"] == 'object_detection') \
                     or (self.clbck_params[_key]["task"] != 'object_detection'):
@@ -711,6 +714,13 @@ class CustomCallback(keras.callbacks.Callback):
         info = self.eta_format(eta)
 
         return [info, int(eta)]
+
+    def predict_yolo(self, x):
+        out1 = self.model.get_layer(name='output_1').output
+        out2 = self.model.get_layer(name='output_2').output
+        out3 = self.model.get_layer(name='output_3').output
+        model = keras.models.Model(self.model.input, [out1, out2, out3])
+        return model.predict(x, batch_size=self.batch_size)
 
     def on_train_begin(self, logs=None):
         # self.model.stop_training = False
@@ -775,20 +785,36 @@ class CustomCallback(keras.callbacks.Callback):
         }
         out_plots_data = {}
         if self.x_Val.get("input_1") is not None:
-            self.y_pred = self.model.predict(self.x_Val, batch_size=self.batch_size)
+            if self.clbck_params['output_1']["task"] == 'object_detection':
+                self.y_pred = self.predict_yolo(self.x_Val)
+            else:
+                self.y_pred = self.model.predict(self.x_Val, batch_size=self.batch_size)
         else:
             self.y_pred = copy.copy(self.y_true)
         if isinstance(self.y_pred, list):
             for i, output_key in enumerate(self.clbck_params.keys()):
-                callback_out_data = self.callbacks[i].epoch_end(
-                    self.last_epoch,
-                    logs=logs,
-                    output_key=output_key,
-                    y_pred=self.y_pred[i],
-                    y_true=self.y_true[output_key],
-                    loss=self.loss[i],
-                    msg_epoch=self.msg_epoch
-                )
+                if output_key == 'output_1' and self.clbck_params[output_key]["task"] == 'object_detection':
+                    callback_out_data = self.callbacks[i].epoch_end(
+                        self.last_epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred,
+                        y_true=self.y_true,
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
+                elif self.clbck_params[output_key]["task"] != 'object_detection':
+                    callback_out_data = self.callbacks[i].epoch_end(
+                        self.last_epoch,
+                        logs=logs,
+                        output_key=output_key,
+                        y_pred=self.y_pred[i],
+                        y_true=self.y_true.get(output_key),
+                        loss=self.loss[i],
+                        msg_epoch=self.msg_epoch
+                    )
+                else:
+                    callback_out_data = {}
                 if len(callback_out_data) != 0:
                     for key in callback_out_data.keys():
                         if key == "table":
@@ -803,7 +829,7 @@ class CustomCallback(keras.callbacks.Callback):
                     logs=logs,
                     output_key=output_key,
                     y_pred=self.y_pred,
-                    y_true=self.y_true[output_key],
+                    y_true=self.y_true.get(output_key),
                     loss=self.loss[i],
                     msg_epoch=self.msg_epoch
                 )
@@ -831,7 +857,7 @@ class CustomCallback(keras.callbacks.Callback):
         out_images_data = {"images": {
             "title": "Исходное изображение",
             "values": []
-        },
+            },
             "ground_truth_masks": {
                 "title": "Маска сегментации",
                 "values": []
@@ -840,23 +866,39 @@ class CustomCallback(keras.callbacks.Callback):
                 "title": "Результат работы модели",
                 "values": []
             },
+            "ground_truth_bbox": {
+                "title": "Правильный bbox",
+                "values": []
+            },
+            "predicted_bbox": {
+                "title": "Результат работы модели",
+                "values": []
+            },
         }
         for i, output_key in enumerate(self.clbck_params.keys()):
-            callback_out_data = self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
-            if len(callback_out_data) != 0:
-                for key in callback_out_data.keys():
-                    if key == "plots":
-                        out_plots_data.update(callback_out_data[key])
-                    elif key == "images":
-                        for im_key in callback_out_data[key].keys():
-                            if im_key == "images":
-                                out_images_data["images"]["values"].extend(callback_out_data[key][im_key])
-                            elif im_key == "ground_truth_masks":
-                                out_images_data["ground_truth_masks"]["values"].extend(
-                                    callback_out_data[key][im_key])
-                            elif im_key == "predicted_mask":
-                                out_images_data["predicted_mask"]["values"].extend(
-                                    callback_out_data[key][im_key])
+            if (output_key == 'output_1' and self.clbck_params[output_key]["task"] == 'object_detection') \
+                    or (self.clbck_params[output_key]["task"] != 'object_detection'):
+                callback_out_data = self.callbacks[i].train_end(output_key=output_key, x_val=self.x_Val)
+                if len(callback_out_data) != 0:
+                    for key in callback_out_data.keys():
+                        if key == "plots":
+                            out_plots_data.update(callback_out_data[key])
+                        elif key == "images":
+                            for im_key in callback_out_data[key].keys():
+                                if im_key == "images":
+                                    out_images_data["images"]["values"].extend(callback_out_data[key][im_key])
+                                elif im_key == "ground_truth_masks":
+                                    out_images_data["ground_truth_masks"]["values"].extend(
+                                        callback_out_data[key][im_key])
+                                elif im_key == "predicted_mask":
+                                    out_images_data["predicted_mask"]["values"].extend(
+                                        callback_out_data[key][im_key])
+                                elif im_key == "ground_truth_bbox":
+                                    out_images_data["ground_truth_bbox"]["values"].extend(
+                                        callback_out_data[key][im_key])
+                                elif im_key == "predicted_bbox":
+                                    out_images_data["predicted_bbox"]["values"].extend(
+                                        callback_out_data[key][im_key])
         self.save_lastmodel()
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)[1]
@@ -1712,7 +1754,7 @@ class RegressionCallback(BaseCallback):
 
 
 class ObjectdetectionCallback(BaseCallback):
-    """Callback for classification"""
+    """Callback for object_detection"""
 
     def __init__(
             self,
@@ -1800,6 +1842,8 @@ class ObjectdetectionCallback(BaseCallback):
             # else:
             metric_name = f"{self.clbck_metrics[metric_idx]}"
             val_metric_name = f"val_{metric_name}"
+            print("metric_name", metric_name)
+            print("val_metric_name", val_metric_name)
             # определяем лучшую метрику для вывода данных при class_metrics='best'
             if logs[val_metric_name] > self.max_accuracy_value:
                 self.max_accuracy_value = logs[val_metric_name]
@@ -1814,7 +1858,7 @@ class ObjectdetectionCallback(BaseCallback):
             epoch_table_data[output_key].update({metric_name: self.history[metric_name][-1]})
             epoch_table_data[output_key].update({val_metric_name: self.history[val_metric_name][-1]})
             out_data.update({"table": epoch_table_data})
-
+        print("out_data", out_data)
         if self.step:
             if (self.epoch % self.step == 0) and (self.step >= 1):
                 plot_data = self.plot_result(output_key)
@@ -1828,9 +1872,326 @@ class ObjectdetectionCallback(BaseCallback):
         if self.show_final:
             plot_data = self.plot_result(output_key)
             out_data.update({"plots": plot_data})
+            print("self.data_tag", self.data_tag)
             if self.data_tag == 'images':
+                print("self.show_best or self.show_worst", self.show_best, self.show_worst)
                 if self.show_best or self.show_worst:
-                    images = self.plot_images(output_key=output_key)
+                    images = self.plot_images(input_key="input_1", output_key=output_key)
                     out_data.update({"images": images})
 
         return out_data
+
+    def plot_result(self, output_key: str = None):
+        """
+        Returns: plot_data
+        """
+        plot_data = {}
+        msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
+        if len(self.clbck_metrics) >= 1:
+            for metric_name in self.clbck_metrics:
+                if not isinstance(metric_name, str):
+                    metric_name = metric_name.name
+                # if len(self.dataset.Y) > 1:
+                #     # определяем, что демонстрируем во 2м и 3м окне
+                #     metric_name = f"{output_key}_{metric_name}"
+                #     val_metric_name = f"val_{metric_name}"
+                # else:
+                val_metric_name = f"val_{metric_name}"
+                metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+                xlabel = "эпоха"
+                ylabel = f"{metric_name}"
+                labels = (metric_title, xlabel, ylabel)
+                plot_data[labels] = [
+                    [
+                        list(range(len(self.history[metric_name]))),
+                        self.history[metric_name],
+                        f"{metric_name}",
+                    ],
+                    [
+                        list(range(len(self.history[val_metric_name]))),
+                        self.history[val_metric_name],
+                        f"{val_metric_name}",
+                    ],
+                ]
+
+        return plot_data
+
+    def plot_images(self, input_key: str = None, output_key: str = None):
+        """
+        Returns:
+            images
+        """
+        images = {"images": [],
+                  "ground_truth_bbox": [],
+                  "predicted_bbox": [],
+                  }
+        # self._dice_coef()
+        # выбираем 5 лучших либо 5 худших результатов сегментации
+        # if self.show_best:
+        #     indexes = np.argsort(self.dice)[-5:]
+        # elif self.show_worst:
+        #     indexes = np.argsort(self.dice)[:5]
+        print("self.x_Val.get(input_key).shape", self.x_Val.get(input_key).shape)
+        indexes = np.random.choice((self.x_Val.get(input_key).shape[0])-1, 5, replace=False)
+        print("indexes", indexes)
+        for idx in indexes:
+            # исходное изобаржение
+            image_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                        "label": 'Выход',
+                        "value": output_key,
+                    }
+                ]
+            }
+
+            image = np.squeeze(
+                self.x_Val.get(input_key)[idx]) #.reshape(self.dataset.input_shape.get(input_key)
+            image_data["image"] = self.image_to_base64(image)
+            images["images"].append(image_data)
+
+            # истинная маска
+            truth_bbox_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                        "label": None,
+                        "value": None,
+                    }
+                ]
+            }
+            # self._get_colored_mask(mask=self.y_true[idx], input_key=input_key, output_key=output_key)
+            # image = np.squeeze(self.colored_mask)
+            #
+            # print("self.y_true", self.y_true[0].shape, self.y_true[1].shape, self.y_true[2].shape)
+            image = self.get_frame(self.x_Val.get(input_key)[idx],
+                                   self.y_true, input_key=input_key,
+                                   output_key=output_key)
+            print("Posle images truth")
+            truth_bbox_data["image"] = self.image_to_base64(image)
+            images["ground_truth_bbox"].append(truth_bbox_data)
+
+            # предсказанная маска
+            predicted_bbox_data = {
+                "image": None,
+                "title": None,
+                "info": [
+                    {
+                        "label": "Выход",
+                        "value": output_key,
+                    }
+                ]
+            }
+            print("do self.get_frame")
+            image = self.get_frame(self.x_Val.get(input_key)[idx],
+                                   self.y_pred, input_key=input_key,
+                                   output_key=output_key) #.reshape(self.dataset.input_shape.get(input_key)
+            # self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
+            # image = np.squeeze(self.colored_mask)
+            predicted_bbox_data["image"] = self.image_to_base64(image)
+            # print("predicted_bbox_dat", predicted_bbox_data)
+            images["predicted_bbox"].append(predicted_bbox_data)
+
+        return images
+
+    def get_frame(self, image, predict, input_key: str = None, output_key: str = None):
+        print("do image_shape")
+        image_shape = np.array(image).shape[:2]
+        print("image_shape", image_shape)
+        thickness = (image_shape[0] + image_shape[1]) // 300
+        print("thicknesse", thickness)
+        name_classes = self.dataset.classes_names.get(output_key)  # Названия классов
+        print("name_classes", name_classes)
+        num_classes = self.dataset.num_classes.get(output_key)  # Количество классов
+        print("num_classes", num_classes)
+        # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
+        # данные значения коррелируются с размерностью входного изображения input_shape
+        anchors = np.array(
+            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
+        num_anchors = len(anchors)  # Сохраняем количество анкоров
+
+        # Создаем набор цветов для ограничивающих рамок
+        hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
+        colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+        colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
+        np.random.seed(43)
+        np.random.shuffle(colors)
+        np.random.seed(None)
+
+
+
+        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]  # Задаем маски для 3 уровней анкоров
+        input_shape = np.array(predict[0].shape[1:3]) * 32 # Получаем размер выходного изображения
+        print("input_shape", np.array(input_shape), input_shape.dtype)
+        # image_shape = np.array([image.size[1], image.size[0]])  # Сохраняем размер оригинального изображения
+
+        level_anchor = 0  # Укажем уровень сетки
+        num_anchors = len(anchors[anchor_mask[level_anchor]])  # Получаем количество анкоров
+        print("num_anchors", num_anchors)
+        anchors_tensor = np.reshape(anchors[anchor_mask[level_anchor]],
+                                    (1, 1, 1, num_anchors, 2))  # Выбираем анкоры для нашего уровня сетки и решейпим
+        grid_shape = predict[level_anchor].shape[1:3]  # Получим размерность сетки
+        grid = []  # Массив для финальной сетки
+        grid_row = []  # Массив для столбца
+        for i in range(grid_shape[0]):  # По всем строкам
+            for j in range(grid_shape[1]):  # По всем столбцам
+                grid_row.append([j, i])  # Создаем элемент [j, i]
+            grid.append(grid_row)  # Добавляем столбец в финальную сетку
+            grid_row = []  # Обнуляем данные для столбца
+        grid = np.array(grid)  # Переводим в numpy
+        grid = np.expand_dims(grid, axis=2)  # Добавляем размерность
+        # Решейпим предикт
+        # feats = np.reshape(predict[level_anchor], (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
+        feats = predict[level_anchor]
+
+        # Функция расчета сигмоиды для вектора
+        def sigmoid(x):  # На вход подаем массив данных
+            return 1 / (1 + np.exp(-x))  # Возвращаем сигмоиду для всех элементов массива
+
+        def non_max_suppression_fast(boxes, scores, overlapThresh):
+            if len(boxes) == 0:  # Если нет ни одного бокса
+                return [], []
+
+            pick = []  # Индексы возвращаемых боксов
+            print("pick", pick)
+            x1 = boxes[:, 0]  # координаты x левыв верхних углов
+            y1 = boxes[:, 1]
+            x2 = boxes[:, 2]
+            y2 = boxes[:, 3]
+
+            area = (x2 - x1 + 1) * (y2 - y1 + 1)
+            idxs = np.argsort(scores)
+            print("idxs", idxs)
+            while len(idxs) > 0:
+                last = len(idxs) - 1
+                i = idxs[last]
+                pick.append(i)
+
+                xx1 = np.maximum(x1[i], x1[idxs[:last]])
+                yy1 = np.maximum(y1[i], y1[idxs[:last]])
+                xx2 = np.minimum(x2[i], x2[idxs[:last]])
+                yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+                w = np.maximum(0, xx2 - xx1 + 1)
+                h = np.maximum(0, yy2 - yy1 + 1)
+
+                overlap = (w * h) / area[idxs[:last]]
+                idxs = np.delete(idxs, np.concatenate(([last],
+                                                       np.where(overlap > overlapThresh)[0])))
+
+            return boxes[pick].astype("int"), scores[pick]
+
+        # Получаем параметры бокса
+        # Координаты центра bounding box
+        xy_param = feats[..., :2]  # Выцепляем 0 и 1 параметры из предикта (соответствуют параметрам смещения центра
+        # анкора)
+        # print("xy_param", xy_param)
+        box_xy = (sigmoid(xy_param) + grid) / grid_shape[::-1]  # Получаем координаты центра bounding box
+        # Высота и ширна bounding box
+        # print("box_xy", box_xy)
+        wh_param = feats[..., 2:4]  # Выцепляем 2 и 3 параметры из предикта (соответствуют праметрам изменения высоты
+        # и ширины анкора)
+        # print("wh_param", wh_param)
+        box_wh = np.exp(wh_param) * anchors_tensor / input_shape[::-1]  # Получаем высоту и ширину bounding box
+        # Вероятность наличия объекта в анкоре
+        conf_param = feats[..., 4:5]  # Выцепляем 4 параметр из предикта (соответствуют вероятности обнаружения объекта)
+        # print("conf_param", conf_param)
+        box_confidence = sigmoid(conf_param)  # Получаем вероятность наличия объекта в bounding box
+        # print("box_confidence", box_confidence)
+        # Класс объекта
+        class_param = feats[..., 5:]  # Выцепляем 5+ параметры из предикта (соответствуют вероятностям классов объектов)
+        # print("class_param", class_param)
+        box_class_probs = sigmoid(class_param)  # Получаем вероятности классов объектов
+        # print("box_class_probs", box_class_probs)
+
+        # Корректируем ограничивающие рамки (Размер изображения на выходе 416х416)
+        # И найденные параметры соответствуют именно этой размерности
+        # Необходимо найти координаты bounding box для рамерности исходного изображения
+        box_yx = box_xy[..., ::-1].copy()
+        box_hw = box_wh[..., ::-1].copy()
+        print("do new_shape", np.min(input_shape / image_shape))
+        new_shape = np.round(np.array(image_shape) * np.min(input_shape / image_shape))  # Находим размерность пропорциональную
+        # исходной с одной из сторон 416
+        print("new_shape", new_shape)
+        offset = (input_shape - new_shape) / 2. / input_shape  # Смотрим на сколько надо сместить в
+        # относительных координатах
+        scale = input_shape / new_shape  # Находим коэфициент масштабирования
+        box_yx = (box_yx - offset) * scale  # Смещаем по координатам
+        box_hw *= scale  # Масштабируем ширину и высоту
+        box_mins = box_yx - (
+                box_hw / 2.)  # Получаем левые верхние координаты (от середины отнимаем половину ширины и высоты)
+        box_maxes = box_yx + (
+                box_hw / 2.)  # Получаем правые нижнние координаты (к середине прибавляем половину ширины и высоты)
+        _boxes = np.concatenate([
+            box_mins[..., 0:1],  # yMin
+            box_mins[..., 1:2],  # xMin
+            box_maxes[..., 0:1],  # yMax
+            box_maxes[..., 1:2]  # xMax
+        ], axis=-1)
+        _boxes *= np.concatenate([image_shape, image_shape])  # Переводим из относительных координат в абсолютные
+        # print("_boxes", _boxes)
+        # Получаем выходные параметры
+        _boxes_reshape = np.reshape(_boxes, (-1, 4))  # Решейпим все боксы в один массив
+        _box_scores = box_confidence * box_class_probs  # Получаем вероятность каждого класса (умноженную на
+        # print("_box_scores", _box_scores)
+        # веоятность наличия объекта)
+        _box_scores_reshape = np.reshape(_box_scores, (-1, num_classes))  # Решейпим в один массив
+        print("_box_scores_reshape", _box_scores_reshape)
+        mask = _box_scores_reshape >= 0.2  # Берем все объекты, обнаруженные с вероятностью больше 0.2
+        _boxes_out = _boxes_reshape[mask[:, 0]]
+        _scores_out = _box_scores_reshape[:, 0][mask[:, 0]]
+        # font = ImageFont.truetype(font=path + 'font.otf',
+        #                           size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
+        # thickness = (image.size[0] + image.size[1]) // 300
+        print("do non_max_suppression_fast")
+        new_boxes, new_scores = non_max_suppression_fast(_boxes_out, _scores_out, 0.5)
+        print("new_boxes, new_scores", new_boxes, new_scores)
+        print("posle non_max_suppression_fast")
+        new_classes = np.ones_like(new_scores, int) * 0
+        print("new_classes", new_classes)
+        print("image", image)
+        image_pred = Image.fromarray(np.uint8(image*255))
+        print("image_pred.size", image_pred.size)
+        for i, c in reversed(list(enumerate(new_classes))):
+            print("Do ImageDraw.Draw")
+            draw = ImageDraw.Draw(image_pred)
+            print("После ImageDraw.Draw")
+            predicted_class = name_classes[c]
+            box = new_boxes[i]
+            print("box", box)
+            score = new_scores[i]
+            print("score", score, c)
+            label = '{} {:.2f}'.format(predicted_class, score)
+            label_size = draw.textsize(label)  # , font
+            print("label_size", label_size)
+            top, left, bottom, right = box
+            print("do top", label, (left, top), (right, bottom))
+            top = max(0, np.floor(top + 0.5).astype(int))
+            print("posle top", (left, top), (right, bottom))
+            left = max(0, np.floor(left + 0.5).astype(int))
+            print("posle left", (left, top), (right, bottom))
+            bottom = min(image_shape[1], np.floor(bottom + 0.5).astype(int))
+            print("posle bottom", (left, top), (right, bottom))
+            right = min(image_shape[0], np.floor(right + 0.5).astype(int))
+            print("Posle right", label, (left, top), (right, bottom))
+
+            if top - label_size[1] >= 0:
+                text_origin = np.array([left, top - label_size[1]])
+            else:
+                text_origin = np.array([left, top + 1])
+            print("text_origin", text_origin)
+            print("thickness", thickness)
+            print("colors", colors)
+            for i in range(thickness):
+                draw.rectangle(
+                    [left + i, top + i, right - i, bottom - i],
+                    outline=colors[c])
+            draw.rectangle(
+                [tuple(text_origin), tuple(text_origin + label_size)],
+                fill=colors[c])
+            draw.text(text_origin, label, fill=(0, 0, 0))  # , font=font
+            del draw
+        return np.asarray(image_pred)

@@ -347,26 +347,42 @@ class VAEBlock(Layer):
         self.conv_stddev = layers.Conv2D(filters=self.latent_size, kernel_size=(1, 1),
                                          padding='same')
         self.gla_stddev = layers.GlobalAveragePooling2D()
+
+        self.conv1d_mean = layers.Conv1D(filters=self.latent_size, kernel_size=1,
+                                         padding='same')
+        self.gla1d_mean = layers.GlobalAveragePooling1D()
+        self.conv1d_stddev = layers.Conv1D(filters=self.latent_size, kernel_size=1,
+                                           padding='same')
+        self.gla1d_stddev = layers.GlobalAveragePooling1D()
+
         self.inter_dense = layers.Dense(8 * self.latent_size, activation='relu')
         self.dense_mean = layers.Dense(self.latent_size)
         self.dense_stddev = layers.Dense(self.latent_size)
 
     def call(self, inputs):
         # variational encoder output (distributions)
-        if K.ndim(inputs) == 4 or K.ndim(inputs) == 4:
+        if K.ndim(inputs) == 4:
             mean = self.conv_mean(inputs)
             stddev = self.conv_stddev(inputs)
             if self.roll_up:
                 mean = self.gla_mean(mean)
                 stddev = self.gla_stddev(stddev)
 
-        elif K.ndim(inputs) == 2 or K.ndim(inputs) == 2:
+        elif K.ndim(inputs) == 3:
+            mean = self.conv1d_mean(inputs)
+            stddev = self.conv1d_stddev(inputs)
+            if self.roll_up:
+                mean = self.gla1d_mean(mean)
+                stddev = self.gla1d_stddev(stddev)
+
+        elif K.ndim(inputs) == 2:
             inter = self.inter_dense(inputs)
             mean = self.dense_mean(inter)
             stddev = self.dense_stddev(inter)
         else:
             raise Exception(
-                'input shape VAEBlock is not a vector [batchSize, intermediate_dim] or [batchSize, width, heigth, ch]')
+                'input shape VAEBlock is not a vector [batchSize, intermediate_dim] or [batchSize, width, heigth, ch] \
+                or [batchSize, steps, input_dim')
         if self.reg:
             # kl divergence:
             latent_loss = K.mean(-0.5 * K.sum(1 + stddev
