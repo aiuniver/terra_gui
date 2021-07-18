@@ -2,25 +2,14 @@
   <div class="board">
     <div class="wrapper">
       <div class="canvas-container">
-        <div class="canvas">
+        <div class="canvas" :style="style">
           <VueBlocksContainer
             ref="container"
             :blocksContent="blocks"
             :scene.sync="scene"
-            class="container"
+            class="cont"
           />
         </div>
-        <ul class="zoom">
-          <li class="inc" id="zoom-inc" data-type="inc">
-            <span class="icon-zoom-inc"></span>
-          </li>
-          <li class="res" id="zoom-reset" data-type="reset">
-            <span class="icon-zoom-reset"></span>
-          </li>
-          <li class="dec" id="zoom-dec" data-type="dec">
-            <span class="icon-zoom-dec"></span>
-          </li>
-        </ul>
       </div>
     </div>
   </div>
@@ -55,10 +44,10 @@ export default {
           description: "Show text",
           fields: [
             {
-              name: "Input",
+              name: "Output",
               type: "event",
-              attr: "input",
-            }
+              attr: "output",
+            },
           ],
         },
         {
@@ -69,23 +58,32 @@ export default {
             {
               name: "Input",
               type: "event",
-              attr: "output",
-            }
+              attr: "input",
+            },
           ],
         },
         {
-          name: "Chat message",
+          name: "sloy",
           family: "Events",
           description: "",
           fields: [
             {
-              name: "message",
-              label: "Activation message",
-              type: "string",
-              attr: "property",
+              name: "Input",
+              type: "event",
+              attr: "input",
             },
             {
               name: "onMessage",
+              type: "event",
+              attr: "output",
+            },
+            {
+              name: "Output",
+              type: "event",
+              attr: "output",
+            },
+            {
+              name: "Output",
               type: "event",
               attr: "output",
             },
@@ -147,44 +145,27 @@ export default {
             y: 50,
             name: "input",
             title: "Input",
-            values: {
-              property: {
-                text: {
-                  label: "Text",
-                  type: "string",
-                },
-              },
-            },
           },
           {
             id: 2,
-            x: -600,
-            y: 50,
-            name: "output",
-            title: "Output",
-            values: {
-              property: {
-                text: {
-                  label: "Text",
-                  type: "string",
-                },
-              },
-            },
+            x: -900,
+            y: 150,
+            name: "sloy",
+            title: "Sloy",
           },
           {
             id: 3,
-            x: -600,
-            y: 150,
-            name: "shortcuts",
-            title: "Text",
-            values: {
-              property: {
-                text: {
-                  label: "Text",
-                  type: "string",
-                },
-              },
-            },
+            x: -900,
+            y: 250,
+            name: "sloy",
+            title: "Sloy",
+          },
+          {
+            id: 4,
+            x: -900,
+            y: 350,
+            name: "output",
+            title: "Output",
           },
         ],
         links: [
@@ -195,13 +176,6 @@ export default {
             targetID: 2,
             targetSlot: 0,
           },
-          {
-            id: 2,
-            originID: 1,
-            originSlot: 1,
-            targetID: 2,
-            targetSlot: 1,
-          },
         ],
         container: {
           centerX: 1042,
@@ -210,6 +184,14 @@ export default {
         },
       },
     };
+  },
+  computed: {
+    style() {
+      console.log(document.documentElement.clientHeight);
+      return {
+        height: (document.documentElement.clientHeight - 157) + "px",
+      };
+    },
   },
   methods: {
     canvasClick(e) {
@@ -260,11 +242,14 @@ export default {
 };
 </script>
 
-<style scoped>
-.canvas {
-  height: 1000px;
+<style lang="scss" scoped>
+.canvas-container {
+  position: relative;
 }
-.container {
+.canvas {
+  // height: 500px;
+}
+.cont {
   height: 100%;
 }
 </style>

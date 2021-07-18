@@ -56,8 +56,8 @@
 
         let pathes = []
         this.lines.forEach(l => {
-          console.log(l)
-          let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.25
+          // console.log(l)
+          let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.1
           pathes.push({
             data: `M ${l.x1}, ${l.y1} C ${(l.x1 + dist)}, ${l.y1}, ${(l.x2 - dist)}, ${l.y2}, ${l.x2}, ${l.y2}`,
             style: l.style,
