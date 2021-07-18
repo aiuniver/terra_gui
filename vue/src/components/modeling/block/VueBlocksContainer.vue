@@ -14,9 +14,9 @@
       @delete="blockDelete(block)"
     />
     <div class="btn-zoom">
-      <i class="icon icon-plus"></i>
-      <i class="icon icon-minimize"></i>
-      <i class="icon icon-minus"></i>
+      <i class="icon icon-plus" @click="zoom(1)"></i>
+      <i class="icon icon-minimize" @click="zoom(0)"></i>
+      <i class="icon icon-minus" @click="zoom(-1)"></i>
     </div>
   </div>
 </template>
@@ -65,7 +65,6 @@ export default {
 
     this.centerX = this.$el.clientWidth / 2;
     this.centerY = this.$el.clientHeight / 2;
-    console.log(this.centerX);
 
     this.importBlocksContent();
     this.importScene();
@@ -218,8 +217,7 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {  // eslint-disable-line
-
+        this.tempLink.style = {          // eslint-disable-line
           stroke: "#8f8f8f",
           strokeWidth: 4 * this.scale,
           fill: "none",
@@ -232,8 +230,34 @@ export default {
     },
   },
   methods: {
-    // Events
-    /** @param e {MouseEvent} */
+    zoom(value) {
+      if (value === 0) {
+        this.scale = 1;
+        return;
+      }
+      let deltaScale = (value === 1) ? 1.1 : 0.9090909090909091;
+      this.scale *= deltaScale;
+      // this.scale = (value === 1) ? this.scale + 0.1 : this.scale - 0.1;
+      if (this.scale < this.minScale) {
+        this.scale = this.minScale;
+        return;
+      } else if (this.scale > this.maxScale) {
+        this.scale = this.maxScale;
+        return;
+      }
+        let zoomingCenter = {
+          x: this.mouseX,
+          y: this.mouseY,
+        };
+
+        let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
+        let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
+
+        this.centerX -= deltaOffsetX;
+        this.centerY -= deltaOffsetY;
+
+        this.updateScene();
+    },
     handleMove(e) {
       let mouse = mouseHelper.getMousePosition(this.$el, e);
       this.mouseX = mouse.x;
@@ -313,6 +337,7 @@ export default {
         // if (e.preventDefault) e.preventDefault()
 
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
+        console.log(deltaScale)
         this.scale *= deltaScale;
 
         if (this.scale < this.minScale) {
@@ -412,6 +437,7 @@ export default {
       this.linking = true;
     },
     linkingStop(targetBlock, slotNumber) {
+      console.log(targetBlock, slotNumber);
       if (this.linkStartData && targetBlock && slotNumber > -1) {
         this.links = this.links.filter((value) => {
           return !(
@@ -425,7 +451,7 @@ export default {
             return o.id;
           })
         );
-
+        console.log(this.linkStartData);
         // skip if looping
         if (this.linkStartData.block.id !== targetBlock.id) {
           this.links.push({
@@ -435,6 +461,8 @@ export default {
             targetID: targetBlock.id,
             targetSlot: slotNumber,
           });
+          console.log("adddd");
+          console.log(this.links);
           this.updateScene();
         }
       }

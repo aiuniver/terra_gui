@@ -40,8 +40,6 @@ export default {
         {
           name: "input",
           title: "Input",
-          family: "Animations",
-          description: "Show text",
           fields: [
             {
               name: "Output",
@@ -53,7 +51,6 @@ export default {
         {
           name: "output",
           title: "Output",
-          description: "Show text",
           fields: [
             {
               name: "Input",
@@ -64,8 +61,6 @@ export default {
         },
         {
           name: "sloy",
-          family: "Events",
-          description: "",
           fields: [
             {
               name: "Input",
@@ -92,8 +87,6 @@ export default {
         {
           name: "shortcuts",
           title: "Shortcuts",
-          family: "Events",
-          description: "Press shortcut for call event",
           fields: [
             {
               name: "keys",
@@ -111,8 +104,6 @@ export default {
         {
           name: "splitter",
           title: "Splitter",
-          family: "Helpers",
-          description: "Press shortcut for call event",
           fields: [
             {
               name: "input",
@@ -176,6 +167,20 @@ export default {
             targetID: 2,
             targetSlot: 0,
           },
+          {
+            id: 2,
+            originID: 2,
+            originSlot: 1,
+            targetID: 3,
+            targetSlot: 0,
+          },
+          {
+            id: 3,
+            originID: 1,
+            originSlot: 0,
+            targetID: 3,
+            targetSlot: 0,
+          },
         ],
         container: {
           centerX: 1042,
@@ -187,56 +192,15 @@ export default {
   },
   computed: {
     style() {
-      console.log(document.documentElement.clientHeight);
       return {
         height: (document.documentElement.clientHeight - 157) + "px",
       };
     },
   },
   methods: {
-    canvasClick(e) {
-      console.log("canvas Click, event:", e);
-    },
-    add() {
-      if (this.$refs.form.validate()) {
-        let maxID = Math.max(
-          0,
-          ...this.scene.nodes.map((link) => {
-            return link.id;
-          })
-        );
-        this.scene.nodes.push({
-          id: maxID + 1,
-          x: -400,
-          y: -100,
-          type: this.nodeCategory[this.nodeType],
-          label: this.nodeLabel ? this.nodeLabel : `test${maxID + 1}`,
-        });
-        this.nodeLabel = "";
-        this.dialog = false;
-      }
-    },
-    cancel() {
-      console.log(this.$refs.form.reset());
-      this.nodeLabel = "";
-      this.dialog = false;
-    },
-    save() {
-      const { nodes, links } = this.scene;
-      console.log({ nodes, links });
-      alert(JSON.stringify({ nodes, links }));
-    },
-    nodeClick(id) {
-      console.log("node click", id);
-    },
-    nodeDelete(id) {
-      console.log("node delete", id);
-    },
-    linkBreak(id) {
-      console.log("link break", id);
-    },
-    linkAdded(link) {
-      console.log("new link added:", link);
+    addBlock () {
+      console.log(this.selectedType)
+      this.$refs.container.addNewBlock(this.selectedType)
     },
   },
 };
@@ -245,9 +209,6 @@ export default {
 <style lang="scss" scoped>
 .canvas-container {
   position: relative;
-}
-.canvas {
-  // height: 500px;
 }
 .cont {
   height: 100%;

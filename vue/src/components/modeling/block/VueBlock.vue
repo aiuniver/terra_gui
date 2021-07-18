@@ -3,11 +3,16 @@
     @mouseleave="hover = false">
     <div :style="headerStyle" :class="['header', name, { selected: selected }]">
       {{ title }}
-      <a class="delete" @click="deleteBlock">x</a>
+      <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div v-show="hover || selected" class="hover">
+    <div v-if="name !== 'sloy'" v-show="hover || selected" class="hover-over">
       <i class="icon icon-link"></i>
       <i class="icon icon-link-2"></i>
+    </div>
+    <div v-else v-show="hover || selected" class="hover-sloy">
+      <i class="icon icon-link"></i>
+      <i class="icon icon-link-2"></i>
+      <i class="icon icon-trash-2" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
       <div
@@ -232,14 +237,30 @@ $circleConnectedColor: #ffff00;
   cursor: move;
   height: 50px;
 
-  > .hover{
+  .hover-over{
     position: absolute;
     top: 0px;
-    right: -75px;
+    right: -69px;
     height: 48px;
     background-color: #294c6f;
     border-radius: 5px;
-    width: 70px;
+    // width: 70px;
+    padding: 10px 0px;
+    cursor: context-menu;
+    > i {
+      font-size: 1.5em;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+  }
+  .hover-sloy{
+    position: absolute;
+    top: 0px;
+    right: -102px;
+    height: 48px;
+    background-color: #294c6f;
+    border-radius: 5px;
+    // width: 70px;
     padding: 10px 0px;
     cursor: context-menu;
     > i {
@@ -271,33 +292,32 @@ $circleConnectedColor: #ffff00;
       &:hover {
         background: none;
         border: $blockBorder solid #ffb054;
-        // box-shadow: 0 0 0 1.5pt #ffb054;
       }
       &.selected {
       background: none;
-      box-shadow: 0 0 0 1.5pt #ffb054;
+      border: $blockBorder solid #ffb054;
     }
     }
     &.sloy {
       background: #89d764;
       &:hover {
         background: none;
-        box-shadow: 0 0 0 1.5pt #89d764;
+        border: $blockBorder solid #89d764;
       }
       &.selected {
       background: none;
-      box-shadow: 0 0 0 1.5pt #89d764;
+      border: $blockBorder solid #89d764;
     }
     }
     &.output {
       background: #8e51f2;
       &:hover {
         background: none;
-        box-shadow: 0 0 0 1.5pt #8e51f2;
+        border: $blockBorder solid #8e51f2;
       }
       &.selected {
       background: none;
-      box-shadow: 0 0 0 1.5pt #8e51f2;
+      border: $blockBorder solid #8e51f2;
     }
     }
   }
