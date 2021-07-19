@@ -65,9 +65,9 @@ export default {
     console.log(this.def);
     this.select = this.def;
    console.log(this.items);
-    this.$nextTick(() => {
-      this.select = this.def;
-    });
+    // this.$nextTick(() => {
+    //   this.select = this.def;
+    // });
   },
 };
 </script>

@@ -337,7 +337,7 @@ export default {
         // if (e.preventDefault) e.preventDefault()
 
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
-        console.log(deltaScale)
+        // console.log(deltaScale)
         this.scale *= deltaScale;
 
         if (this.scale < this.minScale) {

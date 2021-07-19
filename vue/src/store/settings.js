@@ -26,6 +26,11 @@ export default {
     isMobile() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     },
+    autoHeight() {
+      return {
+        height: (document.documentElement.clientHeight - 157) + "px",
+      };
+    },
     getDrawer(state) {
       return state.drawer;
     },

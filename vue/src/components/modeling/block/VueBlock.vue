@@ -1,11 +1,20 @@
 <template>
-  <div class="vue-block" :style="style" @mouseover="hover = true"
-    @mouseleave="hover = false">
-    <div :style="headerStyle" :class="['header', name, { selected: selected }]">
-      {{ title }}
+  <div
+    class="vue-block"
+    :style="style"
+    @mouseover="hover = true"
+    @mouseleave="hover = false"
+  >
+    <div :class="['header', name, { selected: selected }]">
+      <div class="title" :title="title">{{ id }}: {{ title }}</div>
+      <div class="parametr" :title="parameters">[dsd]sdsds</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div v-if="name !== 'sloy'" v-show="hover || selected" class="hover-over">
+    <div
+      v-if="name.indexOf('sloy') === -1"
+      v-show="hover || selected"
+      class="hover-over"
+    >
       <i class="icon icon-link"></i>
       <i class="icon icon-link-2"></i>
     </div>
@@ -40,6 +49,9 @@
 export default {
   name: "VueBlock",
   props: {
+    id: {
+      type: Number
+    },
     name: {
       type: String,
     },
@@ -64,6 +76,7 @@ export default {
     },
     inputs: Array,
     outputs: Array,
+    parameters: String,
 
     options: {
       type: Object,
@@ -201,11 +214,6 @@ export default {
         transformOrigin: "top left",
       };
     },
-    headerStyle() {
-      return {
-        height: this.options.titleHeight + "px",
-      };
-    },
   },
 };
 </script>
@@ -237,7 +245,7 @@ $circleConnectedColor: #ffff00;
   cursor: move;
   height: 50px;
 
-  .hover-over{
+  .hover-over {
     position: absolute;
     top: 0px;
     right: -69px;
@@ -253,7 +261,7 @@ $circleConnectedColor: #ffff00;
       cursor: pointer;
     }
   }
-  .hover-sloy{
+  .hover-sloy {
     position: absolute;
     top: 0px;
     right: -102px;
@@ -275,6 +283,24 @@ $circleConnectedColor: #ffff00;
     text-align: center;
     height: 48px;
     border-radius: 5px;
+    color: #000;
+    font-size: 0.9em;
+    &:hover, &.selected {
+      color: rgb(211, 210, 210);
+     .parametr {
+      color: #3098e7;
+    }
+    }
+
+    .title {
+      white-space: nowrap;
+      overflow: hidden; 
+      text-overflow: ellipsis;
+    }
+    .parametr {
+      color: #2b5275;
+      font-size: 0.8em;
+    }
 
     > .delete {
       color: red;
@@ -289,36 +315,41 @@ $circleConnectedColor: #ffff00;
 
     &.input {
       background: #ffb054;
+      border: $blockBorder solid #ffb054;
       &:hover {
         background: none;
         border: $blockBorder solid #ffb054;
       }
       &.selected {
-      background: none;
-      border: $blockBorder solid #ffb054;
+        background: none;
+        border: $blockBorder solid #ffb054;
+      }
     }
-    }
-    &.sloy {
+    &.sloy-one,
+    &.sloy-two,
+    &.sloy-three {
       background: #89d764;
+      border: $blockBorder solid #89d764;
       &:hover {
         background: none;
         border: $blockBorder solid #89d764;
       }
       &.selected {
-      background: none;
-      border: $blockBorder solid #89d764;
-    }
+        background: none;
+        border: $blockBorder solid #89d764;
+      }
     }
     &.output {
       background: #8e51f2;
+      border: $blockBorder solid #8e51f2;
       &:hover {
         background: none;
         border: $blockBorder solid #8e51f2;
       }
       &.selected {
-      background: none;
-      border: $blockBorder solid #8e51f2;
-    }
+        background: none;
+        border: $blockBorder solid #8e51f2;
+      }
     }
   }
 
@@ -335,7 +366,7 @@ $circleConnectedColor: #ffff00;
       box-sizing: border-box;
       width: $circleSize;
       height: $circleSize;
-      border: $circleBorder solid rgba(0, 0, 0, 0.5);
+      border: $circleBorder solid rgba(0, 0, 0, 0.178);
       border-radius: 100%;
       cursor: crosshair;
       z-index: 999;

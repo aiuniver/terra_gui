@@ -1,6 +1,6 @@
 <template>
   <main class="page-datasets">
-    <div class="container">
+    <div class="container-fluid">
       <div class="row">
         <div :class="full ? 'col-3' : 'col-18'">
           <Dataset />
@@ -36,3 +36,10 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.container-fluid{
+  background: #17212B;
+  padding: 0;
+}
+</style>

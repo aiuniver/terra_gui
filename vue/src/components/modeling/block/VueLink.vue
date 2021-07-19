@@ -84,7 +84,7 @@
           arrows.push({
             transform: `translate(${pos.x}, ${pos.y}) rotate(${degrees})`,
             style: {
-              stroke: l.style.stroke,
+              stroke: "rgb(80, 125, 150)",
               strokeWidth: l.style.strokeWidth * 2,
               fill: l.style.stroke
             }

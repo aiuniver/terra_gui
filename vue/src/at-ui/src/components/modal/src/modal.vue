@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="abs">
     <transition name="fade">
       <div class="at-modal__mask" v-show="visible" @click="handleMaskClick"></div>
     </transition>
@@ -208,3 +208,9 @@
     }
   }
 </script>
+
+<style lang="scss" scoped>
+.abs {
+  position: absolute;
+}
+</style>

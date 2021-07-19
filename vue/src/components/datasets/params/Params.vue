@@ -2,7 +2,7 @@
   <div class="properties">
     <div class="wrapper">
       <div class="params">
-        <vue-custom-scrollbar class="scroll-area" :settings="scroll">
+        <vue-custom-scrollbar class="scroll-area" :settings="scroll" :style="height">
           <div class="params-container">
             <DatasetButton @click="click" />
             <div class="params-item load-dataset-field">
@@ -182,6 +182,7 @@ export default {
   computed: {
     ...mapGetters({
       settings: "datasets/getSettings",
+      height: "settings/autoHeight",
     }),
     inputLayer() {
       const int = +this.inputs;
@@ -255,7 +256,7 @@ export default {
 .scroll-area {
   position: relative;
   width: 100%;
-  height: calc(100vh - 152px);
+  /* height: calc(100vh - 152px); */
 }
 button {
   font-size: 0.875rem;

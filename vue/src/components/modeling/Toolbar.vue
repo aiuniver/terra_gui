@@ -6,7 +6,7 @@
           <li
             :key="i"
             :disabled="disabled"
-            @click.prevent="$emit('click', name)"
+            @click.prevent="click(name)"
           >
             <span :title="title" :class="icon"></span>
           </li>
@@ -30,7 +30,7 @@ export default {
       },
       {
         title: "Сохранить модель",
-        name: "save_model",
+        name: "save",
         disabled: true,
         icon: "icon-model-save",
       },
@@ -55,7 +55,7 @@ export default {
       },
       {
         title: "Промежуточный слой",
-        name: "middle",
+        name: "sloy",
         disabled: false,
         icon: "icon-layer-middle",
       },
@@ -74,6 +74,11 @@ export default {
       },
     ],
   }),
+  methods: {
+    click(event) {
+      this.$store.dispatch('modeling/setToolbarEvent', { event })
+    }
+  }
 };
 </script>
 

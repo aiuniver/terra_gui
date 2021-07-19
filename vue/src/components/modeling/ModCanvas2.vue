@@ -1,22 +1,36 @@
 <template>
   <div class="board">
-    <div class="wrapper">
-      <div class="canvas-container">
-        <div class="canvas" :style="style">
-          <VueBlocksContainer
-            ref="container"
-            :blocksContent="blocks"
-            :scene.sync="scene"
-            class="cont"
-          />
-        </div>
-      </div>
+    <div class="canvas" :style="height">
+      <VueBlocksContainer
+        ref="container"
+        :blocksContent="blocks"
+        :scene.sync="scene"
+        class="cont"
+      />
     </div>
+    <at-modal v-model="create" width="150">
+      <div slot="header">
+        <span>Тип слоя</span>
+      </div>
+      <div>
+        <at-dropdown @on-dropdown-command="addBlock">
+          <at-button size="large" :style="{}" >Тип Слоя<i class="icon icon-chevron-down" /></at-button>
+          <at-dropdown-menu slot="menu">
+            <at-dropdown-item v-for="({ title, value }, i) of typeBlock" :value="value" :key="'menu' + i" :name="value">{{ title }}</at-dropdown-item>
+          </at-dropdown-menu>
+        </at-dropdown>
+      </div>
+      <div slot="footer" class="d-flex">
+        <!-- <at-button @click="addBlock" type="primary">Создать</at-button> -->
+        <!-- <at-button @click="create = false">Отменить</at-button> -->
+      </div>
+    </at-modal>
   </div>
 </template>
 
 <script>
 import VueBlocksContainer from "@/components/modeling/block/VueBlocksContainer";
+import { mapGetters } from 'vuex';
 export default {
   name: "ModCanvas",
   components: {
@@ -25,109 +39,6 @@ export default {
   data() {
     return {
       dialog: false,
-      nodeType: 1,
-      nodeLabel: "",
-      nodeCategory: ["input", "action", "output"],
-      nodeIcons: [
-        "mdi-format-horizontal-align-left",
-        "mdi-format-horizontal-align-center",
-        "mdi-format-horizontal-align-right",
-      ],
-      rules: {
-        length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
-      },
-      blocks: [
-        {
-          name: "input",
-          title: "Input",
-          fields: [
-            {
-              name: "Output",
-              type: "event",
-              attr: "output",
-            },
-          ],
-        },
-        {
-          name: "output",
-          title: "Output",
-          fields: [
-            {
-              name: "Input",
-              type: "event",
-              attr: "input",
-            },
-          ],
-        },
-        {
-          name: "sloy",
-          fields: [
-            {
-              name: "Input",
-              type: "event",
-              attr: "input",
-            },
-            {
-              name: "onMessage",
-              type: "event",
-              attr: "output",
-            },
-            {
-              name: "Output",
-              type: "event",
-              attr: "output",
-            },
-            {
-              name: "Output",
-              type: "event",
-              attr: "output",
-            },
-          ],
-        },
-        {
-          name: "shortcuts",
-          title: "Shortcuts",
-          fields: [
-            {
-              name: "keys",
-              label: "Activation keys",
-              type: "keys",
-              attr: "property",
-            },
-            {
-              name: "onPress",
-              type: "event",
-              attr: "output",
-            },
-          ],
-        },
-        {
-          name: "splitter",
-          title: "Splitter",
-          fields: [
-            {
-              name: "input",
-              type: "event",
-              attr: "input",
-            },
-            {
-              name: "output",
-              type: "event",
-              attr: "output",
-            },
-            {
-              name: "output",
-              type: "event",
-              attr: "output",
-            },
-            {
-              name: "output",
-              type: "event",
-              attr: "output",
-            },
-          ],
-        },
-      ],
       scene: {
         blocks: [
           {
@@ -136,27 +47,39 @@ export default {
             y: 50,
             name: "input",
             title: "Input",
+            parameters: ''
           },
           {
             id: 2,
             x: -900,
             y: 150,
-            name: "sloy",
+            name: "sloy-one",
             title: "Sloy",
+            parameters: ''
           },
           {
             id: 3,
             x: -900,
             y: 250,
-            name: "sloy",
+            name: "sloy-two",
             title: "Sloy",
+            parameters: ''
           },
           {
             id: 4,
             x: -900,
             y: 350,
+            name: "sloy-three",
+            title: "Sloy",
+            parameters: ''
+          },
+          {
+            id: 5,
+            x: -900,
+            y: 450,
             name: "output",
-            title: "Output",
+            title: "Outpud",
+            parameters: ''
           },
         ],
         links: [
@@ -188,26 +111,41 @@ export default {
           scale: 1,
         },
       },
+      create: false,
+      selectBlockType: '',
     };
   },
   computed: {
-    style() {
-      return {
-        height: (document.documentElement.clientHeight - 157) + "px",
-      };
-    },
+    ...mapGetters({
+      height: "settings/autoHeight",
+      toolbar: "modeling/getToolbarEvent",
+      typeBlock: "modeling/getTypeBlock",
+      blocks: "modeling/getBlocks",
+    })
   },
   methods: {
-    addBlock () {
-      console.log(this.selectedType)
-      this.$refs.container.addNewBlock(this.selectedType)
+    addBlock (type) {
+      console.log(type)
+      this.create = false
+      this.selectBlockType = ''
+      this.$refs.container.addNewBlock(type)
     },
   },
+  watch: {
+    toolbar: {
+      handler({ event }) {
+        if (event === 'sloy') {
+          this.create = true
+        }
+        console.log(event)
+      }
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
-.canvas-container {
+.board {
   position: relative;
 }
 .cont {

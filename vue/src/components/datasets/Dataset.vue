@@ -4,7 +4,7 @@
       <Filters />
       <div class="project-datasets-block datasets">
         <div class="title" @click="click('name')">Выберите датасет</div>
-        <vue-custom-scrollbar class="scroll-area" :settings="settings">
+        <vue-custom-scrollbar class="scroll-area" :settings="settings" :style="height">
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
@@ -47,6 +47,7 @@ export default {
   computed: {
     ...mapGetters({
       datasets: "datasets/getDatasets",
+      height: "settings/autoHeight",
     }),
   },
   methods: {
@@ -61,7 +62,7 @@ export default {
 .scroll-area {
   position: relative;
   width: 100%;
-  height: 400px;
+  /* height: 400px; */
 }
 .board {
   border-right: black solid 1px;

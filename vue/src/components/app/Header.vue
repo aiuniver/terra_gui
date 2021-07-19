@@ -6,26 +6,21 @@
         <div class="label">Project:</div>
         <div class="name">
           <div class="value flexbox-center-nowrap">
-            <span>NoName</span><i></i>
+            <span>{{nameProject}}</span><i></i>
           </div>
         </div>
       </div>
     </div>
     <div class="name-experiment">Название задачи / Название эксперимента</div>
     <div class="user flexbox-right-nowrap">
-      <div class="item project project-new" @click="full = !full">
-        <div class="icon" title="Создать новый проект">
-          <i class="icon-project-new"></i>
-        </div>
-      </div>
-      <div class="item project project-save" data-type="project_save">
-        <div class="icon" title="Сохранить проект">
-          <i class="icon-project-save"></i>
-        </div>
-      </div>
-      <div class="item project project-load" data-type="project_load">
-        <div class="icon" data-type="project_new" title="Загрузить проект">
-          <i class="icon-project-load"></i>
+      <div
+        v-for="({ title, icon, type }, i) of items"
+        :key="'menu_' + i"
+        class="item project"
+        @click="click(type)"
+      >
+        <div class="icon" :title="title">
+          <i :class="icon"></i>
         </div>
       </div>
       <div class="item profile">
@@ -39,11 +34,64 @@
         </div>
       </div>
     </div>
+    <at-modal v-model="save" width="400">
+      <div slot="header" style="text-align: center">
+        <span>Сохранить проект</span>
+      </div>
+      <div class="inner form-inline-label">
+        <div class="field-form">
+          <label>Название проекта</label
+          ><input v-model="nameProject" type="text" />
+        </div>
+        <div class="field-form field-inline field-reverse">
+          <label>Перезаписать</label>
+          <div class="checkout-switch">
+            <input type="checkbox" />
+            <span class="switcher"></span>
+          </div>
+        </div>
+      </div>
+      <div slot="footer">
+        <button @click="save = false">Сохранить</button>
+      </div>
+    </at-modal>
+    <at-modal v-model="load" width="400" >
+      <div slot="header" style="text-align: center">
+        <span>Загрузить проект</span>
+      </div>
+      
+      <div slot="footer">
+        
+      </div>
+    </at-modal>
   </header>
 </template>
 
 <script>
 export default {
+  name: "THeader",
+  data: () => ({
+    items: [
+      {
+        title: "Создать новый проект",
+        type: "project-new",
+        icon: "icon-project-new",
+      },
+      {
+        title: "Сохранить проект",
+        type: "project-save",
+        icon: "icon-project-save",
+      },
+      {
+        title: "Загрузить проект",
+        type: "project-load",
+        icon: "icon-project-load",
+      },
+    ],
+    save: false,
+    load: false,
+    nameProject: 'NoName'
+  }),
   computed: {
     full: {
       set(val) {
@@ -52,6 +100,18 @@ export default {
       get() {
         return this.$store.getters["datasets/getFull"];
       },
+    },
+  },
+  methods: {
+    click(type) {
+      console.log(type);
+      if (type === "project-new") {
+        this.full = !this.full;
+      } else if (type === "project-save") {
+        this.save = true;
+      } else if (type === "project-load") {
+        this.load = true;
+      }
     },
   },
 };
