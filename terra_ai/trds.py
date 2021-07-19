@@ -37,7 +37,7 @@ import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.007
+__version__ = 1.008
 
 
 class CreateDTS(object):
@@ -92,7 +92,7 @@ class CreateDTS(object):
         self.limit: int
         self.dataset: dict = {}
 
-        self.y_cls: np.ndarray = np.array([])
+        self.y_cls: list = []
         self.sequence: list = []
         self.peg: list = []
         self.iter: int = 0
@@ -326,18 +326,30 @@ class CreateDTS(object):
                     peg_idx += 1
                     y_cls.append(cls_idx)
         else:
-            path = self.file_folder
-            if options['folder_name']:
-                path = os.path.join(self.file_folder, options['folder_name'])
-            for directory, folder, file_name in sorted(os.walk(path)):
-                if file_name:
-                    file_folder = directory.replace(self.file_folder, '')[1:]
-                    for name in sorted(file_name):
-                        instr.append(os.path.join(file_folder, name))
+            if options['file_info']['path_type'] == 'path_folder':
+                for folder_name in options['file_info']['path']:
+                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                        if file_name:
+                            file_folder = directory.replace(self.file_folder, '')[1:]
+                            for name in sorted(file_name):
+                                instr.append(os.path.join(file_folder, name))
+                                peg_idx += 1
+                                y_cls.append(cls_idx)
+                            cls_idx += 1
+                            self.peg.append(peg_idx)
+            elif options['file_info']['path_type'] == 'path_file':
+                for file_name in options['file_info']['path']:
+                    data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                    instr = data[options['file_info']['cols_name'][0]].to_list()
+                    prev_elem = instr[0].split('/')[-2]
+                    for elem in instr:
+                        cur_elem = elem.split('/')[-2]
+                        if cur_elem != prev_elem:
+                            self.peg.append(peg_idx)
+                        prev_elem = cur_elem
                         peg_idx += 1
-                        y_cls.append(cls_idx)
-                    cls_idx += 1
-                    self.peg.append(peg_idx)
+                    self.peg.append(len(instr))
+
         instructions['instructions'] = instr
         instructions['parameters'] = options
         self.y_cls = y_cls
@@ -504,20 +516,33 @@ class CreateDTS(object):
 
     def instructions_classification(self, **options):
 
+        instructions: dict = {}
         self.task_type[f'{self.mode}_{self.iter}'] = 'classification'
         self.one_hot_encoding[f'{self.mode}_{self.iter}'] = options['one_hot_encoding']
-        for key, value in self.tags.items():
-            if value in ['images', 'text', 'audio', 'video']:
-                self.classes_names[f'{self.mode}_{self.iter}'] = sorted(os.listdir(self.file_folder)) if not \
-                    self.user_parameters[key]['folder_name'] else list(self.user_parameters[key]['folder_name'].split())
-                self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
-            elif value in ['dataframe']:
-                self.classes_names[f'{self.mode}_{self.iter}'] = self.temporary['classes_names']
-                self.num_classes[f'{self.mode}_{self.iter}'] = self.temporary['num_classes']
 
-        instructions: dict = {'parameters': {'num_classes': len(np.unique(self.y_cls)),
-                                             'one_hot_encoding': options['one_hot_encoding']},
-                              'instructions': self.y_cls}
+        if options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                column = data[options['file_info']['cols_name'][0]].to_list()
+                classes_names = []
+                for elem in column:
+                    if elem not in classes_names:
+                        classes_names.append(elem)
+                self.classes_names[f'{self.mode}_{self.iter}'] = classes_names
+                self.num_classes[f'{self.mode}_{self.iter}'] = len(classes_names)
+                for elem in column:
+                    self.y_cls.append(classes_names.index(elem))
+
+        else:
+            for key, value in self.tags.items():
+                if value in ['images', 'text', 'audio', 'video']:
+                    self.classes_names[f'{self.mode}_{self.iter}'] = \
+                        sorted(self.user_parameters[key]['file_info']['path'])
+                    self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
+
+        instructions['parameters'] = {'num_classes': len(np.unique(self.y_cls)),
+                                      'one_hot_encoding': options['one_hot_encoding']}
+        instructions['instructions'] = self.y_cls
 
         return instructions
 
@@ -865,8 +890,6 @@ class CreateArray(object):
                     black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3), dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
-
-            # resized = resized.numpy().squeeze()
 
             return resized
 
