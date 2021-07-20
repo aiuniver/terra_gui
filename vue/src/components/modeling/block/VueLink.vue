@@ -57,9 +57,19 @@
         let pathes = []
         this.lines.forEach(l => {
           // console.log(l)
-          let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.1
+
+          console.log(l)
+          let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.2
+          
+          const data  = [
+            `M ${l.x1}, ${l.y1} C ${(l.x1)}, ${l.y1}, ${(l.x2)}, ${l.y2}, ${l.x2}, ${l.y2}`,
+            `M ${l.x1}, ${l.y1} C ${(l.x1 + dist)}, ${l.y1}, ${(l.x2 - dist)}, ${l.y2}, ${l.x2}, ${l.y2}`,
+            `M ${l.x1}, ${l.y1} C ${(l.x1 - dist)}, ${l.y1}, ${(l.x2 + dist)}, ${l.y2}, ${l.x2}, ${l.y2}`
+          ]
+
+
           pathes.push({
-            data: `M ${l.x1}, ${l.y1} C ${(l.x1 + dist)}, ${l.y1}, ${(l.x2 - dist)}, ${l.y2}, ${l.x2}, ${l.y2}`,
+            data: data[l.slot] || data[0],
             style: l.style,
             outlineStyle: l.outlineStyle
           })
@@ -76,13 +86,15 @@
         this.lines.forEach(l => {
           // l.x1, l.y1, l.x2, l.y2
           let pos = this.computeConnectionPoint(l.x1, l.y1, l.x2, l.y2, 0.5)
-          let pos2 = this.computeConnectionPoint(l.x1, l.y1, l.x2, l.y2, 0.51)
+          let pos2 = this.computeConnectionPoint(l.x1, l.y1, l.x2, l.y2, 0.501)
 
           let angle = -Math.atan2(pos2.x - pos.x, pos2.y - pos.y)
           let degrees = (angle >= 0 ? angle : (2 * Math.PI + angle)) * 180 / Math.PI
 
+          // console.log(degrees)
+
           arrows.push({
-            transform: `translate(${pos.x}, ${pos.y}) rotate(${degrees})`,
+            transform: `translate(${pos.x}, ${pos.y}) rotate(${degrees - 15})`,
             style: {
               stroke: "rgb(80, 125, 150)",
               strokeWidth: l.style.strokeWidth * 2,

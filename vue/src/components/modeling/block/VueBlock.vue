@@ -55,6 +55,13 @@ export default {
     name: {
       type: String,
     },
+    // position: {
+    //   type: Array,
+    //   default: () => [],
+    //   validator: function (arr) {
+    //     return (typeof arr[0] === "number") && (typeof arr[1] === "number");
+    //   },
+    // },
     x: {
       type: Number,
       default: 0,

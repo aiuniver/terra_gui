@@ -3,7 +3,6 @@ export default {
   namespaced: true,
   state: () => ({
     dialog: false,
-    model_list: [],
     toolbarEvent:  {}
   }),
   mutations: {

@@ -202,6 +202,7 @@ export default {
           y1: y1,
           x2: x2,
           y2: y2,
+          slot: link.originSlot,
           style: {
             stroke: "rgb(101, 185, 244)",
             strokeWidth: 3 * this.scale,
@@ -219,7 +220,7 @@ export default {
       if (this.tempLink) {
         this.tempLink.style = { // eslint-disable-line
           stroke: "#8f8f8f",
-          strokeWidth: 4 * this.scale,
+          strokeWidth: 3 * this.scale,
           fill: "none",
         };
 
@@ -287,6 +288,7 @@ export default {
           y1: linkStartPos.y,
           x2: this.mouseX,
           y2: this.mouseY,
+          slot: this.linkStartData.slotNumber
         };
       }
     },
@@ -421,7 +423,7 @@ export default {
     },
     // Linking
     linkingStart(block, slotNumber) {
-      this.linkStartData = { block: block, slotNumber: slotNumber };
+      this.linkStartData = { block, slotNumber };
       let linkStartPos = this.getConnectionPos(
         this.linkStartData.block,
         this.linkStartData.slotNumber,
@@ -442,13 +444,16 @@ export default {
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
 
+        // console.log(originID, originSlot)
+        // console.log(targetID, targetSlot)
+
         this.links = this.links.filter((line) => {
           return !(
             line.targetID === targetID
             && line.targetSlot === targetSlot
             && line.originID === originID
             && line.originSlot === originSlot
-          );
+          ) && !(line.originID === originID && line.targetID === targetID);
         });
 
         let maxID = Math.max(
