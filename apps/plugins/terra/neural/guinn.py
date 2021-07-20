@@ -9,7 +9,7 @@ import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 from apps.plugins.terra.neural.customcallback import CustomCallback
-from apps.plugins.terra.neural.customlosses import DiceCoefficient  # , yolo_loss
+from apps.plugins.terra.neural.customlosses import DiceCoefficient, yolo_loss
 
 __version__ = 0.06
 
@@ -229,60 +229,60 @@ class GUINN:
             None
         """
         self.Exch.print_2status_bar(('Поготовка датасета', '...'))
-        # if self.DTS.task_type.get('output_1') == 'object_detection':  # Заглушка
-        #     for input_key in self.DTS.X.keys():
-        #
-        #         self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
-        #         if self.DTS.X[input_key]['data'][1] is not None:
-        #             self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-        #         if self.DTS.X[input_key]['data'][2] is not None:
-        #             self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
-        #
-        #     for output_key in self.DTS.Y.keys():
-        #         if output_key == 'output_1':
-        #             self.x_Train.update({'input_2': self.DTS.Y[output_key]['data'][0]})
-        #             if self.DTS.Y[output_key]['data'][1] is not None:
-        #                 self.x_Val.update({'input_2': self.DTS.Y[output_key]['data'][1]})
-        #                 self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
-        #             if self.DTS.Y[output_key]['data'][2] is not None:
-        #                 self.x_Test.update({'input_2': self.DTS.Y[output_key]['data'][2]})
-        #
-        #             self.y_Train.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][0].shape)})
-        #             if self.DTS.Y[output_key]['data'][1] is not None:
-        #                 self.y_Val.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][1].shape)})
-        #             if self.DTS.Y[output_key]['data'][2] is not None:
-        #                 self.y_Test.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][2].shape)})
-        #         elif output_key == 'output_2':
-        #             self.x_Train.update({'input_3': self.DTS.Y[output_key]['data'][0]})
-        #             if self.DTS.Y[output_key]['data'][1] is not None:
-        #                 self.x_Val.update({'input_3': self.DTS.Y[output_key]['data'][1]})
-        #                 self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
-        #             if self.DTS.Y[output_key]['data'][2] is not None:
-        #                 self.x_Test.update({'input_3': self.DTS.Y[output_key]['data'][2]})
-        #         elif output_key == 'output_3':
-        #             self.x_Train.update({'input_4': self.DTS.Y[output_key]['data'][0]})
-        #             if self.DTS.Y[output_key]['data'][1] is not None:
-        #                 self.x_Val.update({'input_4': self.DTS.Y[output_key]['data'][1]})
-        #                 self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
-        #             if self.DTS.Y[output_key]['data'][2] is not None:
-        #                 self.x_Test.update({'input_4': self.DTS.Y[output_key]['data'][2]})
-        #
-        # else:
-        for input_key in self.DTS.X.keys():
+        if self.DTS.task_type.get('output_1') == 'object_detection': #Заглушка
+            for input_key in self.DTS.X.keys():
 
-            self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
-            if self.DTS.X[input_key]['data'][1] is not None:
-                self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
-            if self.DTS.X[input_key]['data'][2] is not None:
-                self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
+                self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
+                if self.DTS.X[input_key]['data'][1] is not None:
+                    self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
+                if self.DTS.X[input_key]['data'][2] is not None:
+                    self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
 
-        for output_key in self.DTS.Y.keys():
+            for output_key in self.DTS.Y.keys():
+                if output_key == 'output_1':
+                    self.x_Train.update({'input_2': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_2': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_2': self.DTS.Y[output_key]['data'][2]})
 
-            self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
-            if self.DTS.Y[output_key]['data'][1] is not None:
-                self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
-            if self.DTS.Y[output_key]['data'][2] is not None:
-                self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
+                    self.y_Train.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][0].shape)})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.y_Val.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][1].shape)})
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.y_Test.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][2].shape)})
+                elif output_key == 'output_2':
+                    self.x_Train.update({'input_3': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_3': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_3': self.DTS.Y[output_key]['data'][2]})
+                elif output_key == 'output_3':
+                    self.x_Train.update({'input_4': self.DTS.Y[output_key]['data'][0]})
+                    if self.DTS.Y[output_key]['data'][1] is not None:
+                        self.x_Val.update({'input_4': self.DTS.Y[output_key]['data'][1]})
+                        self.y_Val_bbox.append(np.array(self.DTS.Y[output_key]['data'][1]))
+                    if self.DTS.Y[output_key]['data'][2] is not None:
+                        self.x_Test.update({'input_4': self.DTS.Y[output_key]['data'][2]})
+
+        else:
+            for input_key in self.DTS.X.keys():
+
+                self.x_Train.update({input_key: self.DTS.X[input_key]['data'][0]})
+                if self.DTS.X[input_key]['data'][1] is not None:
+                    self.x_Val.update({input_key: self.DTS.X[input_key]['data'][1]})
+                if self.DTS.X[input_key]['data'][2] is not None:
+                    self.x_Test.update({input_key: self.DTS.X[input_key]['data'][2]})
+
+            for output_key in self.DTS.Y.keys():
+
+                self.y_Train.update({output_key: self.DTS.Y[output_key]['data'][0]})
+                if self.DTS.Y[output_key]['data'][1] is not None:
+                    self.y_Val.update({output_key: self.DTS.Y[output_key]['data'][1]})
+                if self.DTS.Y[output_key]['data'][2] is not None:
+                    self.y_Test.update({output_key: self.DTS.Y[output_key]['data'][2]})
         self.Exch.print_2status_bar(('Поготовка датасета', 'выполнена'))
         pass
 
@@ -349,8 +349,7 @@ class GUINN:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
             if self.DTS.task_type.get('output_1') == 'object_detection':
-                # self.yolomodel_fit(verbose=1, retrain=False)
-                self.yolomodelv3_fit(verbose=1, retrain=False)
+                self.yolomodel_fit(verbose=1, retrain=False)
             else:
                 self.basemodel_fit(verbose=0, retrain=False)
 
@@ -549,323 +548,77 @@ class GUINN:
                 callbacks=self.callbacks
             )
 
-    # def yolomodel_fit(self, verbose=0, retrain=False) -> None:
-    #     # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
-    #     # данные значения коррелируются с размерностью входного изображения input_shape
-    #     anchors = np.array(
-    #         [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-    #     num_anchors = len(anchors)  # Сохраняем количество анкоров
-    #
-    #     @tf.autograph.experimental.do_not_convert
-    #     def create_model(
-    #             input_shape,
-    #             num_anchor,
-    #             model,
-    #             num_classes,
-    #     ):
-    #         """
-    #             Функция создания полной модели
-    #                 Входные параметры:
-    #                   input_shape - размерность входного изображения для модели YOLO
-    #                   num_anchors - общее количество анкоров
-    #                   model - спроектированная модель
-    #                   num_classes - количесво классов
-    #         """
-    #         w, h, ch = input_shape  # Получаем ширину и высоту и глубину входного изображения
-    #         # inputs = keras.layers.Input(shape=(w, h, ch))  # Создаем входной слой модели, добавляя размерность для
-    #         # глубины цвета
-    #
-    #         # Создаем три входных слоя y_true с размерностями ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6) и (None,
-    #         # 52, 52, 3, 6)) 2 и 3 параметры (13, 13) указывают размерность сетки, на которую условно будет разбито
-    #         # исходное изображение каждый уровень сетки отвечает за обнаружение объектов различных размеров (13 -
-    #         # крупных, 26 - средних, 52 - мелких) 4 параметр - количество анкоров на каждый уровень сетки 5 параметр
-    #         # - 4 параметра описывающие параметры анкора (координаты центра, ширина и высота) + вероятность
-    #         # обнаружения объекта + OHE номер класса
-    #         y_true = [
-    #             keras.layers.Input(shape=(w // 32, h // 32, num_anchor // 3, num_classes + 5), name="input_2"),
-    #             keras.layers.Input(shape=(w // 16, h // 16, num_anchor // 3, num_classes + 5), name="input_3"),
-    #             keras.layers.Input(shape=(w // 8, h // 8, num_anchor // 3, num_classes + 5), name="input_4")
-    #         ]
-    #
-    #         model_yolo = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
-    #         print('Создана модель YOLO. Количество классов: {}.'.format(
-    #             num_classes))  # Выводим сообщение о создании модели
-    #         print('model_yolo.summary()', model_yolo.summary())
-    #         # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
-    #         # На вход слоя подается:
-    #         #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
-    #         #   - y_true (оригинальные данные из обучающей выборки)
-    #         # outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-    #         #                               arguments={'num_anchors': num_anchor})([*model_yolo.output, *y_true])
-    #
-    #         return keras.models.Model([model_yolo.input, *y_true], outputs)  # Возвращаем модель
-    #
-    #     # Создаем модель
-    #     model_YOLO = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
-    #                               num_classes=self.DTS.num_classes['output_1'])
-    #     print(model_YOLO.summary())
-    #
-    #     # Компилируем модель
-    #     self.Exch.print_2status_bar(('Компиляция модели', '...'))
-    #     # self.set_custom_metrics()
-    #     model_YOLO.compile(optimizer=self.optimizer,
-    #                        loss={'yolo_loss': lambda y_true, y_pred: y_pred})
-    #     self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-    #     self.Exch.print_2status_bar(('Начало обучения', '...'))
-    #
-    #     if not retrain:
-    #         self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-    #         clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-    #                                  exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val_bbox,
-    #                                  batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-    #                                  model_name=self.nn_name)
-    #         self.callbacks = [clsclbk]
-    #         self.callbacks.append(keras.callbacks.ModelCheckpoint(
-    #             filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
-    #             verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
-    #             monitor=self.chp_monitor, mode=self.chp_mode))
-    #         self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
-    #
-    #     self.Exch.print_2status_bar(('Начало обучения', '...'))
-    #     self.history = model_YOLO.fit(
-    #         self.x_Train,
-    #         self.y_Train,
-    #         batch_size=self.batch_size,
-    #         shuffle=self.shuffle,
-    #         validation_data=(self.x_Val, self.y_Val),
-    #         epochs=self.epochs,
-    #         verbose=verbose,
-    #         callbacks=self.callbacks
-    #     )
+    def yolomodel_fit(self, verbose=0, retrain=False) -> None:
+        # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
+        # данные значения коррелируются с размерностью входного изображения input_shape
+        anchors = np.array(
+            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
+        num_anchors = len(anchors)  # Сохраняем количество анкоров
 
-    def yolomodelv3_fit(self, verbose=0, retrain=False) -> None:
-        yolo_max_boxes = 100
-        yolo_iou_threshold = 0.5
-        yolo_score_threshold = 0.5
-        yolo_anchors = np.array([(10, 13), (16, 30), (33, 23), (30, 61), (62, 45),
-                                 (59, 119), (116, 90), (156, 198), (373, 326)],
-                                np.float32) / 416
-        yolo_anchor_masks = np.array([[6, 7, 8], [3, 4, 5], [0, 1, 2]])
+        @tf.autograph.experimental.do_not_convert
+        def create_model(
+                input_shape,
+                num_anchor,
+                model,
+                num_classes,
+        ):
+            """
+                Функция создания полной модели
+                    Входные параметры:
+                      input_shape - размерность входного изображения для модели YOLO
+                      num_anchors - общее количество анкоров
+                      model - спроектированная модель
+                      num_classes - количесво классов
+            """
+            w, h, ch = input_shape  # Получаем ширину и высоту и глубину входного изображения
+            # inputs = keras.layers.Input(shape=(w, h, ch))  # Создаем входной слой модели, добавляя размерность для
+            # глубины цвета
 
-        # As tensorflow lite doesn't support tf.size used in tf.meshgrid,
-        # we reimplemented a simple meshgrid function that use basic tf function.
-        def _meshgrid(n_a, n_b):
-
-            return [
-                tf.reshape(tf.tile(tf.range(n_a), [n_b]), (n_b, n_a)),
-                tf.reshape(tf.repeat(tf.range(n_b), n_a), (n_b, n_a))
+            # Создаем три входных слоя y_true с размерностями ((None, 13, 13, 3, 6), (None, 26, 26, 3, 6) и (None,
+            # 52, 52, 3, 6)) 2 и 3 параметры (13, 13) указывают размерность сетки, на которую условно будет разбито
+            # исходное изображение каждый уровень сетки отвечает за обнаружение объектов различных размеров (13 -
+            # крупных, 26 - средних, 52 - мелких) 4 параметр - количество анкоров на каждый уровень сетки 5 параметр
+            # - 4 параметра описывающие параметры анкора (координаты центра, ширина и высота) + вероятность
+            # обнаружения объекта + OHE номер класса
+            y_true = [
+                keras.layers.Input(shape=(w // 32, h // 32, num_anchor // 3, num_classes + 5), name="input_2"),
+                keras.layers.Input(shape=(w // 16, h // 16, num_anchor // 3, num_classes + 5), name="input_3"),
+                keras.layers.Input(shape=(w // 8, h // 8, num_anchor // 3, num_classes + 5), name="input_4")
             ]
 
-        def yolo_boxes(pred, anchors, classes):
-            # pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...classes))
-            grid_size = tf.shape(pred)[1:3]
-            box_xy, box_wh, objectness, class_probs = tf.split(
-                pred, (2, 2, 1, classes), axis=-1)
+            model_yolo = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
+            print('Создана модель YOLO. Количество классов: {}.'.format(
+                num_classes))  # Выводим сообщение о создании модели
+            print('model_yolo.summary()', model_yolo.summary())
+            # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
+            # На вход слоя подается:
+            #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
+            #   - y_true (оригинальные данные из обучающей выборки)
+            outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
+                                          arguments={'num_anchors': num_anchor})([*model_yolo.output, *y_true])
 
-            box_xy = tf.sigmoid(box_xy)
-            objectness = tf.sigmoid(objectness)
-            # class_probs = tf.sigmoid(class_probs)
-            pred_box = tf.concat((box_xy, box_wh), axis=-1)  # original xywh for loss
+            return keras.models.Model([model_yolo.input, *y_true], outputs)  # Возвращаем модель
 
-            # !!! grid[x][y] == (y, x)
-            grid = _meshgrid(grid_size[1], grid_size[0])
-            grid = tf.expand_dims(tf.stack(grid, axis=-1), axis=2)  # [gx, gy, 1, 2]
-
-            box_xy = (box_xy + tf.cast(grid, tf.float32)) / \
-                     tf.cast(grid_size, tf.float32)
-            box_wh = tf.exp(box_wh) * anchors
-
-            box_x1y1 = box_xy - box_wh / 2
-            box_x2y2 = box_xy + box_wh / 2
-            bbox = tf.concat([box_x1y1, box_x2y2], axis=-1)
-
-            return bbox, objectness, class_probs, pred_box
-
-        def yolo_nms(outputs, anchors, masks, classes):
-            # boxes, conf, type
-            b, c, t = [], [], []
-
-            for o in outputs:
-                b.append(tf.reshape(o[0], (tf.shape(o[0])[0], -1, tf.shape(o[0])[-1])))
-                c.append(tf.reshape(o[1], (tf.shape(o[1])[0], -1, tf.shape(o[1])[-1])))
-                t.append(tf.reshape(o[2], (tf.shape(o[2])[0], -1, tf.shape(o[2])[-1])))
-
-            bbox = tf.concat(b, axis=1)
-            confidence = tf.concat(c, axis=1)
-            class_probs = tf.concat(t, axis=1)
-
-            scores = confidence * class_probs
-
-            dscores = tf.squeeze(scores, axis=0)
-            scores = tf.reduce_max(dscores, [1])
-            bbox = tf.reshape(bbox, (-1, 4))
-            classes = tf.argmax(dscores, 1)
-            selected_indices, selected_scores = tf.image.non_max_suppression_with_scores(
-                boxes=bbox,
-                scores=scores,
-                max_output_size=yolo_max_boxes,
-                iou_threshold=yolo_iou_threshold,
-                score_threshold=yolo_score_threshold,
-                soft_nms_sigma=0.5
-            )
-
-            num_valid_nms_boxes = tf.shape(selected_indices)[0]
-
-            selected_indices = tf.concat(
-                [selected_indices, tf.zeros(yolo_max_boxes - num_valid_nms_boxes, tf.int32)], 0)
-            selected_scores = tf.concat(
-                [selected_scores, tf.zeros(yolo_max_boxes - num_valid_nms_boxes, tf.float32)], -1)
-
-            boxes = tf.gather(bbox, selected_indices)
-            boxes = tf.expand_dims(boxes, axis=0)
-            scores = selected_scores
-            scores = tf.expand_dims(scores, axis=0)
-            classes = tf.gather(classes, selected_indices)
-            classes = tf.expand_dims(classes, axis=0)
-            valid_detections = num_valid_nms_boxes
-            valid_detections = tf.expand_dims(valid_detections, axis=0)
-
-            return boxes, scores, classes, valid_detections
-
-        def broadcast_iou(box_1, box_2):
-            # box_1: (..., (x1, y1, x2, y2))
-            # box_2: (N, (x1, y1, x2, y2))
-
-            # broadcast boxes
-            box_1 = tf.expand_dims(box_1, -2)
-            box_2 = tf.expand_dims(box_2, 0)
-            # new_shape: (..., N, (x1, y1, x2, y2))
-            new_shape = tf.broadcast_dynamic_shape(tf.shape(box_1), tf.shape(box_2))
-            box_1 = tf.broadcast_to(box_1, new_shape)
-            box_2 = tf.broadcast_to(box_2, new_shape)
-
-            int_w = tf.maximum(tf.minimum(box_1[..., 2], box_2[..., 2]) -
-                               tf.maximum(box_1[..., 0], box_2[..., 0]), 0)
-            int_h = tf.maximum(tf.minimum(box_1[..., 3], box_2[..., 3]) -
-                               tf.maximum(box_1[..., 1], box_2[..., 1]), 0)
-            int_area = int_w * int_h
-            box_1_area = (box_1[..., 2] - box_1[..., 0]) * \
-                         (box_1[..., 3] - box_1[..., 1])
-            box_2_area = (box_2[..., 2] - box_2[..., 0]) * \
-                         (box_2[..., 3] - box_2[..., 1])
-            return int_area / (box_1_area + box_2_area - int_area)
-
-        def YoloLoss(anchors, classes=80, ignore_thresh=0.5):
-            @tf.autograph.experimental.do_not_convert
-            def yolo_loss(y_true, y_pred):
-                # 1. transform all pred outputs
-                # y_pred: (batch_size, grid, grid, anchors, (x, y, w, h, obj, ...cls))
-                pred_box, pred_obj, pred_class, pred_xywh = yolo_boxes(
-                    y_pred, anchors, classes)
-                pred_xy = pred_xywh[..., 0:2]
-                pred_wh = pred_xywh[..., 2:4]
-
-                # 2. transform all true outputs
-                # y_true: (batch_size, grid, grid, anchors, (x1, y1, x2, y2, obj, ...cls))
-                true_box, true_obj, true_class_idx = tf.split(
-                    y_true, (4, 1, classes), axis=-1)
-                true_xy = (true_box[..., 0:2] + true_box[..., 2:4]) / 2
-                true_wh = true_box[..., 2:4] - true_box[..., 0:2]
-                # give higher weights to small boxes
-                box_loss_scale = 2 - true_wh[..., 0] * true_wh[..., 1]
-
-                # 3. inverting the pred box equations
-
-                grid_size = tf.shape(y_true)[1]
-                grid = tf.meshgrid(tf.range(grid_size), tf.range(grid_size))
-                grid = tf.expand_dims(tf.stack(grid, axis=-1), axis=2)
-                true_xy = true_xy * tf.cast(grid_size, tf.float32) - \
-                          tf.cast(grid, tf.float32)
-                true_wh = tf.math.log(true_wh / anchors)
-                true_wh = tf.where(tf.math.is_inf(true_wh),
-                                   tf.zeros_like(true_wh), true_wh)
-                # 4. calculate all masks
-                obj_mask = tf.squeeze(true_obj, -1)
-                # ignore false positive when iou is over threshold
-                best_iou = tf.map_fn(
-                    lambda x: tf.reduce_max(broadcast_iou(x[0], tf.boolean_mask(
-                        x[1], tf.cast(x[2], tf.bool))), axis=-1),
-                    (pred_box, true_box, obj_mask),
-                    tf.float32)
-                ignore_mask = tf.cast(best_iou < ignore_thresh, tf.float32)
-
-                # 5. calculate all losses
-                xy_loss = obj_mask * box_loss_scale * \
-                          tf.reduce_sum(tf.square(true_xy - pred_xy), axis=-1)
-                wh_loss = obj_mask * box_loss_scale * \
-                          tf.reduce_sum(tf.square(true_wh - pred_wh), axis=-1)
-                obj_loss = keras.losses.binary_crossentropy(true_obj, pred_obj)
-                obj_loss = obj_mask * obj_loss + \
-                           (1 - obj_mask) * ignore_mask * obj_loss
-                # TODO: use binary_crossentropy instead
-                class_loss = obj_mask * keras.losses.binary_crossentropy(
-                    true_class_idx, pred_class)
-
-                # 6. sum over (batch, gridx, gridy, anchors) => (batch, 1)
-                xy_loss = tf.reduce_sum(xy_loss, axis=(1, 2, 3))
-                wh_loss = tf.reduce_sum(wh_loss, axis=(1, 2, 3))
-                obj_loss = tf.reduce_sum(obj_loss, axis=(1, 2, 3))
-                class_loss = tf.reduce_sum(class_loss, axis=(1, 2, 3))
-                # print("xy_loss , wh_loss , obj_loss ,class_loss", xy_loss , wh_loss , obj_loss ,class_loss)
-                return xy_loss + wh_loss + obj_loss + class_loss
-
-            return yolo_loss
-
-        def YoloV3(size=None, channels=3, anchors=yolo_anchors, model=None,
-                   masks=yolo_anchor_masks, classes=2, training=False):
-            # x = inputs = keras.layers.Input([size, size, channels], name='input')
-
-            output_0 = model.get_layer(name='output_1').output
-            output_1 = model.get_layer(name='output_2').output
-            output_2 = model.get_layer(name='output_3').output
-            # x_36, x_61, x = Darknet(name='yolo_darknet')(x)
-            #
-            # x = YoloConv(512, name='yolo_conv_0')(x)
-            # output_0 = YoloOutput(512, len(masks[0]), classes, name='yolo_output_0')(x)
-            #
-            # x = YoloConv(256, name='yolo_conv_1')((x, x_61))
-            # output_1 = YoloOutput(256, len(masks[1]), classes, name='yolo_output_1')(x)
-            #
-            # x = YoloConv(128, name='yolo_conv_2')((x, x_36))
-            # output_2 = YoloOutput(128, len(masks[2]), classes, name='yolo_output_2')(x)
-
-            if training:
-                return keras.models.Model(model.input, (output_0, output_1, output_2), name='yolov3')
-
-            boxes_0 = keras.layers.Lambda(lambda x: yolo_boxes(x, anchors[masks[0]], classes),
-                                          name='yolo_boxes_0')(output_0)
-            boxes_1 = keras.layers.Lambda(lambda x: yolo_boxes(x, anchors[masks[1]], classes),
-                                          name='yolo_boxes_1')(output_1)
-            boxes_2 = keras.layers.Lambda(lambda x: yolo_boxes(x, anchors[masks[2]], classes),
-                                          name='yolo_boxes_2')(output_2)
-
-            outputs = keras.layers.Lambda(lambda x: yolo_nms(x, anchors, masks, classes),
-                                          name='yolo_nms')((boxes_0[:3], boxes_1[:3], boxes_2[:3]))
-
-            return keras.models.Model(model.input, outputs, name='yolov3')
-
-        loss = [YoloLoss(yolo_anchors[mask], classes=self.DTS.num_classes['output_1'])
-                for mask in yolo_anchor_masks]
-
-        model_YOLO = YoloV3(size=416, training=True, model=self.model,
-                            classes=self.DTS.num_classes['output_1'])
-        model_YOLO.compile(optimizer=self.optimizer, loss=loss, run_eagerly=True)
-
+        # Создаем модель
+        model_YOLO = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
+                                  num_classes=self.DTS.num_classes['output_1'])
         print(model_YOLO.summary())
 
         # Компилируем модель
         self.Exch.print_2status_bar(('Компиляция модели', '...'))
         # self.set_custom_metrics()
+        model_YOLO.compile(optimizer=self.optimizer,
+                           loss={'yolo_loss': lambda y_true, y_pred: y_pred})
         self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
         self.Exch.print_2status_bar(('Начало обучения', '...'))
 
         if not retrain:
             self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-            # clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-            #                          exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val_bbox,
-            #                          batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-            #                          model_name=self.nn_name)
-            # self.callbacks = [clsclbk]
+            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
+                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val_bbox,
+                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
+                                     model_name=self.nn_name)
+            self.callbacks = [clsclbk]
             self.callbacks.append(keras.callbacks.ModelCheckpoint(
                 filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
                 verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
@@ -873,7 +626,6 @@ class GUINN:
             self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
 
         self.Exch.print_2status_bar(('Начало обучения', '...'))
-        print('Начало обучения')
         self.history = model_YOLO.fit(
             self.x_Train,
             self.y_Train,
