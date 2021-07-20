@@ -135,6 +135,7 @@ export default {
 
       const target = e.target || e.srcElement;
       if (this.$el.contains(target) && e.which === 1) {
+
         this.dragging = true;
 
         this.$emit("select");

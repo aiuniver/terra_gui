@@ -7,6 +7,7 @@
             ref="container"
             :blocksContent="blocks"
             :scene.sync="scene"
+            @nodeClick="nodeClick"
             class="cont"
           />
         </div>
@@ -145,6 +146,22 @@ export default {
             y: 50,
             name: "input",
             title: "Input",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "asda",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "a",
+                },
+              }
+            }
           },
           {
             id: 2,
@@ -152,6 +169,22 @@ export default {
             y: 150,
             name: "sloy",
             title: "Sloy",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "ddd",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "h",
+                },
+              }
+            }
           },
           {
             id: 3,
@@ -159,6 +192,22 @@ export default {
             y: 250,
             name: "sloy",
             title: "Sloy",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "",
+                },
+              }
+            }
           },
           {
             id: 4,
@@ -166,6 +215,22 @@ export default {
             y: 350,
             name: "output",
             title: "Output",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "",
+                },
+              }
+            }
           },
         ],
         links: [
@@ -227,7 +292,11 @@ export default {
       alert(JSON.stringify({ nodes, links }));
     },
     nodeClick(id) {
-      console.log("node click", id);
+      // console.log("node click", id);
+      let node = this.scene.blocks.find((item) => {
+        return item.id == id
+      })
+      this.$emit("loadParams", node);
     },
     nodeDelete(id) {
       console.log("node delete", id);

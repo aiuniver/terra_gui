@@ -2,8 +2,8 @@
   <main class="page-modeling">
     <div class="container">
       <Toolbar @click="click"/>
-      <ModCanvas2 />
-      <Params />
+      <ModCanvas2 @loadParams="loadParams"/>
+      <Params :node="node_settings"/>
       <ModalLoadModel        
       ></ModalLoadModel>
     </div>
@@ -30,6 +30,7 @@ export default {
   data() {
     return {
       load_model_flag: false,
+      node_settings: {},
       nodeType: 1,
       nodeLabel: "",
       nodeCategory: ["input", "action", "output"],
@@ -59,6 +60,10 @@ export default {
     }),
   },
   methods: {
+    loadParams(node){
+      this.node_settings = node
+      console.log(node)
+    },
     canvasClick(e) {
       console.log("canvas Click, event:", e);
       console.log(e.type);

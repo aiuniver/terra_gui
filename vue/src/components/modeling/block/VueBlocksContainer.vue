@@ -564,6 +564,7 @@ export default {
       block.selected = true;
       this.selectedBlock = block;
       this.deselectAll(block.id);
+      this.$emit("nodeClick", block.id);
       this.$emit("blockSelect", block);
     },
     blockDeselect(block) {
