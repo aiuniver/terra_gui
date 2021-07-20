@@ -2,7 +2,11 @@
   <div class="properties">
     <div class="wrapper">
       <div class="params">
-        <vue-custom-scrollbar class="scroll-area" :settings="scroll" :style="height">
+        <vue-custom-scrollbar
+          class="scroll-area"
+          :settings="scroll"
+          :style="height"
+        >
           <div class="params-container">
             <DatasetButton @click="click" />
             <div class="params-item load-dataset-field">
@@ -37,8 +41,7 @@
                   placeholder="Please select file"
                   @focus="focus"
                   @selected="selected"
-                >
-                </Autocomplete>
+                />
                 <div class="field-form field-inline field-reverse inputs">
                   <label for="field_form-num_links[inputs]"
                     >Кол-во <b>входов</b></label
@@ -153,7 +156,7 @@ export default {
     Layer,
     vueCustomScrollbar,
     DatasetButton,
-    DatasetSlider
+    DatasetSlider,
   },
   data: () => ({
     tabGoogle: true,
@@ -198,49 +201,33 @@ export default {
   methods: {
     async download() {
       if (this.name && this.inputs && this.outputs) {
-        this.isLoading = true;
-        try {
-          const res = {
-            name: this.name,
-            inputs: this.inputs,
-            outputs: this.outputs,
-          };
-          await this.$store.dispatch("datasets/settings", res);
-          this.$Notify.success({ title: "success", message: "success" });
-        } catch (error) {
-          this.$Notify.error({ title: "Error", message: error });
-        }
-        this.isLoading = false;
+        const res = {
+          name: this.name,
+          inputs: this.inputs,
+          outputs: this.outputs,
+        };
+        await this.$store.dispatch("datasets/settings", res);
       } else {
-        this.$Notify.error({ title: "Error", message: "Check file" });
+        this.$store.dispatch("messages/setMessage", { error: "Выберите файл и кол. вход и выходов" });
       }
     },
     async focus() {
-      if (!this.items.length) {
-        const res = {
-          method: "get",
-          url: "/api/v1/datasets/sources/?term=",
-        };
-        const { data: data } = await this.$store.dispatch("datasets/axios", res);
-        console.log(data)
-        this.items = data.map(({ label }, i) => {
-          return { name: label, id: ++i };
-        });
+      const data = await this.$store.dispatch("axios", {
+        url: "/datasets/sources/?term=",
+      });
+      if (!data) {
+        return;
       }
+      this.items = data.map(({ label }, i) => {
+        return { name: label, id: ++i };
+      });
     },
     async selected(value) {
       this.name = value.name;
     },
-    click(val) {
-      console.log(val);
-      this.$store.dispatch("messages/setMessage", { error: "text" });
-      this.$store.dispatch("messages/setProgress", 56);
+    click() {
       if (this.$refs.form) {
-        const data = serialize(this.$refs.form, {
-          hash: true,
-          disabled: true,
-          empty: true,
-        });
+        const data = serialize(this.$refs.form);
         console.log({ dataset_dict: data });
       } else {
         this.$store.dispatch("messages/setMessage", {

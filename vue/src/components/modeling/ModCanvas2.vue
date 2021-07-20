@@ -137,6 +137,10 @@ export default {
         if (event === 'sloy') {
           this.create = true
         }
+        if (event === 'validation') {
+          this.$store.dispatch('test', 'sdsdsdsdsdsd')
+          // this.create = true
+        }
         console.log(event)
       }
     }

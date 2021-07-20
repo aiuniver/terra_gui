@@ -77,10 +77,10 @@ export default {
   computed: {
     ...mapGetters({}),
     preset() {
-      return this.lists[0]?.models || []
+      return this.lists[0]?.models || [];
     },
     custom() {
-      return this.lists[1]?.models || []
+      return this.lists[1]?.models || [];
     },
     dialog: {
       set(value) {
@@ -96,20 +96,20 @@ export default {
       this.$emit("CloseModalWindow", false);
     },
     async load() {
-      const data = await this.$store.dispatch("modeling/loadModel");
-      console.log(data)
-      this.lists = data;
+      const data = await this.$store.dispatch("axios", { url: "/modeling/models/"});
+      if (data) {
+        this.lists = data;
+      }
     },
     async getModel({ name, is_terra }) {
-      const res = {
-        method: "get",
+      const req = {
         url: "/api/v1/modeling/models/",
         data: {
           model_file: name,
           is_terra,
         },
       };
-      const data = await this.$store.dispatch("modeling/axios", res);
+      const data = await this.$store.dispatch("axios", req);
       console.log(data);
     },
   },

@@ -1,4 +1,3 @@
-import axios from "axios";
 import inputs from "./temp/json";
 export default {
   namespaced: true,
@@ -30,16 +29,7 @@ export default {
     },
   },
   actions: {
-    async axios(_, params) {
-      try {
-        const { data } = await axios(params);
-        return data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async settings({ commit }, { inputs, outputs, name }) {
-      try {
+    async settings({ commit, dispatch }, { inputs, outputs, name }) {
         const res = {
           link: "",
           mode: "google_drive",
@@ -49,45 +39,27 @@ export default {
             outputs: +outputs,
           },
         };
-        const {
-          data: { data },
-        } = await axios.post("/api/v1/exchange/load_dataset/", res);
+        const data = await dispatch('axios', {url: "/exchange/load_dataset/", data: res}, {root: true});
         commit("SET_SETTINGS", data);
         return data;
-      } catch (error) {
-        console.log(error);
-      }
     },
-    async get({ commit }) {
-      try {
-        const { data: { data: [preset, custom] } } = await axios.get("/api/v1/datasets/info/");
-        const { datasets:presetDatasets, tags:presetTags } = preset
-        const { datasets:customDatasets, tags:customTags } = custom
-        const datasets = [...presetDatasets, ...customDatasets]
-        let tags = [...presetTags, ...customTags]
-        tags = tags.map((tag) => {
-          return {active: false, ...tag }
-        });
-        commit("SET_DATASETS", datasets);
-        commit("SET_TAGS", tags);
-      } catch (error) {
-        console.log(error);
+    async get({ dispatch, commit }) {
+      const data = await dispatch('axios', {url: "/datasets/info/"}, {root: true});
+      if (!data) {
+        return;
       }
+      const [ preset, custom ]  = data
+      const { datasets:presetDatasets, tags:presetTags } = preset
+      const { datasets:customDatasets, tags:customTags } = custom
+      const datasets = [...presetDatasets, ...customDatasets]
+      let tags = [...presetTags, ...customTags]
+      tags = tags.map((tag) => {
+        return {active: false, ...tag }
+      });
+      commit("SET_DATASETS", datasets);
+      commit("SET_TAGS", tags);
     },
-    async add({ commit }, name) {
-      try {
-        console.log(name);
-        const { data } = await axios.post(
-          "/api/v1/exchange/prepare_dataset/",
-          name
-        );
-        console.log(name);
-        commit("SET_DATASETS", name);
-        return data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
+
     setTagsFilter({ commit }, value) {
       commit("SET_TAGS_FILTER", value);
     },

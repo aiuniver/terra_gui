@@ -217,7 +217,7 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {          // eslint-disable-line
+        this.tempLink.style = { // eslint-disable-line
           stroke: "#8f8f8f",
           strokeWidth: 4 * this.scale,
           fill: "none",
@@ -235,7 +235,7 @@ export default {
         this.scale = 1;
         return;
       }
-      let deltaScale = (value === 1) ? 1.1 : 0.9090909090909091;
+      let deltaScale = value === 1 ? 1.1 : 0.9090909090909091;
       this.scale *= deltaScale;
       // this.scale = (value === 1) ? this.scale + 0.1 : this.scale - 0.1;
       if (this.scale < this.minScale) {
@@ -245,18 +245,18 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-        let zoomingCenter = {
-          x: this.mouseX,
-          y: this.mouseY,
-        };
+      let zoomingCenter = {
+        x: this.mouseX,
+        y: this.mouseY,
+      };
 
-        let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
-        let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
 
-        this.centerX -= deltaOffsetX;
-        this.centerY -= deltaOffsetY;
+      this.centerX -= deltaOffsetX;
+      this.centerY -= deltaOffsetY;
 
-        this.updateScene();
+      this.updateScene();
     },
     handleMove(e) {
       let mouse = mouseHelper.getMousePosition(this.$el, e);
@@ -437,11 +437,17 @@ export default {
       this.linking = true;
     },
     linkingStop(targetBlock, slotNumber) {
-      console.log(targetBlock, slotNumber);
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        this.links = this.links.filter((value) => {
+        const {slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const targetID = targetBlock.id;
+        const targetSlot = slotNumber;
+
+        this.links = this.links.filter((line) => {
           return !(
-            value.targetID === targetBlock.id && value.targetSlot === slotNumber
+            line.targetID === targetID
+            && line.targetSlot === targetSlot
+            && line.originID === originID
+            && line.originSlot === originSlot
           );
         });
 
@@ -451,8 +457,7 @@ export default {
             return o.id;
           })
         );
-        console.log(this.linkStartData);
-        // skip if looping
+
         if (this.linkStartData.block.id !== targetBlock.id) {
           this.links.push({
             id: maxID + 1,
@@ -461,7 +466,7 @@ export default {
             targetID: targetBlock.id,
             targetSlot: slotNumber,
           });
-          console.log("adddd");
+          // console.log("adddd");
           console.log(this.links);
           this.updateScene();
         }

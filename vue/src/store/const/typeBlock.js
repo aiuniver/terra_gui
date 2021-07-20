@@ -20,7 +20,7 @@ const blocks = [
         attr: "input",
       },
       {
-        name: "onMessage",
+        name: "output",
         type: "event",
         attr: "output",
       },
