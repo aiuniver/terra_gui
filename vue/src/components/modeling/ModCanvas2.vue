@@ -43,40 +43,45 @@ export default {
         blocks: [
           {
             id: 1,
-            x: -900,
-            y: 50,
+            position: [-900, 50],
+            // x: -900,
+            // y: 50,
             name: "input",
             title: "Input",
             parameters: ''
           },
           {
             id: 2,
-            x: -900,
-            y: 150,
+            position: [-900, 150],
+            // x: -900,
+            // y: 150,
             name: "sloy-one",
             title: "Sloy",
             parameters: ''
           },
           {
             id: 3,
-            x: -900,
-            y: 250,
+            position: [-900, 250],
+            // x: -900,
+            // y: 250,
             name: "sloy-two",
             title: "Sloy",
             parameters: ''
           },
           {
             id: 4,
-            x: -900,
-            y: 350,
+            position: [-900, 350],
+            // x: -900,
+            // y: 350,
             name: "sloy-three",
             title: "Sloy",
             parameters: ''
           },
           {
             id: 5,
-            x: -900,
-            y: 450,
+            position: [-900, 450],
+            // x: -900,
+            // y: 450,
             name: "output",
             title: "Outpud",
             parameters: ''

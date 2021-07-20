@@ -55,27 +55,27 @@ export default {
     name: {
       type: String,
     },
-    // position: {
-    //   type: Array,
-    //   default: () => [],
-    //   validator: function (arr) {
-    //     return (typeof arr[0] === "number") && (typeof arr[1] === "number");
+    position: {
+      type: Array,
+      default: () => [],
+      validator: function (arr) {
+        return (typeof arr[0] === "number") && (typeof arr[1] === "number");
+      },
+    },
+    // x: {
+    //   type: Number,
+    //   default: 0,
+    //   validator: function (val) {
+    //     return typeof val === "number";
     //   },
     // },
-    x: {
-      type: Number,
-      default: 0,
-      validator: function (val) {
-        return typeof val === "number";
-      },
-    },
-    y: {
-      type: Number,
-      default: 0,
-      validator: function (val) {
-        return typeof val === "number";
-      },
-    },
+    // y: {
+    //   type: Number,
+    //   default: 0,
+    //   validator: function (val) {
+    //     return typeof val === "number";
+    //   },
+    // },
     selected: Boolean,
     title: {
       type: String,
@@ -204,18 +204,18 @@ export default {
       this.$emit("delete");
     },
     moveWithDiff(diffX, diffY) {
-      let left = this.x + diffX / this.options.scale;
-      let top = this.y + diffY / this.options.scale;
+      let left = this.position[0] + diffX / this.options.scale;
+      let top = this.position[1] + diffY / this.options.scale;
 
-      this.$emit("update:x", left);
-      this.$emit("update:y", top);
+      this.$emit("update:position", [left, top]);
+      // this.$emit("update:y", top);
     },
   },
   computed: {
     style() {
       return {
-        top: this.options.center.y + this.y * this.options.scale + "px",
-        left: this.options.center.x + this.x * this.options.scale + "px",
+        left: this.options.center.x + this.position[0] * this.options.scale + "px",
+        top: this.options.center.y + this.position[1] * this.options.scale + "px",
         width: this.options.width + "px",
         transform: "scale(" + (this.options.scale + "") + ")",
         transformOrigin: "top left",
@@ -238,7 +238,7 @@ $circleMargin: 2px; // left/right
 
 $circleNewColor: #00ff00;
 $circleRemoveColor: #ff0000;
-$circleConnectedColor: #ffff00;
+$circleConnectedColor: #569dcf;
 
 .vue-block {
   position: absolute;

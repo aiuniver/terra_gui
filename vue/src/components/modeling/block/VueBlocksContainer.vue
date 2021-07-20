@@ -373,15 +373,14 @@ export default {
       let x = 0;
       let y = 0;
 
-      x += block.x;
-      y += block.y;
+      x += block.position[0];
+      y += block.position[1];
       // console.log(this.optionsForChild)
       // console.log(isInput)
 
       // y += this.optionsForChild.titleHeight
 
       if (isInput && block.inputs.length > slotNumber) {
-        // eslint-disable-line no-eval
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
         } else {
@@ -539,8 +538,8 @@ export default {
         y = (y - this.centerY) / this.scale;
       }
 
-      block.x = x;
-      block.y = y;
+      block.position[0] = x;
+      block.position[1] = y;
       this.blocks.push(block);
 
       this.updateScene();
@@ -580,8 +579,7 @@ export default {
 
       return {
         id: id,
-        x: 0,
-        y: 0,
+        position: [0,0],
         selected: false,
         name: node.name,
         title: node.title || node.name,
