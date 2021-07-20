@@ -33,11 +33,12 @@ from datetime import datetime
 from pytz import timezone
 import json
 import imgaug.augmenters as iaa
+from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.008
+__version__ = 1.009
 
 
 class CreateDTS(object):
@@ -172,9 +173,10 @@ class CreateDTS(object):
                 self.instructions['outputs'][key]['instructions'][0], **self.instructions['outputs'][key]['parameters'])
             if isinstance(array, tuple):
                 for i in range(len(array)):
-                    self.output_shape[key.replace(key[-1], str(int(key[-1])+i))] = array[i].shape
-                    self.output_dtype[key.replace(key[-1], str(int(key[-1])+i))] = str(array[i].dtype)
-                    self.output_datatype[key.replace(key[-1], str(int(key[-1])+i))] = self._set_datatype(array[i].shape)
+                    self.output_shape[key.replace(key[-1], str(int(key[-1]) + i))] = array[i].shape
+                    self.output_dtype[key.replace(key[-1], str(int(key[-1]) + i))] = str(array[i].dtype)
+                    self.output_datatype[key.replace(key[-1], str(int(key[-1]) + i))] = self._set_datatype(
+                        array[i].shape)
             else:
                 self.output_shape[key] = array.shape
                 self.output_dtype[key] = str(array.dtype)
@@ -236,8 +238,8 @@ class CreateDTS(object):
                     y_3: list = []
                     for i in range(self.limit):
                         arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
-                                         self.instructions['outputs'][key]['instructions'][i],
-                                         **self.instructions['outputs'][key]['parameters'])
+                            self.instructions['outputs'][key]['instructions'][i],
+                            **self.instructions['outputs'][key]['parameters'])
                         y_1.append(arrays[0])
                         y_2.append(arrays[1])
                         y_3.append(arrays[2])
@@ -245,9 +247,12 @@ class CreateDTS(object):
                     splits = ['train', 'val', 'test']
                     for spl_seq in splits:
                         for i in range(len(splits)):
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])))] = np.array(y_1)[self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+1))] = np.array(y_2)[self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+2))] = np.array(y_3)[self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])))] = np.array(y_1)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 1))] = np.array(y_2)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 2))] = np.array(y_3)[
+                                self.split_sequence[spl_seq]]
                 else:
                     y: list = []
                     for i in range(self.limit):
@@ -320,35 +325,42 @@ class CreateDTS(object):
         peg_idx = 0
         self.peg.append(0)
         if 'object_detection' in self.tags.values():
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-                if 'txt' not in file_name:
-                    instr.append(os.path.join(options['folder_name'], file_name))
-                    peg_idx += 1
-                    y_cls.append(cls_idx)
-        else:
-            if options['file_info']['path_type'] == 'path_folder':
-                for folder_name in options['file_info']['path']:
-                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
-                        if file_name:
-                            file_folder = directory.replace(self.file_folder, '')[1:]
-                            for name in sorted(file_name):
+            options['object_detection'] = True
+        if options['file_info']['path_type'] == 'path_folder':
+            for folder_name in options['file_info']['path']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            if 'object_detection' in self.tags.values():
+                                if 'txt' not in name:
+                                    instr.append(os.path.join(file_folder, name))
+                                    peg_idx += 1
+                            else:
                                 instr.append(os.path.join(file_folder, name))
                                 peg_idx += 1
-                                y_cls.append(cls_idx)
-                            cls_idx += 1
-                            self.peg.append(peg_idx)
-            elif options['file_info']['path_type'] == 'path_file':
-                for file_name in options['file_info']['path']:
-                    data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
-                    instr = data[options['file_info']['cols_name'][0]].to_list()
-                    prev_elem = instr[0].split('/')[-2]
-                    for elem in instr:
-                        cur_elem = elem.split('/')[-2]
-                        if cur_elem != prev_elem:
-                            self.peg.append(peg_idx)
-                        prev_elem = cur_elem
-                        peg_idx += 1
-                    self.peg.append(len(instr))
+                            y_cls.append(cls_idx)
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                   usecols=options['file_info']['cols_name'])
+                instr = data[options['file_info']['cols_name'][0]].to_list()
+                prev_elem = instr[0].split('/')[-2]
+                for elem in instr:
+                    cur_elem = elem.split('/')[-2]
+                    if cur_elem != prev_elem:
+                        self.peg.append(peg_idx)
+                    prev_elem = cur_elem
+                    peg_idx += 1
+                self.peg.append(len(instr))
+
+        if 'augmentation' in options.keys():
+            aug_parameters = []
+            for key, value in options['augmentation'].items():
+                aug_parameters.append(getattr(iaa, key)(**value))
+            self.createarray.augmentation['images'] = iaa.Sequential(aug_parameters, random_order=True)
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
@@ -461,7 +473,7 @@ class CreateDTS(object):
 
         self.createarray.txt_list[f'{self.mode}_{self.iter}'] = {}
         for key, value in txt_list.items():
-            self.createarray.txt_list[f'{self.mode}_{self.iter}'][key] =\
+            self.createarray.txt_list[f'{self.mode}_{self.iter}'][key] = \
                 self.createarray.tokenizer[f'{self.mode}_{self.iter}'].texts_to_sequences([value])[0]
 
         if options['word_to_vec']:
@@ -603,8 +615,8 @@ class CreateDTS(object):
                 class_names.append(elem)
 
         for i in range(3):
-            self.classes_names[f'{self.mode}_{self.iter+i}'] = class_names
-            self.num_classes[f'{self.mode}_{self.iter+i}'] = int(data['classes'])
+            self.classes_names[f'{self.mode}_{self.iter + i}'] = class_names
+            self.num_classes[f'{self.mode}_{self.iter + i}'] = int(data['classes'])
 
         # list of txt
         txt_list = []
@@ -823,12 +835,57 @@ class CreateArray(object):
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.augmentation: dict = {}
+        self.temporary: dict = {'bounding_boxes': {}}
 
         self.file_folder = None
         self.txt_list: dict = {}
 
         for key, value in options.items():
             self.__dict__[key] = value
+
+    @staticmethod
+    def yolo_to_imgaug(args, shape):
+
+        height, width = shape
+
+        class_num = int(args[0])
+        x_pos = float(args[1])
+        y_pos = float(args[2])
+        x_size = float(args[3])
+        y_size = float(args[4])
+
+        x1 = x_pos * width - (x_size * width / 2)
+        y1 = y_pos * height - (y_size * height / 2)
+        x2 = x_size * width + x1
+        y2 = y_size * height + y1
+
+        return [class_num, x1, y1, x2, y2]
+
+    @staticmethod
+    def imgaug_to_yolo(args, shape=(416, 416)):
+
+        height, width = shape
+
+        class_num = int(args[0])
+        x1 = float(args[1])
+        y1 = float(args[2])
+        x2 = float(args[3])
+        y2 = float(args[4])
+
+        x_pos = x1 / width + ((x2 - x1) / width / 2)
+        y_pos = y1 / height + ((y2 - y1) / height / 2)
+        x_size = (x2 - x1) / width
+        y_size = (y2 - y1) / height
+
+        return_args = [class_num, x_pos, y_pos, x_size, y_size]
+
+        for r in return_args[1:]:
+            if r > 1:
+                return ()
+            if r < 0:
+                return ()
+
+        return return_args
 
     def create_images(self, image_path: str, **options):
 
@@ -837,6 +894,33 @@ class CreateArray(object):
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
+        if 'augmentation' in options.keys():
+
+            if 'object_detection' in options.keys():
+                txt_path = image_path[:image_path.rfind('.')] + '.txt'
+                with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
+                    bounding_boxes = b_boxes.read()
+
+                current_boxes = []
+                for elem in bounding_boxes.split('\n'):
+                    b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
+                    current_boxes.append(
+                        BoundingBox(
+                            **{'label': b_box[0], 'x1': b_box[1], 'y1': b_box[2], 'x2': b_box[3], 'y2': b_box[4]}))
+
+                bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
+                array, bbs_aug = self.augmentation['images'](image=array, bounding_boxes=bbs)
+                list_of_bounding_boxes = []
+                for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
+                    bb = elem.__dict__
+                    b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
+                                                      shape=array.shape[:2])
+                    if b_box_coord != ():
+                        list_of_bounding_boxes.append(b_box_coord)
+
+                self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
+            else:
+                array = self.augmentation['images'](image=array)
 
         return array
 
@@ -878,16 +962,20 @@ class CreateArray(object):
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
-                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
                 else:
-                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3), dtype='uint8')
+                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized))
                     resized = np.concatenate((resized, black_bar))
                 # width
                 if original_shape[1] > target_shape[1]:
-                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
                 else:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3), dtype='uint8')
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
 
@@ -1087,15 +1175,18 @@ class CreateArray(object):
         width: int = options['width']
         num_classes: int = options['num_classes']
 
-        with open(os.path.join(self.file_folder, txt_path), 'r') as txt:
-            bb_file = txt.read()
-        real_boxes = []
-        for elem in bb_file.split('\n'):
-            tmp = []
-            if elem:
-                for num in elem.split(' '):
-                    tmp.append(float(num))
-                real_boxes.append(tmp)
+        if self.temporary['bounding_boxes']:
+            real_boxes = self.temporary['bounding_boxes'][txt_path]
+        else:
+            with open(os.path.join(self.file_folder, txt_path), 'r') as txt:
+                bb_file = txt.read()
+            real_boxes = []
+            for elem in bb_file.split('\n'):
+                tmp = []
+                if elem:
+                    for num in elem.split(' '):
+                        tmp.append(float(num))
+                    real_boxes.append(tmp)
         real_boxes = np.array(real_boxes)
         real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
         anchors = np.array(
@@ -1612,13 +1703,12 @@ class PrepareDTS(object):
         def load_arrays():
 
             for sample in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays')):
-                for idx, arr in enumerate(
-                        os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample))):
+                for arr in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample)):
                     if 'input' in arr:
-                        self.X[sample][f'input_{idx}'] = joblib.load(
+                        self.X[sample][arr[:arr.rfind('.')]] = joblib.load(
                             os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
                     elif 'output' in arr:
-                        self.Y[sample][f'output_{idx}'] = joblib.load(
+                        self.Y[sample][arr[:arr.rfind('.')]] = joblib.load(
                             os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
 
             pass
