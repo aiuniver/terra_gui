@@ -9,7 +9,8 @@ from tempfile import mkdtemp
 from tqdm.notebook import tqdm
 
 from .data import DatasetArchives
-from terra_ai import out_exchange
+# from terra_ai import out_exchange
+from ..data.datasets.creation import SourceData
 
 
 class Dataloader:
@@ -56,12 +57,12 @@ class Dataloader:
                 if idx % 143360 == 0 or idx == progress_bar.total:
                     progress_bar_status = (progress_bar.desc, str(round(idx / progress_bar.total, 2)),
                                            f'{str(round(progress_bar.last_print_t - progress_bar.start_t, 2))} сек.')
-                    if idx == progress_bar.total:
-                        out_exchange.print_progress_bar(progress_bar_status, stop_flag=True)
-                    else:
-                        out_exchange.print_progress_bar(progress_bar_status)
+                    # if idx == progress_bar.total:
+                    #     out_exchange.print_progress_bar(progress_bar_status, stop_flag=True)
+                    # else:
+                    #     out_exchange.print_progress_bar(progress_bar_status)
 
-    def load_data(self, strict_object: Any):
+    def load_data(self, strict_object: SourceData):
         __method_name = f'load_from_{strict_object.mode.lower()}'
         __method = getattr(self, __method_name, None)
         return __method(strict_object.value)
