@@ -25,7 +25,7 @@ class Dataloader:
         return os.listdir(os.path.join(self.trds_path, 'sources'))
 
     @property
-    def file_folder(self):
+    def file_folder(self) -> str:
         return self._file_folder
 
     @file_folder.setter
@@ -74,7 +74,7 @@ class Dataloader:
         self.download(link, file_name)
         if 'zip' in file_name:
             self.unzip(file_name)
-        print(f'Файлы скачаны в директорию {self.file_folder}')
+        return {"message": f"Файлы скачаны в директорию {self.file_folder}"}
 
     def load_from_url(self, link: str):
         file_name = link.split('/')[-1]
@@ -82,11 +82,11 @@ class Dataloader:
         self.download(link, file_name)
         if 'zip' in file_name or 'zip' in link:
             self.unzip(file_name)
-        print(f'Файлы скачаны в директорию {self.file_folder}')
+        return {"message": f"Файлы скачаны в директорию {self.file_folder}"}
 
     def load_from_googledrive(self, filepath: str):
         zip_name = str(filepath).split('/')[-1]
         name = zip_name[:zip_name.rfind('.')]
         self.file_folder = name
         shutil.unpack_archive(filepath, self.file_folder)
-        print(f'Файлы скачаны в директорию {self.file_folder}')
+        return {"message": f"Файлы скачаны в директорию {self.file_folder}"}

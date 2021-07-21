@@ -17,6 +17,7 @@ from .. import ASSETS_PATH
 from .. import progress
 from . import exceptions
 from . import temporary_methods
+from ..datasets import loader
 
 
 class Exchange:
@@ -63,7 +64,8 @@ class Exchange:
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        temporary_methods.dataset_source_load(source)
+        data = loader.load_data(source)
+        return data
 
     def _call_dataset_source_load_progress(self) -> dict:
         """
