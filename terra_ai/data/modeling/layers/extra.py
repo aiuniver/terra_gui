@@ -3,6 +3,13 @@
 """
 
 from enum import Enum
+from typing import Optional, Union, Tuple
+from pydantic import validator
+from pydantic.types import PositiveInt
+
+from ...mixins import BaseMixinData
+from ...exceptions import LayerValueConfigException
+from ...types import ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
@@ -55,16 +62,13 @@ class ConstraintChoice(str, Enum):
 
 
 class ActivationChoice(str, Enum):
-    deserialize = "deserialize"
     elu = "elu"
     exponential = "exponential"
     gelu = "gelu"
-    get = "get"
     hard_sigmoid = "hard_sigmoid"
     linear = "linear"
     relu = "relu"
     selu = "selu"
-    serialize = "serialize"
     sigmoid = "sigmoid"
     softmax = "softmax"
     softplus = "softplus"
@@ -76,3 +80,63 @@ class ActivationChoice(str, Enum):
 class InterpolationChoice(str, Enum):
     nearest = "nearest"
     bilinear = "bilinear"
+
+
+class ResizingInterpolationChoice(str, Enum):
+    bilinear = "bilinear"
+    nearest = "nearest"
+    bicubic = "bicubic"
+    area = "area"
+    lanczos3 = "lanczos3"
+    gaussian = "gaussian"
+    mitchellcubic = "mitchellcubic"
+
+
+class ModuleChoice(str, Enum):
+    tensorflow_keras_layers = "tensorflow.keras.layers"
+    terra_custom_layers = "customLayers"
+    tensorflow_keras_layers_preprocessing = (
+        "tensorflow.keras.layers.experimental.preprocessing"
+    )
+
+
+class ModuleTypeChoice(str, Enum):
+    keras = "keras"
+    terra_layer = "terra_layer"
+
+
+class LayerValidationMethodChoice(str, Enum):
+    fixed = "fixed"
+    minimal = "minimal"
+    dependence_tuple2 = "dependence_tuple2"
+
+
+class LayerValueConfig(BaseMixinData):
+    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    validation: LayerValidationMethodChoice
+
+    @validator("validation")
+    def _validate_validation(
+        cls, value: LayerValidationMethodChoice, values
+    ) -> LayerValidationMethodChoice:
+        __value = values.get("value")
+        if not __value:
+            return value
+        if value == LayerValidationMethodChoice.dependence_tuple2:
+            if not (isinstance(__value, tuple) and len(__value) == 2):
+                raise LayerValueConfigException(value, __value)
+        if value in [
+            LayerValidationMethodChoice.fixed,
+            LayerValidationMethodChoice.minimal,
+        ]:
+            if __value and not isinstance(__value, int):
+                print(__value)
+                raise LayerValueConfigException(value, __value)
+        return value
+
+
+class LayerConfigData(BaseMixinData):
+    num_uplinks: LayerValueConfig
+    input_dimension: LayerValueConfig
+    module: ModuleChoice
+    module_type: ModuleTypeChoice

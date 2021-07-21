@@ -5,6 +5,14 @@
 from enum import Enum
 
 
+class ReferenceTypeChoice(str, Enum):
+    block = "block"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ReferenceTypeChoice))
+
+
 class LayerGroupChoice(str, Enum):
     input = "input"
     middle = "middle"
@@ -55,3 +63,13 @@ class LayerTypeChoice(str, Enum):
     Embedding = "Embedding"
     RepeatVector = "RepeatVector"
     BatchNormalization = "BatchNormalization"
+    Mish = "Mish"
+    InstanceNormalization = "InstanceNormalization"
+    ZeroPadding2D = "ZeroPadding2D"
+    Cropping2D = "Cropping2D"
+    Attention = "Attention"
+    Normalization = "Normalization"
+    Average = "Average"
+    ThresholdedReLU = "ThresholdedReLU"
+    Rescaling = "Rescaling"
+    Resizing = "Resizing"

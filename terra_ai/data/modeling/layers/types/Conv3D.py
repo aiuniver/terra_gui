@@ -12,7 +12,22 @@ from ..extra import (
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice,
+    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+)
+
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 5,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
 )
 
 
@@ -20,12 +35,12 @@ class ParametersMainData(BaseMixinData):
     filters: PositiveInt
     kernel_size: Tuple[PositiveInt, PositiveInt, PositiveInt]
     strides: Tuple[PositiveInt, PositiveInt, PositiveInt] = (1, 1, 1)
-    padding: PaddingChoice = PaddingChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingChoice = PaddingChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
-    data_format: Optional[DataFormatChoice]
+    data_format: DataFormatChoice = DataFormatChoice.channels_last
     dilation_rate: Tuple[PositiveInt, PositiveInt, PositiveInt] = (1, 1, 1)
     groups: PositiveInt = 1
     use_bias: bool = True

@@ -7,7 +7,23 @@ from pydantic.types import PositiveFloat
 
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice
+from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice, LayerConfigData, \
+    LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 2,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
+)
 
 
 class ParametersMainData(BaseMixinData):

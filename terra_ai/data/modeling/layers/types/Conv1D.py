@@ -7,12 +7,32 @@ from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
 from ..extra import (
+    LayerConfigData,
     PaddingAddCausalChoice,
     ActivationChoice,
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
     ConstraintChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+    LayerValidationMethodChoice,
+)
+
+
+LayerConfig = LayerConfigData(
+    **{
+        "num_uplinks": {
+            "value": 1,
+            "validation": LayerValidationMethodChoice.fixed,
+        },
+        "input_dimension": {
+            "value": 3,
+            "validation": LayerValidationMethodChoice.minimal,
+        },
+        "module": ModuleChoice.tensorflow_keras_layers,
+        "module_type": ModuleTypeChoice.keras,
+    }
 )
 
 
@@ -20,8 +40,8 @@ class ParametersMainData(BaseMixinData):
     filters: PositiveInt
     kernel_size: PositiveInt
     strides: PositiveInt = 1
-    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.valid
-    activation: Optional[ActivationChoice]
+    padding: PaddingAddCausalChoice = PaddingAddCausalChoice.same
+    activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):
