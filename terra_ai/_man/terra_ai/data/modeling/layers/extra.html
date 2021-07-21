@@ -38,7 +38,6 @@ from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
 from ...exceptions import LayerValueConfigException
-from ...types import ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
@@ -121,27 +120,72 @@ class ResizingInterpolationChoice(str, Enum):
     mitchellcubic = &#34;mitchellcubic&#34;
 
 
+class SpaceToDepthDataFormatChoice(str, Enum):
+    NHWC = &#34;NHWC&#34;
+    NCHW = &#34;NCHW&#34;
+    NCHW_VECT_C = &#34;NCHW_VECT_C&#34;
+
+
+class PretrainedModelWeightsChoice(str, Enum):
+    imagenet = &#34;imagenet&#34;
+
+
+class PretrainedModelPoolingChoice(str, Enum):
+    max = &#34;max&#34;
+    avg = &#34;avg&#34;
+
+
+class YOLOModeChoice(str, Enum):
+    YOLOv3 = &#34;YOLOv3&#34;
+    YOLOv4 = &#34;YOLOv4&#34;
+    YOLOv5 = &#34;YOLOv5&#34;
+
+
+class YOLOActivationChoice(str, Enum):
+    LeakyReLU = &#34;LeakyReLU&#34;
+    Mish = &#34;Mish&#34;
+    Swish = &#34;Swish&#34;
+
+
+class VAELatentRegularizerChoice(str, Enum):
+    vae = &#34;vae&#34;
+    bvae = &#34;bvae&#34;
+
+
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = &#34;tensorflow.keras.layers&#34;
     terra_custom_layers = &#34;customLayers&#34;
     tensorflow_keras_layers_preprocessing = (
         &#34;tensorflow.keras.layers.experimental.preprocessing&#34;
     )
+    tensorflow_nn = &#34;tensorflow.nn&#34;
+    inception_v3 = &#34;tensorflow.keras.applications.inception_v3&#34;
+    xception = &#34;tensorflow.keras.applications.xception&#34;
+    vgg16 = &#34;tensorflow.keras.applications.vgg16&#34;
+    resnet50 = &#34;tensorflow.keras.applications.resnet50&#34;
 
 
 class ModuleTypeChoice(str, Enum):
     keras = &#34;keras&#34;
+    tensorflow = &#34;tensorflow&#34;
+    keras_pretrained_model = &#34;keras_pretrained_model&#34;
     terra_layer = &#34;terra_layer&#34;
+    block_plan = &#34;block_plan&#34;
 
 
 class LayerValidationMethodChoice(str, Enum):
     fixed = &#34;fixed&#34;
     minimal = &#34;minimal&#34;
     dependence_tuple2 = &#34;dependence_tuple2&#34;
+    dependence_tuple3 = &#34;dependence_tuple3&#34;
 
 
 class LayerValueConfig(BaseMixinData):
-    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    value: Union[
+        PositiveInt,
+        Tuple[PositiveInt, PositiveInt],
+        Tuple[PositiveInt, PositiveInt, PositiveInt],
+    ]
     validation: LayerValidationMethodChoice
 
     @validator(&#34;validation&#34;)
@@ -154,6 +198,9 @@ class LayerValueConfig(BaseMixinData):
         if value == LayerValidationMethodChoice.dependence_tuple2:
             if not (isinstance(__value, tuple) and len(__value) == 2):
                 raise LayerValueConfigException(value, __value)
+        if value == LayerValidationMethodChoice.dependence_tuple3:
+            if not (isinstance(__value, tuple) and len(__value) == 3):
+                raise LayerValueConfigException(value, __value)
         if value in [
             LayerValidationMethodChoice.fixed,
             LayerValidationMethodChoice.minimal,
@@ -165,9 +212,9 @@ class LayerValueConfig(BaseMixinData):
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: LayerValueConfig
+    num_uplinks: Optional[LayerValueConfig]
     input_dimension: LayerValueConfig
-    module: ModuleChoice
+    module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice</code></pre>
 </details>
 </section>
@@ -488,9 +535,9 @@ class LayerConfigData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerConfigData(BaseMixinData):
-    num_uplinks: LayerValueConfig
+    num_uplinks: Optional[LayerValueConfig]
     input_dimension: LayerValueConfig
-    module: ModuleChoice
+    module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -505,7 +552,7 @@ class LayerConfigData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.extra.LayerConfigData.module"><code class="name">var <span class="ident">module</span> : <a title="terra_ai.data.modeling.layers.extra.ModuleChoice" href="#terra_ai.data.modeling.layers.extra.ModuleChoice">ModuleChoice</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.extra.LayerConfigData.module"><code class="name">var <span class="ident">module</span> : Union[<a title="terra_ai.data.modeling.layers.extra.ModuleChoice" href="#terra_ai.data.modeling.layers.extra.ModuleChoice">ModuleChoice</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -513,7 +560,7 @@ class LayerConfigData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.extra.LayerConfigData.num_uplinks"><code class="name">var <span class="ident">num_uplinks</span> : <a title="terra_ai.data.modeling.layers.extra.LayerValueConfig" href="#terra_ai.data.modeling.layers.extra.LayerValueConfig">LayerValueConfig</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.extra.LayerConfigData.num_uplinks"><code class="name">var <span class="ident">num_uplinks</span> : Union[<a title="terra_ai.data.modeling.layers.extra.LayerValueConfig" href="#terra_ai.data.modeling.layers.extra.LayerValueConfig">LayerValueConfig</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -540,7 +587,8 @@ class LayerConfigData(BaseMixinData):
 <pre><code class="python">class LayerValidationMethodChoice(str, Enum):
     fixed = &#34;fixed&#34;
     minimal = &#34;minimal&#34;
-    dependence_tuple2 = &#34;dependence_tuple2&#34;</code></pre>
+    dependence_tuple2 = &#34;dependence_tuple2&#34;
+    dependence_tuple3 = &#34;dependence_tuple3&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -550,6 +598,10 @@ class LayerConfigData(BaseMixinData):
 <h3>Class variables</h3>
 <dl>
 <dt id="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple2"><code class="name">var <span class="ident">dependence_tuple2</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple3"><code class="name">var <span class="ident">dependence_tuple3</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -576,7 +628,11 @@ class LayerConfigData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class LayerValueConfig(BaseMixinData):
-    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    value: Union[
+        PositiveInt,
+        Tuple[PositiveInt, PositiveInt],
+        Tuple[PositiveInt, PositiveInt, PositiveInt],
+    ]
     validation: LayerValidationMethodChoice
 
     @validator(&#34;validation&#34;)
@@ -588,6 +644,9 @@ class LayerConfigData(BaseMixinData):
             return value
         if value == LayerValidationMethodChoice.dependence_tuple2:
             if not (isinstance(__value, tuple) and len(__value) == 2):
+                raise LayerValueConfigException(value, __value)
+        if value == LayerValidationMethodChoice.dependence_tuple3:
+            if not (isinstance(__value, tuple) and len(__value) == 3):
                 raise LayerValueConfigException(value, __value)
         if value in [
             LayerValidationMethodChoice.fixed,
@@ -610,7 +669,7 @@ class LayerConfigData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.extra.LayerValueConfig.value"><code class="name">var <span class="ident">value</span> : Union[pydantic.types.PositiveInt, Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt], NoneType]</code></dt>
+<dt id="terra_ai.data.modeling.layers.extra.LayerValueConfig.value"><code class="name">var <span class="ident">value</span> : Union[pydantic.types.PositiveInt, Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt], Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt, pydantic.types.PositiveInt]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -639,7 +698,12 @@ class LayerConfigData(BaseMixinData):
     terra_custom_layers = &#34;customLayers&#34;
     tensorflow_keras_layers_preprocessing = (
         &#34;tensorflow.keras.layers.experimental.preprocessing&#34;
-    )</code></pre>
+    )
+    tensorflow_nn = &#34;tensorflow.nn&#34;
+    inception_v3 = &#34;tensorflow.keras.applications.inception_v3&#34;
+    xception = &#34;tensorflow.keras.applications.xception&#34;
+    vgg16 = &#34;tensorflow.keras.applications.vgg16&#34;
+    resnet50 = &#34;tensorflow.keras.applications.resnet50&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -648,6 +712,14 @@ class LayerConfigData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.inception_v3"><code class="name">var <span class="ident">inception_v3</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.resnet50"><code class="name">var <span class="ident">resnet50</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_keras_layers"><code class="name">var <span class="ident">tensorflow_keras_layers</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -656,7 +728,19 @@ class LayerConfigData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_nn"><code class="name">var <span class="ident">tensorflow_nn</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.terra_custom_layers"><code class="name">var <span class="ident">terra_custom_layers</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.vgg16"><code class="name">var <span class="ident">vgg16</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleChoice.xception"><code class="name">var <span class="ident">xception</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -674,7 +758,10 @@ class LayerConfigData(BaseMixinData):
 </summary>
 <pre><code class="python">class ModuleTypeChoice(str, Enum):
     keras = &#34;keras&#34;
-    terra_layer = &#34;terra_layer&#34;</code></pre>
+    tensorflow = &#34;tensorflow&#34;
+    keras_pretrained_model = &#34;keras_pretrained_model&#34;
+    terra_layer = &#34;terra_layer&#34;
+    block_plan = &#34;block_plan&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -683,7 +770,19 @@ class LayerConfigData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.block_plan"><code class="name">var <span class="ident">block_plan</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras"><code class="name">var <span class="ident">keras</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras_pretrained_model"><code class="name">var <span class="ident">keras_pretrained_model</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.tensorflow"><code class="name">var <span class="ident">tensorflow</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -755,6 +854,63 @@ class LayerConfigData(BaseMixinData):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.extra.PaddingChoice.valid"><code class="name">var <span class="ident">valid</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice"><code class="flex name class">
+<span>class <span class="ident">PretrainedModelPoolingChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PretrainedModelPoolingChoice(str, Enum):
+    max = &#34;max&#34;
+    avg = &#34;avg&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.avg"><code class="name">var <span class="ident">avg</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.max"><code class="name">var <span class="ident">max</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice"><code class="flex name class">
+<span>class <span class="ident">PretrainedModelWeightsChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PretrainedModelWeightsChoice(str, Enum):
+    imagenet = &#34;imagenet&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice.imagenet"><code class="name">var <span class="ident">imagenet</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -847,6 +1003,145 @@ class LayerConfigData(BaseMixinData):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.nearest"><code class="name">var <span class="ident">nearest</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice"><code class="flex name class">
+<span>class <span class="ident">SpaceToDepthDataFormatChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SpaceToDepthDataFormatChoice(str, Enum):
+    NHWC = &#34;NHWC&#34;
+    NCHW = &#34;NCHW&#34;
+    NCHW_VECT_C = &#34;NCHW_VECT_C&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW"><code class="name">var <span class="ident">NCHW</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW_VECT_C"><code class="name">var <span class="ident">NCHW_VECT_C</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NHWC"><code class="name">var <span class="ident">NHWC</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice"><code class="flex name class">
+<span>class <span class="ident">VAELatentRegularizerChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class VAELatentRegularizerChoice(str, Enum):
+    vae = &#34;vae&#34;
+    bvae = &#34;bvae&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.bvae"><code class="name">var <span class="ident">bvae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.vae"><code class="name">var <span class="ident">vae</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOActivationChoice"><code class="flex name class">
+<span>class <span class="ident">YOLOActivationChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class YOLOActivationChoice(str, Enum):
+    LeakyReLU = &#34;LeakyReLU&#34;
+    Mish = &#34;Mish&#34;
+    Swish = &#34;Swish&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.LeakyReLU"><code class="name">var <span class="ident">LeakyReLU</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Mish"><code class="name">var <span class="ident">Mish</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Swish"><code class="name">var <span class="ident">Swish</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOModeChoice"><code class="flex name class">
+<span>class <span class="ident">YOLOModeChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class YOLOModeChoice(str, Enum):
+    YOLOv3 = &#34;YOLOv3&#34;
+    YOLOv4 = &#34;YOLOv4&#34;
+    YOLOv5 = &#34;YOLOv5&#34;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv3"><code class="name">var <span class="ident">YOLOv3</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv4"><code class="name">var <span class="ident">YOLOv4</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv5"><code class="name">var <span class="ident">YOLOv5</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -946,6 +1241,7 @@ class LayerConfigData(BaseMixinData):
 <h4><code><a title="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice" href="#terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice">LayerValidationMethodChoice</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple2" href="#terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple2">dependence_tuple2</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple3" href="#terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.dependence_tuple3">dependence_tuple3</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.fixed" href="#terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.fixed">fixed</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.minimal" href="#terra_ai.data.modeling.layers.extra.LayerValidationMethodChoice.minimal">minimal</a></code></li>
 </ul>
@@ -960,15 +1256,23 @@ class LayerConfigData(BaseMixinData):
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice" href="#terra_ai.data.modeling.layers.extra.ModuleChoice">ModuleChoice</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.inception_v3" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.inception_v3">inception_v3</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.resnet50" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.resnet50">resnet50</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_keras_layers" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_keras_layers">tensorflow_keras_layers</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_keras_layers_preprocessing" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_keras_layers_preprocessing">tensorflow_keras_layers_preprocessing</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_nn" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.tensorflow_nn">tensorflow_nn</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.terra_custom_layers" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.terra_custom_layers">terra_custom_layers</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.vgg16" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.vgg16">vgg16</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleChoice.xception" href="#terra_ai.data.modeling.layers.extra.ModuleChoice.xception">xception</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice">ModuleTypeChoice</a></code></h4>
 <ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.block_plan" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice.block_plan">block_plan</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras">keras</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras_pretrained_model" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice.keras_pretrained_model">keras_pretrained_model</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.tensorflow" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice.tensorflow">tensorflow</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ModuleTypeChoice.terra_layer" href="#terra_ai.data.modeling.layers.extra.ModuleTypeChoice.terra_layer">terra_layer</a></code></li>
 </ul>
 </li>
@@ -985,6 +1289,19 @@ class LayerConfigData(BaseMixinData):
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.extra.PaddingChoice.same" href="#terra_ai.data.modeling.layers.extra.PaddingChoice.same">same</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.PaddingChoice.valid" href="#terra_ai.data.modeling.layers.extra.PaddingChoice.valid">valid</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice" href="#terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice">PretrainedModelPoolingChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.avg" href="#terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.avg">avg</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.max" href="#terra_ai.data.modeling.layers.extra.PretrainedModelPoolingChoice.max">max</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice" href="#terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice">PretrainedModelWeightsChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice.imagenet" href="#terra_ai.data.modeling.layers.extra.PretrainedModelWeightsChoice.imagenet">imagenet</a></code></li>
 </ul>
 </li>
 <li>
@@ -1005,6 +1322,37 @@ class LayerConfigData(BaseMixinData):
 <li><code><a title="terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.lanczos3" href="#terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.lanczos3">lanczos3</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.mitchellcubic" href="#terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.mitchellcubic">mitchellcubic</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.nearest" href="#terra_ai.data.modeling.layers.extra.ResizingInterpolationChoice.nearest">nearest</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice" href="#terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice">SpaceToDepthDataFormatChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW" href="#terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW">NCHW</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW_VECT_C" href="#terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NCHW_VECT_C">NCHW_VECT_C</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NHWC" href="#terra_ai.data.modeling.layers.extra.SpaceToDepthDataFormatChoice.NHWC">NHWC</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice" href="#terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice">VAELatentRegularizerChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.bvae" href="#terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.bvae">bvae</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.vae" href="#terra_ai.data.modeling.layers.extra.VAELatentRegularizerChoice.vae">vae</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.YOLOActivationChoice" href="#terra_ai.data.modeling.layers.extra.YOLOActivationChoice">YOLOActivationChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.LeakyReLU" href="#terra_ai.data.modeling.layers.extra.YOLOActivationChoice.LeakyReLU">LeakyReLU</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Mish" href="#terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Mish">Mish</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Swish" href="#terra_ai.data.modeling.layers.extra.YOLOActivationChoice.Swish">Swish</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.extra.YOLOModeChoice" href="#terra_ai.data.modeling.layers.extra.YOLOModeChoice">YOLOModeChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv3" href="#terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv3">YOLOv3</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv4" href="#terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv4">YOLOv4</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv5" href="#terra_ai.data.modeling.layers.extra.YOLOModeChoice.YOLOv5">YOLOv5</a></code></li>
 </ul>
 </li>
 </ul>

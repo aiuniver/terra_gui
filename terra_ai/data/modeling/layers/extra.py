@@ -9,7 +9,6 @@ from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
 from ...exceptions import LayerValueConfigException
-from ...types import ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
@@ -92,27 +91,72 @@ class ResizingInterpolationChoice(str, Enum):
     mitchellcubic = "mitchellcubic"
 
 
+class SpaceToDepthDataFormatChoice(str, Enum):
+    NHWC = "NHWC"
+    NCHW = "NCHW"
+    NCHW_VECT_C = "NCHW_VECT_C"
+
+
+class PretrainedModelWeightsChoice(str, Enum):
+    imagenet = "imagenet"
+
+
+class PretrainedModelPoolingChoice(str, Enum):
+    max = "max"
+    avg = "avg"
+
+
+class YOLOModeChoice(str, Enum):
+    YOLOv3 = "YOLOv3"
+    YOLOv4 = "YOLOv4"
+    YOLOv5 = "YOLOv5"
+
+
+class YOLOActivationChoice(str, Enum):
+    LeakyReLU = "LeakyReLU"
+    Mish = "Mish"
+    Swish = "Swish"
+
+
+class VAELatentRegularizerChoice(str, Enum):
+    vae = "vae"
+    bvae = "bvae"
+
+
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
     terra_custom_layers = "customLayers"
     tensorflow_keras_layers_preprocessing = (
         "tensorflow.keras.layers.experimental.preprocessing"
     )
+    tensorflow_nn = "tensorflow.nn"
+    inception_v3 = "tensorflow.keras.applications.inception_v3"
+    xception = "tensorflow.keras.applications.xception"
+    vgg16 = "tensorflow.keras.applications.vgg16"
+    resnet50 = "tensorflow.keras.applications.resnet50"
 
 
 class ModuleTypeChoice(str, Enum):
     keras = "keras"
+    tensorflow = "tensorflow"
+    keras_pretrained_model = "keras_pretrained_model"
     terra_layer = "terra_layer"
+    block_plan = "block_plan"
 
 
 class LayerValidationMethodChoice(str, Enum):
     fixed = "fixed"
     minimal = "minimal"
     dependence_tuple2 = "dependence_tuple2"
+    dependence_tuple3 = "dependence_tuple3"
 
 
 class LayerValueConfig(BaseMixinData):
-    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    value: Union[
+        PositiveInt,
+        Tuple[PositiveInt, PositiveInt],
+        Tuple[PositiveInt, PositiveInt, PositiveInt],
+    ]
     validation: LayerValidationMethodChoice
 
     @validator("validation")
@@ -125,6 +169,9 @@ class LayerValueConfig(BaseMixinData):
         if value == LayerValidationMethodChoice.dependence_tuple2:
             if not (isinstance(__value, tuple) and len(__value) == 2):
                 raise LayerValueConfigException(value, __value)
+        if value == LayerValidationMethodChoice.dependence_tuple3:
+            if not (isinstance(__value, tuple) and len(__value) == 3):
+                raise LayerValueConfigException(value, __value)
         if value in [
             LayerValidationMethodChoice.fixed,
             LayerValidationMethodChoice.minimal,
@@ -136,7 +183,7 @@ class LayerValueConfig(BaseMixinData):
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: LayerValueConfig
+    num_uplinks: Optional[LayerValueConfig]
     input_dimension: LayerValueConfig
-    module: ModuleChoice
+    module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice

@@ -101,7 +101,17 @@ class LayerTypeChoice(str, Enum):
     Average = &#34;Average&#34;
     ThresholdedReLU = &#34;ThresholdedReLU&#34;
     Rescaling = &#34;Rescaling&#34;
-    Resizing = &#34;Resizing&#34;</code></pre>
+    Resizing = &#34;Resizing&#34;
+    InceptionV3 = &#34;InceptionV3&#34;
+    Xception = &#34;Xception&#34;
+    VGG16 = &#34;VGG16&#34;
+    ResNet50 = &#34;ResNet50&#34;
+    CustomUNETBlock = &#34;CustomUNETBlock&#34;
+    YOLOResBlock = &#34;YOLOResBlock&#34;
+    YOLOConvBlock = &#34;YOLOConvBlock&#34;
+    VAEBlock = &#34;VAEBlock&#34;
+    CustomBlock = &#34;CustomBlock&#34;
+    SpaceToDepth = &#34;SpaceToDepth&#34;</code></pre>
 </details>
 </section>
 <section>
@@ -212,7 +222,17 @@ class LayerTypeChoice(str, Enum):
     Average = &#34;Average&#34;
     ThresholdedReLU = &#34;ThresholdedReLU&#34;
     Rescaling = &#34;Rescaling&#34;
-    Resizing = &#34;Resizing&#34;</code></pre>
+    Resizing = &#34;Resizing&#34;
+    InceptionV3 = &#34;InceptionV3&#34;
+    Xception = &#34;Xception&#34;
+    VGG16 = &#34;VGG16&#34;
+    ResNet50 = &#34;ResNet50&#34;
+    CustomUNETBlock = &#34;CustomUNETBlock&#34;
+    YOLOResBlock = &#34;YOLOResBlock&#34;
+    YOLOConvBlock = &#34;YOLOConvBlock&#34;
+    VAEBlock = &#34;VAEBlock&#34;
+    CustomBlock = &#34;CustomBlock&#34;
+    SpaceToDepth = &#34;SpaceToDepth&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -285,6 +305,14 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.CustomBlock"><code class="name">var <span class="ident">CustomBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.CustomUNETBlock"><code class="name">var <span class="ident">CustomUNETBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Dense"><code class="name">var <span class="ident">Dense</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -334,6 +362,10 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D"><code class="name">var <span class="ident">GlobalMaxPool3D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.InceptionV3"><code class="name">var <span class="ident">InceptionV3</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -389,6 +421,10 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.ResNet50"><code class="name">var <span class="ident">ResNet50</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Rescaling"><code class="name">var <span class="ident">Rescaling</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -413,6 +449,10 @@ class LayerTypeChoice(str, Enum):
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.SpaceToDepth"><code class="name">var <span class="ident">SpaceToDepth</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.ThresholdedReLU"><code class="name">var <span class="ident">ThresholdedReLU</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -426,6 +466,26 @@ class LayerTypeChoice(str, Enum):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D"><code class="name">var <span class="ident">UpSampling3D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.VAEBlock"><code class="name">var <span class="ident">VAEBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.VGG16"><code class="name">var <span class="ident">VGG16</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.Xception"><code class="name">var <span class="ident">Xception</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.YOLOConvBlock"><code class="name">var <span class="ident">YOLOConvBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.extra.LayerTypeChoice.YOLOResBlock"><code class="name">var <span class="ident">YOLOResBlock</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -527,6 +587,8 @@ def values() -&gt; list:
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv3D">Conv3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Conv3DTranspose" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Conv3DTranspose">Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Cropping2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Cropping2D">Cropping2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.CustomBlock" href="#terra_ai.data.modeling.extra.LayerTypeChoice.CustomBlock">CustomBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.CustomUNETBlock" href="#terra_ai.data.modeling.extra.LayerTypeChoice.CustomUNETBlock">CustomUNETBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Dense" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Dense">Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.DepthwiseConv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.DepthwiseConv2D">DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Dropout" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Dropout">Dropout</a></code></li>
@@ -540,6 +602,7 @@ def values() -&gt; list:
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool1D">GlobalMaxPool1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool2D">GlobalMaxPool2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.GlobalMaxPool3D">GlobalMaxPool3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.InceptionV3" href="#terra_ai.data.modeling.extra.LayerTypeChoice.InceptionV3">InceptionV3</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Input" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.InstanceNormalization" href="#terra_ai.data.modeling.extra.LayerTypeChoice.InstanceNormalization">InstanceNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.LSTM" href="#terra_ai.data.modeling.extra.LayerTypeChoice.LSTM">LSTM</a></code></li>
@@ -553,16 +616,23 @@ def values() -&gt; list:
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.PReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.PReLU">PReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ReLU">ReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.RepeatVector" href="#terra_ai.data.modeling.extra.LayerTypeChoice.RepeatVector">RepeatVector</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ResNet50" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ResNet50">ResNet50</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Rescaling" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Rescaling">Rescaling</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Reshape" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Reshape">Reshape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Resizing" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Resizing">Resizing</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv1D">SeparableConv1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SeparableConv2D">SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Softmax" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Softmax">Softmax</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.SpaceToDepth" href="#terra_ai.data.modeling.extra.LayerTypeChoice.SpaceToDepth">SpaceToDepth</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ThresholdedReLU" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ThresholdedReLU">ThresholdedReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D">UpSampling2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D">UpSampling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.VAEBlock" href="#terra_ai.data.modeling.extra.LayerTypeChoice.VAEBlock">VAEBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.VGG16" href="#terra_ai.data.modeling.extra.LayerTypeChoice.VGG16">VGG16</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.Xception" href="#terra_ai.data.modeling.extra.LayerTypeChoice.Xception">Xception</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.YOLOConvBlock" href="#terra_ai.data.modeling.extra.LayerTypeChoice.YOLOConvBlock">YOLOConvBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.YOLOResBlock" href="#terra_ai.data.modeling.extra.LayerTypeChoice.YOLOResBlock">YOLOResBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ZeroPadding2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ZeroPadding2D">ZeroPadding2D</a></code></li>
 </ul>
 </li>

@@ -56,6 +56,10 @@ from . import (
     Dense,
     Add,
     Multiply,
+    # Maximum,
+    # Minimum,
+    # Subtract,
+    # Dot,
     Flatten,
     Concatenate,
     Reshape,
@@ -70,21 +74,97 @@ from . import (
     GlobalAveragePooling1D,
     GlobalAveragePooling2D,
     GlobalAveragePooling3D,
+    # Permute,
     GRU,
     LSTM,
     Embedding,
+    # SimpleRNN,
+    # TimeDistributed,
+    # Bidirectional,
+    # ConvLSTM1D,
+    # ConvLSTM2D,
+    # ConvLSTM3D,
+    # RNN,
     RepeatVector,
     BatchNormalization,
+    # Masking,
+    # LayerNormalization,
+    # SpatialDropout1D,
+    # SpatialDropout2D,
+    # SpatialDropout3D,
+    # GaussianDropout,
+    # GaussianNoise,
+    # ActivityRegularization,
+    # AlphaDropout,
+    # MultiHeadAttention,
+    # AdditiveAttention,
     Mish,
     InstanceNormalization,
+    # ZeroPadding1D,
     ZeroPadding2D,
+    # ZeroPadding3D,
+    # Cropping1D,
     Cropping2D,
+    # Cropping3D,
     Attention,
     Normalization,
     Average,
     ThresholdedReLU,
     Rescaling,
     Resizing,
+    # Lambda,
+    # CategoryCrossing,
+    # CategoryEncoding,
+    # CenterCrop,
+    # Discretization,
+    # DiscretizingCombiner,
+    # Hashing,
+    # IntegerLookup,
+    # PreprocessingLayer,
+    # RandomContrast,
+    # RandomCrop,
+    # RandomFlip,
+    # RandomHeight,
+    # RandomRotation,
+    # RandomTranslation,
+    # RandomWidth,
+    # RandomZoom,
+    # StringLookup,
+    # TextVector,
+    # MobileNetV3Large,
+    # MobileNetV3Small,
+    # DenseNet121,
+    # DenseNet169,
+    # DenseNet201,
+    # EfficientNetB0,
+    # EfficientNetB1,
+    # EfficientNetB2,
+    # EfficientNetB3,
+    # EfficientNetB4,
+    # EfficientNetB5,
+    # EfficientNetB6,
+    # EfficientNetB7,
+    # InceptionResNetV2,
+    InceptionV3,
+    #  MobileNet,
+    #  MobileNetV2,
+    #  NASNetLarge,
+    #  NASNetMobile,
+    #  ResNet101,
+    #  ResNet152,
+    ResNet50,
+    # ResNet101V2,
+    # ResNet152V2,
+    #  ResNet50V2,
+    Xception,
+    VGG16,
+    # VGG19,
+    CustomUNETBlock,
+    YOLOResBlock,
+    YOLOConvBlock,
+    VAEBlock,
+    CustomBlock,
+    SpaceToDepth,
 )</code></pre>
 </details>
 </section>
@@ -155,6 +235,14 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.Cropping2D" href="Cropping2D.html">terra_ai.data.modeling.layers.types.Cropping2D</a></code></p></div>
 </dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.CustomBlock" href="CustomBlock.html">terra_ai.data.modeling.layers.types.CustomBlock</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.CustomBlock" href="CustomBlock.html">terra_ai.data.modeling.layers.types.CustomBlock</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.CustomUNETBlock" href="CustomUNETBlock.html">terra_ai.data.modeling.layers.types.CustomUNETBlock</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.CustomUNETBlock" href="CustomUNETBlock.html">terra_ai.data.modeling.layers.types.CustomUNETBlock</a></code></p></div>
+</dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.Dense" href="Dense.html">terra_ai.data.modeling.layers.types.Dense</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.Dense" href="Dense.html">terra_ai.data.modeling.layers.types.Dense</a></code></p></div>
@@ -206,6 +294,10 @@ from . import (
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers.types.GlobalMaxPool3D</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers.types.GlobalMaxPool3D</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.InceptionV3" href="InceptionV3.html">terra_ai.data.modeling.layers.types.InceptionV3</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.InceptionV3" href="InceptionV3.html">terra_ai.data.modeling.layers.types.InceptionV3</a></code></p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.Input" href="Input.html">terra_ai.data.modeling.layers.types.Input</a></code></dt>
 <dd>
@@ -259,6 +351,10 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.RepeatVector" href="RepeatVector.html">terra_ai.data.modeling.layers.types.RepeatVector</a></code></p></div>
 </dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.ResNet50" href="ResNet50.html">terra_ai.data.modeling.layers.types.ResNet50</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.ResNet50" href="ResNet50.html">terra_ai.data.modeling.layers.types.ResNet50</a></code></p></div>
+</dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.Rescaling" href="Rescaling.html">terra_ai.data.modeling.layers.types.Rescaling</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.Rescaling" href="Rescaling.html">terra_ai.data.modeling.layers.types.Rescaling</a></code></p></div>
@@ -283,6 +379,10 @@ from . import (
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.Softmax" href="Softmax.html">terra_ai.data.modeling.layers.types.Softmax</a></code></p></div>
 </dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.SpaceToDepth" href="SpaceToDepth.html">terra_ai.data.modeling.layers.types.SpaceToDepth</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.SpaceToDepth" href="SpaceToDepth.html">terra_ai.data.modeling.layers.types.SpaceToDepth</a></code></p></div>
+</dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.ThresholdedReLU" href="ThresholdedReLU.html">terra_ai.data.modeling.layers.types.ThresholdedReLU</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.ThresholdedReLU" href="ThresholdedReLU.html">terra_ai.data.modeling.layers.types.ThresholdedReLU</a></code></p></div>
@@ -298,6 +398,26 @@ from . import (
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.UpSampling3D" href="UpSampling3D.html">terra_ai.data.modeling.layers.types.UpSampling3D</a></code></dt>
 <dd>
 <div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.UpSampling3D" href="UpSampling3D.html">terra_ai.data.modeling.layers.types.UpSampling3D</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.VAEBlock" href="VAEBlock.html">terra_ai.data.modeling.layers.types.VAEBlock</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code>VAEvBlock</code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.VGG16" href="VGG16.html">terra_ai.data.modeling.layers.types.VGG16</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.VGG16" href="VGG16.html">terra_ai.data.modeling.layers.types.VGG16</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.Xception" href="Xception.html">terra_ai.data.modeling.layers.types.Xception</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.Xception" href="Xception.html">terra_ai.data.modeling.layers.types.Xception</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.YOLOConvBlock" href="YOLOConvBlock.html">terra_ai.data.modeling.layers.types.YOLOConvBlock</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.YOLOConvBlock" href="YOLOConvBlock.html">terra_ai.data.modeling.layers.types.YOLOConvBlock</a></code></p></div>
+</dd>
+<dt><code class="name"><a title="terra_ai.data.modeling.layers.types.YOLOResBlock" href="YOLOResBlock.html">terra_ai.data.modeling.layers.types.YOLOResBlock</a></code></dt>
+<dd>
+<div class="desc"><p>Тип слоя <code><a title="terra_ai.data.modeling.layers.types.YOLOResBlock" href="YOLOResBlock.html">terra_ai.data.modeling.layers.types.YOLOResBlock</a></code></p></div>
 </dd>
 <dt><code class="name"><a title="terra_ai.data.modeling.layers.types.ZeroPadding2D" href="ZeroPadding2D.html">terra_ai.data.modeling.layers.types.ZeroPadding2D</a></code></dt>
 <dd>
@@ -343,6 +463,8 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers.types.Conv3D" href="Conv3D.html">terra_ai.data.modeling.layers.types.Conv3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Conv3DTranspose" href="Conv3DTranspose.html">terra_ai.data.modeling.layers.types.Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Cropping2D" href="Cropping2D.html">terra_ai.data.modeling.layers.types.Cropping2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.CustomBlock" href="CustomBlock.html">terra_ai.data.modeling.layers.types.CustomBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.CustomUNETBlock" href="CustomUNETBlock.html">terra_ai.data.modeling.layers.types.CustomUNETBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Dense" href="Dense.html">terra_ai.data.modeling.layers.types.Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.DepthwiseConv2D" href="DepthwiseConv2D.html">terra_ai.data.modeling.layers.types.DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Dropout" href="Dropout.html">terra_ai.data.modeling.layers.types.Dropout</a></code></li>
@@ -356,6 +478,7 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers.types.GlobalMaxPool1D" href="GlobalMaxPool1D.html">terra_ai.data.modeling.layers.types.GlobalMaxPool1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.GlobalMaxPool2D" href="GlobalMaxPool2D.html">terra_ai.data.modeling.layers.types.GlobalMaxPool2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.GlobalMaxPool3D" href="GlobalMaxPool3D.html">terra_ai.data.modeling.layers.types.GlobalMaxPool3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.InceptionV3" href="InceptionV3.html">terra_ai.data.modeling.layers.types.InceptionV3</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Input" href="Input.html">terra_ai.data.modeling.layers.types.Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.InstanceNormalization" href="InstanceNormalization.html">terra_ai.data.modeling.layers.types.InstanceNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.LSTM" href="LSTM.html">terra_ai.data.modeling.layers.types.LSTM</a></code></li>
@@ -369,16 +492,23 @@ from . import (
 <li><code><a title="terra_ai.data.modeling.layers.types.PReLU" href="PReLU.html">terra_ai.data.modeling.layers.types.PReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.ReLU" href="ReLU.html">terra_ai.data.modeling.layers.types.ReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.RepeatVector" href="RepeatVector.html">terra_ai.data.modeling.layers.types.RepeatVector</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.ResNet50" href="ResNet50.html">terra_ai.data.modeling.layers.types.ResNet50</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Rescaling" href="Rescaling.html">terra_ai.data.modeling.layers.types.Rescaling</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Reshape" href="Reshape.html">terra_ai.data.modeling.layers.types.Reshape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Resizing" href="Resizing.html">terra_ai.data.modeling.layers.types.Resizing</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.SeparableConv1D" href="SeparableConv1D.html">terra_ai.data.modeling.layers.types.SeparableConv1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.SeparableConv2D" href="SeparableConv2D.html">terra_ai.data.modeling.layers.types.SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.Softmax" href="Softmax.html">terra_ai.data.modeling.layers.types.Softmax</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.SpaceToDepth" href="SpaceToDepth.html">terra_ai.data.modeling.layers.types.SpaceToDepth</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.ThresholdedReLU" href="ThresholdedReLU.html">terra_ai.data.modeling.layers.types.ThresholdedReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.UpSampling1D" href="UpSampling1D.html">terra_ai.data.modeling.layers.types.UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.UpSampling2D" href="UpSampling2D.html">terra_ai.data.modeling.layers.types.UpSampling2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.UpSampling3D" href="UpSampling3D.html">terra_ai.data.modeling.layers.types.UpSampling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.VAEBlock" href="VAEBlock.html">terra_ai.data.modeling.layers.types.VAEBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.VGG16" href="VGG16.html">terra_ai.data.modeling.layers.types.VGG16</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.Xception" href="Xception.html">terra_ai.data.modeling.layers.types.Xception</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.YOLOConvBlock" href="YOLOConvBlock.html">terra_ai.data.modeling.layers.types.YOLOConvBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.types.YOLOResBlock" href="YOLOResBlock.html">terra_ai.data.modeling.layers.types.YOLOResBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.types.ZeroPadding2D" href="ZeroPadding2D.html">terra_ai.data.modeling.layers.types.ZeroPadding2D</a></code></li>
 </ul>
 </li>

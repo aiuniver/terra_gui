@@ -3,10 +3,17 @@
 """
 
 from typing import Tuple
-from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ....types import ConstrainedIntValueGe0
+from ..extra import (
+    DataFormatChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
+
 
 LayerConfig = LayerConfigData(
     **{
@@ -25,7 +32,10 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    cropping: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]]
+    cropping: Tuple[
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+    ]
 
 
 class ParametersExtraData(BaseMixinData):
