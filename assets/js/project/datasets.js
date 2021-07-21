@@ -6,7 +6,6 @@
 
     let filters, datasets, params, dataset_load, dataset_prepare;
 
-
     let RemoveDataset = $("#modal-window-remove-dataset").ModalWindow({
         title:"Удалить датасет",
         width:300,

@@ -1,14 +1,15 @@
-from typing import Optional, List
+from typing import Any, Optional, Union, List, Dict
 from pydantic import BaseModel
 
-from .extra import WidgetTypeChoice
-from .types import AliasType
+from .extra import FieldTypeChoice
 
 
-class FieldBase(BaseModel):
-    name: AliasType
+class Field(BaseModel):
+    type: FieldTypeChoice
     label: str
-    type: WidgetTypeChoice
-    parse: Optional[str]
-    value: List[str] = [""]
-    list: Optional[List[str]]
+    default: Any
+    disabled: bool = False
+    readonly: bool = False
+    list: bool = False
+    available: Optional[Union[List, Dict]]
+    available_names: Optional[Union[List, Dict]]
