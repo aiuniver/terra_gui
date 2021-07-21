@@ -32,3 +32,14 @@ class ModelingView(ProjectViewMixin):
 
 class TrainingView(ProjectViewMixin):
     template_name = "project/training.html"
+
+
+class TrainingFormJSView(View):
+    def get(self, request, *arg, **kwargs):
+        data = base64.b64encode(
+            terra_exchange.call("get_training_form").encode("utf-8")
+        ).decode("utf-8")
+        return HttpResponse(
+            f'window._training_form="{data}"',
+            content_type="application/javascript",
+        )

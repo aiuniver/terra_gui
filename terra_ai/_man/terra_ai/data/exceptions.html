@@ -52,6 +52,7 @@ class ExceptionMessages(str, Enum):
     LayerValueConfig = (
         &#34;Validation method `%s` and value `%s` with type `%s` are mismatch&#34;
     )
+    IncorrectReferenceName = &#34;Reference name `%s` is not value, must be `%s`&#34;
 
 
 class TerraDataException(ValueError):
@@ -177,6 +178,16 @@ class LayerValueConfigException(TerraDataException):
                 (args[0] if len(args) else ExceptionMessages.LayerValueConfig)
                 % (str(__validator), str(__value), str(type(__value)))
             )
+        )
+
+
+class IncorrectReferenceNameException(TerraDataException):
+    def __init__(self, __value: str, __regex: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.IncorrectReferenceName)
+                % (str(__value), str(__regex))
+            )
         )</code></pre>
 </details>
 </section>
@@ -266,7 +277,8 @@ class LayerValueConfigException(TerraDataException):
     TrdsConfigFileNotFound = &#34;TRDS `%s` has not `%s`&#34;
     LayerValueConfig = (
         &#34;Validation method `%s` and value `%s` with type `%s` are mismatch&#34;
-    )</code></pre>
+    )
+    IncorrectReferenceName = &#34;Reference name `%s` is not value, must be `%s`&#34;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -284,6 +296,10 @@ class LayerValueConfigException(TerraDataException):
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension"><code class="name">var <span class="ident">FilePathExtension</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.exceptions.ExceptionMessages.IncorrectReferenceName"><code class="name">var <span class="ident">IncorrectReferenceName</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -349,6 +365,33 @@ class LayerValueConfigException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.FilePathExtension)
                 % (str(__file_path), str(__extension))
+            )
+        )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.exceptions.TerraDataException" href="#terra_ai.data.exceptions.TerraDataException">TerraDataException</a></li>
+<li>builtins.ValueError</li>
+<li>builtins.Exception</li>
+<li>builtins.BaseException</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.exceptions.IncorrectReferenceNameException"><code class="flex name class">
+<span>class <span class="ident">IncorrectReferenceNameException</span></span>
+<span>(</span><span>_IncorrectReferenceNameException__value: str, _IncorrectReferenceNameException__regex: str, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Inappropriate argument value (of correct type).</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class IncorrectReferenceNameException(TerraDataException):
+    def __init__(self, __value: str, __regex: str, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.IncorrectReferenceName)
+                % (str(__value), str(__regex))
             )
         )</code></pre>
 </details>
@@ -470,6 +513,7 @@ class LayerValueConfigException(TerraDataException):
 <ul class="hlist">
 <li><a title="terra_ai.data.exceptions.Base64Exception" href="#terra_ai.data.exceptions.Base64Exception">Base64Exception</a></li>
 <li><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></li>
+<li><a title="terra_ai.data.exceptions.IncorrectReferenceNameException" href="#terra_ai.data.exceptions.IncorrectReferenceNameException">IncorrectReferenceNameException</a></li>
 <li><a title="terra_ai.data.exceptions.LayerValueConfigException" href="#terra_ai.data.exceptions.LayerValueConfigException">LayerValueConfigException</a></li>
 <li><a title="terra_ai.data.exceptions.TerraDataValueException" href="#terra_ai.data.exceptions.TerraDataValueException">TerraDataValueException</a></li>
 <li><a title="terra_ai.data.exceptions.TrdsConfigFileNotFoundException" href="#terra_ai.data.exceptions.TrdsConfigFileNotFoundException">TrdsConfigFileNotFoundException</a></li>
@@ -750,6 +794,7 @@ class LayerValueConfigException(TerraDataException):
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.AliasException" href="#terra_ai.data.exceptions.ExceptionMessages.AliasException">AliasException</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.Base64Extension" href="#terra_ai.data.exceptions.ExceptionMessages.Base64Extension">Base64Extension</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.FilePathExtension" href="#terra_ai.data.exceptions.ExceptionMessages.FilePathExtension">FilePathExtension</a></code></li>
+<li><code><a title="terra_ai.data.exceptions.ExceptionMessages.IncorrectReferenceName" href="#terra_ai.data.exceptions.ExceptionMessages.IncorrectReferenceName">IncorrectReferenceName</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.LayerValueConfig" href="#terra_ai.data.exceptions.ExceptionMessages.LayerValueConfig">LayerValueConfig</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.ListEmpty" href="#terra_ai.data.exceptions.ExceptionMessages.ListEmpty">ListEmpty</a></code></li>
 <li><code><a title="terra_ai.data.exceptions.ExceptionMessages.PartTotal" href="#terra_ai.data.exceptions.ExceptionMessages.PartTotal">PartTotal</a></code></li>
@@ -765,6 +810,9 @@ class LayerValueConfigException(TerraDataException):
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.FilePathExtensionException" href="#terra_ai.data.exceptions.FilePathExtensionException">FilePathExtensionException</a></code></h4>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.exceptions.IncorrectReferenceNameException" href="#terra_ai.data.exceptions.IncorrectReferenceNameException">IncorrectReferenceNameException</a></code></h4>
 </li>
 <li>
 <h4><code><a title="terra_ai.data.exceptions.LayerValueConfigException" href="#terra_ai.data.exceptions.LayerValueConfigException">LayerValueConfigException</a></code></h4>

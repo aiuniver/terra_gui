@@ -1,5 +1,6 @@
 import base64
 import os
+import copy
 import json
 import shutil
 
@@ -7,13 +8,21 @@ import requests
 
 from django.conf import settings
 
+from apps.plugins.frontend.training.data import (
+    get_outputs_config,
+    get_callbacks_config,
+    get_checkpoint_layer,
+    data as training_form_data,
+)
+from apps.plugins.frontend.training.form import Form
+from terra_ai.data.training.train import TrainData
+
 from .data import (
     TerraExchangeResponse,
     TerraExchangeProject,
     LayerLocation,
     Layer,
     OutputConfig,
-    TrainConfig,
 )
 from .exceptions import TerraExchangeException
 from .neural import colab_exchange
@@ -136,8 +145,6 @@ class TerraExchange:
                         num_classes=layer.config.num_classes
                     )
                 layers[int(index)] = layer
-
-            self.project.training.outputs = outputs
 
             self.project.layers = layers
             self.project.layers_start = layers
@@ -410,42 +417,26 @@ class TerraExchange:
         else:
             return TerraExchangeResponse(data={"validated": False})
 
-    def _call_before_start_training(
-        self,
-        batch_sizes: int,
-        epochs_count: int,
-        checkpoint: dict = None,
-        optimizer: dict = None,
-        outputs: dict = None,
-    ) -> TerraExchangeResponse:
-        if not checkpoint:
-            checkpoint = {}
-        if not optimizer:
-            optimizer = {}
-        if not outputs:
-            outputs = {}
-
-        colab_exchange.reset_stop_flag()
-        output = checkpoint.get("monitor", {}).get("output")
-        out_type = checkpoint.get("monitor", {}).get("out_type")
-        checkpoint["monitor"]["out_monitor"] = outputs.get(output, {}).get(out_type)
-        if out_type == "metrics":
-            checkpoint["monitor"]["out_monitor"] = checkpoint.get("monitor", {}).get(
-                "out_monitor", {}
-            )[0]
-        self.project.training = TrainConfig(
-            batch_sizes=batch_sizes,
-            epochs_count=epochs_count,
-            checkpoint=checkpoint,
-            optimizer=optimizer,
-            outputs=outputs,
+    def _call_get_training_form(self):
+        data = copy.deepcopy(training_form_data)
+        data["architectures"]["Basic"]["outputs"]["data"] = get_outputs_config(
+            self.project.layers
         )
+        data["architectures"]["Basic"]["callbacks"]["data"] = get_callbacks_config(
+            self.project.layers
+        )
+        data["architectures"]["Basic"]["checkpoint"]["data"]["layer"][
+            "available"
+        ] = get_checkpoint_layer(self.project.layers)
+        form = Form(**data)
+        return form.json()
+
+    def _call_before_start_training(self, **kwargs) -> TerraExchangeResponse:
+        self.project.training = TrainData(**kwargs)
         response = self.call("get_change_validation")
         if not response.data.get("validated"):
             colab_exchange.out_data["stop_flag"] = True
-        response.data["logging"] = json.dumps(
-            self.project.dict().get("training"), indent=4
-        )
+        response.data["logging"] = self.project.training.json(indent=4)
         self._update_in_training_flag()
         self.project.autosave()
         response.data["in_training"] = self.project.in_training
@@ -456,7 +447,7 @@ class TerraExchange:
         model_plan = colab_exchange.get_model_plan(
             self.project.model_plan, self.project.model_name
         )
-        training_data = self.project.dict().get("training")
+        training_data = json.loads(self.project.training.json())
         response = self.__request_post(
             "get_model_to_colab",
             model_plan=model_plan,

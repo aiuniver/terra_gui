@@ -25,6 +25,23 @@
 
         },
 
+        CollapsableGroup: function() {
+
+            if (!this.length) return this;
+
+            let _init = (item) => {
+                item.children(".params-title").bind("click", (event) => {
+                    event.preventDefault();
+                    $(event.currentTarget).parent().toggleClass("collapsed");
+                });
+            }
+
+            return this.each((index, item) => {
+                _init($(item));
+            });
+
+        },
+
         AutoCompleteWidget: function() {
 
             if (!this.length) return this;

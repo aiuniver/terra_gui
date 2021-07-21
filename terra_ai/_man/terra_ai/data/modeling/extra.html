@@ -34,6 +34,14 @@
 from enum import Enum
 
 
+class ReferenceTypeChoice(str, Enum):
+    block = &#34;block&#34;
+
+    @staticmethod
+    def values() -&gt; list:
+        return list(map(lambda item: item.value, ReferenceTypeChoice))
+
+
 class LayerGroupChoice(str, Enum):
     input = &#34;input&#34;
     middle = &#34;middle&#34;
@@ -427,6 +435,53 @@ class LayerTypeChoice(str, Enum):
 </dd>
 </dl>
 </dd>
+<dt id="terra_ai.data.modeling.extra.ReferenceTypeChoice"><code class="flex name class">
+<span>class <span class="ident">ReferenceTypeChoice</span></span>
+<span>(</span><span>value, names=None, *, module=None, qualname=None, type=None, start=1)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>An enumeration.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ReferenceTypeChoice(str, Enum):
+    block = &#34;block&#34;
+
+    @staticmethod
+    def values() -&gt; list:
+        return list(map(lambda item: item.value, ReferenceTypeChoice))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>builtins.str</li>
+<li>enum.Enum</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.extra.ReferenceTypeChoice.block"><code class="name">var <span class="ident">block</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Static methods</h3>
+<dl>
+<dt id="terra_ai.data.modeling.extra.ReferenceTypeChoice.values"><code class="name flex">
+<span>def <span class="ident">values</span></span>(<span>) ‑> list</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def values() -&gt; list:
+    return list(map(lambda item: item.value, ReferenceTypeChoice))</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
 </dl>
 </section>
 </article>
@@ -509,6 +564,13 @@ class LayerTypeChoice(str, Enum):
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling2D">UpSampling2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.UpSampling3D">UpSampling3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.extra.LayerTypeChoice.ZeroPadding2D" href="#terra_ai.data.modeling.extra.LayerTypeChoice.ZeroPadding2D">ZeroPadding2D</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.extra.ReferenceTypeChoice" href="#terra_ai.data.modeling.extra.ReferenceTypeChoice">ReferenceTypeChoice</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.extra.ReferenceTypeChoice.block" href="#terra_ai.data.modeling.extra.ReferenceTypeChoice.block">block</a></code></li>
+<li><code><a title="terra_ai.data.modeling.extra.ReferenceTypeChoice.values" href="#terra_ai.data.modeling.extra.ReferenceTypeChoice.values">values</a></code></li>
 </ul>
 </li>
 </ul>

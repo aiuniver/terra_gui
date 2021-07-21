@@ -76,24 +76,6 @@ class GetChangeValidationSerializer(serializers.Serializer):
     layer = LayerSerializer()
 
 
-class OptimizerParamsSerializer(serializers.Serializer):
-    main = serializers.DictField(required=False, default={})
-    extra = serializers.DictField(required=False, default={})
-
-
-class OptimizerSerializer(serializers.Serializer):
-    name = serializers.CharField()
-    params = OptimizerParamsSerializer()
-
-
-class BeforeStartTrainingSerializer(serializers.Serializer):
-    batch_sizes = serializers.IntegerField(min_value=1)
-    epochs_count = serializers.IntegerField(min_value=1)
-    checkpoint = serializers.DictField(required=False, default={})
-    optimizer = OptimizerSerializer()
-    outputs = serializers.DictField(required=False, default={})
-
-
 class ProjectSaveSerializer(serializers.Serializer):
     name = serializers.CharField(validators=[validate_restriction_name])
     overwrite = serializers.BooleanField(required=False, default=False)

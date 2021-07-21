@@ -7,65 +7,129 @@
     let training_toolbar, training_params, training_results;
 
 
+    let ActionStates = {
+        idle: "idle",
+        locked: "locked",
+        training: "training",
+    }
+
+
+    let RenderOutput = (index, layer) => {
+        let layer_block = $(`
+            <div class="inner">
+                ${layer.name ? `<div class="title">Слой <b>«${layer.name}»</b></div>` : ``}
+                <div class="form-inline-label">
+                    <input type="hidden" id="field_form-architecture_parameters_outputs_${index}_alias" name="architecture[parameters][outputs][${index}][alias]" value="${layer.alias}" data-value-type="string">
+                    <input type="hidden" id="field_form-architecture_parameters_outputs_${index}_task" name="architecture[parameters][outputs][${index}][task]" value="${layer.fields.task.default}" data-value-type="string" data-type="task" data-index="${index}">
+                </div>
+            </div>
+        `);
+
+        Object.defineProperty(layer_block, "task", {
+            set: (value) => {
+                if (layer_block.find("input[data-type=task]").val() === value) return;
+                let metrics = layer_block.find("select[data-type=metrics]");
+                layer_block.find("input[data-type=task]").val(value).trigger("input");
+                metrics.html("");
+                training_params.config.metrics[value].forEach((item) => {
+                    metrics.append($(`<option value="${item}">${item}</option>`));
+                });
+                metrics.selectmenu("refresh");
+            }
+        });
+
+        layer.fields.loss.available = training_params.config.losses;
+        let loss = window.FormWidget(`architecture[parameters][outputs][${index}][loss]`, layer.fields.loss).addClass("field-inline field-reverse");
+        loss.find("select").bind("change", (event) => {
+            layer_block.task = event.currentTarget[event.currentTarget.selectedIndex].parentNode.label;
+        }).selectmenu({
+            "change": (event) => {
+                $(event.target).trigger("change");
+            }
+        });
+        layer_block.children(".form-inline-label").append(loss);
+
+        let metrics = window.FormWidget(`architecture[parameters][outputs][${index}][metrics][]`, layer.fields.metrics).addClass("field-inline field-reverse");
+        metrics.find("select").attr("data-type", "metrics");
+        layer_block.children(".form-inline-label").append(metrics);
+
+        let classes_quantity = window.FormWidget(`architecture[parameters][outputs][${index}][classes_quantity]`, layer.fields.classes_quantity).addClass("field-inline field-reverse");
+        layer_block.children(".form-inline-label").append(classes_quantity);
+
+        loss.find("select").trigger("change");
+        return layer_block;
+    }
+
+
+    let RenderCallback = (index, layer) => {
+        return $(`
+            <div class="inner">
+                ${layer ? `<div class="title">Слой <b>«${layer}»</b></div>` : ``}
+                <div class="form-inline-label"></div>
+            </div>
+        `);
+    }
+
+
+    let RenderCheckpoint = (data) => {
+        let block = $(`<div class="inner form-inline-label"></div>`);
+        for (let name in data) {
+            let widget = window.FormWidget(`architecture[parameters][checkpoint][${name}]`, data[name]).addClass("field-inline field-reverse");
+            block.append(widget);
+        }
+        return block;
+    }
+
+
+    let RenderArchitectureParameters = {
+        Basic: (params_block) => {
+            let render = {
+                outputs: (block, data) => {
+                    for (let i in data) {
+                        block.append(RenderOutput(i, data[i]));
+                    }
+                },
+                checkpoint: (block, data) => {
+                    block.append(RenderCheckpoint(data));
+                },
+                callbacks: (block, data) => {
+                    for (let i in data) {
+                        block.append(RenderCallback(i, data[i]));
+                    }
+                }
+            }
+            for (let group in training_params.config.architectures.Basic) {
+                let cfg = training_params.config.architectures.Basic[group],
+                    block = $(`
+                        <div class="params-item params-${group}${cfg.collapsable ? ' collapsable' : ''}${cfg.collapsed ? ' collapsed' : ''}">
+                            <div class="params-title">${cfg.label}</div>
+                        </div>
+                    `).CollapsableGroup();
+                render[group](block, cfg.data);
+                params_block.append(block);
+            }
+            params_block.find("input[data-type=task]").bind("input", (event) => {
+                let block = $(params_block.find(".params-callbacks > .inner")[event.currentTarget.dataset.index]);
+                block.children(".form-inline-label").html("");
+                let callbacks = training_params.config.callbacks[event.currentTarget.value];
+                for (let name in callbacks) {
+                    let widget = window.FormWidget(`architecture[parameters][outputs][${event.currentTarget.dataset.index}][callbacks][${name}]`, callbacks[name]).addClass("field-inline field-reverse");
+                    block.children(".form-inline-label").append(widget);
+                }
+            }).trigger("input");
+        },
+        Yolo: (params_block) => {
+            console.log("Render Yolo architecture with parameters", training_params.config);
+        }
+    }
+
+
     $.fn.extend({
 
 
         TrainingToolbar: function() {
 
             if (!this.length) return this;
-
-            Object.defineProperty(this, "items", {
-                get: () => {
-                    return this.find(".menu-section > li");
-                }
-            });
-
-            Object.defineProperty(this, "btn", {
-                get: () => {
-                    return {
-                        "charts":this.find(".menu-section > li[data-type=charts]")[0],
-                        "images":this.find(".menu-section > li[data-type=images]")[0],
-                        "texts":this.find(".menu-section > li[data-type=texts]")[0],
-                        "scatters":this.find(".menu-section > li[data-type=scatters]")[0],
-                    };
-                }
-            });
-
-            this.items.children("span").bind("click", (event) => {
-                event.preventDefault();
-                let item = $(event.currentTarget).parent()[0];
-                if (!item.disabled) item.active = !item.active;
-            });
-
-            this.items.each((index, item) => {
-                Object.defineProperty(item, "disabled", {
-                    set: (value) => {
-                        if (value) {
-                            $(item).attr("disabled", "disabled");
-                            item.active = false;
-                        } else {
-                            $(item).removeAttr("disabled");
-                        }
-                    },
-                    get: () => {
-                        return item.hasAttribute("disabled");
-                    }
-                });
-                Object.defineProperty(item, "active", {
-                    set: (value) => {
-                        if (value) {
-                            $(item).addClass("active");
-                            training_results.children(`.${$(item).data("type")}`).removeClass("hidden");
-                        } else {
-                            $(item).removeClass("active");
-                            training_results.children(`.${$(item).data("type")}`).addClass("hidden");
-                        }
-                    },
-                    get: () => {
-                        return $(item).hasClass("active");
-                    }
-                });
-            });
 
             return this;
 
@@ -76,299 +140,210 @@
 
             if (!this.length) return this;
 
-            let _validate = false,
-                _optimizers = {};
+            let _architecture,
+                _optimizer,
+                _on_training = false,
+                _config = JSON.parse($.base64.atob(window._training_form)),
+                params_block = this.find(".params-config .mCSB_container");
 
-            let _field_optimizer = $("#field_form-optimizer"),
-                _field_learning_rate = $("#field_form-learning_rate"),
-                _field_output_loss = $(".field_form-output_loss"),
-                _params_optimizer_extra = $(".params-optimizer-extra"),
-                _action_training = $(".params-container .actions-form > .training > button"),
-                _action_stop = $(".params-container .actions-form > .stop > button"),
-                _action_reset = $(".params-container .actions-form > .reset > button");
-
-            let _camelize = (text) => {
-                let _capitalize = (word) => {
-                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
+            Object.defineProperty(this, "config", {
+                get: () => {
+                    return _config;
                 }
-                let words = text.split("_"),
-                    result = [_capitalize(words[0])];
-                words.slice(1).forEach((word) => result.push(word))
-                return result.join(" ")
-            }
+            });
 
-            Object.defineProperty(this, "validate", {
+            Object.defineProperty(this, "architecture", {
                 set: (value) => {
-                    _validate = value;
+                    _architecture = value;
+                    params_block.children(".params-architecture").html("");
+                    let method = RenderArchitectureParameters[_architecture];
+                    if (method) method(params_block.children(".params-architecture"));
                 },
                 get: () => {
-                    return _validate;
+                    return _architecture;
                 }
             });
 
             Object.defineProperty(this, "optimizer", {
                 set: (value) => {
-                    let _get_defaults = (params) => {
-                        let output = {}
-                        for (let param in params) {
-                            output[param] = {};
-                            for (let name in params[param]) {
-                                output[param][name] = params[param][name].default;
-                            }
-                        }
-                        return output;
-                    }
-                    let params = _optimizers[value] ? _optimizers[value] : _get_defaults(window.TerraProject.optimizers[value]);
-                    _optimizers[value] = params;
-                    _field_learning_rate.val(
-                        window.TerraProject.training.optimizer.name === value && window.TerraProject.training.optimizer.params.main.learning_rate !== undefined
-                            ? window.TerraProject.training.optimizer.params.main.learning_rate
-                            : params.main.learning_rate
-                    );
-                    _params_optimizer_extra.children(".inner").html("");
-                    if (Object.keys(params.extra).length) {
-                        let _params = $.extend(true, {}, window.TerraProject.optimizers[value].extra);
-                        for (let param in _params) {
-                            _params[param].default = window.TerraProject.training.optimizer.name === value && window.TerraProject.training.optimizer.params.extra[param] !== undefined
-                                ? window.TerraProject.training.optimizer.params.extra[param]
-                                : _optimizers[value].extra[param];
-                            if (!_params[param].label) _params[param].label = _camelize(param);
-                            let widget = window.FormWidget(`optimizer[params][extra][${param}]`, _params[param]);
-                            widget.addClass("field-inline field-reverse");
-                            _params_optimizer_extra.children(".inner").append(widget);
-                        }
-                        _params_optimizer_extra.removeClass("hidden");
-                    } else {
-                        _params_optimizer_extra.addClass("hidden");
-                    }
-                    window.TerraProject.training.optimizer.name = value;
-                    window.TerraProject.training.optimizer.params = _optimizers[value];
+                    _optimizer = value;
+                    render_optimizer_parameters(_config.optimizers[_optimizer]);
+                },
+                get: () => {
+                    return _optimizer;
                 }
             });
 
-            _field_optimizer.selectmenu({
-                change:(event) => {
-                    $(event.target).trigger("change");
+            Object.defineProperty(this, "locked", {
+                set: (value) => {
+                    if (value === false) this.children(".params-config").removeClass("disabled");
+                    else if (value === true) this.children(".params-config").addClass("disabled");
                 }
-            }).bind("change", (event) => {
-                this.optimizer = $(event.currentTarget).val();
-            }).trigger("change");
-
-            _field_output_loss.selectmenu({
-                change:(event) => {
-                    $(event.target).trigger("change");
-                }
-            }).bind("change", (event) => {
-                let item = $(event.currentTarget),
-                    output_name = item.data("output"),
-                    task = event.currentTarget.selectedOptions[0].parentNode.label,
-                    field_metrics = $(`.field_form-${output_name}-output_metrics`),
-                    field_num_classes = $(`.field_form-${output_name}-output_num_classes`),
-                    callbacks = window.TerraProject.callbacks[task] === undefined ? {} : window.TerraProject.callbacks[task],
-                    metrics = [];
-                $(`.field_form-${output_name}-output_task`).val(task);
-                field_metrics.html("");
-                try {
-                    metrics = window.TerraProject.compile[task].metrics;
-                } catch {}
-                if (metrics) {
-                    metrics.forEach((item) => {
-                        let option = $(`<option value="${item}">${item}</option>`),
-                            metrics = [];
-                        try {
-                            metrics = window.TerraProject.training.outputs[output_name].metrics;
-                        } catch {}
-                        if (metrics.indexOf(item) > -1) option.attr("selected", "selected");
-                        field_metrics.append(option);
-                    });
-                    field_metrics.removeAttr("disabled");
-                } else {
-                    field_metrics.attr("disabled", "disabled");
-                }
-                field_metrics.selectmenu("refresh");
-                if (["classification", "segmentation"].indexOf(task) > -1) {
-                    field_num_classes.closest(".field-form").removeClass("hidden");
-                } else {
-                    field_num_classes.closest(".field-form").addClass("hidden");
-                }
-                let inner = $(`.params-callbacks > .callback-${output_name} > .form-inline-label`);
-                inner.html("");
-                for (let name in callbacks) {
-                    let callback = callbacks[name],
-                        value = false;
-                    try {
-                        value = window.TerraProject.training.outputs[output_name].callbacks[name];
-                    } catch {
-                        value = callback.default;
-                    }
-                    let widget = window.FormWidget(`outputs[${output_name}][callbacks][${name}]`, callback);
-                    widget.addClass("field-inline field-reverse");
-                    widget.find("input").addClass(`_callback_${name}`).bind("change", (event) => {
-                        let input = $(event.currentTarget);
-                        if (input.hasClass("_callback_show_best_images") || input.hasClass("_callback_show_worst_images")) {
-                            let best = input.closest(".inner").find("._callback_show_best_images"),
-                                worst = input.closest(".inner").find("._callback_show_worst_images");
-                            if (input.hasClass("_callback_show_best_images")) {
-                                if (best[0].checked) worst[0].checked = false;
-                            } else {
-                                if (worst[0].checked) best[0].checked = false;
-                            }
-                        }
-                    });
-                    inner.append(widget);
-                }
-            }).trigger("change");
-
-            _action_stop.bind("click", (event) => {
-                event.preventDefault();
-                _action_stop.attr("disabled", "disabled");
-                window.ExchangeRequest(
-                    "stop_training",
-                    (success, data) => {
-                        if (success) {
-                            this.validate = false;
-                            _action_training.attr("disabled", "disabled");
-                            _action_stop.attr("disabled", "disabled");
-                            _action_reset.attr("disabled", "disabled");
-                        }
-                    }
-                )
             });
 
-            _action_reset.bind("click", (event) => {
-                event.preventDefault();
-                window.StatusBar.clear();
-                window.ExchangeRequest(
-                    "reset_training",
-                    (success, data) => {
-                        if (success) {
-                            this.validate = false;
-                            training_results.charts = [];
-                            training_results.images = {};
-                            training_results.texts = {};
-                            training_results.scatters = [];
-                            _action_training.text("Обучить");
-                            window.StatusBar.message(window.Messages.get("TRAINING_DISCARDED"), true);
-                        } else {
-                            window.StatusBar.message(data.error, false);
-                        }
+            this.find(".actions-form > *").each((index, item) => {
+                Object.defineProperty(item, "disabled", {
+                    set: (value) => {
+                        if (value === false) $(item).children("button").removeAttr("disabled");
+                        else if (value === true) $(item).children("button").attr("disabled", "disabled");
                     }
-                );
+                });
             });
 
-            this.get_data_response = (success, data) => {
-                _action_training.text(data.data.in_training ? "Возобновить" : "Обучить");
-                if (success) {
-                    if (data.data.errors) {
-                        this.validate = false;
-                        _action_training.removeAttr("disabled");
-                        _action_stop.attr("disabled", "disabled");
-                        _action_reset.removeAttr("disabled");
-                        window.StatusBar.message(data.data.errors, false);
-                        training_params.children(".params-config").removeClass("disabled");
-                    } else {
-                        _action_training.attr("disabled", "disabled");
-                        if (data.data.user_stop_train) _action_stop.attr("disabled", "disabled");
-                        else _action_stop.removeAttr("disabled");
-                        _action_reset.attr("disabled", "disabled");
-                        window.StatusBar.message(data.data.status_string);
-                        window.StatusBar.progress(data.data.progress_status.percents, data.data.progress_status.progress_text);
-                        training_results.charts = data.data.plots;
-                        training_results.images = data.data.images;
-                        training_results.texts = data.data.texts;
-                        training_results.scatters = data.data.scatters;
-                        if (data.stop_flag) {
-                            this.validate = false;
-                            _action_training.removeAttr("disabled");
-                            _action_stop.attr("disabled", "disabled");
-                            _action_reset.removeAttr("disabled");
-                            training_params.children(".params-config").removeClass("disabled");
-                        }
+            Object.defineProperty(this, "ActionState", {
+                set: (value) => {
+                    let training = this.find(".actions-form > .training")[0],
+                        stop = this.find(".actions-form > .stop")[0],
+                        reset = this.find(".actions-form > .reset")[0];
+                    switch (value) {
+                        case ActionStates.idle:
+                            training.disabled = false;
+                            stop.disabled = true;
+                            reset.disabled = true;
+                            this.locked = false;
+                            break;
+                        case ActionStates.locked:
+                            training.disabled = true;
+                            stop.disabled = true;
+                            reset.disabled = true;
+                            this.locked = true;
+                            break;
+                        case ActionStates.training:
+                            training.disabled = true;
+                            stop.disabled = false;
+                            reset.disabled = true;
+                            this.locked = true;
+                            break;
                     }
-                } else {
-                    this.validate = false;
-                    _action_training.removeAttr("disabled");
-                    _action_stop.attr("disabled", "disabled");
-                    _action_reset.removeAttr("disabled");
-                    window.StatusBar.message(data.error, false);
-                    training_params.children(".params-config").removeClass("disabled");
                 }
-            }
+            });
+
+            Object.defineProperty(this, "on_training", {
+                set: (value) => {
+                    if (typeof value !== "boolean") return;
+                    _on_training = value;
+                },
+                get: () => {
+                    return _on_training;
+                }
+            });
 
             this.bind("submit", (event) => {
                 event.preventDefault();
-                if (!this.validate) {
-                    _action_training.attr("disabled", "disabled");
-                    _action_stop.removeAttr("disabled");
-                    _action_reset.attr("disabled", "disabled");
-                    this.validate = true;
-                    window.StatusBar.clear();
-                    let data = $(event.currentTarget).serializeObject();
-                    for (let param_name in window.TerraProject.optimizers[data.optimizer.name].extra) {
-                        let param = window.TerraProject.optimizers[data.optimizer.name].extra[param_name];
-                        if (!data.optimizer.params.extra) data.optimizer.params.extra = {};
-                        switch (param.type) {
-                            case "bool":
-                                data.optimizer.params.extra[param_name] = data.optimizer.params.extra[param_name] !== undefined;
-                                break;
-                        }
-                    }
-                    for (let group in window.TerraProject.optimizers[data.optimizer.name]) {
-                        for (let param in window.TerraProject.optimizers[data.optimizer.name][group]) {
-                            switch (window.TerraProject.optimizers[data.optimizer.name][group][param].type) {
-                                case "int":
-                                    data.optimizer.params[group][param] = parseInt(data.optimizer.params[group][param]);
-                                    break;
-                                case "float":
-                                    data.optimizer.params[group][param] = parseFloat(data.optimizer.params[group][param]);
-                                    break;
-                            }
-                        }
-                    }
-                    for (let output_name in data.outputs) {
-                        data.outputs[output_name].num_classes = $(`.field_form-${output_name}-output_num_classes`).val();
-                        let task = data.outputs[output_name].task,
-                            callbacks = data.outputs[output_name].callbacks;
-                        if (!callbacks) callbacks = {}
-                        for (let name in window.TerraProject.callbacks[task]) {
-                            let value = callbacks[name];
-                            switch (window.TerraProject.callbacks[task][name].type) {
-                                case "bool":
-                                    callbacks[name] = value !== undefined;
-                                    break;
-                            }
-                        }
-                        data.outputs[output_name].callbacks = callbacks;
-                    }
-                    data.checkpoint.save_best = data.checkpoint.save_best !== undefined;
-                    data.checkpoint.save_weights = data.checkpoint.save_weights !== undefined;
-                    window.StatusBar.message(window.Messages.get("VALIDATE_MODEL"));
-                    training_params.children(".params-config").addClass("disabled");
+            });
+
+            this.find(".actions-form > .training > button").bind("click", (event) => {
+                event.preventDefault();
+                if (!this.on_training) {
+                    this.on_training = true;
+                    this.ActionState = ActionStates.locked;
                     window.ExchangeRequest(
                         "before_start_training",
-                        (success, output) => {
+                        (success, data) => {
                             if (success) {
-                                window.TerraProject.logging = output.data.logging;
-                                if (output.data.validated) {
-                                    _action_stop.removeAttr("disabled");
-                                    window.ExchangeRequest("start_training");
-                                    window.ExchangeRequest("get_data", this.get_data_response);
+                                window.TerraProject.logging = data.data.logging;
+                                if (data.data.validated) {
+                                    this.ActionState = ActionStates.training;
+                                    window.ExchangeRequest(
+                                        "start_training",
+                                        (success, data) => {
+                                            if (!success) {
+                                                this.on_training = false;
+                                                this.ActionState = ActionStates.idle;
+                                                window.StatusBar.message(data.error, false);
+                                            }
+                                        }
+                                    );
+                                    // window.ExchangeRequest("get_data", this.get_data_response);
                                 } else {
                                     $.cookie("model_need_validation", true, {path: window.TerraProject.path.modeling});
                                     window.location = window.TerraProject.path.modeling;
                                 }
                             } else {
-                                this.validate = false;
-                                _action_training.removeAttr("disabled");
-                                _action_stop.attr("disabled", "disabled");
-                                training_params.children(".params-config").removeClass("disabled");
-                                window.StatusBar.message(output.error, false);
+                                this.on_training = false;
+                                this.ActionState = ActionStates.idle;
+                                window.StatusBar.message(data.error, false);
                             }
                         },
-                        data
+                        _serialize_training_data()
                     )
                 }
             });
+
+            let _serialize_training_data = () => {
+                let data = this.serializeObject();
+
+                let _basic_serializer = (data) => {
+                    data.architecture.parameters.outputs.forEach((item) => {
+                        if (item.callbacks.show_images !== undefined && !item.callbacks.show_images){
+                            item.callbacks.show_images = undefined;
+                        }
+                    });
+                    return data;
+                }
+
+                switch (this.architecture) {
+                    case "Basic":
+                        data = _basic_serializer(data);
+                        break;
+                }
+
+                return data;
+            }
+
+            let render_optimizer_parameters = (config) => {
+                let template = params_block.children(".params-optimizer-extra");
+                template.children(".inner").html("");
+                for (let name in config) {
+                    let widget = window.FormWidget(`optimizer[parameters][extra][${name}]`, config[name]);
+                    widget.addClass("field-inline field-reverse");
+                    template.children(".inner").append(widget);
+                }
+            }
+
+            this.render = () => {
+                let template = params_block.find(".params-optimizer"),
+                    architecture = window.FormWidget("architecture[type]", this.config.form.architecture),
+                    optimizer = window.FormWidget("optimizer[type]", this.config.form.optimizer),
+                    batch = window.FormWidget("batch", this.config.form.batch),
+                    epochs = window.FormWidget("epochs", this.config.form.epochs),
+                    learning_rate = window.FormWidget("optimizer[parameters][main][learning_rate]", this.config.form.learning_rate),
+                    fields_inline = $(`<div class="field-form form-inline-label"></div>`);
+
+                batch.addClass("field-inline");
+                epochs.addClass("field-inline");
+                learning_rate.addClass("field-inline");
+
+                architecture.find("select").bind("change", (event) => {
+                    this.architecture = event.currentTarget[event.currentTarget.selectedIndex].dataset.name;
+                }).selectmenu({
+                    "change": (event) => {
+                        $(event.target).trigger("change");
+                    }
+                });
+
+                optimizer.find("select").bind("change", (event) => {
+                    this.optimizer = event.currentTarget[event.currentTarget.selectedIndex].dataset.name;
+                }).selectmenu({
+                    "change": (event) => {
+                        $(event.target).trigger("change");
+                    }
+                });
+
+                template.children(".inner").append(
+                    architecture,
+                    optimizer,
+                    fields_inline.append(
+                        batch,
+                        epochs,
+                        learning_rate
+                    )
+                );
+
+                optimizer.find("select").trigger("change");
+                architecture.find("select").trigger("change");
+                this.ActionState = ActionStates.idle;
+            }
 
             return this;
 
@@ -378,272 +353,6 @@
         TrainingResults: function() {
 
             if (!this.length) return this;
-
-            let _camelize = (text) => {
-                let _capitalize = (word) => {
-                    return `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`
-                }
-                let words = text.split("_"),
-                    result = [_capitalize(words[0])];
-                words.slice(1).forEach((word) => result.push(word))
-                return result.join(" ")
-            }
-
-            Object.defineProperty(this, "charts", {
-                get: () => {
-                    return this.children(".charts").children(".content");
-                },
-                set: (charts) => {
-                    if (charts.length) {
-                        let disabled = training_toolbar.btn.charts.disabled;
-                        training_toolbar.btn.charts.disabled = false;
-                        if (disabled) training_toolbar.btn.charts.active = true;
-                    } else {
-                        training_toolbar.btn.charts.disabled = true;
-                    }
-                    this.charts.children(".inner").html(charts.length ? '<div class="wrapper"></div>' : '');
-                    charts.forEach((item) => {
-                        let div = $('<div class="item"><div></div></div>');
-                        this.charts.children(".inner").children(".wrapper").append(div);
-                        Plotly.newPlot(
-                            div.children("div")[0],
-                            item.list,
-                            {
-                                autosize:true,
-                                margin:{
-                                    l:70,
-                                    r:20,
-                                    t:60,
-                                    b:20,
-                                    pad:0,
-                                    autoexpand:true,
-                                },
-                                font:{
-                                    color:"#A7BED3"
-                                },
-                                showlegend:true,
-                                legend:{
-                                    y:-.25,
-                                    itemsizing:"constant",
-                                    orientation:"h",
-                                    font:{
-                                        family:"Open Sans",
-                                        color:"#A7BED3",
-                                    }
-                                },
-                                paper_bgcolor:"transparent",
-                                plot_bgcolor:"transparent",
-                                title:{
-                                    text:item.title,
-                                },
-                                xaxis:{
-                                    title:item.xaxis.title,
-                                    showgrid:true,
-                                    zeroline:false,
-                                    linecolor:"#A7BED3",
-                                    gridcolor:"#0E1621",
-                                    gridwidth:1,
-                                },
-                                yaxis:{
-                                    title:item.yaxis.title,
-                                    showgrid:true,
-                                    zeroline:false,
-                                    linecolor:"#A7BED3",
-                                    gridcolor:"#0E1621",
-                                    gridwidth:1,
-                                },
-                            },
-                            {
-                                responsive:true,
-                                displayModeBar:false,
-                            }
-                        );
-                    });
-                }
-            });
-
-            Object.defineProperty(this, "images", {
-                get: () => {
-                    return this.children(".images").children(".content");
-                },
-                set: (images) => {
-                    if (Object.keys(images).length) {
-                        let disabled = training_toolbar.btn.images.disabled;
-                        training_toolbar.btn.images.disabled = false;
-                        if (disabled) training_toolbar.btn.images.active = true;
-                    } else {
-                        training_toolbar.btn.images.disabled = true;
-                    }
-                    this.images.html("");
-                    for (let name in images) {
-                        let group = images[name],
-                            group_block = $(`<div class="group"><div class="title">${_camelize(group.title)}</div><div class="inner"></div></div>`);
-                        if (group.values && group.values.length) {
-                            group.values.forEach((item) => {
-                                let item_block = $(`<div class="item"><div class="wrapper"><img src="data:image/png;base64,${item.image}" alt="" /></div></div>`);
-                                if (item.title) {
-                                    item_block.children(".wrapper").append($(`<div class="title">${item.title}</div>`));
-                                }
-                                if (item.info && item.info.length) {
-                                    let info_block = $('<div class="info"></div>');
-                                    item.info.forEach((info) => {
-                                        if (info.value) {
-                                            info_block.append($(`<div class="param"><label>${info.label}: </label><span>${info.value}</span></div>`));
-                                        }
-                                    });
-                                    item_block.children(".wrapper").append(info_block);
-                                }
-                                group_block.children(".inner").append(item_block);
-                            });
-                            this.images.append(group_block);
-                        }
-                    }
-                }
-            });
-
-            Object.defineProperty(this, "texts", {
-                get: () => {
-                    return this.children(".texts").children(".content");
-                },
-                set: (texts) => {
-                    if (Object.keys(texts).length && (texts.summary || texts.epochs.length)) {
-                        let disabled = training_toolbar.btn.texts.disabled;
-                        training_toolbar.btn.texts.disabled = false;
-                        if (disabled) training_toolbar.btn.texts.active = true;
-                    } else {
-                        training_toolbar.btn.texts.disabled = true;
-                    }
-                    this.texts.html('<div class="inner"></div>');
-                    let format_epoch_value = (value) => {
-                        let num_digits = 3,
-                            factor = 1;
-                        for (let i=0; i<num_digits; i++) factor *= 10;
-                        value = `${Math.round(value*factor)/factor}`;
-                        let split_value = value.split(".");
-                        if (split_value.length === 2) {
-                            split_value[0] = `<span>${split_value[0]}</span>`;
-                            for (let i=0; i<(num_digits - split_value[1].length); i++) split_value[1] += "0";
-                            value = split_value.join("<i>.</i>");
-                        }
-                        return value;
-                    }
-                    if (Object.keys(texts).length) {
-                        if (texts.epochs.length) {
-                            let epochs_block = $('<div class="epochs"><table><thead><tr class="outputs_heads"><th rowspan="2">Эпоха</th><th rowspan="2">Время<br />(сек.)</th></tr><tr class="callbacks_heads"></tr></thead><tbody></tbody></div>'),
-                                outputs_cols = {},
-                                outputs_list = [];
-                            this.texts.children(".inner").append(epochs_block);
-                            texts.epochs.forEach((epoch) => {
-                                for (let output_name in epoch.data) {
-                                    if (!outputs_cols[output_name]) outputs_cols[output_name] = [];
-                                    outputs_cols[output_name] = $.merge(outputs_cols[output_name], Object.keys(epoch.data[output_name])).filter((item, i, items) => {
-                                        return i === items.indexOf(item);
-                                    });
-                                }
-                            });
-                            for (let output_name in outputs_cols) {
-                                let callbacks_cols = outputs_cols[output_name];
-                                outputs_list.push(output_name);
-                                epochs_block.find(".outputs_heads").append($(`<th colspan="${callbacks_cols.length}">${output_name}</th>`));
-                                callbacks_cols.forEach((callback_name) => {
-                                    epochs_block.find(".callbacks_heads").append($(`<th>${callback_name}</th>`));
-                                });
-                            }
-                            texts.epochs.forEach((epoch) => {
-                                let tr = $(`<tr><td class="epoch_num">${epoch.number}</td><td>${epoch.time}</td></tr>`);
-                                outputs_list.forEach((output_name) => {
-                                    outputs_cols[output_name].forEach((callback_name) => {
-                                        let td = $(`<td class="value"><code></code></td>`);
-                                        try {
-                                            td.html(format_epoch_value(epoch.data[output_name][callback_name]));
-                                        } catch (e) {}
-                                        tr.append(td);
-                                    });
-                                });
-                                epochs_block.find("tbody").append(tr);
-                            });
-                            if (texts.summary) {
-                                let tfoot_colspan = 2;
-                                for (let _ in outputs_cols) {
-                                    tfoot_colspan += outputs_cols[_].length;
-                                }
-                                epochs_block.find("tbody").after($(`<tfoot><tr><th colspan="${tfoot_colspan}">${texts.summary}</th></tr></tfoot>`));
-                            }
-                        }
-                    }
-                }
-            });
-
-            Object.defineProperty(this, "scatters", {
-                get: () => {
-                    return this.children(".scatters").children(".content");
-                },
-                set: (scatters) => {
-                    if (scatters.length) {
-                        let disabled = training_toolbar.btn.scatters.disabled;
-                        training_toolbar.btn.scatters.disabled = false;
-                        if (disabled) training_toolbar.btn.scatters.active = true;
-                    } else {
-                        training_toolbar.btn.scatters.disabled = true;
-                    }
-                    this.scatters.children(".inner").html(scatters.length ? '<div class="wrapper"></div>' : '');
-                    scatters.forEach((item) => {
-                        let div = $('<div class="item"><div></div></div>');
-                        this.scatters.children(".inner").children(".wrapper").append(div);
-                        Plotly.newPlot(
-                            div.children("div")[0],
-                            item.list,
-                            {
-                                autosize:true,
-                                margin:{
-                                    l:70,
-                                    r:20,
-                                    t:60,
-                                    b:20,
-                                    pad:0,
-                                    autoexpand:true,
-                                },
-                                font:{
-                                    color:"#A7BED3"
-                                },
-                                showlegend:true,
-                                legend:{
-                                    y:-.25,
-                                    itemsizing:"constant",
-                                    orientation:"h",
-                                    font:{
-                                        family:"Open Sans",
-                                        color:"#A7BED3",
-                                    }
-                                },
-                                paper_bgcolor:"transparent",
-                                plot_bgcolor:"transparent",
-                                title:item.title,
-                                xaxis:{
-                                    title:item.xaxis.title,
-                                    showgrid:true,
-                                    zeroline:false,
-                                    linecolor:"#A7BED3",
-                                    gridcolor:"#0E1621",
-                                    gridwidth:1,
-                                },
-                                yaxis:{
-                                    title:item.yaxis.title,
-                                    showgrid:true,
-                                    zeroline:false,
-                                    linecolor:"#A7BED3",
-                                    gridcolor:"#0E1621",
-                                    gridwidth:1,
-                                },
-                            },
-                            {
-                                responsive:true,
-                                displayModeBar:false,
-                            }
-                        );
-                    });
-                }
-            });
 
             return this;
 
@@ -688,8 +397,15 @@
         training_toolbar = $(".project-training-toolbar > .wrapper").TrainingToolbar();
         training_params = $(".project-training-properties > .wrapper > .params > .params-container").TrainingParams();
         training_results = $(".graphics > .wrapper > .tabs-content > .inner > .tabs-item .tab-container").TrainingResults();
+        training_params.render();
 
         window.ExchangeRequest("get_data", training_params.get_data_response);
+
+        $(window).bind("keyup", (event) => {
+            if (event.keyCode === 70) {
+                console.log($("form.params-container").serializeObject());
+            }
+        })
 
     });
 

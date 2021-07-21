@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from django.conf import settings
 from django.urls import reverse_lazy
 
+from terra_ai.data.training.train import TrainData
+
 from . import utils as terra_utils
 
 
@@ -111,22 +113,21 @@ class LayerType(str, Enum):
     Cropping2D = "Cropping2D"
     VGG16 = "VGG16"
     CustomUNETBlock = "CustomUNETBlock"
-    VAEBlock = 'VAEBlock'
+    VAEBlock = "VAEBlock"
     Conv2DBNDrop = "Conv2DBNDrop"
-    Conv2DBNLeaky = 'Conv2DBNLeaky'
-    CustomResBlock = 'CustomResBlock'
-    Resnet50Block = 'Resnet50Block'
-    PSPBlock = 'PSPBlock'
-    UNETBlock = 'UNETBlock'
-    XceptionBlock = 'XceptionBlock'
-    InceptionV3block = 'InceptionV3block'
+    Conv2DBNLeaky = "Conv2DBNLeaky"
+    CustomResBlock = "CustomResBlock"
+    Resnet50Block = "Resnet50Block"
+    PSPBlock = "PSPBlock"
+    UNETBlock = "UNETBlock"
+    XceptionBlock = "XceptionBlock"
+    InceptionV3block = "InceptionV3block"
     InceptionV3 = "InceptionV3"
     ResNet50 = "ResNet50"
     Xception = "Xception"
     Attention = "Attention"
     YOLOResBlock = "YOLOResBlock"
     YOLOConvBlock = "YOLOConvBlock"
-
 
 
 class OptimizerParams(pydantic.BaseModel):
@@ -389,7 +390,7 @@ class TerraExchangeProject(pydantic.BaseModel):
     optimizers: Dict[str, OptimizerParams] = {}
     callbacks: dict = {}
     compile: dict = {}
-    training: TrainConfig = TrainConfig()
+    training: TrainData = TrainData()
     in_training: bool = False
     path: dict = {
         "datasets": reverse_lazy("apps_project:datasets"),

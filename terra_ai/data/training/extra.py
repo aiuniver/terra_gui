@@ -9,7 +9,7 @@ from ..mixins import BaseMixinData, UniqueListMixin
 
 
 class ArchitectureChoice(str, Enum):
-    Basic = "Базовая"
+    Basic = "Basic"
     Yolo = "Yolo"
 
 

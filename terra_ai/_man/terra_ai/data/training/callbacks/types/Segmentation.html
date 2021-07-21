@@ -26,7 +26,9 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">from ....mixins import BaseMixinData
+<pre><code class="python">from typing import Optional
+
+from ....mixins import BaseMixinData
 from ..extra import ShowImagesChoice
 
 
@@ -37,7 +39,7 @@ class ParametersData(BaseMixinData):
     plot_loss_for_classes: bool = True
     plot_metric_for_classes: bool = True
     plot_final: bool = True
-    show_images: ShowImagesChoice = ShowImagesChoice.Best</code></pre>
+    show_images: Optional[ShowImagesChoice] = ShowImagesChoice.Best</code></pre>
 </details>
 </section>
 <section>
@@ -68,7 +70,7 @@ class ParametersData(BaseMixinData):
     plot_loss_for_classes: bool = True
     plot_metric_for_classes: bool = True
     plot_final: bool = True
-    show_images: ShowImagesChoice = ShowImagesChoice.Best</code></pre>
+    show_images: Optional[ShowImagesChoice] = ShowImagesChoice.Best</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -106,7 +108,7 @@ class ParametersData(BaseMixinData):
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.training.callbacks.types.Segmentation.ParametersData.show_images"><code class="name">var <span class="ident">show_images</span> : <a title="terra_ai.data.training.callbacks.extra.ShowImagesChoice" href="../extra.html#terra_ai.data.training.callbacks.extra.ShowImagesChoice">ShowImagesChoice</a></code></dt>
+<dt id="terra_ai.data.training.callbacks.types.Segmentation.ParametersData.show_images"><code class="name">var <span class="ident">show_images</span> : Union[<a title="terra_ai.data.training.callbacks.extra.ShowImagesChoice" href="../extra.html#terra_ai.data.training.callbacks.extra.ShowImagesChoice">ShowImagesChoice</a>, NoneType]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

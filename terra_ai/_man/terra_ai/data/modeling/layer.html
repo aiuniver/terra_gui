@@ -43,6 +43,7 @@ from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
 from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
+from .types import ReferenceLayerType
 
 
 class LayerShapeData(BaseMixinData):
@@ -93,6 +94,8 @@ class LayerData(AliasMixinData):
     &#34;Расположение слоя в сетке модели&#34;
     parameters: Any
     &#34;Параметры слоя&#34;
+    reference: Optional[ReferenceLayerType]
+    &#34;Ссылка на блок, описанный в модели в поле `references`&#34;
 
     @property
     def parameters_dict(self) -&gt; dict:
@@ -242,6 +245,8 @@ class LayersList(UniqueListMixin):
     &#34;Расположение слоя в сетке модели&#34;
     parameters: Any
     &#34;Параметры слоя&#34;
+    reference: Optional[ReferenceLayerType]
+    &#34;Ссылка на блок, описанный в модели в поле `references`&#34;
 
     @property
     def parameters_dict(self) -&gt; dict:
@@ -310,6 +315,10 @@ class LayersList(UniqueListMixin):
 <dt id="terra_ai.data.modeling.layer.LayerData.position"><code class="name">var <span class="ident">position</span> : Union[Tuple[int, ...], NoneType]</code></dt>
 <dd>
 <div class="desc"><p>Расположение слоя в сетке модели</p></div>
+</dd>
+<dt id="terra_ai.data.modeling.layer.LayerData.reference"><code class="name">var <span class="ident">reference</span> : Union[<a title="terra_ai.data.modeling.types.ReferenceLayerType" href="types.html#terra_ai.data.modeling.types.ReferenceLayerType">ReferenceLayerType</a>, NoneType]</code></dt>
+<dd>
+<div class="desc"><p>Ссылка на блок, описанный в модели в поле <code>references</code></p></div>
 </dd>
 <dt id="terra_ai.data.modeling.layer.LayerData.shape"><code class="name">var <span class="ident">shape</span> : <a title="terra_ai.data.modeling.layer.LayerShapeData" href="#terra_ai.data.modeling.layer.LayerShapeData">LayerShapeData</a></code></dt>
 <dd>
@@ -476,6 +485,7 @@ def parameters_dict(self) -&gt; dict:
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.parameters" href="#terra_ai.data.modeling.layer.LayerData.parameters">parameters</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.parameters_dict" href="#terra_ai.data.modeling.layer.LayerData.parameters_dict">parameters_dict</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.position" href="#terra_ai.data.modeling.layer.LayerData.position">position</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layer.LayerData.reference" href="#terra_ai.data.modeling.layer.LayerData.reference">reference</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.shape" href="#terra_ai.data.modeling.layer.LayerData.shape">shape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layer.LayerData.type" href="#terra_ai.data.modeling.layer.LayerData.type">type</a></code></li>
 </ul>

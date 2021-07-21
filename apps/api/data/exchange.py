@@ -130,10 +130,7 @@ class ExchangeData:
         return terra_exchange.call("get_keras_code")
 
     def _execute_before_start_training(self, **kwargs):
-        serializer = serializers.BeforeStartTrainingSerializer(data=kwargs)
-        if not serializer.is_valid():
-            return self._response_error(str(serializer.errors))
-        return terra_exchange.call("before_start_training", **serializer.validated_data)
+        return terra_exchange.call("before_start_training", **kwargs)
 
     def _execute_start_training(self):
         return terra_exchange.call("start_training")

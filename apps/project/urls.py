@@ -10,4 +10,9 @@ urlpatterns = [
     path("datasets/", project_views.DatasetsView.as_view(), name="datasets"),
     path("modeling/", project_views.ModelingView.as_view(), name="modeling"),
     path("training/", project_views.TrainingView.as_view(), name="training"),
+    path(
+        "training/form.js",
+        project_views.TrainingFormJSView.as_view(),
+        name="training_form_js",
+    ),
 ]

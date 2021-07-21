@@ -30,14 +30,15 @@
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from tensorflow.keras import utils
+from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from time import time
 from PIL import Image
-from librosa import load as librosaload
-import librosa.feature as librosafeature
+from librosa import load as librosa_load
+import librosa.feature as librosa_feature
 import os
 import random
 import matplotlib.pyplot as plt
@@ -68,7 +69,7 @@ class DTS(object):
     def __init__(self, f_folder=&#39;&#39;, path=mkdtemp(), trds_path=&#39;/content/drive/MyDrive/TerraAI/datasets&#39;,
                  exch_obj=tr2dj_obj):
 
-        self.version = 0.341
+        self.version = 0.342
         self.Exch = exch_obj
         self.django_flag = False
         if self.Exch.property_of != &#39;TERRA&#39;:
@@ -104,6 +105,7 @@ class DTS(object):
         self.word2vec: dict = {}
         self.df: dict = {}
         self.tsgenerator: dict = {}
+        self.tf_dataset: dict = {}
 
         self.y_cls: np.ndarray = np.array([])
         self.peg: list = []
@@ -168,7 +170,8 @@ class DTS(object):
                              &#39;timeseries&#39;: {&#39;length&#39;: 1,
                                             &#39;y_cols&#39;: &#39;&#39;,
                                             &#39;scaler&#39;: [&#39;No Scaler&#39;, &#39;StandardScaler&#39;, &#39;MinMaxScaler&#39;],
-                                            &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]}
+                                            &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]},
+                             &#39;object_detection&#39;: {}
                              }
 
         return method_parameters[name]
@@ -177,7 +180,8 @@ class DTS(object):
 
         parameters = {}
         list_of_params = [&#39;images&#39;, &#39;text&#39;, &#39;audio&#39;, &#39;dataframe&#39;] + [&#39;classification&#39;, &#39;segmentation&#39;,
-                                                                     &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;]
+                                                                     &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;,
+                                                                     &#39;object_detection&#39;]
 
         for elem in list_of_params:
             temp = {}
@@ -540,7 +544,10 @@ class DTS(object):
                 elif &#39;output&#39; in arr:
                     self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, &#39;arrays&#39;, arr))
                     self.output_shape[arr[:-3]] = self.Y[arr[:-3]][&#39;data&#39;][0].shape[1:]
-                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
+                    if &#39;object_detection&#39; in self.tags.values():
+                        self.output_datatype[arr[:-3]] = &#39;2D&#39;
+                    else:
+                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
             self.input_datatype = &#39; &#39;.join(inp_datatype)
 
             pass
@@ -609,6 +616,48 @@ class DTS(object):
 
             pass
 
+        def get_train_generator():
+
+            x_train = {}
+            for x_key in self.X.keys():
+                x_train[x_key] = self.X[x_key][&#39;data&#39;][0]
+
+            y_train = {}
+            for y_key in self.Y.keys():
+                y_train[y_key] = self.Y[y_key][&#39;data&#39;][0]
+
+            train_generator = Dataset.from_tensor_slices((x_train, y_train))
+
+            return train_generator
+
+        def get_validation_generator():
+
+            x_val = {}
+            for x_key in self.X.keys():
+                x_val[x_key] = self.X[x_key][&#39;data&#39;][1]
+
+            y_val = {}
+            for y_key in self.Y.keys():
+                y_val[y_key] = self.Y[y_key][&#39;data&#39;][1]
+
+            val_generator = Dataset.from_tensor_slices((x_val, y_val))
+
+            return val_generator
+
+        def get_test_generator():
+
+            x_test = {}
+            for x_key in self.X.keys():
+                x_test[x_key] = self.X[x_key][&#39;data&#39;][2]
+
+            y_test = {}
+            for y_key in self.Y.keys():
+                y_test[y_key] = self.Y[y_key][&#39;data&#39;][2]
+
+            test_generator = Dataset.from_tensor_slices((x_test, y_test))
+
+            return test_generator
+
         if options[&#39;dataset_name&#39;] in [&#39;mnist&#39;, &#39;fashion_mnist&#39;, &#39;cifar10&#39;, &#39;cifar100&#39;, &#39;imdb&#39;, &#39;boston_housing&#39;,
                                        &#39;reuters&#39;] and options[&#39;source&#39;] != &#39;custom_dataset&#39;:
 
@@ -646,6 +695,10 @@ class DTS(object):
             load_tokenizer()
             load_word2vec()
             load_tsgenerator()
+
+        self.tf_dataset[&#39;train&#39;] = get_train_generator()
+        self.tf_dataset[&#39;val&#39;] = get_validation_generator()
+        self.tf_dataset[&#39;test&#39;] = get_test_generator()
 
         # temp_attributes = [&#39;df&#39;, &#39;peg&#39;, &#39;user_parameters&#39;]
         # for item in temp_attributes:
@@ -1344,11 +1397,11 @@ class DTS(object):
             array: np.ndarray = np.array([])
 
             if feature in [&#39;chroma_stft&#39;, &#39;mfcc&#39;, &#39;spectral_centroid&#39;, &#39;spectral_bandwidth&#39;, &#39;spectral_rolloff&#39;]:
-                array = getattr(librosafeature, feature)(y=section, sr=sr)
+                array = getattr(librosa_feature, feature)(y=section, sr=sr)
             elif feature == &#39;rms&#39;:
-                array = getattr(librosafeature, feature)(y=section)[0]
+                array = getattr(librosa_feature, feature)(y=section)[0]
             elif feature == &#39;zero_crossing_rate&#39;:
-                array = getattr(librosafeature, feature)(y=section)
+                array = getattr(librosa_feature, feature)(y=section)
 
             return array
 
@@ -1415,7 +1468,7 @@ class DTS(object):
                 idx = 0
                 peg_idx = 0
                 for file in progress_bar:
-                    y, sample_rate = librosaload(file)
+                    y, sample_rate = librosa_load(file)
                     while len(y) &gt;= length:
                         sect = y[:length]
                         sect = np.array(sect)
@@ -1683,6 +1736,8 @@ class DTS(object):
         num_classes = int(data[&#39;classes&#39;])
         self.num_classes[f&#39;output_{self.iter}&#39;] = num_classes
         self.task_type[f&#39;output_{self.iter}&#39;] = &#39;object_detection&#39;
+        self.task_type[f&#39;output_{self.iter+1}&#39;] = &#39;object_detection&#39;
+        self.task_type[f&#39;output_{self.iter+2}&#39;] = &#39;object_detection&#39;
 
         # obj.names
         with open(os.path.join(self.file_folder, data[&#34;names&#34;].split(&#34;/&#34;)[-1]), &#39;r&#39;) as dt:
@@ -1899,7 +1954,7 @@ class DTS(object):
 <dl>
 <dt id="terra_ai.trds.DTS"><code class="flex name class">
 <span>class <span class="ident">DTS</span></span>
-<span>(</span><span>f_folder='', path='/tmp/tmpubm9ijnr', trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=&lt;terra_ai.guiexchange.Exchange object&gt;)</span>
+<span>(</span><span>f_folder='', path='/tmp/tmps0_7xv8a', trds_path='/content/drive/MyDrive/TerraAI/datasets', exch_obj=&lt;terra_ai.guiexchange.Exchange object&gt;)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1912,7 +1967,7 @@ class DTS(object):
     def __init__(self, f_folder=&#39;&#39;, path=mkdtemp(), trds_path=&#39;/content/drive/MyDrive/TerraAI/datasets&#39;,
                  exch_obj=tr2dj_obj):
 
-        self.version = 0.341
+        self.version = 0.342
         self.Exch = exch_obj
         self.django_flag = False
         if self.Exch.property_of != &#39;TERRA&#39;:
@@ -1948,6 +2003,7 @@ class DTS(object):
         self.word2vec: dict = {}
         self.df: dict = {}
         self.tsgenerator: dict = {}
+        self.tf_dataset: dict = {}
 
         self.y_cls: np.ndarray = np.array([])
         self.peg: list = []
@@ -2012,7 +2068,8 @@ class DTS(object):
                              &#39;timeseries&#39;: {&#39;length&#39;: 1,
                                             &#39;y_cols&#39;: &#39;&#39;,
                                             &#39;scaler&#39;: [&#39;No Scaler&#39;, &#39;StandardScaler&#39;, &#39;MinMaxScaler&#39;],
-                                            &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]}
+                                            &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]},
+                             &#39;object_detection&#39;: {}
                              }
 
         return method_parameters[name]
@@ -2021,7 +2078,8 @@ class DTS(object):
 
         parameters = {}
         list_of_params = [&#39;images&#39;, &#39;text&#39;, &#39;audio&#39;, &#39;dataframe&#39;] + [&#39;classification&#39;, &#39;segmentation&#39;,
-                                                                     &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;]
+                                                                     &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;,
+                                                                     &#39;object_detection&#39;]
 
         for elem in list_of_params:
             temp = {}
@@ -2384,7 +2442,10 @@ class DTS(object):
                 elif &#39;output&#39; in arr:
                     self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, &#39;arrays&#39;, arr))
                     self.output_shape[arr[:-3]] = self.Y[arr[:-3]][&#39;data&#39;][0].shape[1:]
-                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
+                    if &#39;object_detection&#39; in self.tags.values():
+                        self.output_datatype[arr[:-3]] = &#39;2D&#39;
+                    else:
+                        self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
             self.input_datatype = &#39; &#39;.join(inp_datatype)
 
             pass
@@ -2453,6 +2514,48 @@ class DTS(object):
 
             pass
 
+        def get_train_generator():
+
+            x_train = {}
+            for x_key in self.X.keys():
+                x_train[x_key] = self.X[x_key][&#39;data&#39;][0]
+
+            y_train = {}
+            for y_key in self.Y.keys():
+                y_train[y_key] = self.Y[y_key][&#39;data&#39;][0]
+
+            train_generator = Dataset.from_tensor_slices((x_train, y_train))
+
+            return train_generator
+
+        def get_validation_generator():
+
+            x_val = {}
+            for x_key in self.X.keys():
+                x_val[x_key] = self.X[x_key][&#39;data&#39;][1]
+
+            y_val = {}
+            for y_key in self.Y.keys():
+                y_val[y_key] = self.Y[y_key][&#39;data&#39;][1]
+
+            val_generator = Dataset.from_tensor_slices((x_val, y_val))
+
+            return val_generator
+
+        def get_test_generator():
+
+            x_test = {}
+            for x_key in self.X.keys():
+                x_test[x_key] = self.X[x_key][&#39;data&#39;][2]
+
+            y_test = {}
+            for y_key in self.Y.keys():
+                y_test[y_key] = self.Y[y_key][&#39;data&#39;][2]
+
+            test_generator = Dataset.from_tensor_slices((x_test, y_test))
+
+            return test_generator
+
         if options[&#39;dataset_name&#39;] in [&#39;mnist&#39;, &#39;fashion_mnist&#39;, &#39;cifar10&#39;, &#39;cifar100&#39;, &#39;imdb&#39;, &#39;boston_housing&#39;,
                                        &#39;reuters&#39;] and options[&#39;source&#39;] != &#39;custom_dataset&#39;:
 
@@ -2490,6 +2593,10 @@ class DTS(object):
             load_tokenizer()
             load_word2vec()
             load_tsgenerator()
+
+        self.tf_dataset[&#39;train&#39;] = get_train_generator()
+        self.tf_dataset[&#39;val&#39;] = get_validation_generator()
+        self.tf_dataset[&#39;test&#39;] = get_test_generator()
 
         # temp_attributes = [&#39;df&#39;, &#39;peg&#39;, &#39;user_parameters&#39;]
         # for item in temp_attributes:
@@ -3188,11 +3295,11 @@ class DTS(object):
             array: np.ndarray = np.array([])
 
             if feature in [&#39;chroma_stft&#39;, &#39;mfcc&#39;, &#39;spectral_centroid&#39;, &#39;spectral_bandwidth&#39;, &#39;spectral_rolloff&#39;]:
-                array = getattr(librosafeature, feature)(y=section, sr=sr)
+                array = getattr(librosa_feature, feature)(y=section, sr=sr)
             elif feature == &#39;rms&#39;:
-                array = getattr(librosafeature, feature)(y=section)[0]
+                array = getattr(librosa_feature, feature)(y=section)[0]
             elif feature == &#39;zero_crossing_rate&#39;:
-                array = getattr(librosafeature, feature)(y=section)
+                array = getattr(librosa_feature, feature)(y=section)
 
             return array
 
@@ -3259,7 +3366,7 @@ class DTS(object):
                 idx = 0
                 peg_idx = 0
                 for file in progress_bar:
-                    y, sample_rate = librosaload(file)
+                    y, sample_rate = librosa_load(file)
                     while len(y) &gt;= length:
                         sect = y[:length]
                         sect = np.array(sect)
@@ -3527,6 +3634,8 @@ class DTS(object):
         num_classes = int(data[&#39;classes&#39;])
         self.num_classes[f&#39;output_{self.iter}&#39;] = num_classes
         self.task_type[f&#39;output_{self.iter}&#39;] = &#39;object_detection&#39;
+        self.task_type[f&#39;output_{self.iter+1}&#39;] = &#39;object_detection&#39;
+        self.task_type[f&#39;output_{self.iter+2}&#39;] = &#39;object_detection&#39;
 
         # obj.names
         with open(os.path.join(self.file_folder, data[&#34;names&#34;].split(&#34;/&#34;)[-1]), &#39;r&#39;) as dt:
@@ -3798,7 +3907,8 @@ def get_method_parameters(name: str) -&gt; dict:
                          &#39;timeseries&#39;: {&#39;length&#39;: 1,
                                         &#39;y_cols&#39;: &#39;&#39;,
                                         &#39;scaler&#39;: [&#39;No Scaler&#39;, &#39;StandardScaler&#39;, &#39;MinMaxScaler&#39;],
-                                        &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]}
+                                        &#39;task_type&#39;: [&#39;timeseries&#39;, &#39;regression&#39;]},
+                         &#39;object_detection&#39;: {}
                          }
 
     return method_parameters[name]</code></pre>
@@ -3823,11 +3933,11 @@ def get_method_parameters(name: str) -&gt; dict:
         array: np.ndarray = np.array([])
 
         if feature in [&#39;chroma_stft&#39;, &#39;mfcc&#39;, &#39;spectral_centroid&#39;, &#39;spectral_bandwidth&#39;, &#39;spectral_rolloff&#39;]:
-            array = getattr(librosafeature, feature)(y=section, sr=sr)
+            array = getattr(librosa_feature, feature)(y=section, sr=sr)
         elif feature == &#39;rms&#39;:
-            array = getattr(librosafeature, feature)(y=section)[0]
+            array = getattr(librosa_feature, feature)(y=section)[0]
         elif feature == &#39;zero_crossing_rate&#39;:
-            array = getattr(librosafeature, feature)(y=section)
+            array = getattr(librosa_feature, feature)(y=section)
 
         return array
 
@@ -3894,7 +4004,7 @@ def get_method_parameters(name: str) -&gt; dict:
             idx = 0
             peg_idx = 0
             for file in progress_bar:
-                y, sample_rate = librosaload(file)
+                y, sample_rate = librosa_load(file)
                 while len(y) &gt;= length:
                     sect = y[:length]
                     sect = np.array(sect)
@@ -4069,7 +4179,8 @@ def get_method_parameters(name: str) -&gt; dict:
 
     parameters = {}
     list_of_params = [&#39;images&#39;, &#39;text&#39;, &#39;audio&#39;, &#39;dataframe&#39;] + [&#39;classification&#39;, &#39;segmentation&#39;,
-                                                                 &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;]
+                                                                 &#39;text_segmentation&#39;, &#39;regression&#39;, &#39;timeseries&#39;,
+                                                                 &#39;object_detection&#39;]
 
     for elem in list_of_params:
         temp = {}
@@ -4664,6 +4775,8 @@ If base is on the standard base list also print detailed information about speci
     num_classes = int(data[&#39;classes&#39;])
     self.num_classes[f&#39;output_{self.iter}&#39;] = num_classes
     self.task_type[f&#39;output_{self.iter}&#39;] = &#39;object_detection&#39;
+    self.task_type[f&#39;output_{self.iter+1}&#39;] = &#39;object_detection&#39;
+    self.task_type[f&#39;output_{self.iter+2}&#39;] = &#39;object_detection&#39;
 
     # obj.names
     with open(os.path.join(self.file_folder, data[&#34;names&#34;].split(&#34;/&#34;)[-1]), &#39;r&#39;) as dt:
@@ -4733,7 +4846,10 @@ If base is on the standard base list also print detailed information about speci
             elif &#39;output&#39; in arr:
                 self.Y[arr[:-3]] = joblib.load(os.path.join(self.file_folder, &#39;arrays&#39;, arr))
                 self.output_shape[arr[:-3]] = self.Y[arr[:-3]][&#39;data&#39;][0].shape[1:]
-                self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
+                if &#39;object_detection&#39; in self.tags.values():
+                    self.output_datatype[arr[:-3]] = &#39;2D&#39;
+                else:
+                    self.output_datatype[arr[:-3]] = self._set_datatype(shape=self.Y[arr[:-3]][&#39;data&#39;][0].shape)
         self.input_datatype = &#39; &#39;.join(inp_datatype)
 
         pass
@@ -4802,6 +4918,48 @@ If base is on the standard base list also print detailed information about speci
 
         pass
 
+    def get_train_generator():
+
+        x_train = {}
+        for x_key in self.X.keys():
+            x_train[x_key] = self.X[x_key][&#39;data&#39;][0]
+
+        y_train = {}
+        for y_key in self.Y.keys():
+            y_train[y_key] = self.Y[y_key][&#39;data&#39;][0]
+
+        train_generator = Dataset.from_tensor_slices((x_train, y_train))
+
+        return train_generator
+
+    def get_validation_generator():
+
+        x_val = {}
+        for x_key in self.X.keys():
+            x_val[x_key] = self.X[x_key][&#39;data&#39;][1]
+
+        y_val = {}
+        for y_key in self.Y.keys():
+            y_val[y_key] = self.Y[y_key][&#39;data&#39;][1]
+
+        val_generator = Dataset.from_tensor_slices((x_val, y_val))
+
+        return val_generator
+
+    def get_test_generator():
+
+        x_test = {}
+        for x_key in self.X.keys():
+            x_test[x_key] = self.X[x_key][&#39;data&#39;][2]
+
+        y_test = {}
+        for y_key in self.Y.keys():
+            y_test[y_key] = self.Y[y_key][&#39;data&#39;][2]
+
+        test_generator = Dataset.from_tensor_slices((x_test, y_test))
+
+        return test_generator
+
     if options[&#39;dataset_name&#39;] in [&#39;mnist&#39;, &#39;fashion_mnist&#39;, &#39;cifar10&#39;, &#39;cifar100&#39;, &#39;imdb&#39;, &#39;boston_housing&#39;,
                                    &#39;reuters&#39;] and options[&#39;source&#39;] != &#39;custom_dataset&#39;:
 
@@ -4839,6 +4997,10 @@ If base is on the standard base list also print detailed information about speci
         load_tokenizer()
         load_word2vec()
         load_tsgenerator()
+
+    self.tf_dataset[&#39;train&#39;] = get_train_generator()
+    self.tf_dataset[&#39;val&#39;] = get_validation_generator()
+    self.tf_dataset[&#39;test&#39;] = get_test_generator()
 
     # temp_attributes = [&#39;df&#39;, &#39;peg&#39;, &#39;user_parameters&#39;]
     # for item in temp_attributes:
