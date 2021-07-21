@@ -19,6 +19,51 @@ class ModelLoadData(BaseMixinData):
     "Пусть к фалу модели"
 
 
+class BlockDetailsData(BaseMixinData):
+    """
+    Детальная информация о блоке
+    """
+
+    type: Optional[str]
+    "Тип модели: `2D`"
+    name: Optional[AliasType]
+    "Название модели: `rasposnavanie_avtomobiley`"
+    input_shape: Optional[str]
+    "Размерность входных слоев: `[32,32,3], [128,128,3]`"
+    image: Optional[Base64Type]
+    "Изображение схемы модели в `base64`"
+    layers: Optional[LayersList]
+    "Список слоев"
+
+
+class BlockData(AliasMixinData):
+    """
+    Информация о блоке
+    """
+
+    name: str
+    "Название"
+    file_path: Optional[confilepath(ext="block")]
+    "Путь к файлу блока"
+    details: Optional[BlockDetailsData]
+    "Детальная информация о блоке"
+
+
+class BlocksList(UniqueListMixin):
+    """
+    Список блоков, основанных на `BlockData`
+    ```
+    class Meta:
+        source = BlockData
+        identifier = "name"
+    ```
+    """
+
+    class Meta:
+        source = BlockData
+        identifier = "name"
+
+
 class ModelDetailsData(BaseMixinData):
     """
     Детальная информация о модели
@@ -34,6 +79,8 @@ class ModelDetailsData(BaseMixinData):
     "Изображение схемы модели в `base64`"
     layers: Optional[LayersList]
     "Список слоев"
+    references: BlocksList = BlocksList()
+    "Списки блоков, используемых в модели"
 
 
 class ModelData(AliasMixinData):
@@ -43,7 +90,7 @@ class ModelData(AliasMixinData):
 
     name: str
     "Название"
-    file_path: confilepath(ext="model")
+    file_path: Optional[confilepath(ext="model")]
     "Путь к файлу модели"
     details: Optional[ModelDetailsData]
     "Детальная информация о модели"

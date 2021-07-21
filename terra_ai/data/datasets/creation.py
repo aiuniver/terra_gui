@@ -181,13 +181,13 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
-    value: Union[confilepath(ext="zip"), HttpUrl]
+    value: Union[confilepath(ext="zip"), HttpUrl, str]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)
     def _validate_mode_value(
-        cls, value: Union[FilePathType, HttpUrl], values
-    ) -> Union[FilePathType, HttpUrl]:
+        cls, value: Union[FilePathType, HttpUrl, str], values
+    ) -> Union[FilePathType, HttpUrl, str]:
         mode = values.get("mode")
         if mode == SourceModeChoice.GoogleDrive:
             if not isinstance(value, Path):
@@ -340,6 +340,8 @@ class CreationData(BaseMixinData):
     "Информация о данных"
     tags: TagsList = TagsList()
     "Список тегов"
+    use_generator: bool = False
+    "Использовать генераторы"
     inputs: CreationInputsList = CreationInputsList()
     "`input`-слои"
     outputs: CreationOutputsList = CreationOutputsList()
