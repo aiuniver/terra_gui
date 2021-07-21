@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ....mixins import BaseMixinData
 from ..extra import ShowImagesChoice
 
@@ -9,4 +11,4 @@ class ParametersData(BaseMixinData):
     plot_loss_for_classes: bool = True
     plot_metric_for_classes: bool = True
     plot_final: bool = True
-    show_images: ShowImagesChoice = ShowImagesChoice.Best
+    show_images: Optional[ShowImagesChoice] = ShowImagesChoice.Best
