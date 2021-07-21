@@ -120,7 +120,7 @@ export default {
             // y: 350,
             name: "sloy-three",
             title: "Sloy",
-            parameters: ''
+            parameters: {}
           },
           {
             id: 5,

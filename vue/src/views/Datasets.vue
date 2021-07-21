@@ -1,11 +1,11 @@
 <template>
   <main class="page-datasets">
     <div class="container-fluid">
-      <div class="row">
-        <div :class="full ? 'col-3' : 'col-18'">
+      <div class="main">
+        <div class="one">
           <Dataset />
         </div>
-        <div :class="full ? 'col-21' : 'col-6'">
+        <div class="two">
           <ParamsFull v-if="full" />
           <Params v-else />
         </div>
@@ -41,5 +41,16 @@ export default {
 .container-fluid{
   background: #17212B;
   padding: 0;
+}
+
+.main {
+  display: flex
+}
+.one {
+  flex-shrink: 1;
+}
+.two {
+  flex-shrink: 0;
+  width: 400px;
 }
 </style>

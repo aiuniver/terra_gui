@@ -62,20 +62,6 @@ export default {
         return (typeof arr[0] === "number") && (typeof arr[1] === "number");
       },
     },
-    // x: {
-    //   type: Number,
-    //   default: 0,
-    //   validator: function (val) {
-    //     return typeof val === "number";
-    //   },
-    // },
-    // y: {
-    //   type: Number,
-    //   default: 0,
-    //   validator: function (val) {
-    //     return typeof val === "number";
-    //   },
-    // },
     selected: Boolean,
     title: {
       type: String,
@@ -83,8 +69,10 @@ export default {
     },
     inputs: Array,
     outputs: Array,
-    parameters: String,
-
+    parameters: {
+      type: Object,
+      default: () => {}
+    },
     options: {
       type: Object,
     },

@@ -65,6 +65,6 @@ export default {
   /* height: 400px; */
 }
 .board {
-  border-right: black solid 1px;
+  border-right: #0e1621  solid 1px;
 }
 </style>

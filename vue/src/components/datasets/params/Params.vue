@@ -1,6 +1,4 @@
 <template>
-  <div class="properties">
-    <div class="wrapper">
       <div class="params">
         <vue-custom-scrollbar
           class="scroll-area"
@@ -137,8 +135,6 @@
           </div>
         </vue-custom-scrollbar>
       </div>
-    </div>
-  </div>
 </template>
 
 <script>
