@@ -38,7 +38,7 @@ import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.009
+__version__ = 1.01
 
 
 class CreateDTS(object):
@@ -215,7 +215,7 @@ class CreateDTS(object):
             with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'sequence.json'),
                       'w') as seq:
                 json.dump(self.split_sequence, seq)
-            if 'txt_list' in self.createarray.__dict__.keys():
+            if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
                 with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'txt_list.json'),
                           'w') as fp:
                     json.dump(self.createarray.txt_list, fp)
@@ -282,6 +282,8 @@ class CreateDTS(object):
             os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer'), exist_ok=True)
         if self.createarray.word2vec:
             os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec'), exist_ok=True)
+        if self.createarray.augmentation:
+            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation'), exist_ok=True)
         # if self.createarray.tsgenerator:
         #     os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator'), exist_ok=True)
 
@@ -297,6 +299,10 @@ class CreateDTS(object):
             if self.createarray.word2vec[w2v]:
                 joblib.dump(self.createarray.word2vec[w2v],
                             os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec', f'{w2v}.gz'))
+        for aug in self.createarray.augmentation.keys():
+            if self.createarray.augmentation[aug]:
+                joblib.dump(self.createarray.augmentation[aug],
+                            os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation', f'{aug}.gz'))
         # for tsg in self.createarray.tsgenerator.keys():
         #     if self.createarray.tsgenerator[tsg]:
         #         joblib.dump(self.createarray.tsgenerator[tsg],
@@ -324,6 +330,7 @@ class CreateDTS(object):
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
+        options['put'] = f'{self.mode}_{self.iter}'
         if 'object_detection' in self.tags.values():
             options['object_detection'] = True
         if options['file_info']['path_type'] == 'path_folder':
@@ -342,6 +349,7 @@ class CreateDTS(object):
                             y_cls.append(cls_idx)
                         cls_idx += 1
                         self.peg.append(peg_idx)
+            self.y_cls = y_cls
         elif options['file_info']['path_type'] == 'path_file':
             for file_name in options['file_info']['path']:
                 data = pd.read_csv(os.path.join(self.file_folder, file_name),
@@ -360,11 +368,11 @@ class CreateDTS(object):
             aug_parameters = []
             for key, value in options['augmentation'].items():
                 aug_parameters.append(getattr(iaa, key)(**value))
-            self.createarray.augmentation['images'] = iaa.Sequential(aug_parameters, random_order=True)
-
+            self.createarray.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters,
+                                                                                       random_order=True)
+        del options['augmentation']
         instructions['instructions'] = instr
         instructions['parameters'] = options
-        self.y_cls = y_cls
 
         return instructions
 
@@ -522,9 +530,115 @@ class CreateDTS(object):
 
         pass
 
-    def instructions_dataframe(self):
+    def instructions_dataframe(self, **options):
+        """
+            Args:
+                **options: Параметры датафрейма:
+                    MinMaxScaler: строка номеров колонок для обработки
+                    StandardScaler: строка номеров колонок для обработки
+                    Categorical: строка номеров колонок для обработки c уже готовыми категориями
+                    Categorical_ranges: dict для присваивания категории  в зависимости от диапазона данных
+                        num_cols: число колонок
+                        cols: номера колонок
+                        col_(int): строка с диапазонами
+                    one_hot_encoding: строка номеров колонок для перевода категорий в ОНЕ
+                    file_name: имя файла.csv
+                    y_col: столбец датафрейма для классификации
+            Returns:
+                instructions: dict      Словарь с инструкциями для create_dataframe.
+        """
 
-        pass
+        def str_to_list(str_numbers, df_cols):
+            """
+            Получает строку из пользовательских номеров колонок,
+            возвращает лист индексов данных колонок
+            """
+            merged = []
+            try:
+                str_numbers = str_numbers.split(' ')
+            except:
+                print('Разделите номера колонок ТОЛЬКО пробелами')
+            for i in range(len(str_numbers)):
+                if '-' in str_numbers[i]:
+                    idx = str_numbers[i].index('-')
+                    fi = int(str_numbers[i][:idx]) - 1
+                    si = int(str_numbers[i][idx + 1:])
+                    tmp = list(range(fi, si))
+                    merged.extend(tmp)
+                elif re.findall(r'\D', str_numbers[i]) != []:
+                    merged.append(df_cols.to_list().index(str_numbers[i]))
+                else:
+                    merged.append(int(str_numbers[i]) - 1)
+
+            return merged
+
+        general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]), nrows=1)
+        self.createarray.df_with_y = pd.read_csv(
+            os.path.join(self.file_folder, options['file_info']['path'][0]), usecols=(str_to_list(
+                options['file_info']['cols_name'][0], general_df.columns) + str_to_list(options['y_col'],
+                                                                                        general_df.columns)))
+        self.createarray.df_with_y.sort_values(by=options['y_col'], inplace=True, ignore_index=True)
+
+        self.peg.append(0)
+        for i in range(len(self.createarray.df_with_y.loc[:, options['y_col']]) - 1):
+            if self.createarray.df_with_y.loc[:, options['y_col']][i] != \
+                    self.createarray.df_with_y.loc[:, options['y_col']][i + 1]:
+                self.peg.append(i + 1)
+        self.peg.append(len(self.createarray.df_with_y))
+
+        self.createarray.df = self.createarray.df_with_y.iloc[:, str_to_list(
+            options['file_info']['cols_name'][0], self.createarray.df_with_y.columns)]
+
+        instructions = {'instructions': np.arange(0, len(self.createarray.df)).tolist(),
+                        'parameters': {'put': f'{self.mode}_{self.iter}'}}
+
+        if 'MinMaxScaler' or 'StandardScaler' in options.keys():
+            self.createarray.scaler[f'{self.mode}_{self.iter}'] = {}
+            if 'MinMaxScaler' in options.keys():
+                instructions['parameters']['MinMaxScaler'] = str_to_list(str_numbers=options['MinMaxScaler'],
+                                                                         df_cols=self.createarray.df.columns)
+                self.createarray.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'] = MinMaxScaler()
+                self.createarray.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'].fit(
+                    self.createarray.df.iloc[:, instructions['parameters']['MinMaxScaler']].to_numpy().reshape(-1, 1))
+
+            if 'StandardScaler' in options.keys():
+                instructions['parameters']['StandardScaler'] = str_to_list(options['StandardScaler'],
+                                                                           self.createarray.df.columns)
+                self.createarray.scaler[f'{self.mode}_{self.iter}']['StandardScaler'] = StandardScaler()
+                self.createarray.scaler[f'{self.mode}_{self.iter}']['StandardScaler'].fit(
+                    self.createarray.df.iloc[:, instructions['parameters']['StandardScaler']].to_numpy().reshape(-1, 1))
+
+        if 'Categorical' in options.keys():
+            instructions['parameters']['Categorical'] = {}
+            instructions['parameters']['Categorical']['lst_cols'] = str_to_list(options['Categorical'],
+                                                                                self.createarray.df.columns)
+            for i in instructions['parameters']['Categorical']['lst_cols']:
+                instructions['parameters']['Categorical'][f'col_{i}'] = np.unique(
+                    self.createarray.df.iloc[:, i]).tolist()
+
+        if 'Categorical_ranges' in options.keys():
+            instructions['parameters']['Categorical_ranges'] = {}
+            instructions['parameters']['Categorical_ranges']['lst_cols'] = str_to_list(
+                options['Categorical_ranges']['cols'], self.createarray.df.columns)
+            for i in instructions['parameters']['Categorical_ranges']['lst_cols']:
+                instructions['parameters']['Categorical_ranges'][f'col_{i}'] = {}
+                for j in range(len(options['Categorical_ranges'][f'col_{i + 1}'].split(' '))):
+                    instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = int(
+                        options['Categorical_ranges'][f'col_{i + 1}'].split(' ')[j])
+
+        if 'one_hot_encoding' in options.keys():
+            instructions['parameters']['one_hot_encoding'] = {}
+            instructions['parameters']['one_hot_encoding']['lst_cols'] = str_to_list(options['one_hot_encoding'],
+                                                                                     self.createarray.df.columns)
+            for i in instructions['parameters']['one_hot_encoding']['lst_cols']:
+                if i in instructions['parameters']['Categorical_ranges']['lst_cols']:
+                    instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
+                        options['Categorical_ranges'][f'col_{i + 1}'].split(' '))
+                else:
+                    instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
+                        np.unique(self.createarray.df.iloc[:, i]))
+
+        return instructions
 
     def instructions_classification(self, **options):
 
@@ -836,6 +950,7 @@ class CreateArray(object):
         self.word2vec: dict = {}
         self.augmentation: dict = {}
         self.temporary: dict = {'bounding_boxes': {}}
+        self.df = None
 
         self.file_folder = None
         self.txt_list: dict = {}
@@ -894,8 +1009,7 @@ class CreateArray(object):
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
-        if 'augmentation' in options.keys():
-
+        if self.augmentation[options['put']]:
             if 'object_detection' in options.keys():
                 txt_path = image_path[:image_path.rfind('.')] + '.txt'
                 with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
@@ -909,7 +1023,7 @@ class CreateArray(object):
                             **{'label': b_box[0], 'x1': b_box[1], 'y1': b_box[2], 'x2': b_box[3], 'y2': b_box[4]}))
 
                 bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
-                array, bbs_aug = self.augmentation['images'](image=array, bounding_boxes=bbs)
+                array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
                 list_of_bounding_boxes = []
                 for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
                     bb = elem.__dict__
@@ -920,7 +1034,7 @@ class CreateArray(object):
 
                 self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
             else:
-                array = self.augmentation['images'](image=array)
+                array = self.augmentation[options['put']](image=array)
 
         return array
 
@@ -1060,9 +1174,61 @@ class CreateArray(object):
 
         pass
 
-    def create_dataframe(self):
+    def create_dataframe(self, row_number: int, **options):
+        """
+            Args:
+                row_number: номер строки с сырыми данными датафрейма,
+                **options: Параметры обработки колонок:
+                    MinMaxScaler: лист индексов колонок для обработки
+                    StandardScaler: лист индексов колонок для обработки
+                    Categorical: лист индексов колонок для перевода по готовым категориям
+                    Categorical_ranges: лист индексов колонок для перевода по категориям по диапазонам
+                    one_hot_encoding: лист индексов колонок для перевода в ОНЕ
+                    put: str  Индекс входа или выхода.
+            Returns:
+                array: np.ndarray
+                    Массив вектора обработанных данных.
+        """
+        row = self.df.loc[row_number].copy().tolist()
 
-        pass
+        if 'StandardScaler' in options.keys():
+            for i in options['StandardScaler']:
+                row[i] = self.scaler[options['put']]['StandardScaler'].transform(
+                    np.array([row[i]]).reshape(-1, 1)).tolist()
+
+        if 'MinMaxScaler' in options.keys():
+            for i in options['MinMaxScaler']:
+                row[i] = self.scaler[options['put']]['MinMaxScaler'].transform(
+                    np.array(row[i]).reshape(-1, 1)).tolist()
+
+        if 'Categorical' in options.keys():
+            for i in options['Categorical']['lst_cols']:
+                row[i] = list(options['Categorical'][f'col_{i}']).index(row[i])
+
+        if 'Categorical_ranges' in options.keys():
+            for i in options['Categorical_ranges']['lst_cols']:
+                for j in range(len(options['Categorical_ranges'][f'col_{i}'])):
+                    if row[i] <= options['Categorical_ranges'][f'col_{i}'][f'range_{j}']:
+                        row[i] = j
+                        break
+
+        if 'one_hot_encoding' in options.keys():
+            for i in options['one_hot_encoding']['lst_cols']:
+                row[i] = utils.to_categorical(row[i], options['one_hot_encoding'][f'col_{i}'], dtype='uint8').tolist()
+
+        array = []
+        for i in row:
+            if type(i) == list:
+                if type(i[0]) == list:
+                    array.extend(i[0])
+                else:
+                    array.extend(i)
+            else:
+                array.append(i)
+
+        array = np.array(array)
+
+        return array
 
     def create_classification(self, index, **options):
 
@@ -1174,6 +1340,7 @@ class CreateArray(object):
         height: int = options['height']
         width: int = options['width']
         num_classes: int = options['num_classes']
+        zero_boxes_flag: bool = False
 
         if self.temporary['bounding_boxes']:
             real_boxes = self.temporary['bounding_boxes'][txt_path]
@@ -1187,6 +1354,10 @@ class CreateArray(object):
                     for num in elem.split(' '):
                         tmp.append(float(num))
                     real_boxes.append(tmp)
+
+        if not real_boxes:
+            zero_boxes_flag = True
+            real_boxes = [[0, 0, 0, 0, 0]]
         real_boxes = np.array(real_boxes)
         real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
         anchors = np.array(
@@ -1221,9 +1392,8 @@ class CreateArray(object):
                     k = anchor_mask[m].index(int(best_anchor))
                     c = real_boxes[r, 4].astype('int32')
                     y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
-                    y_true[m][j, h, k, 4] = 1
-                    y_true[m][j, h, k, 5 + c] = 1
-                    break
+                    y_true[m][j, h, k, 4] = 0 if zero_boxes_flag else 1
+                    y_true[m][j, h, k, 5 + c] = 0 if zero_boxes_flag else 1
 
         return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
 
@@ -1547,9 +1717,16 @@ class PrepareDTS(object):
                     self.instructions['inputs'][key]['instructions'][idx],
                     **self.instructions['inputs'][key]['parameters'])
             for key in self.instructions['outputs'].keys():
-                outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['outputs'][key]['instructions'][idx],
-                    **self.instructions['outputs'][key]['parameters'])
+                if 'object_detection' in self.tags.values():
+                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
+                    for i in range(3):
+                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                else:
+                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
 
             yield inputs, outputs
 
@@ -1563,9 +1740,16 @@ class PrepareDTS(object):
                     self.instructions['inputs'][key]['instructions'][idx],
                     **self.instructions['inputs'][key]['parameters'])
             for key in self.instructions['outputs'].keys():
-                outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['outputs'][key]['instructions'][idx],
-                    **self.instructions['outputs'][key]['parameters'])
+                if 'object_detection' in self.tags.values():
+                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
+                    for i in range(3):
+                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                else:
+                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
 
             yield inputs, outputs
 
@@ -1579,9 +1763,16 @@ class PrepareDTS(object):
                     self.instructions['inputs'][key]['instructions'][idx],
                     **self.instructions['inputs'][key]['parameters'])
             for key in self.instructions['outputs'].keys():
-                outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['outputs'][key]['instructions'][idx],
-                    **self.instructions['outputs'][key]['parameters'])
+                if 'object_detection' in self.tags.values():
+                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
+                    for i in range(3):
+                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                else:
+                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
+                        self.instructions['outputs'][key]['instructions'][idx],
+                        **self.instructions['outputs'][key]['parameters'])
 
             yield inputs, outputs
 
@@ -1761,6 +1952,22 @@ class PrepareDTS(object):
 
             pass
 
+        def load_augmentation():
+
+            augmentation = []
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'augmentation')
+            if os.path.exists(folder_path):
+                for aug in os.listdir(folder_path):
+                    augmentation.append(aug[:-3])
+
+            for put in list(self.tags.keys()):
+                if put in augmentation:
+                    self.createarray.augmentation[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
+                else:
+                    self.createarray.augmentation[put] = None
+
+            pass
+
         if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and \
                 source != 'custom_dataset':
             if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
@@ -1797,19 +2004,14 @@ class PrepareDTS(object):
                     with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'inputs', inp),
                               'r') as cfg:
                         data = json.load(cfg)
-                        self.instructions['inputs'][inp[:inp.rfind('.')]] = data
-
+                    self.instructions['inputs'][inp[:inp.rfind('.')]] = data
                 for out in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions',
                                                    'outputs')):
                     with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'outputs', out),
                               'r') as cfg:
                         data = json.load(cfg)
-                        self.instructions['outputs'][out[:out.rfind('.')]] = data
-
+                    self.instructions['outputs'][out[:out.rfind('.')]] = data
                 self.createarray.file_folder = self.dataloader.file_folder
-                load_scalers()
-                load_tokenizer()
-                load_word2vec()
 
                 self.dataset['train'] = Dataset.from_generator(self.generator_train,
                                                                output_shapes=(self.input_shape, self.output_shape),
@@ -1820,17 +2022,17 @@ class PrepareDTS(object):
                 self.dataset['test'] = Dataset.from_generator(self.generator_test,
                                                               output_shapes=(self.input_shape, self.output_shape),
                                                               output_types=(self.input_dtype, self.output_dtype))
-
             else:
                 load_arrays()
-                load_scalers()
-                load_tokenizer()
-                load_word2vec()
-                # load_tsgenerator()
 
                 self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
                 self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
                 self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
+
+        load_scalers()
+        load_tokenizer()
+        load_word2vec()
+        load_augmentation()
 
         self.dts_prepared = True
 
