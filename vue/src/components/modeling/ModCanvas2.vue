@@ -48,7 +48,22 @@ export default {
             // y: 50,
             name: "input",
             title: "Input",
-            parameters: ''
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "asda",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "a",
+                },
+              }
+            }
           },
           {
             id: 2,
@@ -57,7 +72,22 @@ export default {
             // y: 150,
             name: "sloy-one",
             title: "Sloy",
-            parameters: ''
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "ddd",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "h",
+                },
+              }
+            }
           },
           {
             id: 3,
@@ -66,7 +96,22 @@ export default {
             // y: 250,
             name: "sloy-two",
             title: "Sloy",
-            parameters: ''
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "",
+                },
+              }
+            }
           },
           {
             id: 4,
@@ -83,8 +128,23 @@ export default {
             // x: -900,
             // y: 450,
             name: "output",
-            title: "Outpud",
-            parameters: ''
+            title: "Output",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "string",
+                  parse: "[main][x_cols]",
+                  default: "",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "string",
+                  parse: "[extra][x_cols]",
+                  default: "",
+                },
+              }
+            }
           },
         ],
         links: [

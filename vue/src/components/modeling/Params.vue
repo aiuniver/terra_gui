@@ -11,7 +11,7 @@
           <div class="params-item params-config">
             <div class="inner">
               <Input
-                  :value="'слой_1'"
+                  :value="node.name "
                   :label="'Название слоя'"
                   :type="'text'"
                   :parse="'name'"
@@ -30,14 +30,18 @@
                 >
             </Autocomplete>
           </div>
-          <div class="params-item params-main hidden">
-            <div class="params-title">Параметры слоя</div>
-            <div class="inner form-inline-label"></div>
-          </div>
-          <div class="params-item params-extra collapsable collapsed hidden">
-            <div class="params-title">Дополнительные параметры</div>
-            <div class="inner form-inline-label"></div>
-          </div>
+          <at-collapse>
+            <at-collapse-item class="mt-3" title="Параметры слоя">
+              <div class="params-main inner">
+                <Forms :items="node.parameters.main"></Forms>
+              </div>
+            </at-collapse-item>
+            <at-collapse-item class="mt-3" title="Дополнительные параметры">
+              <div class="params-extra inner">
+                <Forms :items="node.parameters.extra"></Forms>
+              </div>
+            </at-collapse-item>
+          </at-collapse>
           <div class="params-item params-actions">
             <div class="inner">
               <div class="actions-form">
@@ -55,13 +59,45 @@
 <script>
 import Input from "@/components/forms/Input.vue";
 import Autocomplete from "@/components/forms/Autocomplete.vue";
+import Forms from "@/components/forms/index.vue"
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: "Params",
   components: {
     Input,
     Autocomplete,
+    Forms,
     // Select
+  },
+  props: {
+    node: {
+      type: Object,
+      default: () => {
+        return {
+          id: 7,
+            x: -900,
+            y: 250,
+            name: "sloy",
+            title: "Sloy",
+            parameters: {
+              main: {
+                x_cols: {
+                  type: "str",
+                  parse: "[main][x_cols]",
+                  default: "",
+                },
+              },
+              extra: {
+                x_cols: {
+                  type: "str",
+                  parse: "[extra][x_cols]",
+                  default: "",
+                },
+              }
+            }
+        }
+      }
+    },
   },
   data: () => ({
     layer_types: [
