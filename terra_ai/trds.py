@@ -38,7 +38,7 @@ import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.01
+__version__ = 1.011
 
 
 class CreateDTS(object):
@@ -264,7 +264,7 @@ class CreateDTS(object):
                     self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
 
             for sample in self.X.keys():
-                os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
+                # os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
                 for inp in self.X[sample].keys():
                     os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample), exist_ok=True)
                     joblib.dump(self.X[sample][inp],
@@ -370,7 +370,8 @@ class CreateDTS(object):
                 aug_parameters.append(getattr(iaa, key)(**value))
             self.createarray.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters,
                                                                                        random_order=True)
-        del options['augmentation']
+            del options['augmentation']
+
         instructions['instructions'] = instr
         instructions['parameters'] = options
 
@@ -385,24 +386,38 @@ class CreateDTS(object):
         peg_idx = 0
         self.peg.append(0)
 
-        path = self.file_folder
-        if options['folder_name']:
-            path = os.path.join(self.file_folder, options['folder_name'])
-        for directory, folder, file_name in sorted(os.walk(path)):
-            if file_name:
-                file_folder = directory.replace(self.file_folder, '')[1:]
-                for name in sorted(file_name):
-                    instr.append(os.path.join(file_folder, name))
+        options['put'] = f'{self.mode}_{self.iter}'
+        if options['file_info']['path_type'] == 'path_folder':
+            for folder_name in options['file_info']['path']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            instr.append(os.path.join(file_folder, name))
+                            peg_idx += 1
+                            if options['class_mode'] == 'По каждому кадру':
+                                y_cls.append(np.full((options['max_frames'], 1), cls_idx).tolist())
+                            else:
+                                y_cls.append(cls_idx)
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+            self.y_cls = y_cls
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                   usecols=options['file_info']['cols_name'])
+                instr = data[options['file_info']['cols_name'][0]].to_list()
+                prev_elem = instr[0].split('/')[-2]
+                for elem in instr:
+                    cur_elem = elem.split('/')[-2]
+                    if cur_elem != prev_elem:
+                        self.peg.append(peg_idx)
+                    prev_elem = cur_elem
                     peg_idx += 1
-                    if options['class_mode'] == 'По каждому кадру':
-                        y_cls.append(np.full((options['max_frames'], 1), cls_idx).tolist())
-                    else:
-                        y_cls.append(cls_idx)
-                cls_idx += 1
-                self.peg.append(peg_idx)
-        instructions['instructions'] = instr
+                self.peg.append(len(instr))
+
         instructions['parameters'] = options
-        self.y_cls = y_cls
+        instructions['instructions'] = instr
 
         return instructions
 
@@ -672,9 +687,29 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_regression(self):
+    def instructions_regression(self, **options):
 
-        pass
+        instructions: dict = {}
+        instr: list = []
+
+        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = False
+        self.task_type[f'{self.mode}_{self.iter}'] = 'regression'
+
+        for file_name in options['file_info']['path']:
+            data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+            instr = data[options['file_info']['cols_name'][0]].to_list()
+
+        if 'scaler' in options.keys():
+            if options['scaler'] == 'MinMaxScaler':
+                self.createarray.scaler[f'{self.mode}_{self.iter}'] = MinMaxScaler()
+            if options['scaler'] == 'StandardScaler':
+                self.createarray.scaler[f'{self.mode}_{self.iter}'] = StandardScaler()
+            self.createarray.scaler[f'{self.mode}_{self.iter}'].fit(np.array(instr).reshape(-1, 1))
+
+        instructions['instructions'] = instr
+        instructions['parameters'] = options
+
+        return instructions
 
     def instructions_segmentation(self, **options):
 
@@ -686,8 +721,13 @@ class CreateDTS(object):
         self.one_hot_encoding[f'{self.mode}_{self.iter}'] = True
         self.task_type[f'{self.mode}_{self.iter}'] = 'segmentation'
 
-        for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-            instr.append(os.path.join(options['folder_name'], file_name))
+        if options['file_info']['path_type'] == 'path_folder':
+            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['file_info']['path'][0]))):
+                instr.append(os.path.join(options['file_info']['path'][0], file_name))
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                instr = data[options['file_info']['cols_name'][0]].to_list()
 
         instructions = {'instructions': instr,
                         'parameters': {'mask_range': options['mask_range'],
@@ -1009,7 +1049,7 @@ class CreateArray(object):
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
-        if self.augmentation[options['put']]:
+        if options['put'] in self.augmentation.keys():
             if 'object_detection' in options.keys():
                 txt_path = image_path[:image_path.rfind('.')] + '.txt'
                 with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
@@ -1234,13 +1274,17 @@ class CreateArray(object):
 
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
-        index = np.array(index)
+        array = np.array(index)
 
-        return index
+        return array
 
-    def create_regression(self):
+    def create_regression(self, index, **options):
 
-        pass
+        if 'scaler' in options.keys():
+            index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
+        array = np.array(index)
+
+        return array
 
     def create_segmentation(self, image_path: str, **options: dict) -> np.ndarray:
 
