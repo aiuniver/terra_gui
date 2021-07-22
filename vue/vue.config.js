@@ -4,7 +4,7 @@ const proxy = {
   MacBookPro: 'http://localhost:8001/'
 }
 module.exports = {
-  // productionSourceMap: false,
+  productionSourceMap: false,
   devServer: {
     proxy: proxy[process.env.USERNAME] || 'http://localhost:8000/'
   }
