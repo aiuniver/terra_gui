@@ -50,6 +50,7 @@ export default {
     },
   },
   mounted() {
+    window.addEventListener('keyup', this.keyup);
     document.documentElement.addEventListener(
       "mousemove",
       this.handleMove,
@@ -70,6 +71,7 @@ export default {
     this.importScene();
   },
   beforeDestroy() {
+    window.removeEventListener('keyup', this.keyup);
     document.documentElement.removeEventListener(
       "mousemove",
       this.handleMove,
@@ -231,6 +233,20 @@ export default {
     },
   },
   methods: {
+    keyup (event) {
+      const { code, ctrlKey } = event
+      if (code === 'Delete') {
+        if (this.selectedBlock) {
+          this.blockDelete(this.selectedBlock)
+        }
+      }
+      if (code === 'KeyC' && ctrlKey) {
+        if (this.selectedBlock) {
+          this.blockDelete(this.selectedBlock)
+        }
+      }
+      // console.log(event)
+    },
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
@@ -600,6 +616,7 @@ export default {
       block.selected = true;
       this.selectedBlock = block;
       this.deselectAll(block.id);
+      // this.$emit("nodeClick", block.id);
       this.$emit("blockSelect", block);
     },
     blockDeselect(block) {
@@ -760,8 +777,9 @@ export default {
   display: grid;
   width: max-content;
   position: absolute;
-  bottom: 0px;
-  right: 0px;
+  bottom: 10px;
+  right: 10px;
+  background-color: #0e1621;
   i {
     font-size: large;
     cursor: pointer;

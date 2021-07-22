@@ -6,6 +6,8 @@
         :blocksContent="blocks"
         :scene.sync="scene"
         class="cont"
+        @blockSelect="selected"
+        @blockDeselect="selected(null)"
       />
     </div>
     <at-modal v-model="create" width="150">
@@ -39,83 +41,6 @@ export default {
   data() {
     return {
       dialog: false,
-      scene: {
-        blocks: [
-          {
-            id: 1,
-            position: [-900, 50],
-            // x: -900,
-            // y: 50,
-            name: "input",
-            title: "Input",
-            parameters: ''
-          },
-          {
-            id: 2,
-            position: [-900, 150],
-            // x: -900,
-            // y: 150,
-            name: "sloy-one",
-            title: "Sloy",
-            parameters: ''
-          },
-          {
-            id: 3,
-            position: [-900, 250],
-            // x: -900,
-            // y: 250,
-            name: "sloy-two",
-            title: "Sloy",
-            parameters: ''
-          },
-          {
-            id: 4,
-            position: [-900, 350],
-            // x: -900,
-            // y: 350,
-            name: "sloy-three",
-            title: "Sloy",
-            parameters: ''
-          },
-          {
-            id: 5,
-            position: [-900, 450],
-            // x: -900,
-            // y: 450,
-            name: "output",
-            title: "Outpud",
-            parameters: ''
-          },
-        ],
-        links: [
-          {
-            id: 1,
-            originID: 1,
-            originSlot: 0,
-            targetID: 2,
-            targetSlot: 0,
-          },
-          {
-            id: 2,
-            originID: 2,
-            originSlot: 1,
-            targetID: 3,
-            targetSlot: 0,
-          },
-          {
-            id: 3,
-            originID: 1,
-            originSlot: 0,
-            targetID: 3,
-            targetSlot: 0,
-          },
-        ],
-        container: {
-          centerX: 1042,
-          centerY: 140,
-          scale: 1,
-        },
-      },
       create: false,
       selectBlockType: '',
     };
@@ -126,7 +51,23 @@ export default {
       toolbar: "modeling/getToolbarEvent",
       typeBlock: "modeling/getTypeBlock",
       blocks: "modeling/getBlocks",
-    })
+    }),
+    scene: {
+      set(value) {
+        this.$store.dispatch('modeling/setScene', value)
+      },
+      get() {
+        return this.$store.getters["modeling/getScene"]
+      }
+    },
+    select: {
+      set(value) {
+        this.$store.dispatch('modeling/setSelect', value)
+      },
+      get() {
+        return this.$store.getters["modeling/getSelect"]
+      }
+    }
   },
   methods: {
     addBlock (type) {
@@ -135,6 +76,12 @@ export default {
       this.selectBlockType = ''
       this.$refs.container.addNewBlock(type)
     },
+    selected(block) {
+      this.select = block?.id || null
+    },
+    doSomething(value) {
+      console.log(value)
+    }
   },
   watch: {
     toolbar: {
@@ -155,7 +102,9 @@ export default {
 
 <style lang="scss" scoped>
 .board {
+  flex-shrink: 1;
   position: relative;
+  width: 100%;
 }
 .cont {
   height: 100%;

@@ -1,94 +1,132 @@
 <template>
-  <div class="properties project-modeling-properties">
-    <div class="wrapper">
-      <nav class="params-navbar">
-        <ul class="flexbox-left-nowrap">
-          <li class="active"><span>Слой</span></li>
-        </ul>
-      </nav>
-      <div class="params">
-        <form class="params-container layers-form" novalidate="novalidate" autocomplete="off" style="position: relative; overflow: visible;">
-          <div class="params-item params-config">
-            <div class="inner">
+  <div class="params">
+    <vue-custom-scrollbar
+      class="scroll-area"
+      :settings="scroll"
+      :style="height"
+    >
+      <div>
+        <Navbar />
+        <div class="params__items">
+          <form novalidate="novalidate" ref="form">
+            <div class="params__items--item">
               <Input
-                  :value="'слой_1'"
-                  :label="'Название слоя'"
-                  :type="'text'"
-                  :parse="'name'"
-                  :name="'name'"
+                :value="block.name"
+                :label="'Название слоя'"
+                :type="'text'"
+                :parse="'name'"
+                :name="'name'"
+              />
+              <Autocomplete
+                :options="list"
+                :disabled="false"
+                :label="'Тип слоя'"
+                name="type"
+                :maxItem="100"
+                @selected="selected"
               />
             </div>
-            <Autocomplete
-                  :options="layer_types"
-                  :disabled="false"
-                  :label="'Тип слоя'"
-                  name="type"
-                  :maxItem="10"
-                  placeholder="Please select an option"
-                  @focus="focus"
-                  @selected="selected"
-                >
-            </Autocomplete>
-          </div>
-          <div class="params-item params-main hidden">
-            <div class="params-title">Параметры слоя</div>
-            <div class="inner form-inline-label"></div>
-          </div>
-          <div class="params-item params-extra collapsable collapsed hidden">
-            <div class="params-title">Дополнительные параметры</div>
-            <div class="inner form-inline-label"></div>
-          </div>
-          <div class="params-item params-actions">
-            <div class="inner">
-              <div class="actions-form">
-                <div class="item save"><button id="save-node" disabled="disabled">Сохранить</button></div>
-                <div class="item clone"><button id="clone-node" disabled="disabled">Клонировать</button></div>
+            <at-collapse>
+              <at-collapse-item class="mt-3" title="Параметры слоя">
+                <div class="params-main inner">
+                  <Forms :items="main" parse="main" />
+                </div>
+              </at-collapse-item>
+              <at-collapse-item class="mt-3" title="Дополнительные параметры">
+                <div class="params-extra inner">
+                  <Forms :items="extra" parse="extra" />
+                </div>
+              </at-collapse-item>
+            </at-collapse>
+            <div class="params-item params-actions">
+              <div class="inner">
+                <div class="actions-form">
+                  <div class="item save">
+                    <button disabled="disabled">Сохранить</button>
+                  </div>
+                  <div class="item clone">
+                    <button disabled="disabled">Клонировать</button>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </vue-custom-scrollbar>
   </div>
 </template>
 
 <script>
+import Navbar from "@/components/modeling/comp/Navbar.vue";
 import Input from "@/components/forms/Input.vue";
 import Autocomplete from "@/components/forms/Autocomplete.vue";
+import Forms from "@/components/modeling/comp/Forms.vue";
+import { mapGetters } from "vuex";
+import serialize from "@/assets/js/serialize";
+import vueCustomScrollbar from "vue-custom-scrollbar";
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: "Params",
   components: {
     Input,
     Autocomplete,
+    Forms,
+    Navbar,
+    vueCustomScrollbar,
     // Select
   },
   data: () => ({
-    layer_types: [
-      "BatchNormalization",
-      "Conv1D",
-      "Conv2D",
-      "Conv3D"
-    ]
+    main: {},
+    extra: {},
   }),
+  computed: {
+    ...mapGetters({
+      block: "modeling/getBlock",
+      list: "modeling/getList",
+      layers: "modeling/getLayers",
+      height: "settings/autoHeight",
+      scroll: "settings/scroll",
+    }),
+  },
   methods: {
-    focus() {
+    focus() {},
+    selected({ name }) {
+      this.main = this.layers[name].main || {};
+      this.extra = this.layers[name].extra || {};
+      console.log(this.layers[name]);
 
+      if (this.$refs.form) {
+        const data = serialize(this.$refs.form);
+        console.log(data);
+      }
     },
-    selected() {
-      
-    }
-  }
-
-}
+  },
+};
 </script>
 
-<style scoped>
-.params-actions{
-  padding: 20px 10px;
-}
-.dropdown{
-  padding: 10px 0;
+<style lang="scss" scoped>
+.params {
+  width: 400px;
+  flex-shrink: 0;
+  border-left: #0e1621 solid 1px;
+  // border-left: #0e1621  1px solid;
+  &__items {
+    &--item {
+      padding: 20px;
+    }
+  }
 }
 
+.params-actions {
+  padding: 20px 10px;
+}
+.dropdown {
+  padding: 10px 0;
+}
+.scroll-area {
+  position: relative;
+  width: 100%;
+  /* height: calc(100vh - 152px); */
+}
 </style>

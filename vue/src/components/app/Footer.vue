@@ -16,12 +16,10 @@
       <div :class="`state ${protsessor}`">
         <div class="wrapper">{{ protsessor }}</div>
       </div>
-    </footer>
-    <section id="copyright">
-      <div class="container">
+      <div class="copyright">
         {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
       </div>
-    </section>
+    </footer>
   </div>
 </template>
 
@@ -51,5 +49,19 @@ export default {
 }
 .state {
   text-transform: uppercase;
+}
+.copyright {
+    position: fixed;
+    width: 100%;
+    left: 0;
+    bottom: 0;
+    z-index: 901;
+    user-select: none;
+    line-height: 30px;
+    padding: 0 10px;
+    color: #A7BED3;
+    font-size: .6875rem;
+    text-align: right;
+    background-color: #0e1621;
 }
 </style>

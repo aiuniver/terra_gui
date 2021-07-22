@@ -1,10 +1,10 @@
 <template>
   <main class="page-modeling">
-    <div class="container">
+    <div class="cont">
+      <ModalLoadModel />
       <Toolbar />
       <ModCanvas2 />
       <Params />
-      <ModalLoadModel />
     </div>
   </main>
 </template>
@@ -25,3 +25,21 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+.cont {
+  display: flex;
+  background: #17212b;
+  padding: 0;
+}
+
+.one {
+  width: 100%;
+  flex-shrink: 1;
+  border-right: #0e1621 1px solid;
+}
+.two {
+  flex-shrink: 0;
+  width: 400px;
+}
+</style>
