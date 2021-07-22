@@ -1,15 +1,9 @@
 <template>
   <main class="page-datasets">
-    <div class="container-fluid">
-      <div class="main">
-        <div class="one">
-          <Dataset />
-        </div>
-        <div class="two">
-          <ParamsFull v-if="full" />
-          <Params v-else />
-        </div>
-      </div>
+    <div class="cont">
+      <Dataset />
+      <ParamsFull v-if="full" />
+      <Params v-else />
     </div>
   </main>
 </template>
@@ -38,19 +32,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container-fluid{
+.cont{
   background: #17212B;
   padding: 0;
+  display: flex;
 }
 
-.main {
-  display: flex
-}
-.one {
-  flex-shrink: 1;
-}
-.two {
-  flex-shrink: 0;
-  width: 400px;
-}
 </style>

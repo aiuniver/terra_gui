@@ -161,11 +161,6 @@ export default {
       { id: 1, name: "Option 1" },
       { id: 2, name: "Option 2" },
     ],
-    scroll: {
-      suppressScrollY: false,
-      suppressScrollX: true,
-      wheelPropagation: false,
-    },
     inputs: 1,
     outputs: 1,
     tab: null,
@@ -182,6 +177,7 @@ export default {
     ...mapGetters({
       settings: "datasets/getSettings",
       height: "settings/autoHeight",
+      scroll: "settings/scroll",
     }),
     inputLayer() {
       const int = +this.inputs;
@@ -235,7 +231,12 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss" scoped>
+.params{
+  flex-shrink: 0;
+  width: 400px;
+  border-left: #0e1621  solid 1px;
+}
 .scroll-area {
   position: relative;
   width: 100%;

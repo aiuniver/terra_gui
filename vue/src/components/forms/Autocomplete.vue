@@ -69,7 +69,7 @@ export default {
     };
   },
   created() {
-    this.$emit("selected", this.selected);
+    // this.$emit("selected", this.selected);
   },
   computed: {
     filteredOptions() {
@@ -104,7 +104,7 @@ export default {
       } else {
         this.searchFilter = this.selected.name;
       }
-      this.$emit("selected", this.selected);
+      // this.$emit("selected", this.selected);
       this.optionsShown = false;
     },
     // Selecting when pressing Enter
@@ -166,7 +166,7 @@ export default {
   .dropdown-content {
     position: absolute;
     background-color: #242f3d;
-    width: 90%;
+    width: 100%;
     max-height: 248px;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);

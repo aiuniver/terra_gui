@@ -2,11 +2,20 @@
   <div class="form-inline-label">
     <template v-for="({ type, default: def, available, event }, key) of items">
       <Input
+        v-if="type === 'tuple'"
+        :value="def.join()"
+        :label="key"
+        type="text"
+        :parse="`[${parse}][${key}]`"
+        :name="key"
+        :key="key"
+      />
+      <Input
         v-if="type === 'int' || type === 'string'"
         :value="def"
         :label="key"
         :type="type === 'int' ? 'number' : 'text'"
-        :parse="`${parse}[parameters][${key}]`"
+        :parse="`[${parse}][${key}]`"
         :name="key"
         :key="key"
       />
@@ -15,7 +24,7 @@
         :value="def"
         :label="key"
         type="checkbox"
-        :parse="`${parse}[parameters][${key}]`"
+        :parse="`[${parse}][${key}]`"
         :name="key"
         :event="event"
         :key="key"
@@ -25,7 +34,7 @@
         :label="key"
         :lists="available"
         :value="def || ''"
-        :parse="`${parse}[parameters][${key}]`"
+        :parse="`[${parse}][${key}]`"
         :name="key"
         :key="key"
       />

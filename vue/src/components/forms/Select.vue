@@ -9,7 +9,7 @@
       style="width: 100px"
       @on-change="change"
     >
-      <at-option v-for="(item, key) in items" :key="item+key" :value="item">{{
+      <at-option v-for="(item, key) in items" :key="'item_' + key" :value="item">{{
         item
       }}</at-option>
     </at-select>
@@ -48,7 +48,9 @@ export default {
   computed: {
     items () {
       if (Array.isArray(this.lists)) {
-        return this.lists
+        return this.lists.map((i) => {
+          return i || ''
+        })
       } else {
         return Object.keys(this.lists);
       }

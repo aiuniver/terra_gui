@@ -11,6 +11,11 @@ export default {
       { title: "Layers", icon: "mdi-help-box", path: "/layers" },
     ],
     drawer: true,
+    scroll: {
+      suppressScrollY: false,
+      suppressScrollX: true,
+      wheelPropagation: false,
+    },
   }),
   mutations: {
     SET_DRAWER(state, value) {
@@ -28,8 +33,11 @@ export default {
     },
     autoHeight() {
       return {
-        height: (document.documentElement.clientHeight - 157) + "px",
+        height: (document.documentElement.clientHeight - 155) + "px",
       };
+    },
+    scroll({scroll}) {
+      return scroll
     },
     getDrawer(state) {
       return state.drawer;
