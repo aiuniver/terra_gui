@@ -82,7 +82,7 @@ Vue.use(vuescroll, {
       disable: false
     }
   },
-  name: 'scrollbar' // customize component name, default -> vueScroll
+  name: 'scrollbar'
 });
 
 
@@ -90,7 +90,6 @@ Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
 Vue.use(VueRouter);
-// Vue.use(Vuetify);
 export const bus = new Vue();
 
 new Vue({
@@ -99,6 +98,5 @@ new Vue({
     routes,
   }),
   store: new Vuex.Store(store),
-  // vuetify: new Vuetify(opts),
   render: (h) => h(App),
 }).$mount("#app");

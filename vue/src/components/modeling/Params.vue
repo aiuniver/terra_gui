@@ -1,8 +1,8 @@
 <template>
   <div class="params">
-    <scrollbar :style="height">
-      <div class="params-container">
-        <Navbar />
+    <div class="params-container">
+      <Navbar />
+      <scrollbar :style="height">
         <div class="params__items">
           <form novalidate="novalidate" ref="form">
             <div class="params__items--item">
@@ -49,8 +49,8 @@
             </div>
           </form>
         </div>
-      </div>
-    </scrollbar>
+      </scrollbar>
+    </div>
   </div>
 </template>
 
