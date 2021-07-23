@@ -19,6 +19,7 @@
     "vue-plotly": "^1.1.0",
     "vue-router": "^3.5.1",
     "vue-simple-flowchart": "^0.1.8",
+    "vuescroll": "^4.17.3",
     "vuetify": "^2.5.4",
     "vuex": "^3.6.2"
   },
@@ -48,6 +49,7 @@
     "parserOptions": {
       "parser": "babel-eslint"
     },
+    "ignorePatterns": ["/vue/src/assets/*.js"],
     "rules": {}
   },
   "browserslist": [

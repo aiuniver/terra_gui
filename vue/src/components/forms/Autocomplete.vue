@@ -59,7 +59,8 @@ export default {
     label: {
       type: String,
       default: ''
-    }
+    },
+    value: String
   },
   data() {
     return {
@@ -69,7 +70,8 @@ export default {
     };
   },
   created() {
-    // this.$emit("selected", this.selected);
+    this.searchFilter = this.value
+    this.$emit("selected", { name: this.value});
   },
   computed: {
     filteredOptions() {

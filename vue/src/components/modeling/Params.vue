@@ -1,11 +1,7 @@
 <template>
   <div class="params">
-    <vue-custom-scrollbar
-      class="scroll-area"
-      :settings="scroll"
-      :style="height"
-    >
-      <div>
+    <scrollbar :style="height">
+      <div class="params-container">
         <Navbar />
         <div class="params__items">
           <form novalidate="novalidate" ref="form">
@@ -19,6 +15,7 @@
               />
               <Autocomplete
                 :options="list"
+                :value="'Dense'"
                 :disabled="false"
                 :label="'Тип слоя'"
                 name="type"
@@ -26,7 +23,7 @@
                 @selected="selected"
               />
             </div>
-            <at-collapse>
+            <at-collapse value="1">
               <at-collapse-item class="mt-3" title="Параметры слоя">
                 <div class="params-main inner">
                   <Forms :items="main" parse="main" />
@@ -53,7 +50,7 @@
           </form>
         </div>
       </div>
-    </vue-custom-scrollbar>
+    </scrollbar>
   </div>
 </template>
 
@@ -64,7 +61,7 @@ import Autocomplete from "@/components/forms/Autocomplete.vue";
 import Forms from "@/components/modeling/comp/Forms.vue";
 import { mapGetters } from "vuex";
 import serialize from "@/assets/js/serialize";
-import vueCustomScrollbar from "vue-custom-scrollbar";
+
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: "Params",
@@ -73,7 +70,6 @@ export default {
     Autocomplete,
     Forms,
     Navbar,
-    vueCustomScrollbar,
     // Select
   },
   data: () => ({
@@ -86,7 +82,6 @@ export default {
       list: "modeling/getList",
       layers: "modeling/getLayers",
       height: "settings/autoHeight",
-      scroll: "settings/scroll",
     }),
   },
   methods: {
@@ -123,10 +118,5 @@ export default {
 }
 .dropdown {
   padding: 10px 0;
-}
-.scroll-area {
-  position: relative;
-  width: 100%;
-  /* height: calc(100vh - 152px); */
 }
 </style>

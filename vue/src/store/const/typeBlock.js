@@ -12,7 +12,7 @@ const blocks = [
   },
   {
     name: "sloy-one",
-    title: 'Sloy one',
+    title: "Sloy one",
     fields: [
       {
         name: "Input",
@@ -28,7 +28,7 @@ const blocks = [
   },
   {
     name: "sloy-two",
-    title: 'Sloy two',
+    title: "Sloy two",
     fields: [
       {
         name: "Input",
@@ -49,7 +49,7 @@ const blocks = [
   },
   {
     name: "sloy-three",
-    title: 'Sloy three',
+    title: "Sloy three",
     fields: [
       {
         name: "Input",
@@ -92,111 +92,62 @@ const scene = {
       id: 1,
       position: [-900, 50],
       name: "input",
-      title: "Input",
+      type: "Input",
       parameters: {
-        main: {
-          x_cols: {
-            type: "string",
-            parse: "[main][x_cols]",
-            default: "asda",
-          },
-        },
-        extra: {
-          x_cols: {
-            type: "string",
-            parse: "[extra][x_cols]",
-            default: "a",
-          },
-        }
-      }
+        extra: { name: "input_1" },
+        main: {},
+      },
     },
     {
       id: 2,
       position: [-900, 150],
-      name: "sloy-one",
-      title: "Sloy",
+      name: "sloy-three",
+      type: "BatchNormalization",
       parameters: {
-        main: {
-          x_cols: {
-            type: "string",
-            parse: "[main][x_cols]",
-            default: "ddd",
-          },
-        },
+        main: {},
         extra: {
-          x_cols: {
-            type: "string",
-            parse: "[extra][x_cols]",
-            default: "h",
-          },
-        }
-      }
+          axis: -1,
+          momentum: 0.99,
+          epsilon: 0.001,
+          center: true,
+          scale: true,
+          beta_initializer: "zeros",
+          gamma_initializer: "ones",
+          moving_mean_initializer: "zeros",
+          moving_variance_initializer: "ones",
+          beta_regularizer: "",
+          gamma_regularizer: "",
+          beta_constraint: "",
+          gamma_constraint: "",
+        },
+      },
     },
     {
       id: 3,
       position: [-900, 250],
-      name: "sloy-two",
-      title: "Sloy",
-      parameters: {
-        main: {
-          x_cols: {
-            type: "string",
-            parse: "[main][x_cols]",
-            default: "",
-          },
-        },
-        extra: {
-          x_cols: {
-            type: "string",
-            parse: "[extra][x_cols]",
-            default: "",
-          },
-        }
-      }
-    },
-    {
-      id: 4,
-      position: [-900, 350],
-      name: "sloy-three",
-      title: "Sloy",
-      parameters: {
-        main: {
-          x_cols: {
-            type: "string",
-            parse: "[main][x_cols]",
-            default: "",
-          },
-        },
-        extra: {
-          x_cols: {
-            type: "string",
-            parse: "[extra][x_cols]",
-            default: "",
-          },
-        }
-      }
-    },
-    {
-      id: 5,
-      position: [-900, 450],
       name: "output",
-      title: "Output",
+      type: "Dense",
+      group: "output",
+      bind: [],
+      shape: [1, 1, 1],
+      location: null,
       parameters: {
         main: {
-          x_cols: {
-            type: "string",
-            parse: "[main][x_cols]",
-            default: "",
-          },
+          units: 100,
+          activation: "softmax",
         },
         extra: {
-          x_cols: {
-            type: "string",
-            parse: "[extra][x_cols]",
-            default: "",
-          },
-        }
-      }
+          use_bias: true,
+          kernel_initializer: "glorot_uniform",
+          bias_initializer: "zeros",
+          kernel_regularizer: "",
+          bias_regularizer: "",
+          activity_regularizer: "",
+          kernel_constraint: "",
+          bias_constraint: "",
+          name: "output_1",
+        },
+      },
     },
   ],
   links: [
@@ -229,8 +180,8 @@ const scene = {
   },
 };
 
-const typeBlock = blocks.map(({ name, title}) => {
-  return { value: name,  title }
+const typeBlock = blocks.map(({ name, title }) => {
+  return { value: name, title };
 });
 
-export { blocks, typeBlock, scene }
+export { blocks, typeBlock, scene };

@@ -1,26 +1,17 @@
 <template>
   <div class="board">
-    <vue-custom-scrollbar
-      class="scroll-area"
-      :settings="{
-        suppressScrollY: false,
-        suppressScrollX: true,
-        wheelPropagation: false,
-      }"
-    >
+    <scrollbar :style="height">
       <div class="tab-container">
         <Chars v-if="chars" />
         <Scatters v-if="scatters" />
         <Images v-if="images" />
         <Texts v-if="texts" />
       </div>
-    </vue-custom-scrollbar>
+    </scrollbar>
   </div>
 </template>
 
 <script>
-import vueCustomScrollbar from "vue-custom-scrollbar";
-import "vue-custom-scrollbar/dist/vueScrollbar.css";
 import { mapGetters } from "vuex";
 import Images from "./main/images/index.vue";
 import Texts from "./main/texts/index.vue";
@@ -34,7 +25,6 @@ export default {
     Texts,
     Scatters,
     Chars,
-    vueCustomScrollbar,
   },
   computed: {
     ...mapGetters({
@@ -42,17 +32,13 @@ export default {
       scatters: "trainings/getToolbarScatters",
       images: "trainings/getToolbarImages",
       texts: "trainings/getToolbarTexts",
+      height: "settings/autoHeight",
     }),
   },
 };
 </script>
 
 <style scoped>
-.scroll-area {
-  position: relative;
-  width: 100%;
-  height: 800px;
-}
 .tab-container {
   padding: 20px;
   display: flex;

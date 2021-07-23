@@ -4,7 +4,7 @@
       <Filters />
       <div class="project-datasets-block datasets">
         <div class="title" @click="click('name')">Выберите датасет</div>
-        <vue-custom-scrollbar class="scroll-area" :settings="settings" :style="height">
+        <scrollbar :style="height">
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
@@ -18,15 +18,13 @@
               </div>
             </div>
           </div>
-        </vue-custom-scrollbar>
+        </scrollbar>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import vueCustomScrollbar from "vue-custom-scrollbar";
-import "vue-custom-scrollbar/dist/vueScrollbar.css";
 import Filters from "@/components/datasets/Filters.vue";
 import { mapGetters } from "vuex";
 import Card from "@/components/datasets/Card";
@@ -35,15 +33,7 @@ export default {
   components: {
     Card,
     Filters,
-    vueCustomScrollbar,
   },
-  data: () => ({
-    settings: {
-      suppressScrollY: false,
-      suppressScrollX: true,
-      wheelPropagation: false,
-    },
-  }),
   computed: {
     ...mapGetters({
       datasets: "datasets/getDatasets",
@@ -59,14 +49,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-
-.scroll-area {
-  position: relative;
-  width: 100%;
-  /* height: 400px; */
-}
 .board {
-  // border-right: #0e1621  solid 1px;
   flex-shrink: 1;
   width: 100%;
 }
