@@ -15,16 +15,28 @@ class PaddingChoice(str, Enum):
     valid = "valid"
     same = "same"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingChoice))
+
 
 class PaddingAddCausalChoice(str, Enum):
     valid = "valid"
     same = "same"
     causal = "causal"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingAddCausalChoice))
+
 
 class DataFormatChoice(str, Enum):
     channels_last = "channels_last"
     channels_first = "channels_first"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, DataFormatChoice))
 
 
 class InitializerChoice(str, Enum):
@@ -45,11 +57,19 @@ class InitializerChoice(str, Enum):
     he_normal = "he_normal"
     he_uniform = "he_uniform"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, InitializerChoice))
+
 
 class RegularizerChoice(str, Enum):
     l1 = "l1"
     l2 = "l2"
     l1_l2 = "l1_l2"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, RegularizerChoice))
 
 
 class ConstraintChoice(str, Enum):
@@ -58,6 +78,10 @@ class ConstraintChoice(str, Enum):
     non_neg = "non_neg"
     unit_norm = "unit_norm"
     radial_constraint = "radial_constraint"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ConstraintChoice))
 
 
 class ActivationChoice(str, Enum):
@@ -75,10 +99,18 @@ class ActivationChoice(str, Enum):
     swish = "swish"
     tanh = "tanh"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ActivationChoice))
+
 
 class InterpolationChoice(str, Enum):
     nearest = "nearest"
     bilinear = "bilinear"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, InterpolationChoice))
 
 
 class ResizingInterpolationChoice(str, Enum):
@@ -90,20 +122,36 @@ class ResizingInterpolationChoice(str, Enum):
     gaussian = "gaussian"
     mitchellcubic = "mitchellcubic"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ResizingInterpolationChoice))
+
 
 class SpaceToDepthDataFormatChoice(str, Enum):
     NHWC = "NHWC"
     NCHW = "NCHW"
     NCHW_VECT_C = "NCHW_VECT_C"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, SpaceToDepthDataFormatChoice))
+
 
 class PretrainedModelWeightsChoice(str, Enum):
     imagenet = "imagenet"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PretrainedModelWeightsChoice))
 
 
 class PretrainedModelPoolingChoice(str, Enum):
     max = "max"
     avg = "avg"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PretrainedModelPoolingChoice))
 
 
 class YOLOModeChoice(str, Enum):
@@ -111,16 +159,28 @@ class YOLOModeChoice(str, Enum):
     YOLOv4 = "YOLOv4"
     YOLOv5 = "YOLOv5"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, YOLOModeChoice))
+
 
 class YOLOActivationChoice(str, Enum):
     LeakyReLU = "LeakyReLU"
     Mish = "Mish"
     Swish = "Swish"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, YOLOActivationChoice))
+
 
 class VAELatentRegularizerChoice(str, Enum):
     vae = "vae"
     bvae = "bvae"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, VAELatentRegularizerChoice))
 
 
 class ModuleChoice(str, Enum):

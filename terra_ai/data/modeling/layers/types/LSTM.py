@@ -11,7 +11,11 @@ from ..extra import (
     ActivationChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+    ConstraintChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
 )
 
 LayerConfig = LayerConfigData(
@@ -31,7 +35,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    units: PositiveInt
+    units: PositiveInt = 32
     return_sequences: bool = False
     return_state: bool = False
 

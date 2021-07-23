@@ -1,12 +1,17 @@
 """
 ## Тип слоя `VAEvBlock`
 """
-from typing import Optional, Tuple
+from typing import Optional
 
 from pydantic import PositiveInt
 
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice, ActivationChoice, \
-    YOLOModeChoice, YOLOActivationChoice, PaddingChoice, VAELatentRegularizerChoice
+from ..extra import (
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+    VAELatentRegularizerChoice,
+)
 from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
@@ -27,10 +32,12 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     latent_size: PositiveInt = 32
-    latent_regularizer: Optional[VAELatentRegularizerChoice] = VAELatentRegularizerChoice.vae
-    beta: float = 5.
-    capacity: float = 128.
-    randomSample: bool = True
+    latent_regularizer: Optional[
+        VAELatentRegularizerChoice
+    ] = VAELatentRegularizerChoice.vae
+    beta: float = 5.0
+    capacity: float = 128.0
+    random_sample: bool = True
     roll_up: bool = True
 
 

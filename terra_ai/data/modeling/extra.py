@@ -3,6 +3,7 @@
 """
 
 from enum import Enum
+from typing import List, Tuple
 
 
 class ReferenceTypeChoice(str, Enum):
@@ -83,3 +84,7 @@ class LayerTypeChoice(str, Enum):
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
     SpaceToDepth = "SpaceToDepth"
+
+    @staticmethod
+    def options() -> List[Tuple[str, str]]:
+        return list(map(lambda item: (item.name, item.value), LayerTypeChoice))

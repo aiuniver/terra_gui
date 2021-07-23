@@ -6,8 +6,15 @@ from typing import Optional
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice, LayerConfigData, \
-    LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    InitializerChoice,
+    RegularizerChoice,
+    ConstraintChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{
@@ -26,8 +33,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    input_dim: PositiveInt
-    output_dim: PositiveInt
+    input_dim: PositiveInt = 20000
+    output_dim: PositiveInt = 64
 
 
 class ParametersExtraData(BaseMixinData):

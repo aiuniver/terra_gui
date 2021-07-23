@@ -12,7 +12,11 @@ from ..extra import (
     DataFormatChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+    ConstraintChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
 )
 
 LayerConfig = LayerConfigData(
@@ -32,8 +36,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    filters: PositiveInt
-    kernel_size: Tuple[PositiveInt, PositiveInt]
+    filters: PositiveInt = 32
+    kernel_size: Tuple[PositiveInt, PositiveInt] = (1, 1)
     strides: Tuple[PositiveInt, PositiveInt] = (1, 1)
     padding: PaddingChoice = PaddingChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu

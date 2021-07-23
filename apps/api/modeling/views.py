@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 
+from apps.plugins.project import data_path
 from terra_ai.agent import agent_exchange
 
 from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
@@ -25,7 +26,5 @@ class ModelLoadProgressAPIView(BaseAPIView):
 
 class ModelsAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        data = agent_exchange(
-            "models", path=str(request.project.path.modeling.absolute())
-        )
+        data = agent_exchange("models", path=str(data_path.modeling))
         return BaseResponseSuccess(data)

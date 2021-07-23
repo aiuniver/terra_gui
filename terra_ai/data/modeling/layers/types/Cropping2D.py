@@ -35,7 +35,7 @@ class ParametersMainData(BaseMixinData):
     cropping: Tuple[
         Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
         Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
-    ]
+    ] = ((0, 0), (0, 0))
 
 
 class ParametersExtraData(BaseMixinData):

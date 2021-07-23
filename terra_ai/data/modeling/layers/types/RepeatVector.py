@@ -4,7 +4,12 @@
 
 from pydantic.types import PositiveInt
 
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
@@ -28,4 +33,4 @@ class ParametersMainData(BaseMixinData):
 
 
 class ParametersExtraData(BaseMixinData):
-    n: PositiveInt
+    n: PositiveInt = 8
