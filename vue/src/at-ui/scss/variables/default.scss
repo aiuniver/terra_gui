@@ -421,7 +421,7 @@ $collapse-header-text-color          : $text-color;
 $collapse-header-text-color-disabled : $grey-400;
 
 $collapse-icon-size                  : $font-size-smer;
-$collapse-icon-color                 : tint($title-color, 50%);
+$collapse-icon-color                 : $color-border;
 
 $collapse-body-text-color            : $text-color;
 $collapse-body-bg-color              : $color-bg;

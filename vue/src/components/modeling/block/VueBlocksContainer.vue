@@ -50,7 +50,7 @@ export default {
     },
   },
   mounted() {
-    window.addEventListener('keyup', this.keyup);
+    document.documentElement.addEventListener('keyup', this.keyup);
     document.documentElement.addEventListener(
       "mousemove",
       this.handleMove,
@@ -71,7 +71,7 @@ export default {
     this.importScene();
   },
   beforeDestroy() {
-    window.removeEventListener('keyup', this.keyup);
+    document.documentElement.removeEventListener('keyup', this.keyup);
     document.documentElement.removeEventListener(
       "mousemove",
       this.handleMove,

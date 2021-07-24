@@ -31,6 +31,11 @@ export default {
         height: (document.documentElement.clientHeight - 155) + "px",
       };
     },
+    height:() => (value) => {
+      return {
+        height: (document.documentElement.clientHeight - value) + "px",
+      };
+    },
     getDrawer(state) {
       return state.drawer;
     },

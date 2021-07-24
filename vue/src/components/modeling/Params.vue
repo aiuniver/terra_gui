@@ -13,14 +13,11 @@
                 :parse="'name'"
                 :name="'name'"
               />
-              <Autocomplete
-                :options="list"
-                :value="'Dense'"
-                :disabled="false"
-                :label="'Тип слоя'"
+              <Autocomplete2
+                v-model="block.type"
+                :list="list"
+                label="Тип слоя"
                 name="type"
-                :maxItem="100"
-                @selected="selected"
               />
             </div>
             <at-collapse value="1">
@@ -57,7 +54,7 @@
 <script>
 import Navbar from "@/components/modeling/comp/Navbar.vue";
 import Input from "@/components/forms/Input.vue";
-import Autocomplete from "@/components/forms/Autocomplete.vue";
+import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
 import Forms from "@/components/modeling/comp/Forms.vue";
 import { mapGetters } from "vuex";
 import serialize from "@/assets/js/serialize";
@@ -67,22 +64,27 @@ export default {
   name: "Params",
   components: {
     Input,
-    Autocomplete,
+    Autocomplete2,
     Forms,
     Navbar,
     // Select
   },
   data: () => ({
-    main: {},
     extra: {},
+    type: ''
   }),
   computed: {
     ...mapGetters({
       block: "modeling/getBlock",
       list: "modeling/getList",
       layers: "modeling/getLayers",
-      height: "settings/autoHeight",
     }),
+    main() {
+      return this.layers[this.block.type].main || {};
+    },
+    height() {
+      return this.$store.getters['settings/height'](170)
+    }
   },
   methods: {
     focus() {},
