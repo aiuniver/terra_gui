@@ -9,7 +9,8 @@ from tensorflow import keras
 from tensorflow.keras.models import load_model
 from apps.plugins.terra.neural.customcallback import CustomCallback
 from apps.plugins.terra.neural.customlosses import DiceCoefficient
-
+# import apps.plugins.terra.data as Data
+import terra_ai.data.training.extra as Extra
 __version__ = 0.06
 
 
@@ -82,17 +83,17 @@ class GUINN:
         self.monitor: str = 'accuracy'
         self.monitor2: str = "loss"
 
-    def set_optimizer(self) -> None:
+    def set_optimizer(self, params) -> None:
         """
         Set optimizer method for using terra w/o gui
 
         """
-        self.optimizer_object = getattr(keras.optimizers, self.optimizer_name)
-        self.optimizer = self.optimizer_object(**self.optimizer_kwargs)
+        optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
+        self.optimizer = optimizer_object(**params.optimizer.parameters)
 
         pass
 
-    def set_custom_metrics(self):
+    def set_custom_metrics(self, params):
         for i_key in self.metrics.keys():
             for idx, metric in enumerate(self.metrics[i_key]):
                 if metric in self.custom_losses_dict.keys():
@@ -103,23 +104,41 @@ class GUINN:
                         self.metrics[i_key][idx] = self.custom_losses_dict[metric](name=metric)
                 pass
 
-    def set_chp_monitor(self) -> None:
+    def set_chp_monitor(self, params) -> None:
         if len(self.x_Train) > 1:
-            if self.chp_indicator == 'train':
-                self.chp_monitor = f'{self.chp_monitors["output"]}_{self.chp_monitors["out_monitor"]}'
+            if params.architecture.parameters.checkpoint.indicator == Extra.CheckpointIndicatorChoice.train:
+                if params.architecture.parameters.checkpoint.type == Extra.CheckpointTypeChoice.Metrics:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
+                else:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
             else:
-                self.chp_monitor = f'val_{self.chp_monitors["output"]}_{self.chp_monitors["out_monitor"]}'
+                if params.architecture.parameters.checkpoint.type == Extra.CheckpointTypeChoice.Metrics:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
+                else:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
         else:
-            if self.chp_indicator == 'train':
-                if self.chp_monitors["out_type"] == 'loss':
+            if params.architecture.parameters.checkpoint.indicator == Extra.CheckpointIndicatorChoice.train:
+                if params.architecture.parameters.checkpoint.type == Extra.CheckpointTypeChoice.Metrics:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'{output.metrics[0].value}'
+                else:
                     self.chp_monitor = 'loss'
-                else:
-                    self.chp_monitor = f'{self.chp_monitors["out_monitor"]}'
             else:
-                if self.chp_monitors["out_type"] == 'loss':
-                    self.chp_monitor = 'val_loss'
+                if params.architecture.parameters.checkpoint.type == Extra.CheckpointTypeChoice.Metrics:
+                    for output in params.architecture.parameters.outputs:
+                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                            self.chp_monitor = f'val_{output.metrics[0].value}'
                 else:
-                    self.chp_monitor = f'val_{self.chp_monitors["out_monitor"]}'
+                    self.chp_monitor = 'val_loss'
 
     def set_main_params(self, output_params: dict = None, clbck_chp: dict = None,
                         shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
@@ -151,6 +170,8 @@ class GUINN:
         Args:
             dts_obj (object): setting task_name
         """
+
+
         if not self.model_is_trained:
             self.nn_cleaner()
             self.DTS = dts_obj
@@ -248,17 +269,41 @@ class GUINN:
         self.Exch.print_2status_bar(('Поготовка датасета', 'выполнена'))
         pass
 
-    def terra_fit(self, nnmodel: object = keras.Model, verbose: int = 0) -> None:
+    def terra_fit(self, nnmodel: object = keras.Model, training_params=None, verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
         Args:
             nnmodel (obj): keras model for fit
+            training_params:
             verbose:    verbose arg from tensorflow.keras.model.fit
 
         Return:
             None
         """
+        shuffle: bool = True, epochs: int = 10, batch_size: int = 32,
+        optimizer_params: dict = None) -> None:
+        self.output_params = output_params
+        self.chp_indicator = clbck_chp['indicator'].value  # 'train' или 'val'
+        self.chp_monitors = clbck_chp[
+            'monitor']  # это словарь {'output': 'output_1', 'out_type': 'loss', 'out_monitor': 'mse'}
+        self.chp_mode = clbck_chp['mode'].value  # 'min' или 'max'
+        self.chp_save_best = clbck_chp['save_best']  # bool
+        self.chp_save_weights = clbck_chp['save_weights']  # bool
+        self.shuffle = shuffle
+        self.epochs = training_params.epochs
+        self.batch_size = training_params.batch
+        self.optimizer_name = training_params.optimizer.type
+        self.optimizer_kwargs = training_params.optimizer.parameters
+        self.set_optimizer(training_params)
+        self.set_chp_monitor(training_params)
+        for output_key in self.output_params.keys():
+            self.metrics.update({output_key: self.output_params[output_key]['metrics']})
+            self.loss.update({output_key: self.output_params[output_key]['loss']})
+
+        pass
+
+
         if self.model_is_trained:
             try:
                 list_files = os.listdir(self.training_path)
