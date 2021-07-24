@@ -13,6 +13,17 @@ class ReferenceTypeChoice(str, Enum):
         return list(map(lambda item: item.value, ReferenceTypeChoice))
 
 
+class LayerBindPositionChoice(str, Enum):
+    top = "top"
+    right = "right"
+    bottom = "bottom"
+    left = "left"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerBindPositionChoice))
+
+
 class LayerGroupChoice(str, Enum):
     input = "input"
     middle = "middle"

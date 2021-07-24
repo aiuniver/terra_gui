@@ -9,11 +9,11 @@ from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
+from ..mixins import BaseMixinData, IDMixinData, UniqueListMixin
 from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
 from . import layers
-from .extra import LayerTypeChoice, LayerGroupChoice
+from .extra import LayerTypeChoice, LayerGroupChoice, LayerBindPositionChoice
 from .types import ReferenceLayerType
 
 
@@ -26,13 +26,22 @@ class LayerShapeData(BaseMixinData):
     output: List[Tuple[PositiveInt, ...]] = []
 
 
+class LayerBindIDsData(BaseMixinData):
+    """
+    Связи слоев сверху и снизу, только ID
+    """
+
+    up: List[Optional[PositiveInt]] = []
+    down: List[PositiveInt] = []
+
+
 class LayerBindData(BaseMixinData):
     """
     Связи слоев сверху и снизу
     """
 
-    up: List[Optional[ConstrainedIntValueGe0]] = []
-    down: List[ConstrainedIntValueGe0] = []
+    up: List[Optional[Tuple[PositiveInt, LayerBindPositionChoice]]] = []
+    down: List[Tuple[PositiveInt, LayerBindPositionChoice]] = []
 
     @validator("up", allow_reuse=True)
     def _validate_bind(cls, value):
@@ -44,7 +53,7 @@ class LayerBindData(BaseMixinData):
         return value
 
 
-class LayerData(AliasMixinData):
+class LayerData(IDMixinData):
     """
     Данные слоя
     """
@@ -73,6 +82,17 @@ class LayerData(AliasMixinData):
         __data = json.loads(self.parameters.main.json())
         __data.update(json.loads(self.parameters.extra.json()))
         return __data
+
+    @property
+    def bind_ids(self) -> LayerBindIDsData:
+        return LayerBindIDsData(
+            up=list(
+                map(lambda item: item[0] if item is not None else None, self.bind.up)
+            ),
+            down=list(
+                map(lambda item: item[0] if item is not None else None, self.bind.down)
+            ),
+        )
 
     @validator("location", "position", allow_reuse=True)
     def _validate_xy(cls, value: list, values) -> list:
@@ -110,10 +130,10 @@ class LayersList(UniqueListMixin):
     ```
     class Meta:
         source = LayerData
-        identifier = "alias"
+        identifier = "id"
     ```
     """
 
     class Meta:
         source = LayerData
-        identifier = "alias"
+        identifier = "id"

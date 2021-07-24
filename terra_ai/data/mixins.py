@@ -7,7 +7,7 @@ import json
 from typing import List, Union, Optional, Any
 from pydantic import BaseModel
 
-from .types import AliasType
+from .types import AliasType, IDType
 from .exceptions import (
     UniqueListIdentifierException,
     UniqueListUndefinedIdentifierException,
@@ -34,6 +34,14 @@ class BaseMixinData(BaseModel):
                 __value = map(lambda item: item.dict(), data.get(__name, __type()))
                 data.update({__name: list(__value)})
         return data
+
+
+class IDMixinData(BaseMixinData):
+    """
+    Расширение модели идентификатором `id`.
+    """
+
+    id: IDType
 
 
 class AliasMixinData(BaseMixinData):
