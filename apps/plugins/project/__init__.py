@@ -7,8 +7,10 @@ from pydantic import validator, ValidationError, DirectoryPath
 
 from django.conf import settings
 
+from terra_ai.agent import agent_exchange
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
+from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
 
 UNKNOWN_NAME = "NoName"
@@ -70,6 +72,9 @@ class ProjectPathData(BaseMixinData):
 
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
+    hardware: HardwareAcceleratorData = HardwareAcceleratorData(
+        type=HardwareAcceleratorChoice.CPU
+    )
 
     def __init__(self, save=False, **data):
         super().__init__(**data)
@@ -93,7 +98,11 @@ except ValidationError as error:
     project_save = True
 
 if project_save:
-    project = Project(save=True)
+    project = Project(save=True, hardware=agent_exchange("hardware_accelerator"))
 else:
     with open(project_path.config, "r") as config_ref:
-        project = Project(**json.load(config_ref))
+        data = json.load(config_ref)
+        data.update({"hardware": agent_exchange("hardware_accelerator")})
+        project = Project(**data)
+
+print(project)
