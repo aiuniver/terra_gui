@@ -1,5 +1,6 @@
 import os
 import json
+import tensorflow
 
 from pathlib import Path
 from transliterate import slugify
@@ -12,6 +13,7 @@ from ..data.modeling.model import ModelsGroupsList, ModelLoadData
 
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
+from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
 from .. import ASSETS_PATH
 from .. import progress
@@ -37,6 +39,26 @@ class Exchange:
         # Вызываем метод
         return __method(**kwargs)
 
+    @property
+    def is_colab(self) -> bool:
+        return "COLAB_GPU" in os.environ.keys()
+
+    def _call_hardware_accelerator(self) -> dict:
+        device_name = tensorflow.test.gpu_device_name()
+        if device_name != "/device:GPU:0":
+            if self.is_colab:
+                try:
+                    tensorflow.distribute.cluster_resolver.TPUClusterResolver()
+                    __type = HardwareAcceleratorChoice.TPU
+                except ValueError:
+                    __type = HardwareAcceleratorChoice.CPU
+            else:
+                __type = HardwareAcceleratorChoice.CPU
+        else:
+            __type = HardwareAcceleratorChoice.GPU
+        hardware = HardwareAcceleratorData(type=__type)
+        return hardware.native()
+
     def _call_datasets_info(self, path: str) -> dict:
         """
         Получение данных для страницы датасетов: датасеты и теги
@@ -57,7 +79,7 @@ class Exchange:
                 )
             except Exception:
                 pass
-        return info.dict()
+        return info.native()
 
     def _call_dataset_source_load(self, mode: str, value: str):
         """
@@ -71,7 +93,7 @@ class Exchange:
         """
         Прогресс загрузки исходников датасета
         """
-        return progress.pool(progress.PoolName.dataset_source_load).dict()
+        return progress.pool(progress.PoolName.dataset_source_load).native()
 
     def _call_datasets_sources(self, path: str) -> list:
         """
@@ -85,7 +107,7 @@ class Exchange:
             except Exception:
                 pass
         files.sort(key=lambda item: item.label)
-        return json.loads(files.json())
+        return files.native()
 
     def _call_models(self, path: str) -> list:
         """
@@ -107,7 +129,7 @@ class Exchange:
             except Exception:
                 pass
         models.get("custom").models.sort(key=lambda item: item.label)
-        return json.loads(models.json())
+        return models.native()
 
     def _call_model_load(self, value: str):
         """
@@ -120,7 +142,7 @@ class Exchange:
         """
         Прогресс загрузки модели
         """
-        return progress.pool(progress.PoolName.model_load).dict()
+        return progress.pool(progress.PoolName.model_load).native()
 
 
 agent_exchange = Exchange()

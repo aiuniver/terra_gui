@@ -2,16 +2,43 @@
 ## Дополнительные структуры данных
 """
 
+from enum import Enum
 from typing import Optional, Tuple
 from pydantic import validator, BaseModel
+from pydantic.color import Color
 
+from .mixins import BaseMixinData
 from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
 
 BYTES_UNITS = ["б", "Кб", "Мб", "Гб", "Тб", "Пб", "Эб", "Зб", "Иб"]
 
 
-class FileSizeData(BaseModel):
+class HardwareAcceleratorChoice(str, Enum):
+    CPU = "CPU"
+    GPU = "GPU"
+    TPU = "TPU"
+
+
+class HardwareAcceleratorColorChoice(str, Enum):
+    CPU = "FF0000"
+    GPU = "2EA022"
+    TPU = "B8C324"
+
+
+class HardwareAcceleratorData(BaseMixinData):
+    type: HardwareAcceleratorChoice
+    color: Optional[Color]
+
+    @validator("color", always=True)
+    def _validate_color(cls, value: Color, values) -> Color:
+        __type = values.get("type")
+        if not __type:
+            return value
+        return HardwareAcceleratorColorChoice[__type.name]
+
+
+class FileSizeData(BaseMixinData):
     """
     Вес файла
     """
