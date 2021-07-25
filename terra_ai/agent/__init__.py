@@ -2,9 +2,13 @@ import os
 import tensorflow
 
 from pathlib import Path
-from transliterate import slugify
 
-from ..data.datasets.dataset import DatasetLoadData, CustomDataset, DatasetsGroupsList
+from ..data.datasets.dataset import (
+    DatasetLoadData,
+    CustomDatasetConfigData,
+    DatasetsGroupsList,
+    DatasetData,
+)
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
@@ -83,17 +87,8 @@ class Exchange:
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(path):
             try:
-                dataset = CustomDataset(path=Path(path, dirname))
-                alias = slugify(dataset.config.get("name"), language_code="ru")
-                info.get("custom").datasets.append(
-                    {
-                        "alias": alias,
-                        "name": dataset.config.get("name"),
-                        "date": dataset.config.get("date"),
-                        "size": {"value": dataset.config.get("size")},
-                        "tags": dataset.tags.dict(),
-                    }
-                )
+                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                info.get("custom").datasets.append(DatasetData(**dataset_config.config))
             except Exception:
                 pass
         return info.native()

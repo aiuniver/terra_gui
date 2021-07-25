@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from ..data.datasets.dataset import CustomDataset, DatasetData
+from ..data.datasets.dataset import CustomDatasetConfigData, DatasetData
+from .. import DATASET_EXT
 
 
 class DTS:
@@ -10,5 +11,5 @@ class DTS:
 
     @staticmethod
     def get_dataset_custom_info(name: str, path: Path) -> DatasetData:
-        data = CustomDataset(path=Path(path, f"{name}.trds"))
+        data = CustomDatasetConfigData(path=Path(path, f"{name}.{DATASET_EXT}"))
         return DatasetData(**data.config)

@@ -212,4 +212,8 @@ DatasetsGroups = [
         "alias": "custom",
         "name": "Собственные",
     },
+    {
+        "alias": "custom",
+        "name": "Собственные",
+    },
 ]
