@@ -6,7 +6,7 @@ from enum import Enum
 
 
 class Tags(dict, Enum):
-    images = {"alias": "images", "name": "Images"}
+    image = {"alias": "image", "name": "Image"}
     classification = {"alias": "classification", "name": "Classification"}
     tensorflow_keras = {"alias": "tensorflow_keras", "name": "Tensorflow.keras"}
     text = {"alias": "text", "name": "Text"}
@@ -24,14 +24,15 @@ class Tags(dict, Enum):
 
 DatasetsGroups = [
     {
-        "alias": "preset",
-        "name": "Предустановленные",
+        "alias": "keras",
+        "name": "Keras",
         "datasets": [
             {
                 "alias": "mnist",
                 "name": "Mnist",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.tensorflow_keras,
                 ],
@@ -39,8 +40,9 @@ DatasetsGroups = [
             {
                 "alias": "fashion_mnist",
                 "name": "Fashion mnist",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.tensorflow_keras,
                 ],
@@ -48,8 +50,9 @@ DatasetsGroups = [
             {
                 "alias": "cifar10",
                 "name": "Cifar 10",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.tensorflow_keras,
                 ],
@@ -57,8 +60,9 @@ DatasetsGroups = [
             {
                 "alias": "cifar100",
                 "name": "Cifar 100",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.tensorflow_keras,
                 ],
@@ -66,6 +70,7 @@ DatasetsGroups = [
             {
                 "alias": "imdb",
                 "name": "IMDB",
+                "limit": 1,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -76,6 +81,7 @@ DatasetsGroups = [
             {
                 "alias": "boston_housing",
                 "name": "Boston housing",
+                "limit": 1,
                 "tags": [
                     Tags.text,
                     Tags.regression,
@@ -86,6 +92,7 @@ DatasetsGroups = [
             {
                 "alias": "reuters",
                 "name": "Reuters",
+                "limit": 1,
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -96,6 +103,7 @@ DatasetsGroups = [
             {
                 "alias": "sber",
                 "name": "Sber",
+                "limit": 1,
                 "tags": [
                     Tags.timeseries,
                     Tags.regression,
@@ -105,8 +113,9 @@ DatasetsGroups = [
             {
                 "alias": "cars",
                 "name": "Автомобили",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.terra_ai,
                 ],
@@ -114,8 +123,9 @@ DatasetsGroups = [
             {
                 "alias": "cars3",
                 "name": "Автомобили 3",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.terra_ai,
                 ],
@@ -123,8 +133,9 @@ DatasetsGroups = [
             {
                 "alias": "aircraft",
                 "name": "Самолеты",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.segmentation,
                     Tags.object_detection,
                     Tags.terra_ai,
@@ -133,8 +144,9 @@ DatasetsGroups = [
             {
                 "alias": "lips",
                 "name": "Губы",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.segmentation,
                     Tags.terra_ai,
                 ],
@@ -142,8 +154,9 @@ DatasetsGroups = [
             {
                 "alias": "diseases",
                 "name": "Заболевания",
+                "limit": 1,
                 "tags": [
-                    Tags.images,
+                    Tags.image,
                     Tags.classification,
                     Tags.russian,
                     Tags.terra_ai,
@@ -152,6 +165,7 @@ DatasetsGroups = [
             {
                 "alias": "contracts",
                 "name": "Договоры",
+                "limit": 1,
                 "tags": [
                     Tags.text,
                     Tags.segmentation,
@@ -162,6 +176,7 @@ DatasetsGroups = [
             {
                 "alias": "smart_home",
                 "name": "Умный дом",
+                "limit": 1,
                 "tags": [
                     Tags.audio,
                     Tags.classification,
@@ -173,6 +188,7 @@ DatasetsGroups = [
             {
                 "alias": "trading",
                 "name": "Трейдинг",
+                "limit": 1,
                 "tags": [
                     Tags.trading,
                     Tags.timeseries,
@@ -182,6 +198,7 @@ DatasetsGroups = [
             {
                 "alias": "apartments",
                 "name": "Квартиры",
+                "limit": 1,
                 "tags": [
                     Tags.text,
                     Tags.regression,

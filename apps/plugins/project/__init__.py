@@ -109,3 +109,7 @@ else:
         data = json.load(config_ref)
         data.update({"hardware": agent_exchange("hardware_accelerator")})
         project = Project(**data)
+
+print("-------------------------")
+print(project)
+print("-------------------------")

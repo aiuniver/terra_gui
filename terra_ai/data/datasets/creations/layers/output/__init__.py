@@ -9,7 +9,7 @@ class LayerBaseData(BaseMixinData):
     pass
 
 
-class LayerImagesData(LayerBaseData, types.Images.ParametersData):
+class LayerImageData(LayerBaseData, types.Image.ParametersData):
     pass
 
 

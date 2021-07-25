@@ -177,15 +177,25 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, List, Tuple
 from pydantic import validator, DirectoryPath
+from pydantic.types import PositiveInt
+from pydantic.color import Color
 from transliterate import slugify
 
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..presets import datasets as presets_datasets
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
+from ..training.extra import TaskChoice
 from .tags import TagsList
+from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
+
+
+class DatasetLoadData(BaseMixinData):
+    path: DirectoryPath
+    group: DatasetGroupChoice
+    alias: str
 
 
 class CustomDataset(BaseMixinData):
@@ -230,19 +240,38 @@ class CustomDataset(BaseMixinData):
         return value
 
 
+class DatasetLayerData(BaseMixinData):
+    datatype: Dict[int, str] = {}
+    dtype: Dict[int, str] = {}
+    shape: Dict[int, Tuple[PositiveInt, ...]] = {}
+    names: Dict[int, str] = {}
+
+
+class DatasetInputsData(DatasetLayerData):
+    tasks: Dict[int, LayerInputTypeChoice] = {}
+
+
+class DatasetOutputsData(DatasetLayerData):
+    tasks: Dict[int, LayerOutputTypeChoice] = {}
+
+
 class DatasetData(AliasMixinData):
     """
     Информация о датасете
     """
 
     name: str
-    "Название"
-    size: Optional[FileSizeData]
-    "Вес"
     date: Optional[datetime]
-    "Дата создания"
+    size: Optional[FileSizeData]
+    limit: PositiveInt
+    use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    "Список тегов"
+    classes_names: Dict[int, List[str]] = {}
+    classes_colors: List[Color] = []
+    one_hot_encoding: Dict[int, bool] = {}
+    task_type: Dict[int, TaskChoice] = {}
+    inputs: DatasetInputsData = DatasetInputsData()
+    outputs: DatasetOutputsData = DatasetOutputsData()
 
 
 class DatasetsList(UniqueListMixin):
