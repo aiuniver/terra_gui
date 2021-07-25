@@ -1,14 +1,25 @@
-from typing import Optional, List
-from pydantic import BaseModel
+from typing import Any, Optional, Union, List
 
-from .extra import WidgetTypeChoice
-from .types import AliasType
+from terra_ai.data.types import AliasType
+from terra_ai.data.mixins import BaseMixinData
+
+from .extra import FieldTypeChoice
 
 
-class FieldBase(BaseModel):
+class ListOptionData(BaseMixinData):
+    value: str
+    label: str
+
+
+class ListOptgroupData(BaseMixinData):
+    label: str
+    items: List[ListOptionData]
+
+
+class Field(BaseMixinData):
+    type: FieldTypeChoice
     name: AliasType
     label: str
-    type: WidgetTypeChoice
-    parse: Optional[str]
-    value: List[str] = [""]
-    list: Optional[List[str]]
+    parse: str
+    value: Any = ""
+    list: Optional[List[Union[ListOptionData, ListOptgroupData]]]

@@ -3,7 +3,13 @@
 """
 
 from ....mixins import BaseMixinData
-from ..extra import ActivationChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    ActivationChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{
@@ -22,7 +28,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    activation: ActivationChoice
+    activation: ActivationChoice = ActivationChoice.relu
 
 
 class ParametersExtraData(BaseMixinData):

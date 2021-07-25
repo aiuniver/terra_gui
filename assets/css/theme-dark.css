@@ -239,7 +239,12 @@ input[type=text][disabled=disabled],
 input[type=number][disabled=disabled],
 input[type=email][disabled=disabled],
 input[type=tel][disabled=disabled],
-input[type=password][disabled=disabled] {
+input[type=password][disabled=disabled],
+input[type=text][readonly=readonly],
+input[type=number][readonly=readonly],
+input[type=email][readonly=readonly],
+input[type=tel][readonly=readonly],
+input[type=password][readonly=readonly] {
     opacity:.35;
 }
 input[type=text]:focus,

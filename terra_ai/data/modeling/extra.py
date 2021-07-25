@@ -13,10 +13,25 @@ class ReferenceTypeChoice(str, Enum):
         return list(map(lambda item: item.value, ReferenceTypeChoice))
 
 
+class LayerBindPositionChoice(str, Enum):
+    top = "top"
+    right = "right"
+    bottom = "bottom"
+    left = "left"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerBindPositionChoice))
+
+
 class LayerGroupChoice(str, Enum):
     input = "input"
     middle = "middle"
     output = "output"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerGroupChoice))
 
 
 class LayerTypeChoice(str, Enum):
@@ -73,3 +88,17 @@ class LayerTypeChoice(str, Enum):
     ThresholdedReLU = "ThresholdedReLU"
     Rescaling = "Rescaling"
     Resizing = "Resizing"
+    InceptionV3 = "InceptionV3"
+    Xception = "Xception"
+    VGG16 = "VGG16"
+    ResNet50 = "ResNet50"
+    CustomUNETBlock = "CustomUNETBlock"
+    YOLOResBlock = "YOLOResBlock"
+    YOLOConvBlock = "YOLOConvBlock"
+    VAEBlock = "VAEBlock"
+    CustomBlock = "CustomBlock"
+    SpaceToDepth = "SpaceToDepth"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, LayerTypeChoice))

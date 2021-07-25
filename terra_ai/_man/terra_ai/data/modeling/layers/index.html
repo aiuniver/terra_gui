@@ -368,12 +368,12 @@ class LayerBatchNormalizationData(LayerMixinData):
     )
 
 
-class ParametersTypeMishData(LayerMixinData):
+class LayerMishData(LayerMixinData):
     main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
     extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()
 
 
-class ParametersTypeInstanceNormalizationData(LayerMixinData):
+class LayerInstanceNormalizationData(LayerMixinData):
     main: types.InstanceNormalization.ParametersMainData = (
         types.InstanceNormalization.ParametersMainData()
     )
@@ -382,7 +382,7 @@ class ParametersTypeInstanceNormalizationData(LayerMixinData):
     )
 
 
-class ParametersTypeZeroPadding2DData(LayerMixinData):
+class LayerZeroPadding2DData(LayerMixinData):
     main: types.ZeroPadding2D.ParametersMainData = (
         types.ZeroPadding2D.ParametersMainData(padding=((1, 1), (1, 1)))
     )
@@ -391,24 +391,24 @@ class ParametersTypeZeroPadding2DData(LayerMixinData):
     )
 
 
-class ParametersTypeCropping2DData(LayerMixinData):
+class LayerCropping2DData(LayerMixinData):
     main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
-        cropping=((1, 1), (1, 1))
+        cropping=((0, 0), (0, 0))
     )
     extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()
 
 
-class ParametersTypeAttentionData(LayerMixinData):
+class LayerAttentionData(LayerMixinData):
     main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
     extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()
 
 
-class ParametersTypeAverageData(LayerMixinData):
+class LayerAverageData(LayerMixinData):
     main: types.Average.ParametersMainData = types.Average.ParametersMainData()
     extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()
 
 
-class ParametersTypeThresholdedReLUData(LayerMixinData):
+class LayerThresholdedReLUData(LayerMixinData):
     main: types.ThresholdedReLU.ParametersMainData = (
         types.ThresholdedReLU.ParametersMainData()
     )
@@ -417,14 +417,82 @@ class ParametersTypeThresholdedReLUData(LayerMixinData):
     )
 
 
-class ParametersTypeRescalingData(LayerMixinData):
+class LayerRescalingData(LayerMixinData):
     main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
     extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()
 
 
-class ParametersTypeResizingData(LayerMixinData):
+class LayerResizingData(LayerMixinData):
     main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
     extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()
+
+
+class LayerInceptionV3Data(LayerMixinData):
+    main: types.InceptionV3.ParametersMainData = types.InceptionV3.ParametersMainData()
+    extra: types.InceptionV3.ParametersExtraData = (
+        types.InceptionV3.ParametersExtraData()
+    )
+
+
+class LayerXceptionData(LayerMixinData):
+    main: types.Xception.ParametersMainData = types.Xception.ParametersMainData()
+    extra: types.Xception.ParametersExtraData = types.Xception.ParametersExtraData()
+
+
+class LayerVGG16Data(LayerMixinData):
+    main: types.VGG16.ParametersMainData = types.VGG16.ParametersMainData()
+    extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()
+
+
+class LayerResNet50Data(LayerMixinData):
+    main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
+    extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()
+
+
+class LayerCustomUNETBlockData(LayerMixinData):
+    main: types.CustomUNETBlock.ParametersMainData = (
+        types.CustomUNETBlock.ParametersMainData()
+    )
+    extra: types.CustomUNETBlock.ParametersExtraData = (
+        types.CustomUNETBlock.ParametersExtraData()
+    )
+
+
+class LayerYOLOResBlockData(LayerMixinData):
+    main: types.YOLOResBlock.ParametersMainData = (
+        types.YOLOResBlock.ParametersMainData()
+    )
+    extra: types.YOLOResBlock.ParametersExtraData = (
+        types.YOLOResBlock.ParametersExtraData()
+    )
+
+
+class LayerYOLOConvBlockData(LayerMixinData):
+    main: types.YOLOConvBlock.ParametersMainData = (
+        types.YOLOConvBlock.ParametersMainData()
+    )
+    extra: types.YOLOConvBlock.ParametersExtraData = (
+        types.YOLOConvBlock.ParametersExtraData()
+    )
+
+
+class LayerVAEBlockData(LayerMixinData):
+    main: types.VAEBlock.ParametersMainData = types.VAEBlock.ParametersMainData()
+    extra: types.VAEBlock.ParametersExtraData = types.VAEBlock.ParametersExtraData()
+
+
+class LayerCustomBlockData(LayerMixinData):
+    main: types.CustomBlock.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.CustomBlock.ParametersExtraData = (
+        types.CustomBlock.ParametersExtraData()
+    )
+
+
+class LayerSpaceToDepthData(LayerMixinData):
+    main: types.SpaceToDepth.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.SpaceToDepth.ParametersExtraData = (
+        types.CustomBlock.ParametersExtraData()
+    )
 
 
 Layer = Enum(
@@ -534,6 +602,14 @@ Layer = Enum(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.layers.Layer.CustomBlock"><code class="name">var <span class="ident">CustomBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.CustomUNETBlock"><code class="name">var <span class="ident">CustomUNETBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.Layer.Dense"><code class="name">var <span class="ident">Dense</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -583,6 +659,10 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.Layer.GlobalMaxPool3D"><code class="name">var <span class="ident">GlobalMaxPool3D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.InceptionV3"><code class="name">var <span class="ident">InceptionV3</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -638,6 +718,10 @@ Layer = Enum(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.layers.Layer.ResNet50"><code class="name">var <span class="ident">ResNet50</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.Layer.Rescaling"><code class="name">var <span class="ident">Rescaling</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -662,6 +746,10 @@ Layer = Enum(
 <dd>
 <div class="desc"></div>
 </dd>
+<dt id="terra_ai.data.modeling.layers.Layer.SpaceToDepth"><code class="name">var <span class="ident">SpaceToDepth</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
 <dt id="terra_ai.data.modeling.layers.Layer.ThresholdedReLU"><code class="name">var <span class="ident">ThresholdedReLU</span></code></dt>
 <dd>
 <div class="desc"></div>
@@ -675,6 +763,26 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.Layer.UpSampling3D"><code class="name">var <span class="ident">UpSampling3D</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.VAEBlock"><code class="name">var <span class="ident">VAEBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.VGG16"><code class="name">var <span class="ident">VGG16</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.Xception"><code class="name">var <span class="ident">Xception</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.YOLOConvBlock"><code class="name">var <span class="ident">YOLOConvBlock</span></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.Layer.YOLOResBlock"><code class="name">var <span class="ident">YOLOResBlock</span></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -759,6 +867,92 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.LayerAddData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Add.ParametersMainData" href="types/Add.html#terra_ai.data.modeling.layers.types.Add.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerAttentionData"><code class="flex name class">
+<span>class <span class="ident">LayerAttentionData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerAttentionData(LayerMixinData):
+    main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
+    extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerAttentionData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Attention.ParametersExtraData" href="types/Attention.html#terra_ai.data.modeling.layers.types.Attention.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerAttentionData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Attention.ParametersMainData" href="types/Attention.html#terra_ai.data.modeling.layers.types.Attention.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerAverageData"><code class="flex name class">
+<span>class <span class="ident">LayerAverageData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerAverageData(LayerMixinData):
+    main: types.Average.ParametersMainData = types.Average.ParametersMainData()
+    extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerAverageData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Average.ParametersExtraData" href="types/Average.html#terra_ai.data.modeling.layers.types.Average.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerAverageData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Average.ParametersMainData" href="types/Average.html#terra_ai.data.modeling.layers.types.Average.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1299,6 +1493,143 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.LayerConv3DTransposeData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Conv3DTranspose.ParametersMainData" href="types/Conv3DTranspose.html#terra_ai.data.modeling.layers.types.Conv3DTranspose.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCropping2DData"><code class="flex name class">
+<span>class <span class="ident">LayerCropping2DData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerCropping2DData(LayerMixinData):
+    main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
+        cropping=((0, 0), (0, 0))
+    )
+    extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerCropping2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Cropping2D.ParametersExtraData" href="types/Cropping2D.html#terra_ai.data.modeling.layers.types.Cropping2D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCropping2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Cropping2D.ParametersMainData" href="types/Cropping2D.html#terra_ai.data.modeling.layers.types.Cropping2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCustomBlockData"><code class="flex name class">
+<span>class <span class="ident">LayerCustomBlockData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerCustomBlockData(LayerMixinData):
+    main: types.CustomBlock.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.CustomBlock.ParametersExtraData = (
+        types.CustomBlock.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerCustomBlockData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.CustomBlock.ParametersExtraData" href="types/CustomBlock.html#terra_ai.data.modeling.layers.types.CustomBlock.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCustomBlockData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.CustomBlock.ParametersMainData" href="types/CustomBlock.html#terra_ai.data.modeling.layers.types.CustomBlock.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCustomUNETBlockData"><code class="flex name class">
+<span>class <span class="ident">LayerCustomUNETBlockData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerCustomUNETBlockData(LayerMixinData):
+    main: types.CustomUNETBlock.ParametersMainData = (
+        types.CustomUNETBlock.ParametersMainData()
+    )
+    extra: types.CustomUNETBlock.ParametersExtraData = (
+        types.CustomUNETBlock.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerCustomUNETBlockData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.CustomUNETBlock.ParametersExtraData" href="types/CustomUNETBlock.html#terra_ai.data.modeling.layers.types.CustomUNETBlock.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerCustomUNETBlockData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.CustomUNETBlock.ParametersMainData" href="types/CustomUNETBlock.html#terra_ai.data.modeling.layers.types.CustomUNETBlock.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -1968,6 +2299,51 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.layers.LayerInceptionV3Data"><code class="flex name class">
+<span>class <span class="ident">LayerInceptionV3Data</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerInceptionV3Data(LayerMixinData):
+    main: types.InceptionV3.ParametersMainData = types.InceptionV3.ParametersMainData()
+    extra: types.InceptionV3.ParametersExtraData = (
+        types.InceptionV3.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerInceptionV3Data.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.InceptionV3.ParametersExtraData" href="types/InceptionV3.html#terra_ai.data.modeling.layers.types.InceptionV3.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerInceptionV3Data.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.InceptionV3.ParametersMainData" href="types/InceptionV3.html#terra_ai.data.modeling.layers.types.InceptionV3.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.layers.LayerInputData"><code class="flex name class">
 <span>class <span class="ident">LayerInputData</span></span>
 <span>(</span><span>**data)</span>
@@ -1998,6 +2374,53 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.LayerInputData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Input.ParametersMainData" href="types/Input.html#terra_ai.data.modeling.layers.types.Input.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerInstanceNormalizationData"><code class="flex name class">
+<span>class <span class="ident">LayerInstanceNormalizationData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerInstanceNormalizationData(LayerMixinData):
+    main: types.InstanceNormalization.ParametersMainData = (
+        types.InstanceNormalization.ParametersMainData()
+    )
+    extra: types.InstanceNormalization.ParametersExtraData = (
+        types.InstanceNormalization.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerInstanceNormalizationData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersExtraData" href="types/InstanceNormalization.html#terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerInstanceNormalizationData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersMainData" href="types/InstanceNormalization.html#terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2257,6 +2680,49 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.layers.LayerMishData"><code class="flex name class">
+<span>class <span class="ident">LayerMishData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerMishData(LayerMixinData):
+    main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
+    extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerMishData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Mish.ParametersExtraData" href="types/Mish.html#terra_ai.data.modeling.layers.types.Mish.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerMishData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Mish.ParametersMainData" href="types/Mish.html#terra_ai.data.modeling.layers.types.Mish.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.layers.LayerMixinData"><code class="flex name class">
 <span>class <span class="ident">LayerMixinData</span></span>
 <span>(</span><span>**data)</span>
@@ -2283,6 +2749,8 @@ Layer = Enum(
 <ul class="hlist">
 <li><a title="terra_ai.data.modeling.layers.LayerActivationData" href="#terra_ai.data.modeling.layers.LayerActivationData">LayerActivationData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerAddData" href="#terra_ai.data.modeling.layers.LayerAddData">LayerAddData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerAttentionData" href="#terra_ai.data.modeling.layers.LayerAttentionData">LayerAttentionData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerAverageData" href="#terra_ai.data.modeling.layers.LayerAverageData">LayerAverageData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerAveragePooling1DData" href="#terra_ai.data.modeling.layers.LayerAveragePooling1DData">LayerAveragePooling1DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerAveragePooling2DData" href="#terra_ai.data.modeling.layers.LayerAveragePooling2DData">LayerAveragePooling2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerAveragePooling3DData" href="#terra_ai.data.modeling.layers.LayerAveragePooling3DData">LayerAveragePooling3DData</a></li>
@@ -2294,6 +2762,9 @@ Layer = Enum(
 <li><a title="terra_ai.data.modeling.layers.LayerConv2DTransposeData" href="#terra_ai.data.modeling.layers.LayerConv2DTransposeData">LayerConv2DTransposeData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerConv3DData" href="#terra_ai.data.modeling.layers.LayerConv3DData">LayerConv3DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerConv3DTransposeData" href="#terra_ai.data.modeling.layers.LayerConv3DTransposeData">LayerConv3DTransposeData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerCropping2DData" href="#terra_ai.data.modeling.layers.LayerCropping2DData">LayerCropping2DData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerCustomBlockData" href="#terra_ai.data.modeling.layers.LayerCustomBlockData">LayerCustomBlockData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerCustomUNETBlockData" href="#terra_ai.data.modeling.layers.LayerCustomUNETBlockData">LayerCustomUNETBlockData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerDenseData" href="#terra_ai.data.modeling.layers.LayerDenseData">LayerDenseData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerDepthwiseConv2DData" href="#terra_ai.data.modeling.layers.LayerDepthwiseConv2DData">LayerDepthwiseConv2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerDropoutData" href="#terra_ai.data.modeling.layers.LayerDropoutData">LayerDropoutData</a></li>
@@ -2307,32 +2778,37 @@ Layer = Enum(
 <li><a title="terra_ai.data.modeling.layers.LayerGlobalMaxPool1DData" href="#terra_ai.data.modeling.layers.LayerGlobalMaxPool1DData">LayerGlobalMaxPool1DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerGlobalMaxPool2DData" href="#terra_ai.data.modeling.layers.LayerGlobalMaxPool2DData">LayerGlobalMaxPool2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerGlobalMaxPool3DData" href="#terra_ai.data.modeling.layers.LayerGlobalMaxPool3DData">LayerGlobalMaxPool3DData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerInceptionV3Data" href="#terra_ai.data.modeling.layers.LayerInceptionV3Data">LayerInceptionV3Data</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerInputData" href="#terra_ai.data.modeling.layers.LayerInputData">LayerInputData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerInstanceNormalizationData" href="#terra_ai.data.modeling.layers.LayerInstanceNormalizationData">LayerInstanceNormalizationData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerLSTMData" href="#terra_ai.data.modeling.layers.LayerLSTMData">LayerLSTMData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerLeakyReLUData" href="#terra_ai.data.modeling.layers.LayerLeakyReLUData">LayerLeakyReLUData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerMaxPool1DData" href="#terra_ai.data.modeling.layers.LayerMaxPool1DData">LayerMaxPool1DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerMaxPool2DData" href="#terra_ai.data.modeling.layers.LayerMaxPool2DData">LayerMaxPool2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerMaxPool3DData" href="#terra_ai.data.modeling.layers.LayerMaxPool3DData">LayerMaxPool3DData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerMishData" href="#terra_ai.data.modeling.layers.LayerMishData">LayerMishData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerMultiplyData" href="#terra_ai.data.modeling.layers.LayerMultiplyData">LayerMultiplyData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerPReLUData" href="#terra_ai.data.modeling.layers.LayerPReLUData">LayerPReLUData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerReLUData" href="#terra_ai.data.modeling.layers.LayerReLUData">LayerReLUData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerRepeatVectorData" href="#terra_ai.data.modeling.layers.LayerRepeatVectorData">LayerRepeatVectorData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerResNet50Data" href="#terra_ai.data.modeling.layers.LayerResNet50Data">LayerResNet50Data</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerRescalingData" href="#terra_ai.data.modeling.layers.LayerRescalingData">LayerRescalingData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerReshapeData" href="#terra_ai.data.modeling.layers.LayerReshapeData">LayerReshapeData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerResizingData" href="#terra_ai.data.modeling.layers.LayerResizingData">LayerResizingData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerSeparableConv1DData" href="#terra_ai.data.modeling.layers.LayerSeparableConv1DData">LayerSeparableConv1DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerSeparableConv2DData" href="#terra_ai.data.modeling.layers.LayerSeparableConv2DData">LayerSeparableConv2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerSoftmaxData" href="#terra_ai.data.modeling.layers.LayerSoftmaxData">LayerSoftmaxData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerSpaceToDepthData" href="#terra_ai.data.modeling.layers.LayerSpaceToDepthData">LayerSpaceToDepthData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerThresholdedReLUData" href="#terra_ai.data.modeling.layers.LayerThresholdedReLUData">LayerThresholdedReLUData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerUpSampling1DData" href="#terra_ai.data.modeling.layers.LayerUpSampling1DData">LayerUpSampling1DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerUpSampling2DData" href="#terra_ai.data.modeling.layers.LayerUpSampling2DData">LayerUpSampling2DData</a></li>
 <li><a title="terra_ai.data.modeling.layers.LayerUpSampling3DData" href="#terra_ai.data.modeling.layers.LayerUpSampling3DData">LayerUpSampling3DData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeAttentionData" href="#terra_ai.data.modeling.layers.ParametersTypeAttentionData">ParametersTypeAttentionData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeAverageData" href="#terra_ai.data.modeling.layers.ParametersTypeAverageData">ParametersTypeAverageData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeCropping2DData" href="#terra_ai.data.modeling.layers.ParametersTypeCropping2DData">ParametersTypeCropping2DData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData" href="#terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData">ParametersTypeInstanceNormalizationData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeMishData" href="#terra_ai.data.modeling.layers.ParametersTypeMishData">ParametersTypeMishData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeRescalingData" href="#terra_ai.data.modeling.layers.ParametersTypeRescalingData">ParametersTypeRescalingData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeResizingData" href="#terra_ai.data.modeling.layers.ParametersTypeResizingData">ParametersTypeResizingData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData" href="#terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData">ParametersTypeThresholdedReLUData</a></li>
-<li><a title="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData" href="#terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData">ParametersTypeZeroPadding2DData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerVAEBlockData" href="#terra_ai.data.modeling.layers.LayerVAEBlockData">LayerVAEBlockData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerVGG16Data" href="#terra_ai.data.modeling.layers.LayerVGG16Data">LayerVGG16Data</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerXceptionData" href="#terra_ai.data.modeling.layers.LayerXceptionData">LayerXceptionData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerYOLOConvBlockData" href="#terra_ai.data.modeling.layers.LayerYOLOConvBlockData">LayerYOLOConvBlockData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerYOLOResBlockData" href="#terra_ai.data.modeling.layers.LayerYOLOResBlockData">LayerYOLOResBlockData</a></li>
+<li><a title="terra_ai.data.modeling.layers.LayerZeroPadding2DData" href="#terra_ai.data.modeling.layers.LayerZeroPadding2DData">LayerZeroPadding2DData</a></li>
 </ul>
 <h3>Class variables</h3>
 <dl>
@@ -2530,6 +3006,92 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
+<dt id="terra_ai.data.modeling.layers.LayerResNet50Data"><code class="flex name class">
+<span>class <span class="ident">LayerResNet50Data</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerResNet50Data(LayerMixinData):
+    main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
+    extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerResNet50Data.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.ResNet50.ParametersExtraData" href="types/ResNet50.html#terra_ai.data.modeling.layers.types.ResNet50.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerResNet50Data.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.ResNet50.ParametersMainData" href="types/ResNet50.html#terra_ai.data.modeling.layers.types.ResNet50.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerRescalingData"><code class="flex name class">
+<span>class <span class="ident">LayerRescalingData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerRescalingData(LayerMixinData):
+    main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
+    extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerRescalingData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Rescaling.ParametersExtraData" href="types/Rescaling.html#terra_ai.data.modeling.layers.types.Rescaling.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerRescalingData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Rescaling.ParametersMainData" href="types/Rescaling.html#terra_ai.data.modeling.layers.types.Rescaling.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
 <dt id="terra_ai.data.modeling.layers.LayerReshapeData"><code class="flex name class">
 <span>class <span class="ident">LayerReshapeData</span></span>
 <span>(</span><span>**data)</span>
@@ -2560,6 +3122,49 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.LayerReshapeData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Reshape.ParametersMainData" href="types/Reshape.html#terra_ai.data.modeling.layers.types.Reshape.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerResizingData"><code class="flex name class">
+<span>class <span class="ident">LayerResizingData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerResizingData(LayerMixinData):
+    main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
+    extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerResizingData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Resizing.ParametersExtraData" href="types/Resizing.html#terra_ai.data.modeling.layers.types.Resizing.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerResizingData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Resizing.ParametersMainData" href="types/Resizing.html#terra_ai.data.modeling.layers.types.Resizing.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2697,6 +3302,98 @@ Layer = Enum(
 <div class="desc"></div>
 </dd>
 <dt id="terra_ai.data.modeling.layers.LayerSoftmaxData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Softmax.ParametersMainData" href="types/Softmax.html#terra_ai.data.modeling.layers.types.Softmax.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerSpaceToDepthData"><code class="flex name class">
+<span>class <span class="ident">LayerSpaceToDepthData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerSpaceToDepthData(LayerMixinData):
+    main: types.SpaceToDepth.ParametersMainData = types.CustomBlock.ParametersMainData()
+    extra: types.SpaceToDepth.ParametersExtraData = (
+        types.CustomBlock.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerSpaceToDepthData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.SpaceToDepth.ParametersExtraData" href="types/SpaceToDepth.html#terra_ai.data.modeling.layers.types.SpaceToDepth.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerSpaceToDepthData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.SpaceToDepth.ParametersMainData" href="types/SpaceToDepth.html#terra_ai.data.modeling.layers.types.SpaceToDepth.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerThresholdedReLUData"><code class="flex name class">
+<span>class <span class="ident">LayerThresholdedReLUData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerThresholdedReLUData(LayerMixinData):
+    main: types.ThresholdedReLU.ParametersMainData = (
+        types.ThresholdedReLU.ParametersMainData()
+    )
+    extra: types.ThresholdedReLU.ParametersExtraData = (
+        types.ThresholdedReLU.ParametersExtraData()
+    )</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerThresholdedReLUData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersExtraData" href="types/ThresholdedReLU.html#terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerThresholdedReLUData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersMainData" href="types/ThresholdedReLU.html#terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2851,8 +3548,8 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAttentionData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeAttentionData</span></span>
+<dt id="terra_ai.data.modeling.layers.LayerVAEBlockData"><code class="flex name class">
+<span>class <span class="ident">LayerVAEBlockData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -2863,9 +3560,9 @@ Layer = Enum(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeAttentionData(LayerMixinData):
-    main: types.Attention.ParametersMainData = types.Attention.ParametersMainData()
-    extra: types.Attention.ParametersExtraData = types.Attention.ParametersExtraData()</code></pre>
+<pre><code class="python">class LayerVAEBlockData(LayerMixinData):
+    main: types.VAEBlock.ParametersMainData = types.VAEBlock.ParametersMainData()
+    extra: types.VAEBlock.ParametersExtraData = types.VAEBlock.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2876,11 +3573,11 @@ Layer = Enum(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAttentionData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Attention.ParametersExtraData" href="types/Attention.html#terra_ai.data.modeling.layers.types.Attention.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerVAEBlockData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.VAEBlock.ParametersExtraData" href="types/VAEBlock.html#terra_ai.data.modeling.layers.types.VAEBlock.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAttentionData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Attention.ParametersMainData" href="types/Attention.html#terra_ai.data.modeling.layers.types.Attention.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerVAEBlockData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.VAEBlock.ParametersMainData" href="types/VAEBlock.html#terra_ai.data.modeling.layers.types.VAEBlock.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2894,8 +3591,8 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAverageData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeAverageData</span></span>
+<dt id="terra_ai.data.modeling.layers.LayerVGG16Data"><code class="flex name class">
+<span>class <span class="ident">LayerVGG16Data</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -2906,9 +3603,9 @@ Layer = Enum(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeAverageData(LayerMixinData):
-    main: types.Average.ParametersMainData = types.Average.ParametersMainData()
-    extra: types.Average.ParametersExtraData = types.Average.ParametersExtraData()</code></pre>
+<pre><code class="python">class LayerVGG16Data(LayerMixinData):
+    main: types.VGG16.ParametersMainData = types.VGG16.ParametersMainData()
+    extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2919,11 +3616,11 @@ Layer = Enum(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAverageData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Average.ParametersExtraData" href="types/Average.html#terra_ai.data.modeling.layers.types.Average.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerVGG16Data.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.VGG16.ParametersExtraData" href="types/VGG16.html#terra_ai.data.modeling.layers.types.VGG16.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeAverageData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Average.ParametersMainData" href="types/Average.html#terra_ai.data.modeling.layers.types.Average.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerVGG16Data.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.VGG16.ParametersMainData" href="types/VGG16.html#terra_ai.data.modeling.layers.types.VGG16.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -2937,8 +3634,8 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeCropping2DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeCropping2DData</span></span>
+<dt id="terra_ai.data.modeling.layers.LayerXceptionData"><code class="flex name class">
+<span>class <span class="ident">LayerXceptionData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -2949,57 +3646,55 @@ Layer = Enum(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeCropping2DData(LayerMixinData):
-    main: types.Cropping2D.ParametersMainData = types.Cropping2D.ParametersMainData(
-        cropping=((1, 1), (1, 1))
+<pre><code class="python">class LayerXceptionData(LayerMixinData):
+    main: types.Xception.ParametersMainData = types.Xception.ParametersMainData()
+    extra: types.Xception.ParametersExtraData = types.Xception.ParametersExtraData()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
+<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
+<li>pydantic.main.BaseModel</li>
+<li>pydantic.utils.Representation</li>
+</ul>
+<h3>Class variables</h3>
+<dl>
+<dt id="terra_ai.data.modeling.layers.LayerXceptionData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Xception.ParametersExtraData" href="types/Xception.html#terra_ai.data.modeling.layers.types.Xception.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerXceptionData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Xception.ParametersMainData" href="types/Xception.html#terra_ai.data.modeling.layers.types.Xception.ParametersMainData">ParametersMainData</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
+<ul class="hlist">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOConvBlockData"><code class="flex name class">
+<span>class <span class="ident">LayerYOLOConvBlockData</span></span>
+<span>(</span><span>**data)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LayerYOLOConvBlockData(LayerMixinData):
+    main: types.YOLOConvBlock.ParametersMainData = (
+        types.YOLOConvBlock.ParametersMainData()
     )
-    extra: types.Cropping2D.ParametersExtraData = types.Cropping2D.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeCropping2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Cropping2D.ParametersExtraData" href="types/Cropping2D.html#terra_ai.data.modeling.layers.types.Cropping2D.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeCropping2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Cropping2D.ParametersMainData" href="types/Cropping2D.html#terra_ai.data.modeling.layers.types.Cropping2D.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeInstanceNormalizationData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeInstanceNormalizationData(LayerMixinData):
-    main: types.InstanceNormalization.ParametersMainData = (
-        types.InstanceNormalization.ParametersMainData()
-    )
-    extra: types.InstanceNormalization.ParametersExtraData = (
-        types.InstanceNormalization.ParametersExtraData()
+    extra: types.YOLOConvBlock.ParametersExtraData = (
+        types.YOLOConvBlock.ParametersExtraData()
     )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -3011,54 +3706,11 @@ Layer = Enum(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersExtraData" href="types/InstanceNormalization.html#terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOConvBlockData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.YOLOConvBlock.ParametersExtraData" href="types/YOLOConvBlock.html#terra_ai.data.modeling.layers.types.YOLOConvBlock.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersMainData" href="types/InstanceNormalization.html#terra_ai.data.modeling.layers.types.InstanceNormalization.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeMishData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeMishData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeMishData(LayerMixinData):
-    main: types.Mish.ParametersMainData = types.Mish.ParametersMainData()
-    extra: types.Mish.ParametersExtraData = types.Mish.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeMishData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Mish.ParametersExtraData" href="types/Mish.html#terra_ai.data.modeling.layers.types.Mish.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeMishData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Mish.ParametersMainData" href="types/Mish.html#terra_ai.data.modeling.layers.types.Mish.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOConvBlockData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.YOLOConvBlock.ParametersMainData" href="types/YOLOConvBlock.html#terra_ai.data.modeling.layers.types.YOLOConvBlock.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -3072,8 +3724,8 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeRescalingData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeRescalingData</span></span>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOResBlockData"><code class="flex name class">
+<span>class <span class="ident">LayerYOLOResBlockData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -3084,98 +3736,12 @@ Layer = Enum(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeRescalingData(LayerMixinData):
-    main: types.Rescaling.ParametersMainData = types.Rescaling.ParametersMainData()
-    extra: types.Rescaling.ParametersExtraData = types.Rescaling.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeRescalingData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Rescaling.ParametersExtraData" href="types/Rescaling.html#terra_ai.data.modeling.layers.types.Rescaling.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeRescalingData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Rescaling.ParametersMainData" href="types/Rescaling.html#terra_ai.data.modeling.layers.types.Rescaling.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeResizingData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeResizingData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeResizingData(LayerMixinData):
-    main: types.Resizing.ParametersMainData = types.Resizing.ParametersMainData()
-    extra: types.Resizing.ParametersExtraData = types.Resizing.ParametersExtraData()</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></li>
-<li><a title="terra_ai.data.mixins.BaseMixinData" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData">BaseMixinData</a></li>
-<li>pydantic.main.BaseModel</li>
-<li>pydantic.utils.Representation</li>
-</ul>
-<h3>Class variables</h3>
-<dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeResizingData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.Resizing.ParametersExtraData" href="types/Resizing.html#terra_ai.data.modeling.layers.types.Resizing.ParametersExtraData">ParametersExtraData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeResizingData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.Resizing.ParametersMainData" href="types/Resizing.html#terra_ai.data.modeling.layers.types.Resizing.ParametersMainData">ParametersMainData</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></b></code>:
-<ul class="hlist">
-<li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.dict" href="../../mixins.html#terra_ai.data.mixins.BaseMixinData.dict">dict</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeThresholdedReLUData</span></span>
-<span>(</span><span>**data)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Базовая модель, которая должна применяться ко всем структурам.</p>
-<p>Create a new model by parsing and validating input data from keyword arguments.</p>
-<p>Raises ValidationError if the input data cannot be parsed to form a valid model.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ParametersTypeThresholdedReLUData(LayerMixinData):
-    main: types.ThresholdedReLU.ParametersMainData = (
-        types.ThresholdedReLU.ParametersMainData()
+<pre><code class="python">class LayerYOLOResBlockData(LayerMixinData):
+    main: types.YOLOResBlock.ParametersMainData = (
+        types.YOLOResBlock.ParametersMainData()
     )
-    extra: types.ThresholdedReLU.ParametersExtraData = (
-        types.ThresholdedReLU.ParametersExtraData()
+    extra: types.YOLOResBlock.ParametersExtraData = (
+        types.YOLOResBlock.ParametersExtraData()
     )</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -3187,11 +3753,11 @@ Layer = Enum(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersExtraData" href="types/ThresholdedReLU.html#terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOResBlockData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.YOLOResBlock.ParametersExtraData" href="types/YOLOResBlock.html#terra_ai.data.modeling.layers.types.YOLOResBlock.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersMainData" href="types/ThresholdedReLU.html#terra_ai.data.modeling.layers.types.ThresholdedReLU.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerYOLOResBlockData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.YOLOResBlock.ParametersMainData" href="types/YOLOResBlock.html#terra_ai.data.modeling.layers.types.YOLOResBlock.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -3205,8 +3771,8 @@ Layer = Enum(
 </li>
 </ul>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData"><code class="flex name class">
-<span>class <span class="ident">ParametersTypeZeroPadding2DData</span></span>
+<dt id="terra_ai.data.modeling.layers.LayerZeroPadding2DData"><code class="flex name class">
+<span>class <span class="ident">LayerZeroPadding2DData</span></span>
 <span>(</span><span>**data)</span>
 </code></dt>
 <dd>
@@ -3217,7 +3783,7 @@ Layer = Enum(
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ParametersTypeZeroPadding2DData(LayerMixinData):
+<pre><code class="python">class LayerZeroPadding2DData(LayerMixinData):
     main: types.ZeroPadding2D.ParametersMainData = (
         types.ZeroPadding2D.ParametersMainData(padding=((1, 1), (1, 1)))
     )
@@ -3234,11 +3800,11 @@ Layer = Enum(
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersExtraData" href="types/ZeroPadding2D.html#terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersExtraData">ParametersExtraData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerZeroPadding2DData.extra"><code class="name">var <span class="ident">extra</span> : <a title="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersExtraData" href="types/ZeroPadding2D.html#terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersExtraData">ParametersExtraData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt id="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData" href="types/ZeroPadding2D.html#terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData">ParametersMainData</a></code></dt>
+<dt id="terra_ai.data.modeling.layers.LayerZeroPadding2DData.main"><code class="name">var <span class="ident">main</span> : <a title="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData" href="types/ZeroPadding2D.html#terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData">ParametersMainData</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -3295,6 +3861,8 @@ Layer = Enum(
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Conv3D" href="#terra_ai.data.modeling.layers.Layer.Conv3D">Conv3D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Conv3DTranspose" href="#terra_ai.data.modeling.layers.Layer.Conv3DTranspose">Conv3DTranspose</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Cropping2D" href="#terra_ai.data.modeling.layers.Layer.Cropping2D">Cropping2D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.CustomBlock" href="#terra_ai.data.modeling.layers.Layer.CustomBlock">CustomBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.CustomUNETBlock" href="#terra_ai.data.modeling.layers.Layer.CustomUNETBlock">CustomUNETBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Dense" href="#terra_ai.data.modeling.layers.Layer.Dense">Dense</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.DepthwiseConv2D" href="#terra_ai.data.modeling.layers.Layer.DepthwiseConv2D">DepthwiseConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Dropout" href="#terra_ai.data.modeling.layers.Layer.Dropout">Dropout</a></code></li>
@@ -3308,6 +3876,7 @@ Layer = Enum(
 <li><code><a title="terra_ai.data.modeling.layers.Layer.GlobalMaxPool1D" href="#terra_ai.data.modeling.layers.Layer.GlobalMaxPool1D">GlobalMaxPool1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.GlobalMaxPool2D" href="#terra_ai.data.modeling.layers.Layer.GlobalMaxPool2D">GlobalMaxPool2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.GlobalMaxPool3D" href="#terra_ai.data.modeling.layers.Layer.GlobalMaxPool3D">GlobalMaxPool3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.InceptionV3" href="#terra_ai.data.modeling.layers.Layer.InceptionV3">InceptionV3</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Input" href="#terra_ai.data.modeling.layers.Layer.Input">Input</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.InstanceNormalization" href="#terra_ai.data.modeling.layers.Layer.InstanceNormalization">InstanceNormalization</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.LSTM" href="#terra_ai.data.modeling.layers.Layer.LSTM">LSTM</a></code></li>
@@ -3321,16 +3890,23 @@ Layer = Enum(
 <li><code><a title="terra_ai.data.modeling.layers.Layer.PReLU" href="#terra_ai.data.modeling.layers.Layer.PReLU">PReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.ReLU" href="#terra_ai.data.modeling.layers.Layer.ReLU">ReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.RepeatVector" href="#terra_ai.data.modeling.layers.Layer.RepeatVector">RepeatVector</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.ResNet50" href="#terra_ai.data.modeling.layers.Layer.ResNet50">ResNet50</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Rescaling" href="#terra_ai.data.modeling.layers.Layer.Rescaling">Rescaling</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Reshape" href="#terra_ai.data.modeling.layers.Layer.Reshape">Reshape</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Resizing" href="#terra_ai.data.modeling.layers.Layer.Resizing">Resizing</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.SeparableConv1D" href="#terra_ai.data.modeling.layers.Layer.SeparableConv1D">SeparableConv1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.SeparableConv2D" href="#terra_ai.data.modeling.layers.Layer.SeparableConv2D">SeparableConv2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.Softmax" href="#terra_ai.data.modeling.layers.Layer.Softmax">Softmax</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.SpaceToDepth" href="#terra_ai.data.modeling.layers.Layer.SpaceToDepth">SpaceToDepth</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.ThresholdedReLU" href="#terra_ai.data.modeling.layers.Layer.ThresholdedReLU">ThresholdedReLU</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.UpSampling1D" href="#terra_ai.data.modeling.layers.Layer.UpSampling1D">UpSampling1D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.UpSampling2D" href="#terra_ai.data.modeling.layers.Layer.UpSampling2D">UpSampling2D</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.UpSampling3D" href="#terra_ai.data.modeling.layers.Layer.UpSampling3D">UpSampling3D</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.VAEBlock" href="#terra_ai.data.modeling.layers.Layer.VAEBlock">VAEBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.VGG16" href="#terra_ai.data.modeling.layers.Layer.VGG16">VGG16</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.Xception" href="#terra_ai.data.modeling.layers.Layer.Xception">Xception</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.YOLOConvBlock" href="#terra_ai.data.modeling.layers.Layer.YOLOConvBlock">YOLOConvBlock</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.Layer.YOLOResBlock" href="#terra_ai.data.modeling.layers.Layer.YOLOResBlock">YOLOResBlock</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.Layer.ZeroPadding2D" href="#terra_ai.data.modeling.layers.Layer.ZeroPadding2D">ZeroPadding2D</a></code></li>
 </ul>
 </li>
@@ -3346,6 +3922,20 @@ Layer = Enum(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerAddData.extra" href="#terra_ai.data.modeling.layers.LayerAddData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.LayerAddData.main" href="#terra_ai.data.modeling.layers.LayerAddData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerAttentionData" href="#terra_ai.data.modeling.layers.LayerAttentionData">LayerAttentionData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerAttentionData.extra" href="#terra_ai.data.modeling.layers.LayerAttentionData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerAttentionData.main" href="#terra_ai.data.modeling.layers.LayerAttentionData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerAverageData" href="#terra_ai.data.modeling.layers.LayerAverageData">LayerAverageData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerAverageData.extra" href="#terra_ai.data.modeling.layers.LayerAverageData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerAverageData.main" href="#terra_ai.data.modeling.layers.LayerAverageData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -3426,6 +4016,27 @@ Layer = Enum(
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerConv3DTransposeData.extra" href="#terra_ai.data.modeling.layers.LayerConv3DTransposeData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.LayerConv3DTransposeData.main" href="#terra_ai.data.modeling.layers.LayerConv3DTransposeData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerCropping2DData" href="#terra_ai.data.modeling.layers.LayerCropping2DData">LayerCropping2DData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerCropping2DData.extra" href="#terra_ai.data.modeling.layers.LayerCropping2DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerCropping2DData.main" href="#terra_ai.data.modeling.layers.LayerCropping2DData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerCustomBlockData" href="#terra_ai.data.modeling.layers.LayerCustomBlockData">LayerCustomBlockData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerCustomBlockData.extra" href="#terra_ai.data.modeling.layers.LayerCustomBlockData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerCustomBlockData.main" href="#terra_ai.data.modeling.layers.LayerCustomBlockData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerCustomUNETBlockData" href="#terra_ai.data.modeling.layers.LayerCustomUNETBlockData">LayerCustomUNETBlockData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerCustomUNETBlockData.extra" href="#terra_ai.data.modeling.layers.LayerCustomUNETBlockData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerCustomUNETBlockData.main" href="#terra_ai.data.modeling.layers.LayerCustomUNETBlockData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -3526,10 +4137,24 @@ Layer = Enum(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerInceptionV3Data" href="#terra_ai.data.modeling.layers.LayerInceptionV3Data">LayerInceptionV3Data</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerInceptionV3Data.extra" href="#terra_ai.data.modeling.layers.LayerInceptionV3Data.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerInceptionV3Data.main" href="#terra_ai.data.modeling.layers.LayerInceptionV3Data.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.layers.LayerInputData" href="#terra_ai.data.modeling.layers.LayerInputData">LayerInputData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerInputData.extra" href="#terra_ai.data.modeling.layers.LayerInputData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.LayerInputData.main" href="#terra_ai.data.modeling.layers.LayerInputData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerInstanceNormalizationData" href="#terra_ai.data.modeling.layers.LayerInstanceNormalizationData">LayerInstanceNormalizationData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerInstanceNormalizationData.extra" href="#terra_ai.data.modeling.layers.LayerInstanceNormalizationData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerInstanceNormalizationData.main" href="#terra_ai.data.modeling.layers.LayerInstanceNormalizationData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -3571,6 +4196,13 @@ Layer = Enum(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerMishData" href="#terra_ai.data.modeling.layers.LayerMishData">LayerMishData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerMishData.extra" href="#terra_ai.data.modeling.layers.LayerMishData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerMishData.main" href="#terra_ai.data.modeling.layers.LayerMishData.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.layers.LayerMixinData" href="#terra_ai.data.modeling.layers.LayerMixinData">LayerMixinData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerMixinData.extra" href="#terra_ai.data.modeling.layers.LayerMixinData.extra">extra</a></code></li>
@@ -3606,10 +4238,31 @@ Layer = Enum(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerResNet50Data" href="#terra_ai.data.modeling.layers.LayerResNet50Data">LayerResNet50Data</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerResNet50Data.extra" href="#terra_ai.data.modeling.layers.LayerResNet50Data.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerResNet50Data.main" href="#terra_ai.data.modeling.layers.LayerResNet50Data.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerRescalingData" href="#terra_ai.data.modeling.layers.LayerRescalingData">LayerRescalingData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerRescalingData.extra" href="#terra_ai.data.modeling.layers.LayerRescalingData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerRescalingData.main" href="#terra_ai.data.modeling.layers.LayerRescalingData.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.layers.LayerReshapeData" href="#terra_ai.data.modeling.layers.LayerReshapeData">LayerReshapeData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerReshapeData.extra" href="#terra_ai.data.modeling.layers.LayerReshapeData.extra">extra</a></code></li>
 <li><code><a title="terra_ai.data.modeling.layers.LayerReshapeData.main" href="#terra_ai.data.modeling.layers.LayerReshapeData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerResizingData" href="#terra_ai.data.modeling.layers.LayerResizingData">LayerResizingData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerResizingData.extra" href="#terra_ai.data.modeling.layers.LayerResizingData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerResizingData.main" href="#terra_ai.data.modeling.layers.LayerResizingData.main">main</a></code></li>
 </ul>
 </li>
 <li>
@@ -3634,6 +4287,20 @@ Layer = Enum(
 </ul>
 </li>
 <li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerSpaceToDepthData" href="#terra_ai.data.modeling.layers.LayerSpaceToDepthData">LayerSpaceToDepthData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerSpaceToDepthData.extra" href="#terra_ai.data.modeling.layers.LayerSpaceToDepthData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerSpaceToDepthData.main" href="#terra_ai.data.modeling.layers.LayerSpaceToDepthData.main">main</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerThresholdedReLUData" href="#terra_ai.data.modeling.layers.LayerThresholdedReLUData">LayerThresholdedReLUData</a></code></h4>
+<ul class="">
+<li><code><a title="terra_ai.data.modeling.layers.LayerThresholdedReLUData.extra" href="#terra_ai.data.modeling.layers.LayerThresholdedReLUData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerThresholdedReLUData.main" href="#terra_ai.data.modeling.layers.LayerThresholdedReLUData.main">main</a></code></li>
+</ul>
+</li>
+<li>
 <h4><code><a title="terra_ai.data.modeling.layers.LayerUpSampling1DData" href="#terra_ai.data.modeling.layers.LayerUpSampling1DData">LayerUpSampling1DData</a></code></h4>
 <ul class="">
 <li><code><a title="terra_ai.data.modeling.layers.LayerUpSampling1DData.extra" href="#terra_ai.data.modeling.layers.LayerUpSampling1DData.extra">extra</a></code></li>
@@ -3655,66 +4322,45 @@ Layer = Enum(
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeAttentionData" href="#terra_ai.data.modeling.layers.ParametersTypeAttentionData">ParametersTypeAttentionData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerVAEBlockData" href="#terra_ai.data.modeling.layers.LayerVAEBlockData">LayerVAEBlockData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeAttentionData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeAttentionData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeAttentionData.main" href="#terra_ai.data.modeling.layers.ParametersTypeAttentionData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerVAEBlockData.extra" href="#terra_ai.data.modeling.layers.LayerVAEBlockData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerVAEBlockData.main" href="#terra_ai.data.modeling.layers.LayerVAEBlockData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeAverageData" href="#terra_ai.data.modeling.layers.ParametersTypeAverageData">ParametersTypeAverageData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerVGG16Data" href="#terra_ai.data.modeling.layers.LayerVGG16Data">LayerVGG16Data</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeAverageData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeAverageData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeAverageData.main" href="#terra_ai.data.modeling.layers.ParametersTypeAverageData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerVGG16Data.extra" href="#terra_ai.data.modeling.layers.LayerVGG16Data.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerVGG16Data.main" href="#terra_ai.data.modeling.layers.LayerVGG16Data.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeCropping2DData" href="#terra_ai.data.modeling.layers.ParametersTypeCropping2DData">ParametersTypeCropping2DData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerXceptionData" href="#terra_ai.data.modeling.layers.LayerXceptionData">LayerXceptionData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeCropping2DData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeCropping2DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeCropping2DData.main" href="#terra_ai.data.modeling.layers.ParametersTypeCropping2DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerXceptionData.extra" href="#terra_ai.data.modeling.layers.LayerXceptionData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerXceptionData.main" href="#terra_ai.data.modeling.layers.LayerXceptionData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData" href="#terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData">ParametersTypeInstanceNormalizationData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerYOLOConvBlockData" href="#terra_ai.data.modeling.layers.LayerYOLOConvBlockData">LayerYOLOConvBlockData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.main" href="#terra_ai.data.modeling.layers.ParametersTypeInstanceNormalizationData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerYOLOConvBlockData.extra" href="#terra_ai.data.modeling.layers.LayerYOLOConvBlockData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerYOLOConvBlockData.main" href="#terra_ai.data.modeling.layers.LayerYOLOConvBlockData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeMishData" href="#terra_ai.data.modeling.layers.ParametersTypeMishData">ParametersTypeMishData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerYOLOResBlockData" href="#terra_ai.data.modeling.layers.LayerYOLOResBlockData">LayerYOLOResBlockData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeMishData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeMishData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeMishData.main" href="#terra_ai.data.modeling.layers.ParametersTypeMishData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerYOLOResBlockData.extra" href="#terra_ai.data.modeling.layers.LayerYOLOResBlockData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerYOLOResBlockData.main" href="#terra_ai.data.modeling.layers.LayerYOLOResBlockData.main">main</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeRescalingData" href="#terra_ai.data.modeling.layers.ParametersTypeRescalingData">ParametersTypeRescalingData</a></code></h4>
+<h4><code><a title="terra_ai.data.modeling.layers.LayerZeroPadding2DData" href="#terra_ai.data.modeling.layers.LayerZeroPadding2DData">LayerZeroPadding2DData</a></code></h4>
 <ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeRescalingData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeRescalingData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeRescalingData.main" href="#terra_ai.data.modeling.layers.ParametersTypeRescalingData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeResizingData" href="#terra_ai.data.modeling.layers.ParametersTypeResizingData">ParametersTypeResizingData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeResizingData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeResizingData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeResizingData.main" href="#terra_ai.data.modeling.layers.ParametersTypeResizingData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData" href="#terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData">ParametersTypeThresholdedReLUData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.main" href="#terra_ai.data.modeling.layers.ParametersTypeThresholdedReLUData.main">main</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData" href="#terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData">ParametersTypeZeroPadding2DData</a></code></h4>
-<ul class="">
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.extra" href="#terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.extra">extra</a></code></li>
-<li><code><a title="terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.main" href="#terra_ai.data.modeling.layers.ParametersTypeZeroPadding2DData.main">main</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerZeroPadding2DData.extra" href="#terra_ai.data.modeling.layers.LayerZeroPadding2DData.extra">extra</a></code></li>
+<li><code><a title="terra_ai.data.modeling.layers.LayerZeroPadding2DData.main" href="#terra_ai.data.modeling.layers.LayerZeroPadding2DData.main">main</a></code></li>
 </ul>
 </li>
 </ul>

@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 
+from apps.plugins.project import data_path
 from terra_ai.agent import agent_exchange
 
 from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
@@ -8,9 +9,7 @@ from .serializers import SourceLoadSerializer
 
 class InfoAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        data = agent_exchange(
-            "datasets_info", path=str(request.project.path.datasets.absolute())
-        )
+        data = agent_exchange("datasets_info", path=str(data_path.datasets))
         return BaseResponseSuccess(data)
 
 
@@ -33,7 +32,5 @@ class SourceLoadProgressAPIView(BaseAPIView):
 
 class SourcesAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        data = agent_exchange(
-            "datasets_sources", path=str(request.project.path.sources.absolute())
-        )
+        data = agent_exchange("datasets_sources", path=str(data_path.sources))
         return BaseResponseSuccess(data)

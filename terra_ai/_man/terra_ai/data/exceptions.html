@@ -38,7 +38,10 @@ from typing import Any
 class ExceptionMessages(str, Enum):
     TerraDataValue = &#34;%s: Value error&#34;
     ValueType = &#34;%s: Value must be a %s&#34;
-    AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
+    AliasException = (
+        &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, &#39;
+        &#34;must always begin with a latin character&#34;
+    )
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
     UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;
@@ -264,7 +267,10 @@ class IncorrectReferenceNameException(TerraDataException):
 <pre><code class="python">class ExceptionMessages(str, Enum):
     TerraDataValue = &#34;%s: Value error&#34;
     ValueType = &#34;%s: Value must be a %s&#34;
-    AliasException = &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, must always begin with a latin character&#39;
+    AliasException = (
+        &#39;%s: It is allowed to use only lowercase latin characters, numbers and the &#34;_&#34; sign, &#39;
+        &#34;must always begin with a latin character&#34;
+    )
     UniqueListIdentifier = &#39;Identifier &#34;%s&#34; is undefined as attribute of %s&#39;
     UniqueListUndefinedIdentifier = &#39;Identifier is undefined in &#34;%s&#34;&#39;
     PartTotal = &#34;%s: Sum of all properties must by 1&#34;

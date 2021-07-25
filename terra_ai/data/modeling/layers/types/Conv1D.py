@@ -37,8 +37,8 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    filters: PositiveInt
-    kernel_size: PositiveInt
+    filters: PositiveInt = 32
+    kernel_size: PositiveInt = 5
     strides: PositiveInt = 1
     padding: PaddingAddCausalChoice = PaddingAddCausalChoice.same
     activation: Optional[ActivationChoice] = ActivationChoice.relu

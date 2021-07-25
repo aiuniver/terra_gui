@@ -10,7 +10,11 @@ from ..extra import (
     ActivationChoice,
     InitializerChoice,
     RegularizerChoice,
-    ConstraintChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice,
+    ConstraintChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
 )
 
 LayerConfig = LayerConfigData(
@@ -30,7 +34,7 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    units: PositiveInt
+    units: PositiveInt = 32
     activation: Optional[ActivationChoice] = ActivationChoice.relu
 
 

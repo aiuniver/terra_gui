@@ -9,12 +9,15 @@ from pydantic.types import PositiveInt
 
 from ...mixins import BaseMixinData
 from ...exceptions import LayerValueConfigException
-from ...types import ConstrainedIntValueGe2
 
 
 class PaddingChoice(str, Enum):
     valid = "valid"
     same = "same"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingChoice))
 
 
 class PaddingAddCausalChoice(str, Enum):
@@ -22,10 +25,18 @@ class PaddingAddCausalChoice(str, Enum):
     same = "same"
     causal = "causal"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PaddingAddCausalChoice))
+
 
 class DataFormatChoice(str, Enum):
     channels_last = "channels_last"
     channels_first = "channels_first"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, DataFormatChoice))
 
 
 class InitializerChoice(str, Enum):
@@ -46,11 +57,19 @@ class InitializerChoice(str, Enum):
     he_normal = "he_normal"
     he_uniform = "he_uniform"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, InitializerChoice))
+
 
 class RegularizerChoice(str, Enum):
     l1 = "l1"
     l2 = "l2"
     l1_l2 = "l1_l2"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, RegularizerChoice))
 
 
 class ConstraintChoice(str, Enum):
@@ -59,6 +78,10 @@ class ConstraintChoice(str, Enum):
     non_neg = "non_neg"
     unit_norm = "unit_norm"
     radial_constraint = "radial_constraint"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ConstraintChoice))
 
 
 class ActivationChoice(str, Enum):
@@ -76,10 +99,18 @@ class ActivationChoice(str, Enum):
     swish = "swish"
     tanh = "tanh"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ActivationChoice))
+
 
 class InterpolationChoice(str, Enum):
     nearest = "nearest"
     bilinear = "bilinear"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, InterpolationChoice))
 
 
 class ResizingInterpolationChoice(str, Enum):
@@ -91,6 +122,66 @@ class ResizingInterpolationChoice(str, Enum):
     gaussian = "gaussian"
     mitchellcubic = "mitchellcubic"
 
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ResizingInterpolationChoice))
+
+
+class SpaceToDepthDataFormatChoice(str, Enum):
+    NHWC = "NHWC"
+    NCHW = "NCHW"
+    NCHW_VECT_C = "NCHW_VECT_C"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, SpaceToDepthDataFormatChoice))
+
+
+class PretrainedModelWeightsChoice(str, Enum):
+    imagenet = "imagenet"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PretrainedModelWeightsChoice))
+
+
+class PretrainedModelPoolingChoice(str, Enum):
+    max = "max"
+    avg = "avg"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, PretrainedModelPoolingChoice))
+
+
+class YOLOModeChoice(str, Enum):
+    YOLOv3 = "YOLOv3"
+    YOLOv4 = "YOLOv4"
+    YOLOv5 = "YOLOv5"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, YOLOModeChoice))
+
+
+class YOLOActivationChoice(str, Enum):
+    LeakyReLU = "LeakyReLU"
+    Mish = "Mish"
+    Swish = "Swish"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, YOLOActivationChoice))
+
+
+class VAELatentRegularizerChoice(str, Enum):
+    vae = "vae"
+    bvae = "bvae"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, VAELatentRegularizerChoice))
+
 
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
@@ -98,21 +189,34 @@ class ModuleChoice(str, Enum):
     tensorflow_keras_layers_preprocessing = (
         "tensorflow.keras.layers.experimental.preprocessing"
     )
+    tensorflow_nn = "tensorflow.nn"
+    inception_v3 = "tensorflow.keras.applications.inception_v3"
+    xception = "tensorflow.keras.applications.xception"
+    vgg16 = "tensorflow.keras.applications.vgg16"
+    resnet50 = "tensorflow.keras.applications.resnet50"
 
 
 class ModuleTypeChoice(str, Enum):
     keras = "keras"
+    tensorflow = "tensorflow"
+    keras_pretrained_model = "keras_pretrained_model"
     terra_layer = "terra_layer"
+    block_plan = "block_plan"
 
 
 class LayerValidationMethodChoice(str, Enum):
     fixed = "fixed"
     minimal = "minimal"
     dependence_tuple2 = "dependence_tuple2"
+    dependence_tuple3 = "dependence_tuple3"
 
 
 class LayerValueConfig(BaseMixinData):
-    value: Optional[Union[PositiveInt, Tuple[PositiveInt, PositiveInt]]]
+    value: Union[
+        PositiveInt,
+        Tuple[PositiveInt, PositiveInt],
+        Tuple[PositiveInt, PositiveInt, PositiveInt],
+    ]
     validation: LayerValidationMethodChoice
 
     @validator("validation")
@@ -125,18 +229,20 @@ class LayerValueConfig(BaseMixinData):
         if value == LayerValidationMethodChoice.dependence_tuple2:
             if not (isinstance(__value, tuple) and len(__value) == 2):
                 raise LayerValueConfigException(value, __value)
+        if value == LayerValidationMethodChoice.dependence_tuple3:
+            if not (isinstance(__value, tuple) and len(__value) == 3):
+                raise LayerValueConfigException(value, __value)
         if value in [
             LayerValidationMethodChoice.fixed,
             LayerValidationMethodChoice.minimal,
         ]:
             if __value and not isinstance(__value, int):
-                print(__value)
                 raise LayerValueConfigException(value, __value)
         return value
 
 
 class LayerConfigData(BaseMixinData):
-    num_uplinks: LayerValueConfig
+    num_uplinks: Optional[LayerValueConfig]
     input_dimension: LayerValueConfig
-    module: ModuleChoice
+    module: Optional[ModuleChoice]
     module_type: ModuleTypeChoice

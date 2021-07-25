@@ -7,8 +7,15 @@ from pydantic.types import PositiveFloat
 
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0Le1
-from ..extra import InitializerChoice, RegularizerChoice, ConstraintChoice, LayerConfigData, \
-    LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    InitializerChoice,
+    RegularizerChoice,
+    ConstraintChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{

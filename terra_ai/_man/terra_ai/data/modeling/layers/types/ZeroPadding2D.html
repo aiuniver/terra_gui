@@ -32,10 +32,17 @@
 &#34;&#34;&#34;
 
 from typing import Tuple
-from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ....types import ConstrainedIntValueGe0
+from ..extra import (
+    DataFormatChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
+
 
 LayerConfig = LayerConfigData(
     **{
@@ -54,7 +61,10 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    padding: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]]
+    padding: Tuple[
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+    ]
 
 
 class ParametersExtraData(BaseMixinData):
@@ -120,7 +130,10 @@ class ParametersExtraData(BaseMixinData):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class ParametersMainData(BaseMixinData):
-    padding: Tuple[Tuple[PositiveInt, PositiveInt], Tuple[PositiveInt, PositiveInt]]</code></pre>
+    padding: Tuple[
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+        Tuple[ConstrainedIntValueGe0, ConstrainedIntValueGe0],
+    ]</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -130,7 +143,7 @@ class ParametersExtraData(BaseMixinData):
 </ul>
 <h3>Class variables</h3>
 <dl>
-<dt id="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData.padding"><code class="name">var <span class="ident">padding</span> : Tuple[Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt], Tuple[pydantic.types.PositiveInt, pydantic.types.PositiveInt]]</code></dt>
+<dt id="terra_ai.data.modeling.layers.types.ZeroPadding2D.ParametersMainData.padding"><code class="name">var <span class="ident">padding</span> : Tuple[Tuple[<a title="terra_ai.data.types.ConstrainedIntValue" href="../../../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>, <a title="terra_ai.data.types.ConstrainedIntValue" href="../../../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>], Tuple[<a title="terra_ai.data.types.ConstrainedIntValue" href="../../../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>, <a title="terra_ai.data.types.ConstrainedIntValue" href="../../../types.html#terra_ai.data.types.ConstrainedIntValue">ConstrainedIntValue</a>]]</code></dt>
 <dd>
 <div class="desc"></div>
 </dd>

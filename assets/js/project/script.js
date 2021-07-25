@@ -373,10 +373,7 @@
             $(event.currentTarget).parent().toggleClass("hidden");
         });
 
-        $(".params-item.collapsable > .params-title").bind("click", (event) => {
-            event.preventDefault();
-            $(event.currentTarget).parent().toggleClass("collapsed");
-        });
+        $(".params-item.collapsable").CollapsableGroup();
 
         /**
          * Редактирование названия проекта
