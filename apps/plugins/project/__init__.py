@@ -70,11 +70,16 @@ class ProjectPathData(BaseMixinData):
         return value
 
 
+class DatasetData(BaseMixinData):
+    pass
+
+
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     hardware: HardwareAcceleratorData = HardwareAcceleratorData(
         type=HardwareAcceleratorChoice.CPU
     )
+    dataset: Optional[DatasetData]
 
     def __init__(self, save=False, **data):
         super().__init__(**data)
@@ -104,5 +109,3 @@ else:
         data = json.load(config_ref)
         data.update({"hardware": agent_exchange("hardware_accelerator")})
         project = Project(**data)
-
-print(project)
