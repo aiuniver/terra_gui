@@ -1,22 +1,9 @@
 export default {
   namespaced: true,
   state: () => ({
-    app: {
-      name: "Terra_ai_vue",
-      version: "0.0.1",
-    },
     project: {},
-    menus: [
-      { title: "Home", icon: "mdi-view-dashboard", path: "/" },
-      { title: "Datasets", icon: "mdi-account-multiple", path: "/datasets" },
-      { title: "Layers", icon: "mdi-help-box", path: "/layers" },
-    ],
-    drawer: true,
   }),
   mutations: {
-    SET_DRAWER(state, value) {
-      state.drawer = value;
-    },
     SET_PROJECT(state, value) {
       state.project = value;
     },
@@ -27,11 +14,13 @@ export default {
       if (!data) {
         return;
       }
-      const { project } = data
-      console.log(project)
-
+      const { project, defaults:{modeling: {layers_types} } } = data
+      const list = Object.keys(layers_types).map((key) => {
+        return { label: key, value: key };
+      });
       commit("SET_PROJECT", project);
-      // commit("SET_TAGS", tags);
+      commit('modeling/SET_LIST', list, { root: true }) 
+      commit('modeling/SET_LAYERS', layers_types, { root: true }) 
     },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
@@ -53,15 +42,6 @@ export default {
       return {
         height: (document.documentElement.clientHeight - value) + "px",
       };
-    },
-    getDrawer(state) {
-      return state.drawer;
-    },
-    getMenus(state) {
-      return state.menus;
-    },
-    getApp(state) {
-      return state.app;
     },
   },
 };

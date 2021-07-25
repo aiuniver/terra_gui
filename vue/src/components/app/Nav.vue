@@ -23,6 +23,7 @@ export default {
       { title: 'Данные', path: '/datasets' },
       { title: 'Проектирование', path: '/modeling' },
       { title: 'Обучение', path: '/training' },
+      { title: 'Деплой', path: '/deploy' },
     ]
   }),
   created() {

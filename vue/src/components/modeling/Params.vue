@@ -23,7 +23,7 @@
             <at-collapse value="1">
               <at-collapse-item class="mt-3" title="Параметры слоя">
                 <div class="params-main inner">
-                  <Forms :items="main" parse="main" />
+                  <Forms :items="main" />
                 </div>
               </at-collapse-item>
               <at-collapse-item class="mt-3" title="Дополнительные параметры">
@@ -70,8 +70,7 @@ export default {
     // Select
   },
   data: () => ({
-    extra: {},
-    type: ''
+    type: "",
   }),
   computed: {
     ...mapGetters({
@@ -80,11 +79,22 @@ export default {
       layers: "modeling/getLayers",
     }),
     main() {
-      return this.layers[this.block.type].main || {};
+      if (Object.keys(this.layers).length && this.block.type) {
+        return this.layers[this.block.type]?.main || [];
+      } else {
+        return [];
+      }
+    },
+    extra() {
+      if (Object.keys(this.layers).length && this.block.type) {
+        return this.layers[this.block.type]?.extra || [];
+      } else {
+        return [];
+      }
     },
     height() {
-      return this.$store.getters['settings/height'](170)
-    }
+      return this.$store.getters["settings/height"](170);
+    },
   },
   methods: {
     focus() {},
