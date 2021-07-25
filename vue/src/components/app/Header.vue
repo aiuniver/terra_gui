@@ -6,7 +6,8 @@
         <div class="label">Project:</div>
         <div class="name">
           <div class="value flexbox-center-nowrap">
-            <span>{{nameProject}}</span><i></i>
+            <span>{{ nameProject }}</span
+            ><i></i>
           </div>
         </div>
       </div>
@@ -55,14 +56,12 @@
         <button @click="save = false">Сохранить</button>
       </div>
     </at-modal>
-    <at-modal v-model="load" width="400" >
+    <at-modal v-model="load" width="400">
       <div slot="header" style="text-align: center">
         <span>Загрузить проект</span>
       </div>
-      
-      <div slot="footer">
-        
-      </div>
+
+      <div slot="footer"></div>
     </at-modal>
   </header>
 </template>
@@ -90,9 +89,16 @@ export default {
     ],
     save: false,
     load: false,
-    nameProject: 'NoName'
   }),
   computed: {
+    nameProject: {
+      set(name) {
+        this.$store.dispatch("settings/setProject", { name });
+      },
+      get() {
+        return this.$store.getters["settings/getProject"].name;
+      },
+    },
     full: {
       set(val) {
         this.$store.dispatch("datasets/setFull", val);

@@ -22,8 +22,8 @@ export default {
       commit('modeling/SET_LIST', list, { root: true }) 
       commit('modeling/SET_LAYERS', layers_types, { root: true }) 
     },
-    setDrawer({ commit }, data) {
-      commit("SET_DRAWER", data);
+    setProject({ commit, state }, data) {
+      commit("SET_PROJECT", {...state, ...data });
     },
   },
   getters: {

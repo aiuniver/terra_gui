@@ -2,7 +2,7 @@
   <div class="params">
     <scrollbar :style="height">
       <div class="params-container pa-5">
-        <input type="text">
+        <t-input />
       </div>
     </scrollbar>
   </div>
@@ -10,9 +10,11 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import TInput from "@/components/forms/TInput.vue";
 export default {
   name: "Settings",
   components: {
+    TInput
   },
   data: () => ({}),
   computed: {
