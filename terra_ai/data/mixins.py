@@ -35,6 +35,9 @@ class BaseMixinData(BaseModel):
                 data.update({__name: list(__value)})
         return data
 
+    def native(self) -> dict:
+        return json.loads(self.json())
+
 
 class IDMixinData(BaseMixinData):
     """
@@ -206,6 +209,9 @@ class UniqueListMixin(List):
         for __item in self:
             __items.append(json.loads(__item.json()))
         return json.dumps(__items, **kwargs)
+
+    def native(self) -> dict:
+        return json.loads(self.json())
 
     def append(self, __object: Union[dict, Meta.source]):
         """

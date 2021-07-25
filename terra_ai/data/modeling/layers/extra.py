@@ -237,7 +237,6 @@ class LayerValueConfig(BaseMixinData):
             LayerValidationMethodChoice.minimal,
         ]:
             if __value and not isinstance(__value, int):
-                print(__value)
                 raise LayerValueConfigException(value, __value)
         return value
 
