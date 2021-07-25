@@ -464,7 +464,7 @@ main > .container > .properties > .wrapper .mCSB_container {
 
 /* FOOTER */
 
-footer {
+/* footer {
     width:100%;
     line-height:30px;
     position:fixed;
@@ -513,7 +513,6 @@ footer > .message > .wrapper {
     padding:0 20px;
 }
 
-/* message */
 footer > .message {
     overflow:hidden;
     -webkit-box-ordinal-group:1;
@@ -538,7 +537,6 @@ footer > .message > .wrapper > .error {
     cursor:pointer;
 }
 
-/* progress */
 footer > .progress > .wrapper {
     width:338px;
     height:100%;
@@ -552,7 +550,6 @@ footer > .progress > .wrapper > i {
     position:relative;
     z-index:1;
     font-style:normal;
-    /*transition:width 1s linear;*/
     overflow:hidden;
 }
 footer > .progress > .wrapper > i > span {
@@ -575,7 +572,7 @@ footer > .progress > .wrapper > span {
     white-space:nowrap;
 }
 
-/* state */
+
 footer > .state > .wrapper {
     width:59px;
     font-weight:600;
@@ -591,7 +588,6 @@ footer > .state > .wrapper:before {
     vertical-align:middle;
 }
 
-/* copyright */
 #copyright {
     position:fixed;
     width:100%;
@@ -607,7 +603,7 @@ footer > .state > .wrapper:before {
     color:#A7BED3;
     font-size:.6875rem;
     text-align:right;
-}
+} */
 
 /* toolbar */
 .toolbar {

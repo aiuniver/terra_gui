@@ -3,7 +3,6 @@ export default {
   state: () => ({
     color: 'success',
     message: '',
-    protsessor: 'cpu',
     progress: 0
   }),
   mutations: {
@@ -25,16 +24,12 @@ export default {
       commit('SET_COLOR', error ? 'error' : 'success')
       commit('SET_MESSAGE', error || message )
     },
-    setProtsessor ({ commit }, protsessor) {
-      commit('SET_PROTSESSOR', protsessor )
-    },
     setProgress ({ commit }, progress) {
       commit('SET_PROGRESS', progress )
     },
   },
   getters: {
     getProgress: state => state.progress,
-    getProtsessor: state => state.protsessor,
     getMessage: state => state.message,
     getColor: state => state.color
   }

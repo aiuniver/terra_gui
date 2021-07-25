@@ -5,6 +5,7 @@ export default {
       name: "Terra_ai_vue",
       version: "0.0.1",
     },
+    project: {},
     menus: [
       { title: "Home", icon: "mdi-view-dashboard", path: "/" },
       { title: "Datasets", icon: "mdi-account-multiple", path: "/datasets" },
@@ -16,13 +17,30 @@ export default {
     SET_DRAWER(state, value) {
       state.drawer = value;
     },
+    SET_PROJECT(state, value) {
+      state.project = value;
+    },
   },
   actions: {
+    async get({ dispatch, commit }) {
+      const data = await dispatch('axios', {url: "/config/"}, {root: true});
+      if (!data) {
+        return;
+      }
+      const { project } = data
+      console.log(project)
+
+      commit("SET_PROJECT", project);
+      // commit("SET_TAGS", tags);
+    },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },
   },
   getters: {
+    getProject({ project }) {
+      return project
+    },
     isMobile() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     },

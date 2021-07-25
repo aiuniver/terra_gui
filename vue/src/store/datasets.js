@@ -93,12 +93,10 @@ export default {
       if (!tagsFilter.length) {
         return datasets;
       }
-      console.log(tagsFilter)
       return datasets.filter(({tags}) => {
         const index = tags.filter(({alias}) => {
           return tagsFilter.indexOf(alias) !== -1;
         });
-        console.log(index)
         return index.length === tagsFilter.length
       });
     },
