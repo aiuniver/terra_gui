@@ -1,15 +1,9 @@
 <template>
   <main class="page-datasets">
-    <div class="container-fluid">
-      <div class="row">
-        <div :class="full ? 'col-3' : 'col-18'">
-          <Dataset />
-        </div>
-        <div :class="full ? 'col-21' : 'col-6'">
-          <ParamsFull v-if="full" />
-          <Params v-else />
-        </div>
-      </div>
+    <div class="cont">
+      <Dataset />
+      <ParamsFull v-if="full" />
+      <Params v-else />
     </div>
   </main>
 </template>
@@ -38,8 +32,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.container-fluid{
+.cont{
   background: #17212B;
   padding: 0;
+  display: flex;
 }
+
 </style>

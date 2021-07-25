@@ -28,7 +28,7 @@ export default {
     },
     autoHeight() {
       return {
-        height: (document.documentElement.clientHeight - 157) + "px",
+        height: (document.documentElement.clientHeight - 155) + "px",
       };
     },
     getDrawer(state) {

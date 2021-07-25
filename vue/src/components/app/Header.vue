@@ -1,7 +1,7 @@
 <template>
   <header class="flexbox-center-nowrap">
     <div class="project flexbox-left-nowrap">
-      <a href="/project/datasets/" class="logo"></a>
+      <a href="#" class="logo"></a>
       <div class="title flexbox-left-nowrap">
         <div class="label">Project:</div>
         <div class="name">
@@ -120,5 +120,6 @@ export default {
 <style lang="scss" scoped>
 .flexbox-center-nowrap {
   padding: 0 10px;
+  margin: 1px 0 0 0;
 }
 </style>

@@ -24,7 +24,7 @@
         v-if="available"
         :label="key"
         :lists="available"
-        :value="def"
+        :value="def || ''"
         :parse="`${parse}[parameters][${key}]`"
         :name="key"
         :key="key"

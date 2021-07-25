@@ -28,3 +28,10 @@ export default {
 };
 </script>
 
+<style lang="scss" scoped>
+.field-form {
+  input {
+    max-width: 100px !important;
+  }
+}
+</style>

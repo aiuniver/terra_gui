@@ -1,11 +1,11 @@
 <template>
-  <at-modal v-model="dialog" width="680">
+  <at-modal v-model="dialog" width="680" :styles="{top: '150px'}">
     <div slot="header" style="text-align: center">
       <span>Загрузка модели</span>
     </div>
     <div class="row at-row no-gutter">
       <div class="col-16 models-list">
-        <vue-custom-scrollbar class="scroll-area" :settings="settings">
+        <scrollbar class="scroll-area">
           <ul class="loaded-list">
             <li
               v-for="(list, i) of preset"
@@ -25,7 +25,7 @@
               <div class="remove"></div>
             </li>
           </ul>
-        </vue-custom-scrollbar>
+        </scrollbar>
       </div>
       <div class="col-8">
         <div class="model-arch">
@@ -59,20 +59,11 @@
 </template>
 
 <script>
-import vueCustomScrollbar from "vue-custom-scrollbar";
 import { mapGetters } from "vuex";
 export default {
   name: "ModalWindowLoadModel",
-  components: {
-    vueCustomScrollbar,
-  },
   data: () => ({
     lists: [],
-    settings: {
-      suppressScrollY: false,
-      suppressScrollX: true,
-      wheelPropagation: false,
-    },
   }),
   computed: {
     ...mapGetters({}),

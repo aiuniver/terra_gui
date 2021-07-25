@@ -89,7 +89,8 @@ export default {
         const index = tags.filter(({alias}) => {
           return tagsFilter.indexOf(alias) !== -1;
         });
-        return index.length;
+        console.log(index)
+        return index.length === tagsFilter.length
       });
     },
   },

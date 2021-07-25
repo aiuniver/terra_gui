@@ -1,13 +1,13 @@
-
 const inputs = {
   images: {
     folder_name: {
-      type: "str",                       // Тип компонента. Можно оставить, но желательно поменять на соответственно text, select, number, checkbox,
-      name: "folder_name",               // Имя компонента, желательно добавить, но не обязательно если ключь будет соответствовать имени
-      parse: "[parameters][folder_name][]",// Строка для персера. Как будет формироватся обьект. [inputs][input_$] будет добавлятся к строке 
-      label: "Name number",              // Название поля ввода
-      default: "",                       // значение по умолчанию
-      available: [                       // список. желательно переименовать в lists
+      type: "str", // Тип компонента. Можно оставить, но желательно поменять на соответственно text, select, number, checkbox,
+      name: "folder_name", // Имя компонента, желательно добавить, но не обязательно если ключь будет соответствовать имени
+      parse: "[parameters][folder_name][]", // Строка для персера. Как будет формироватся обьект. [inputs][input_$] будет добавлятся к строке
+      label: "Name number", // Название поля ввода
+      default: "", // значение по умолчанию
+      available: [
+        // список. желательно переименовать в lists
         "",
         "Аппендицит",
         "Гастрит",
@@ -95,19 +95,19 @@ const inputs = {
       type: "bool",
       default: true,
       parse: "[parameters][embedding]",
-      event: ['word_to_vec', 'bag_of_words']
+      event: ["word_to_vec", "bag_of_words"],
     },
     bag_of_words: {
       type: "bool",
       default: false,
       parse: "[parameters][bag_of_words]",
-      event: ['word_to_vec', 'embedding']
+      event: ["word_to_vec", "embedding"],
     },
     word_to_vec: {
       type: "bool",
       default: false,
       parse: "[parameters][word_to_vec]",
-      event: ['embedding', 'bag_of_words']
+      event: ["embedding", "bag_of_words"],
     },
     word_to_vec_size: {
       type: "int",

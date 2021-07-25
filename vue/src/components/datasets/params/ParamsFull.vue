@@ -110,16 +110,16 @@ export default {
 @import "@/at-ui/scss/variables/index.scss";
 
 .params {
-  position: relative;
+  // position: relative;
 
-  &__top {
-    padding: 10px;
-    background-color: #1b242e;
-    &--rigth {
-      display: flex;
-      justify-content: center;
-      padding: 8px;
-    }
-  }
+  // &__top {
+  //   padding: 10px;
+  //   background-color: #1b242e;
+  //   &--rigth {
+  //     display: flex;
+  //     justify-content: center;
+  //     padding: 8px;
+  //   }
+  // }
 }
 </style>

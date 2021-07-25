@@ -12,7 +12,7 @@ const blocks = [
   },
   {
     name: "sloy-one",
-    title: 'Sloy one',
+    title: "Sloy one",
     fields: [
       {
         name: "Input",
@@ -28,7 +28,7 @@ const blocks = [
   },
   {
     name: "sloy-two",
-    title: 'Sloy two',
+    title: "Sloy two",
     fields: [
       {
         name: "Input",
@@ -49,7 +49,7 @@ const blocks = [
   },
   {
     name: "sloy-three",
-    title: 'Sloy three',
+    title: "Sloy three",
     fields: [
       {
         name: "Input",
@@ -86,8 +86,102 @@ const blocks = [
   },
 ];
 
-const typeBlock = blocks.map(({ name, title}) => {
-  return { value: name,  title }
+const scene = {
+  blocks: [
+    {
+      id: 1,
+      position: [-900, 50],
+      name: "input",
+      type: "Input",
+      parameters: {
+        extra: { name: "input_1" },
+        main: {},
+      },
+    },
+    {
+      id: 2,
+      position: [-900, 150],
+      name: "sloy-three",
+      type: "BatchNormalization",
+      parameters: {
+        main: {},
+        extra: {
+          axis: -1,
+          momentum: 0.99,
+          epsilon: 0.001,
+          center: true,
+          scale: true,
+          beta_initializer: "zeros",
+          gamma_initializer: "ones",
+          moving_mean_initializer: "zeros",
+          moving_variance_initializer: "ones",
+          beta_regularizer: "",
+          gamma_regularizer: "",
+          beta_constraint: "",
+          gamma_constraint: "",
+        },
+      },
+    },
+    {
+      id: 3,
+      position: [-900, 250],
+      name: "output",
+      type: "Dense",
+      group: "output",
+      bind: [],
+      shape: [1, 1, 1],
+      location: null,
+      parameters: {
+        main: {
+          units: 100,
+          activation: "softmax",
+        },
+        extra: {
+          use_bias: true,
+          kernel_initializer: "glorot_uniform",
+          bias_initializer: "zeros",
+          kernel_regularizer: "",
+          bias_regularizer: "",
+          activity_regularizer: "",
+          kernel_constraint: "",
+          bias_constraint: "",
+          name: "output_1",
+        },
+      },
+    },
+  ],
+  links: [
+    {
+      id: 1,
+      originID: 1,
+      originSlot: 0,
+      targetID: 2,
+      targetSlot: 0,
+    },
+    {
+      id: 2,
+      originID: 2,
+      originSlot: 1,
+      targetID: 3,
+      targetSlot: 0,
+    },
+    {
+      id: 3,
+      originID: 1,
+      originSlot: 0,
+      targetID: 3,
+      targetSlot: 0,
+    },
+  ],
+  container: {
+    centerX: 1042,
+    centerY: 140,
+    scale: 1,
+  },
+};
+
+const typeBlock = blocks.map(({ name, title }) => {
+  return { value: name, title };
 });
 
-export { blocks, typeBlock }
+export { blocks, typeBlock, scene };

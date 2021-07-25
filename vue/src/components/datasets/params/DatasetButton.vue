@@ -24,3 +24,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss" scoped>
+button{
+  font-size: .875rem;
+}
+</style>

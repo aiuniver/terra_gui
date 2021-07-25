@@ -65,6 +65,27 @@ Vue.use(AtComponents)
 // Vue.prototype.$Modal = Dialog
 // Vue.prototype.$Message = Message
 
+import vuescroll from '@/assets/js/vuescroll-native.min.js';
+
+Vue.use(vuescroll, {
+  ops: {
+    bar: {
+      showDelay: 500,
+      onlyShowBarOnScroll: true,
+      keepShow: false,
+      background: '#242f3d',
+      opacity: 1,
+      hoverStyle: false,
+      specifyBorderRadius: false,
+      minSize: 0,
+      size: '4px',
+      disable: false
+    }
+  },
+  name: 'scrollbar' // customize component name, default -> vueScroll
+});
+
+
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
