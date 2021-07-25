@@ -51,7 +51,10 @@ export default {
       const [ preset, custom ]  = data
       const { datasets:presetDatasets, tags:presetTags } = preset
       const { datasets:customDatasets, tags:customTags } = custom
-      const datasets = [...presetDatasets, ...customDatasets]
+      let datasets = [...presetDatasets, ...customDatasets]
+      datasets = datasets.map((dataset) => {
+        return  {...dataset, active: false}
+      })
       let tags = [...presetTags, ...customTags]
       tags = tags.map((tag) => {
         return {active: false, ...tag }
@@ -59,7 +62,13 @@ export default {
       commit("SET_DATASETS", datasets);
       commit("SET_TAGS", tags);
     },
-
+    setSelect({ commit, state:{datasets}  }, dataset){
+      const data = datasets.map((item) => {
+        item.active = (item.name === dataset.name)
+        return item
+      })
+      commit("SET_DATASETS", data);
+    },
     setTagsFilter({ commit }, value) {
       commit("SET_TAGS_FILTER", value);
     },
