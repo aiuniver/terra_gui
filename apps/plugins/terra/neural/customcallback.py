@@ -3,10 +3,11 @@ import copy
 import os
 import tempfile
 import colorsys
+import random
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
 import tensorflow as tf
-
+import cv2
 import matplotlib.pyplot as plt
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy
@@ -351,7 +352,7 @@ class BaseCallback():
         return metric_classes
 
     def image_to_base64(self, image_as_array):
-        if image_as_array.dtype == 'int32':
+        if image_as_array.dtype != 'uint8':
             image_as_array = image_as_array.astype(np.uint8)
         temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
         try:
@@ -857,7 +858,7 @@ class CustomCallback(keras.callbacks.Callback):
         out_images_data = {"images": {
             "title": "Исходное изображение",
             "values": []
-            },
+        },
             "ground_truth_masks": {
                 "title": "Маска сегментации",
                 "values": []
@@ -1932,10 +1933,16 @@ class ObjectdetectionCallback(BaseCallback):
         # elif self.show_worst:
         #     indexes = np.argsort(self.dice)[:5]
         print("self.x_Val.get(input_key).shape", self.x_Val.get(input_key).shape)
-        indexes = np.random.choice((self.x_Val.get(input_key).shape[0])-1, 5, replace=False)
+        indexes = np.random.choice((self.x_Val.get(input_key).shape[0]) - 1, 5, replace=False)
         print("indexes", indexes)
         for idx in indexes:
             # исходное изобаржение
+            original_image = self.x_Val.get(input_key)[idx]
+            image_shape = original_image.shape
+            if self.dataset.scaler.get(input_key) is not None:
+                original_image = self.dataset.scaler.get(input_key).inverse_transform(original_image.reshape((-1, 1)))
+                original_image = original_image.reshape(image_shape)
+                print("original_image scaler", original_image)
             image_data = {
                 "image": None,
                 "title": None,
@@ -1947,9 +1954,9 @@ class ObjectdetectionCallback(BaseCallback):
                 ]
             }
 
-            image = np.squeeze(
-                self.x_Val.get(input_key)[idx]) #.reshape(self.dataset.input_shape.get(input_key)
-            image_data["image"] = self.image_to_base64(image)
+            # image = np.squeeze(
+            #     self.x_Val.get(input_key)[idx])  # .reshape(self.dataset.input_shape.get(input_key)
+            image_data["image"] = self.image_to_base64(original_image)
             images["images"].append(image_data)
 
             # истинная маска
@@ -1967,7 +1974,7 @@ class ObjectdetectionCallback(BaseCallback):
             # image = np.squeeze(self.colored_mask)
             #
             # print("self.y_true", self.y_true[0].shape, self.y_true[1].shape, self.y_true[2].shape)
-            image = self.get_frame(self.x_Val.get(input_key)[idx],
+            image = self.get_frame(original_image,
                                    self.y_true, input_key=input_key,
                                    output_key=output_key)
             print("Posle images truth")
@@ -1986,9 +1993,9 @@ class ObjectdetectionCallback(BaseCallback):
                 ]
             }
             print("do self.get_frame")
-            image = self.get_frame(self.x_Val.get(input_key)[idx],
+            image = self.get_frame(original_image,
                                    self.y_pred, input_key=input_key,
-                                   output_key=output_key) #.reshape(self.dataset.input_shape.get(input_key)
+                                   output_key=output_key)  # .reshape(self.dataset.input_shape.get(input_key)
             # self._get_colored_mask(mask=self.y_pred[idx], input_key=input_key, output_key=output_key)
             # image = np.squeeze(self.colored_mask)
             predicted_bbox_data["image"] = self.image_to_base64(image)
@@ -1997,201 +2004,239 @@ class ObjectdetectionCallback(BaseCallback):
 
         return images
 
-    def get_frame(self, image, predict, input_key: str = None, output_key: str = None):
-        print("do image_shape")
-        image_shape = np.array(image).shape[:2]
-        print("image_shape", image_shape)
-        thickness = (image_shape[0] + image_shape[1]) // 300
-        print("thicknesse", thickness)
-        name_classes = self.dataset.classes_names.get(output_key)  # Названия классов
-        print("name_classes", name_classes)
-        num_classes = self.dataset.num_classes.get(output_key)  # Количество классов
-        print("num_classes", num_classes)
-        # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
-        # данные значения коррелируются с размерностью входного изображения input_shape
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_anchors = len(anchors)  # Сохраняем количество анкоров
+    def get_frame(self, original_image, predict, input_key: str = None, output_key: str = None):
+        ANCHORS = [[[10, 13], [16, 30], [33, 23]],
+                   [[30, 61], [62, 45], [59, 119]],
+                   [[116, 90], [156, 198], [373, 326]]]
+        STRIDES = [32, 16, 8]
+        print("output_key", output_key)
 
-        # Создаем набор цветов для ограничивающих рамок
-        hsv_tuples = [(x / len(name_classes), 1., 1.) for x in range(len(name_classes))]
-        colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
-        colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
-        np.random.seed(43)
-        np.random.shuffle(colors)
-        np.random.seed(None)
+        def decode(conv_output, NUM_CLASS, i=0):
+            # where i = 0, 1 or 2 to correspond to the three grid scales
+            conv_shape = tf.shape(conv_output)
+            batch_size = conv_shape[0]
+            output_size = conv_shape[1]
 
+            # conv_output = tf.reshape(conv_output, (batch_size, output_size, output_size, 3, 5 + NUM_CLASS))
 
+            conv_raw_dxdy = conv_output[:, :, :, :, 0:2]  # offset of center position
+            conv_raw_dwdh = conv_output[:, :, :, :, 2:4]  # Prediction box length and width offset
+            conv_raw_conf = conv_output[:, :, :, :, 4:5]  # confidence of the prediction box
+            conv_raw_prob = conv_output[:, :, :, :, 5:]  # category probability of the prediction box
 
-        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]  # Задаем маски для 3 уровней анкоров
-        input_shape = np.array(predict[0].shape[1:3]) * 32 # Получаем размер выходного изображения
-        print("input_shape", np.array(input_shape), input_shape.dtype)
-        # image_shape = np.array([image.size[1], image.size[0]])  # Сохраняем размер оригинального изображения
+            # next need Draw the grid. Where output_size is equal to 13, 26 or 52
+            y = tf.range(output_size, dtype=tf.int32)
+            y = tf.expand_dims(y, -1)
+            y = tf.tile(y, [1, output_size])
+            x = tf.range(output_size, dtype=tf.int32)
+            x = tf.expand_dims(x, 0)
+            x = tf.tile(x, [output_size, 1])
 
-        level_anchor = 0  # Укажем уровень сетки
-        num_anchors = len(anchors[anchor_mask[level_anchor]])  # Получаем количество анкоров
-        print("num_anchors", num_anchors)
-        anchors_tensor = np.reshape(anchors[anchor_mask[level_anchor]],
-                                    (1, 1, 1, num_anchors, 2))  # Выбираем анкоры для нашего уровня сетки и решейпим
-        grid_shape = predict[level_anchor].shape[1:3]  # Получим размерность сетки
-        grid = []  # Массив для финальной сетки
-        grid_row = []  # Массив для столбца
-        for i in range(grid_shape[0]):  # По всем строкам
-            for j in range(grid_shape[1]):  # По всем столбцам
-                grid_row.append([j, i])  # Создаем элемент [j, i]
-            grid.append(grid_row)  # Добавляем столбец в финальную сетку
-            grid_row = []  # Обнуляем данные для столбца
-        grid = np.array(grid)  # Переводим в numpy
-        grid = np.expand_dims(grid, axis=2)  # Добавляем размерность
-        # Решейпим предикт
-        # feats = np.reshape(predict[level_anchor], (-1, grid_shape[0], grid_shape[1], num_anchors, num_classes + 5))
-        feats = predict[level_anchor]
+            xy_grid = tf.concat([x[:, :, tf.newaxis], y[:, :, tf.newaxis]], axis=-1)
+            xy_grid = tf.tile(xy_grid[tf.newaxis, :, :, tf.newaxis, :], [batch_size, 1, 1, 3, 1])
+            xy_grid = tf.cast(xy_grid, tf.float32)
 
-        # Функция расчета сигмоиды для вектора
-        def sigmoid(x):  # На вход подаем массив данных
-            return 1 / (1 + np.exp(-x))  # Возвращаем сигмоиду для всех элементов массива
+            # Calculate the center position of the prediction box:
+            pred_xy = (tf.sigmoid(conv_raw_dxdy) + xy_grid) * STRIDES[i]
+            # Calculate the length and width of the prediction box:
+            pred_wh = (tf.exp(conv_raw_dwdh) * ANCHORS[i]) * STRIDES[i]
 
-        def non_max_suppression_fast(boxes, scores, overlapThresh):
-            if len(boxes) == 0:  # Если нет ни одного бокса
-                return [], []
+            pred_xywh = tf.concat([pred_xy, pred_wh], axis=-1)
+            pred_conf = tf.sigmoid(conv_raw_conf)  # object box calculates the predicted confidence
+            pred_prob = tf.sigmoid(conv_raw_prob)  # calculating the predicted probability category box object
 
-            pick = []  # Индексы возвращаемых боксов
-            print("pick", pick)
-            x1 = boxes[:, 0]  # координаты x левыв верхних углов
-            y1 = boxes[:, 1]
-            x2 = boxes[:, 2]
-            y2 = boxes[:, 3]
+            # calculating the predicted probability category box object
+            return tf.concat([pred_xywh, pred_conf, pred_prob], axis=-1)
 
-            area = (x2 - x1 + 1) * (y2 - y1 + 1)
-            idxs = np.argsort(scores)
-            print("idxs", idxs)
-            while len(idxs) > 0:
-                last = len(idxs) - 1
-                i = idxs[last]
-                pick.append(i)
+        def bbox_iou(boxes1, boxes2):
+            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
+            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
 
-                xx1 = np.maximum(x1[i], x1[idxs[:last]])
-                yy1 = np.maximum(y1[i], y1[idxs[:last]])
-                xx2 = np.minimum(x2[i], x2[idxs[:last]])
-                yy2 = np.minimum(y2[i], y2[idxs[:last]])
+            boxes1 = tf.concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
+                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
+            boxes2 = tf.concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
+                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
 
-                w = np.maximum(0, xx2 - xx1 + 1)
-                h = np.maximum(0, yy2 - yy1 + 1)
+            left_up = tf.maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = tf.minimum(boxes1[..., 2:], boxes2[..., 2:])
 
-                overlap = (w * h) / area[idxs[:last]]
-                idxs = np.delete(idxs, np.concatenate(([last],
-                                                       np.where(overlap > overlapThresh)[0])))
+            inter_section = tf.maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
 
-            return boxes[pick].astype("int"), scores[pick]
+            return 1.0 * inter_area / union_area
 
-        # Получаем параметры бокса
-        # Координаты центра bounding box
-        xy_param = feats[..., :2]  # Выцепляем 0 и 1 параметры из предикта (соответствуют параметрам смещения центра
-        # анкора)
-        # print("xy_param", xy_param)
-        box_xy = (sigmoid(xy_param) + grid) / grid_shape[::-1]  # Получаем координаты центра bounding box
-        # Высота и ширна bounding box
-        # print("box_xy", box_xy)
-        wh_param = feats[..., 2:4]  # Выцепляем 2 и 3 параметры из предикта (соответствуют праметрам изменения высоты
-        # и ширины анкора)
-        # print("wh_param", wh_param)
-        box_wh = np.exp(wh_param) * anchors_tensor / input_shape[::-1]  # Получаем высоту и ширину bounding box
-        # Вероятность наличия объекта в анкоре
-        conf_param = feats[..., 4:5]  # Выцепляем 4 параметр из предикта (соответствуют вероятности обнаружения объекта)
-        # print("conf_param", conf_param)
-        box_confidence = sigmoid(conf_param)  # Получаем вероятность наличия объекта в bounding box
-        # print("box_confidence", box_confidence)
-        # Класс объекта
-        class_param = feats[..., 5:]  # Выцепляем 5+ параметры из предикта (соответствуют вероятностям классов объектов)
-        # print("class_param", class_param)
-        box_class_probs = sigmoid(class_param)  # Получаем вероятности классов объектов
-        # print("box_class_probs", box_class_probs)
+        def draw_bbox(image, bboxes, CLASS, show_label=True, show_confidence=True,
+                      Text_colors=(255, 255, 0), rectangle_colors='', tracking=False):
 
-        # Корректируем ограничивающие рамки (Размер изображения на выходе 416х416)
-        # И найденные параметры соответствуют именно этой размерности
-        # Необходимо найти координаты bounding box для рамерности исходного изображения
-        box_yx = box_xy[..., ::-1].copy()
-        box_hw = box_wh[..., ::-1].copy()
-        print("do new_shape", np.min(input_shape / image_shape))
-        new_shape = np.round(np.array(image_shape) * np.min(input_shape / image_shape))  # Находим размерность пропорциональную
-        # исходной с одной из сторон 416
-        print("new_shape", new_shape)
-        offset = (input_shape - new_shape) / 2. / input_shape  # Смотрим на сколько надо сместить в
-        # относительных координатах
-        scale = input_shape / new_shape  # Находим коэфициент масштабирования
-        box_yx = (box_yx - offset) * scale  # Смещаем по координатам
-        box_hw *= scale  # Масштабируем ширину и высоту
-        box_mins = box_yx - (
-                box_hw / 2.)  # Получаем левые верхние координаты (от середины отнимаем половину ширины и высоты)
-        box_maxes = box_yx + (
-                box_hw / 2.)  # Получаем правые нижнние координаты (к середине прибавляем половину ширины и высоты)
-        _boxes = np.concatenate([
-            box_mins[..., 0:1],  # yMin
-            box_mins[..., 1:2],  # xMin
-            box_maxes[..., 0:1],  # yMax
-            box_maxes[..., 1:2]  # xMax
-        ], axis=-1)
-        _boxes *= np.concatenate([image_shape, image_shape])  # Переводим из относительных координат в абсолютные
-        # print("_boxes", _boxes)
-        # Получаем выходные параметры
-        _boxes_reshape = np.reshape(_boxes, (-1, 4))  # Решейпим все боксы в один массив
-        _box_scores = box_confidence * box_class_probs  # Получаем вероятность каждого класса (умноженную на
-        # print("_box_scores", _box_scores)
-        # веоятность наличия объекта)
-        _box_scores_reshape = np.reshape(_box_scores, (-1, num_classes))  # Решейпим в один массив
-        print("_box_scores_reshape", _box_scores_reshape)
-        mask = _box_scores_reshape >= 0.2  # Берем все объекты, обнаруженные с вероятностью больше 0.2
-        _boxes_out = _boxes_reshape[mask[:, 0]]
-        _scores_out = _box_scores_reshape[:, 0][mask[:, 0]]
-        # font = ImageFont.truetype(font=path + 'font.otf',
-        #                           size=np.floor(3e-2 * image.size[1] + 0.5).astype('int32'))
-        # thickness = (image.size[0] + image.size[1]) // 300
-        print("do non_max_suppression_fast")
-        new_boxes, new_scores = non_max_suppression_fast(_boxes_out, _scores_out, 0.5)
-        print("new_boxes, new_scores", new_boxes, new_scores)
-        print("posle non_max_suppression_fast")
-        new_classes = np.ones_like(new_scores, int) * 0
-        print("new_classes", new_classes)
-        print("image", image)
-        image_pred = Image.fromarray(np.uint8(image*255))
-        print("image_pred.size", image_pred.size)
-        for i, c in reversed(list(enumerate(new_classes))):
-            print("Do ImageDraw.Draw")
-            draw = ImageDraw.Draw(image_pred)
-            print("После ImageDraw.Draw")
-            predicted_class = name_classes[c]
-            box = new_boxes[i]
-            print("box", box)
-            score = new_scores[i]
-            print("score", score, c)
-            label = '{} {:.2f}'.format(predicted_class, score)
-            label_size = draw.textsize(label)  # , font
-            print("label_size", label_size)
-            top, left, bottom, right = box
-            print("do top", label, (left, top), (right, bottom))
-            top = max(0, np.floor(top + 0.5).astype(int))
-            print("posle top", (left, top), (right, bottom))
-            left = max(0, np.floor(left + 0.5).astype(int))
-            print("posle left", (left, top), (right, bottom))
-            bottom = min(image_shape[1], np.floor(bottom + 0.5).astype(int))
-            print("posle bottom", (left, top), (right, bottom))
-            right = min(image_shape[0], np.floor(right + 0.5).astype(int))
-            print("Posle right", label, (left, top), (right, bottom))
+            num_classes = len(CLASS)
+            print("CLASS", CLASS, num_classes)
+            image_h, image_w, _ = image.shape
+            hsv_tuples = [(1.0 * x / num_classes, 1., 1.) for x in range(num_classes)]
+            # print("hsv_tuples", hsv_tuples)
+            colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples))
+            colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), colors))
 
-            if top - label_size[1] >= 0:
-                text_origin = np.array([left, top - label_size[1]])
-            else:
-                text_origin = np.array([left, top + 1])
-            print("text_origin", text_origin)
-            print("thickness", thickness)
-            print("colors", colors)
-            for i in range(thickness):
-                draw.rectangle(
-                    [left + i, top + i, right - i, bottom - i],
-                    outline=colors[c])
-            draw.rectangle(
-                [tuple(text_origin), tuple(text_origin + label_size)],
-                fill=colors[c])
-            draw.text(text_origin, label, fill=(0, 0, 0))  # , font=font
-            del draw
-        return np.asarray(image_pred)
+            random.seed(0)
+            random.shuffle(colors)
+            random.seed(None)
+
+            for i, bbox in enumerate(bboxes):
+                coor = np.array(bbox[:4], dtype=np.int32)
+                score = bbox[4]
+                print("bbox[5]", bbox[5])
+                class_ind = int(bbox[5])
+                print("class_ind", class_ind)
+                bbox_color = rectangle_colors if rectangle_colors != '' else colors[class_ind]
+                bbox_thick = int(0.6 * (image_h + image_w) / 1000)
+                if bbox_thick < 1: bbox_thick = 1
+                fontScale = 0.75 * bbox_thick
+                (x1, y1), (x2, y2) = (coor[0], coor[1]), (coor[2], coor[3])
+
+                # put object rectangle
+                cv2.rectangle(image, (x1, y1), (x2, y2), bbox_color, bbox_thick * 2)
+
+                if show_label:
+                    # get text label
+                    score_str = " {:.2f}".format(score) if show_confidence else ""
+
+                    if tracking: score_str = " " + str(score)
+
+                    try:
+                        label = "{}".format(CLASS[class_ind]) + score_str
+                    except KeyError:
+                        print("You received KeyError, this might be that you are trying to use yolo original weights")
+                        print(
+                            "while using custom classes, if using custom model in configs.py set YOLO_CUSTOM_WEIGHTS = True")
+
+                    # get text size
+                    (text_width, text_height), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                                                                          fontScale, thickness=bbox_thick)
+                    # put filled text rectangle
+                    cv2.rectangle(image, (x1, y1), (x1 + text_width, y1 - text_height - baseline), bbox_color,
+                                  thickness=cv2.FILLED)
+
+                    # put text above rectangle
+                    cv2.putText(image, label, (x1, y1 - 4), cv2.FONT_HERSHEY_COMPLEX_SMALL,
+                                fontScale, Text_colors, bbox_thick, lineType=cv2.LINE_AA)
+
+            return image
+
+        def bboxes_iou(boxes1, boxes2):
+            boxes1 = np.array(boxes1)
+            boxes2 = np.array(boxes2)
+
+            boxes1_area = (boxes1[..., 2] - boxes1[..., 0]) * (boxes1[..., 3] - boxes1[..., 1])
+            boxes2_area = (boxes2[..., 2] - boxes2[..., 0]) * (boxes2[..., 3] - boxes2[..., 1])
+
+            left_up = np.maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = np.minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+            inter_section = np.maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
+            ious = np.maximum(1.0 * inter_area / union_area, np.finfo(np.float32).eps)
+
+            return ious
+
+        def nms(bboxes, iou_threshold, sigma=0.3, method='nms'):
+            """
+            :param bboxes: (xmin, ymin, xmax, ymax, score, class)
+            Note: soft-nms, https://arxiv.org/pdf/1704.04503.pdf
+                  https://github.com/bharatsingh430/soft-nms
+            """
+            classes_in_img = list(set(bboxes[:, 5]))
+            best_bboxes = []
+
+            for cls in classes_in_img:
+                cls_mask = (bboxes[:, 5] == cls)
+                cls_bboxes = bboxes[cls_mask]
+                # Process 1: Determine whether the number of bounding boxes is greater than 0
+                while len(cls_bboxes) > 0:
+                    # Process 2: Select the bounding box with the highest score according to socre order A
+                    max_ind = np.argmax(cls_bboxes[:, 4])
+                    best_bbox = cls_bboxes[max_ind]
+                    best_bboxes.append(best_bbox)
+                    cls_bboxes = np.concatenate([cls_bboxes[: max_ind], cls_bboxes[max_ind + 1:]])
+                    # Process 3: Calculate this bounding box A and
+                    # Remain all iou of the bounding box and remove those bounding boxes whose iou value is higher than the threshold
+                    iou = bboxes_iou(best_bbox[np.newaxis, :4], cls_bboxes[:, :4])
+                    weight = np.ones((len(iou),), dtype=np.float32)
+
+                    assert method in ['nms', 'soft-nms']
+
+                    if method == 'nms':
+                        iou_mask = iou > iou_threshold
+                        weight[iou_mask] = 0.0
+
+                    if method == 'soft-nms':
+                        weight = np.exp(-(1.0 * iou ** 2 / sigma))
+
+                    cls_bboxes[:, 4] = cls_bboxes[:, 4] * weight
+                    score_mask = cls_bboxes[:, 4] > 0.
+                    cls_bboxes = cls_bboxes[score_mask]
+
+            return best_bboxes
+
+        def postprocess_boxes(pred_bbox, original_image, input_size, score_threshold):
+            valid_scale = [0, np.inf]
+            pred_bbox = np.array(pred_bbox)
+
+            pred_xywh = pred_bbox[:, 0:4]
+            pred_conf = pred_bbox[:, 4]
+            pred_prob = pred_bbox[:, 5:]
+
+            # 1. (x, y, w, h) --> (xmin, ymin, xmax, ymax)
+            pred_coor = np.concatenate([pred_xywh[:, :2] - pred_xywh[:, 2:] * 0.5,
+                                        pred_xywh[:, :2] + pred_xywh[:, 2:] * 0.5], axis=-1)
+            # 2. (xmin, ymin, xmax, ymax) -> (xmin_org, ymin_org, xmax_org, ymax_org)
+            org_h, org_w = original_image.shape[:2]
+            resize_ratio = min(input_size / org_w, input_size / org_h)
+
+            dw = (input_size - resize_ratio * org_w) / 2
+            dh = (input_size - resize_ratio * org_h) / 2
+
+            pred_coor[:, 0::2] = 1.0 * (pred_coor[:, 0::2] - dw) / resize_ratio
+            pred_coor[:, 1::2] = 1.0 * (pred_coor[:, 1::2] - dh) / resize_ratio
+
+            # 3. clip some boxes those are out of range
+            pred_coor = np.concatenate([np.maximum(pred_coor[:, :2], [0, 0]),
+                                        np.minimum(pred_coor[:, 2:], [org_w - 1, org_h - 1])], axis=-1)
+            invalid_mask = np.logical_or((pred_coor[:, 0] > pred_coor[:, 2]), (pred_coor[:, 1] > pred_coor[:, 3]))
+            pred_coor[invalid_mask] = 0
+
+            # 4. discard some invalid boxes
+            bboxes_scale = np.sqrt(np.multiply.reduce(pred_coor[:, 2:4] - pred_coor[:, 0:2], axis=-1))
+            scale_mask = np.logical_and((valid_scale[0] < bboxes_scale), (bboxes_scale < valid_scale[1]))
+
+            # 5. discard boxes with low scores
+            classes = np.argmax(pred_prob, axis=-1)
+            scores = pred_conf * pred_prob[np.arange(len(pred_coor)), classes]
+            score_mask = scores > score_threshold
+            mask = np.logical_and(scale_mask, score_mask)
+            coors, scores, classes = pred_coor[mask], scores[mask], classes[mask]
+
+            return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
+
+        input_size = 416
+        score_threshold = 0.3
+        iou_threshold = 0.45
+        pred_bbox = []
+        for i in range(len(ANCHORS)):
+            pred_bbox.append(decode(predict[i], self.num_classes, i))
+        print("pred_bbox", len(pred_bbox))
+        pred_bbox = [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in pred_bbox]
+        print("reshape predbox")
+        pred_bbox = tf.concat(pred_bbox, axis=0)
+        print("concat predbox")
+        bboxes = postprocess_boxes(pred_bbox, original_image, input_size, score_threshold)
+        print("bboxes postproces")
+        bboxes = nms(bboxes, iou_threshold, method='nms')
+        print("bboxes nms", bboxes)
+        print("self.dataset.classes_names", self.dataset.classes_names)
+
+        image = draw_bbox(original_image, bboxes, CLASS=self.dataset.classes_names[output_key])
+        # CreateXMLfile("XML_Detections", str(int(time.time())), original_image, bboxes, read_class_names(CLASSES))
+        print("image.shape", image.shape)
+        print(image)
+        return image
