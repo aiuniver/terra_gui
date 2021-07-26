@@ -57,6 +57,12 @@ class SourceLoadProgressAPIView(BaseAPIView):
         )
 
 
+class SourcesCreateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        print(request.data)
+        return BaseResponseSuccess()
+
+
 class SourcesAPIView(BaseAPIView):
     def get(self, request, **kwargs):
         return BaseResponseSuccess(
