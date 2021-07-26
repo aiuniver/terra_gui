@@ -379,6 +379,25 @@ class CreateDTS(object):
 
     def instructions_video(self, **options):
 
+        """
+
+        Args:
+            **options: Параметры обработки:
+                height: int
+                    Высота кадра.
+                width: int
+                    Ширина кадра.
+                fill_mode: int
+                    Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
+                frame_mode: str
+                    Режим обработки кадра (Сохранить пропорции, Растянуть).
+
+        Returns:
+            instructions: dict
+                Инструкции для создания массивов.
+
+        """
+
         instructions: dict = {}
         instr: list = []
         paths: list = []
@@ -435,6 +454,9 @@ class CreateDTS(object):
 
         del options['video_mode']
         del options['file_info']
+        del options['length']
+        del options['step']
+        del options['max_frames']
         instructions['parameters'] = options
         instructions['instructions'] = instr
 
@@ -1102,21 +1124,17 @@ class CreateArray(object):
         """
 
         Args:
-            video_path: str
-                Путь к файлу
-            **options: Параметры сегментации:
+            video_path: dict
+                Путь к файлу: [начало, конец]
+            **options: Параметры обработки:
                 height: int
                     Высота кадра.
                 width: int
                     Ширина кадра.
-                max_frames: int
-                    Максимальное количество кадров.
-                mode: str
+                fill_mode: int
+                    Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
+                frame_mode: str
                     Режим обработки кадра (Сохранить пропорции, Растянуть).
-                x_len: int
-                    Длина окна выборки.
-                step: int
-                    Шаг окна выборки.
 
         Returns:
             array: np.ndarray
