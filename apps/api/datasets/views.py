@@ -34,14 +34,14 @@ class ChoiceAPIView(BaseAPIView):
 
 
 class InfoAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange("datasets_info", path=str(data_path.datasets)).native()
         )
 
 
 class SourceLoadAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         serializer = SourceLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
@@ -55,7 +55,7 @@ class SourceLoadAPIView(BaseAPIView):
 
 
 class SourceLoadProgressAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
             data=agent_exchange("dataset_source_load_progress").native()
         )
@@ -68,7 +68,7 @@ class SourcesCreateAPIView(BaseAPIView):
 
 
 class SourcesAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange("datasets_sources", path=str(data_path.sources)).native()
         )
