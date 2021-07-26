@@ -11,6 +11,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
+from terra_ai.data.datasets.dataset import DatasetData
 
 
 UNKNOWN_NAME = "NoName"
@@ -68,10 +69,6 @@ class ProjectPathData(BaseMixinData):
         except FileExistsError:
             pass
         return value
-
-
-class DatasetData(BaseMixinData):
-    pass
 
 
 class Project(BaseMixinData):
