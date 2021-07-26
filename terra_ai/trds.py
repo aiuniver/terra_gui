@@ -38,7 +38,7 @@ import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.011
+__version__ = 1.012
 
 
 class CreateDTS(object):
@@ -381,7 +381,9 @@ class CreateDTS(object):
 
         instructions: dict = {}
         instr: list = []
+        paths: list = []
         y_cls: list = []
+        classes_names = []
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
@@ -393,29 +395,46 @@ class CreateDTS(object):
                     if file_name:
                         file_folder = directory.replace(self.file_folder, '')[1:]
                         for name in sorted(file_name):
-                            instr.append(os.path.join(file_folder, name))
-                            peg_idx += 1
-                            if options['class_mode'] == 'По каждому кадру':
-                                y_cls.append(np.full((options['max_frames'], 1), cls_idx).tolist())
-                            else:
-                                y_cls.append(cls_idx)
-                        cls_idx += 1
-                        self.peg.append(peg_idx)
+                            paths.append(os.path.join(file_folder, name))
+                        classes_names.append(file_folder)
             self.y_cls = y_cls
         elif options['file_info']['path_type'] == 'path_file':
             for file_name in options['file_info']['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                   usecols=options['file_info']['cols_name'])
-                instr = data[options['file_info']['cols_name'][0]].to_list()
-                prev_elem = instr[0].split('/')[-2]
-                for elem in instr:
-                    cur_elem = elem.split('/')[-2]
-                    if cur_elem != prev_elem:
-                        self.peg.append(peg_idx)
-                    prev_elem = cur_elem
-                    peg_idx += 1
-                self.peg.append(len(instr))
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                paths = data[options['file_info']['cols_name'][0]].to_list()
 
+        prev_class = paths[0].split('/')[-2]
+        for idx in range(len(paths)):
+            cur_class = paths[idx].split('/')[-2]
+            if options['video_mode'] == 'Целиком':
+                instr.append({paths[idx]: [0, options['max_frames']]})
+                peg_idx += 1
+                if cur_class != prev_class:
+                    cls_idx += 1
+                    self.peg.append(peg_idx)
+                    prev_class = cur_class
+                y_cls.append(cls_idx)
+            elif options['video_mode'] == 'По длине и шагу':
+                cur_step = 0
+                stop_flag = False
+                cap = cv2.VideoCapture(os.path.join(self.file_folder, paths[idx]))
+                frame_count = int(cap.get(7))
+                while not stop_flag:
+                    peg_idx += 1
+                    instr.append({paths[idx]: [cur_step, cur_step + options['length']]})
+                    if cur_class != prev_class:
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+                        prev_class = cur_class
+                    y_cls.append(cls_idx)
+                    cur_step += options['step']
+                    if cur_step + options['length'] > frame_count:
+                        stop_flag = True
+
+        self.peg.append(len(instr))
+
+        del options['video_mode']
+        del options['file_info']
         instructions['parameters'] = options
         instructions['instructions'] = instr
 
@@ -1105,14 +1124,14 @@ class CreateArray(object):
 
         """
 
-        def resize_frame(one_frame, original_shape, target_shape, mode):
+        def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
             resized = None
 
-            if mode == 'Растянуть':
+            if frame_mode == 'Растянуть':
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
-            elif mode == 'Сохранить пропорции':
+            elif frame_mode == 'Сохранить пропорции':
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
@@ -1135,33 +1154,61 @@ class CreateArray(object):
 
             return resized
 
+        def add_frames(video_array, fill_mode, frames_to_add, total_frames):
+
+            frames: np.ndarray = np.array([])
+
+            if fill_mode == 'Черными кадрами':
+                frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
+            elif fill_mode == 'Средним значением':
+                mean = np.mean(video_array, axis=0, dtype='uint16')
+                frames = np.full((6, *mean.shape), mean, dtype='uint8')
+            elif fill_mode == 'Последними кадрами':
+                cur_frames = video_array.shape[0]
+                if total_frames > frames_to_add:
+                    frames = np.flip(video_array[-frames_to_add:], axis=0)
+                elif total_frames <= frames_to_add:
+                    for i in range(total_frames // cur_frames - 1):
+                        frames = np.flip(video_array[-cur_frames:], axis=0)
+                        video_array = np.concatenate((video_array, frames), axis=0)
+                    if total_frames % cur_frames:
+                        frames = np.flip(video_array[-(total_frames % cur_frames):], axis=0)
+            video_array = np.concatenate((video_array, frames), axis=0)
+
+            return video_array
+
         array = []
         shape = (options['height'], options['width'])
+        [[file_name, video_range]] = video_path.items()
+        frames_count = video_range[1] - video_range[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(self.file_folder, video_path))
-        height = int(cap.get(4))
+        cap = cv2.VideoCapture(os.path.join(self.file_folder, file_name))
         width = int(cap.get(3))
-        # fps = int(cap.get(5))
-        frame_count = int(cap.get(7))
+        height = int(cap.get(4))
+        max_frames = int(cap.get(7))
+        cap.set(1, video_range[0])
         try:
-            while True:
+            for _ in range(frames_count):
                 ret, frame = cap.read()
                 if not ret:
                     break
                 if shape != (height, width):
-                    frame = resize_frame(frame, (height, width), shape, options['mode'])
+                    frame = resize_frame(one_frame=frame,
+                                         original_shape=(height, width),
+                                         target_shape=shape,
+                                         frame_mode=options['frame_mode'])
                 frame = frame[:, :, [2, 1, 0]]
                 array.append(frame)
-                if len(array) == options['max_frames']:
-                    break
         finally:
             cap.release()
 
         array = np.array(array)
-        if frame_count < options['max_frames']:
-            add_frames = np.zeros((options['max_frames'] - frame_count, *shape, 3), dtype='uint8')
-            array = np.concatenate((array, add_frames), axis=0)
+        if max_frames < frames_count:
+            array = add_frames(video_array=array,
+                               fill_mode=options['fill_mode'],
+                               frames_to_add=frames_count - max_frames,
+                               total_frames=max_frames)
 
         return array
 
