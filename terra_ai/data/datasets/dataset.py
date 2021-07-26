@@ -177,50 +177,43 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, List, Tuple
 from pydantic import validator, DirectoryPath
-from transliterate import slugify
+from pydantic.types import PositiveInt
+from pydantic.color import Color
 
+from ... import DATASET_EXT, DATASET_CONFIG
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
-from ..presets import datasets as presets_datasets
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
+from ..training.extra import TaskChoice
 from .tags import TagsList
+from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 
 
-class CustomDataset(BaseMixinData):
+class DatasetLoadData(BaseMixinData):
+    path: DirectoryPath
+    group: DatasetGroupChoice
+    alias: str
+
+
+class CustomDatasetConfigData(BaseMixinData):
     """
-    Пользовательский датасет
+    Загрузка конфигурации пользовательского датасета
     """
 
     path: DirectoryPath
     config: Optional[dict] = {}
 
-    @property
-    def tags(self) -> TagsList:
-        __tags = list(
-            filter(
-                None,
-                list(self.config.get("tags").values())
-                + list(self.config.get("user_tags")),
-            )
-        )
-        tags = []
-        for name in __tags:
-            alias = slugify(name, language_code="ru")
-            __tag = getattr(presets_datasets.Tags, alias, None)
-            tags.append(__tag.value if __tag else {"name": name, "alias": alias})
-        return TagsList(tags)
-
     @validator("path")
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        if not str(value).endswith(".trds"):
+        if not str(value).endswith(f".{DATASET_EXT}"):
             raise TrdsDirExtException(value.name)
         return value
 
     @validator("config", always=True)
     def _validate_config(cls, value: dict, values) -> dict:
-        config_path = Path(values.get("path"), "config.json")
+        config_path = Path(values.get("path"), DATASET_CONFIG)
         if not config_path.is_file():
             raise TrdsConfigFileNotFoundException(
                 values.get("path").name, config_path.name
@@ -230,19 +223,38 @@ class CustomDataset(BaseMixinData):
         return value
 
 
+class DatasetLayerData(BaseMixinData):
+    datatype: Dict[int, str] = {}
+    dtype: Dict[int, str] = {}
+    shape: Dict[int, Tuple[PositiveInt, ...]] = {}
+    names: Dict[int, str] = {}
+
+
+class DatasetInputsData(DatasetLayerData):
+    tasks: Dict[int, LayerInputTypeChoice] = {}
+
+
+class DatasetOutputsData(DatasetLayerData):
+    tasks: Dict[int, LayerOutputTypeChoice] = {}
+
+
 class DatasetData(AliasMixinData):
     """
     Информация о датасете
     """
 
     name: str
-    "Название"
-    size: Optional[FileSizeData]
-    "Вес"
     date: Optional[datetime]
-    "Дата создания"
+    size: Optional[FileSizeData]
+    limit: PositiveInt
+    use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    "Список тегов"
+    classes_names: Dict[int, List[str]] = {}
+    classes_colors: List[Color] = []
+    one_hot_encoding: Dict[int, bool] = {}
+    task_type: Dict[int, TaskChoice] = {}
+    inputs: DatasetInputsData = DatasetInputsData()
+    outputs: DatasetOutputsData = DatasetOutputsData()
 
 
 class DatasetsList(UniqueListMixin):

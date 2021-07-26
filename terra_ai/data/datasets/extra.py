@@ -39,12 +39,21 @@ class LayerScalerChoice(str, Enum):
     min_max_scaler = "min_max_scaler"
 
 
+class DatasetGroupChoice(str, Enum):
+    keras = "keras"
+    custom = "custom"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, DatasetGroupChoice))
+
+
 class LayerInputTypeChoice(str, Enum):
     """
     Типы данных для `input`-слоев
     """
 
-    Images = "Images"
+    Image = "Image"
     Text = "Text"
     Audio = "Audio"
     Dataframe = "Dataframe"
@@ -55,7 +64,7 @@ class LayerOutputTypeChoice(str, Enum):
     Типы данных для `output`-слоев
     """
 
-    Images = "Images"
+    Image = "Image"
     Text = "Text"
     Audio = "Audio"
     Classification = "Classification"
