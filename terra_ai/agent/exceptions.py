@@ -6,6 +6,7 @@ class ExceptionMessages(str, Enum):
     CallMethodNotFound = "Instance of `%s` must have method `%s`"
     MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
     DatasetGroupUndefinedMethod = "Undefined dataset load method for group `%s`"
+    UnknownKerasDataset = "Unknown keras dataset `%s`"
 
 
 class ExchangeBaseException(Exception):
@@ -29,3 +30,11 @@ class MethodNotCallableException(ExchangeBaseException):
 class DatasetGroupUndefinedMethodException(ExchangeBaseException):
     def __init__(self, __group: Any):
         super().__init__(ExceptionMessages.DatasetGroupUndefinedMethod % (str(__group)))
+
+
+class UnknownKerasDatasetException(ExchangeBaseException):
+    class Meta:
+        message: str = ExceptionMessages.UnknownKerasDataset
+
+    def __init__(self, __name: str, *args):
+        super().__init__(self.Meta.message % str(__name), *args)

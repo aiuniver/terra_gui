@@ -20,9 +20,8 @@ from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
 from ..datasets import loader
-from ..datasets.dataset import DTS
 
-from .. import ASSETS_PATH
+from .. import ASSETS_PATH, DATASET_EXT
 from .. import progress
 from ..progress import ProgressData
 from . import exceptions
@@ -70,9 +69,19 @@ class Exchange:
         """
         dataset_choice = DatasetLoadData(path=path, group=group, alias=alias)
         if dataset_choice.group == DatasetGroupChoice.keras:
-            return DTS.get_dataset_keras_info(dataset_choice.alias)
-        if dataset_choice.group == DatasetGroupChoice.custom:
-            return DTS.get_dataset_custom_info(dataset_choice.alias, path)
+            dataset = (
+                DatasetsGroupsList(DatasetsGroups)
+                .get(DatasetGroupChoice.keras)
+                .datasets.get(dataset_choice.alias)
+            )
+            if not dataset:
+                raise exceptions.UnknownKerasDatasetException(dataset_choice.alias)
+            return dataset
+        elif dataset_choice.group == DatasetGroupChoice.custom:
+            data = CustomDatasetConfigData(
+                path=Path(path, f"{dataset_choice.alias}.{DATASET_EXT}")
+            )
+            return DatasetData(**data.config)
         else:
             raise exceptions.DatasetGroupUndefinedMethodException(
                 dataset_choice.group.value
