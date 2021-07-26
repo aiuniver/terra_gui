@@ -43,12 +43,12 @@ class AddToHueAndSaturationData(BaseMixinData):
 
 class ChannelShuffleData(BaseMixinData):
     p: ConstrainedFloatValueGe0Le1
-    channels: List[ConstrainedIntValueGe0Le2, ConstrainedIntValueGe0Le2, ConstrainedIntValueGe0Le2]
+    channels: List[ConstrainedIntValueGe0Le2]
 
 
 class MotionBlurData(BaseMixinData):
     k: ConstrainedFloatValueGe0Le1
-    angle: List[int, int]
+    angle: List[int]
 
 
 class ScaleData(BaseMixinData):
