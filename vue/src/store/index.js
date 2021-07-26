@@ -25,6 +25,9 @@ export default {
         config.method = config.method || 'get'
         config.url = '/api/v1' + config.url,
         config.data = config.data || {}
+        config.headers = {
+          'Content-Type': 'application/json'
+        }
         console.log('config: ', config)
         const response = await axios(config);
         console.log('response', response)

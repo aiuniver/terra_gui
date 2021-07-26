@@ -24,12 +24,13 @@
               </li>
             </ul>
             <Autocomplete
-              v-if="tabGoogle"
+              v-show="tabGoogle"
               :options="items"
               label="Выберите файл из Google-диска"
+              @focus="focus"
               @selected="selected"
             />
-            <div v-else class="field-form">
+            <div v-show="!tabGoogle" class="field-form">
               <label>Введите URL на архив исходников</label>
               <input
                 v-model="urlName"
@@ -206,11 +207,13 @@ export default {
       if (!data) {
         return;
       }
-      this.items = data.map(({ label }, i) => {
-        return { name: label, id: ++i };
+      console.log(data)
+      this.items = data.map(({ label, value }, i) => {
+        return { name: label, id: ++i, value };
       });
     },
     async selected(value) {
+      console.log(value)
       this.googleName = value.value;
     },
     click() {
