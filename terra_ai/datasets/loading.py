@@ -101,7 +101,7 @@ os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 def __load_from_googledrive(folder: Path, zipfile_path: Path):
     # Сброс прогресс-бара
     progress_name = progress.PoolName.dataset_source_load
-    progress.pool.reset(progress_name, message="Загрузка датасета")
+    progress.pool.reset(progress_name, message="Загрузка датасета", finished=False)
 
     # Получение папки датасета
     folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]

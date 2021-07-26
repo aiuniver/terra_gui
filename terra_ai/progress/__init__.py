@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from threading import Thread
 
 from ..data.types import ConstrainedFloatValueGe0Le100
+from ..data.mixins import BaseMixinData
 
 
 def threading(method):
@@ -19,11 +20,11 @@ class PoolName(str, Enum):
     model_load = "model_load"
 
 
-class ProgressData(BaseModel):
+class ProgressData(BaseMixinData):
     percent: ConstrainedFloatValueGe0Le100 = 0
     message: str = ""
     error: str = ""
-    finished: bool = False
+    finished: bool = True
     data: Any
 
     @property
@@ -40,7 +41,7 @@ class ProgressData(BaseModel):
         return __data
 
 
-class ProgressItems(BaseModel):
+class ProgressItems(BaseMixinData):
     dataset_source_load: ProgressData = ProgressData()
     model_load: ProgressData = ProgressData()
 
