@@ -20,8 +20,8 @@ export default {
     Footer
   },
   async created() {
-    await this.$store.dispatch("datasets/get");
     await this.$store.dispatch("projects/get");
+    await this.$store.dispatch("datasets/get");
     if (!this.$store.state.projects.project.dataset && this.$route.path !== '/datasets') {
       this.$router.push('/datasets');
     }

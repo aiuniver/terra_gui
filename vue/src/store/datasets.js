@@ -48,7 +48,7 @@ export default {
     async loadProgress({ dispatch }, source ) {
       return await dispatch("axios",{ url: "/datasets/source/load/progress/", data: source }, { root: true });
     },
-    async get({ dispatch, commit }) {
+    async get({ dispatch, commit, rootState }) {
       const data = await dispatch(
         "axios",
         { url: "/datasets/info/" },
@@ -66,9 +66,10 @@ export default {
       const cusDataset = customDatasets.map((item) => {
         return {...item, group: 'custom'}
       })
+      const alias = rootState.projects.project.dataset.alias
       let datasets = [...preDataset, ...cusDataset];
       datasets = datasets.map((dataset) => {
-        return { ...dataset, active: false };
+        return { ...dataset, active: ( dataset.alias === alias) };
       });
       let tags = [...presetTags, ...customTags];
       tags = tags.map((tag) => {
