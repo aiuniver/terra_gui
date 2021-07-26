@@ -31,7 +31,7 @@ class HardwareAcceleratorData(BaseMixinData):
     color: Optional[Color]
 
     @validator("color", always=True)
-    def _validate_color(cls, value: Color, values) -> Color:
+    def _validate_color(cls, value: str, values) -> str:
         __type = values.get("type")
         if not __type:
             return value

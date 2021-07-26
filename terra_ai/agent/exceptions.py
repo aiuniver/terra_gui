@@ -3,8 +3,9 @@ from enum import Enum
 
 
 class ExceptionMessages(str, Enum):
-    CallMethodNotFound = "Instance of %s must have method %s"
-    MethodNotCallable = "Method %s of instance of %s must be callable"
+    CallMethodNotFound = "Instance of `%s` must have method `%s`"
+    MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
+    DatasetGroupUndefinedMethod = "Undefined dataset load method for group `%s`"
 
 
 class ExchangeBaseException(Exception):
@@ -23,3 +24,8 @@ class MethodNotCallableException(ExchangeBaseException):
         super().__init__(
             ExceptionMessages.MethodNotCallable % (str(__method), str(__class))
         )
+
+
+class DatasetGroupUndefinedMethodException(ExchangeBaseException):
+    def __init__(self, __group: Any):
+        super().__init__(ExceptionMessages.DatasetGroupUndefinedMethod % (str(__group)))

@@ -1,13 +1,17 @@
 import os
-import json
 import tensorflow
 
 from pathlib import Path
-from transliterate import slugify
 
-from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
+from ..data.datasets.dataset import (
+    DatasetLoadData,
+    CustomDatasetConfigData,
+    DatasetsGroupsList,
+    DatasetData,
+)
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
+from ..data.datasets.extra import DatasetGroupChoice
 
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData
 
@@ -15,11 +19,13 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
+from ..datasets import loader
+from ..datasets.dataset import DTS
+
 from .. import ASSETS_PATH
 from .. import progress
 from . import exceptions
 from . import temporary_methods
-from ..datasets import loader
 
 
 class Exchange:
@@ -59,6 +65,21 @@ class Exchange:
         hardware = HardwareAcceleratorData(type=__type)
         return hardware.native()
 
+    def _call_dataset_choice(self, path: str, group: str, alias: str) -> dict:
+        """
+        Выбор датасета
+        """
+        dataset_choice = DatasetLoadData(path=path, group=group, alias=alias)
+        if dataset_choice.group == DatasetGroupChoice.keras:
+            return DTS.get_dataset_keras_info(dataset_choice.alias)
+        if dataset_choice.group == DatasetGroupChoice.custom:
+            data = DTS.get_dataset_custom_info(dataset_choice.alias, path)
+            return data.native()
+        else:
+            raise exceptions.DatasetGroupUndefinedMethodException(
+                dataset_choice.group.value
+            )
+
     def _call_datasets_info(self, path: str) -> dict:
         """
         Получение данных для страницы датасетов: датасеты и теги
@@ -66,17 +87,8 @@ class Exchange:
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(path):
             try:
-                dataset = CustomDataset(path=Path(path, dirname))
-                alias = slugify(dataset.config.get("name"), language_code="ru")
-                info.get("custom").datasets.append(
-                    {
-                        "alias": alias,
-                        "name": dataset.config.get("name"),
-                        "date": dataset.config.get("date"),
-                        "size": {"value": dataset.config.get("size")},
-                        "tags": dataset.tags.dict(),
-                    }
-                )
+                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                info.get("custom").datasets.append(DatasetData(**dataset_config.config))
             except Exception:
                 pass
         return info.native()
