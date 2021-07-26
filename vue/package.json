@@ -1,6 +1,6 @@
 {
   "name": "vue_neural",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -10,17 +10,12 @@
   "dependencies": {
     "axios": "^0.21.1",
     "core-js": "^3.6.5",
-    "form-serialize": "^0.7.2",
-    "keen-ui": "^1.3.1",
     "package.json": "^2.0.1",
     "vue": "^2.6.14",
     "vue-axios": "^3.2.4",
-    "vue-custom-scrollbar": "^1.4.1",
     "vue-plotly": "^1.1.0",
     "vue-router": "^3.5.1",
     "vue-simple-flowchart": "^0.1.8",
-    "vuescroll": "^4.17.3",
-    "vuetify": "^2.5.4",
     "vuex": "^3.6.2"
   },
   "devDependencies": {
@@ -49,7 +44,9 @@
     "parserOptions": {
       "parser": "babel-eslint"
     },
-    "ignorePatterns": ["/vue/src/assets/*.js"],
+    "ignorePatterns": [
+      "/src/assets/*.js"
+    ],
     "rules": {}
   },
   "browserslist": [

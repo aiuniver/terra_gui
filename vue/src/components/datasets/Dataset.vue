@@ -41,9 +41,15 @@ export default {
     }),
   },
   methods: {
-    click(value){
-      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${value}»`})
+    click(dataset){
+      this.$store.dispatch('datasets/setSelect', dataset)
+      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     }
+  },
+  mounted() {
+    this.items = this.datasets.map((item) => {
+      return item
+    })
   }
 };
 </script>

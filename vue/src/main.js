@@ -1,11 +1,11 @@
 import Vue from "vue";
 import App from "./App.vue";
 import Vuex from "vuex";
-import VueRouter from "vue-router";
+// import VueRouter from "vue-router";
 import axios from "axios";
 import VueAxios from "vue-axios";
 
-import routes from "./routers/index";
+import router from "./routers/index";
 import store from "./store/index";
 
 // import {
@@ -71,8 +71,8 @@ Vue.use(vuescroll, {
   ops: {
     bar: {
       showDelay: 500,
-      onlyShowBarOnScroll: true,
-      keepShow: false,
+      onlyShowBarOnScroll: false,
+      keepShow: true,
       background: '#242f3d',
       opacity: 1,
       hoverStyle: false,
@@ -82,23 +82,18 @@ Vue.use(vuescroll, {
       disable: false
     }
   },
-  name: 'scrollbar' // customize component name, default -> vueScroll
+  name: 'scrollbar'
 });
 
 
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
-Vue.use(VueRouter);
-// Vue.use(Vuetify);
+// Vue.use(VueRouter);
 export const bus = new Vue();
 
 new Vue({
-  router: new VueRouter({
-    mode: "history",
-    routes,
-  }),
+  router,
   store: new Vuex.Store(store),
-  // vuetify: new Vuetify(opts),
   render: (h) => h(App),
 }).$mount("#app");

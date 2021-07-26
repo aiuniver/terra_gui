@@ -2,7 +2,7 @@
   <div class="params">
     <scrollbar :style="height">
       <div class="params-container">
-        <DatasetButton @click="click" />
+        <DatasetButton />
         <div class="params-item load-dataset-field">
           <form
             class="inner form-inline-label"
@@ -11,31 +11,31 @@
           >
             <ul class="tabs">
               <li
-                :class="tabGoogle ? 'active' : ''"
+                :class="{active: tabGoogle} "
                 @click.prevent="tabGoogle = true"
               >
                 Google drive
               </li>
               <li
-                :class="!tabGoogle ? 'active' : ''"
+                :class="{active: !tabGoogle} "
                 @click.prevent="tabGoogle = false"
               >
                 URL-ссылка
               </li>
             </ul>
             <Autocomplete
+              v-if="tabGoogle"
               :options="items"
-              :disabled="false"
-              :label="
-                tabGoogle
-                  ? 'Выберите файл из Google-диска'
-                  : 'Введите URL на архив исходников'
-              "
-              :maxItem="10"
-              placeholder="Please select file"
-              @focus="focus"
+              label="Выберите файл из Google-диска"
               @selected="selected"
             />
+            <div v-else class="field-form">
+              <label>Введите URL на архив исходников</label>
+              <input
+                v-model="urlName"
+                type="text"
+              />
+            </div>
             <div class="field-form field-inline field-reverse inputs">
               <label for="field_form-num_links[inputs]"
                 >Кол-во <b>входов</b></label
@@ -75,26 +75,26 @@
               <at-collapse value="0">
                 <at-collapse-item class="mt-3" title="Входные слои">
                   <div class="inner row inputs-layers">
-                    <template v-for="(input, i) of inputLayer">
+                    <!-- <template v-for="(input, i) of inputLayer">
                       <Layer
                         def="images"
                         :parse="`inputs[input_${input}]`"
                         :name="`input_${input}`"
                         :key="'input_' + i"
                       />
-                    </template>
+                    </template> -->
                   </div>
                 </at-collapse-item>
                 <at-collapse-item class="mt-3" title="Выходные слои">
                   <div class="inner row inputs-layers">
-                    <template v-for="(output, i) of outputLayer">
+                    <!-- <template v-for="(output, i) of outputLayer">
                       <Layer
                         def="classification"
                         :parse="`outputs[output_${output}]`"
                         :name="`output_${output}`"
                         :key="'output_' + i"
                       />
-                    </template>
+                    </template> -->
                   </div>
                 </at-collapse-item>
               </at-collapse>
@@ -137,32 +137,28 @@
 
 import { mapGetters } from "vuex";
 import Autocomplete from "@/components/forms/Autocomplete.vue";
+// import Input from "@/components/forms/Input.vue";
 import DatasetSlider from "@/components/datasets/params/DatasetSlider.vue";
-import Layer from "./Layer.vue";
+// import Layer from "./Layer.vue";
 import DatasetButton from "./DatasetButton.vue";
 import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
   components: {
     Autocomplete,
-    Layer,
+    // Layer,
     DatasetButton,
     DatasetSlider,
+    // Input
   },
   data: () => ({
     tabGoogle: true,
-    slider: 10,
-    options: [
-      { id: 1, name: "Option 1" },
-      { id: 2, name: "Option 2" },
-    ],
+    urlName: '',
+    googleName: '',
+    interval: null,
     inputs: 1,
     outputs: 1,
-    tab: null,
-    name: "",
     items: [],
-    isLoading: false,
-    search: null,
     rules: {
       length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
       required: (len) => len.length !== 0 || `Not be empty`,
@@ -185,17 +181,21 @@ export default {
     },
   },
   methods: {
+    createInterval() {
+      this.interval = setInterval(function () {
+        this.loadData();
+      }.bind(this), 30000); 
+    },
     async download() {
-      if (this.name && this.inputs && this.outputs) {
+      if (this.googleName) {
         const res = {
-          name: this.name,
-          inputs: this.inputs,
-          outputs: this.outputs,
+          mode: this.tabGoogle ? 'GoogleDrive' : 'URL',
+          value: this.tabGoogle ? this.googleName : this.urlName,
         };
-        await this.$store.dispatch("datasets/settings", res);
+        await this.$store.dispatch("datasets/sourceLoad", res);
       } else {
         this.$store.dispatch("messages/setMessage", {
-          error: "Выберите файл и кол. вход и выходов",
+          error: "Выберите файл",
         });
       }
     },
@@ -211,7 +211,7 @@ export default {
       });
     },
     async selected(value) {
-      this.name = value.name;
+      this.googleName = value.value;
     },
     click() {
       if (this.$refs.form) {

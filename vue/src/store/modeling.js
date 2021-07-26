@@ -1,5 +1,5 @@
 import { blocks, typeBlock, scene } from "./const/typeBlock";
-import { list, layers } from "./const/typeLayers";
+// import { list, layers } from "./const/typeLayers";
 export default {
   namespaced: true,
   state: () => ({
@@ -7,10 +7,16 @@ export default {
     toolbarEvent: {},
     select: null,
     scene: { ...scene },
-    list: [...list],
-    layers: {...layers}
+    list: [],
+    layers: {}
   }),
   mutations: {
+    SET_LAYERS(state, value) {
+      state.layers = {...value};
+    },
+    SET_LIST(state, value) {
+      state.list = [...value];
+    },
     SET_DIALOG(state, value) {
       state.dialog = value;
     },

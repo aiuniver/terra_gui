@@ -4662,8 +4662,23 @@ const layers = {
   },
 };
 
-const list = Object.keys(layers).map((key, i ) => {
-  return { name: key, value: key, id: ++i };
+const list = Object.keys(layers).map((key) => {
+  return { label: key, value: key };
 });
 
 export { list, layers };
+
+
+
+
+// const dfdfd = {
+//   id: 1,
+//   name: "L3",
+//   type: "Conv2D",
+//   group: "middle",
+//   bind: [
+//     [1,0],
+//     [1,4]
+//   ],
+//   position: [100, 110],
+// };

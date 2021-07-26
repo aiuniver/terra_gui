@@ -1,14 +1,13 @@
 <template>
-  <div class="field-form field-inline field-reverse">
-    <slot>
-      <label :for="name">{{ label }}</label>
-    </slot>
-    <input :id="name" :type="type" :name="parse" :value="value" />
+  <div class="">
+      <label>{{ label }}</label>
+    <input :type="type" :name="parse" :value="value" />
   </div>
 </template>
 
 <script>
 export default {
+  name: 't-input',
   props: {
     label: {
       type: String,
@@ -21,8 +20,9 @@ export default {
     value: {
       type: [String, Number],
     },
-    parse: String,
-    name: String,
+    parse: {
+      type: String,
+    },
   },
 };
 </script>

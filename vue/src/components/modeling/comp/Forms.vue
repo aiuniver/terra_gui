@@ -1,41 +1,41 @@
 <template>
   <div class="form-inline-label">
-    <template v-for="({ type, default: def, available, event }, key) of items">
+    <template v-for="({ type, value, list, event, label, parse, name }, key) of items">
       <Input
         v-if="type === 'tuple'"
-        :value="def.join()"
-        :label="key"
+        :value="value"
+        :label="label"
         type="text"
-        :parse="`[${parse}][${key}]`"
-        :name="key"
+        :parse="parse"
+        :name="name"
         :key="key"
       />
       <Input
-        v-if="type === 'int' || type === 'string'"
-        :value="def"
-        :label="key"
-        :type="type === 'int' ? 'number' : 'text'"
-        :parse="`[${parse}][${key}]`"
-        :name="key"
+        v-if="type === 'number' || type === 'text'"
+        :value="value"
+        :label="label"
+        :type="type"
+        :parse="parse"
+        :name="name"
         :key="key"
       />
       <Checkbox
-        v-if="type === 'bool'"
-        :value="def"
-        :label="key"
+        v-if="type === 'checkbox'"
+        :value="value"
+        :label="label"
         type="checkbox"
-        :parse="`[${parse}][${key}]`"
-        :name="key"
+        :parse="parse"
+        :name="name"
         :event="event"
         :key="key"
       />
       <Select
-        v-if="available"
-        :label="key"
-        :lists="available"
-        :value="def || ''"
-        :parse="`[${parse}][${key}]`"
-        :name="key"
+        v-if="type === 'select'"
+        :label="label"
+        :lists="list"
+        :value="value"
+        :parse="parse"
+        :name="name"
         :key="key"
       />
     </template>
@@ -56,7 +56,7 @@ export default {
   },
   props: {
     items: {
-      type: Object,
+      type: Array,
       required: true,
     },
     parse: {

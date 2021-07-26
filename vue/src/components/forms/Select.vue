@@ -9,9 +9,9 @@
       style="width: 100px"
       @on-change="change"
     >
-      <at-option v-for="(item, key) in items" :key="'item_' + key" :value="item">{{
-        item
-      }}</at-option>
+      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
+        {{ label }}
+      </at-option>
     </at-select>
   </div>
 </template>
