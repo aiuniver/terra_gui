@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path
+from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 
@@ -24,6 +25,7 @@ class ChoiceAPIView(BaseAPIView):
                 path=str(data_path.datasets),
                 **serializer.validated_data
             )
+            request.project.save()
             return BaseResponseSuccess(request.project.dataset.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -48,6 +50,8 @@ class SourceLoadAPIView(BaseAPIView):
             return BaseResponseSuccess(data)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class SourceLoadProgressAPIView(BaseAPIView):

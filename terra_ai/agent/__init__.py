@@ -19,7 +19,7 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
-from ..datasets import loader
+from ..datasets import loading as datasets_loading
 
 from .. import ASSETS_PATH, DATASET_EXT
 from .. import progress
@@ -105,7 +105,7 @@ class Exchange:
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        return loader.load_data(source)
+        return datasets_loading.load(source)
 
     def _call_dataset_source_load_progress(self) -> ProgressData:
         """
