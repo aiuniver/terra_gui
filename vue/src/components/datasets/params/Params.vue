@@ -183,9 +183,19 @@ export default {
   },
   methods: {
     createInterval() {
-      this.interval = setInterval(function () {
-        this.loadData();
-      }.bind(this), 30000); 
+      this.interval = setInterval(async () => {
+        
+        const data = await this.$store.dispatch("datasets/loadProgress", {});
+        const { finished, message, percent } = data
+        if ( !data || finished ) {
+          clearTimeout(this.interval);
+          this.$store.dispatch("messages/setMessage", { message: message });
+          this.$store.dispatch("messages/setProgress", percent);
+        } else {
+          this.$store.dispatch("messages/setProgress", percent);
+        }
+        console.log(data)
+      }, 1000); 
     },
     async download() {
       if (this.googleName) {
@@ -193,6 +203,7 @@ export default {
           mode: this.tabGoogle ? 'GoogleDrive' : 'URL',
           value: this.tabGoogle ? this.googleName : this.urlName,
         };
+        this.createInterval()
         await this.$store.dispatch("datasets/sourceLoad", res);
       } else {
         this.$store.dispatch("messages/setMessage", {

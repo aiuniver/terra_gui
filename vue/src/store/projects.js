@@ -24,7 +24,7 @@ export default {
     },
     async saveProject({ dispatch }, name) {
       console.log(name)
-      const res = {method: 'post', url: "/project/name/", data: name }
+      const res = {url: "/project/name/", data: name }
       const data = await dispatch('axios', res , {root: true});
       if (!data) {
         return;

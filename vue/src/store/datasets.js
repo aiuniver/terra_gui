@@ -34,7 +34,7 @@ export default {
   },
   actions: {
     async choice({ commit, dispatch }, dataset) {
-      const data = await dispatch("axios", { method: 'post', url: "/datasets/choice/", data: dataset }, { root: true });
+      const data = await dispatch("axios", { url: "/datasets/choice/", data: dataset }, { root: true });
       if (data) {
         commit("projects/SET_PROJECT", { dataset: data }, { root: true })
         dispatch('messages/setMessage', { message: `Датасет «${data.name}» загружен`}, { root: true })
@@ -43,8 +43,10 @@ export default {
       return data;
     },
     async sourceLoad({ dispatch }, source ) {
-      const data = await dispatch("axios",{ url: "/datasets/source/load/", data: source }, { root: true });
-      return data;
+      return await dispatch("axios",{ url: "/datasets/source/load/", data: source }, { root: true });
+    },
+    async loadProgress({ dispatch }, source ) {
+      return await dispatch("axios",{ url: "/datasets/source/load/progress/", data: source }, { root: true });
     },
     async get({ dispatch, commit }) {
       const data = await dispatch(
