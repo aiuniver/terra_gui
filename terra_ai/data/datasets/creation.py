@@ -145,7 +145,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
-from pydantic import validator, HttpUrl
+from pydantic import validator, HttpUrl, DirectoryPath
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
@@ -336,6 +336,10 @@ class CreationData(BaseMixinData):
 
     name: str
     "Название"
+    datasets_path: DirectoryPath
+    "Путь к директории датасетов проекта"
+    source_path: DirectoryPath
+    "Путь к директории с исходниками, полученный после их загрузки"
     info: CreationInfoData = CreationInfoData()
     "Информация о данных"
     tags: TagsList = TagsList()

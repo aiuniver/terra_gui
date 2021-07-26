@@ -21,15 +21,16 @@ from pytz import timezone
 from .data import DataType
 from . import array_creator, loader
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
+from ..data.datasets.dataset import DatasetData
 
 
 class CreateDTS(object):
 
-    def __init__(self, trds_path='/content/drive/MyDrive/TerraAI/datasets'):
+    def __init__(self):
 
         self._datatype = 'DIM'
 
-        self.trds_path: str = trds_path
+        self.trds_path: str = ''
         self.file_folder: str = ''
 
         self.name: str = ''
@@ -91,7 +92,6 @@ class CreateDTS(object):
         loader.load_data(strict_object=strict_object)
 
         self.zip_params = json.loads(strict_object.json())
-        self.file_folder = loader.file_folder
 
     def set_dataset_data(self, data: Union[CreationInputsList, CreationOutputsList]):
         for elem in data:
@@ -114,6 +114,8 @@ class CreateDTS(object):
         self.source = 'custom dataset'
         self.user_tags = creation_data.tags
         self.use_generator = creation_data.use_generator
+        self.trds_path = creation_data.datasets_path
+        self.file_folder = creation_data.source_path
 
         for data in [creation_data.inputs, creation_data.outputs]:
             self.set_dataset_data(data)
@@ -284,8 +286,7 @@ class CreateDTS(object):
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
-
-        pass
+        return DatasetData(**data)
 
     def instructions_images_obj_detection(self, folder_name: str) -> list:
         data: list = []
