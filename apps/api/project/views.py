@@ -8,4 +8,4 @@ class NameAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         request.project.name = serializer.validated_data.get("name")
-        return BaseResponseSuccess(data=None)
+        return BaseResponseSuccess()

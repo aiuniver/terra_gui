@@ -24,8 +24,8 @@ from ..datasets.dataset import DTS
 
 from .. import ASSETS_PATH
 from .. import progress
+from ..progress import ProgressData
 from . import exceptions
-from . import temporary_methods
 
 
 class Exchange:
@@ -49,7 +49,7 @@ class Exchange:
     def is_colab(self) -> bool:
         return "COLAB_GPU" in os.environ.keys()
 
-    def _call_hardware_accelerator(self) -> dict:
+    def _call_hardware_accelerator(self) -> HardwareAcceleratorData:
         device_name = tensorflow.test.gpu_device_name()
         if device_name != "/device:GPU:0":
             if self.is_colab:
@@ -62,10 +62,9 @@ class Exchange:
                 __type = HardwareAcceleratorChoice.CPU
         else:
             __type = HardwareAcceleratorChoice.GPU
-        hardware = HardwareAcceleratorData(type=__type)
-        return hardware.native()
+        return HardwareAcceleratorData(type=__type)
 
-    def _call_dataset_choice(self, path: str, group: str, alias: str) -> dict:
+    def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
         """
         Выбор датасета
         """
@@ -73,14 +72,13 @@ class Exchange:
         if dataset_choice.group == DatasetGroupChoice.keras:
             return DTS.get_dataset_keras_info(dataset_choice.alias)
         if dataset_choice.group == DatasetGroupChoice.custom:
-            data = DTS.get_dataset_custom_info(dataset_choice.alias, path)
-            return data.native()
+            return DTS.get_dataset_custom_info(dataset_choice.alias, path)
         else:
             raise exceptions.DatasetGroupUndefinedMethodException(
                 dataset_choice.group.value
             )
 
-    def _call_datasets_info(self, path: str) -> dict:
+    def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
@@ -91,23 +89,22 @@ class Exchange:
                 info.get("custom").datasets.append(DatasetData(**dataset_config.config))
             except Exception:
                 pass
-        return info.native()
+        return info
 
-    def _call_dataset_source_load(self, mode: str, value: str):
+    def _call_dataset_source_load(self, mode: str, value: str) -> dict:
         """
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        data = loader.load_data(source)
-        return data
+        return loader.load_data(source)
 
-    def _call_dataset_source_load_progress(self) -> dict:
+    def _call_dataset_source_load_progress(self) -> ProgressData:
         """
         Прогресс загрузки исходников датасета
         """
-        return progress.pool(progress.PoolName.dataset_source_load).native()
+        return progress.pool(progress.PoolName.dataset_source_load)
 
-    def _call_datasets_sources(self, path: str) -> list:
+    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
         Получение списка исходников датасетов
         """
@@ -119,9 +116,9 @@ class Exchange:
             except Exception:
                 pass
         files.sort(key=lambda item: item.label)
-        return files.native()
+        return files
 
-    def _call_models(self, path: str) -> list:
+    def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
@@ -141,20 +138,20 @@ class Exchange:
             except Exception:
                 pass
         models.get("custom").models.sort(key=lambda item: item.label)
-        return models.native()
+        return models
 
-    def _call_model_load(self, value: str):
+    def _call_model_load(self, value: str) -> dict:
         """
         Загрузка модели
         """
         model = ModelLoadData(value=value)
-        temporary_methods.model_load(model)
+        # temporary_methods.model_load(model)
 
-    def _call_model_load_progress(self) -> dict:
+    def _call_model_load_progress(self) -> ProgressData:
         """
         Прогресс загрузки модели
         """
-        return progress.pool(progress.PoolName.model_load).native()
+        return progress.pool(progress.PoolName.model_load)
 
 
 agent_exchange = Exchange()

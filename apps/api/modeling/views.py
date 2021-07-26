@@ -21,10 +21,11 @@ class ModelLoadAPIView(BaseAPIView):
 
 class ModelLoadProgressAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        return BaseResponseSuccess(data=agent_exchange("model_load_progress"))
+        return BaseResponseSuccess(agent_exchange("model_load_progress").native())
 
 
 class ModelsAPIView(BaseAPIView):
     def get(self, request, **kwargs):
-        data = agent_exchange("models", path=str(data_path.modeling))
-        return BaseResponseSuccess(data)
+        return BaseResponseSuccess(
+            agent_exchange("models", path=str(data_path.modeling)).native()
+        )
