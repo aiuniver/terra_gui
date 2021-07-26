@@ -3,17 +3,21 @@ export default {
   namespaced: true,
   state: () => ({
     datasets: [],
+    selected: null,
     tags: [],
     settings: {},
     sort: "",
     tagsFilter: [],
     id: null,
     dialog: false,
-    full: false
+    full: false,
   }),
   mutations: {
     SET_DATASETS(state, value) {
       state.datasets = [...value];
+    },
+    SET_SELECTED(state, value) {
+      state.selected = value;
     },
     SET_SETTINGS(state, value) {
       state.settings = { ...value };
@@ -29,45 +33,55 @@ export default {
     },
   },
   actions: {
-    async settings({ commit, dispatch }, { inputs, outputs, name }) {
-        const res = {
-          link: "",
-          mode: "google_drive",
-          name,
-          num_links: {
-            inputs: +inputs,
-            outputs: +outputs,
-          },
-        };
-        const data = await dispatch('axios', {url: "/exchange/load_dataset/", data: res}, {root: true});
-        commit("SET_SETTINGS", data);
-        return data;
+    async choice({ commit, dispatch }, dataset) {
+      const data = await dispatch("axios", { method: 'post', url: "/datasets/choice/", data: dataset }, { root: true });
+      if (data) {
+        commit("projects/SET_PROJECT", { dataset: data }, { root: true })
+        dispatch('messages/setMessage', { message: `Датасет «${data.name}» загружен`}, { root: true })
+      }
+      // console.log(rootState)
+      return data;
+    },
+    async sourceLoad({ dispatch }, source ) {
+      const data = await dispatch("axios",{ url: "/datasets/source/load/", data: source }, { root: true });
+      return data;
     },
     async get({ dispatch, commit }) {
-      const data = await dispatch('axios', {url: "/datasets/info/"}, {root: true});
+      const data = await dispatch(
+        "axios",
+        { url: "/datasets/info/" },
+        { root: true }
+      );
       if (!data) {
         return;
       }
-      const [ preset, custom ]  = data
-      const { datasets:presetDatasets, tags:presetTags } = preset
-      const { datasets:customDatasets, tags:customTags } = custom
-      let datasets = [...presetDatasets, ...customDatasets]
-      datasets = datasets.map((dataset) => {
-        return  {...dataset, active: false}
+      const [preset, custom] = data;
+      const { datasets: presetDatasets, tags: presetTags } = preset;
+      const { datasets: customDatasets, tags: customTags } = custom;
+      const preDataset = presetDatasets.map((item) => {
+        return {...item, group: 'keras'}
       })
-      let tags = [...presetTags, ...customTags]
+      const cusDataset = customDatasets.map((item) => {
+        return {...item, group: 'custom'}
+      })
+      let datasets = [...preDataset, ...cusDataset];
+      datasets = datasets.map((dataset) => {
+        return { ...dataset, active: false };
+      });
+      let tags = [...presetTags, ...customTags];
       tags = tags.map((tag) => {
-        return {active: false, ...tag }
+        return { active: false, ...tag };
       });
       commit("SET_DATASETS", datasets);
       commit("SET_TAGS", tags);
     },
-    setSelect({ commit, state:{datasets}  }, dataset){
+    setSelect({ commit, state: { datasets } }, dataset) {
       const data = datasets.map((item) => {
-        item.active = (item.name === dataset.name)
-        return item
-      })
+        item.active = item.name === dataset.name;
+        return item;
+      });
       commit("SET_DATASETS", data);
+      commit("SET_SELECTED", dataset);
     },
     setTagsFilter({ commit }, value) {
       commit("SET_TAGS_FILTER", value);
@@ -79,6 +93,9 @@ export default {
   getters: {
     getSettings() {
       return inputs;
+    },
+    getSelected({ selected }) {
+      return selected;
     },
     getFull({ full }) {
       return full;
@@ -93,11 +110,11 @@ export default {
       if (!tagsFilter.length) {
         return datasets;
       }
-      return datasets.filter(({tags}) => {
-        const index = tags.filter(({alias}) => {
+      return datasets.filter(({ tags }) => {
+        const index = tags.filter(({ alias }) => {
           return tagsFilter.indexOf(alias) !== -1;
         });
-        return index.length === tagsFilter.length
+        return index.length === tagsFilter.length;
       });
     },
   },

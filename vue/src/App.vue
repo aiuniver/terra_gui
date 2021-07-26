@@ -19,9 +19,12 @@ export default {
     Nav,
     Footer
   },
-  created() {
-    this.$store.dispatch("datasets/get");
-    this.$store.dispatch("settings/get");
+  async created() {
+    await this.$store.dispatch("datasets/get");
+    await this.$store.dispatch("projects/get");
+    if (!this.$store.state.projects.project.dataset && this.$route.path !== '/datasets') {
+      this.$router.push('/datasets');
+    }
   },
 };
 </script>

@@ -53,7 +53,7 @@
         </div>
       </div>
       <div slot="footer">
-        <button @click="save = false">Сохранить</button>
+        <button @click="saveProject">Сохранить</button>
       </div>
     </at-modal>
     <at-modal v-model="load" width="400">
@@ -93,10 +93,10 @@ export default {
   computed: {
     nameProject: {
       set(name) {
-        this.$store.dispatch("settings/setProject", { name });
+        this.$store.dispatch("projects/setProject", { name });
       },
       get() {
-        return this.$store.getters["settings/getProject"].name;
+        return this.$store.getters["projects/getProject"].name;
       },
     },
     full: {
@@ -109,6 +109,10 @@ export default {
     },
   },
   methods: {
+    async saveProject() {
+      await this.$store.dispatch('projects/saveProject', { name: this.nameProject })
+      this.save = false
+    },
     click(type) {
       console.log(type);
       if (type === "project-new") {

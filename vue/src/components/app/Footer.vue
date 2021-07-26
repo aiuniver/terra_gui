@@ -30,7 +30,7 @@ export default {
       message: "messages/getMessage",
       color: "messages/getColor",
       progress: "messages/getProgress",
-      project: "settings/getProject",
+      project: "projects/getProject",
     }),
     protsessor() {
       return this.project?.hardware || "";
