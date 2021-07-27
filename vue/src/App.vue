@@ -17,15 +17,19 @@ export default {
   components: {
     Header,
     Nav,
-    Footer
+    Footer,
   },
+  data: () => ({}),
   async created() {
     await this.$store.dispatch("projects/get");
     await this.$store.dispatch("datasets/get");
-    if (!this.$store?.state?.projects?.project?.dataset && this.$route.path !== '/datasets') {
-      this.$router.push('/datasets');
+    if (
+      !this.$store?.state?.projects?.project?.dataset &&
+      this.$route.path !== "/datasets"
+    ) {
+      this.$router.push("/datasets");
     }
-  },
+  }
 };
 </script>
 

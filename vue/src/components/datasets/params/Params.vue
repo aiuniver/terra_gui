@@ -121,6 +121,16 @@
                       <span class="switcher"></span>
                     </div>
                   </div>
+                  <div class="field-form field-inline field-reverse">
+                    <label>Использовать генератор</label>
+                    <div class="checkout-switch">
+                      <input
+                        type="checkbox"
+                        name="parameters[use_generator]"
+                      />
+                      <span class="switcher"></span>
+                    </div>
+                  </div>
                   <button class="mt-6" @click.prevent="click">
                     Сформировать
                   </button>

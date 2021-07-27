@@ -1,5 +1,5 @@
 <template>
-  <div class="project-datasets-block filters">
+  <div class="project-datasets-block filters" ref="filters">
     <div class="title">Теги</div>
     <div class="inner">
       <ul>
@@ -7,7 +7,7 @@
           v-for="({ name, alias, active }, i) in tags"
           :key="i"
           @click="click(i, alias)"
-          :class="{active}"
+          :class="{ active }"
         >
           <span>
             {{ name }}
@@ -48,6 +48,30 @@ export default {
         return t;
       }, []);
     },
+    myEventHandler() {
+      const height = this.$refs.filters.clientHeight;
+      this.$store.dispatch("settings/setFilterHeight", height);
+    },
+  },
+  watch: {
+    tags() {
+      this.$nextTick(() => {
+        const height = this.$refs.filters.clientHeight;
+        this.$store.dispatch("settings/setFilterHeight", height);
+      });
+    },
+  },
+  mounted() {
+    setTimeout(() => {
+      const height = this.$refs.filters.clientHeight;
+      this.$store.dispatch("settings/setFilterHeight", height);
+    }, 100);
+  },
+  created() {
+    window.addEventListener("resize", this.myEventHandler);
+  },
+  destroyed() {
+    window.removeEventListener("resize", this.myEventHandler);
   },
 };
 </script>

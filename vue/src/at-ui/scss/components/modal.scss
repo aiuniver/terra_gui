@@ -40,7 +40,7 @@
   &__header {
     padding: $modal-header-padding;
     color: $title-color;
-    font-size: $modal-header-font-size;
+    font-size: $modal-header-font-size !important;
     // font-weight: bold;
     line-height: 1.5;
     border-bottom: 1px solid $modal-section-border-color;
@@ -48,6 +48,7 @@
     p, .at-modal__title {
       @include ellipsis();
       vertical-align: middle;
+      font-size: $modal-header-font-size !important;
     }
   }
   &__close {
@@ -84,11 +85,11 @@
   }
   &__footer {
     padding: $modal-footer-padding;
-    border-top: 1px solid $modal-section-border-color;
+    // border-top: 1px solid $modal-section-border-color;
     text-align: right;
 
     .at-btn + .at-btn {
-      margin-left: 8px;
+      // margin-left: 8px;
     }
   }
 
