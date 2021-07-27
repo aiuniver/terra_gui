@@ -1,5 +1,5 @@
 <template>
-  <div class="row params">
+  <div class="row params full">
     <div class="col-24 params__top">
       <div class="row">
         <div
@@ -15,14 +15,16 @@
         </div>
         <div>
           <table class="csv-table">
-            <tr v-for="(row, y) in table_test" :key="row">
+            <tr
+                v-for="(row, index) in table_test"
+                @mousedown="select"
+                @mouseover="select"
+                :data-index="index"
+                :class="{ 'selected': selected_tr.includes(index) }"
+            >
               <td
-                  v-for="(item, x) in row"
+                  v-for="item in row"
                   :key="item"
-                  @mousedown="select"
-                  @mouseover="select"
-                  :data-key="key(x, y)"
-                  :class="{ selected: selected_td.includes(key(x, y)) }"
               >{{ item }}</td>
             </tr>
           </table>
@@ -90,7 +92,7 @@ export default {
       },
     ],
     table_test: [],
-    selected_td: [],
+    selected_tr: [],
   }),
   computed: {
     ...mapGetters({
@@ -126,15 +128,15 @@ export default {
       //   return x;
       // });
     },
-
-    key: (x, y) => `${y}.${x}`,
-    select({ buttons, target: { dataset: { key } } }) {
+    select({ buttons, target: { dataset: { index } } }) {
+      event.preventDefault();
+      console.log({ buttons, target: { dataset: { index } } })
       if (buttons) {
-        const index = this.selected_td.indexOf(key);
-        if (index !== -1) {
-          this.selected_td.splice(index, 1);
+        const key = this.selected_tr.indexOf(index);
+        if (key !== -1) {
+          this.selected_tr.splice(key, 1);
         } else {
-          this.selected_td.push(key);
+          this.selected_tr.push(index);
         }
       }
     },
@@ -164,9 +166,13 @@ export default {
 }
 .csv-table{
    border-collapse: collapse;
+   border: 1px solid #434445;
+   border-radius: 4px;
   td{
     padding: 7px; /* Поля вокруг содержимого таблицы */
-    border: 1px solid black; /* Параметры рамки */
+   }
+  tr:nth-child(even) {
+    background: #3b4249; /* Цвет фона четных строк */
    }
 }
 .selected{
