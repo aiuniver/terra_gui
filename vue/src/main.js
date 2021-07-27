@@ -86,6 +86,9 @@ Vue.use(vuescroll, {
 });
 
 
+import VuePapaParse from "vue-papa-parse";
+Vue.use(VuePapaParse)
+
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
