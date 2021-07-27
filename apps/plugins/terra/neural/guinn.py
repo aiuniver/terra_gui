@@ -247,11 +247,11 @@ class GUINN:
                     if self.DTS.Y[output_key]['data'][2] is not None:
                         self.x_Test.update({'input_2': self.DTS.Y[output_key]['data'][2]})
 
-                    self.y_Train.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][0].shape)})
+                    self.y_Train.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][0].shape[0])})
                     if self.DTS.Y[output_key]['data'][1] is not None:
-                        self.y_Val.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][1].shape)})
+                        self.y_Val.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][1].shape[0])})
                     if self.DTS.Y[output_key]['data'][2] is not None:
-                        self.y_Test.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][2].shape)})
+                        self.y_Test.update({'yolo_loss': np.zeros(self.DTS.Y[output_key]['data'][2].shape[0])})
                 elif output_key == 'output_2':
                     self.x_Train.update({'input_3': self.DTS.Y[output_key]['data'][0]})
                     if self.DTS.Y[output_key]['data'][1] is not None:
