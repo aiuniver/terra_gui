@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic.types import DirectoryPath, PositiveInt
+from pydantic.types import PositiveInt
 
 from ...extra import FileInfo
 from ...image_augmentation import AugmentationData
@@ -8,6 +8,7 @@ from .....extra import LayerNetChoice, LayerScalerChoice
 
 
 class ParametersData(BaseMixinData):
+    # image_path???
     file_info: FileInfo
     width: PositiveInt
     height: PositiveInt
