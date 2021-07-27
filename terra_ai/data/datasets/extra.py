@@ -41,6 +41,7 @@ class LayerScalerChoice(str, Enum):
 
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
+    terra = "terra"
     custom = "custom"
 
     @staticmethod
