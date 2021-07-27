@@ -41,6 +41,7 @@ class LayerScalerChoice(str, Enum):
 
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
+    terra = "terra"
     custom = "custom"
 
     @staticmethod
@@ -72,3 +73,4 @@ class LayerOutputTypeChoice(str, Enum):
     TextSegmentation = "TextSegmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
+    ObjectDetection = "ObjectDetection"

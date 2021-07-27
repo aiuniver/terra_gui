@@ -1,12 +1,14 @@
 import os
 import sys
 import shutil
+import base64
 import zipfile
 import requests
 
 from tqdm import tqdm
 from pathlib import Path
-from tempfile import mkdtemp, gettempdir
+from tempfile import mkdtemp, gettempdir, NamedTemporaryFile
+from pydantic.networks import HttpUrl
 
 from .data import DatasetArchives
 
@@ -15,7 +17,12 @@ from ..data.datasets.creation import SourceData
 from ..exceptions.datasets import DatasetSourceLoadUndefinedMethodException
 
 
+DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
+DATASET_UNPACK_TITLE = "Распаковка исходников датасета"
+NOT_ZIP_FILE_URL = "Неверная ссылка на zip-файл «%s»"
 DATASETS_SOURCE_DIR = Path(gettempdir(), "terraai", "datasets")
+AVAILABLE_ZIP_CONTENT_TYPE = ["application/zip", "application/x-zip-compressed"]
+URL_DOWNLOAD_DIVISOR = 1024
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 
@@ -85,27 +92,51 @@ os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 #         if "zip" in file_name:
 #             self.unzip(file_name)
 #         return {"message": f"Файлы скачаны в директорию {self.file_folder}"}
-#
-#     def load_from_url(self, link: str):
-#         file_name = link.split("/")[-1]
-#         self.file_folder = (
-#             file_name[: file_name.rfind(".")] if "." in file_name else file_name
-#         )
-#         self.download(link, file_name)
-#         if "zip" in file_name or "zip" in link:
-#             self.unzip(file_name)
-#         return {"message": f"Файлы скачаны в директорию {self.file_folder}"}
+
+
+def __download(progress_name: str, url: HttpUrl) -> Path:
+    progress.pool(progress_name, message=DOWNLOAD_SOURCE_TITLE, finished=False)
+    file_destination = NamedTemporaryFile(delete=False)
+    try:
+        response = requests.get(url, stream=True)
+        if requests.status_codes.codes.get("ok") != response.status_code:
+            raise Exception(NOT_ZIP_FILE_URL % url)
+        length = int(response.headers.get("Content-Length", 0))
+        size = 0
+        with open(file_destination.name, "wb") as file_destination_ref:
+            for data in response.iter_content(chunk_size=URL_DOWNLOAD_DIVISOR):
+                size += file_destination_ref.write(data)
+                progress.pool(progress_name, percent=size / length * 100)
+    except requests.exceptions.ConnectionError as error:
+        os.remove(file_destination.name)
+        raise requests.exceptions.ConnectionError(error)
+    return Path(file_destination.name)
+
+
+def __unpack(progress_name: str, zipfile_path: Path) -> Path:
+    progress.pool.reset(progress_name, message=DATASET_UNPACK_TITLE, finished=False)
+    tmp_destination = mkdtemp()
+    try:
+        with zipfile.ZipFile(zipfile_path) as zipfile_ref:
+            __tqdm = tqdm(zipfile_ref.infolist())
+            for member in __tqdm:
+                zipfile_ref.extract(member, tmp_destination)
+                progress.pool(progress_name, percent=__tqdm.n / __tqdm.total * 100)
+            progress.pool(progress_name, percent=100)
+    except Exception as error:
+        shutil.rmtree(tmp_destination, ignore_errors=True)
+        raise Exception(error)
+    return tmp_destination
 
 
 @progress.threading
-def __load_from_googledrive(folder: Path, zipfile_path: Path):
+def __load_from_url(folder: Path, url: HttpUrl):
+    # Получение папки датасета
+    folder_name = base64.b64encode(url.encode("UTF-8")).decode("UTF-8")
+    dataset_path = Path(folder, folder_name)
+
     # Сброс прогресс-бара
     progress_name = progress.PoolName.dataset_source_load
-    progress.pool.reset(progress_name, message="Загрузка датасета", finished=False)
-
-    # Получение папки датасета
-    folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]
-    dataset_path = Path(folder, folder_name)
 
     # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
     # что загрузка завершена и возвращаем путь в прогресс-бар
@@ -118,28 +149,47 @@ def __load_from_googledrive(folder: Path, zipfile_path: Path):
         )
         return
 
-    # Создаем временную папку, в которую будем распаковывать архив исходников,
-    # и запускаем распаковку
-    tmp_destination = mkdtemp()
+    # Запускаем загрузку
     try:
-        with zipfile.ZipFile(zipfile_path) as zipfile_ref:
-            __tqdm = tqdm(zipfile_ref.infolist())
-            for member in __tqdm:
-                zipfile_ref.extract(member, tmp_destination)
-                progress.pool(progress_name, percent=__tqdm.n / __tqdm.total * 100)
-            shutil.move(tmp_destination, dataset_path)
-            progress.pool(
-                progress_name,
-                percent=__tqdm.n / __tqdm.total * 100,
-                data=dataset_path.absolute(),
-                finished=True,
-            )
-    except Exception as error:
-        shutil.rmtree(tmp_destination, ignore_errors=True)
+        zipfile_path = __download(progress_name, url)
+        zip_destination = __unpack(progress_name, zipfile_path)
+        shutil.move(zip_destination, dataset_path)
+        os.remove(zipfile_path.absolute())
+        progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
+    except (Exception, requests.exceptions.ConnectionError) as error:
         progress.pool(progress_name, error=str(error))
 
 
-def load(strict_object: SourceData):
+@progress.threading
+def __load_from_googledrive(folder: Path, zipfile_path: Path):
+    # Получение папки датасета
+    folder_name = zipfile_path.name[: zipfile_path.name.rfind(".")]
+    dataset_path = Path(folder, folder_name)
+
+    # Имя прогресс-бара
+    progress_name = progress.PoolName.dataset_source_load
+
+    # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
+    # что загрузка завершена и возвращаем путь в прогресс-бар
+    if dataset_path.exists():
+        progress.pool(
+            progress_name,
+            percent=100,
+            data=dataset_path.absolute(),
+            finished=True,
+        )
+        return
+
+    # Запускаем загрузку
+    try:
+        zip_destination = __unpack(progress_name, zipfile_path)
+        shutil.move(zip_destination, dataset_path)
+        progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
+    except Exception as error:
+        progress.pool(progress_name, error=str(error))
+
+
+def source(strict_object: SourceData):
     __method_name = f"__load_from_{strict_object.mode.lower()}"
     __method = getattr(sys.modules.get(__name__), __method_name, None)
     if __method:

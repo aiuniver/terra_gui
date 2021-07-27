@@ -17,7 +17,8 @@ class ExceptionMessages(str, Enum):
     UniqueListUndefinedIdentifier = 'Identifier is undefined in "%s"'
     PartTotal = "%s: Sum of all properties must by 1"
     ListEmpty = "%s: must not be empty"
-    FilePathExtension = '%s: File must have "%s" extension'
+    FilePathExtension = '%s: File name must have "%s" extension'
+    FileNameExtension = '%s: File name must have "%s" extension'
     Base64Extension = "Incorrect base64 string value"
     XY = "%s: Value must be a list with 2 elements, received %s"
     ValueNotInList = "%s: Value must be in list %s"
@@ -99,6 +100,16 @@ class FilePathExtensionException(TerraDataException):
             (
                 (args[0] if len(args) else ExceptionMessages.FilePathExtension)
                 % (str(__file_path), str(__extension))
+            )
+        )
+
+
+class FileNameExtensionException(TerraDataException):
+    def __init__(self, __file_name: Any, __extension: Any, *args):
+        super().__init__(
+            (
+                (args[0] if len(args) else ExceptionMessages.FileNameExtension)
+                % (str(__file_name), str(__extension))
             )
         )
 

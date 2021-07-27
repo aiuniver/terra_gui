@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 from pydantic.types import DirectoryPath, PositiveInt
 from pydantic.color import Color
@@ -23,4 +23,6 @@ class ParametersData(BaseMixinData):
     classes_names: List[str]
     classes_colors: List[Color]
     mask_range: PositiveInt
+    num_classes: Optional[PositiveInt]
+    shape: Optional[Tuple[PositiveInt, ...]]
 
