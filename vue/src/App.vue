@@ -27,9 +27,24 @@ export default {
       !this.$store?.state?.projects?.project?.dataset &&
       this.$route.path !== "/datasets"
     ) {
-      this.$router.push("/datasets");
+      const text = {
+        "/modeling": "редактирования модели",
+        "/training": "обучения",
+        "/deploy": "деплоя",
+      };
+      const self = this;
+      this.$Modal.alert({
+        title: "Предупреждение!",
+        width: 300,
+        content: `Для ${text[this.$route.path]} необходимо загрузить датасет.`,
+        showClose: false,
+        okText: "Загрузить датасет",
+        callback: function () {
+          self.$router.push("/datasets");
+        },
+      });
     }
-  }
+  },
 };
 </script>
 

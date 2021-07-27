@@ -2,12 +2,17 @@
   <div class="footer">
     <div class="footer__message">
       <div :class="['footer__message--text', color]">
-          {{ message }}
+        {{ message }}
       </div>
     </div>
     <div class="footer__progress">
       <div class="footer__progress--item">
-        <i :style="{ width: progress + '%' }"><span></span></i><span></span>
+        <i :style="{ width: progress + '%' }">
+          <span>
+            {{ progressMessage }}
+          </span>
+        </i>
+        <span>{{ progressMessage }}</span>
       </div>
     </div>
     <div class="footer__state">
@@ -31,6 +36,7 @@ export default {
       color: "messages/getColor",
       progress: "messages/getProgress",
       project: "projects/getProject",
+      progressMessage: "messages/getProgressMessage",
     }),
     protsessor() {
       return this.project?.hardware || "";
@@ -152,6 +158,26 @@ export default {
         z-index: 1;
         font-style: normal;
         overflow: hidden;
+        > span {
+          color: #fff;
+          line-height: 24px;
+          position: absolute;
+          left: 0;
+          top: 0;
+          padding: 0 7px;
+        }
+      }
+      > span {
+        color: #2b5278;
+        display: block;
+        line-height: 30px;
+        padding: 0 10px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 0;
+        width: 100%;
+        white-space: nowrap;
       }
     }
   }

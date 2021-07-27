@@ -1,6 +1,6 @@
 <template>
   <div class="field-form field-inline align-center row">
-    <div class="col-7 label"><label>Train + val + test</label></div>
+    <div class="col-7 label">Train + val + test</div>
     <div class="col-7"><Range @set="change" /></div>
     <div class="col-10 input">
       <input type="number" name="parameters[train_part]" v-model="min"/>
@@ -35,11 +35,13 @@ export default {
 
 <style scoped>
 .input input {
+  margin-right: 1px;
   max-width: 45px;
   height: 22px;
   font-size: 0.75rem;
 }
-.label > label {
+.label {
   font-size: 0.75rem;
+  margin-bottom: 5px;
 }
 </style>

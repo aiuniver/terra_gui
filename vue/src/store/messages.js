@@ -1,36 +1,44 @@
 export default {
   namespaced: true,
   state: () => ({
-    color: 'success',
-    message: '',
-    progress: 0
+    color: "success",
+    message: "",
+    progressMessage: "",
+    progress: 0,
   }),
   mutations: {
-    SET_COLOR (state, color) {
-      state.color = color
+    SET_COLOR(state, value) {
+      state.color = value;
     },
-    SET_MESSAGE (state, message) {
-      state.message = message
+    SET_MESSAGE(state, value) {
+      state.message = value;
     },
-    SET_PROTSESSOR (state, protsessor) {
-      state.protsessor = protsessor
+    SET_PROGRESS_MESSAGE(state, value) {
+      state.progressMessage = value;
     },
-    SET_PROGRESS (state, progress) {
-      state.progress = progress
+    SET_PROTSESSOR(state, value) {
+      state.protsessor = value;
+    },
+    SET_PROGRESS(state, value) {
+      state.progress = value;
     },
   },
   actions: {
-    setMessage ({ commit }, { error, message }) {
-      commit('SET_COLOR', error ? 'error' : 'success')
-      commit('SET_MESSAGE', error || message )
+    setMessage({ commit }, { error, message }) {
+      commit("SET_COLOR", error ? "error" : "success");
+      commit("SET_MESSAGE", error || message);
     },
-    setProgress ({ commit }, progress) {
-      commit('SET_PROGRESS', progress )
+    setProgressMessage({ commit }, message ) {
+      commit("SET_PROGRESS_MESSAGE", message);
+    },
+    setProgress({ commit }, progress) {
+      commit("SET_PROGRESS", progress);
     },
   },
   getters: {
-    getProgress: state => state.progress,
-    getMessage: state => state.message,
-    getColor: state => state.color
-  }
-}
+    getProgress: ({ progress }) => progress,
+    getProgressMessage: ({ progressMessage }) => progressMessage,
+    getMessage: ({ message }) => message,
+    getColor: ({ color }) => color,
+  },
+};

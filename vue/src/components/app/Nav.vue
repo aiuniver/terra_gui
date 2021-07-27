@@ -37,13 +37,15 @@ export default {
           this.$router.push(path);
         }
       } else {
-        if (this.$route.path !== "/datasets") {
-          this.$router.push("/datasets");
-        }
+        const text = {
+          "/modeling": "редактирования модели",
+          "/training": "обучения",
+          "/deploy": "деплоя",
+        };
         this.$Modal.alert({
           title: "Предупреждение!",
           width: 300,
-          content: "Для редактирования модели необходимо загрузить датасет.",
+          content: `Для ${text[path]} необходимо загрузить датасет.`,
           showClose: false,
           okText: "Загрузить датасет",
           callback: function (action) {
@@ -52,21 +54,6 @@ export default {
         });
       }
     },
-  },
-  created() {
-    console.log(this.$route)
-    if (this.$route.path !== "/") {
-      this.$Modal.alert({
-        title: "Предупреждение!",
-        width: 300,
-        content: "Для редактирования модели необходимо загрузить датасет.",
-        showClose: false,
-        okText: "Загрузить датасет",
-        callback: function (action) {
-          console.log(action);
-        },
-      });
-    }
   },
 };
 </script>

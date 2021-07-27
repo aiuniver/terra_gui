@@ -38,7 +38,7 @@
               />
             </div>
             <div class="field-form field-inline field-reverse inputs">
-              <label for="field_form-num_links[inputs]"
+              <label for="num_links[inputs]"
                 >Кол-во <b>входов</b></label
               >
               <input
@@ -47,16 +47,18 @@
                 min="0"
                 max="100"
                 name="num_links[inputs]"
+                id="num_links[inputs]"
                 data-value-type="number"
               />
             </div>
             <div class="field-form field-inline field-reverse outputs">
-              <label for="field_form-num_links[outputs]"
+              <label for="num_links[outputs]"
                 >Кол-во <b>выходов</b></label
               >
               <input
                 type="number"
                 name="num_links[outputs]"
+                id="num_links[outputs]"
                 min="0"
                 max="100"
                 data-value-type="number"
@@ -103,30 +105,32 @@
                 <div class="params-title">Параметры датасета</div>
                 <div class="inner form-inline-label px-5 py-3">
                   <div class="field-form">
-                    <label>Название датасета</label>
-                    <input type="text" name="parameters[name]" />
+                    <label for="parameters[name]">Название датасета</label>
+                    <input id="parameters[name]" type="text" name="parameters[name]" />
                   </div>
                   <div class="field-form">
-                    <label>Теги</label>
-                    <input type="text" name="parameters[user_tags]" />
+                    <label for="parameters[user_tags]">Теги</label>
+                    <input id="parameters[user_tags]" type="text" name="parameters[user_tags]" />
                   </div>
                   <DatasetSlider />
                   <div class="field-form field-inline field-reverse">
-                    <label>Сохранить последовательность</label>
+                    <label for="parameters[preserve_sequence]">Сохранить последовательность</label>
                     <div class="checkout-switch">
                       <input
                         type="checkbox"
                         name="parameters[preserve_sequence]"
+                        id="parameters[preserve_sequence]"
                       />
                       <span class="switcher"></span>
                     </div>
                   </div>
                   <div class="field-form field-inline field-reverse">
-                    <label>Использовать генератор</label>
+                    <label for="parameters[use_generator]" >Использовать генератор</label>
                     <div class="checkout-switch">
                       <input
                         type="checkbox"
                         name="parameters[use_generator]"
+                        id="parameters[use_generator]"
                       />
                       <span class="switcher"></span>
                     </div>
@@ -199,10 +203,11 @@ export default {
         const { finished, message, percent } = data
         if ( !data || finished ) {
           clearTimeout(this.interval);
-          this.$store.dispatch("messages/setMessage", { message: message });
+          this.$store.dispatch("messages/setProgressMessage", message );
           this.$store.dispatch("messages/setProgress", percent);
         } else {
           this.$store.dispatch("messages/setProgress", percent);
+          this.$store.dispatch("messages/setProgressMessage",  message );
         }
         console.log(data)
       }, 1000); 
