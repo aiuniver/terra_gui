@@ -100,6 +100,12 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
             },
+        ],
+    },
+    {
+        "alias": "terra",
+        "name": "Terra",
+        "datasets": [
             {
                 "alias": "sber",
                 "name": "Sber",
