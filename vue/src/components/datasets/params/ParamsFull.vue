@@ -15,10 +15,10 @@
         </div>
         <div>
           <table class="csv-table">
-            <tr v-for="(row, y) in table_test" :key="row">
+            <tr v-for="(row, y) in table_test" :key="row+y">
               <td
                   v-for="(item, x) in row"
-                  :key="item"
+                  :key="item+x"
                   @mousedown="select"
                   @mouseover="select"
                   :data-key="key(x, y)"
@@ -144,10 +144,6 @@ export default {
 
 
 <style lang="scss">
-.full {
-  width: 1000px;
-}
-@import "@/at-ui/scss/variables/index.scss";
 
 .params {
   // position: relative;

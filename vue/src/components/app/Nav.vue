@@ -96,6 +96,7 @@ export default {
     align-items: center;
 
     &--item {
+      color: #6C7883;
       padding-right: 1px;
       display: block;
       padding: 0 40px;
@@ -107,8 +108,12 @@ export default {
       white-space: nowrap;
       user-select: none;
     }
-    &.active {
+    .active {
       background-color: #17212b;
+      color: #ffffff;
+    }
+    :hover {
+      color: #ffffff;
     }
   }
 }
