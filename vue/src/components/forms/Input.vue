@@ -1,7 +1,13 @@
 <template>
-  <div class="field">
+  <div class="field inline">
     <label class="field__label" :for="name">{{ label }}</label>
-    <input class="field__input" :id="name" :type="type" :name="parse" :value="value" />
+    <input
+      class="field__input"
+      :id="name"
+      :type="type"
+      :name="parse"
+      :value="value"
+    />
   </div>
 </template>
 
@@ -26,6 +32,30 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.inline {
+  display: flex;
+  .field__label {
+    width: auto;
+    padding: 0 20px 0 10px;
+    text-align: left;
+    width: 120px;
+    margin: 0;
+    padding: 0 10px 0 0;
+    text-align: right;
+    flex-direction: row-reverse;
+    -webkit-box-pack: end;
+    -moz-box-pack: end;
+    -webkit-justify-content: flex-end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+  }
+  .field__input {
+    height: 22px;
+    font-size: 0.75rem;
+    max-width: 100px;
+    width: 100px;
+  }
+}
 .field {
   &__label {
     color: #a7bed3;

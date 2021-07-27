@@ -2,9 +2,9 @@
   <div class="board">
     <div class="wrapper">
       <Filters />
-      <div class="project-datasets-block datasets">
+      <div class="project-datasets-block datasets" :style="height">
         <div class="title" @click="click('name')">Выберите датасет</div>
-        <scrollbar :style="height">
+        <scrollbar >
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
@@ -37,20 +37,29 @@ export default {
   computed: {
     ...mapGetters({
       datasets: "datasets/getDatasets",
-      height: "settings/autoHeight",
     }),
+    height() {
+      const filterHeight = this.$store.getters['settings/getFilterHeight']
+      return this.$store.getters["settings/height"](filterHeight + 207);
+    },
   },
   methods: {
     click(dataset){
       this.$store.dispatch('datasets/setSelect', dataset)
-      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
+      // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
+    },
+    change(value) {
+      console.log(this.height)
+      console.log(value)
+      this.filterHeight = value
+      console.log(this.height)
     }
   },
   mounted() {
     this.items = this.datasets.map((item) => {
       return item
     })
-  }
+  },
 };
 </script>
 

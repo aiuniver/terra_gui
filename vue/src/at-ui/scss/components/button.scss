@@ -11,7 +11,7 @@ $btn-active-shade-percent: 10%;
   background-color: $background-color;
 
   &:hover {
-    background-color: tint($background-color, $btn-hover-tint-percent);
+    // background-color: tint($background-color, $btn-hover-tint-percent);
     border-color: tint($background-color, $btn-hover-tint-percent);
   }
   &:active {
@@ -25,9 +25,9 @@ $btn-active-shade-percent: 10%;
   color: $text-color;
 
   &:hover {
-    background: none;
-    color: tint($text-color, $btn-hover-tint-percent);
-    border-color: tint($border-color, $btn-hover-tint-percent);
+    // background: none;
+    // color: tint($text-color, $btn-hover-tint-percent);
+    // border-color: tint($border-color, $btn-hover-tint-percent);
   }
   &:active {
     background: none;
@@ -50,6 +50,8 @@ $btn-active-shade-percent: 10%;
   transition: background 0.2s;
   user-select: none;
   cursor: pointer;
+  box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
+  transition: border-color .3s ease-in-out, box-shadow .3s ease-in-out, background-color .3s ease-in-out, color .3s ease-in-out !important;
 
   &:hover {
     background-color: $btn-default-bg-hover;
@@ -59,7 +61,7 @@ $btn-active-shade-percent: 10%;
   }
   &:disabled,
   &:disabled:hover,
-  &:disabled:active, {
+  &:disabled:active {
     cursor: not-allowed;
     color: $btn-disabled-color;
     border-color: $btn-disabled-border;
@@ -121,7 +123,7 @@ $btn-active-shade-percent: 10%;
 
     &:disabled,
     &:disabled:hover,
-    &:disabled:active, {
+    &:disabled:active {
       background: none;
     }
   }
@@ -135,7 +137,7 @@ $btn-active-shade-percent: 10%;
     &--hollow {
       &:disabled,
       &:disabled:hover,
-      &:disabled:active, {
+      &:disabled:active {
         background: none;
       }
     }
@@ -215,7 +217,7 @@ $btn-active-shade-percent: 10%;
     animation: loadingCircle 1s linear infinite;
   }
   &__text {
-    font-size: $btn-font-size-base;
+    font-size: $font-size-btn;
   }
 }
 

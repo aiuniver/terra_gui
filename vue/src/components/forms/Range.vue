@@ -54,7 +54,7 @@ export default {
   margin: auto;
   text-align: center;
   position: relative;
-  height: 1em;
+  /* height: 1em; */
 }
 
 .range-slider input[type=range] {

@@ -72,7 +72,7 @@
       },
       showClose: {
         type: Boolean,
-        default: true
+        default: false
       },
       showFooter: {
         type: Boolean,

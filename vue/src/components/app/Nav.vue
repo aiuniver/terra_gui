@@ -37,22 +37,23 @@ export default {
           this.$router.push(path);
         }
       } else {
-        if (this.$route.path !== "/datasets") {
-          this.$router.push("/datasets");
-        }
+        const text = {
+          "/modeling": "редактирования модели",
+          "/training": "обучения",
+          "/deploy": "деплоя",
+        };
         this.$Modal.alert({
           title: "Предупреждение!",
           width: 300,
-          content: "Для редактирования модели необходимо загрузить датасет.",
+          content: `Для ${text[path]} необходимо загрузить датасет.`,
+          showClose: false,
+          okText: "Загрузить датасет",
           callback: function (action) {
-            console.log(action)
+            console.log(action);
           },
         });
       }
     },
-  },
-  created() {
-    console.log(this.$router.history.current.fullPath === "/datasets");
   },
 };
 </script>
@@ -96,7 +97,7 @@ export default {
     align-items: center;
 
     &--item {
-      color: #6C7883;
+      color: #6c7883;
       padding-right: 1px;
       display: block;
       padding: 0 40px;
@@ -107,6 +108,7 @@ export default {
       transition: color 0.3s ease-in-out;
       white-space: nowrap;
       user-select: none;
+      cursor: pointer;
     }
     .active {
       background-color: #17212b;
