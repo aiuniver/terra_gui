@@ -66,7 +66,7 @@ export default {
       const cusDataset = customDatasets.map((item) => {
         return {...item, group: 'custom'}
       })
-      const alias = rootState.projects.project.dataset.alias
+      const alias = rootState.projects.project.dataset?.alias
       let datasets = [...preDataset, ...cusDataset];
       datasets = datasets.map((dataset) => {
         return { ...dataset, active: ( dataset.alias === alias) };

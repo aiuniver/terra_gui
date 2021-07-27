@@ -1,9 +1,7 @@
 <template>
-  <div class="field-form field-inline field-reverse">
-    <slot>
-      <label :for="name">{{ label }}</label>
-    </slot>
-    <input :id="name" :type="type" :name="parse" :value="value" />
+  <div class="field">
+    <label class="field__label" :for="name">{{ label }}</label>
+    <input class="field__input" :id="name" :type="type" :name="parse" :value="value" />
   </div>
 </template>
 
@@ -28,9 +26,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.field-form {
-  input {
-    max-width: 100px !important;
+.field {
+  &__label {
+    color: #a7bed3;
+    display: block;
+    margin: 0 0 10px 0;
+    line-height: 1.25;
+    font-size: 0.75rem;
+  }
+  &__input {
+    // max-width: 100px !important;
   }
 }
 </style>
