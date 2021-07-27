@@ -11,6 +11,7 @@ export default {
   actions: {
     async get({ dispatch, commit }) {
       const data = await dispatch('axios', {url: "/config/"}, {root: true});
+      console.log(data)
       if (!data) {
         return;
       }
