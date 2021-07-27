@@ -9,22 +9,23 @@
           class="col-4 params__top--left"
           draggable="true"
         >
-          <h4 draggable="true">Text</h4>
-          <h4 draggable="true">Text</h4>
-          <h4 draggable="true">Text</h4>
+          <h4 draggable="true" >Text</h4>
+          <h4 draggable="true" >Text</h4>
+          <h4 draggable="true" >Text</h4>
         </div>
         <div>
           <table class="csv-table">
-            <tr v-for="(row, index) in table_test" :key="index">
-              <td
-                v-for="(item, i) in row"
-                :key="item"
+            <tr
+                v-for="(row, index) in table_test"
                 @mousedown="select"
-                :data-index="i"
-                :class="{ selected: selected_tr.includes(i) }"
-              >
-                {{ item }}
-              </td>
+                @mouseover="select"
+                :data-index="index"
+                :class="{ 'selected': selected_tr.includes(index) }"
+            >
+              <td
+                  v-for="item in row"
+                  :key="item"
+              >{{ item }}</td>
             </tr>
           </table>
         </div>
@@ -34,7 +35,7 @@
           draggable="true"
         >
           <CardFile name="sdsd" />
-          <CardFile name="bvvb" />
+          <CardFile  name="bvvb" />
         </div>
       </div>
     </div>
@@ -99,42 +100,37 @@ export default {
     }),
   },
   created() {
-    let file =
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33";
+    let file = "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33";
 
     this.table_test = this.$papa.parse(file).data;
   },
   methods: {
     onDragStart(e, item) {
-      console.log(e);
-      console.log(item);
+      console.log(e)
+      console.log(item)
       // e.dataTransfer.dropEffect = "move";
       // e.dataTransfer.effectAllowed = "move";
       // e.dataTransfer.setData("itemId", item.id.toString());
     },
     onDrop(e, categoryId) {
-      console.log(e);
-      console.log(categoryId);
+
+      console.log(e)
+      console.log(categoryId)
       // const itemId = parseInt(e.dataTransfer.getData("itemId"));
       // this.items = this.items.map((x) => {
       //   if (x.id == itemId) x.categoryId = categoryId;
       //   return x;
       // });
     },
-    select({
-      buttons,
-      target: {
-        dataset: { index },
-      },
-    }) {
+    select({ buttons, target: { dataset: { index } } }) {
       event.preventDefault();
-      console.log({ buttons, target: { dataset: { index } } });
+      console.log({ buttons, target: { dataset: { index } } })
       if (buttons) {
         const key = this.selected_tr.indexOf(index);
         if (key !== -1) {
@@ -168,19 +164,19 @@ export default {
   //   }
   // }
 }
-.csv-table {
-  border-collapse: collapse;
-  border: 1px solid #434445;
-  border-radius: 4px;
-  td {
+.csv-table{
+   border-collapse: collapse;
+   border: 1px solid #434445;
+   border-radius: 4px;
+  td{
     padding: 7px; /* Поля вокруг содержимого таблицы */
-  }
+   }
   tr:nth-child(even) {
     background: #3b4249; /* Цвет фона четных строк */
-  }
+   }
 }
-.selected {
-  background: green;
-  color: #fff;
+.selected{
+  background:green;
+  color:#fff;
 }
 </style>
