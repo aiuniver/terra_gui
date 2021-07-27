@@ -145,11 +145,12 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
-from pydantic import validator, HttpUrl, DirectoryPath
+from pydantic import validator, DirectoryPath
+from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
+from ..types import confilepath, confilename, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
@@ -181,7 +182,7 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
-    value: Union[confilepath(ext="zip"), HttpUrl, str]
+    value: Union[confilepath(ext="zip"), HttpUrl, confilename(ext="zip")]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)

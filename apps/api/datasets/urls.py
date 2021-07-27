@@ -14,8 +14,6 @@ urlpatterns = [
         views.SourceLoadProgressAPIView.as_view(),
         name="source_load_progress",
     ),
-    path(
-        "sources/create/", views.SourcesCreateAPIView.as_view(), name="sources_create"
-    ),
+    path("source/create/", views.SourcesCreateAPIView.as_view(), name="source_create"),
     path("sources/", views.SourcesAPIView.as_view(), name="sources"),
 ]
