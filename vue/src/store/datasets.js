@@ -49,29 +49,28 @@ export default {
       return await dispatch("axios",{ url: "/datasets/source/load/progress/", data: source }, { root: true });
     },
     async get({ dispatch, commit, rootState }) {
-      const data = await dispatch(
-        "axios",
-        { url: "/datasets/info/" },
-        { root: true }
-      );
+      const data = await dispatch("axios",{ url: "/datasets/info/" }, { root: true });
       if (!data) {
         return;
       }
-      const [preset, custom] = data;
-      const { datasets: presetDatasets, tags: presetTags } = preset;
-      const { datasets: customDatasets, tags: customTags } = custom;
-      const preDataset = presetDatasets.map((item) => {
-        return {...item, group: 'keras'}
+      let datasets = []
+      let tags = []
+      const selectDataset = rootState.projects.project.dataset?.alias
+
+      data.forEach(function({ datasets: preDataset, tags: preTags, alias  }){
+        const tempDataset = preDataset.map((dataset) => {
+          return {...dataset, group: alias, active: ( dataset.alias === selectDataset)}
+        })
+        datasets = [...datasets, ...tempDataset]
+        const tempTags = preTags.filter((tag) => {
+          const isTrue = tags.filter(({ alias }) => {
+            return (alias === tag.alias)
+          })
+          return !isTrue.length
+        })
+        tags = [...tags, ...tempTags]
       })
-      const cusDataset = customDatasets.map((item) => {
-        return {...item, group: 'custom'}
-      })
-      const alias = rootState.projects.project.dataset?.alias
-      let datasets = [...preDataset, ...cusDataset];
-      datasets = datasets.map((dataset) => {
-        return { ...dataset, active: ( dataset.alias === alias) };
-      });
-      let tags = [...presetTags, ...customTags];
+
       tags = tags.map((tag) => {
         return { active: false, ...tag };
       });

@@ -6,8 +6,9 @@
         <div class="label">Project:</div>
         <div class="name">
           <div class="value flexbox-center-nowrap">
-            <span>{{ nameProject }}</span
-            ><i></i>
+            <span v-show="!clickProject" @click="focusInput()">{{ nameProject }}</span>
+            <input v-show="clickProject" v-model="nameProject" ref="project" type="text" @blur="blur" >            
+            <i></i>
           </div>
         </div>
       </div>
@@ -70,6 +71,7 @@
 export default {
   name: "THeader",
   data: () => ({
+    clickProject: false,
     items: [
       {
         title: "Создать новый проект",
@@ -123,6 +125,14 @@ export default {
         this.load = true;
       }
     },
+    blur() {
+      this.clickProject = false
+      this.saveProject()
+    },
+    focusInput() {
+      this.clickProject = true, 
+      this.$nextTick(() => this.$refs.project.focus())
+    }
   },
 };
 </script>
@@ -131,5 +141,19 @@ export default {
 .flexbox-center-nowrap {
   padding: 0 10px;
   margin: 1px 0 0 0;
+}
+.value {
+  padding: 0;
+  > input {
+    width: 100px;
+    height: 25px;
+    margin-right: 5px;
+    padding: 0 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    border: 1px solid;
+    border-radius: 4px;
+    transition: border-color .3s ease-in-out, opacity .3s ease-in-out;
+  }
 }
 </style>
