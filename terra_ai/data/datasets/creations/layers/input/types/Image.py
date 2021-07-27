@@ -8,7 +8,6 @@ from .....extra import LayerNetChoice, LayerScalerChoice
 
 
 class ParametersData(BaseMixinData):
-    # image_path???
     file_info: FileInfo
     width: PositiveInt
     height: PositiveInt

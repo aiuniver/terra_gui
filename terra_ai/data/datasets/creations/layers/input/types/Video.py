@@ -26,7 +26,6 @@ class VideoModeChoice(str, Enum):
 
 
 class ParametersData(BaseMixinData):
-    # image_path???
     file_info: FileInfo
     width: PositiveInt
     height: PositiveInt

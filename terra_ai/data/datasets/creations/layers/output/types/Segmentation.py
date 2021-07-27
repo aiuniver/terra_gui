@@ -19,7 +19,6 @@ class MasksSegmentationList(UniqueListMixin):
 
 
 class ParametersData(BaseMixinData):
-    # image_path???
     file_info: FileInfo
     classes_names: List[str]
     classes_colors: List[Color]

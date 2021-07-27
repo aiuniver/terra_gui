@@ -27,13 +27,7 @@ class ParametersData(BaseMixinData):
     max_words: PositiveInt
     put: Optional[str]
 
-    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
-    # Разобраться с Артуром по
-    #     pymorphy: Optional[bool] = False
-    #     embedding: Optional[bool] = False
-    #     bag_of_words: Optional[bool] = False
-    #     word_to_vec: Optional[bool] = False
-    #     image_path
+    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding # ???
 
     @validator("prepare_method", allow_reuse=True)
     def _validate_prepare_method(
