@@ -24,10 +24,10 @@ class CreateArray(object):
         self.file_folder = None
         self.txt_list: dict = {}
 
-    def create_images(self, image_path: str, **options):
+    def create_image(self, file_folder, image_path: str, **options):
 
         shape = (options['height'], options['width'])
-        img = load_img(path=os.path.join(self.file_folder, image_path), target_size=shape)
+        img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))

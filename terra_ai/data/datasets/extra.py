@@ -57,6 +57,7 @@ class LayerInputTypeChoice(str, Enum):
     Text = "Text"
     Audio = "Audio"
     Dataframe = "Dataframe"
+    Video = "Video"
 
 
 class LayerOutputTypeChoice(str, Enum):

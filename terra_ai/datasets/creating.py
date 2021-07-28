@@ -9,7 +9,10 @@ import pymorphy2
 import shutil
 import json
 import joblib
+import decamelize
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
+
+import imgaug.augmenters as iaa
 
 from tqdm.notebook import tqdm
 from io import open as io_open
@@ -18,8 +21,9 @@ from datetime import datetime
 from pytz import timezone
 
 # from terra_ai import out_exchange
-from .data import DataType
-from . import array_creator, loader
+from .data import DataType, Preprocesses
+from . import array_creator
+from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
 from ..data.datasets.dataset import DatasetData
 
@@ -27,6 +31,8 @@ from ..data.datasets.dataset import DatasetData
 class CreateDTS(object):
 
     def __init__(self):
+
+        self.dataset_user_data: CreationData
 
         self._datatype = 'DIM'
 
@@ -38,7 +44,7 @@ class CreateDTS(object):
         self.tags: dict = {}
         self.user_tags: list = []
         self.language: str = ''
-        self.divide_ratio: list = [0.8, 0.1, 0.1]
+
         self.limit: int = 0
         self.input_datatype: dict = {}  # string
         self.input_dtype: dict = {}
@@ -89,15 +95,15 @@ class CreateDTS(object):
 
     def load_data(self, strict_object):
 
-        loader.load_data(strict_object=strict_object)
+        dataset_loading.load(strict_object=strict_object)
 
         self.zip_params = json.loads(strict_object.json())
 
     def set_dataset_data(self, data: Union[CreationInputsList, CreationOutputsList]):
         for elem in data:
-            self.tags[elem.alias] = elem.type.lower()
-            self.input_names[elem.alias] = elem.name
-            self.user_parameters[elem.alias] = elem.parameters
+            self.tags[elem.id] = elem.type.lower()
+            self.input_names[elem.id] = elem.name
+            self.user_parameters[elem.id] = elem.parameters
 
     def create_instructions(self, instruction_type: str, data: Union[CreationInputsList, CreationOutputsList]):
         self.iter = 0
@@ -105,17 +111,30 @@ class CreateDTS(object):
         instruction_key = instruction_type + 's'
         for elem in data:
             self.iter += 1
-            self.instructions[instruction_key][elem.alias] = getattr(self, f"instructions_{elem.type.lower()}")(
-                **elem.parameters.dict())
+            self.instructions[instruction_key][elem.id] = getattr(
+                self, f"instructions_{decamelize.convert(elem.type)}"
+            )(**elem.parameters.dict())
+
+    def write_preprocesses_to_files(self):
+        for preprocess_name in Preprocesses:
+            preprocess = getattr(array_creator, preprocess_name)
+            preprocess_file_path = os.path.join(self.trds_path, f'dataset {self.name}', preprocess_name)
+            if preprocess:
+                os.makedirs(preprocess_file_path, exist_ok=True)
+                for key in preprocess.keys():
+                    if preprocess.get(key, {}):
+                        joblib.dump(preprocess[key], os.path.join(preprocess_file_path, f'{key}.gz'))
 
     def create_dataset(self, creation_data: CreationData):
+        self.dataset_user_data = creation_data
+
         self.name = creation_data.name
-        self.divide_ratio = tuple(creation_data.info.part.dict().values())
-        self.source = 'custom dataset'
         self.user_tags = creation_data.tags
         self.use_generator = creation_data.use_generator
         self.trds_path = creation_data.datasets_path
-        self.file_folder = creation_data.source_path
+        self.file_folder = str(creation_data.source_path)
+
+        self.source = 'custom dataset'
 
         for data in [creation_data.inputs, creation_data.outputs]:
             self.set_dataset_data(data)
@@ -128,7 +147,10 @@ class CreateDTS(object):
         # Получаем входные параметры
         for key in self.instructions['inputs'].keys():
             array = getattr(array_creator, f'create_{self.tags[key]}')(
-                self.instructions['inputs'][key]['instructions'][0], **self.instructions['inputs'][key]['parameters'])
+                creation_data.source_path,
+                self.instructions['inputs'][key]['instructions'][0],
+                **self.instructions['inputs'][key]['parameters']
+            )
             self.input_shape[key] = array.shape
             self.input_dtype[key] = str(array.dtype)
             self.datatype = array.shape
@@ -136,7 +158,10 @@ class CreateDTS(object):
         # Получаем выходные параметры
         for key in self.instructions['outputs'].keys():
             array = getattr(array_creator, f'create_{self.tags[key]}')(
-                self.instructions['outputs'][key]['instructions'][0], **self.instructions['outputs'][key]['parameters'])
+                creation_data.source_path,
+                self.instructions['outputs'][key]['instructions'][0],
+                **self.instructions['outputs'][key]['parameters']
+            )
             if isinstance(array, tuple):
                 for i in range(len(array)):
                     self.output_shape[key.replace(key[-1], str(int(key[-1]) + i))] = array[i].shape
@@ -155,8 +180,8 @@ class CreateDTS(object):
         self.split_sequence['test'] = []
         for i in range(len(self.peg) - 1):
             indices = np.arange(self.peg[i], self.peg[i + 1])
-            train_len = int(self.divide_ratio[0] * len(indices))
-            val_len = int(self.divide_ratio[1] * len(indices))
+            train_len = int(creation_data.info.part.train * len(indices))
+            val_len = int(creation_data.info.part.validation * len(indices))
             indices = indices.tolist()
             self.split_sequence['train'].extend(indices[:train_len])
             self.split_sequence['val'].extend(indices[train_len:train_len + val_len])
@@ -166,7 +191,7 @@ class CreateDTS(object):
             random.shuffle(self.split_sequence['val'])
             random.shuffle(self.split_sequence['test'])
 
-        self.limit: int = len(self.instructions['inputs']['input_1']['instructions'])
+        self.limit: int = len(self.instructions['inputs'][1]['instructions'])
 
         data = {}
         if creation_data.use_generator:
@@ -192,6 +217,7 @@ class CreateDTS(object):
                 x: list = []
                 for i in range(self.limit):
                     x.append(getattr(array_creator, f"create_{self.tags[key]}")(
+                        creation_data.source_path,
                         self.instructions['inputs'][key]['instructions'][i],
                         **self.instructions['inputs'][key]['parameters']))
                 self.X['train'][key] = np.array(x)[self.split_sequence['train']]
@@ -205,6 +231,7 @@ class CreateDTS(object):
                     y_3: list = []
                     for i in range(self.limit):
                         arrays = getattr(array_creator, f"create_{self.tags[key]}")(
+                            creation_data.source_path,
                             self.instructions['outputs'][key]['instructions'][i],
                             **self.instructions['outputs'][key]['parameters'])
                         y_1.append(arrays[0])
@@ -224,6 +251,7 @@ class CreateDTS(object):
                     y: list = []
                     for i in range(self.limit):
                         y.append(getattr(array_creator, f"create_{self.tags[key]}")(
+                            creation_data.source_path,
                             self.instructions['outputs'][key]['instructions'][i],
                             **self.instructions['outputs'][key]['parameters']))
                     self.Y['train'][key] = np.array(y)[self.split_sequence['train']]
@@ -243,37 +271,7 @@ class CreateDTS(object):
                     joblib.dump(self.Y[sample][inp],
                                 os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample, f'{inp}.gz'))
 
-        if array_creator.scaler:
-            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'scalers'), exist_ok=True)
-        if array_creator.tokenizer:
-            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer'), exist_ok=True)
-        if array_creator.word2vec:
-            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec'), exist_ok=True)
-        if array_creator.augmentation:
-            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation'), exist_ok=True)
-        # if self.createarray.tsgenerator:
-        #     os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator'), exist_ok=True)
-
-        for scaler in array_creator.scaler.keys():
-            if array_creator.scaler[scaler]:
-                joblib.dump(array_creator.scaler[scaler],
-                            os.path.join(self.trds_path, f'dataset {self.name}', 'scalers', f'{scaler}.gz'))
-        for tok in array_creator.tokenizer.keys():
-            if array_creator.tokenizer[tok]:
-                joblib.dump(array_creator.tokenizer[tok],
-                            os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer', f'{tok}.gz'))
-        for w2v in array_creator.word2vec.keys():
-            if array_creator.word2vec[w2v]:
-                joblib.dump(array_creator.word2vec[w2v],
-                            os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec', f'{w2v}.gz'))
-        for aug in array_creator.augmentation.keys():
-            if array_creator.augmentation[aug]:
-                joblib.dump(array_creator.augmentation[aug],
-                            os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation', f'{aug}.gz'))
-        # for tsg in self.createarray.tsgenerator.keys():
-        #     if self.createarray.tsgenerator[tsg]:
-        #         joblib.dump(self.createarray.tsgenerator[tsg],
-        #                     os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator', f'{tsg}.gz'))
+        self.write_preprocesses_to_files()
 
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'input_datatype', 'input_dtype', 'input_shape', 'input_names',
@@ -281,12 +279,21 @@ class CreateDTS(object):
                       'num_classes', 'classes_names', 'classes_colors',
                       'one_hot_encoding', 'task_type', 'limit', 'use_generator']
 
+        tags = []
+        for value in self.tags.values():
+            tags.append({'alias': value, 'name': value.title()})
+        self.tags = tags
+
         for attr in attributes:
             data[attr] = self.__dict__[attr]
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
+        data['alias'] = creation_data.alias
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
-        return DatasetData(**data)
+        print(data)
+        output = DatasetData(**data)
+        print(output)
+        return output
 
     def instructions_images_obj_detection(self, folder_name: str) -> list:
         data: list = []
@@ -319,18 +326,74 @@ class CreateDTS(object):
         self.y_cls = y_cls
         return data
 
-    def instructions_images(self, **options: Any):
-        folder = options.get('folder_name', '')
-        instructions: dict = {}
-        options['put'] = f'{self.mode}_{self.iter}'
+    # def instructions_images(self, **options: Any):
+    #     folder = options.get('folder_name', '')
+    #     instructions: dict = {}
+    #     options['put'] = f'{self.mode}_{self.iter}'
+    #
+    #     if 'object_detection' in self.tags.values():
+    #         instr = self.instructions_images_obj_detection(folder)
+    #     else:
+    #         instr = self.instructions_images_video(folder)
+    #
+    #     instructions['instructions'] = instr
+    #     instructions['parameters'] = options
+    #
+    #     return instructions
 
+    def instructions_image(self, **options):
+
+        instructions: dict = {}
+        instr: list = []
+        y_cls: list = []
+        cls_idx = 0
+        peg_idx = 0
+        self.peg.append(0)
+        options['put'] = f'{self.mode}_{self.iter}'
         if 'object_detection' in self.tags.values():
-            instr = self.instructions_images_obj_detection(folder)
-        else:
-            instr = self.instructions_images_video(folder)
+            options['object_detection'] = True
+        if options['file_info']['path_type'] == 'path_folder':
+            for folder_name in options['file_info']['path']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            if 'object_detection' in self.tags.values():
+                                if 'txt' not in name:
+                                    instr.append(os.path.join(file_folder, name))
+                                    peg_idx += 1
+                            else:
+                                instr.append(os.path.join(file_folder, name))
+                                peg_idx += 1
+                            y_cls.append(cls_idx)
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+            self.y_cls = y_cls
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                   usecols=options['file_info']['cols_name'])
+                instr = data[options['file_info']['cols_name'][0]].to_list()
+                prev_elem = instr[0].split('/')[-2]
+                for elem in instr:
+                    cur_elem = elem.split('/')[-2]
+                    if cur_elem != prev_elem:
+                        self.peg.append(peg_idx)
+                    prev_elem = cur_elem
+                    peg_idx += 1
+                self.peg.append(len(instr))
+
+        if options.get('augmentation', None):
+            aug_parameters = []
+            for key, value in options['augmentation'].items():
+                aug_parameters.append(getattr(iaa, key)(**value))
+            array_creator.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters,
+                                                                                       random_order=True)
+            del options['augmentation']
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
+
 
         return instructions
 
