@@ -5,13 +5,14 @@
 
 .at-modal {
   position: relative;
-  top: $modal-initial-top;
+  // top: $modal-initial-top;
   width: auto;
   margin: 0 auto;
   border: none;
   border-radius: $border-radius-base;
   background-color: $modal-bg-color;
   outline: none;
+  box-shadow:0 2px 10px 0 rgba(0,0,0,.25);
 
   /* elements */
   &__mask {
@@ -30,12 +31,15 @@
   }
   &__wrapper {
     position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    // left: 0;
+    // right: 0;
+    // top: 0;
+    // bottom: 0;
     outline: 0;
     z-index: $zindex-modal;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   &__header {
     padding: $modal-header-padding;

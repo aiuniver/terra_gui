@@ -1,17 +1,19 @@
 <template>
-  <div class="params-item dataset-change pa-5">
-    <div class="actions-form">
-      <div v-for="({ name, title }, i) of buttons" :key="i">
-        <button :disabled="!selected" @click="click(name)">
-          {{ title }}
-        </button>
-      </div>
-    </div>
+  <div>
+    <button
+      v-for="({ name, title }, i) of buttons"
+      :key="i"
+      :disabled="!selected"
+      @click="click(name)"
+    >
+      {{ title }}
+    </button>
   </div>
 </template>
 
 <script>
 export default {
+  name: 'DatasetButton',
   props: {
     buttons: {
       type: Array,
@@ -24,23 +26,25 @@ export default {
   },
   computed: {
     selected() {
-      return this.$store.getters['datasets/getSelected']
-    }
+      return this.$store.getters["datasets/getSelected"];
+    },
   },
   methods: {
-    async click(name){
-      if(name === 'prepare') {
-        const { alias, group, name } = this.selected
-        this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${name}»`})
-        await this.$store.dispatch('datasets/choice', { alias, group })
+    async click(name) {
+      if (name === "prepare") {
+        const { alias, group, name } = this.selected;
+        this.$store.dispatch("messages/setMessage", {
+          message: `Выбран датасет «${name}»`,
+        });
+        await this.$store.dispatch("datasets/choice", { alias, group });
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
-button{
-  font-size: .875rem;
+button {
+  font-size: 0.875rem;
 }
 </style>

@@ -43,8 +43,6 @@ export default {
     },
     placeholder: {
       type: String,
-      required: false,
-      default: "Please select an option",
     },
     disabled: {
       type: Boolean,

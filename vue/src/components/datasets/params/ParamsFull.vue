@@ -150,19 +150,10 @@ export default {
 
 
 <style lang="scss">
-
 .params {
-  // position: relative;
-
-  // &__top {
-  //   padding: 10px;
-  //   background-color: #1b242e;
-  //   &--rigth {
-  //     display: flex;
-  //     justify-content: center;
-  //     padding: 8px;
-  //   }
-  // }
+  flex-shrink: 0;
+  width: 1500px;
+  border-left: #0e1621 solid 1px;
 }
 .csv-table {
   border-collapse: collapse;
