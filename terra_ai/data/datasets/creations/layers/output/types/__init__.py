@@ -1,5 +1,5 @@
 from . import (
-    Images,
+    Image,
     Text,
     Audio,
     Classification,

@@ -1,35 +1,19 @@
 export default {
   namespaced: true,
   state: () => ({
-    project: {},
+    filterHeight: 32
   }),
   mutations: {
-    SET_PROJECT(state, value) {
-      state.project = value;
-    },
+    SET_FILTER_HEIGHT(state, value) {
+      state.filterHeight = value
+    }
   },
   actions: {
-    async get({ dispatch, commit }) {
-      const data = await dispatch('axios', {url: "/config/"}, {root: true});
-      if (!data) {
-        return;
-      }
-      const { project, defaults:{modeling: {layers_types} } } = data
-      const list = Object.keys(layers_types).map((key) => {
-        return { label: key, value: key };
-      });
-      commit("SET_PROJECT", project);
-      commit('modeling/SET_LIST', list, { root: true }) 
-      commit('modeling/SET_LAYERS', layers_types, { root: true }) 
-    },
-    setProject({ commit, state }, data) {
-      commit("SET_PROJECT", {...state, ...data });
-    },
+    setFilterHeight({ commit }, value) {
+      commit('SET_FILTER_HEIGHT', value)
+    }
   },
   getters: {
-    getProject({ project }) {
-      return project
-    },
     isMobile() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
     },
@@ -42,6 +26,9 @@ export default {
       return {
         height: (document.documentElement.clientHeight - value) + "px",
       };
+    },
+    getFilterHeight({ filterHeight }) {
+      return filterHeight
     },
   },
 };

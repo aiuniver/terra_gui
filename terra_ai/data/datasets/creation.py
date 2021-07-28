@@ -52,7 +52,7 @@ In [2]: source = {
    ...:         {
    ...:             "alias": "input_1",
    ...:             "name": "Input 1",
-   ...:             "type": "images",
+   ...:             "type": "image",
    ...:             "parameters": {
    ...:                 "width": "120",
    ...:                 "height": "80",
@@ -64,7 +64,7 @@ In [2]: source = {
 In [3]: data = CreationData(**source)
 
 In [4]: data
-Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=<LayerInputTypeChoice.text: 'text'>, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=<LayerPrepareMethodChoice.embedding: 'embedding'>, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=<LayerOutputTypeChoice.images: 'images'>, parameters=LayerOutputTypeImagesData(folder_path=None, width=120, height=80, net=<LayerNetChoice.convolutional: 'convolutional'>, scaler=<LayerScalerChoice.no_scaler: 'no_scaler'>))])
+Out[4]: CreationData(name='Самолеты', info=CreationInfoData(part=CreationInfoPartData(train=0.6, validation=0.3, test=0.1), shuffle=True), tags=[], inputs=[CreationInputData(alias='input_1', name='Input 1', type=<LayerInputTypeChoice.text: 'text'>, parameters=LayerInputTypeTextData(folder_path=None, delete_symbols=None, x_len=100, step=30, max_words_count=20000, pymorphy=False, prepare_method=<LayerPrepareMethodChoice.embedding: 'embedding'>, word_to_vec_size=None))], outputs=[CreationOutputData(alias='input_1', name='Input 1', type=<LayerOutputTypeChoice.image: 'image'>, parameters=LayerOutputTypeImageData(folder_path=None, width=120, height=80, net=<LayerNetChoice.convolutional: 'convolutional'>, scaler=<LayerScalerChoice.no_scaler: 'no_scaler'>))])
 
 In [5]: data.dict()
 Out[5]:
@@ -85,7 +85,7 @@ Out[5]:
     'word_to_vec_size': None}}],
  'outputs': [{'alias': 'input_1',
    'name': 'Input 1',
-   'type': <LayerOutputTypeChoice.images: 'images'>,
+   'type': <LayerOutputTypeChoice.image: 'image'>,
    'parameters': {'folder_path': None,
     'width': 120,
     'height': 80,
@@ -93,7 +93,7 @@ Out[5]:
     'scaler': <LayerScalerChoice.no_scaler: 'no_scaler'>}}]}
 
 In [6]: data.json()
-Out[6]: '{"name": "\\u0421\\u0430\\u043c\\u043e\\u043b\\u0435\\u0442\\u044b", "info": {"part": {"train": 0.6, "validation": 0.3, "test": 0.1}, "shuffle": true}, "tags": [], "inputs": [{"alias": "input_1", "name": "Input 1", "type": "text", "parameters": {"folder_path": null, "delete_symbols": null, "x_len": 100, "step": 30, "max_words_count": 20000, "pymorphy": false, "prepare_method": "embedding", "word_to_vec_size": null}}], "outputs": [{"alias": "input_1", "name": "Input 1", "type": "images", "parameters": {"folder_path": null, "width": 120, "height": 80, "net": "Convolutional", "scaler": "NoScaler"}}]}'
+Out[6]: '{"name": "\\u0421\\u0430\\u043c\\u043e\\u043b\\u0435\\u0442\\u044b", "info": {"part": {"train": 0.6, "validation": 0.3, "test": 0.1}, "shuffle": true}, "tags": [], "inputs": [{"alias": "input_1", "name": "Input 1", "type": "text", "parameters": {"folder_path": null, "delete_symbols": null, "x_len": 100, "step": 30, "max_words_count": 20000, "pymorphy": false, "prepare_method": "embedding", "word_to_vec_size": null}}], "outputs": [{"alias": "input_1", "name": "Input 1", "type": "image", "parameters": {"folder_path": null, "width": 120, "height": 80, "net": "Convolutional", "scaler": "NoScaler"}}]}'
 
 In [7]: print(data.json(indent=2, ensure_ascii=False))
 {
@@ -128,7 +128,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
     {
       "alias": "input_1",
       "name": "Input 1",
-      "type": "images",
+      "type": "image",
       "parameters": {
         "folder_path": null,
         "width": 120,
@@ -145,11 +145,12 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
-from pydantic import validator, HttpUrl
+from pydantic import validator, DirectoryPath
+from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
-from ..types import confilepath, FilePathType, ConstrainedFloatValueGe0Le1
+from ..types import confilepath, confilename, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
@@ -181,7 +182,7 @@ class SourceData(BaseMixinData):
 
     mode: SourceModeChoice
     "Режим загрузки исходных данных"
-    value: Union[confilepath(ext="zip"), HttpUrl, str]
+    value: Union[confilepath(ext="zip"), HttpUrl, confilename(ext="zip")]
     "Значение для режим загрузки исходных данных. Тип будет зависеть от выбранного режима `mode`"
 
     @validator("value", allow_reuse=True)
@@ -336,6 +337,10 @@ class CreationData(BaseMixinData):
 
     name: str
     "Название"
+    datasets_path: DirectoryPath
+    "Путь к директории датасетов проекта"
+    source_path: DirectoryPath
+    "Путь к директории с исходниками, полученный после их загрузки"
     info: CreationInfoData = CreationInfoData()
     "Информация о данных"
     tags: TagsList = TagsList()

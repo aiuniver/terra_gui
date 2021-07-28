@@ -5,13 +5,14 @@
 
 .at-modal {
   position: relative;
-  top: $modal-initial-top;
+  // top: $modal-initial-top;
   width: auto;
   margin: 0 auto;
   border: none;
   border-radius: $border-radius-base;
   background-color: $modal-bg-color;
   outline: none;
+  box-shadow:0 2px 10px 0 rgba(0,0,0,.25);
 
   /* elements */
   &__mask {
@@ -30,17 +31,20 @@
   }
   &__wrapper {
     position: fixed;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
+    // left: 0;
+    // right: 0;
+    // top: 0;
+    // bottom: 0;
     outline: 0;
     z-index: $zindex-modal;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   &__header {
     padding: $modal-header-padding;
     color: $title-color;
-    font-size: $modal-header-font-size;
+    font-size: $modal-header-font-size !important;
     // font-weight: bold;
     line-height: 1.5;
     border-bottom: 1px solid $modal-section-border-color;
@@ -48,6 +52,7 @@
     p, .at-modal__title {
       @include ellipsis();
       vertical-align: middle;
+      font-size: $modal-header-font-size !important;
     }
   }
   &__close {
@@ -84,11 +89,11 @@
   }
   &__footer {
     padding: $modal-footer-padding;
-    border-top: 1px solid $modal-section-border-color;
+    // border-top: 1px solid $modal-section-border-color;
     text-align: right;
 
     .at-btn + .at-btn {
-      margin-left: 8px;
+      // margin-left: 8px;
     }
   }
 

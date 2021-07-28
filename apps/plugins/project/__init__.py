@@ -11,6 +11,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
+from terra_ai.data.datasets.dataset import DatasetData
 
 
 UNKNOWN_NAME = "NoName"
@@ -75,6 +76,7 @@ class Project(BaseMixinData):
     hardware: HardwareAcceleratorData = HardwareAcceleratorData(
         type=HardwareAcceleratorChoice.CPU
     )
+    dataset: Optional[DatasetData]
 
     def __init__(self, save=False, **data):
         super().__init__(**data)
@@ -105,4 +107,6 @@ else:
         data.update({"hardware": agent_exchange("hardware_accelerator")})
         project = Project(**data)
 
+print("-------------------------")
 print(project)
+print("-------------------------")

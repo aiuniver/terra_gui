@@ -8,7 +8,7 @@ from .serializers import ModelLoadSerializer
 
 
 class ModelLoadAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         serializer = ModelLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
@@ -20,11 +20,12 @@ class ModelLoadAPIView(BaseAPIView):
 
 
 class ModelLoadProgressAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
-        return BaseResponseSuccess(data=agent_exchange("model_load_progress"))
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(agent_exchange("model_load_progress").native())
 
 
 class ModelsAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
-        data = agent_exchange("models", path=str(data_path.modeling))
-        return BaseResponseSuccess(data)
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange("models", path=str(data_path.modeling)).native()
+        )

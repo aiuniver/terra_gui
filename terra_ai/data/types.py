@@ -10,11 +10,17 @@ from typing import Type
 from pydantic import FilePath
 from pydantic.types import conint, confloat, PositiveInt
 
-from .exceptions import AliasException, Base64Exception, FilePathExtensionException
+from .exceptions import (
+    AliasException,
+    Base64Exception,
+    FilePathExtensionException,
+    FileNameExtensionException,
+)
 
 
 ConstrainedIntValueGe0 = conint(ge=0)
 ConstrainedIntValueGe2 = conint(ge=2)
+ConstrainedIntValueGe0Le2 = conint(ge=0, le=2)
 ConstrainedFloatValueGe0 = confloat(ge=0)
 ConstrainedFloatValueLe0 = confloat(le=0)
 ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
@@ -65,3 +71,19 @@ class FilePathType(FilePath):
 def confilepath(*, ext: str) -> Type[FilePath]:
     namespace = dict(ext=ext)
     return type("FilePathType", (FilePathType,), namespace)
+
+
+class FileNameType(FilePath):
+    ext: str
+
+    @classmethod
+    def validate(self, value: str) -> str:
+        value = super().validate(value)
+        if not str(value).endswith(f".{self.ext}"):
+            raise FileNameExtensionException(value, self.ext)
+        return value
+
+
+def confilename(*, ext: str) -> str:
+    namespace = dict(ext=ext)
+    return type("FileNameType", (FileNameType,), namespace)

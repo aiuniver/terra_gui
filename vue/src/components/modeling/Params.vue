@@ -1,53 +1,39 @@
 <template>
   <div class="params">
-    <div class="params-container">
-      <Navbar />
-      <scrollbar :style="height">
-        <div class="params__items">
-          <form novalidate="novalidate" ref="form">
-            <div class="params__items--item">
-              <Input
-                :value="block.name"
-                :label="'Название слоя'"
-                :type="'text'"
-                :parse="'name'"
-                :name="'name'"
-              />
-              <Autocomplete2
-                v-model="block.type"
-                :list="list"
-                label="Тип слоя"
-                name="type"
-              />
-            </div>
-            <at-collapse value="1">
-              <at-collapse-item class="mt-3" title="Параметры слоя">
-                <div class="params-main inner">
-                  <Forms :items="main" />
-                </div>
-              </at-collapse-item>
-              <at-collapse-item class="mt-3" title="Дополнительные параметры">
-                <div class="params-extra inner">
-                  <Forms :items="extra" parse="extra" />
-                </div>
-              </at-collapse-item>
-            </at-collapse>
-            <div class="params-item params-actions">
-              <div class="inner">
-                <div class="actions-form">
-                  <div class="item save">
-                    <button disabled="disabled">Сохранить</button>
-                  </div>
-                  <div class="item clone">
-                    <button disabled="disabled">Клонировать</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </scrollbar>
-    </div>
+    <Navbar />
+    <scrollbar :style="height">
+      <div class="params__items">
+        <form novalidate="novalidate" ref="form">
+          <div class="params__items--item">
+            <Input
+              :value="block.name"
+              :label="'Название слоя'"
+              :type="'text'"
+              :parse="'name'"
+              :name="'name'"
+            />
+            <Autocomplete2
+              v-model="block.type"
+              :list="list"
+              label="Тип слоя"
+              name="type"
+            />
+          </div>
+          <at-collapse value="1">
+            <at-collapse-item class="mb-3" title="Параметры слоя">
+              <Forms :items="main" />
+            </at-collapse-item>
+            <at-collapse-item class="mb-3" title="Дополнительные параметры">
+              <Forms :items="extra" parse="extra" />
+            </at-collapse-item>
+          </at-collapse>
+          <div class="params__items--item">
+            <button class="mb-1" disabled="disabled">Сохранить</button>
+            <button disabled="disabled">Клонировать</button>
+          </div>
+        </form>
+      </div>
+    </scrollbar>
   </div>
 </template>
 

@@ -1,13 +1,17 @@
 import os
-import json
 import tensorflow
 
 from pathlib import Path
-from transliterate import slugify
 
-from ..data.datasets.dataset import CustomDataset, DatasetsGroupsList
+from ..data.datasets.dataset import (
+    DatasetLoadData,
+    CustomDatasetConfigData,
+    DatasetsGroupsList,
+    DatasetData,
+)
 from ..data.datasets.creation import SourceData
 from ..data.datasets.creation import FilePathSourcesList
+from ..data.datasets.extra import DatasetGroupChoice
 
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData
 
@@ -15,11 +19,12 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
-from .. import ASSETS_PATH
+from ..datasets import loading as datasets_loading
+
+from .. import ASSETS_PATH, DATASET_EXT
 from .. import progress
+from ..progress import ProgressData
 from . import exceptions
-from . import temporary_methods
-from ..datasets import loader
 
 
 class Exchange:
@@ -43,7 +48,7 @@ class Exchange:
     def is_colab(self) -> bool:
         return "COLAB_GPU" in os.environ.keys()
 
-    def _call_hardware_accelerator(self) -> dict:
+    def _call_hardware_accelerator(self) -> HardwareAcceleratorData:
         device_name = tensorflow.test.gpu_device_name()
         if device_name != "/device:GPU:0":
             if self.is_colab:
@@ -56,46 +61,66 @@ class Exchange:
                 __type = HardwareAcceleratorChoice.CPU
         else:
             __type = HardwareAcceleratorChoice.GPU
-        hardware = HardwareAcceleratorData(type=__type)
-        return hardware.native()
+        return HardwareAcceleratorData(type=__type)
 
-    def _call_datasets_info(self, path: str) -> dict:
+    def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
+        """
+        Выбор датасета
+        """
+        dataset_choice = DatasetLoadData(path=path, group=group, alias=alias)
+        if dataset_choice.group == DatasetGroupChoice.keras:
+            dataset = (
+                DatasetsGroupsList(DatasetsGroups)
+                .get(DatasetGroupChoice.keras)
+                .datasets.get(dataset_choice.alias)
+            )
+            if not dataset:
+                raise exceptions.UnknownKerasDatasetException(dataset_choice.alias)
+            return dataset
+        elif dataset_choice.group == DatasetGroupChoice.custom:
+            data = CustomDatasetConfigData(
+                path=Path(path, f"{dataset_choice.alias}.{DATASET_EXT}")
+            )
+            return DatasetData(**data.config)
+        else:
+            raise exceptions.DatasetGroupUndefinedMethodException(
+                dataset_choice.group.value
+            )
+
+    def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
         info = DatasetsGroupsList(DatasetsGroups)
         for dirname in os.listdir(path):
             try:
-                dataset = CustomDataset(path=Path(path, dirname))
-                alias = slugify(dataset.config.get("name"), language_code="ru")
-                info.get("custom").datasets.append(
-                    {
-                        "alias": alias,
-                        "name": dataset.config.get("name"),
-                        "date": dataset.config.get("date"),
-                        "size": {"value": dataset.config.get("size")},
-                        "tags": dataset.tags.dict(),
-                    }
-                )
+                dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
+                info.get("custom").datasets.append(DatasetData(**dataset_config.config))
             except Exception:
                 pass
-        return info.native()
+        return info
 
-    def _call_dataset_source_load(self, mode: str, value: str):
+    def _call_dataset_source_load(self, mode: str, value: str) -> dict:
         """
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        data = loader.load_data(source)
-        return data
+        return datasets_loading.source(source)
 
-    def _call_dataset_source_load_progress(self) -> dict:
+    def _call_dataset_source_create(self, **kwargs) -> dict:
+        """
+        Создание датасета из исходников
+        """
+        print(kwargs)
+        return {}
+
+    def _call_dataset_source_load_progress(self) -> ProgressData:
         """
         Прогресс загрузки исходников датасета
         """
-        return progress.pool(progress.PoolName.dataset_source_load).native()
+        return progress.pool(progress.PoolName.dataset_source_load)
 
-    def _call_datasets_sources(self, path: str) -> list:
+    def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
         Получение списка исходников датасетов
         """
@@ -107,9 +132,9 @@ class Exchange:
             except Exception:
                 pass
         files.sort(key=lambda item: item.label)
-        return files.native()
+        return files
 
-    def _call_models(self, path: str) -> list:
+    def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
@@ -129,20 +154,20 @@ class Exchange:
             except Exception:
                 pass
         models.get("custom").models.sort(key=lambda item: item.label)
-        return models.native()
+        return models
 
-    def _call_model_load(self, value: str):
+    def _call_model_load(self, value: str) -> dict:
         """
         Загрузка модели
         """
         model = ModelLoadData(value=value)
-        temporary_methods.model_load(model)
+        # temporary_methods.model_load(model)
 
-    def _call_model_load_progress(self) -> dict:
+    def _call_model_load_progress(self) -> ProgressData:
         """
         Прогресс загрузки модели
         """
-        return progress.pool(progress.PoolName.model_load).native()
+        return progress.pool(progress.PoolName.model_load)
 
 
 agent_exchange = Exchange()

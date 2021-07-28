@@ -28,24 +28,24 @@ class BaseResponse(Response):
 
 
 class BaseResponseSuccess(BaseResponse):
-    def __init__(self, data, *args, **kwargs):
+    def __init__(self, data=None, *args, **kwargs):
         super().__init__(data=data, *args, **kwargs)
 
 
 class BaseResponseError(BaseResponse):
-    def __init__(self, error, *args, **kwargs):
+    def __init__(self, error=None, *args, **kwargs):
         super().__init__(error=error, *args, **kwargs)
 
 
 class BaseResponseErrorGeneral(BaseResponseError):
-    def __init__(self, error, *args, **kwargs):
+    def __init__(self, error=None, *args, **kwargs):
         if isinstance(error, dict):
             error = list(filter(None, [str(error.get("detail", ""))]))
         super().__init__(error={"general": error}, *args, **kwargs)
 
 
 class BaseResponseErrorFields(BaseResponseError):
-    def __init__(self, error, *args, **kwargs):
+    def __init__(self, error=None, *args, **kwargs):
         if isinstance(error, ValidationError):
             __errors = {}
             for __error in error.errors():

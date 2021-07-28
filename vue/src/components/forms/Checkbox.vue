@@ -1,6 +1,6 @@
 <template>
   <div class="field-form field-inline field-reverse">
-    <label>{{ label }}</label>
+    <label @click="checked = !checked">{{ label }}</label>
     <div class="checkout-switch">
       <input
         v-model="checked"

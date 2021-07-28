@@ -1,168 +1,123 @@
 <template>
   <div class="params">
     <scrollbar :style="height">
-      <div class="params-container">
-        <DatasetButton @click="click" />
-        <div class="params-item load-dataset-field">
-          <form
-            class="inner form-inline-label"
-            novalidate="novalidate"
-            autocomplete="off"
-          >
-            <ul class="tabs">
-              <li
-                :class="tabGoogle ? 'active' : ''"
-                @click.prevent="tabGoogle = true"
-              >
-                Google drive
-              </li>
-              <li
-                :class="!tabGoogle ? 'active' : ''"
-                @click.prevent="tabGoogle = false"
-              >
-                URL-ссылка
-              </li>
-            </ul>
-            <Autocomplete
-              :options="items"
-              :disabled="false"
-              :label="
-                tabGoogle
-                  ? 'Выберите файл из Google-диска'
-                  : 'Введите URL на архив исходников'
-              "
-              :maxItem="10"
-              placeholder="Please select file"
-              @focus="focus"
-              @selected="selected"
-            />
-            <div class="field-form field-inline field-reverse inputs">
-              <label for="field_form-num_links[inputs]"
-                >Кол-во <b>входов</b></label
-              >
-              <input
-                v-model="inputs"
-                type="number"
-                min="0"
-                max="100"
-                name="num_links[inputs]"
-                data-value-type="number"
-              />
-            </div>
-            <div class="field-form field-inline field-reverse outputs">
-              <label for="field_form-num_links[outputs]"
-                >Кол-во <b>выходов</b></label
-              >
-              <input
-                type="number"
-                name="num_links[outputs]"
-                min="0"
-                max="100"
-                data-value-type="number"
-                :value="outputs"
-              />
-            </div>
-            <div class="actions-form">
-              <div class="item load">
-                <button @click.prevent="download">Загрузить</button>
-              </div>
-            </div>
-          </form>
+      <div class="params__items">
+        <div class="params__items--item">
+          <DatasetButton />
         </div>
-        <div class="params-item dataset-prepare">
-          <form novalidate="novalidate" ref="form">
-            <div class="params-container">
-              <at-collapse value="0">
-                <at-collapse-item class="mt-3" title="Входные слои">
-                  <div class="inner row inputs-layers">
-                    <template v-for="(input, i) of inputLayer">
+        <div class="params__items--item pa-0">
+          <DatasetTab @select="select" />
+        </div>
+        <div class="params__items--item py-0">
+          <DatasetTwoInput />
+        </div>
+        <div class="params__items--item">
+          <button @click.prevent="download">Загрузить</button>
+        </div>
+        <form novalidate="novalidate" ref="form">
+          <at-collapse value="0">
+            <at-collapse-item title="Входные слои">
+              <div class="inner row inputs-layers">
+                <!-- <template v-for="(input, i) of inputLayer">
                       <Layer
                         def="images"
                         :parse="`inputs[input_${input}]`"
                         :name="`input_${input}`"
                         :key="'input_' + i"
                       />
-                    </template>
-                  </div>
-                </at-collapse-item>
-                <at-collapse-item class="mt-3" title="Выходные слои">
-                  <div class="inner row inputs-layers">
-                    <template v-for="(output, i) of outputLayer">
+                    </template> -->
+              </div>
+            </at-collapse-item>
+            <at-collapse-item title="Выходные слои">
+              <div class="inner row inputs-layers">
+                <!-- <template v-for="(output, i) of outputLayer">
                       <Layer
                         def="classification"
                         :parse="`outputs[output_${output}]`"
                         :name="`output_${output}`"
                         :key="'output_' + i"
                       />
-                    </template>
-                  </div>
-                </at-collapse-item>
-              </at-collapse>
-              <div class="params-item dataset-params mt-2">
-                <div class="params-title">Параметры датасета</div>
-                <div class="inner form-inline-label px-5 py-3">
-                  <div class="field-form">
-                    <label>Название датасета</label>
-                    <input type="text" name="parameters[name]" />
-                  </div>
-                  <div class="field-form">
-                    <label>Теги</label>
-                    <input type="text" name="parameters[user_tags]" />
-                  </div>
-                  <DatasetSlider />
-                  <div class="field-form field-inline field-reverse">
-                    <label>Сохранить последовательность</label>
-                    <div class="checkout-switch">
-                      <input
-                        type="checkbox"
-                        name="parameters[preserve_sequence]"
-                      />
-                      <span class="switcher"></span>
-                    </div>
-                  </div>
-                  <button class="mt-6" @click.prevent="click">
-                    Сформировать
-                  </button>
+                    </template> -->
+              </div>
+            </at-collapse-item>
+          </at-collapse>
+          <div class="params__items--title">Параметры датасета</div>
+          <div class="params__items--item">
+            <div class="inner form-inline-label">
+              <div class="field-form">
+                <label for="parameters[name]">Название датасета</label>
+                <input
+                  id="parameters[name]"
+                  type="text"
+                  name="parameters[name]"
+                />
+              </div>
+              <div class="field-form">
+                <label for="parameters[user_tags]">Теги</label>
+                <input
+                  id="parameters[user_tags]"
+                  type="text"
+                  name="parameters[user_tags]"
+                />
+              </div>
+              <DatasetSlider />
+              <div class="field-form field-inline field-reverse">
+                <label for="parameters[preserve_sequence]"
+                  >Сохранить последовательность</label
+                >
+                <div class="checkout-switch">
+                  <input
+                    type="checkbox"
+                    name="parameters[preserve_sequence]"
+                    id="parameters[preserve_sequence]"
+                  />
+                  <span class="switcher"></span>
                 </div>
               </div>
+              <div class="field-form field-inline field-reverse">
+                <label for="parameters[use_generator]"
+                  >Использовать генератор</label
+                >
+                <div class="checkout-switch">
+                  <input
+                    type="checkbox"
+                    name="parameters[use_generator]"
+                    id="parameters[use_generator]"
+                  />
+                  <span class="switcher"></span>
+                </div>
+              </div>
+              <button class="mt-6" @click.prevent="click">Сформировать</button>
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
       </div>
     </scrollbar>
   </div>
 </template>
 
 <script>
-
 import { mapGetters } from "vuex";
-import Autocomplete from "@/components/forms/Autocomplete.vue";
+import DatasetTwoInput from "@/components/datasets/params/DatasetTwoInput.vue";
 import DatasetSlider from "@/components/datasets/params/DatasetSlider.vue";
-import Layer from "./Layer.vue";
+import DatasetTab from "@/components/datasets/params/DatasetTab.vue";
+// import Layer from "./Layer.vue";
 import DatasetButton from "./DatasetButton.vue";
 import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
   components: {
-    Autocomplete,
-    Layer,
+    DatasetTab,
+    // Layer,
     DatasetButton,
     DatasetSlider,
+    DatasetTwoInput,
   },
   data: () => ({
-    tabGoogle: true,
-    slider: 10,
-    options: [
-      { id: 1, name: "Option 1" },
-      { id: 2, name: "Option 2" },
-    ],
+    dataset: {},
+    interval: null,
     inputs: 1,
     outputs: 1,
-    tab: null,
-    name: "",
-    items: [],
-    isLoading: false,
-    search: null,
     rules: {
       length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
       required: (len) => len.length !== 0 || `Not be empty`,
@@ -185,33 +140,35 @@ export default {
     },
   },
   methods: {
+    createInterval() {
+      this.interval = setInterval(async () => {
+        const data = await this.$store.dispatch("datasets/loadProgress", {});
+        const { finished, message, percent } = data;
+        if (!data || finished) {
+          clearTimeout(this.interval);
+          this.$store.dispatch("messages/setProgressMessage", message);
+          this.$store.dispatch("messages/setProgress", percent);
+        } else {
+          this.$store.dispatch("messages/setProgress", percent);
+          this.$store.dispatch("messages/setProgressMessage", message);
+        }
+        console.log(data);
+      }, 1000);
+    },
+    select(select) {
+      console.log(select)
+      this.dataset = select
+    },
     async download() {
-      if (this.name && this.inputs && this.outputs) {
-        const res = {
-          name: this.name,
-          inputs: this.inputs,
-          outputs: this.outputs,
-        };
-        await this.$store.dispatch("datasets/settings", res);
+      const { mode, value } = this.dataset
+      if (mode && value) {
+        this.createInterval()
+        await this.$store.dispatch("datasets/sourceLoad", { mode, value });
       } else {
         this.$store.dispatch("messages/setMessage", {
-          error: "Выберите файл и кол. вход и выходов",
+          error: "Выберите файл",
         });
       }
-    },
-    async focus() {
-      const data = await this.$store.dispatch("axios", {
-        url: "/datasets/sources/?term=",
-      });
-      if (!data) {
-        return;
-      }
-      this.items = data.map(({ label }, i) => {
-        return { name: label, id: ++i };
-      });
-    },
-    async selected(value) {
-      this.name = value.name;
     },
     click() {
       if (this.$refs.form) {
@@ -229,9 +186,24 @@ export default {
 
 <style lang="scss" scoped>
 .params {
-  flex-shrink: 0;
   width: 400px;
+  flex-shrink: 0;
   border-left: #0e1621 solid 1px;
+  // border-left: #0e1621  1px solid;
+  &__items {
+    &--item {
+      padding: 20px;
+    }
+    &--title {
+      display: block;
+      line-height: 1.25;
+      margin: 0 0 10px 0;
+      padding: 5px 20px;
+      font-size: 0.75rem;
+      user-select: none;
+      background-color: #0e1621;
+    }
+  }
 }
 button {
   font-size: 0.875rem;

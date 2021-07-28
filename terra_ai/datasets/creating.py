@@ -3,11 +3,13 @@ import random
 from typing import Any, Union
 
 import numpy as np
+import pandas as pd
 import re
 import pymorphy2
 import shutil
 import json
 import joblib
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from tqdm.notebook import tqdm
 from io import open as io_open
@@ -15,19 +17,20 @@ from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
 
-from terra_ai import out_exchange
+# from terra_ai import out_exchange
 from .data import DataType
 from . import array_creator, loader
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
+from ..data.datasets.dataset import DatasetData
 
 
 class CreateDTS(object):
 
-    def __init__(self, trds_path='/content/drive/MyDrive/TerraAI/datasets'):
+    def __init__(self):
 
         self._datatype = 'DIM'
 
-        self.trds_path: str = trds_path
+        self.trds_path: str = ''
         self.file_folder: str = ''
 
         self.name: str = ''
@@ -89,11 +92,10 @@ class CreateDTS(object):
         loader.load_data(strict_object=strict_object)
 
         self.zip_params = json.loads(strict_object.json())
-        self.file_folder = loader.file_folder
 
     def set_dataset_data(self, data: Union[CreationInputsList, CreationOutputsList]):
         for elem in data:
-            self.tags[elem.alias] = elem.type
+            self.tags[elem.alias] = elem.type.lower()
             self.input_names[elem.alias] = elem.name
             self.user_parameters[elem.alias] = elem.parameters
 
@@ -103,7 +105,7 @@ class CreateDTS(object):
         instruction_key = instruction_type + 's'
         for elem in data:
             self.iter += 1
-            self.instructions[instruction_key][elem.alias] = getattr(self, f"instructions_{elem.type}")(
+            self.instructions[instruction_key][elem.alias] = getattr(self, f"instructions_{elem.type.lower()}")(
                 **elem.parameters.dict())
 
     def create_dataset(self, creation_data: CreationData):
@@ -111,7 +113,9 @@ class CreateDTS(object):
         self.divide_ratio = tuple(creation_data.info.part.dict().values())
         self.source = 'custom dataset'
         self.user_tags = creation_data.tags
-        # self.use_generator = creation_data.use_generator
+        self.use_generator = creation_data.use_generator
+        self.trds_path = creation_data.datasets_path
+        self.file_folder = creation_data.source_path
 
         for data in [creation_data.inputs, creation_data.outputs]:
             self.set_dataset_data(data)
@@ -120,7 +124,7 @@ class CreateDTS(object):
         self.create_instructions(instruction_type='input', data=creation_data.inputs)
         # Создаем выходные инструкции
         self.create_instructions(instruction_type='output', data=creation_data.outputs)
-
+        print("INSTR", self.instructions)
         # Получаем входные параметры
         for key in self.instructions['inputs'].keys():
             array = getattr(array_creator, f'create_{self.tags[key]}')(
@@ -135,10 +139,10 @@ class CreateDTS(object):
                 self.instructions['outputs'][key]['instructions'][0], **self.instructions['outputs'][key]['parameters'])
             if isinstance(array, tuple):
                 for i in range(len(array)):
-                    self.output_shape[key.replace(key[-1], str(int(key[-1])+i))] = array[i].shape
-                    self.output_dtype[key.replace(key[-1], str(int(key[-1])+i))] = str(array[i].dtype)
+                    self.output_shape[key.replace(key[-1], str(int(key[-1]) + i))] = array[i].shape
+                    self.output_dtype[key.replace(key[-1], str(int(key[-1]) + i))] = str(array[i].dtype)
                     self.datatype = array[i].shape
-                    self.output_datatype[key.replace(key[-1], str(int(key[-1])+i))] = self.datatype
+                    self.output_datatype[key.replace(key[-1], str(int(key[-1]) + i))] = self.datatype
             else:
                 self.output_shape[key] = array.shape
                 self.output_dtype[key] = str(array.dtype)
@@ -157,7 +161,7 @@ class CreateDTS(object):
             self.split_sequence['train'].extend(indices[:train_len])
             self.split_sequence['val'].extend(indices[train_len:train_len + val_len])
             self.split_sequence['test'].extend(indices[train_len + val_len:])
-        if not dataset_dict['parameters']['preserve_sequence']:
+        if creation_data.info.shuffle:
             random.shuffle(self.split_sequence['train'])
             random.shuffle(self.split_sequence['val'])
             random.shuffle(self.split_sequence['test'])
@@ -165,7 +169,7 @@ class CreateDTS(object):
         self.limit: int = len(self.instructions['inputs']['input_1']['instructions'])
 
         data = {}
-        if dataset_dict['parameters']['use_generator']:
+        if creation_data.use_generator:
             # Сохранение датасета для генератора
             data['zip_params'] = self.zip_params
             os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions'), exist_ok=True)
@@ -178,7 +182,7 @@ class CreateDTS(object):
             with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'sequence.json'),
                       'w') as seq:
                 json.dump(self.split_sequence, seq)
-            if 'txt_list' in array_creator.__dict__.keys():
+            if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
                 with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'txt_list.json'),
                           'w') as fp:
                     json.dump(array_creator.txt_list, fp)
@@ -201,8 +205,8 @@ class CreateDTS(object):
                     y_3: list = []
                     for i in range(self.limit):
                         arrays = getattr(array_creator, f"create_{self.tags[key]}")(
-                                         self.instructions['outputs'][key]['instructions'][i],
-                                         **self.instructions['outputs'][key]['parameters'])
+                            self.instructions['outputs'][key]['instructions'][i],
+                            **self.instructions['outputs'][key]['parameters'])
                         y_1.append(arrays[0])
                         y_2.append(arrays[1])
                         y_3.append(arrays[2])
@@ -210,9 +214,12 @@ class CreateDTS(object):
                     splits = ['train', 'val', 'test']
                     for spl_seq in splits:
                         for i in range(len(splits)):
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])))] = np.array(y_1)[self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+1))] = np.array(y_2)[self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])+2))] = np.array(y_3)[self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1])))] = np.array(y_1)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 1))] = np.array(y_2)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 2))] = np.array(y_3)[
+                                self.split_sequence[spl_seq]]
                 else:
                     y: list = []
                     for i in range(self.limit):
@@ -224,7 +231,7 @@ class CreateDTS(object):
                     self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
 
             for sample in self.X.keys():
-                os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
+                # os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
                 for inp in self.X[sample].keys():
                     os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample), exist_ok=True)
                     joblib.dump(self.X[sample][inp],
@@ -242,6 +249,8 @@ class CreateDTS(object):
             os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tokenizer'), exist_ok=True)
         if array_creator.word2vec:
             os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec'), exist_ok=True)
+        if array_creator.augmentation:
+            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation'), exist_ok=True)
         # if self.createarray.tsgenerator:
         #     os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'tsgenerator'), exist_ok=True)
 
@@ -257,6 +266,10 @@ class CreateDTS(object):
             if array_creator.word2vec[w2v]:
                 joblib.dump(array_creator.word2vec[w2v],
                             os.path.join(self.trds_path, f'dataset {self.name}', 'word2vec', f'{w2v}.gz'))
+        for aug in array_creator.augmentation.keys():
+            if array_creator.augmentation[aug]:
+                joblib.dump(array_creator.augmentation[aug],
+                            os.path.join(self.trds_path, f'dataset {self.name}', 'augmentation', f'{aug}.gz'))
         # for tsg in self.createarray.tsgenerator.keys():
         #     if self.createarray.tsgenerator[tsg]:
         #         joblib.dump(self.createarray.tsgenerator[tsg],
@@ -273,73 +286,74 @@ class CreateDTS(object):
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
+        return DatasetData(**data)
 
-        pass
+    def instructions_images_obj_detection(self, folder_name: str) -> list:
+        data: list = []
+        for file_name in sorted(os.listdir(os.path.join(self.file_folder, folder_name))):
+            if 'txt' not in file_name:
+                data.append(os.path.join(folder_name, file_name))
+        self.y_cls = [0, ]
+        return data
 
-    def instructions_images(self, **options):
-
-        instructions: dict = {}
-        instr: list = []
+    def instructions_images_video(self, folder_name: str, class_mode: bool = False, max_frames: int = None) -> list:
+        data: list = []
         y_cls: list = []
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
-        if 'object_detection' in self.tags.values():
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-                if 'txt' not in file_name:
-                    instr.append(os.path.join(options['folder_name'], file_name))
-                    peg_idx += 1
-                    y_cls.append(cls_idx)
-        else:
-            path = self.file_folder
-            if options['folder_name']:
-                path = os.path.join(self.file_folder, options['folder_name'])
-            for directory, folder, file_name in sorted(os.walk(path)):
-                if file_name:
-                    file_folder = directory.replace(self.file_folder, '')[1:]
-                    for name in sorted(file_name):
-                        instr.append(os.path.join(file_folder, name))
-                        peg_idx += 1
-                        y_cls.append(cls_idx)
-                    cls_idx += 1
-                    self.peg.append(peg_idx)
-        instructions['instructions'] = instr
-        instructions['parameters'] = options
-        self.y_cls = y_cls
+        path = os.path.join(self.file_folder, folder_name) if folder_name else self.file_folder
 
-        return instructions
-
-    def instructions_video(self, **options):
-
-        instructions: dict = {}
-        instr: list = []
-        y_cls: list = []
-        cls_idx = 0
-        peg_idx = 0
-        self.peg.append(0)
-
-        path = self.file_folder
-        if options['folder_name']:
-            path = os.path.join(self.file_folder, options['folder_name'])
         for directory, folder, file_name in sorted(os.walk(path)):
             if file_name:
                 file_folder = directory.replace(self.file_folder, '')[1:]
                 for name in sorted(file_name):
-                    instr.append(os.path.join(file_folder, name))
+                    data.append(os.path.join(file_folder, name))
                     peg_idx += 1
-                    if options['class_mode'] == 'По каждому кадру':
-                        y_cls.append(np.full((options['max_frames'], 1), cls_idx).tolist())
+                    if class_mode:
+                        y_cls.append(np.full((max_frames, 1), cls_idx).tolist())
                     else:
                         y_cls.append(cls_idx)
                 cls_idx += 1
                 self.peg.append(peg_idx)
+        self.y_cls = y_cls
+        return data
+
+    def instructions_images(self, **options: Any):
+        folder = options.get('folder_name', '')
+        instructions: dict = {}
+        options['put'] = f'{self.mode}_{self.iter}'
+
+        if 'object_detection' in self.tags.values():
+            instr = self.instructions_images_obj_detection(folder)
+        else:
+            instr = self.instructions_images_video(folder)
+
         instructions['instructions'] = instr
         instructions['parameters'] = options
-        self.y_cls = y_cls
+
+        return instructions
+
+    def instructions_video(self, **options: Any):
+        folder = options.get('folder_name', '')
+        instructions: dict = {}
+        class_mode = False
+        max_frames = None
+
+        if options.get('class_mode', '') == 'По каждому кадру':
+            class_mode = True
+            max_frames = options.get('max_frames', '')
+
+        instructions['instructions'] = self.instructions_images_video(folder, class_mode, max_frames)
+        instructions['parameters'] = options
 
         return instructions
 
     def instructions_text(self, **options):
+
+        folder_name = options.get('folder_name', '')
+        word_to_vec = options.get('word_to_vec', '')
+        bag_of_words = options.get('bag_of_words', '')
 
         def read_text(file_path):
 
@@ -370,7 +384,7 @@ class CreateDTS(object):
 
         txt_list: dict = {}
 
-        if options['folder_name']:
+        if folder_name:
             for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
                 txt_list[os.path.join(options['folder_name'], file_name)] = read_text(
                     os.path.join(self.file_folder, options['folder_name'], file_name))
@@ -405,19 +419,19 @@ class CreateDTS(object):
                 break
 
         array_creator.create_tokenizer(self.mode, self.iter, **{'num_words': options['max_words_count'],
-                                                                   'filters': filters,
-                                                                   'lower': True,
-                                                                   'split': ' ',
-                                                                   'char_level': False,
-                                                                   'oov_token': '<UNK>'})
+                                                                'filters': filters,
+                                                                'lower': True,
+                                                                'split': ' ',
+                                                                'char_level': False,
+                                                                'oov_token': '<UNK>'})
         array_creator.tokenizer[f'{self.mode}_{self.iter}'].fit_on_texts(list(txt_list.values()))
 
         array_creator.txt_list[f'{self.mode}_{self.iter}'] = {}
         for key, value in txt_list.items():
-            array_creator.txt_list[f'{self.mode}_{self.iter}'][key] =\
+            array_creator.txt_list[f'{self.mode}_{self.iter}'][key] = \
                 array_creator.tokenizer[f'{self.mode}_{self.iter}'].texts_to_sequences([value])[0]
 
-        if options['word_to_vec']:
+        if word_to_vec:
             reverse_tok = {}
             for key, value in array_creator.tokenizer[f'{self.mode}_{self.iter}'].word_index.items():
                 reverse_tok[value] = key
@@ -429,8 +443,8 @@ class CreateDTS(object):
                         tmp.append(reverse_tok[word])
                     words.append(tmp)
             array_creator.create_word2vec(mode=self.mode, iteration=self.iter, words=words,
-                                             size=options['word_to_vec_size'], window=10, min_count=1, workers=10,
-                                             iter=10)
+                                          size=options['word_to_vec_size'], window=10, min_count=1, workers=10,
+                                          iter=10)
 
         instr = []
         if 'text_segmentation' not in self.tags.values():
@@ -451,8 +465,8 @@ class CreateDTS(object):
                 cls_idx += 1
             self.y_cls = y_cls
         instructions = {'instructions': instr,
-                        'parameters': {'bag_of_words': options['bag_of_words'],
-                                       'word_to_vec': options['word_to_vec'],
+                        'parameters': {'bag_of_words': bag_of_words,
+                                       'word_to_vec': word_to_vec,
                                        'put': f'{self.mode}_{self.iter}'
                                        }
                         }
@@ -463,35 +477,175 @@ class CreateDTS(object):
 
         pass
 
-    def instructions_dataframe(self):
+    def instructions_dataframe(self, **options):
+        """
+            Args:
+                **options: Параметры датафрейма:
+                    MinMaxScaler: строка номеров колонок для обработки
+                    StandardScaler: строка номеров колонок для обработки
+                    Categorical: строка номеров колонок для обработки c уже готовыми категориями
+                    Categorical_ranges: dict для присваивания категории  в зависимости от диапазона данных
+                        num_cols: число колонок
+                        cols: номера колонок
+                        col_(int): строка с диапазонами
+                    one_hot_encoding: строка номеров колонок для перевода категорий в ОНЕ
+                    file_name: имя файла.csv
+                    y_col: столбец датафрейма для классификации
+            Returns:
+                instructions: dict      Словарь с инструкциями для create_dataframe.
+        """
 
-        pass
+        def str_to_list(str_numbers, df_cols):
+            """
+            Получает строку из пользовательских номеров колонок,
+            возвращает лист индексов данных колонок
+            """
+            merged = []
+            try:
+                str_numbers = str_numbers.split(' ')
+            except:
+                print('Разделите номера колонок ТОЛЬКО пробелами')
+            for i in range(len(str_numbers)):
+                if '-' in str_numbers[i]:
+                    idx = str_numbers[i].index('-')
+                    fi = int(str_numbers[i][:idx]) - 1
+                    si = int(str_numbers[i][idx + 1:])
+                    tmp = list(range(fi, si))
+                    merged.extend(tmp)
+                elif re.findall(r'\D', str_numbers[i]) != []:
+                    merged.append(df_cols.to_list().index(str_numbers[i]))
+                else:
+                    merged.append(int(str_numbers[i]) - 1)
 
-    def instructions_classification(self, **options):
+            return merged
 
-        self.task_type[f'{self.mode}_{self.iter}'] = 'classification'
-        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = options['one_hot_encoding']
-        for key, value in self.tags.items():
-            if value in ['images', 'text', 'audio', 'video']:
-                self.classes_names[f'{self.mode}_{self.iter}'] = sorted(os.listdir(self.file_folder)) if not \
-                    self.user_parameters[key]['folder_name'] else list(self.user_parameters[key]['folder_name'].split())
-                self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
-            elif value in ['dataframe']:
-                self.classes_names[f'{self.mode}_{self.iter}'] = self.temporary['classes_names']
-                self.num_classes[f'{self.mode}_{self.iter}'] = self.temporary['num_classes']
+        general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]), nrows=1)
+        array_creator.df_with_y = pd.read_csv(
+            os.path.join(self.file_folder, options['file_info']['path'][0]), usecols=(str_to_list(
+                options['file_info']['cols_name'][0], general_df.columns) + str_to_list(options['y_col'],
+                                                                                        general_df.columns)))
+        array_creator.df_with_y.sort_values(by=options['y_col'], inplace=True, ignore_index=True)
 
-        instructions: dict = {'parameters': {'num_classes': len(np.unique(self.y_cls)),
-                                             'one_hot_encoding': options['one_hot_encoding']},
-                              'instructions': self.y_cls}
+        self.peg.append(0)
+        for i in range(len(array_creator.df_with_y.loc[:, options['y_col']]) - 1):
+            if array_creator.df_with_y.loc[:, options['y_col']][i] != \
+                    array_creator.df_with_y.loc[:, options['y_col']][i + 1]:
+                self.peg.append(i + 1)
+        self.peg.append(len(array_creator.df_with_y))
+
+        array_creator.df = array_creator.df_with_y.iloc[:, str_to_list(
+            options['file_info']['cols_name'][0], array_creator.df_with_y.columns)]
+
+        instructions = {'instructions': np.arange(0, len(array_creator.df)).tolist(),
+                        'parameters': {'put': f'{self.mode}_{self.iter}'}}
+
+        if 'MinMaxScaler' or 'StandardScaler' in options.keys():
+            array_creator.scaler[f'{self.mode}_{self.iter}'] = {}
+            if 'MinMaxScaler' in options.keys():
+                instructions['parameters']['MinMaxScaler'] = str_to_list(str_numbers=options['MinMaxScaler'],
+                                                                         df_cols=array_creator.df.columns)
+                array_creator.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'] = MinMaxScaler()
+                array_creator.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'].fit(
+                    array_creator.df.iloc[:, instructions['parameters']['MinMaxScaler']].to_numpy().reshape(-1, 1))
+
+            if 'StandardScaler' in options.keys():
+                instructions['parameters']['StandardScaler'] = str_to_list(options['StandardScaler'],
+                                                                           array_creator.df.columns)
+                array_creator.scaler[f'{self.mode}_{self.iter}']['StandardScaler'] = StandardScaler()
+                array_creator.scaler[f'{self.mode}_{self.iter}']['StandardScaler'].fit(
+                    array_creator.df.iloc[:, instructions['parameters']['StandardScaler']].to_numpy().reshape(-1, 1))
+
+        if 'Categorical' in options.keys():
+            instructions['parameters']['Categorical'] = {}
+            instructions['parameters']['Categorical']['lst_cols'] = str_to_list(options['Categorical'],
+                                                                                array_creator.df.columns)
+            for i in instructions['parameters']['Categorical']['lst_cols']:
+                instructions['parameters']['Categorical'][f'col_{i}'] = np.unique(
+                    array_creator.df.iloc[:, i]).tolist()
+
+        if 'Categorical_ranges' in options.keys():
+            instructions['parameters']['Categorical_ranges'] = {}
+            instructions['parameters']['Categorical_ranges']['lst_cols'] = str_to_list(
+                options['Categorical_ranges']['cols'], array_creator.df.columns)
+            for i in instructions['parameters']['Categorical_ranges']['lst_cols']:
+                instructions['parameters']['Categorical_ranges'][f'col_{i}'] = {}
+                for j in range(len(options['Categorical_ranges'][f'col_{i + 1}'].split(' '))):
+                    instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = int(
+                        options['Categorical_ranges'][f'col_{i + 1}'].split(' ')[j])
+
+        if 'one_hot_encoding' in options.keys():
+            instructions['parameters']['one_hot_encoding'] = {}
+            instructions['parameters']['one_hot_encoding']['lst_cols'] = str_to_list(options['one_hot_encoding'],
+                                                                                     array_creator.df.columns)
+            for i in instructions['parameters']['one_hot_encoding']['lst_cols']:
+                if i in instructions['parameters']['Categorical_ranges']['lst_cols']:
+                    instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
+                        options['Categorical_ranges'][f'col_{i + 1}'].split(' '))
+                else:
+                    instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
+                        np.unique(array_creator.df.iloc[:, i]))
 
         return instructions
 
-    def instructions_regression(self):
+    def instructions_classification(self, **options):
 
-        pass
+        instructions: dict = {}
+        self.task_type[f'{self.mode}_{self.iter}'] = 'classification'
+        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = options['one_hot_encoding']
+
+        if options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                column = data[options['file_info']['cols_name'][0]].to_list()
+                classes_names = []
+                for elem in column:
+                    if elem not in classes_names:
+                        classes_names.append(elem)
+                self.classes_names[f'{self.mode}_{self.iter}'] = classes_names
+                self.num_classes[f'{self.mode}_{self.iter}'] = len(classes_names)
+                for elem in column:
+                    self.y_cls.append(classes_names.index(elem))
+
+        else:
+            for key, value in self.tags.items():
+                if value in ['images', 'text', 'audio', 'video']:
+                    self.classes_names[f'{self.mode}_{self.iter}'] = \
+                        sorted(self.user_parameters[key]['file_info']['path'])
+                    self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
+
+        instructions['parameters'] = {'num_classes': len(np.unique(self.y_cls)),
+                                      'one_hot_encoding': options['one_hot_encoding']}
+        instructions['instructions'] = self.y_cls
+
+        return instructions
+
+    def instructions_regression(self, **options):
+
+        instructions: dict = {}
+        instr: list = []
+
+        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = False
+        self.task_type[f'{self.mode}_{self.iter}'] = 'regression'
+
+        for file_name in options['file_info']['path']:
+            data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+            instr = data[options['file_info']['cols_name'][0]].to_list()
+
+        if 'scaler' in options.keys():
+            if options['scaler'] == 'MinMaxScaler':
+                array_creator.scaler[f'{self.mode}_{self.iter}'] = MinMaxScaler()
+            if options['scaler'] == 'StandardScaler':
+                array_creator.scaler[f'{self.mode}_{self.iter}'] = StandardScaler()
+            array_creator.scaler[f'{self.mode}_{self.iter}'].fit(np.array(instr).reshape(-1, 1))
+
+        instructions['instructions'] = instr
+        instructions['parameters'] = options
+
+        return instructions
 
     def instructions_segmentation(self, **options):
-
+        print(options)
+        folder_name = options.get('folder_name', '')
         instr: list = []
 
         self.classes_names[f'{self.mode}_{self.iter}'] = options['classes_names']
@@ -500,8 +654,13 @@ class CreateDTS(object):
         self.one_hot_encoding[f'{self.mode}_{self.iter}'] = True
         self.task_type[f'{self.mode}_{self.iter}'] = 'segmentation'
 
-        for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-            instr.append(os.path.join(options['folder_name'], file_name))
+        if options['file_info']['path_type'] == 'path_folder':
+            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['file_info']['path'][0]))):
+                instr.append(os.path.join(options['file_info']['path'][0], file_name))
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                instr = data[options['file_info']['cols_name'][0]].to_list()
 
         instructions = {'instructions': instr,
                         'parameters': {'mask_range': options['mask_range'],
@@ -543,8 +702,8 @@ class CreateDTS(object):
                 class_names.append(elem)
 
         for i in range(3):
-            self.classes_names[f'{self.mode}_{self.iter+i}'] = class_names
-            self.num_classes[f'{self.mode}_{self.iter+i}'] = int(data['classes'])
+            self.classes_names[f'{self.mode}_{self.iter + i}'] = class_names
+            self.num_classes[f'{self.mode}_{self.iter + i}'] = int(data['classes'])
 
         # list of txt
         txt_list = []

@@ -11,7 +11,7 @@ class NotFoundAPIView(BaseAPIView):
 
 
 class ConfigAPIView(BaseAPIView):
-    def get(self, request, **kwargs):
+    def post(self, request, **kwargs):
         return BaseResponseSuccess(
             {
                 "defaults": json.loads(

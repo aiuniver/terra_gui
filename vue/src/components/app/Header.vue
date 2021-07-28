@@ -1,41 +1,44 @@
 <template>
-  <header class="flexbox-center-nowrap">
-    <div class="project flexbox-left-nowrap">
-      <a href="#" class="logo"></a>
-      <div class="title flexbox-left-nowrap">
-        <div class="label">Project:</div>
-        <div class="name">
-          <div class="value flexbox-center-nowrap">
-            <span>{{ nameProject }}</span
-            ><i></i>
-          </div>
+  <div class="header">
+    <div class="header__left">
+      <a href="#" class="header__left--logo"></a>
+      <div class="header__left--title">
+        <div class="header__left--label">Project:</div>
+        <div class="header__left--name">
+          <!-- <span
+              ref="project"
+              :contenteditable="clickProject"
+              @click="save = true"
+              @focusout="handleFocusOut(false)"
+              @input="change"
+              >{{ nameProject }}</span
+            > -->
+          <span @click="save = true">{{ nameProject }}</span>
+          <i></i>
         </div>
       </div>
     </div>
-    <div class="name-experiment">Название задачи / Название эксперимента</div>
-    <div class="user flexbox-right-nowrap">
+    <div class="header__center">Название задачи / Название эксперимента</div>
+    <div class="header__right">
       <div
         v-for="({ title, icon, type }, i) of items"
         :key="'menu_' + i"
-        class="item project"
+        class="header__right--icon"
         @click="click(type)"
+        :title="title"
       >
-        <div class="icon" :title="title">
-          <i :class="icon"></i>
-        </div>
+        <i :class="[icon]"></i>
       </div>
-      <div class="item profile">
-        <div class="icon"><i></i></div>
-        <div class="menu">
-          <div class="group">
-            <ul>
-              <li><span>Сменить цветовую схему</span></li>
-            </ul>
-          </div>
-        </div>
+      <div class="header__right--icon">
+        <i class="profile"></i>
       </div>
     </div>
-    <at-modal v-model="save" width="400">
+    <at-modal
+      v-model="save"
+      width="400"
+      :maskClosable="false"
+      :showClose="true"
+    >
       <div slot="header" style="text-align: center">
         <span>Сохранить проект</span>
       </div>
@@ -53,7 +56,7 @@
         </div>
       </div>
       <div slot="footer">
-        <button @click="save = false">Сохранить</button>
+        <button @click="saveProject">Сохранить</button>
       </div>
     </at-modal>
     <at-modal v-model="load" width="400">
@@ -63,13 +66,15 @@
 
       <div slot="footer"></div>
     </at-modal>
-  </header>
+  </div>
 </template>
 
 <script>
 export default {
   name: "THeader",
   data: () => ({
+    clickProject: false,
+    name: "kjkjkjkj",
     items: [
       {
         title: "Создать новый проект",
@@ -93,10 +98,10 @@ export default {
   computed: {
     nameProject: {
       set(name) {
-        this.$store.dispatch("settings/setProject", { name });
+        this.$store.dispatch("projects/setProject", { name });
       },
       get() {
-        return this.$store.getters["settings/getProject"].name;
+        return this.$store.getters["projects/getProject"].name;
       },
     },
     full: {
@@ -109,6 +114,24 @@ export default {
     },
   },
   methods: {
+    async saveProject() {
+      if (this.nameProject.length > 2) {
+        this.$store.dispatch("messages/setMessage", {
+          message: `Изменение названия проекта на «${this.nameProject}»`,
+        });
+        await this.$store.dispatch("projects/saveProject", {
+          name: this.nameProject,
+        });
+        this.$store.dispatch("messages/setMessage", {
+          message: `Название проекта изменено на «${this.nameProject}»`,
+        });
+        this.save = false;
+      } else {
+        this.$store.dispatch("messages/setMessage", {
+          error: "Длина не может быть < 3 сим.",
+        });
+      }
+    },
     click(type) {
       console.log(type);
       if (type === "project-new") {
@@ -119,13 +142,208 @@ export default {
         this.load = true;
       }
     },
+    change(value) {
+      console.log(value);
+    },
+    handleFocusOut(e) {
+      console.log(e);
+      (this.clickProject = e), this.$nextTick(() => this.$refs.project.focus());
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
+.header {
+  background: #17212B;
+  width: 100%;
+  height: 52px;
+  margin: 1px 0 0 0;
+  padding: 0 10px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 800;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-direction: normal;
+  -moz-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -moz-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-content: center;
+  -ms-flex-line-pack: center;
+  align-content: center;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+  &__left {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-direction: normal;
+    -moz-box-direction: normal;
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: nowrap;
+    -ms-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-box-pack: start;
+    -moz-box-pack: start;
+    -webkit-justify-content: flex-start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-align-content: flex-start;
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-box-align: center;
+    -moz-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    &--logo {
+      display: block;
+      content: "";
+      width: 28px;
+      height: 28px;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjgiIGhlaWdodD0iMjgiIHZpZXdCb3g9IjAgMCAyOCAyOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxLjQxNzUgOC4wNzA2QzIyLjIzMjggOC4wNzA2IDIyLjg5OTkgNy40MDM1NCAyMi44OTk5IDYuNTg4MjVDMjIuODk5OSA1Ljc3Mjk2IDIyLjIzMjggNS4xMDU5IDIxLjQxNzUgNS4xMDU5SDYuNTk0MDJDNS43Nzg3MiA1LjEwNTkgNS4xMTE2NiA1Ljc3Mjk2IDUuMTExNjYgNi41ODgyNUM1LjExMTY2IDcuNDAzNTQgNS43Nzg3MiA4LjA3MDYgNi41OTQwMiA4LjA3MDZIMjEuNDE3NVpNMTIuNTIzNCAyMS40MTE4QzEyLjUyMzQgMjIuMjI3MSAxMy4xOTA1IDIyLjg5NDEgMTQuMDA1OCAyMi44OTQxQzE0LjgyMTEgMjIuODk0MSAxNS40ODgxIDIyLjIyNzEgMTUuNDg4MSAyMS40MTE4VjEyLjc2NDdDMTUuNDg4MSAxMS45NDk0IDE0LjgyMTEgMTEuMjgyNCAxNC4wMDU4IDExLjI4MjRDMTMuMTkwNSAxMS4yODI0IDEyLjUyMzQgMTEuOTQ5NCAxMi41MjM0IDEyLjc2NDdWMjEuNDExOFoiIGZpbGw9IiM2NUI5RjQiLz4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0yNy4xNzY1IDAuODIzNTI5SDAuODIzNTI5VjI3LjE3NjVIMjcuMTc2NVYwLjgyMzUyOVpNMCAwVjI4SDI4VjBIMFoiIGZpbGw9IiM2NUI5RjQiLz4KPC9zdmc+Cg==);
+    }
+    &--title {
+      margin: 0 0 0 15px;
+      line-height: 1.375;
+      display: flex;
+    }
+    &--label {
+      color: #a7bed3;
+      margin: 0 5px 0 0;
+    user-select: none;
+    }
+    &--name {
+      position: relative;
+      white-space: nowrap;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      > span {
+        min-width: 0;
+        margin: 0 7px 0 0;
+        cursor: text;
+        user-select: none;
+        white-space: nowrap;
+        outline: none;
+        border: 1px solid transparent;
+        border-radius: 4px;
+      }
+      > i {
+        display: block;
+        width: 13px;
+        height: 13px;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMiIGhlaWdodD0iMTMiIHZpZXdCb3g9IjAgMCAxMyAxMyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTAuODc1IDkuNzgyODFWMTIuMTI2NkgzLjMxNjQxTDEwLjUxNjkgNS4yMTQwNkw4LjA3NTUyIDIuODcwMzFMMC44NzUgOS43ODI4MVpNMTIuNDA0OSAzLjQwMTU2QzEyLjY1ODkgMy4xNTc4MSAxMi42NTg5IDIuNzY0MDYgMTIuNDA0OSAyLjUyMDMxTDEwLjg4MTUgMS4wNTc4MUMxMC42Mjc2IDAuODE0MDYyIDEwLjIxNzQgMC44MTQwNjIgOS45NjM1NCAxLjA1NzgxTDguNzcyMTMgMi4yMDE1NkwxMS4yMTM1IDQuNTQ1MzFMMTIuNDA0OSAzLjQwMTU2WiIgZmlsbD0iI0E3QkVEMyIvPgo8L3N2Zz4K);
+      }
+    }
+  }
+  &__center {
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+  }
+  &__right {
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-box-direction: normal;
+    -moz-box-direction: normal;
+    -webkit-box-orient: horizontal;
+    -moz-box-orient: horizontal;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: nowrap;
+    -ms-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-box-pack: end;
+    -moz-box-pack: end;
+    -webkit-justify-content: flex-end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    -webkit-align-content: center;
+    -ms-flex-line-pack: center;
+    align-content: center;
+    -webkit-box-align: center;
+    -moz-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    &--icon {
+      margin: 0 10px 0 0;
+      > i {
+        background-size: 24px 24px;
+        display: block;
+        width: 32px;
+        height: 32px;
+        background-position: center;
+        background-repeat: no-repeat;
+        cursor: pointer;
+        user-select: none;
+      }
+      .profile {
+        background-size: 32px 32px;
+        background-image: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4IiB3aWR0aD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZmlsbD0iIzY1QjlGNCIgZD0iTTI0IDRjLTExLjA1IDAtMjAgOC45NS0yMCAyMHM4Ljk1IDIwIDIwIDIwIDIwLTguOTUgMjAtMjAtOC45NS0yMC0yMC0yMHptMCA2YzMuMzEgMCA2IDIuNjkgNiA2IDAgMy4zMi0yLjY5IDYtNiA2cy02LTIuNjgtNi02YzAtMy4zMSAyLjY5LTYgNi02em0wIDI4LjRjLTUuMDEgMC05LjQxLTIuNTYtMTItNi40NC4wNS0zLjk3IDguMDEtNi4xNiAxMi02LjE2czExLjk0IDIuMTkgMTIgNi4xNmMtMi41OSAzLjg4LTYuOTkgNi40NC0xMiA2LjQ0eiIvPjxwYXRoIGQ9Ik0wIDBoNDh2NDhoLTQ4eiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==);
+      }
+    }
+  }
+  & > * {
+    -webkit-box-ordinal-group: 1;
+    -moz-box-ordinal-group: 1;
+    -webkit-order: 0;
+    -ms-flex-order: 0;
+    order: 0;
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -webkit-flex: 1 1 auto;
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    -webkit-align-self: auto;
+    -ms-flex-item-align: auto;
+    align-self: auto;
+  }
+}
+
 .flexbox-center-nowrap {
   padding: 0 10px;
   margin: 1px 0 0 0;
+}
+.value {
+  padding: 0;
+  max-width: 300px;
 }
 </style>

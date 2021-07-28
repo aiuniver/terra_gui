@@ -1,5 +1,5 @@
 <template>
-  <at-modal v-model="dialog" width="680" :styles="{top: '150px'}">
+  <at-modal v-model="dialog" width="680">
     <div slot="header" style="text-align: center">
       <span>Загрузка модели</span>
     </div>

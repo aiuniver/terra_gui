@@ -62,7 +62,7 @@
     line-height:18px;
     padding:0 15px;
     font-size:.75rem;
-    border:2px solid;
+    border:1px solid;
     border-radius:4px;
     white-space:nowrap;
     cursor:pointer;
@@ -269,7 +269,7 @@
 .layout-item {
     width:50%;
     margin:0 !important;
-    padding:0 5px 20px 5px;
+    /* padding:0 5px 20px 5px; */
 }
 .layout-item .form-inline-label {
     padding-top:10px;
