@@ -67,5 +67,6 @@ export default {
 .board {
   flex-shrink: 1;
   width: 100%;
+  background-color: #17212b;
 }
 </style>

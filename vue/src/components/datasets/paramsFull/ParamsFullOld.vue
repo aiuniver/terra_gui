@@ -132,6 +132,7 @@ export default {
       event.preventDefault();
       console.log({ buttons, target: { dataset: { index } } })
       if (buttons) {
+         
         const key = this.selected_tr.indexOf(index);
         if (key !== -1) {
           this.selected_tr.splice(key, 1);
@@ -148,7 +149,8 @@ export default {
 <style lang="scss">
 .params {
   flex-shrink: 0;
-  width: 1500px;
+  width: 100%;
+  margin-left: 50px;
   border-left: #0e1621 solid 1px;
 }
 .csv-table{

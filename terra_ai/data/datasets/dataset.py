@@ -249,9 +249,9 @@ class DatasetData(AliasMixinData):
     limit: PositiveInt
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    classes_names: Dict[int, List[str]] = {}
-    classes_colors: List[Color] = []
-    one_hot_encoding: Dict[int, bool] = {}
+    classes_names: Dict[PositiveInt, List[str]] = {}
+    classes_colors: Dict[PositiveInt, List[Color]] = {}
+    one_hot_encoding: Dict[PositiveInt, bool] = {}
     task_type: Dict[int, TaskChoice] = {}
     inputs: DatasetInputsData = DatasetInputsData()
     outputs: DatasetOutputsData = DatasetOutputsData()

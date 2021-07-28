@@ -63,9 +63,12 @@ class SourceLoadProgressAPIView(BaseAPIView):
 
 class SourcesCreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            data=agent_exchange("dataset_source_create", **request.data).native()
-        )
+        try:
+            return BaseResponseSuccess(
+                data=agent_exchange("dataset_source_create", **request.data).native()
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
 
 
 class SourcesAPIView(BaseAPIView):
