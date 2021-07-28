@@ -1,7 +1,7 @@
 <template>
   <main class="page-datasets">
     <div class="cont">
-      <Dataset />
+      <Dataset v-show="!full" />
       <ParamsFull v-if="full" />
       <Params v-else />
     </div>
@@ -12,7 +12,7 @@
 import { mapGetters } from 'vuex'
 import Dataset from "@/components/datasets/Dataset.vue";
 import Params from "@/components/datasets/params/Params.vue";
-import ParamsFull from "@/components/datasets/params/ParamsFull.vue";
+import ParamsFull from "@/components/datasets/paramsFull/ParamsFull.vue";
 
 export default {
   name: "Datasets",
@@ -33,9 +33,10 @@ export default {
 
 <style lang="scss" scoped>
 .cont{
-  background: #17212B;
+  background-color: #0e1621;
   padding: 0;
   display: flex;
+  height: 100%;
 }
 
 </style>

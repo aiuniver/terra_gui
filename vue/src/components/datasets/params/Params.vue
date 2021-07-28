@@ -189,6 +189,7 @@ export default {
   width: 400px;
   flex-shrink: 0;
   border-left: #0e1621 solid 1px;
+  background-color: #17212b;
   // border-left: #0e1621  1px solid;
   &__items {
     &--item {
