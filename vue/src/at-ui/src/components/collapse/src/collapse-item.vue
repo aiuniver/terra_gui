@@ -5,27 +5,25 @@
       'at-collapse__item--disabled': disabled
     }">
     <div class="at-collapse__header" @click="toggle">
-      <i class="icon at-collapse__icon icon-chevron-left"></i>
+      <i class="icon at-collapse__icon old__icon"></i>
       <slot name="title" v-if="$slots.title"></slot>
       <div v-else>{{ title }}</div>
     </div>
-    <collapse-transition>
-      <div class="at-collapse__body" v-show="isActive">
-        <div class="at-collapse__content">
-          <slot></slot>
-        </div>
+    <div class="at-collapse__body" v-show="isActive">
+      <div class="at-collapse__content">
+        <slot></slot>
       </div>
-    </collapse-transition>
+    </div>
   </div>
 </template>
 
 <script>
-import CollapseTransition from '@/at-ui/src/utils/collapse-transition'
+// import CollapseTransition from '@/at-ui/src/utils/collapse-transition'
 
 export default {
   name: 'AtCollapseItem',
   components: {
-    CollapseTransition
+    // CollapseTransition
   },
   props: {
     title: {

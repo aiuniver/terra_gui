@@ -437,15 +437,15 @@ $modal-bg-color             : $color-bg;
 $modal-mask-bg-color        : #0e1621e6;
 $modal-section-border-color : $color-bg-base;
 
-$modal-header-padding       : 10px 15px;
+$modal-header-padding       : 10px 20px;
 $modal-header-font-size     : .875rem;
 $modal-close-font-size      : 24px;
 $modal-icon-font-size       : 32px;
 
-$modal-body-padding         : 16px;
+$modal-body-padding         : 20px 20px 10px 20px;
 $modal-body-font-size       : .75rem;
 
-$modal-footer-padding       : 12px 16px;
+$modal-footer-padding       : 0 20px 20px 20px;
 
 $modal-icon-color-success  : $green-300;
 $modal-icon-color-error    : $red-300;

@@ -1,7 +1,7 @@
 <template>
   <div class="footer">
     <div class="footer__message">
-      <div :class="['footer__message--text', color]">
+      <div :class="['footer__message--text', color]" @click="click(color)">
         {{ message }}
       </div>
     </div>
@@ -16,20 +16,36 @@
       </div>
     </div>
     <div class="footer__state">
-      <div class="footer__state--icon" :style="style"></div>
-      <div class="footer__state--text">{{ protsessor.type }}</div>
+      <div class="footer__state--text">
+        <span :style="style"></span>
+        {{ protsessor.type }}
+      </div>
     </div>
     <div class="footer__copyright">
       {{
         `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}`
       }}
     </div>
+    <at-modal v-model="dialogError" width="400">
+      <div slot="header" style="text-align: center">
+        <span>Что-то пошло не так...</span>
+      </div>
+      <div class="inner form-inline-label">
+        <code>{{ message }}</code>
+      </div>
+      <div slot="footer">
+        <button @click="dialogError = false">Понял</button>
+      </div>
+    </at-modal>
   </div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
 export default {
+  data: () => ({
+    dialogError: false,
+  }),
   computed: {
     ...mapGetters({
       message: "messages/getMessage",
@@ -43,6 +59,13 @@ export default {
     },
     style() {
       return { backgroundColor: "#" + this.protsessor.color };
+    },
+  },
+  methods: {
+    click(color) {
+      if (color === "error") {
+        this.dialogError = true;
+      }
     },
   },
 };
@@ -61,6 +84,7 @@ export default {
 .state {
   text-transform: uppercase;
 }
+
 .footer {
   color: #a7bed3;
   background: #17212b;
@@ -127,19 +151,20 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 59px;
     font-weight: 600;
     &--text {
       text-transform: uppercase;
-    }
-    &--icon {
-      display: inline-block;
-      content: "";
-      width: 10px;
-      height: 10px;
-      margin: 0 5px 0 0;
-      border-radius: 50%;
-      vertical-align: middle;
+      padding: 0 10px;
+      width: 59px;
+      & > span {
+        display: inline-block;
+        content: "";
+        width: 10px;
+        height: 10px;
+        margin: 0 5px 0 0;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
     }
   }
   &__progress {
