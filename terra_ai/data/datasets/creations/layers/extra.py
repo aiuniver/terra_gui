@@ -19,13 +19,15 @@ class FileInfo(BaseMixinData):
 
     @validator("path", allow_reuse=True)
     def _validate_path_type_path(
-            cls, path: Union[str, confilepath(ext="csv")], values
+            cls, path: List[Union[str, confilepath(ext="csv")]], values
     ) -> Union[str, confilepath(ext="csv")]:
         path_type = values.get("path_type")
         if path_type == PathTypeChoice.path_file:
-            if not isinstance(path, confilepath(ext="csv")):
-                raise ValueTypeException(path, confilepath(ext="csv"))
+            for val in path:
+                if not isinstance(val, confilepath(ext="csv")):
+                    raise ValueTypeException(path, confilepath(ext="csv"))
         if path_type == PathTypeChoice.path_folder:
-            if not isinstance(path, str):
-                raise ValueTypeException(path, str)
+            for val in path:
+                if not isinstance(val, str):
+                    raise ValueTypeException(path, str)
         return path

@@ -1,6 +1,13 @@
 """
 Datasets constants data
 """
+from enum import Enum
+from typing import List, Any, Optional
+
+from pydantic import validator, DirectoryPath
+
+from terra_ai.data.mixins import BaseMixinData
+from terra_ai.datasets.arrays_create import CreateArray
 
 DatasetArchives = {
     'трейдинг': 'trading.zip',
@@ -25,3 +32,32 @@ DataType = {0: 'DIM',
             4: '3D',
             5: '4D'
             }
+
+
+class Preprocesses(str, Enum):
+    scaler = "scaler"
+    tokenizer = "tokenizer"
+    word2vec = "word2vec"
+    augmentation = "augmentation"
+    # tsgenerator = "tsgenerator"
+
+
+class InstructionsData(BaseMixinData):
+    sources: List[Any]
+    parameters: Any
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
+
+
+class DatasetInstructionsData(BaseMixinData):
+    inputs: InstructionsData
+    outputs: InstructionsData
+
+
+class PathsData(BaseMixinData):
+    datasets: DirectoryPath
+    instructions: Optional[DirectoryPath]
+    arrays: DirectoryPath
+

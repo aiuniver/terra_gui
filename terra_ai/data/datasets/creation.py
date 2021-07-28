@@ -149,7 +149,7 @@ from pydantic import validator, DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
+from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import confilepath, confilename, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
@@ -236,7 +236,7 @@ class CreationInfoData(BaseMixinData):
         return value
 
 
-class CreationInputData(AliasMixinData):
+class CreationInputData(IDMixinData):
     """
     Информация о `input`-слое
     """
@@ -268,7 +268,7 @@ class CreationInputData(AliasMixinData):
         return field.type_(**value or {})
 
 
-class CreationOutputData(AliasMixinData):
+class CreationOutputData(IDMixinData):
     """
     Информация о `output`-слое
     """
@@ -330,7 +330,7 @@ class CreationOutputsList(UniqueListMixin):
         identifier = "alias"
 
 
-class CreationData(BaseMixinData):
+class CreationData(AliasMixinData):
     """
     Полная информация о создании датасета
     """
