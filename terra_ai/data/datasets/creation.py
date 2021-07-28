@@ -149,7 +149,7 @@ from pydantic import validator, DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData
+from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
 from ..types import confilepath, confilename, FilePathType, ConstrainedFloatValueGe0Le1
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice

@@ -2,9 +2,9 @@
 Datasets constants data
 """
 from enum import Enum
-from typing import List, Any
+from typing import List, Any, Optional
 
-from pydantic import validator
+from pydantic import validator, DirectoryPath
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.datasets.arrays_create import CreateArray
@@ -49,3 +49,15 @@ class InstructionsData(BaseMixinData):
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
         return field.type_(**value or {})
+
+
+class DatasetInstructionsData(BaseMixinData):
+    inputs: InstructionsData
+    outputs: InstructionsData
+
+
+class PathsData(BaseMixinData):
+    datasets: DirectoryPath
+    instructions: Optional[DirectoryPath]
+    arrays: DirectoryPath
+

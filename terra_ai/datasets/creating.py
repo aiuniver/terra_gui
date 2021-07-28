@@ -10,6 +10,7 @@ import shutil
 import json
 import joblib
 import decamelize
+from pydantic import DirectoryPath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 import imgaug.augmenters as iaa
@@ -21,7 +22,7 @@ from datetime import datetime
 from pytz import timezone
 
 # from terra_ai import out_exchange
-from .data import DataType, Preprocesses
+from .data import DataType, Preprocesses, PathsData
 from . import array_creator
 from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
@@ -33,6 +34,7 @@ class CreateDTS(object):
     def __init__(self):
 
         self.dataset_user_data: CreationData
+        self.paths: PathsData
 
         self._datatype = 'DIM'
 
@@ -105,6 +107,17 @@ class CreateDTS(object):
             self.input_names[elem.id] = elem.name
             self.user_parameters[elem.id] = elem.parameters
 
+    def set_paths(self, data: CreationData):
+        dataset_path = os.path.join(data.datasets_path, f'dataset {data.name}')
+        instructions_path = None
+        arrays_path = os.path.join(dataset_path, "arrays")
+        os.makedirs(dataset_path, exist_ok=True)
+        os.makedirs(arrays_path, exist_ok=True)
+        if data.use_generator:
+            instructions_path = os.path.join(dataset_path, "instructions")
+            os.makedirs(instructions_path, exist_ok=True)
+        self.paths = PathsData(datasets=dataset_path, instructions=instructions_path, arrays=arrays_path)
+
     def create_instructions(self, instruction_type: str, data: Union[CreationInputsList, CreationOutputsList]):
         self.iter = 0
         self.mode = instruction_type
@@ -118,7 +131,7 @@ class CreateDTS(object):
     def write_preprocesses_to_files(self):
         for preprocess_name in Preprocesses:
             preprocess = getattr(array_creator, preprocess_name)
-            preprocess_file_path = os.path.join(self.trds_path, f'dataset {self.name}', preprocess_name)
+            preprocess_file_path = os.path.join(self.paths.datasets, preprocess_name)
             if preprocess:
                 os.makedirs(preprocess_file_path, exist_ok=True)
                 for key in preprocess.keys():
@@ -135,6 +148,8 @@ class CreateDTS(object):
         self.file_folder = str(creation_data.source_path)
 
         self.source = 'custom dataset'
+
+        self.set_paths(data=creation_data)
 
         for data in [creation_data.inputs, creation_data.outputs]:
             self.set_dataset_data(data)
@@ -197,18 +212,17 @@ class CreateDTS(object):
         if creation_data.use_generator:
             # Сохранение датасета для генератора
             data['zip_params'] = self.zip_params
-            os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions'), exist_ok=True)
             for key in self.instructions.keys():
-                os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', key), exist_ok=True)
+                os.makedirs(os.path.join(self.paths.instructions, key), exist_ok=True)
                 for inp in self.instructions[key].keys():
-                    with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', key, f'{inp}.json'),
+                    with open(os.path.join(self.paths.instructions, key, f'{inp}.json'),
                               'w') as instruction:
                         json.dump(self.instructions[key][inp], instruction)
-            with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'sequence.json'),
+            with open(os.path.join(self.paths.instructions, 'sequence.json'),
                       'w') as seq:
                 json.dump(self.split_sequence, seq)
             if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
-                with open(os.path.join(self.trds_path, f'dataset {self.name}', 'instructions', 'txt_list.json'),
+                with open(os.path.join(self.paths.instructions, 'txt_list.json'),
                           'w') as fp:
                     json.dump(array_creator.txt_list, fp)
         else:
@@ -261,15 +275,15 @@ class CreateDTS(object):
             for sample in self.X.keys():
                 # os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
                 for inp in self.X[sample].keys():
-                    os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample), exist_ok=True)
+                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
                     joblib.dump(self.X[sample][inp],
-                                os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample, f'{inp}.gz'))
+                                os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
 
             for sample in self.Y.keys():
                 for inp in self.Y[sample].keys():
-                    os.makedirs(os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample), exist_ok=True)
+                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
                     joblib.dump(self.Y[sample][inp],
-                                os.path.join(self.trds_path, f'dataset {self.name}', 'arrays', sample, f'{inp}.gz'))
+                                os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
 
         self.write_preprocesses_to_files()
 
