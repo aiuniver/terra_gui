@@ -1,10 +1,17 @@
 export default {
   namespaced: true,
   state: () => ({
+    filterHeight: 32
   }),
   mutations: {
+    SET_FILTER_HEIGHT(state, value) {
+      state.filterHeight = value
+    }
   },
   actions: {
+    setFilterHeight({ commit }, value) {
+      commit('SET_FILTER_HEIGHT', value)
+    }
   },
   getters: {
     isMobile() {
@@ -19,6 +26,9 @@ export default {
       return {
         height: (document.documentElement.clientHeight - value) + "px",
       };
+    },
+    getFilterHeight({ filterHeight }) {
+      return filterHeight
     },
   },
 };

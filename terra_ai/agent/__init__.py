@@ -105,7 +105,14 @@ class Exchange:
         Загрузка исходников датасета
         """
         source = SourceData(mode=mode, value=value)
-        return datasets_loading.load(source)
+        return datasets_loading.source(source)
+
+    def _call_dataset_source_create(self, **kwargs) -> dict:
+        """
+        Создание датасета из исходников
+        """
+        print(kwargs)
+        return {}
 
     def _call_dataset_source_load_progress(self) -> ProgressData:
         """

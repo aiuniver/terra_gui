@@ -30,7 +30,8 @@ export default {
   methods: {
     async click(name){
       if(name === 'prepare') {
-        const { alias, group } = this.selected
+        const { alias, group, name } = this.selected
+        this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${name}»`})
         await this.$store.dispatch('datasets/choice', { alias, group })
       }
     }
