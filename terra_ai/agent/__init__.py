@@ -9,7 +9,7 @@ from ..data.datasets.dataset import (
     DatasetsGroupsList,
     DatasetData,
 )
-from ..data.datasets.creation import SourceData
+from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
 
@@ -111,7 +111,8 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        print(kwargs)
+        creation = CreationData(**kwargs)
+        print(creation)
         return {}
 
     def _call_dataset_source_load_progress(self) -> ProgressData:
