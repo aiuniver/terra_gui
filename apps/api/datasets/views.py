@@ -64,15 +64,6 @@ class SourceLoadProgressAPIView(BaseAPIView):
 class SourcesCreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            request.data.update(
-                {
-                    "name": "Мой датасет",
-                    "datasets_path": data_path.datasets,
-                    "source_path": "/tmp/terraai/datasets/googledrive/airplane",
-                    "inputs": [{}],
-                    "outputs": [{}],
-                }
-            )
             return BaseResponseSuccess(
                 data=agent_exchange("dataset_source_create", **request.data).native()
             )
