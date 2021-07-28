@@ -12,7 +12,7 @@
           Lorem, ipsum dolor sit amet consectetur adipisicing elit. Iure magnam necessitatibus ipsa corporis impedit. Exercitationem animi deleniti voluptates vel ullam explicabo hic sequi nesciunt fuga sit reprehenderit, recusandae odio veniam?
         </div>
         <div class="main__center">
-          <div class="main__center--left"></div>
+          <div class="main__center--left"><CsvTable/></div>
           <div class="main__center--right"></div>
         </div>
         <div class="main__footer">
@@ -26,11 +26,13 @@ Lorem ipsum dolor sit amet consectetur adipisicing elit. Vero facere neque venia
 <script>
 // import CardFormInput from "@/components/datasets/CardFormInput.vue";
 // import CardFile from "@/components/datasets/CardFile.vue";
+import CsvTable from "./components/forms/CsvTable";
 
 export default {
   name: "ParamsFull",
   components: {
     // CardFile,
+    CsvTable,
   },
   data: () => ({}),
   computed: {

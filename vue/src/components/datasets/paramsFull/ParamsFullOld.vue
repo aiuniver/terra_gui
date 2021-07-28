@@ -153,19 +153,5 @@ export default {
   margin-left: 50px;
   border-left: #0e1621 solid 1px;
 }
-.csv-table{
-   border-collapse: collapse;
-   border: 1px solid #434445;
-   border-radius: 4px;
-  td{
-    padding: 7px; /* Поля вокруг содержимого таблицы */
-   }
-  tr:nth-child(even) {
-    background: #3b4249; /* Цвет фона четных строк */
-   }
-}
-.selected{
-  background:green;
-  color:#fff;
-}
+
 </style>
