@@ -12,6 +12,7 @@ from IPython import get_ipython
 from tensorflow.keras.models import load_model
 from transliterate import slugify, detect_language
 
+from terra_ai.data.training.train import TrainData
 from terra_ai.trds import DTS
 from terra_ai.guiexchange import Exchange as GuiExch
 from apps.plugins.terra.neural.guinn import GUINN
@@ -1198,9 +1199,9 @@ class Exchange(StatesData, GuiExch):
         self.process_flag = ""
         self.epochs = 0
 
-    def start_training(self, model: bytes, **kwargs) -> None:
-        training = kwargs
-        set_epochs = training.get("epochs_count", 10)
+    def start_training(self, model: bytes, pathname: str, **kwargs) -> None:
+        training = TrainData(**kwargs)
+        set_epochs = training.epochs
         if self.process_flag not in ["trained", "stopped"]:
             self.process_flag = "train"
             self._reset_out_data()
@@ -1223,7 +1224,7 @@ class Exchange(StatesData, GuiExch):
         model_zip = tempfile.NamedTemporaryFile(
             prefix="model_", suffix="tmp.zip", delete=False
         )
-        self.nn.training_path = training.get("pathname", "")
+        self.nn.training_path = pathname
         with open(model_zip.name, "wb") as f:
             print("WRITE START")
             try:
@@ -1239,26 +1240,26 @@ class Exchange(StatesData, GuiExch):
         os.remove(model_zip.name)
         model_dir.cleanup()
 
-        output_optimizer_params = {"op_name": "", "op_kwargs": {}}
-
-        output_params = training.get("outputs", {})
-        clbck_chp = training.get("checkpoint", {})
-        batch_size = training.get("batch_sizes", 32)
-        optimizer_params = training.get("optimizer", {})
-        output_optimizer_params["op_name"] = optimizer_params.get("name")
-        for key, val in optimizer_params.get("params", {}).items():
-            output_optimizer_params["op_kwargs"].update(val)
-        self.print_2status_bar(("Установка параметров обучения", "..."))
-        self.nn.set_main_params(
-            output_params=output_params,
-            clbck_chp=clbck_chp,
-            epochs=set_epochs,
-            batch_size=batch_size,
-            optimizer_params=output_optimizer_params,
-        )
-        self.print_2status_bar(("Подготовка запуска обучения", "..."))
+        # output_optimizer_params = {"op_name": "", "op_kwargs": {}}
+        #
+        # output_params = training.get("outputs", {})
+        # clbck_chp = training.get("checkpoint", {})
+        # batch_size = training.get("batch_sizes", 32)
+        # optimizer_params = training.get("optimizer", {})
+        # output_optimizer_params["op_name"] = optimizer_params.get("name")
+        # for key, val in optimizer_params.get("params", {}).items():
+        #     output_optimizer_params["op_kwargs"].update(val)
+        # self.print_2status_bar(("Установка параметров обучения", "..."))
+        # self.nn.set_main_params(
+        #     output_params=output_params,
+        #     clbck_chp=clbck_chp,
+        #     epochs=set_epochs,
+        #     batch_size=batch_size,
+        #     optimizer_params=output_optimizer_params,
+        # )
+        # self.print_2status_bar(("Подготовка запуска обучения", "..."))
         try:
-            self.nn.terra_fit(nn_model)
+            self.nn.terra_fit(nn_model, training)
             if self.epoch == self.epochs:
                 self.is_trained = True
                 self.process_flag = "trained"
