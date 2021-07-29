@@ -7,7 +7,7 @@ from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 from .serializers import ModelLoadSerializer
 
 
-class ModelLoadAPIView(BaseAPIView):
+class LoadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = ModelLoadSerializer(data=request.data)
         if not serializer.is_valid():
@@ -22,7 +22,7 @@ class ModelLoadAPIView(BaseAPIView):
             return BaseResponseErrorFields(error)
 
 
-class ModelsAPIView(BaseAPIView):
+class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange("models", path=str(data_path.modeling)).native()
