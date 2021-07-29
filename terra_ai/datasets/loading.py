@@ -2,27 +2,20 @@ import os
 import sys
 import shutil
 import base64
-import zipfile
 import requests
 
-from tqdm import tqdm
 from pathlib import Path
-from tempfile import mkdtemp, gettempdir, NamedTemporaryFile
+from tempfile import gettempdir
 from pydantic.networks import HttpUrl
-
-from .data import DatasetArchives
 
 from .. import progress
 from ..data.datasets.creation import SourceData
 from ..exceptions.datasets import DatasetSourceLoadUndefinedMethodException
-
+from ..progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_UNPACK_TITLE = "Распаковка исходников датасета"
-NOT_ZIP_FILE_URL = "Неверная ссылка на zip-файл «%s»"
 DATASETS_SOURCE_DIR = Path(gettempdir(), "terraai", "datasets")
-AVAILABLE_ZIP_CONTENT_TYPE = ["application/zip", "application/x-zip-compressed"]
-URL_DOWNLOAD_DIVISOR = 1024
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 
@@ -94,41 +87,6 @@ os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 #         return {"message": f"Файлы скачаны в директорию {self.file_folder}"}
 
 
-def __download(progress_name: str, url: HttpUrl) -> Path:
-    progress.pool(progress_name, message=DOWNLOAD_SOURCE_TITLE, finished=False)
-    file_destination = NamedTemporaryFile(delete=False)
-    try:
-        response = requests.get(url, stream=True)
-        if requests.status_codes.codes.get("ok") != response.status_code:
-            raise Exception(NOT_ZIP_FILE_URL % url)
-        length = int(response.headers.get("Content-Length", 0))
-        size = 0
-        with open(file_destination.name, "wb") as file_destination_ref:
-            for data in response.iter_content(chunk_size=URL_DOWNLOAD_DIVISOR):
-                size += file_destination_ref.write(data)
-                progress.pool(progress_name, percent=size / length * 100)
-    except requests.exceptions.ConnectionError as error:
-        os.remove(file_destination.name)
-        raise requests.exceptions.ConnectionError(error)
-    return Path(file_destination.name)
-
-
-def __unpack(progress_name: str, zipfile_path: Path) -> Path:
-    progress.pool.reset(progress_name, message=DATASET_UNPACK_TITLE, finished=False)
-    tmp_destination = mkdtemp()
-    try:
-        with zipfile.ZipFile(zipfile_path) as zipfile_ref:
-            __tqdm = tqdm(zipfile_ref.infolist())
-            for member in __tqdm:
-                zipfile_ref.extract(member, tmp_destination)
-                progress.pool(progress_name, percent=__tqdm.n / __tqdm.total * 100)
-            progress.pool(progress_name, percent=100)
-    except Exception as error:
-        shutil.rmtree(tmp_destination, ignore_errors=True)
-        raise Exception(error)
-    return tmp_destination
-
-
 @progress.threading
 def __load_from_url(folder: Path, url: HttpUrl):
     # Получение папки датасета
@@ -151,8 +109,12 @@ def __load_from_url(folder: Path, url: HttpUrl):
 
     # Запускаем загрузку
     try:
-        zipfile_path = __download(progress_name, url)
-        zip_destination = __unpack(progress_name, zipfile_path)
+        zipfile_path = progress_utils.download(
+            progress_name, DOWNLOAD_SOURCE_TITLE, url
+        )
+        zip_destination = progress_utils.unpack(
+            progress_name, DATASET_UNPACK_TITLE, zipfile_path
+        )
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
         progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
@@ -182,7 +144,9 @@ def __load_from_googledrive(folder: Path, zipfile_path: Path):
 
     # Запускаем загрузку
     try:
-        zip_destination = __unpack(progress_name, zipfile_path)
+        zip_destination = progress_utils.unpack(
+            progress_name, DATASET_UNPACK_TITLE, zipfile_path
+        )
         shutil.move(zip_destination, dataset_path)
         progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
     except Exception as error:

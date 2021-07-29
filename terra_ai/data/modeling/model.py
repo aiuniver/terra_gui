@@ -4,7 +4,7 @@
 
 from typing import Optional, List
 from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic.types import PositiveInt, DirectoryPath
 
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
@@ -34,6 +34,8 @@ class ModelLoadData(BaseMixinData):
 
     value: confilepath(ext="model")
     "Пусть к фалу модели"
+    destination: DirectoryPath
+    "Путь распаковки модели"
 
 
 class BlockDetailsData(BaseMixinData):
@@ -122,8 +124,8 @@ class ModelDetailsData(BaseMixinData):
     "Тип модели: `2D`"
     name: Optional[AliasType]
     "Название модели: `rasposnavanie_avtomobiley`"
-    input_shape: Optional[str]
-    "Размерность входных слоев: `[32,32,3], [128,128,3]`"
+    # input_shape: Optional[str]
+    # "Размерность входных слоев: `[32,32,3], [128,128,3]`"
     image: Optional[Base64Type]
     "Изображение схемы модели в `base64`"
     layers: Optional[LayersList]

@@ -1,6 +1,7 @@
 import os
 import tensorflow
 
+from typing import Any
 from pathlib import Path
 
 from ..data.datasets.dataset import (
@@ -20,6 +21,7 @@ from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
 from ..datasets import loading as datasets_loading
+from ..modeling import loading as modeling_loading
 
 from .. import ASSETS_PATH, DATASET_EXT
 from .. import progress
@@ -28,7 +30,7 @@ from . import exceptions
 
 
 class Exchange:
-    def __call__(self, method: str, *args, **kwargs) -> dict:
+    def __call__(self, method: str, *args, **kwargs) -> Any:
         # Получаем метод для вызова
         __method_name = f"_call_{method}"
         __method = getattr(self, __method_name, None)
@@ -100,12 +102,17 @@ class Exchange:
                 pass
         return info
 
-    def _call_dataset_source_load(self, mode: str, value: str) -> dict:
+    def _call_dataset_source_load(self, mode: str, value: str):
         """
         Загрузка исходников датасета
         """
-        source = SourceData(mode=mode, value=value)
-        return datasets_loading.source(source)
+        datasets_loading.source(SourceData(mode=mode, value=value))
+
+    def _call_dataset_source_load_progress(self) -> ProgressData:
+        """
+        Прогресс загрузки исходников датасета
+        """
+        return progress.pool(progress.PoolName.dataset_source_load)
 
     def _call_dataset_source_create(self, **kwargs) -> dict:
         """
@@ -114,12 +121,6 @@ class Exchange:
         creation = CreationData(**kwargs)
         print(creation)
         return {}
-
-    def _call_dataset_source_load_progress(self) -> ProgressData:
-        """
-        Прогресс загрузки исходников датасета
-        """
-        return progress.pool(progress.PoolName.dataset_source_load)
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
@@ -157,12 +158,11 @@ class Exchange:
         models.get("custom").models.sort(key=lambda item: item.label)
         return models
 
-    def _call_model_load(self, value: str) -> dict:
+    def _call_model_load(self, value: str, destination: Path):
         """
         Загрузка модели
         """
-        model = ModelLoadData(value=value)
-        # temporary_methods.model_load(model)
+        modeling_loading.model(ModelLoadData(value=value, destination=destination))
 
     def _call_model_load_progress(self) -> ProgressData:
         """
