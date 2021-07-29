@@ -8,11 +8,11 @@ import tensorflow as tf
 import operator
 from tensorflow import keras
 from tensorflow.keras.models import load_model
-from apps.plugins.terra.neural.customcallback import CustomCallback
-from apps.plugins.terra.neural.customlosses import DiceCoefficient, yolo_loss
+from terra_ai.training.customcallback import CustomCallback
+from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 
 import terra_ai.data.training.extra as Extra
-__version__ = 0.06
+__version__ = 0.01
 
 
 class GUINN:
