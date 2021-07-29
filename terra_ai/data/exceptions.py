@@ -5,6 +5,8 @@
 from enum import Enum
 from typing import Any
 
+from .. import settings
+
 
 class ExceptionMessages(str, Enum):
     TerraDataValue = "%s: Value error"
@@ -22,8 +24,10 @@ class ExceptionMessages(str, Enum):
     Base64Extension = "Incorrect base64 string value"
     XY = "%s: Value must be a list with 2 elements, received %s"
     ValueNotInList = "%s: Value must be in list %s"
-    TrdsDirExt = "TRDS dirname must have `.trds` extension, received `%s`"
-    TrdsConfigFileNotFound = "TRDS `%s` has not `%s`"
+    TrdsDirExt = (
+        f"Dataset dirname must have `.{settings.DATASET_EXT}` extension, received `%s`"
+    )
+    TrdsConfigFileNotFound = "Dataset `%s` has not `%s`"
     LayerValueConfig = (
         "Validation method `%s` and value `%s` with type `%s` are mismatch"
     )

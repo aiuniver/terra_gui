@@ -3,12 +3,9 @@
 """
 
 
-EmptyModelData = {
+EmptyModelDetailsData = {
     "alias": "no_name",
     "name": "NoName",
-    "details": {
-        "name": "no_name",
-    },
 }
 
 ModelsGroups = [
