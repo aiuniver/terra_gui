@@ -5,8 +5,12 @@ from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, i
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.sequence import TimeseriesGenerator
 from tensorflow.keras import utils
+from tensorflow import concat as tf_concat
+from tensorflow import maximum as tf_maximum
+from tensorflow import minimum as tf_minimum
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -24,7 +28,7 @@ import pymorphy2
 import shutil
 from gensim.models.word2vec import Word2Vec
 from tqdm.notebook import tqdm
-from io import open as io_open
+# from io import open as io_open
 from terra_ai.guiexchange import Exchange
 import joblib
 import requests
@@ -38,7 +42,7 @@ import cv2
 
 tr2dj_obj = Exchange()
 
-__version__ = 1.012
+__version__ = 1.013
 
 
 class CreateDTS(object):
@@ -150,8 +154,9 @@ class CreateDTS(object):
         self.mode = 'input'
         for inp in dataset_dict['inputs']:
             self.iter += 1
-            self.instructions['inputs'][inp] = getattr(self, f"instructions_{self.tags[inp]}")(
-                **dataset_dict['inputs'][inp]['parameters'])
+            self.instructions['inputs'][f'{self.mode}_{self.iter}'] = getattr(self,
+                                                                              f"instructions_{self.tags[f'{self.mode}_{self.iter}']}")(
+                **dataset_dict['inputs'][f'{self.mode}_{self.iter}']['parameters'])
         # Создаем выходные инструкции
         self.iter = 0
         self.mode = 'output'
@@ -175,8 +180,8 @@ class CreateDTS(object):
                 for i in range(len(array)):
                     self.output_shape[key.replace(key[-1], str(int(key[-1]) + i))] = array[i].shape
                     self.output_dtype[key.replace(key[-1], str(int(key[-1]) + i))] = str(array[i].dtype)
-                    self.output_datatype[key.replace(key[-1], str(int(key[-1]) + i))] = self._set_datatype(
-                        array[i].shape)
+                    self.output_datatype[key.replace(key[-1], str(int(key[-1]) + i))] =\
+                        self._set_datatype(array[i].shape)
             else:
                 self.output_shape[key] = array.shape
                 self.output_dtype[key] = str(array.dtype)
@@ -236,6 +241,9 @@ class CreateDTS(object):
                     y_1: list = []
                     y_2: list = []
                     y_3: list = []
+                    y_4: list = []
+                    y_5: list = []
+                    y_6: list = []
                     for i in range(self.limit):
                         arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
                             self.instructions['outputs'][key]['instructions'][i],
@@ -243,6 +251,9 @@ class CreateDTS(object):
                         y_1.append(arrays[0])
                         y_2.append(arrays[1])
                         y_3.append(arrays[2])
+                        y_4.append(arrays[3])
+                        y_5.append(arrays[4])
+                        y_6.append(arrays[5])
 
                     splits = ['train', 'val', 'test']
                     for spl_seq in splits:
@@ -252,6 +263,12 @@ class CreateDTS(object):
                             self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 1))] = np.array(y_2)[
                                 self.split_sequence[spl_seq]]
                             self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 2))] = np.array(y_3)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 3))] = np.array(y_4)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 4))] = np.array(y_5)[
+                                self.split_sequence[spl_seq]]
+                            self.Y[spl_seq][key.replace(key[-1], str(int(key[-1]) + 5))] = np.array(y_6)[
                                 self.split_sequence[spl_seq]]
                 else:
                     y: list = []
@@ -363,7 +380,6 @@ class CreateDTS(object):
                     prev_elem = cur_elem
                     peg_idx += 1
                 self.peg.append(len(instr))
-
         if 'augmentation' in options.keys():
             aug_parameters = []
             for key, value in options['augmentation'].items():
@@ -464,59 +480,41 @@ class CreateDTS(object):
 
     def instructions_text(self, **options):
 
-        def read_text(file_path):
+        def read_text(file_path, lower, filters, split) -> str:
 
-            del_symbols = ['\n', '\t', '\ufeff']
-            if options['delete_symbols']:
-                del_symbols += options['delete_symbols'].split(' ')
-
-            with io_open(file_path, encoding='utf-8', errors='ignore') as f:
-                text = f.read()
-                for del_symbol in del_symbols:
-                    text = text.replace(del_symbol, ' ')
-            for put, tag in self.tags.items():
-                if tag == 'text_segmentation':
-                    open_symbol = self.user_parameters[put]['open_tags'].split(' ')[0][0]
-                    close_symbol = self.user_parameters[put]['open_tags'].split(' ')[0][-1]
-                    text = re.sub(open_symbol, f" {open_symbol}", text)
-                    text = re.sub(close_symbol, f"{close_symbol} ", text)
-                    break
+            # del_symbols = ['\n', '\t', '\ufeff']
+            # if options['delete_symbols']:
+            #     del_symbols += options['delete_symbols'].split(' ')
+            #
+            # with io_open(file_path, encoding='utf-8', errors='ignore') as f:
+            #     text = f.read()
+            #     for del_symbol in del_symbols:
+            #         text = text.replace(del_symbol, ' ')
+            # for put, tag in self.tags.items():
+            #     if tag == 'text_segmentation':
+            #         open_symbol = self.user_parameters[put]['open_tags'].split(' ')[0][0]
+            #         close_symbol = self.user_parameters[put]['open_tags'].split(' ')[0][-1]
+            #         text = re.sub(open_symbol, f" {open_symbol}", text)
+            #         text = re.sub(close_symbol, f"{close_symbol} ", text)
+            #         break
+            with open(os.path.join(self.file_folder, file_path), 'r') as txt:
+                text = txt.read()
+            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': filters, 'split': split}))
 
             return text
 
-        def apply_pymorphy(text, morphy) -> list:
+        def apply_pymorphy(text, morphy) -> str:
 
             words_list = text.split(' ')
             words_list = [morphy.parse(w)[0].normal_form for w in words_list]
 
-            return words_list
+            return ' '.join(words_list)
 
         txt_list: dict = {}
+        lower: bool = True
+        filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
+        split: str = ' '
 
-        if options['folder_name']:
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-                txt_list[os.path.join(options['folder_name'], file_name)] = read_text(
-                    os.path.join(self.file_folder, options['folder_name'], file_name))
-        else:
-            tree = os.walk(self.file_folder)
-            for directory, folder, file_name in sorted(tree):
-                if bool(file_name) is not False:
-                    folder_name = directory.split(os.path.sep)[-1]
-                    for name in sorted(file_name):
-                        text_file = read_text(os.path.join(directory, name))
-                        if text_file:
-                            txt_list[os.path.join(folder_name, name)] = text_file
-                else:
-                    continue
-
-        #################################################
-        if options['pymorphy']:
-            pymorphy = pymorphy2.MorphAnalyzer()
-            for i in range(len(txt_list)):
-                txt_list[i] = apply_pymorphy(txt_list[i], pymorphy)
-        #################################################
-
-        filters = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
         for key, value in self.tags.items():
             if value == 'text_segmentation':
                 open_tags = self.user_parameters[key]['open_tags']
@@ -527,54 +525,133 @@ class CreateDTS(object):
                         filters = filters.replace(ch, '')
                 break
 
-        self.createarray.create_tokenizer(self.mode, self.iter, **{'num_words': options['max_words_count'],
-                                                                   'filters': filters,
-                                                                   'lower': True,
-                                                                   'split': ' ',
-                                                                   'char_level': False,
-                                                                   'oov_token': '<UNK>'})
-        self.createarray.tokenizer[f'{self.mode}_{self.iter}'].fit_on_texts(list(txt_list.values()))
+        if options['file_info']['path_type'] == 'path_folder':
+            for folder_name in options['file_info']['path']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            file_path = os.path.join(file_folder, name)
+                            txt_list[file_path] = read_text(file_path, lower, filters, split)
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                   usecols=options['file_info']['cols_name'])
+                column = data[options['file_info']['cols_name'][0]].to_list()  # TODO - dd
 
-        self.createarray.txt_list[f'{self.mode}_{self.iter}'] = {}
-        for key, value in txt_list.items():
-            self.createarray.txt_list[f'{self.mode}_{self.iter}'][key] = \
-                self.createarray.tokenizer[f'{self.mode}_{self.iter}'].texts_to_sequences([value])[0]
+        # if options['folder_name']:
+        #     for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
+        #         txt_list[os.path.join(options['folder_name'], file_name)] = read_text(
+        #             os.path.join(self.file_folder, options['folder_name'], file_name))
+        # else:
+        #     tree = os.walk(self.file_folder)
+        #     for directory, folder, file_name in sorted(tree):
+        #         if bool(file_name) is not False:
+        #             folder_name = directory.split(os.path.sep)[-1]
+        #             for name in sorted(file_name):
+        #                 text_file = read_text(os.path.join(directory, name))
+        #                 if text_file:
+        #                     txt_list[os.path.join(folder_name, name)] = text_file
+        #         else:
+        #             continue
+
+        #################################################
+
+        if options['pymorphy']:
+            pymorphy = pymorphy2.MorphAnalyzer()
+            for key, value in txt_list.items():
+                txt_list[key] = apply_pymorphy(value, pymorphy)
+
+        # self.createarray.txt_list[f'{self.mode}_{self.iter}'] = {}
+        # for key, value in txt_list.items():
+        #     self.createarray.txt_list[f'{self.mode}_{self.iter}'][key] = \
+        #         self.createarray.tokenizer[f'{self.mode}_{self.iter}'].texts_to_sequences([value])[0]
 
         if options['word_to_vec']:
-            reverse_tok = {}
-            for key, value in self.createarray.tokenizer[f'{self.mode}_{self.iter}'].word_index.items():
-                reverse_tok[value] = key
-            words = []
-            for key in self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys():
-                for lst in self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]:
-                    tmp = []
-                    for word in lst:
-                        tmp.append(reverse_tok[word])
-                    words.append(tmp)
-            self.createarray.create_word2vec(mode=self.mode, iteration=self.iter, words=words,
+
+            # reverse_tok = {}
+            # for key, value in self.createarray.tokenizer[f'{self.mode}_{self.iter}'].word_index.items():
+            #     reverse_tok[value] = key
+            # words = []
+            # for key in self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys():
+            #     for lst in self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]:
+            #         tmp = []
+            #         for word in lst:
+            #             tmp.append(reverse_tok[word])
+            #         words.append(tmp)
+
+            txt_list_w2v = []
+            for elem in list(txt_list.values()):
+                txt_list_w2v.append(elem.split(' '))
+
+            self.createarray.create_word2vec(mode=self.mode, iteration=self.iter, words=txt_list_w2v,
                                              size=options['word_to_vec_size'], window=10, min_count=1, workers=10,
                                              iter=10)
+        else:
+            self.createarray.create_tokenizer(self.mode, self.iter, **{'num_words': options['max_words_count'],
+                                                                       'filters': filters,
+                                                                       'lower': lower,
+                                                                       'split': split,
+                                                                       'char_level': False,
+                                                                       'oov_token': '<UNK>'})
+            self.createarray.tokenizer[f'{self.mode}_{self.iter}'].fit_on_texts(list(txt_list.values()))
 
-        instr = []
-        if 'text_segmentation' not in self.tags.values():
-            y_cls = []
-            cls_idx = 0
-            length = options['x_len']
-            stride = options['step']
-            peg_idx = 0
-            self.peg.append(0)
-            for key in sorted(self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys()):
-                index = 0
-                while index + length <= len(self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]):
-                    instr.append({'file': key, 'slice': [index, index + length]})
+        # if 'text_segmentation' not in self.tags.values():
+        #     y_cls = []
+        #     cls_idx = 0
+        #     length = options['x_len']
+        #     stride = options['step']
+        #     peg_idx = 0
+        #     self.peg.append(0)
+        #     for key in sorted(self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys()):
+        #         index = 0
+        #         while index + length <= len(self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]):
+        #             instr.append({'file': key, 'slice': [index, index + length]})
+        #             peg_idx += 1
+        #             index += stride
+        #             y_cls.append(cls_idx)
+        #         self.peg.append(peg_idx)
+        #         cls_idx += 1
+
+        instr: list = []
+        y_cls: list = []
+        peg_idx: int = 0
+        cls_idx: int = 0
+        prev_class: str = sorted(txt_list.keys())[0].split('/')[-2]
+        self.peg.append(0)
+
+        for key, value in sorted(txt_list.items()):
+            cur_class = key.split('/')[-2]
+            if options['txt_mode'] == 'Целиком':
+                instr.append({key: [0, options['max_words']]})
+                if cur_class != prev_class:
+                    cls_idx += 1
+                    self.peg.append(peg_idx)
+                    prev_class = cur_class
+                peg_idx += 1
+                y_cls.append(cls_idx)
+            elif options['txt_mode'] == 'По длине и шагу':
+                max_length = len(value.split(' '))
+                cur_step = 0
+                stop_flag = False
+                while not stop_flag:
+                    instr.append({key: [cur_step, cur_step + options['length']]})
+                    cur_step += options['step']
+                    if cur_class != prev_class:
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+                        prev_class = cur_class
                     peg_idx += 1
-                    index += stride
                     y_cls.append(cls_idx)
-                self.peg.append(peg_idx)
-                cls_idx += 1
-            self.y_cls = y_cls
+                    if cur_step + options['length'] > max_length:
+                        stop_flag = True
+        self.peg.append(len(instr))
+        self.y_cls = y_cls
+        self.createarray.txt_list[f'{self.mode}_{self.iter}'] = txt_list
+
         instructions = {'instructions': instr,
-                        'parameters': {'bag_of_words': options['bag_of_words'],
+                        'parameters': {'embedding': options['embedding'],
+                                       'bag_of_words': options['bag_of_words'],
                                        'word_to_vec': options['word_to_vec'],
                                        'put': f'{self.mode}_{self.iter}'
                                        }
@@ -796,11 +873,11 @@ class CreateDTS(object):
                 elem = elem.split(' = ')
                 data[elem[0]] = elem[1]
 
-        for key, value in self.tags.items():
-            if value == 'images':
-                parameters['height'] = self.user_parameters[key]['height']
-                parameters['width'] = self.user_parameters[key]['width']
-                parameters['num_classes'] = int(data['classes'])
+        # for key, value in self.tags.items():
+        #     if value == 'images':
+                # parameters['height'] = self.user_parameters[key]['height']
+                # parameters['width'] = self.user_parameters[key]['width']
+        parameters['num_classes'] = int(data['classes'])
 
         # obj.names
         with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
@@ -1086,7 +1163,7 @@ class CreateArray(object):
     def create_images(self, image_path: str, **options):
 
         shape = (options['height'], options['width'])
-        img = load_img(path=os.path.join(self.file_folder, image_path), target_size=shape)
+        img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
@@ -1098,26 +1175,32 @@ class CreateArray(object):
 
                 current_boxes = []
                 for elem in bounding_boxes.split('\n'):
-                    b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
-                    current_boxes.append(
-                        BoundingBox(
-                            **{'label': b_box[0], 'x1': b_box[1], 'y1': b_box[2], 'x2': b_box[3], 'y2': b_box[4]}))
+                    # b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
+                    if elem:
+                        b_box = elem.split(',')
+                        b_box = [int(x) for x in b_box]
+                        current_boxes.append(
+                            BoundingBox(
+                                **{'label': b_box[4], 'x1': b_box[0], 'y1': b_box[1], 'x2': b_box[2], 'y2': b_box[3]}))
 
                 bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
                 array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
                 list_of_bounding_boxes = []
                 for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
                     bb = elem.__dict__
-                    b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
-                                                      shape=array.shape[:2])
-                    if b_box_coord != ():
-                        list_of_bounding_boxes.append(b_box_coord)
+                    # b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
+                    #                                   shape=array.shape[:2])
+                    # if b_box_coord != ():
+                    if bb:
+                        list_of_bounding_boxes.append([bb['x1'], bb['y1'], bb['x2'], bb['y2'], bb['label']])
 
                 self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
             else:
                 array = self.augmentation[options['put']](image=array)
 
-        return array
+        array = array / 255
+
+        return array.astype('float32')
 
     def create_video(self, video_path, **options) -> np.ndarray:
 
@@ -1180,17 +1263,17 @@ class CreateArray(object):
                 frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
             elif fill_mode == 'Средним значением':
                 mean = np.mean(video_array, axis=0, dtype='uint16')
-                frames = np.full((6, *mean.shape), mean, dtype='uint8')
+                frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
             elif fill_mode == 'Последними кадрами':
-                cur_frames = video_array.shape[0]
+                # cur_frames = video_array.shape[0]
                 if total_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
                 elif total_frames <= frames_to_add:
-                    for i in range(total_frames // cur_frames - 1):
-                        frames = np.flip(video_array[-cur_frames:], axis=0)
+                    for i in range(frames_to_add // total_frames):
+                        frames = np.flip(video_array[-total_frames:], axis=0)
                         video_array = np.concatenate((video_array, frames), axis=0)
-                    if total_frames % cur_frames:
-                        frames = np.flip(video_array[-(total_frames % cur_frames):], axis=0)
+                    if frames_to_add + total_frames != video_array.shape[0]:
+                        frames = np.flip(video_array[-(frames_to_add + total_frames - video_array.shape[0]):], axis=0)
             video_array = np.concatenate((video_array, frames), axis=0)
 
             return video_array
@@ -1239,6 +1322,8 @@ class CreateArray(object):
                 - file: Название файла.
                 - slice: Индексы рассматриваемой части последовательности
             **options: Параметры обработки текста:
+                embedding: Tokenizer object, bool
+                    Перевод в числовую последовательность.
                 bag_of_words: Tokenizer object, bool
                     Перевод в формат bag_of_words.
                 word_to_vec: Word2Vec object, bool
@@ -1251,25 +1336,37 @@ class CreateArray(object):
                 Массив текстового вектора.
         """
 
-        filepath: str = sample['file']
-        slicing: list = sample['slice']
-        array = self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]
+        array = []
+        [[filepath, slicing]] = sample.items()
+        text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
-        for key, value in options.items():
-            if value:
-                if key == 'bag_of_words':
-                    array = self.tokenizer[options['put']].sequences_to_matrix([array]).astype('uint16')
-                elif key == 'word_to_vec':
-                    reverse_tok = {}
-                    words_list = []
-                    for word, index in self.tokenizer[options['put']].word_index.items():
-                        reverse_tok[index] = word
-                    for idx in array:
-                        words_list.append(reverse_tok[idx])
-                    array = []
-                    for word in words_list:
-                        array.append(self.word2vec[options['put']].wv[word])
-                break
+        if options['embedding']:
+            array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
+        elif options['bag_of_words']:
+            array = self.tokenizer[options['put']].texts_to_matrix([text])[0]
+        elif options['word_to_vec']:
+            for word in text:
+                array.append(self.word2vec[options['put']][word])
+
+        if len(array) < slicing[1] - slicing[0]:
+            words_to_add = [1 for _ in range((slicing[1] - slicing[0]) - len(array))]
+            array += words_to_add
+
+        # for key, value in options.items():
+        #     if value:
+        #         if key == 'bag_of_words':
+        #             array = self.tokenizer[options['put']].sequences_to_matrix([array]).astype('uint16')
+        #         elif key == 'word_to_vec':
+        # reverse_tok = {}
+        # words_list = []
+        # for word, index in self.tokenizer[options['put']].word_index.items():
+        #     reverse_tok[index] = word
+        # for idx in array:
+        #     words_list.append(reverse_tok[idx])
+        #     array = []
+        #     for word in words_list:
+        #         array.append(self.word2vec[options['put']].wv[word])
+        # break
 
         array = np.array(array)
 
@@ -1433,11 +1530,11 @@ class CreateArray(object):
             txt_path: str
                 Путь к файлу
             **options: Параметры сегментации:
-                height: int
+                height: int ######!!!!!!
                     Высота изображения.
-                width: int
+                width: int ######!!!!!!
                     Ширина изображения.
-                num_classes: tuple
+                num_classes: int
                     Количество классов.
 
         Returns:
@@ -1446,10 +1543,40 @@ class CreateArray(object):
 
         """
 
-        height: int = options['height']
-        width: int = options['width']
+        def bbox_iou(boxes1, boxes2):
+
+            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
+            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
+
+            boxes1 = tf_concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
+                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
+            boxes2 = tf_concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
+                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
+
+            left_up = tf_maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = tf_minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+            inter_section = tf_maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
+
+            return 1.0 * inter_area / union_area
+
+        # height: int = options['height']
+        # width: int = options['width']
         num_classes: int = options['num_classes']
         zero_boxes_flag: bool = False
+        strides = np.array([8, 16, 32])
+        output_levels = len(strides)
+        train_input_sizes = 416
+        anchor_per_scale = 3
+        yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
+                        [[30, 61], [62, 45], [59, 119]],
+                        [[116, 90], [156, 198], [373, 326]]]
+        anchors = (np.array(yolo_anchors).T / strides).T
+        max_bbox_per_scale = 100
+        train_input_size = random.choice([train_input_sizes])
+        train_output_sizes = train_input_size // strides
 
         if self.temporary['bounding_boxes']:
             real_boxes = self.temporary['bounding_boxes'][txt_path]
@@ -1460,51 +1587,117 @@ class CreateArray(object):
             for elem in bb_file.split('\n'):
                 tmp = []
                 if elem:
-                    for num in elem.split(' '):
-                        tmp.append(float(num))
+                    for num in elem.split(','):
+                        tmp.append(int(num))
                     real_boxes.append(tmp)
 
         if not real_boxes:
             zero_boxes_flag = True
             real_boxes = [[0, 0, 0, 0, 0]]
         real_boxes = np.array(real_boxes)
-        real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_layers = 3
-        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+        label = [np.zeros((train_output_sizes[i], train_output_sizes[i], anchor_per_scale,
+                           5 + num_classes)) for i in range(output_levels)]
+        bboxes_xywh = [np.zeros((max_bbox_per_scale, 4)) for _ in range(output_levels)]
+        bbox_count = np.zeros((output_levels,))
 
-        real_boxes = np.array(real_boxes, dtype='float32')
-        input_shape = np.array((height, width), dtype='int32')
+        for bbox in real_boxes:
+            bbox_class_ind = int(bbox[4])
+            bbox_coordinate = np.array(bbox[:4])
+            one_hot = np.zeros(num_classes, dtype=np.float)
+            one_hot[bbox_class_ind] = 0.0 if zero_boxes_flag else 1.0
+            uniform_distribution = np.full(num_classes, 1.0 / num_classes)
+            deta = 0.01
+            smooth_one_hot = one_hot * (1 - deta) + deta * uniform_distribution
 
-        boxes_wh = real_boxes[..., 2:4] * input_shape
+            bbox_xywh = np.concatenate([(bbox_coordinate[2:] + bbox_coordinate[:2]) * 0.5,
+                                        bbox_coordinate[2:] - bbox_coordinate[:2]], axis=-1)
+            bbox_xywh_scaled = 1.0 * bbox_xywh[np.newaxis, :] / strides[:, np.newaxis]
 
-        cells = [13, 26, 52]
-        y_true = [np.zeros((cells[n], cells[n], len(anchor_mask[n]), 5 + num_classes), dtype='float32') for n in
-                  range(num_layers)]
-        box_area = boxes_wh[:, 0] * boxes_wh[:, 1]
+            iou = []
+            exist_positive = False
+            for i in range(output_levels):  # range(3):
+                anchors_xywh = np.zeros((anchor_per_scale, 4))
+                anchors_xywh[:, 0:2] = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32) + 0.5
+                anchors_xywh[:, 2:4] = anchors[i]
 
-        anchor_area = anchors[:, 0] * anchors[:, 1]
-        for r in range(len(real_boxes)):
-            correct_anchors = []
-            for anchor in anchors:
-                correct_anchors.append([min(anchor[0], boxes_wh[r][0]), min(anchor[1], boxes_wh[r][1])])
-            correct_anchors = np.array(correct_anchors)
-            correct_anchors_area = correct_anchors[:, 0] * correct_anchors[:, 1]
-            iou = correct_anchors_area / (box_area[r] + anchor_area - correct_anchors_area)
-            best_anchor = np.argmax(iou, axis=-1)
+                iou_scale = bbox_iou(bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh)
+                iou.append(iou_scale)
+                iou_mask = iou_scale > 0.3
 
-            for m in range(num_layers):
-                if best_anchor in anchor_mask[m]:
-                    h = np.floor(real_boxes[r, 0] * cells[m]).astype('int32')
-                    j = np.floor(real_boxes[r, 1] * cells[m]).astype('int32')
-                    k = anchor_mask[m].index(int(best_anchor))
-                    c = real_boxes[r, 4].astype('int32')
-                    y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
-                    y_true[m][j, h, k, 4] = 0 if zero_boxes_flag else 1
-                    y_true[m][j, h, k, 5 + c] = 0 if zero_boxes_flag else 1
+                if np.any(iou_mask):
+                    xind, yind = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32)
 
-        return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
+                    label[i][yind, xind, iou_mask, :] = 0
+                    label[i][yind, xind, iou_mask, 0:4] = bbox_xywh
+                    label[i][yind, xind, iou_mask, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                    label[i][yind, xind, iou_mask, 5:] = smooth_one_hot
+
+                    bbox_ind = int(bbox_count[i] % max_bbox_per_scale)
+                    bboxes_xywh[i][bbox_ind, :4] = bbox_xywh
+                    bbox_count[i] += 1
+
+                    exist_positive = True
+
+            if not exist_positive:
+                best_anchor_ind = np.argmax(np.array(iou).reshape(-1), axis=-1)
+                best_detect = int(best_anchor_ind / anchor_per_scale)
+                best_anchor = int(best_anchor_ind % anchor_per_scale)
+                xind, yind = np.floor(bbox_xywh_scaled[best_detect, 0:2]).astype(np.int32)
+
+                label[best_detect][yind, xind, best_anchor, :] = 0
+                label[best_detect][yind, xind, best_anchor, 0:4] = bbox_xywh
+                label[best_detect][yind, xind, best_anchor, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                label[best_detect][yind, xind, best_anchor, 5:] = smooth_one_hot
+
+                bbox_ind = int(bbox_count[best_detect] % max_bbox_per_scale)
+                bboxes_xywh[best_detect][bbox_ind, :4] = bbox_xywh
+                bbox_count[best_detect] += 1
+
+        label_sbbox, label_mbbox, label_lbbox = label
+        sbboxes, mbboxes, lbboxes = bboxes_xywh
+
+        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),\
+               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),\
+               np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
+
+        # real_boxes = np.array(real_boxes)
+        # real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
+        # anchors = np.array(
+        #     [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
+        # num_layers = 3
+        # anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+        #
+        # real_boxes = np.array(real_boxes, dtype='float32')
+        # input_shape = np.array((height, width), dtype='int32')
+        #
+        # boxes_wh = real_boxes[..., 2:4] * input_shape
+        #
+        # cells = [13, 26, 52]
+        # y_true = [np.zeros((cells[n], cells[n], len(anchor_mask[n]), 5 + num_classes), dtype='float32') for n in
+        #           range(num_layers)]
+        # box_area = boxes_wh[:, 0] * boxes_wh[:, 1]
+        #
+        # anchor_area = anchors[:, 0] * anchors[:, 1]
+        # for r in range(len(real_boxes)):
+        #     correct_anchors = []
+        #     for anchor in anchors:
+        #         correct_anchors.append([min(anchor[0], boxes_wh[r][0]), min(anchor[1], boxes_wh[r][1])])
+        #     correct_anchors = np.array(correct_anchors)
+        #     correct_anchors_area = correct_anchors[:, 0] * correct_anchors[:, 1]
+        #     iou = correct_anchors_area / (box_area[r] + anchor_area - correct_anchors_area)
+        #     best_anchor = np.argmax(iou, axis=-1)
+        #
+        #     for m in range(num_layers):
+        #         if best_anchor in anchor_mask[m]:
+        #             h = np.floor(real_boxes[r, 0] * cells[m]).astype('int32')
+        #             j = np.floor(real_boxes[r, 1] * cells[m]).astype('int32')
+        #             k = anchor_mask[m].index(int(best_anchor))
+        #             c = real_boxes[r, 4].astype('int32')
+        #             y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
+        #             y_true[m][j, h, k, 4] = 0 if zero_boxes_flag else 1
+        #             y_true[m][j, h, k, 5 + c] = 0 if zero_boxes_flag else 1
+        #
+        # return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
 
     def create_scaler(self):
 
@@ -1830,8 +2023,8 @@ class PrepareDTS(object):
                     arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
                         **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                    for i in range(6):
+                        outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
                 else:
                     outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
@@ -1853,8 +2046,8 @@ class PrepareDTS(object):
                     arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
                         **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                    for i in range(6):
+                        outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
                 else:
                     outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
@@ -1876,8 +2069,8 @@ class PrepareDTS(object):
                     arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
                         **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                    for i in range(6):
+                        outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
                 else:
                     outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
