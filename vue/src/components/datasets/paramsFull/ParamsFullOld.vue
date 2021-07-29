@@ -1,5 +1,5 @@
 <template>
-  <div class="row params">
+  <div class="row params full">
     <div class="col-24 params__top">
       <div class="row">
         <div
@@ -9,21 +9,22 @@
           class="col-4 params__top--left"
           draggable="true"
         >
-          <h4 draggable="true" >Text</h4>
-          <h4 draggable="true" >Text</h4>
-          <h4 draggable="true" >Text</h4>
+          <h4 draggable="true">Text</h4>
+          <h4 draggable="true">Text</h4>
+          <h4 draggable="true">Text</h4>
         </div>
         <div>
           <table class="csv-table">
-            <tr v-for="(row, y) in table_test" :key="row+y">
+            <tr v-for="(row, index) in table_test" :key="index">
               <td
-                  v-for="(item, x) in row"
-                  :key="item+x"
-                  @mousedown="select"
-                  @mouseover="select"
-                  :data-key="key(x, y)"
-                  :class="{ selected: selected_td.includes(key(x, y)) }"
-              >{{ item }}</td>
+                v-for="(item, i) in row"
+                :key="item"
+                @mousedown="select"
+                :data-index="i"
+                :class="{ selected: selected_tr.includes(i) }"
+              >
+                {{ item }}
+              </td>
             </tr>
           </table>
         </div>
@@ -33,7 +34,7 @@
           draggable="true"
         >
           <CardFile name="sdsd" />
-          <CardFile  name="bvvb" />
+          <CardFile name="bvvb" />
         </div>
       </div>
     </div>
@@ -90,7 +91,7 @@ export default {
       },
     ],
     table_test: [],
-    selected_td: [],
+    selected_tr: [],
   }),
   computed: {
     ...mapGetters({
@@ -98,43 +99,49 @@ export default {
     }),
   },
   created() {
-    let file = "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33";
+    let file =
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
+      "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33";
 
     this.table_test = this.$papa.parse(file).data;
   },
   methods: {
     onDragStart(e, item) {
-      console.log(e)
-      console.log(item)
+      console.log(e);
+      console.log(item);
       // e.dataTransfer.dropEffect = "move";
       // e.dataTransfer.effectAllowed = "move";
       // e.dataTransfer.setData("itemId", item.id.toString());
     },
     onDrop(e, categoryId) {
-
-      console.log(e)
-      console.log(categoryId)
+      console.log(e);
+      console.log(categoryId);
       // const itemId = parseInt(e.dataTransfer.getData("itemId"));
       // this.items = this.items.map((x) => {
       //   if (x.id == itemId) x.categoryId = categoryId;
       //   return x;
       // });
     },
-
-    key: (x, y) => `${y}.${x}`,
-    select({ buttons, target: { dataset: { key } } }) {
+    select({
+      buttons,
+      target: {
+        dataset: { index },
+      },
+    }) {
+      event.preventDefault();
+      console.log({ buttons, target: { dataset: { index } } });
       if (buttons) {
-        const index = this.selected_td.indexOf(key);
-        if (index !== -1) {
-          this.selected_td.splice(index, 1);
+         
+        const key = this.selected_tr.indexOf(index);
+        if (key !== -1) {
+          this.selected_tr.splice(key, 1);
         } else {
-          this.selected_td.push(key);
+          this.selected_tr.push(index);
         }
       }
     },
@@ -144,29 +151,25 @@ export default {
 
 
 <style lang="scss">
-
 .params {
-  // position: relative;
-
-  // &__top {
-  //   padding: 10px;
-  //   background-color: #1b242e;
-  //   &--rigth {
-  //     display: flex;
-  //     justify-content: center;
-  //     padding: 8px;
-  //   }
-  // }
+  flex-shrink: 0;
+  width: 100%;
+  margin-left: 50px;
+  border-left: #0e1621 solid 1px;
 }
-.csv-table{
-   border-collapse: collapse;
-  td{
+.csv-table {
+  border-collapse: collapse;
+  border: 1px solid #434445;
+  border-radius: 4px;
+  td {
     padding: 7px; /* Поля вокруг содержимого таблицы */
-    border: 1px solid black; /* Параметры рамки */
-   }
+  }
+  tr:nth-child(even) {
+    background: #3b4249; /* Цвет фона четных строк */
+  }
 }
-.selected{
-  background:green;
-  color:#fff;
+.selected {
+  background: green;
+  color: #fff;
 }
 </style>

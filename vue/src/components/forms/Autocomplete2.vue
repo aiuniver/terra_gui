@@ -7,7 +7,7 @@
       :name="name"
       :disabled="disabled"
       :placeholder="placeholder"
-      @focus="show = true"
+      @focus="focus"
       @blur="select(false)"
     />
     <div class="dropdown__content" v-show="show">
@@ -59,22 +59,27 @@ export default {
   },
   methods: {
     select(item) {
-      console.log(item);
+      // console.log(item);
       if (item) {
         this.selected = item;
         this.show = false;
         this.search = item.label;
         this.$emit("input", this.selected.value);
+        this.$emit("selected", item);
       } else {
         this.search = this.selected.label;
         this.show = false;
       }
     },
+    focus() {
+      this.show = true
+      this.$emit('focus', true)
+    }
   },
   watch: {
     value: {
       handler(value){
-        console.log(value)
+        // console.log(value)
         this.search = value
       }
     }
@@ -109,6 +114,7 @@ export default {
     background: #242f3d;
     cursor: pointer;
     display: block;
+    z-index: 103;
     &:focus {
       border: 1px solid #e7ecf5;
     }
@@ -125,8 +131,9 @@ export default {
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
     overflow: auto;
-    border-radius: 4px;
+    border-radius: 0 0 4px 4px;
     z-index: 102;
+    // bottom: -29px;
     > div {
       color: #a7bed3;
       font-size: 0.7em;
