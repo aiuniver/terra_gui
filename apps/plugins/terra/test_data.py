@@ -51,6 +51,7 @@ TRAINDATA = {
 
 if __name__ == '__main__':
     traindata = TrainData(**TRAINDATA)
-    print(traindata.architecture.parameters.outputs[0].metrics == ["Accuracy"])
+
+    print(traindata.architecture.outputs_dict[0]["alias"])
     print(traindata.optimizer.parameters_dict)
     # print(traindata.json(indent=2))

@@ -288,9 +288,9 @@ class GUINN:
         self.optimizer_kwargs = training_params.optimizer.parameters
         self.set_optimizer(training_params)
         self.set_chp_monitor(training_params)
-        for output_key in self.output_params.keys():
-            self.metrics.update({output_key: self.output_params[output_key]['metrics']})
-            self.loss.update({output_key: self.output_params[output_key]['loss']})
+        for output_layer in training_params.architecture.outputs_dict:
+            self.metrics.update({output_layer["alias"]: output_layer["metrics"]})
+            self.loss.update({output_layer["alias"]: output_layer["loss"]})
 
 
         if self.model_is_trained:

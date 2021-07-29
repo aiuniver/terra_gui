@@ -44,6 +44,11 @@ class ArchitectureData(BaseMixinData):
     type: ArchitectureChoice
     parameters: Any
 
+    @property
+    def outputs_dict(self) -> dict:
+        __data = json.loads(self.parameters.outputs.json())
+        return __data
+
     @validator("type", pre=True)
     def _validate_type(cls, value: ArchitectureChoice) -> ArchitectureChoice:
         if value not in list(ArchitectureChoice):
