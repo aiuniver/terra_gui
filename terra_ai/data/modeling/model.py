@@ -203,7 +203,7 @@ class ModelsList(UniqueListMixin):
     ```
     class Meta:
         source = ModelListData
-        identifier = "name"
+        identifier = "label"
     ```
     """
 

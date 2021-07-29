@@ -1,3 +1,4 @@
+import os
 import shutil
 
 from .. import progress
@@ -17,9 +18,8 @@ def model(data: ModelLoadData):
         zip_destination = progress_utils.unpack(
             progress_name, MODEL_UNPACK_TITLE, data.value
         )
-        shutil.move(zip_destination, data.destination)
-        print(zip_destination)
-        print(data.destination)
+        shutil.rmtree(data.destination)
+        os.rename(zip_destination, data.destination)
         progress.pool(progress_name, data=data.destination.absolute(), finished=True)
     except Exception as error:
         progress.pool(progress_name, error=str(error))
