@@ -2,9 +2,9 @@
 Datasets constants data
 """
 from enum import Enum
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Union, Dict
 
-from pydantic import validator, DirectoryPath
+from pydantic import validator, DirectoryPath, FilePath, PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.datasets.arrays_create import CreateArray
@@ -43,17 +43,17 @@ class Preprocesses(str, Enum):
 
 
 class InstructionsData(BaseMixinData):
-    sources: List[Any]
+    instructions: List[Union[str, PositiveInt, Dict[str, List[PositiveInt]]]]
     parameters: Any
 
-    @validator("parameters", always=True)
-    def _validate_parameters(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
+    # @validator("parameters", always=True)
+    # def _validate_parameters(cls, value: Any, values, field) -> Any:
+    #     return field.type_(**value or {})
 
 
 class DatasetInstructionsData(BaseMixinData):
-    inputs: InstructionsData
-    outputs: InstructionsData
+    inputs: Dict[PositiveInt, InstructionsData]
+    outputs: Dict[PositiveInt, InstructionsData]
 
 
 class PathsData(BaseMixinData):
