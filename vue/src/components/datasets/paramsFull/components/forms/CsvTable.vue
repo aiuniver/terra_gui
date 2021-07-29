@@ -25,20 +25,24 @@ export default {
     selected_cols: [],
   }),
   created() {
-    let file = "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33\n" +
-                "123;222223;asd;sdfg;sdfgdfghfdghg;gggdfas;33";
+    let file = ";text;text larrrrrge;text normal;text;text;text;text\n" +
+        "0;1;text;text;text 2131;NaN;text 2131. dddd;2\n" +
+        "2;1;text;text;text 2131;text 2131. dddd;text 2131;2\n" +
+        "4;1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
+        "6;1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
+        "8;1;text;text;text 2131;NaN;text 2131;2";
 
     let copy = this.$papa.parse(file).data;
+    this.table_test = []
 
-    for(let i = 0; i < copy.length; ++i){
+    let row = copy.length;
+    let col = copy[0].length
+
+    for(let i = 0; i < col; ++i){
       this.table_test.push([]);
-      for(let j = 0; j < copy[i].length; ++j){
-        this.table_test[i].push(copy[j][i]);
+      for(let j = 0; j < row; ++j){
+
+        this.table_test[i].push(copy[j][i] ? copy[j][i] : "-");
       }
     }
     console.log(this.table_test)
@@ -62,9 +66,9 @@ export default {
 <style lang="scss" scoped>
 .csv-table {
   border-collapse: collapse;
-  border: 2px solid #434445;
+  border: 1px solid #6C7883;
   border-radius: 8px;
-  padding: 10px;
+  padding: 24px 0 2px 0;
   display: flex;
 
   .table__col {
@@ -72,9 +76,9 @@ export default {
     flex-direction: column;
   }
   .table__row {
-    padding: 7px;
+    padding: 1px 7px;
     &:nth-child(even) {
-      background: #3b4249;
+      background: #242F3D;
     }
   }
 }
@@ -88,12 +92,6 @@ export default {
   }
   &:last-child{
     border-radius: 0 6px 6px 0;
-  }
-  .table__row {
-    padding: 7px;
-    &:nth-child(1) {
-      background: #89D764;
-    }
   }
 }
 </style>

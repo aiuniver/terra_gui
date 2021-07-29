@@ -1,6 +1,7 @@
 <template>
   <scrollbar>
     <div class="block-header">
+      <CsvTable/>
       <CardFile :title="'BMW'" :color="'#FFB054'" />
       <CardFile :title="'AUDI'" :color="'#89D764'" />
       <CardFile :title="'Ferrari'" :color="'#8E51F2'" />
@@ -11,10 +12,12 @@
 
 <script>
 import CardFile from "../components/card/CardFile.vue";
+import CsvTable from "../components/forms/CsvTable";
 export default {
   name: "BlockHeader",
   components: {
     CardFile,
+    CsvTable
   },
 };
 </script>
