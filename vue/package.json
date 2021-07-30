@@ -17,7 +17,6 @@
     "vue-papa-parse": "^2.0.0",
     "vue-plotly": "^1.1.0",
     "vue-router": "^3.5.1",
-    "vue-simple-flowchart": "^0.1.8",
     "vuex": "^3.6.2"
   },
   "devDependencies": {

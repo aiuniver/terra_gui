@@ -1,23 +1,51 @@
 <template>
   <div class="block-file">
-    <div class="block-file__header">Выбор папки/файла</div>
-    <div class="block-file__body"></div>
+    <div class="block-file__header">
+      <i class="block-file__header--icon"></i>
+      Выбор папки/файла
+    </div>
+    <div class="block-file__body">
+      <files-menu v-model="nodes" />
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'BlockMainRight',
-}
+  name: "BlockFiles",
+  data: () => ({
+    nodes: [
+      {
+        title: "Cars",
+        type: "folder",
+        isExpanded: true,
+        children: [
+          { title: "BMW.jpg", type: "image" },
+          { title: "AUDI.jpg", type: "image" },
+        ],
+      },
+      {
+        title: "Music",
+        type: "folder",
+        children: [
+          { title: "1.mp3", type: "audio" },
+          { title: "song.wav", type: "audio" },
+        ],
+      },
+      {
+        title: "Text",
+        type: "folder",
+        children: [{ title: "Table", type: "text" }],
+      },
+    ],
+  }),
+};
 </script>
 
 <style lang="scss" scoped>
 .block-file {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
   width: 100%;
+  height: 100%;
   position: relative;
   &__header {
     position: absolute;
@@ -35,6 +63,19 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 16px;
+    &--icon {
+      display: inline-block;
+      position: absolute;
+      width: 7px;
+      height: 11px;
+      right: 9px;
+      background-repeat: no-repeat;
+      background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOCIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDggMTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik02LjcwOTk4IDAuNzA5OTk2QzYuMzE5OTggMC4zMTk5OTYgNS42ODk5OCAwLjMxOTk5NiA1LjI5OTk4IDAuNzA5OTk2TDAuNzA5OTggNS4zQzAuMzE5OTggNS42OSAwLjMxOTk4IDYuMzIgMC43MDk5OCA2LjcxTDUuMjk5OTggMTEuM0M1LjY4OTk4IDExLjY5IDYuMzE5OTggMTEuNjkgNi43MDk5OCAxMS4zQzcuMDk5OTggMTAuOTEgNy4wOTk5OCAxMC4yOCA2LjcwOTk4IDkuODlMMi44Mjk5OCA2TDYuNzA5OTggMi4xMkM3LjA5OTk4IDEuNzMgNy4wODk5OCAxLjA5IDYuNzA5OTggMC43MDk5OTZaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=");
+    }
+  }
+  &__body {
+    padding-top: 30px;
+    height: 100%;
   }
 }
 </style>
