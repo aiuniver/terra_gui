@@ -1,5 +1,5 @@
 <template>
-  <div class="app">
+  <div class="app" ref="terra">
     <Header />
     <Nav />
     <router-view></router-view>
@@ -20,6 +20,13 @@ export default {
     Footer,
   },
   data: () => ({}),
+  methods: {
+    myEventHandler() {
+      const height = this.$refs.terra.clientHeight;
+      const wigth = this.$refs.terra.clientWidth;
+      this.$store.dispatch("settings/setResize", { height, wigth });
+    },
+  },
   async created() {
     await this.$store.dispatch("projects/get");
     await this.$store.dispatch("datasets/get");
@@ -44,6 +51,10 @@ export default {
         },
       });
     }
+    window.addEventListener("resize", this.myEventHandler);
+  },
+  destroyed() {
+    window.removeEventListener("resize", this.myEventHandler);
   },
 };
 </script>

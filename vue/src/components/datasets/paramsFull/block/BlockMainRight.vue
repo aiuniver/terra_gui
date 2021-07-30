@@ -1,29 +1,51 @@
 <template>
   <div class="block-right">
     <div class="block-right__fab">
-      <Fab />
+      <Fab @click="add"/>
     </div>
     <div class="block-right__header">Выходные параметры</div>
-    <div class="block-right__body"></div>
+    <div class="block-right__body">
+      <template v-for="({ title, color }, i) of cardLayers">
+        <CardLayer :title="title" :color="color" :key="'cardLayersRight' + i" />
+      </template>
+    </div>
   </div>
 </template>
 
 <script>
-import Fab from '../components/forms/Fab.vue'
+import Fab from "../components/forms/Fab.vue";
+import CardLayer from "../components/card/CardLayer.vue";
 export default {
-  name: 'BlockMainRight',
+  name: "BlockMainRight",
   components: {
-    Fab
-  }
-}
+    Fab,
+    CardLayer,
+  },
+  data: () => ({
+    cardLayers: [{ title: "Name", color: "#8e51f2" }],
+  }),
+  methods: {
+    add() {
+      this.cardLayers.push({ title: "Name", color: this.getColor() })
+    },
+    getColor() {
+      var letters = "0123456789ABCDEF";
+      var color = "#";
+      for (var i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    },
+  },
+};
 </script>
 
 <style lang="scss" scoped>
 .block-right {
   display: flex;
   flex-direction: row;
-  justify-content: center;
-  align-items: center;
+  // justify-content: center;
+  // align-items: center;
   width: 100%;
   position: relative;
   &__header {
@@ -43,10 +65,19 @@ export default {
     color: #ffffff;
     padding: 4px 16px;
   }
-  &__fab{
+  &__body {
+    display: flex;
+    padding: 40px 16px 16px 70px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    justify-content: flex-start;
+  }
+  &__fab {
     position: absolute;
-    right: 16px;
+    left: 16px;
     top: 40px;
+    z-index: 100;
   }
 }
 </style>
