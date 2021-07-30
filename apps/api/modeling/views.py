@@ -7,24 +7,22 @@ from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 from .serializers import ModelLoadSerializer
 
 
-class ModelLoadAPIView(BaseAPIView):
+class LoadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = ModelLoadSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            data = agent_exchange("model_load", **serializer.validated_data)
-            return BaseResponseSuccess(data)
+            request.project.model = agent_exchange(
+                "model_load", **serializer.validated_data
+            )
+            request.project.save()
+            return BaseResponseSuccess(request.project.model.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
 
-class ModelLoadProgressAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        return BaseResponseSuccess(agent_exchange("model_load_progress").native())
-
-
-class ModelsAPIView(BaseAPIView):
+class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
             agent_exchange("models", path=str(data_path.modeling)).native()

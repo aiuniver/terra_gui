@@ -1,6 +1,8 @@
 import os
+import json
 import tensorflow
 
+from typing import Any
 from pathlib import Path
 
 from ..data.datasets.dataset import (
@@ -13,7 +15,8 @@ from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
 
-from ..data.modeling.model import ModelsGroupsList, ModelLoadData
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.modeling.extra import ModelGroupChoice
 
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
@@ -21,14 +24,12 @@ from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
 from ..datasets import loading as datasets_loading
 
-from .. import ASSETS_PATH, DATASET_EXT
-from .. import progress
-from ..progress import ProgressData
+from .. import settings, progress
 from . import exceptions
 
 
 class Exchange:
-    def __call__(self, method: str, *args, **kwargs) -> dict:
+    def __call__(self, method: str, *args, **kwargs) -> Any:
         # Получаем метод для вызова
         __method_name = f"_call_{method}"
         __method = getattr(self, __method_name, None)
@@ -79,7 +80,7 @@ class Exchange:
             return dataset
         elif dataset_choice.group == DatasetGroupChoice.custom:
             data = CustomDatasetConfigData(
-                path=Path(path, f"{dataset_choice.alias}.{DATASET_EXT}")
+                path=Path(path, f"{dataset_choice.alias}.{settings.DATASET_EXT}")
             )
             return DatasetData(**data.config)
         else:
@@ -95,17 +96,24 @@ class Exchange:
         for dirname in os.listdir(path):
             try:
                 dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
-                info.get("custom").datasets.append(DatasetData(**dataset_config.config))
+                info.get(DatasetGroupChoice.custom.name).datasets.append(
+                    DatasetData(**dataset_config.config)
+                )
             except Exception:
                 pass
         return info
 
-    def _call_dataset_source_load(self, mode: str, value: str) -> dict:
+    def _call_dataset_source_load(self, mode: str, value: str):
         """
         Загрузка исходников датасета
         """
-        source = SourceData(mode=mode, value=value)
-        return datasets_loading.source(source)
+        datasets_loading.source(SourceData(mode=mode, value=value))
+
+    def _call_dataset_source_load_progress(self) -> progress.ProgressData:
+        """
+        Прогресс загрузки исходников датасета
+        """
+        return progress.pool(progress.PoolName.dataset_source_load)
 
     def _call_dataset_source_create(self, **kwargs) -> dict:
         """
@@ -114,12 +122,6 @@ class Exchange:
         creation = CreationData(**kwargs)
         print(creation)
         return {}
-
-    def _call_dataset_source_load_progress(self) -> ProgressData:
-        """
-        Прогресс загрузки исходников датасета
-        """
-        return progress.pool(progress.PoolName.dataset_source_load)
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
@@ -140,35 +142,37 @@ class Exchange:
         Получение списка моделей
         """
         models = ModelsGroupsList(ModelsGroups)
-        models_path = Path(ASSETS_PATH, "models")
+        models_path = Path(settings.ASSETS_PATH, "models")
         for filename in os.listdir(models_path):
             try:
-                models.get("preset").models.append(
+                models.get(ModelGroupChoice.preset.name).models.append(
                     {"value": Path(models_path, filename)}
                 )
             except Exception:
                 pass
-        models.get("preset").models.sort(key=lambda item: item.label)
+        models.get(ModelGroupChoice.preset.name).models.sort(
+            key=lambda item: item.label
+        )
         for filename in os.listdir(path):
             try:
-                models.get("custom").models.append({"value": Path(path, filename)})
+                models.get(ModelGroupChoice.custom.name).models.append(
+                    {"value": Path(path, filename)}
+                )
             except Exception:
                 pass
-        models.get("custom").models.sort(key=lambda item: item.label)
+        models.get(ModelGroupChoice.custom.name).models.sort(
+            key=lambda item: item.label
+        )
         return models
 
-    def _call_model_load(self, value: str) -> dict:
+    def _call_model_load(self, value: str) -> ModelDetailsData:
         """
         Загрузка модели
         """
-        model = ModelLoadData(value=value)
-        # temporary_methods.model_load(model)
-
-    def _call_model_load_progress(self) -> ProgressData:
-        """
-        Прогресс загрузки модели
-        """
-        return progress.pool(progress.PoolName.model_load)
+        data = ModelLoadData(value=value)
+        with open(data.value.absolute(), "r") as config_ref:
+            config = json.load(config_ref)
+            return ModelDetailsData(**config)
 
 
 agent_exchange = Exchange()
