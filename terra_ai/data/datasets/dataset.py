@@ -177,7 +177,7 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Union
 from pydantic import validator, DirectoryPath
 from pydantic.types import PositiveInt
 from pydantic.color import Color
@@ -223,19 +223,53 @@ class CustomDatasetConfigData(BaseMixinData):
         return value
 
 
+# class DatasetLayerData(BaseMixinData):
+#     datatype: Dict[int, str] = {}
+#     dtype: Dict[int, str] = {}
+#     shape: Dict[int, Tuple[PositiveInt, ...]] = {}
+#     names: Dict[int, str] = {}
+#
+#
+# class DatasetInputsData(DatasetLayerData):
+#     tasks: Dict[int, LayerInputTypeChoice] = {}
+#
+#
+# class DatasetOutputsData(DatasetLayerData):
+#     tasks: Dict[int, LayerOutputTypeChoice] = {}
+#
+#
+# class DatasetData(AliasMixinData):
+#     """
+#     Информация о датасете
+#     """
+#
+#     name: str
+#     date: Optional[datetime]
+#     size: Optional[FileSizeData]
+#     limit: PositiveInt # не нужен
+#     use_generator: bool = False
+#     tags: Optional[TagsList] = TagsList()
+#     classes_names: Dict[PositiveInt, List[str]] = {}
+#     classes_colors: Dict[PositiveInt, List[Color]] = {}
+#     one_hot_encoding: Dict[PositiveInt, bool] = {}
+#     task_type: Dict[int, TaskChoice] = {}
+#     inputs: DatasetInputsData = DatasetInputsData()
+#     outputs: DatasetOutputsData = DatasetOutputsData()
+
+
 class DatasetLayerData(BaseMixinData):
-    datatype: Dict[int, str] = {}
-    dtype: Dict[int, str] = {}
-    shape: Dict[int, Tuple[PositiveInt, ...]] = {}
-    names: Dict[int, str] = {}
+    datatype: str
+    dtype: str
+    shape: Tuple[PositiveInt, ...]
+    name: str
 
 
 class DatasetInputsData(DatasetLayerData):
-    tasks: Dict[int, LayerInputTypeChoice] = {}
+    task: LayerInputTypeChoice
 
 
 class DatasetOutputsData(DatasetLayerData):
-    tasks: Dict[int, LayerOutputTypeChoice] = {}
+    task: LayerOutputTypeChoice
 
 
 class DatasetData(AliasMixinData):
@@ -246,15 +280,15 @@ class DatasetData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
-    limit: PositiveInt
+    limit: PositiveInt # не нужен
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
     classes_names: Dict[PositiveInt, List[str]] = {}
     classes_colors: Dict[PositiveInt, List[Color]] = {}
     one_hot_encoding: Dict[PositiveInt, bool] = {}
     task_type: Dict[int, TaskChoice] = {}
-    inputs: DatasetInputsData = DatasetInputsData()
-    outputs: DatasetOutputsData = DatasetOutputsData()
+    inputs: Dict[PositiveInt, DatasetInputsData]
+    outputs: Dict[PositiveInt, DatasetOutputsData]
 
 
 class DatasetsList(UniqueListMixin):

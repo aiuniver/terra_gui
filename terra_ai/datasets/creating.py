@@ -27,7 +27,7 @@ from . import array_creator
 from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
     CreationOutputData
-from ..data.datasets.dataset import DatasetData
+from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
 
 
 class CreateDTS(object):
@@ -36,6 +36,11 @@ class CreateDTS(object):
 
         self.dataset_user_data: CreationData
         self.paths: PathsData
+        self.instructions: InstructionsData
+        self.inputs = None
+        self.outputs = None
+        self.input_names: dict = {}
+        self.output_names: dict = {}
 
         self._datatype = 'DIM'
 
@@ -49,14 +54,6 @@ class CreateDTS(object):
         self.language: str = ''
 
         self.limit: int = 0
-        self.input_datatype: dict = {}  # string
-        self.input_dtype: dict = {}
-        self.input_shape: dict = {}
-        self.input_names: dict = {}
-        self.output_datatype: dict = {}
-        self.output_dtype: dict = {}
-        self.output_shape: dict = {}
-        self.output_names: dict = {}
         self.num_classes: dict = {}
         self.classes_names: dict = {}
         self.classes_colors: dict = {}
@@ -74,7 +71,6 @@ class CreateDTS(object):
         self.df: dict = {}
         self.tsgenerator: dict = {}
 
-        self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.limit: int
         self.dataset: dict = {}
 
@@ -149,7 +145,52 @@ class CreateDTS(object):
                     if preprocess.get(key, {}):
                         joblib.dump(preprocess[key], os.path.join(preprocess_file_path, f'{key}.gz'))
 
+    def create_inputs_parameters(self, creation_data):
+        creating_inputs_data = {}
+        for key in self.instructions.inputs.keys():
+            array = getattr(array_creator, f'create_{self.tags[key]}')(
+                creation_data.source_path,
+                self.instructions.inputs.get(key).instructions[0],
+                **self.instructions.inputs.get(key).parameters
+            )
+            current_input = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
+                                              dtype=str(array.dtype),
+                                              shape=array.shape,
+                                              name=self.input_names.get(key, ''),
+                                              task=creation_data.inputs.get(key).type
+                                              )
+            creating_inputs_data.update([(key, current_input.native())])
+        return creating_inputs_data
+
+    def create_output_parameters(self, creation_data):
+        creating_outputs_data = {}
+        for key in self.instructions.outputs.keys():
+            array = getattr(array_creator, f'create_{self.tags[key]}')(
+                creation_data.source_path,
+                self.instructions.outputs.get(key).instructions[0],
+                **self.instructions.outputs.get(key).parameters
+            )
+            if isinstance(array, tuple):
+                for i in range(len(array)):
+                    current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
+                                                        dtype=str(array[i].dtype),
+                                                        shape=array[i].shape,
+                                                        name=self.output_names.get(key, ''),
+                                                        task=creation_data.outputs.get(key).type
+                                                        )
+                    creating_outputs_data.update([(key + i, current_output)])
+            else:
+                current_output = DatasetOutputsData(datatype=DataType.get(len(array.shape), 'DIM'),
+                                                    dtype=str(array.dtype),
+                                                    shape=array.shape,
+                                                    name=self.output_names.get(key, ''),
+                                                    task=creation_data.outputs.get(key).type
+                                                    )
+                creating_outputs_data.update([(key, current_output.native())])
+        return creating_outputs_data
+
     def create_dataset(self, creation_data: CreationData):
+
         self.dataset_user_data = creation_data
 
         self.name = creation_data.name
@@ -160,40 +201,17 @@ class CreateDTS(object):
 
         self.source = 'custom dataset'
 
+        # Устанавливаем пути
         self.set_paths(data=creation_data)
 
         # Создаем инструкции
         self.instructions = self.create_instructions(creation_data)
 
         # Получаем входные параметры
-        for key in self.instructions.inputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.inputs[key].instructions[0],
-                **self.instructions.inputs[key].parameters
-            )
-            self.input_shape[key] = array.shape
-            self.input_dtype[key] = str(array.dtype)
-            self.datatype = array.shape
-            self.input_datatype[key] = self.datatype
+        self.inputs = self.create_inputs_parameters(creation_data=creation_data)
+
         # Получаем выходные параметры
-        for key in self.instructions.outputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.outputs[key].instructions[0],
-                **self.instructions.outputs[key].parameters
-            )
-            if isinstance(array, tuple):
-                for i in range(len(array)):
-                    self.output_shape[key + i] = array[i].shape
-                    self.output_dtype[key + i] = str(array[i].dtype)
-                    self.datatype = array[i].shape
-                    self.output_datatype[key + i] = self.datatype
-            else:
-                self.output_shape[key] = array.shape
-                self.output_dtype[key] = str(array.dtype)
-                self.datatype = array.shape
-                self.output_datatype[key] = self.datatype
+        self.outputs = self.create_output_parameters(creation_data=creation_data)
 
         # Разделение на три выборки
         self.split_sequence['train'] = []
@@ -212,7 +230,7 @@ class CreateDTS(object):
             random.shuffle(self.split_sequence['val'])
             random.shuffle(self.split_sequence['test'])
 
-        self.limit: int = len(self.instructions.inputs[1].instructions)
+        self.limit: int = len(self.instructions.inputs.get(1).instructions)
 
         data = {}
         if creation_data.use_generator:
@@ -238,8 +256,8 @@ class CreateDTS(object):
                 for i in range(self.limit):
                     x.append(getattr(array_creator, f"create_{self.tags[key]}")(
                         creation_data.source_path,
-                        self.instructions.inputs[key].instructions[i],
-                        **self.instructions.inputs[key].parameters))
+                        self.instructions.inputs.get(key).instructions[i],
+                        **self.instructions.inputs.get(key).parameters))
                 self.X['train'][key] = np.array(x)[self.split_sequence['train']]
                 self.X['val'][key] = np.array(x)[self.split_sequence['val']]
                 self.X['test'][key] = np.array(x)[self.split_sequence['test']]
@@ -252,8 +270,8 @@ class CreateDTS(object):
                     for i in range(self.limit):
                         arrays = getattr(array_creator, f"create_{self.tags[key]}")(
                             creation_data.source_path,
-                            self.instructions.outputs[key].instructions[i],
-                            **self.instructions.outputs[key].parameters)
+                            self.instructions.outputs.get(key).instructions[i],
+                            **self.instructions.outputs.get(key).parameters)
                         y_1.append(arrays[0])
                         y_2.append(arrays[1])
                         y_3.append(arrays[2])
@@ -272,8 +290,8 @@ class CreateDTS(object):
                     for i in range(self.limit):
                         y.append(getattr(array_creator, f"create_{self.tags[key]}")(
                             creation_data.source_path,
-                            self.instructions.outputs[key].instructions[i],
-                            **self.instructions.outputs[key].parameters))
+                            self.instructions.outputs.get(key).instructions[i],
+                            **self.instructions.outputs.get(key).parameters))
                     self.Y['train'][key] = np.array(y)[self.split_sequence['train']]
                     self.Y['val'][key] = np.array(y)[self.split_sequence['val']]
                     self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
@@ -294,9 +312,7 @@ class CreateDTS(object):
         self.write_preprocesses_to_files()
 
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
-                      'input_datatype', 'input_dtype', 'input_shape', 'input_names',
-                      'output_datatype', 'output_dtype', 'output_shape', 'output_names',
-                      'num_classes', 'classes_names', 'classes_colors',
+                      'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
                       'one_hot_encoding', 'task_type', 'limit', 'use_generator']
 
         tags = []
@@ -310,7 +326,7 @@ class CreateDTS(object):
         data['alias'] = creation_data.alias
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
-        print(data)
+
         output = DatasetData(**data)
         print(output)
         return output
@@ -408,12 +424,11 @@ class CreateDTS(object):
             for key, value in options['augmentation'].items():
                 aug_parameters.append(getattr(iaa, key)(**value))
             array_creator.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters,
-                                                                                       random_order=True)
+                                                                                    random_order=True)
             del options['augmentation']
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
-
 
         return instructions
 
