@@ -7,15 +7,15 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilename
 
 
-class StagePrepareUserData(BaseMixinData):
+class StageUploadUserData(BaseMixinData):
     login: str
     name: str
     lastname: str
 
 
-class StagePrepareData(BaseMixinData):
+class StageUploadData(BaseMixinData):
     stage: PositiveInt
-    user: StagePrepareUserData
+    user: StageUploadUserData
     project_name: str
     project_name_lat: Optional[str]
     url: str

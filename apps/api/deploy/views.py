@@ -19,7 +19,7 @@ class UploadAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         try:
             stage = agent_exchange(
-                "deploy_prepare",
+                "deploy_upload",
                 **{
                     "stage": 1,
                     "user": {
