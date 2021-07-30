@@ -13,9 +13,11 @@
           </template>
         </div>
         <div v-else class="block-header__overlay">
+          <div class="int">
           <div class="block-header__overlay--icon"></div>
           <div class="block-header__overlay--title">
             Перетащите папку или файл для начала работы с содержимым архива
+          </div>
           </div>
         </div>
       </div>
@@ -51,6 +53,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.int{
+  padding: 10px;
+}
 .inner {
   // position: absolute;
   // top: 10px;

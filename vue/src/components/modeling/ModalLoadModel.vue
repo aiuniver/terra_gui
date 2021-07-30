@@ -87,7 +87,7 @@ export default {
       this.$emit("CloseModalWindow", false);
     },
     async load() {
-      const data = await this.$store.dispatch("axios", { url: "/modeling/models/"});
+      const data = await this.$store.dispatch("axios", { url: "/modeling/info/"});
       if (data) {
         this.lists = data;
       }
