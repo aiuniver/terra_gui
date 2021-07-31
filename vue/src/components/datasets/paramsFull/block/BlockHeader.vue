@@ -10,7 +10,9 @@
               :type="type"
               :key="'files_' + i"
             />
+
           </template>
+          <CardTable/>
         </div>
         <div v-else class="block-header__overlay">
           <div class="int">
@@ -27,10 +29,12 @@
 
 <script>
 import CardFile from "../components/card/CardFile.vue";
+import CardTable from "../components/card/CardTable";
 export default {
   name: "BlockHeader",
   components: {
     CardFile,
+    CardTable
   },
   data: () => ({
     files: [
