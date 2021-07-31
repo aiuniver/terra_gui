@@ -3,30 +3,12 @@
     <div class="canvas" :style="height">
       <VueBlocksContainer
         ref="container"
-        :blocksContent="blocks"
         :scene.sync="scene"
         class="cont"
         @blockSelect="selected"
         @blockDeselect="selected(null)"
       />
     </div>
-    <at-modal v-model="create" width="150">
-      <div slot="header">
-        <span>Тип слоя</span>
-      </div>
-      <div>
-        <at-dropdown @on-dropdown-command="addBlock">
-          <at-button size="large" :style="{}" >Тип Слоя<i class="icon icon-chevron-down" /></at-button>
-          <at-dropdown-menu slot="menu">
-            <at-dropdown-item v-for="({ title, value }, i) of typeBlock" :value="value" :key="'menu' + i" :name="value">{{ title }}</at-dropdown-item>
-          </at-dropdown-menu>
-        </at-dropdown>
-      </div>
-      <div slot="footer" class="d-flex">
-        <!-- <at-button @click="addBlock" type="primary">Создать</at-button> -->
-        <!-- <at-button @click="create = false">Отменить</at-button> -->
-      </div>
-    </at-modal>
   </div>
 </template>
 
@@ -86,8 +68,8 @@ export default {
   watch: {
     toolbar: {
       handler({ event }) {
-        if (event === 'sloy') {
-          this.create = true
+        if (event === 'middle') {
+          this.addBlock(event)
         }
         if (event === 'validation') {
           this.$store.dispatch('test', 'sdsdsdsdsdsd')

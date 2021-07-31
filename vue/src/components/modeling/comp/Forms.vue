@@ -9,6 +9,7 @@
         :parse="parse"
         :name="name"
         :key="key"
+        inline
       />
       <Input
         v-if="type === 'number' || type === 'text'"
@@ -18,6 +19,7 @@
         :parse="parse"
         :name="name"
         :key="key"
+        inline
       />
       <Checkbox
         v-if="type === 'checkbox'"

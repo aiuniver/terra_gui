@@ -49,88 +49,77 @@ export default {
       type: Object,
     },
   },
-  mounted() {
-    document.documentElement.addEventListener('keyup', this.keyup);
-    document.documentElement.addEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.addEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.addEventListener("mouseup", this.handleUp, true);
-    document.documentElement.addEventListener("wheel", this.handleWheel, true);
+  data: () => ({
+    dragging: false,
+    //
+    centerX: 0,
+    centerY: 0,
+    scale: 1,
+    //
+    nodes: [
+      {
+        group: "input",
+        title: "Input",
+        fields: [
+          {
+            name: "Output",
+            type: "event",
+            attr: "output",
+          },
+        ],
+      },
+      {
+        group: "middle",
+        title: "Sloy",
+        fields: [
+          {
+            name: "Input",
+            type: "event",
+            attr: "input",
+          },
+          {
+            name: "output",
+            type: "event",
+            attr: "output",
+          },
+        ],
+      },
+      {
+        group: "output",
+        title: "Output",
+        fields: [
+          {
+            name: "Input",
+            type: "event",
+            attr: "input",
+          },
+        ],
+      },
+    ],
+    blocks: [],
+    links: [],
+    //
+    tempLink: null,
+    selectedBlock: null,
+    hasDragged: false,
 
-    this.centerX = this.$el.clientWidth / 2;
-    this.centerY = this.$el.clientHeight / 2;
+    mouseX: 0,
+    mouseY: 0,
+    lastMouseX: 0,
+    lastMouseY: 0,
+    minScale: 0.2,
+    maxScale: 5,
+    linking: false,
+    linkStartData: null,
+    inputSlotClassName: "inputSlot",
 
-    this.importBlocksContent();
-    this.importScene();
-  },
-  beforeDestroy() {
-    document.documentElement.removeEventListener('keyup', this.keyup);
-    document.documentElement.removeEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mouseup",
-      this.handleUp,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "wheel",
-      this.handleWheel,
-      true
-    );
-  },
-  created() {
-    this.mouseX = 0;
-    this.mouseY = 0;
-
-    this.lastMouseX = 0;
-    this.lastMouseY = 0;
-
-    this.minScale = 0.2;
-    this.maxScale = 5;
-
-    this.linking = false;
-    this.linkStartData = null;
-
-    this.inputSlotClassName = "inputSlot";
-
-    this.defaultScene = {
+    defaultScene: {
       blocks: [],
       links: [],
       container: {},
-    };
-  },
-  data() {
-    return {
-      dragging: false,
-      //
-      centerX: 0,
-      centerY: 0,
-      scale: 1,
-      //
-      nodes: [],
-      blocks: [],
-      links: [],
-      //
-      tempLink: null,
-      selectedBlock: null,
-      hasDragged: false,
-    };
-  },
+    },
+  }),
+
   computed: {
     optionsForChild() {
       return {
@@ -220,7 +209,7 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = { // eslint-disable-line
+        this.tempLink.style = {  // eslint-disable-line
           stroke: "#8f8f8f",
           strokeWidth: 3 * this.scale,
           fill: "none",
@@ -233,16 +222,16 @@ export default {
     },
   },
   methods: {
-    keyup (event) {
-      const { code, ctrlKey } = event
-      if (code === 'Delete') {
+    keyup(event) {
+      const { code, ctrlKey } = event;
+      if (code === "Delete") {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock)
+          this.blockDelete(this.selectedBlock);
         }
       }
-      if (code === 'KeyC' && ctrlKey) {
+      if (code === "KeyC" && ctrlKey) {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock)
+          this.blockDelete(this.selectedBlock);
         }
       }
       // console.log(event)
@@ -304,7 +293,7 @@ export default {
           y1: linkStartPos.y,
           x2: this.mouseX,
           y2: this.mouseY,
-          slot: this.linkStartData.slotNumber
+          slot: this.linkStartData.slotNumber,
         };
       }
     },
@@ -438,6 +427,7 @@ export default {
     },
     // Linking
     linkingStart(block, slotNumber) {
+      console.log('linkingStart')
       this.linkStartData = { block, slotNumber };
       let linkStartPos = this.getConnectionPos(
         this.linkStartData.block,
@@ -454,8 +444,12 @@ export default {
       this.linking = true;
     },
     linkingStop(targetBlock, slotNumber) {
+      console.log('linkingStop')
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        const {slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const {
+          slotNumber: originSlot,
+          block: { id: originID },
+        } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
 
@@ -463,12 +457,14 @@ export default {
         // console.log(targetID, targetSlot)
 
         this.links = this.links.filter((line) => {
-          return !(
-            line.targetID === targetID
-            && line.targetSlot === targetSlot
-            && line.originID === originID
-            && line.originSlot === originSlot
-          ) && !(line.originID === originID && line.targetID === targetID);
+          return (
+            !(
+              line.targetID === targetID &&
+              line.targetSlot === targetSlot &&
+              line.originID === originID &&
+              line.originSlot === originSlot
+            ) && !(line.originID === originID && line.targetID === targetID)
+          );
         });
 
         let maxID = Math.max(
@@ -497,6 +493,7 @@ export default {
       this.linkStartData = null;
     },
     linkingBreak(targetBlock, slotNumber) {
+      console.log('linkingBreak')
       if (targetBlock && slotNumber > -1) {
         let findLink = this.links.find((value) => {
           return (
@@ -515,6 +512,11 @@ export default {
               value.targetSlot === slotNumber
             );
           });
+          // targetBlock.inputs[findLink].active = false
+          // findBlock.outputs[slotNumber].active = false
+          // console.log(targetBlock.inputs[slotNumber].active = false)
+          // console.log(findBlock.outputs[slotNumber].active = false)
+          console.log(findLink)
 
           this.linkingStart(findBlock, findLink.originSlot);
 
@@ -523,6 +525,7 @@ export default {
       }
     },
     removeLink(linkID) {
+      console.log('removeLink')
       this.links = this.links.filter((value) => {
         return !(value.id === linkID);
       });
@@ -537,7 +540,8 @@ export default {
       );
 
       let node = this.nodes.find((n) => {
-        return n.name === nodeName;
+        console.log(n)
+        return n.group === nodeName;
       });
 
       if (!node) {
@@ -554,16 +558,17 @@ export default {
         y = (y - this.centerY) / this.scale;
       }
 
+      console.log(block)
       block.position[0] = x;
       block.position[1] = y;
       this.blocks.push(block);
 
-      this.updateScene();
+      // this.updateScene();
     },
     createBlock(node, id) {
       let inputs = [];
       let outputs = [];
-      let values = {};
+      // let values = {};
 
       node.fields.forEach((field) => {
         if (field.attr === "input") {
@@ -576,32 +581,34 @@ export default {
             name: field.name,
             label: field.label || field.name,
           });
-        } else {
-          if (!values[field.attr]) {
-            values[field.attr] = {};
-          }
+        } 
+        // else {
+        //   if (!values[field.attr]) {
+        //     values[field.attr] = {};
+        //   }
 
-          let newField = merge({}, field);
-          delete newField["name"];
-          delete newField["attr"];
+        //   let newField = merge({}, field);
+        //   delete newField["name"];
+        //   delete newField["attr"];
 
-          if (!values[field.attr][field.name]) {
-            values[field.attr][field.name] = {};
-          }
+        //   if (!values[field.attr][field.name]) {
+        //     values[field.attr][field.name] = {};
+        //   }
 
-          values[field.attr][field.name] = newField;
-        }
+        //   values[field.attr][field.name] = newField;
+        // }
       });
 
       return {
         id: id,
-        position: [0,0],
+        position: [0, 0],
+        group:node.group,
         selected: false,
         name: node.name,
         title: node.title || node.name,
         inputs: inputs,
         outputs: outputs,
-        values: values,
+        // values: values,
       };
     },
     deselectAll(withoutID = null) {
@@ -644,12 +651,10 @@ export default {
     },
     //
     prepareBlocks(blocks) {
-      return blocks
-        .map((block) => {
+      return blocks.map((block) => {
           let node = this.nodes.find((n) => {
-            return n.name === block.name;
+            return n.group === block.group;
           });
-
           if (!node) {
             return null;
           }
@@ -686,16 +691,12 @@ export default {
 
         block.inputs.forEach((s, index) => {
           // is linked
-          block.inputs[index].active = inputs.some(
-            (i) => i.targetSlot === index
-          );
+          block.inputs[index].active = inputs.some((i) => i.targetSlot === index);
         });
 
         block.outputs.forEach((s, index) => {
           // is linked
-          block.outputs[index].active = outputs.some(
-            (i) => i.originSlot === index
-          );
+          block.outputs[index].active = outputs.some((i) => i.originSlot === index);
         });
 
         newBlocks.push(block);
@@ -703,13 +704,13 @@ export default {
 
       return newBlocks;
     },
-    importBlocksContent() {
-      if (this.blocksContent) {
-        this.nodes = merge([], this.blocksContent);
-      }
-    },
+    // importBlocksContent() {
+    //   if (this.blocksContent) {
+    //     this.nodes = merge([], this.blocksContent);
+    //   }
+    // },
     importScene() {
-      let scene = merge(this.defaultScene, this.scene);
+      let scene = {...this.defaultScene, ...this.scene};
 
       let blocks = this.prepareBlocks(scene.blocks);
       blocks = this.prepareBlocksLinking(blocks, scene.links);
@@ -753,14 +754,58 @@ export default {
       };
     },
     updateScene() {
-      this.$emit("update:scene", this.exportScene());
+      // this.scene = this.exportScene()
+      // this.$emit("update:scene", this.exportScene());
     },
   },
+
+  mounted() {
+    document.documentElement.addEventListener("keyup", this.keyup);
+    document.documentElement.addEventListener(
+      "mousemove",
+      this.handleMove,
+      true
+    );
+    document.documentElement.addEventListener(
+      "mousedown",
+      this.handleDown,
+      true
+    );
+    document.documentElement.addEventListener("mouseup", this.handleUp, true);
+    document.documentElement.addEventListener("wheel", this.handleWheel, true);
+
+    this.centerX = this.$el.clientWidth / 2;
+    this.centerY = this.$el.clientHeight / 2;
+
+    this.importScene();
+  },
+  beforeDestroy() {
+    document.documentElement.removeEventListener("keyup", this.keyup);
+    document.documentElement.removeEventListener(
+      "mousemove",
+      this.handleMove,
+      true
+    );
+    document.documentElement.removeEventListener(
+      "mousedown",
+      this.handleDown,
+      true
+    );
+    document.documentElement.removeEventListener(
+      "mouseup",
+      this.handleUp,
+      true
+    );
+    document.documentElement.removeEventListener(
+      "wheel",
+      this.handleWheel,
+      true
+    );
+  },
+
   watch: {
-    blocksContent() {
-      this.importBlocksContent();
-    },
     scene() {
+      console.log('scene')
       this.importScene();
     },
   },

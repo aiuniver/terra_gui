@@ -62,9 +62,10 @@ export default {
     ...mapGetters({
       block: "modeling/getBlock",
       list: "modeling/getList",
-      layers: "modeling/getLayers",
+      layers: "modeling/getLayersType",
     }),
     main() {
+      // console.log(this.block)
       if (Object.keys(this.layers).length && this.block.type) {
         return this.layers[this.block.type]?.main || [];
       } else {
@@ -72,6 +73,7 @@ export default {
       }
     },
     extra() {
+      // console.log(this.block)
       if (Object.keys(this.layers).length && this.block.type) {
         return this.layers[this.block.type]?.extra || [];
       } else {
