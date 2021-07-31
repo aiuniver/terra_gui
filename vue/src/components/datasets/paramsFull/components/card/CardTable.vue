@@ -57,6 +57,28 @@ export default {
     }
   },
   methods: {
+    compare(a, b) {
+      if (a.dataset.index < b.dataset.index) {
+        return -1;
+      }
+      if (a.dataset.index > b.dataset.index) {
+        return 1;
+      }
+      return 0;
+    },
+    sortOnDataIndex(el){
+      let arr = [], i = el.children.length;
+      while(i--){
+        arr[i] = el.children[i];
+        el.children[i].remove()
+      }
+      arr.sort(this.compare);
+      i = 0;
+      while(arr[i]) {
+        el.appendChild(arr[i]);
+        ++i;
+      }
+    },
     select(index){
       event.preventDefault();
       if(event.which == 1){
@@ -68,10 +90,12 @@ export default {
           this.selected_cols.splice(key, 1);
           document.querySelector(`.selected__cols`).removeChild(col)
           unselected_cols.append(col);
+          this.sortOnDataIndex(unselected_cols);
         } else {
           this.selected_cols.push(index);
           document.querySelector(`.table__data`).removeChild(col)
           selected_cols.append(col);
+          this.sortOnDataIndex(selected_cols);
         }
 
         if(this.selected_cols.length == 0){
@@ -79,7 +103,6 @@ export default {
         }else{
           selected_cols.style.display = 'flex';
         }
-
       }
     }
   },
