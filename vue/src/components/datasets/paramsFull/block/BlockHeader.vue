@@ -10,16 +10,6 @@
               :key="'files_' + i"
             />
           </template>
-<<<<<<< HEAD
-        </div>
-        <div v-else class="block-header__overlay">
-          <div class="int">
-          <div class="block-header__overlay--icon"></div>
-          <div class="block-header__overlay--title">
-            Перетащите папку или файл для начала работы с содержимым архива
-          </div>
-          </div>
-=======
       </Cards>
       <div class="empty"></div>
     </div>
@@ -28,7 +18,6 @@
         <div class="block-header__overlay--icon"></div>
         <div class="block-header__overlay--title">
           Перетащите папку или файл для начала работы с содержимым архива
->>>>>>> features/new
         </div>
       </div>
     </div>
