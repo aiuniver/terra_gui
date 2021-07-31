@@ -2,6 +2,7 @@
 ## Структура данных обучения
 """
 
+import json
 from typing import Any
 from pydantic import validator
 from pydantic.types import PositiveInt
@@ -16,6 +17,12 @@ from .extra import OptimizerChoice, ArchitectureChoice
 class OptimizerData(BaseMixinData):
     type: OptimizerChoice
     parameters: Any
+
+    @property
+    def parameters_dict(self) -> dict:
+        __data = json.loads(self.parameters.main.json())
+        __data.update(json.loads(self.parameters.extra.json()))
+        return __data
 
     @validator("type", pre=True)
     def _validate_type(cls, value: OptimizerChoice) -> OptimizerChoice:
@@ -36,6 +43,11 @@ class OptimizerData(BaseMixinData):
 class ArchitectureData(BaseMixinData):
     type: ArchitectureChoice
     parameters: Any
+
+    @property
+    def outputs_dict(self) -> dict:
+        __data = json.loads(self.parameters.outputs.json())
+        return __data
 
     @validator("type", pre=True)
     def _validate_type(cls, value: ArchitectureChoice) -> ArchitectureChoice:

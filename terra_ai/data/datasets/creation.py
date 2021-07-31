@@ -312,7 +312,7 @@ class CreationInputsList(UniqueListMixin):
 
     class Meta:
         source = CreationInputData
-        identifier = "alias"
+        identifier = "id"
 
 
 class CreationOutputsList(UniqueListMixin):
@@ -327,7 +327,7 @@ class CreationOutputsList(UniqueListMixin):
 
     class Meta:
         source = CreationOutputData
-        identifier = "alias"
+        identifier = "id"
 
 
 class CreationData(AliasMixinData):

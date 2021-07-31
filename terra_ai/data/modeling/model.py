@@ -6,6 +6,7 @@ from typing import Optional, List
 from pydantic import validator
 from pydantic.types import PositiveInt
 
+from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
 from .layer import LayersList, LayerBindData
@@ -32,7 +33,7 @@ class ModelLoadData(BaseMixinData):
     Информация для загрузки модели
     """
 
-    value: confilepath(ext="model")
+    value: confilepath(ext=settings.MODEL_EXT)
     "Пусть к фалу модели"
 
 
@@ -113,17 +114,13 @@ class BlocksList(UniqueListMixin):
         identifier = "name"
 
 
-class ModelDetailsData(BaseMixinData):
+class ModelDetailsData(AliasMixinData):
     """
     Детальная информация о модели
     """
 
-    type: Optional[str]
-    "Тип модели: `2D`"
-    name: Optional[AliasType]
-    "Название модели: `rasposnavanie_avtomobiley`"
-    input_shape: Optional[str]
-    "Размерность входных слоев: `[32,32,3], [128,128,3]`"
+    name: Optional[str]
+    "Название модели: `Распознавание автомобилей`"
     image: Optional[Base64Type]
     "Изображение схемы модели в `base64`"
     layers: Optional[LayersList]
@@ -137,6 +134,10 @@ class ModelDetailsData(BaseMixinData):
         for layer in self.layers:
             links += self.__get_links(layer.id, layer.bind.down)
         return links
+
+    @property
+    def input_shape(self) -> str:
+        return ""
 
     def __get_links(
         self, layer_id: PositiveInt, binds_down: LayerBindData
@@ -160,7 +161,12 @@ class ModelDetailsData(BaseMixinData):
 
     def dict(self, **kwargs):
         data = super().dict()
-        data.update({"links": self.links})
+        data.update(
+            {
+                "links": self.links,
+                "input_shape": self.input_shape,
+            }
+        )
         return data
 
 
@@ -171,7 +177,7 @@ class ModelData(AliasMixinData):
 
     name: str
     "Название"
-    file_path: Optional[confilepath(ext="model")]
+    file_path: Optional[confilepath(ext=settings.MODEL_EXT)]
     "Путь к файлу модели"
     details: Optional[ModelDetailsData]
     "Детальная информация о модели"
@@ -182,7 +188,7 @@ class ModelListData(BaseMixinData):
     Информация о модели в списке
     """
 
-    value: confilepath(ext="model")
+    value: confilepath(ext=settings.MODEL_EXT)
     "Путь к файлу модели"
     label: Optional[str]
     "Название"
@@ -192,7 +198,7 @@ class ModelListData(BaseMixinData):
         file_path = values.get("value")
         if not file_path:
             return value
-        return file_path.name.split(".model")[0]
+        return file_path.name.split(f".{settings.MODEL_EXT}")[0]
 
 
 class ModelsList(UniqueListMixin):
@@ -201,7 +207,7 @@ class ModelsList(UniqueListMixin):
     ```
     class Meta:
         source = ModelListData
-        identifier = "name"
+        identifier = "label"
     ```
     """
 

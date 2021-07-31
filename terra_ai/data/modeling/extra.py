@@ -5,6 +5,15 @@
 from enum import Enum
 
 
+class ModelGroupChoice(str, Enum):
+    preset = "preset"
+    custom = "custom"
+
+    @staticmethod
+    def values() -> list:
+        return list(map(lambda item: item.value, ModelGroupChoice))
+
+
 class ReferenceTypeChoice(str, Enum):
     block = "block"
 

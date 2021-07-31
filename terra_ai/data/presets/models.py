@@ -3,6 +3,11 @@
 """
 
 
+EmptyModelDetailsData = {
+    "alias": "no_name",
+    "name": "NoName",
+}
+
 ModelsGroups = [
     {
         "alias": "preset",

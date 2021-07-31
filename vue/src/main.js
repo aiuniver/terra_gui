@@ -69,6 +69,12 @@ import vuescroll from '@/assets/js/vuescroll-native.min.js';
 
 Vue.use(vuescroll, {
   ops: {
+    vuescroll: {
+      mode: 'native',
+      sizeStrategy: 'percent',
+      detectResize: false,
+      locking: true,
+    },
     bar: {
       showDelay: 500,
       onlyShowBarOnScroll: false,
@@ -80,11 +86,16 @@ Vue.use(vuescroll, {
       minSize: 0,
       size: '4px',
       disable: false
+    },
+    rail: {
+      size: '4px',
     }
   },
   name: 'scrollbar'
 });
 
+import FilesMenu from "@/components/datasets/paramsFull/components/forms/FilesMenu.vue";
+Vue.component('files-menu', FilesMenu)
 
 import VuePapaParse from "vue-papa-parse";
 Vue.use(VuePapaParse)

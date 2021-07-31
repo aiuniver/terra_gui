@@ -182,7 +182,7 @@ from pydantic import validator, DirectoryPath
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
-from ... import DATASET_EXT, DATASET_CONFIG
+from ... import settings
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
@@ -207,13 +207,13 @@ class CustomDatasetConfigData(BaseMixinData):
 
     @validator("path")
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        if not str(value).endswith(f".{DATASET_EXT}"):
+        if not str(value).endswith(f".{settings.DATASET_EXT}"):
             raise TrdsDirExtException(value.name)
         return value
 
     @validator("config", always=True)
     def _validate_config(cls, value: dict, values) -> dict:
-        config_path = Path(values.get("path"), DATASET_CONFIG)
+        config_path = Path(values.get("path"), settings.DATASET_CONFIG)
         if not config_path.is_file():
             raise TrdsConfigFileNotFoundException(
                 values.get("path").name, config_path.name

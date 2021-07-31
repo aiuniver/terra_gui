@@ -1,5 +1,5 @@
-import json
 import os
+import json
 
 from typing import Optional
 from pathlib import Path
@@ -12,6 +12,8 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.presets.models import EmptyModelDetailsData
 
 
 UNKNOWN_NAME = "NoName"
@@ -77,6 +79,7 @@ class Project(BaseMixinData):
         type=HardwareAcceleratorChoice.CPU
     )
     dataset: Optional[DatasetData]
+    model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
 
     def __init__(self, save=False, **data):
         super().__init__(**data)
@@ -106,7 +109,3 @@ else:
         data = json.load(config_ref)
         data.update({"hardware": agent_exchange("hardware_accelerator")})
         project = Project(**data)
-
-print("-------------------------")
-print(project)
-print("-------------------------")
