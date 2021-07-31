@@ -6,7 +6,7 @@
         <form novalidate="novalidate" ref="form">
           <div class="params__items--item">
             <Input
-              :value="block.name"
+              v-model="block.name"
               :label="'Название слоя'"
               :type="'text'"
               :parse="'name'"
@@ -21,7 +21,7 @@
           </div>
           <at-collapse value="1">
             <at-collapse-item class="mb-3" title="Параметры слоя">
-              <Forms :items="main" />
+              <Forms :items="main" :parameters="parametersMain"/>
             </at-collapse-item>
             <at-collapse-item class="mb-3" title="Дополнительные параметры">
               <Forms :items="extra" parse="extra" />
@@ -60,10 +60,20 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      block: "modeling/getBlock",
       list: "modeling/getList",
       layers: "modeling/getLayersType",
     }),
+    block: {
+      set(value) {
+        console.log(value)
+      },
+      get() {
+        return this.$store.getters['modeling/getBlock'] || {}
+      }
+    },
+    parametersMain() {
+      return this.block?.parameters?.main || {}
+    },
     main() {
       // console.log(this.block)
       if (Object.keys(this.layers).length && this.block.type) {

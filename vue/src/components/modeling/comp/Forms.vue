@@ -1,9 +1,11 @@
 <template>
   <div class="form-inline-label">
-    <template v-for="({ type, value, list, event, label, parse, name }, key) of items">
+    <template
+      v-for="({ type, value, list, event, label, parse, name }, key) of items"
+    >
       <Input
         v-if="type === 'tuple'"
-        :value="value"
+        :value="parameters[name] || value"
         :label="label"
         type="text"
         :parse="parse"
@@ -13,7 +15,7 @@
       />
       <Input
         v-if="type === 'number' || type === 'text'"
-        :value="value"
+        :value="parameters[name]  | toString "
         :label="label"
         :type="type"
         :parse="parse"
@@ -54,7 +56,7 @@ export default {
   components: {
     Input,
     Select,
-    Checkbox
+    Checkbox,
   },
   props: {
     items: {
@@ -62,7 +64,21 @@ export default {
       required: true,
     },
     parse: {
-        type: String
+      type: String,
+    },
+    parameters: {
+      type: Object,
+      default: () => {},
+    },
+  },
+  filters: {
+    toString: function (value) {
+      
+      if (typeof (value) === "object") {
+console.log( value.join())
+        return value.join()
+      }
+      return value
     },
   },
 };

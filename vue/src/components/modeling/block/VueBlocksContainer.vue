@@ -59,44 +59,21 @@ export default {
     nodes: [
       {
         group: "input",
-        title: "Input",
-        fields: [
-          {
-            name: "Output",
-            type: "event",
-            attr: "output",
-          },
-        ],
+        inputs: [],
+        outputs: [{}],
       },
       {
         group: "middle",
-        title: "Sloy",
-        fields: [
-          {
-            name: "Input",
-            type: "event",
-            attr: "input",
-          },
-          {
-            name: "output",
-            type: "event",
-            attr: "output",
-          },
-        ],
+        inputs: [{}],
+        outputs: [{}],
       },
       {
         group: "output",
-        title: "Output",
-        fields: [
-          {
-            name: "Input",
-            type: "event",
-            attr: "input",
-          },
-        ],
+        inputs: [{}],
+        outputs: [],
       },
     ],
-    blocks: [],
+    // blocks: [],
     links: [],
     //
     tempLink: null,
@@ -121,6 +98,29 @@ export default {
   }),
 
   computed: {
+    // layers() {
+    //   const { layers } = this.$store.getters['modeling/getModel']
+    //   if (layers) {
+    //     const newBlocks = this.prepareLayers(layers) 
+    //     this.blocks = newBlocks; // eslint-disable-line
+    //     // const links = newBlocks.map((block) => {
+    //     //   if (block) {
+
+    //     //   }
+    //     // })
+    //     console.log(newBlocks)
+    //   }
+      
+    //   return []
+    // },
+    blocks: {
+      set(value) {
+        this.$store.dispatch('modeling/setBlocks', value)
+      },
+      get() {
+        return this.$store.getters['modeling/getBlocks']
+      }
+    },
     optionsForChild() {
       return {
         width: 200,
@@ -428,6 +428,7 @@ export default {
     // Linking
     linkingStart(block, slotNumber) {
       console.log('linkingStart')
+      // block.outputs[slotNumber].active = true
       this.linkStartData = { block, slotNumber };
       let linkStartPos = this.getConnectionPos(
         this.linkStartData.block,
@@ -484,6 +485,8 @@ export default {
           });
           // console.log("adddd");
           console.log(this.links);
+          targetBlock.inputs[targetSlot].active = true
+          targetBlock.inputs[targetSlot].active = true
           this.updateScene();
         }
       }
@@ -512,8 +515,8 @@ export default {
               value.targetSlot === slotNumber
             );
           });
-          // targetBlock.inputs[findLink].active = false
-          // findBlock.outputs[slotNumber].active = false
+          targetBlock.inputs[findLink.targetSlot].active = false
+          findBlock.outputs[findLink.originSlot].active = false
           // console.log(targetBlock.inputs[slotNumber].active = false)
           // console.log(findBlock.outputs[slotNumber].active = false)
           console.log(findLink)
@@ -566,22 +569,22 @@ export default {
       // this.updateScene();
     },
     createBlock(node, id) {
-      let inputs = [];
-      let outputs = [];
+      // let inputs = [];
+      // let outputs = [];
       // let values = {};
 
-      node.fields.forEach((field) => {
-        if (field.attr === "input") {
-          inputs.push({
-            name: field.name,
-            label: field.label || field.name,
-          });
-        } else if (field.attr === "output") {
-          outputs.push({
-            name: field.name,
-            label: field.label || field.name,
-          });
-        } 
+      // node.fields.forEach((field) => {
+      //   if (field.attr === "input") {
+      //     inputs.push({
+      //       name: field.name,
+      //       label: field.label || field.name,
+      //     });
+      //   } else if (field.attr === "output") {
+      //     outputs.push({
+      //       name: field.name,
+      //       label: field.label || field.name,
+      //     });
+      //   } 
         // else {
         //   if (!values[field.attr]) {
         //     values[field.attr] = {};
@@ -597,7 +600,7 @@ export default {
 
         //   values[field.attr][field.name] = newField;
         // }
-      });
+      // });
 
       return {
         id: id,
@@ -606,8 +609,8 @@ export default {
         selected: false,
         name: node.name,
         title: node.title || node.name,
-        inputs: inputs,
-        outputs: outputs,
+        inputs: node.inputs,
+        outputs: node.outputs,
         // values: values,
       };
     },
@@ -673,6 +676,40 @@ export default {
           return !!b;
         });
     },
+
+    prepareLayers(blocks) {
+      let last = 0    
+      const newBlock = blocks.map((block) => {
+          let node = this.nodes.find((n) => {
+            return n.group === block.group;
+          });
+          if (!node) {
+            return null;
+          }
+          let newBlock  = {
+            selected: false,
+            inputs: node.inputs,
+            outputs: node.outputs,
+          }
+          
+          const x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+          const y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+
+          newBlock = { ...newBlock, ...block }
+          console.log(newBlock.position)
+          if (!newBlock.position) {
+            newBlock.position = [x + last,y + last]
+            last = last + 20
+          }
+          return newBlock;
+        })
+        .filter((b) => {
+          return !!b;
+        });
+
+        return JSON.parse(JSON.stringify(newBlock))
+    },
+
     prepareBlocksLinking(blocks, links) {
       if (!blocks) {
         return [];
@@ -777,7 +814,7 @@ export default {
     this.centerX = this.$el.clientWidth / 2;
     this.centerY = this.$el.clientHeight / 2;
 
-    this.importScene();
+    // this.importScene();
   },
   beforeDestroy() {
     document.documentElement.removeEventListener("keyup", this.keyup);

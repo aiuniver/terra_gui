@@ -6,7 +6,7 @@
     @mouseleave="hover = false"
   >
     <div :class="['header', group, { selected: selected }]">
-      <div class="title" :title="title">{{ id }}: {{ title }}</div>
+      <div class="title" :title="name">{{ id }}: {{ name }}</div>
       <div class="parametr" :title="parameters">[dsd]sdsds</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
@@ -218,13 +218,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$blockBorder: 2px;
+$blockBorder: 3px;
 
 $ioPaddingInner: 2px 0;
 $ioHeight: 16px;
 $ioFontSize: 14px;
 
-$circleBorder: 1px;
+$circleBorder: 4px;
 $circleSize: 10px;
 $circleMargin: 2px; // left/right
 

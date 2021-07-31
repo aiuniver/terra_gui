@@ -22,7 +22,7 @@ export default {
       });
       commit("SET_PROJECT", project);
       commit('modeling/SET_MODELING', { layers_types, list }, { root: true }) 
-      commit('modeling/SET_MODEL', { model }, { root: true }) 
+      commit('modeling/SET_MODEL', model, { root: true }) 
     },
     async saveProject({ dispatch }, name) {
       console.log(name)
