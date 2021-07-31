@@ -1,90 +1,43 @@
-const blocks = [
-  {
-    name: "input",
-    title: "Input",
-    fields: [
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-    ],
-  },
-  {
-    name: "sloy-one",
-    title: "Sloy one",
-    fields: [
-      {
-        name: "Input",
-        type: "event",
-        attr: "input",
-      },
-      {
-        name: "output",
-        type: "event",
-        attr: "output",
-      },
-    ],
-  },
-  {
-    name: "sloy-two",
-    title: "Sloy two",
-    fields: [
-      {
-        name: "Input",
-        type: "event",
-        attr: "input",
-      },
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-    ],
-  },
-  {
-    name: "sloy-three",
-    title: "Sloy three",
-    fields: [
-      {
-        name: "Input",
-        type: "event",
-        attr: "input",
-      },
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-      {
-        name: "Output",
-        type: "event",
-        attr: "output",
-      },
-    ],
-  },
-  {
-    name: "output",
-    title: "Output",
-    fields: [
-      {
-        name: "Input",
-        type: "event",
-        attr: "input",
-      },
-    ],
-  },
-];
+// const blocks = [
+//   {
+//     group: "input",
+//     title: "Input",
+//     fields: [
+//       {
+//         name: "Output",
+//         type: "event",
+//         attr: "output",
+//       },
+//     ],
+//   },
+//   {
+//     group: "middle",
+//     title: "Sloy",
+//     fields: [
+//       {
+//         name: "Input",
+//         type: "event",
+//         attr: "input",
+//       },
+//       {
+//         name: "output",
+//         type: "event",
+//         attr: "output",
+//       },
+//     ],
+//   },
+//   {
+//     group: "output",
+//     title: "Output",
+//     fields: [
+//       {
+//         name: "Input",
+//         type: "event",
+//         attr: "input",
+//       },
+//     ],
+//   },
+// ];
 
 const scene = {
   blocks: [
@@ -101,7 +54,7 @@ const scene = {
     {
       id: 2,
       position: [-900, 150],
-      name: "sloy-three",
+      name: "middle",
       type: "BatchNormalization",
       parameters: {
         main: {},
@@ -161,27 +114,17 @@ const scene = {
     {
       id: 2,
       originID: 2,
-      originSlot: 1,
-      targetID: 3,
-      targetSlot: 0,
-    },
-    {
-      id: 3,
-      originID: 1,
       originSlot: 0,
       targetID: 3,
       targetSlot: 0,
     },
+
   ],
-  container: {
-    centerX: 1042,
-    centerY: 140,
-    scale: 1,
-  },
+
 };
 
-const typeBlock = blocks.map(({ name, title }) => {
-  return { value: name, title };
-});
+// const typeBlock = blocks.map(({ name, title }) => {
+//   return { value: name, title };
+// });
 
-export { blocks, typeBlock, scene };
+export {  scene };

@@ -49,7 +49,7 @@ export default {
       },
       {
         title: "Промежуточный слой",
-        name: "sloy",
+        name: "middle",
         disabled: false,
         icon: "icon-layer-middle",
       },

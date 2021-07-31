@@ -34,13 +34,21 @@ export default {
     Card,
     Filters,
   },
+  data: () => ({
+    hight: 0
+  }),
   computed: {
     ...mapGetters({
       datasets: "datasets/getDatasets",
     }),
+    // height() {
+    //   const filterHeight = this.$store.getters['settings/getFilterHeight']
+    //   return this.$store.getters["settings/height"](filterHeight + 207);
+    // },
     height() {
-      const filterHeight = this.$store.getters['settings/getFilterHeight']
-      return this.$store.getters["settings/height"](filterHeight + 207);
+      // const filterHeight = this.$store.getters['settings/getFilterHeight']
+      // return this.$store.getters["settings/height"](filterHeight + 207);
+      return { height: (this.hight - 207) + 'px' }
     },
   },
   methods: {
@@ -56,6 +64,8 @@ export default {
     }
   },
   mounted() {
+    console.log(this.$el.clientHeight)
+    this.hight = this.$el.clientHeight
     this.items = this.datasets.map((item) => {
       return item
     })
