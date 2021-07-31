@@ -10,6 +10,7 @@
               :key="'files_' + i"
             />
           </template>
+          <CardTable/>
       </Cards>
       <div class="empty"></div>
     </div>
@@ -32,7 +33,7 @@ export default {
   name: "BlockHeader",
   components: {
     CardFile,
-    CardTable
+    CardTable,
     Cards,
   },
   data: () => ({

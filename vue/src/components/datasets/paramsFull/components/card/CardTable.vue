@@ -1,13 +1,21 @@
 <template>
   <div class="csv-table">
     <div class="table__data">
+      <div class="table__col">
+        <div class="table__row"></div>
+        <div class="table__row">0</div>
+        <div class="table__row">2</div>
+        <div class="table__row">4</div>
+        <div class="table__row">6</div>
+        <div class="table__row">8</div>
+      </div>
+      <div class="selected__cols"></div>
       <div
           class="table__col"
           v-for="(row, index) in table_test"
           :key="row"
           @mousedown="select(index)"
-          @mouseover="select(index)"
-          :class="{ selected: selected_cols.includes(index) }"
+          :data-index="index"
       >
         <div
             class="table__row"
@@ -28,12 +36,12 @@ export default {
     selected_cols: [],
   }),
   created() {
-    let file = ";text;text larrrrrge;text normal;text;text;text;text\n" +
-        "0;1;text;text;text 2131;NaN;text 2131. dddd;2\n" +
-        "2;1;text;text;text 2131;text 2131. dddd;text 2131;2\n" +
-        "4;1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
-        "6;1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
-        "8;1;text;text;text 2131;NaN;text 2131;2";
+    let file = "text;text larrrrrge;text normal;text;text;text;text\n" +
+        "1;text;text;text 2131;NaN;text 2131. dddd;2\n" +
+        "1;text;text;text 2131;text 2131. dddd;text 2131;2\n" +
+        "1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
+        "1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
+        "1;text;text;text 2131;NaN;text 2131;2";
 
     let copy = this.$papa.parse(file).data;
     this.table_test = []
@@ -53,11 +61,25 @@ export default {
       event.preventDefault();
       if(event.which == 1){
         const key = this.selected_cols.indexOf(index);
+        const selected_cols = document.querySelector(".selected__cols");
+        const unselected_cols = document.querySelector(".table__data");
+        let col = document.querySelector(`.table__col[data-index='${index}']`);
         if (key !== -1) {
           this.selected_cols.splice(key, 1);
+          document.querySelector(`.selected__cols`).removeChild(col)
+          unselected_cols.append(col);
         } else {
           this.selected_cols.push(index);
+          document.querySelector(`.table__data`).removeChild(col)
+          selected_cols.append(col);
         }
+
+        if(this.selected_cols.length == 0){
+          selected_cols.style.display = 'none';
+        }else{
+          selected_cols.style.display = 'flex';
+        }
+
       }
     }
   },
@@ -102,8 +124,15 @@ export default {
   }
 }
 
+.selected__cols{
+  display: flex;
+  border: 1px solid #89D764;
+  border-radius: 4px;
+}
+
 .selected{
   border: 1px solid #89D764;
+  border-radius: 4px;
   color:#fff;
 
   &:nth-child(1){
