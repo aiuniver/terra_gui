@@ -1,8 +1,7 @@
 <template>
   <div class="block-header" @drop="onDrop($event)" @dragover.prevent>
-    <scrollbar>
-      <div class="inner">
-        <div v-if="files.length" class="block-header__main">
+    <div v-if="files.length" class="block-header__main">
+      <Cards>
           <template v-for="({ title, color, type }, i) of files">
             <CardFile
               :title="title"
@@ -10,31 +9,31 @@
               :type="type"
               :key="'files_' + i"
             />
-
           </template>
-          <CardTable/>
-        </div>
-        <div v-else class="block-header__overlay">
-          <div class="int">
-          <div class="block-header__overlay--icon"></div>
-          <div class="block-header__overlay--title">
-            Перетащите папку или файл для начала работы с содержимым архива
-          </div>
-          </div>
+      </Cards>
+      <div class="empty"></div>
+    </div>
+    <div v-else class="inner">
+      <div class="block-header__overlay">
+        <div class="block-header__overlay--icon"></div>
+        <div class="block-header__overlay--title">
+          Перетащите папку или файл для начала работы с содержимым архива
         </div>
       </div>
-    </scrollbar>
+    </div>
   </div>
 </template>
 
 <script>
 import CardFile from "../components/card/CardFile.vue";
 import CardTable from "../components/card/CardTable";
+import Cards from "../components/card/Cards.vue";
 export default {
   name: "BlockHeader",
   components: {
     CardFile,
     CardTable
+    Cards,
   },
   data: () => ({
     files: [
@@ -53,6 +52,9 @@ export default {
       this.files.push({ title, color, type });
     },
   },
+  mounted() {
+    console.log(this.$el.clientHeight);
+  },
 };
 </script>
 
@@ -64,6 +66,12 @@ export default {
   // position: absolute;
   // top: 10px;
   // height: 150px;
+  padding: 10px;
+  height: 100%;
+}
+.empty {
+  width: 10px;
+  height: 100%;
 }
 .block-header {
   width: 100%;
@@ -73,6 +81,8 @@ export default {
     flex-direction: row;
     justify-content: center;
     align-items: center;
+    height: 100%;
+    position: relative;
   }
   &__overlay {
     background: #242f3d;

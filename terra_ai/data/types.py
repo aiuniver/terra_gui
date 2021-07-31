@@ -73,12 +73,15 @@ def confilepath(*, ext: str) -> Type[FilePath]:
     return type("FilePathType", (FilePathType,), namespace)
 
 
-class FileNameType(FilePath):
+class FileNameType(str):
     ext: str
 
     @classmethod
+    def __get_validators__(self):
+        yield self.validate
+
+    @classmethod
     def validate(self, value: str) -> str:
-        value = super().validate(value)
         if not str(value).endswith(f".{self.ext}"):
             raise FileNameExtensionException(value, self.ext)
         return value

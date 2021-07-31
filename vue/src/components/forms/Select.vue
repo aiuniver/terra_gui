@@ -1,6 +1,6 @@
 <template>
-  <div class="field-form field-inline field-reverse">
-    <label>{{ label }}</label>
+  <div class="field">
+    <label class="field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="value"/>
     <at-select
       clearable
@@ -58,14 +58,13 @@ export default {
   },
   methods: {
     change(e) {
-      console.log(e)
       this.$emit('input', e)
     // bus.$emit("change", e);
     },
   },
   created() {
     this.select = this.value
-    console.log(this.select)
+    // console.log(this.select)
     // console.log('created', this.name);
     // bus.$on("change", () => {
     //   console.log(this.name, 'data');
@@ -80,4 +79,28 @@ export default {
 
 
 <style lang="scss" scope>
+.field {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  -webkit-box-pack: end;
+  margin-bottom: 10px;
+  align-items: center;
+  &__label {
+    width: auto;
+    padding: 0 20px 0 10px;
+    text-align: left;
+    color: #A7BED3;
+    display: block;
+    margin: 0;
+    line-height: 1.25;
+    font-size: .75rem;
+  }
+  &__input {
+    height: 22px;
+    font-size: 0.75rem;
+    max-width: 100px;
+    width: 100px;
+  }
+}
 </style>

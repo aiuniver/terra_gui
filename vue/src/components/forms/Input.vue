@@ -1,9 +1,9 @@
 <template>
-  <div class="field inline">
-    <label class="field__label" :for="name">{{ label }}</label>
+  <div :class="['t-field', { 't-inline': inline }]">
+    <label class="t-field__label" :for="parse">{{ label }}</label>
     <input
-      class="field__input"
-      :id="name"
+      class="t-field__input"
+      :id="parse"
       :type="type"
       :name="parse"
       :value="value"
@@ -27,45 +27,59 @@ export default {
     },
     parse: String,
     name: String,
+    inline: Boolean,
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.inline {
-  display: flex;
-  .field__label {
-    width: auto;
-    padding: 0 20px 0 10px;
-    text-align: left;
-    width: 120px;
-    margin: 0;
-    padding: 0 10px 0 0;
-    text-align: right;
-    flex-direction: row-reverse;
-    -webkit-box-pack: end;
-    -moz-box-pack: end;
-    -webkit-justify-content: flex-end;
-    -ms-flex-pack: end;
-    justify-content: flex-end;
-  }
-  .field__input {
-    height: 22px;
-    font-size: 0.75rem;
-    max-width: 100px;
-    width: 100px;
-  }
-}
-.field {
+.t-field {
+  margin-bottom: 20px;
   &__label {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
     line-height: 1.25;
     font-size: 0.75rem;
+    user-select: none;
   }
   &__input {
-    // max-width: 100px !important;
+    color: #fff;
+    border-color: #6C7883;
+    background: #242F3D;
+    height: 42px;
+    padding: 0 10px;
+    font-size: .875rem;
+    font-weight: 400;
+    border-radius: 4px;
+    transition: border-color .3s ease-in-out, opacity .3s ease-in-out;
+    &:focus{
+      border-color: #fff;
+    }
+  }
+}
+.t-inline {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  -webkit-box-pack: end;
+  margin-bottom: 10px;
+  align-items: center;
+  > label {
+    width: auto;
+    padding: 0 20px 0 10px;
+    text-align: left;
+    color: #A7BED3;
+    display: block;
+    margin: 0;
+    line-height: 1.25;
+    font-size: .75rem;
+  }
+  > input {
+    height: 22px;
+    font-size: 0.75rem;
+    max-width: 100px;
+    width: 100px;
   }
 }
 </style>

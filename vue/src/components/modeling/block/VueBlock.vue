@@ -5,13 +5,13 @@
     @mouseover="hover = true"
     @mouseleave="hover = false"
   >
-    <div :class="['header', name, { selected: selected }]">
+    <div :class="['header', group, { selected: selected }]">
       <div class="title" :title="title">{{ id }}: {{ title }}</div>
       <div class="parametr" :title="parameters">[dsd]sdsds</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
     <div
-      v-if="name.indexOf('sloy') === -1"
+      v-if="group.indexOf('middle') === -1"
       v-show="hover || selected"
       class="hover-over"
     >
@@ -53,6 +53,9 @@ export default {
       type: Number
     },
     name: {
+      type: String,
+    },
+    group: {
       type: String,
     },
     position: {
@@ -321,9 +324,7 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #ffb054;
       }
     }
-    &.sloy-one,
-    &.sloy-two,
-    &.sloy-three {
+    &.middle {
       background: #89d764;
       border: $blockBorder solid #89d764;
       &:hover {

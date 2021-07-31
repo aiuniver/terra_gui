@@ -16,12 +16,13 @@ export default {
         return;
       }
       const { project, defaults:{modeling: {layers_types} } } = data
+      const { model } = project
       const list = Object.keys(layers_types).map((key) => {
         return { label: key, value: key };
       });
       commit("SET_PROJECT", project);
-      commit('modeling/SET_LIST', list, { root: true }) 
-      commit('modeling/SET_LAYERS', layers_types, { root: true }) 
+      commit('modeling/SET_MODELING', { layers_types, list }, { root: true }) 
+      commit('modeling/SET_MODEL', { model }, { root: true }) 
     },
     async saveProject({ dispatch }, name) {
       console.log(name)
