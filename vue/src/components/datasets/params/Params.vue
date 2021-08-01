@@ -1,117 +1,28 @@
 <template>
   <div class="params">
-    <scrollbar :style="height">
-      <div class="params__items">
-        <div class="params__items--item">
-          <DatasetButton />
-        </div>
-        <div class="params__items--item pa-0">
-          <DatasetTab @select="select" />
-        </div>
-        <div class="params__items--item py-0">
-          <DatasetTwoInput />
-        </div>
-        <div class="params__items--item">
-          <button @click.prevent="download">Загрузить</button>
-        </div>
-        <form novalidate="novalidate" ref="form">
-          <at-collapse value="0">
-            <at-collapse-item title="Входные слои">
-              <div class="inner row inputs-layers">
-                <!-- <template v-for="(input, i) of inputLayer">
-                      <Layer
-                        def="images"
-                        :parse="`inputs[input_${input}]`"
-                        :name="`input_${input}`"
-                        :key="'input_' + i"
-                      />
-                    </template> -->
-              </div>
-            </at-collapse-item>
-            <at-collapse-item title="Выходные слои">
-              <div class="inner row inputs-layers">
-                <!-- <template v-for="(output, i) of outputLayer">
-                      <Layer
-                        def="classification"
-                        :parse="`outputs[output_${output}]`"
-                        :name="`output_${output}`"
-                        :key="'output_' + i"
-                      />
-                    </template> -->
-              </div>
-            </at-collapse-item>
-          </at-collapse>
-          <div class="params__items--title">Параметры датасета</div>
-          <div class="params__items--item">
-            <div class="inner form-inline-label">
-              <div class="field-form">
-                <label for="parameters[name]">Название датасета</label>
-                <input
-                  id="parameters[name]"
-                  type="text"
-                  name="parameters[name]"
-                />
-              </div>
-              <div class="field-form">
-                <label for="parameters[user_tags]">Теги</label>
-                <input
-                  id="parameters[user_tags]"
-                  type="text"
-                  name="parameters[user_tags]"
-                />
-              </div>
-              <DatasetSlider />
-              <div class="field-form field-inline field-reverse">
-                <label for="parameters[preserve_sequence]"
-                  >Сохранить последовательность</label
-                >
-                <div class="checkout-switch">
-                  <input
-                    type="checkbox"
-                    name="parameters[preserve_sequence]"
-                    id="parameters[preserve_sequence]"
-                  />
-                  <span class="switcher"></span>
-                </div>
-              </div>
-              <div class="field-form field-inline field-reverse">
-                <label for="parameters[use_generator]"
-                  >Использовать генератор</label
-                >
-                <div class="checkout-switch">
-                  <input
-                    type="checkbox"
-                    name="parameters[use_generator]"
-                    id="parameters[use_generator]"
-                  />
-                  <span class="switcher"></span>
-                </div>
-              </div>
-              <button class="mt-6" @click.prevent="click">Сформировать</button>
-            </div>
-          </div>
-        </form>
+    <div class="params__btn" @click="full = !full">
+      <i class="params__btn--icon"></i>
+    </div>
+    <div class="params__items">
+      <div class="params__items--item">
+        <DatasetButton />
       </div>
-    </scrollbar>
+      <div class="params__items--item pa-0">
+        <DatasetTab @select="select" />
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
-import DatasetTwoInput from "@/components/datasets/params/DatasetTwoInput.vue";
-import DatasetSlider from "@/components/datasets/params/DatasetSlider.vue";
 import DatasetTab from "@/components/datasets/params/DatasetTab.vue";
-// import Layer from "./Layer.vue";
 import DatasetButton from "./DatasetButton.vue";
-import serialize from "@/assets/js/serialize";
 export default {
   name: "Settings",
   components: {
     DatasetTab,
-    // Layer,
     DatasetButton,
-    DatasetSlider,
-    DatasetTwoInput,
   },
   data: () => ({
     dataset: {},
@@ -138,6 +49,14 @@ export default {
       const settings = this.settings;
       return int > 0 && int < 100 && Object.keys(settings).length ? int : 0;
     },
+    full: {
+      set(val) {
+        this.$store.dispatch("datasets/setFull", val);
+      },
+      get() {
+        return this.$store.getters["datasets/getFull"];
+      },
+    },
   },
   methods: {
     createInterval() {
@@ -156,27 +75,17 @@ export default {
       }, 1000);
     },
     select(select) {
-      console.log(select)
-      this.dataset = select
+      console.log(select);
+      this.dataset = select;
     },
     async download() {
-      const { mode, value } = this.dataset
+      const { mode, value } = this.dataset;
       if (mode && value) {
-        this.createInterval()
+        this.createInterval();
         await this.$store.dispatch("datasets/sourceLoad", { mode, value });
       } else {
         this.$store.dispatch("messages/setMessage", {
           error: "Выберите файл",
-        });
-      }
-    },
-    click() {
-      if (this.$refs.form) {
-        const data = serialize(this.$refs.form);
-        console.log({ dataset_dict: data });
-      } else {
-        this.$store.dispatch("messages/setMessage", {
-          error: "Error validate",
         });
       }
     },
@@ -190,7 +99,32 @@ export default {
   flex-shrink: 0;
   border-left: #0e1621 solid 1px;
   background-color: #17212b;
+  position: relative;
   // border-left: #0e1621  1px solid;
+  &__btn {
+    position: absolute;
+    bottom: 1px;
+    right: 0px;
+    width: 31px;
+    height: 38px;
+    background-color: #17212b;
+    border-radius: 4px 0px 0px 4px;
+    border: 1px solid #A7BED3;
+    padding: 12px 7px;
+    cursor: pointer;
+    &--icon {
+      display: block;
+      width: 17px;
+      height: 15px;
+      background-position: center;
+      background-repeat: no-repeat;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxOCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3IDEySDZDNS40NSAxMiA1IDExLjU1IDUgMTFDNSAxMC40NSA1LjQ1IDEwIDYgMTBIMTdDMTcuNTUgMTAgMTggMTAuNDUgMTggMTFDMTggMTEuNTUgMTcuNTUgMTIgMTcgMTJaTTE3IDdIOUM4LjQ1IDcgOCA2LjU1IDggNkM4IDUuNDUgOC40NSA1IDkgNUgxN0MxNy41NSA1IDE4IDUuNDUgMTggNkMxOCA2LjU1IDE3LjU1IDcgMTcgN1pNMTggMUMxOCAxLjU1IDE3LjU1IDIgMTcgMkg2QzUuNDUgMiA1IDEuNTUgNSAxQzUgMC40NSA1LjQ1IDAgNiAwSDE3QzE3LjU1IDAgMTggMC40NSAxOCAxWk0wLjcwMDAwMSA4Ljg4TDMuNTggNkwwLjcwMDAwMSAzLjEyQzAuMzEwMDAxIDIuNzMgMC4zMTAwMDEgMi4xIDAuNzAwMDAxIDEuNzFDMS4wOSAxLjMyIDEuNzIgMS4zMiAyLjExIDEuNzFMNS43IDUuM0M2LjA5IDUuNjkgNi4wOSA2LjMyIDUuNyA2LjcxTDIuMTEgMTAuM0MxLjcyIDEwLjY5IDEuMDkgMTAuNjkgMC43MDAwMDEgMTAuM0MwLjMyMDAwMiA5LjkxIDAuMzEwMDAxIDkuMjcgMC43MDAwMDEgOC44OFoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==);
+    }
+  }
   &__items {
     &--item {
       padding: 20px;

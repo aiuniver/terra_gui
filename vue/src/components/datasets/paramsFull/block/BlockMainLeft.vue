@@ -64,6 +64,7 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 16px;
+    justify-content: flex-end;
   }
   &__body {
     display: flex;

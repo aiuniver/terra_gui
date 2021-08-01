@@ -1,7 +1,7 @@
 <template>
   <div class="card-file" :style="bc">
     <div v-if="isSelect" class="card-file__header" :style="bg">{{ name }}</div>
-    <div :class="['card-file__body', type ]"></div>
+    <div :class="['card-file__body', type]"></div>
     <div class="card-file__footer" :style="bg">{{ title }}</div>
   </div>
 </template>
@@ -12,7 +12,7 @@ export default {
   props: {
     color: {
       type: String,
-      default: "#242f3d",
+      default: "",
     },
     title: String,
     name: String,
@@ -36,8 +36,9 @@ export default {
   position: relative;
   width: 150px;
   height: 150px;
+  border: 1px solid #6c7883;
+  box-sizing: border-box;
   border-radius: 4px;
-  border: #242f3d solid 1px;
   background-color: #17212b;
   margin: 0 5px;
   &__footer,
@@ -69,7 +70,7 @@ export default {
   &__footer {
     bottom: 0;
     border-radius: 0 0 3px 3px;
-    padding: 4px 6px 2px 6px
+    padding: 4px 6px 2px 6px;
   }
 }
 .audio {
@@ -82,6 +83,6 @@ export default {
   background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTM5LjUgMzUuMTY2N1Y0LjgzMzMzQzM5LjUgMi40NSAzNy41NSAwLjUgMzUuMTY2NyAwLjVINC44MzMzM0MyLjQ1IDAuNSAwLjUgMi40NSAwLjUgNC44MzMzM1YzNS4xNjY3QzAuNSAzNy41NSAyLjQ1IDM5LjUgNC44MzMzMyAzOS41SDM1LjE2NjdDMzcuNTUgMzkuNSAzOS41IDM3LjU1IDM5LjUgMzUuMTY2N1pNMTMuMjgzMyAyNC4yOUwxNy44MzMzIDI5Ljc3MTdMMjQuNTUgMjEuMTI2N0MyNC45ODMzIDIwLjU2MzMgMjUuODUgMjAuNTYzMyAyNi4yODMzIDIxLjE0ODNMMzMuODg4MyAzMS4yODgzQzM0LjQzIDMyLjAwMzMgMzMuOTEgMzMuMDIxNyAzMy4wMjE3IDMzLjAyMTdINy4wNDMzM0M2LjEzMzMzIDMzLjAyMTcgNS42MzUgMzEuOTgxNyA2LjE5ODMzIDMxLjI2NjdMMTEuNTkzMyAyNC4zMzMzQzEyLjAwNSAyMy43NyAxMi44MjgzIDIzLjc0ODMgMTMuMjgzMyAyNC4yOVoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==);
 }
 .folder {
-    background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE4IDJIMTBMOC41OSAwLjU5QzguMjEgMC4yMSA3LjcgMCA3LjE3IDBIMkMwLjkgMCAwLjAwOTk5OTk5IDAuOSAwLjAwOTk5OTk5IDJMMCAxNEMwIDE1LjEgMC45IDE2IDIgMTZIMThDMTkuMSAxNiAyMCAxNS4xIDIwIDE0VjRDMjAgMi45IDE5LjEgMiAxOCAyWk0xNyAxNEgzQzIuNDUgMTQgMiAxMy41NSAyIDEzVjVDMiA0LjQ1IDIuNDUgNCAzIDRIMTdDMTcuNTUgNCAxOCA0LjQ1IDE4IDVWMTNDMTggMTMuNTUgMTcuNTUgMTQgMTcgMTRaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=)
+  background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAyMCAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE4IDJIMTBMOC41OSAwLjU5QzguMjEgMC4yMSA3LjcgMCA3LjE3IDBIMkMwLjkgMCAwLjAwOTk5OTk5IDAuOSAwLjAwOTk5OTk5IDJMMCAxNEMwIDE1LjEgMC45IDE2IDIgMTZIMThDMTkuMSAxNiAyMCAxNS4xIDIwIDE0VjRDMjAgMi45IDE5LjEgMiAxOCAyWk0xNyAxNEgzQzIuNDUgMTQgMiAxMy41NSAyIDEzVjVDMiA0LjQ1IDIuNDUgNCAzIDRIMTdDMTcuNTUgNCAxOCA0LjQ1IDE4IDVWMTNDMTggMTMuNTUgMTcuNTUgMTQgMTcgMTRaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=);
 }
 </style>
