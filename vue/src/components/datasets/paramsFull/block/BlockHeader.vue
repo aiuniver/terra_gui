@@ -10,6 +10,7 @@
               :key="'files_' + i"
             />
           </template>
+          <CardTable/>
       </Cards>
       <div class="empty"></div>
     </div>
@@ -26,11 +27,13 @@
 
 <script>
 import CardFile from "../components/card/CardFile.vue";
+import CardTable from "../components/card/CardTable";
 import Cards from "../components/card/Cards.vue";
 export default {
   name: "BlockHeader",
   components: {
     CardFile,
+    CardTable,
     Cards,
   },
   data: () => ({
