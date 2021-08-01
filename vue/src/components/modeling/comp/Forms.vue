@@ -5,42 +5,46 @@
     >
       <Input
         v-if="type === 'tuple'"
-        :value="parameters[name] || value"
+        :value="getValue(valueDef[name], value)"
         :label="label"
         type="text"
         :parse="parse"
         :name="name"
-        :key="key"
+        :key="blockType + key"
         inline
+        @change="change"
       />
       <Input
         v-if="type === 'number' || type === 'text'"
-        :value="parameters[name]  | toString "
+        :value="getValue(valueDef[name], value)"
         :label="label"
         :type="type"
         :parse="parse"
         :name="name"
-        :key="key"
+        :key="blockType + key"
         inline
+        @change="change"
       />
       <Checkbox
         v-if="type === 'checkbox'"
-        :value="value"
+        :value="getValue(valueDef[name], value)"
         :label="label"
         type="checkbox"
         :parse="parse"
         :name="name"
         :event="event"
-        :key="key"
+        :key="blockType + key"
+        @change="change"
       />
       <Select
         v-if="type === 'select'"
+        :value="getValue(valueDef[name], value)"
         :label="label"
         :lists="list"
-        :value="value"
         :parse="parse"
         :name="name"
-        :key="key"
+        :key="blockType + key"
+        @change="change"
       />
     </template>
   </div>
@@ -59,26 +63,50 @@ export default {
     Checkbox,
   },
   props: {
-    items: {
-      type: Array,
-      required: true,
-    },
-    parse: {
-      type: String,
-    },
-    parameters: {
+    data: {
       type: Object,
-      default: () => {},
+      default: () => ({ type: "main", items: [], value: {} }),
+    },
+  },
+  computed: {
+    items() {
+      return this.data?.items || [];
+    },
+    valueDef() {
+      // console.log(this.data?.value);
+      return this.data?.value || {};
+    },
+    type() {
+      return this.data?.type || "";
+    },
+    blockType() {
+      return this.data?.blockType || "";
+    },
+  },
+  methods: {
+    change(e) {
+      this.$emit("change", { type: this.type, ...e });
+    },
+    getValue(val, defVal) {
+      const value = val ?? defVal;
+      if (typeof value === "object") {
+        return value.join();
+      }
+      return value
     },
   },
   filters: {
     toString: function (value) {
-      
-      if (typeof (value) === "object") {
-console.log( value.join())
-        return value.join()
+      // console.log( value )
+      if (typeof value === "object") {
+        return value.join();
       }
-      return value
+      return value;
+    },
+    isCheck: function (value) {
+      // console.log( value )
+      // console.log( typeof(value) )
+      return !!value;
     },
   },
 };

@@ -1,11 +1,11 @@
 <template>
   <div class="field">
     <label class="field__label">{{ label }}</label>
-    <input style="display: none" :name="parse" :value="value"/>
+    <input style="display: none" :name="parse" :value="select"/>
     <at-select
+      v-model="select"
       clearable
       size="small"
-      :value="value"
       style="width: 100px"
       @on-change="change"
     >
@@ -57,14 +57,17 @@ export default {
     },
   },
   methods: {
-    change(e) {
-      this.$emit('input', e)
+    change(value) {
+      this.$emit('input', value)
+      this.$emit('change', { name: this.name, value })
+      
     // bus.$emit("change", e);
     },
   },
   created() {
     this.select = this.value
-    // console.log(this.select)
+
+    // console.log('created', this.select)
     // console.log('created', this.name);
     // bus.$on("change", () => {
     //   console.log(this.name, 'data');

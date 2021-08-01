@@ -1,14 +1,14 @@
 <template>
   <div class="field-form field-inline field-reverse">
-    <label @click="checked = !checked">{{ label }}</label>
+    <label :for="parse">{{ label }}</label>
     <div class="checkout-switch">
       <input
-        v-model="checked"
-        :checked="value ? 'checked' : ''"
+        :id="parse"
+        :checked="checked ? 'checked' : ''"
         :type="type"
         :value="checked"
         :name="parse"
-        @change="change(value)"
+        @change="change"
       />
       <span class="switcher"></span>
     </div>
@@ -28,7 +28,7 @@ export default {
       default: "text",
     },
     value: {
-      type: [String, Number, Boolean],
+      type: [Boolean],
     },
     name: {
       type: String,
@@ -45,15 +45,18 @@ export default {
     checked: null,
   }),
   methods: {
-    change() {
-      console.log(this.name, this.checked);
-      bus.$emit("change", { event: this.name, value: this.checked });
+    change(e) {
+      // console.log(e);
+      const value = e.target.checked
+      this.$emit("change", { name: this.name, value });
+      bus.$emit("change", { event: this.name, value });
     },
   },
   created() {
     this.checked = this.value;
+    // console.log('created ' + this.name, this.checked)
     if (this.event.length) {
-      console.log("created", this.name);
+      // console.log("created", this.name);
       bus.$on("change", ({ event }) => {
         if (this.event.includes(event)) {
           this.checked = false;

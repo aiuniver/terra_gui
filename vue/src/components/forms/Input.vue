@@ -8,6 +8,7 @@
       :type="type"
       :name="parse"
       :value="value"
+      @blur="change"
     />
   </div>
 </template>
@@ -30,13 +31,27 @@ export default {
     name: String,
     inline: Boolean,
   },
+  data: () => ({
+    isChange: false
+  }),
   computed: {
     input: {
       set(value) {
         this.$emit('input', value)
+        this.isChange = true
       },
       get() {
         return this.value
+      }
+    }
+  },
+  methods: {
+    change(e) {
+      if (this.isChange) {
+        let value = e.target.value
+        value = this.type === 'number' ? +value : value
+        this.$emit('change', { name: this.name, value } )
+        this.isChange = false
       }
     }
   }

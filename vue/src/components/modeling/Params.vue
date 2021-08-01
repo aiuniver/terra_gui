@@ -21,10 +21,10 @@
           </div>
           <at-collapse value="1">
             <at-collapse-item class="mb-3" title="Параметры слоя">
-              <Forms :items="main" :parameters="parametersMain"/>
+              <Forms :data="main" @change="change"/>
             </at-collapse-item>
             <at-collapse-item class="mb-3" title="Дополнительные параметры">
-              <Forms :items="extra" parse="extra" />
+              <Forms :data="extra" @change="change" />
             </at-collapse-item>
           </at-collapse>
           <div class="params__items--item">
@@ -43,7 +43,7 @@ import Input from "@/components/forms/Input.vue";
 import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
 import Forms from "@/components/modeling/comp/Forms.vue";
 import { mapGetters } from "vuex";
-import serialize from "@/assets/js/serialize";
+// import serialize from "@/assets/js/serialize";
 
 // import Select from "@/components/forms/Select.vue";
 export default {
@@ -65,7 +65,8 @@ export default {
     }),
     block: {
       set(value) {
-        console.log(value)
+        // console.log(value)
+        this.$store.dispatch('modeling/setBlock', value)
       },
       get() {
         return this.$store.getters['modeling/getBlock'] || {}
@@ -74,20 +75,29 @@ export default {
     parametersMain() {
       return this.block?.parameters?.main || {}
     },
+    parametersExtra() {
+      // console.log(this.block?.parameters?.extra)
+      return this.block?.parameters?.extra || {}
+    },
     main() {
-      // console.log(this.block)
       if (Object.keys(this.layers).length && this.block.type) {
-        return this.layers[this.block.type]?.main || [];
+        const items = this.layers[this.block.type]?.main || []
+        const value = this.block?.parameters?.main || {}
+        const blockType = this.block.type
+        return { type: 'main', items, value, blockType };
       } else {
-        return [];
+        return { type: 'main', items: [], value: {} };
       }
     },
     extra() {
       // console.log(this.block)
       if (Object.keys(this.layers).length && this.block.type) {
-        return this.layers[this.block.type]?.extra || [];
+        const items = this.layers[this.block.type]?.extra || []
+        const value = this.block?.parameters?.extra || {}
+        const blockType = this.block.type
+        return { type: 'extra', items, value, blockType };
       } else {
-        return [];
+        return { type: 'extra', items: [], value: {} };
       }
     },
     height() {
@@ -95,17 +105,23 @@ export default {
     },
   },
   methods: {
-    focus() {},
-    selected({ name }) {
-      this.main = this.layers[name].main || {};
-      this.extra = this.layers[name].extra || {};
-      console.log(this.layers[name]);
-
-      if (this.$refs.form) {
-        const data = serialize(this.$refs.form);
-        console.log(data);
-      }
+    change({ type, name, value}) {
+      console.log({ type, name, value})
+      // if (this.block.parameters[type][name]) {
+        this.block.parameters[type][name] = value
+        console.log(this.block.parameters[type][name])
+        // this.block = { ...this.block }
+      // }
     },
+    // selected({ name }) {
+    //   if (this.$refs.form) {
+    //     const data = serialize(this.$refs.form);
+    //     console.log(data);
+    //   }
+    //   this.main = this.layers[name].main || {};
+    //   this.extra = this.layers[name].extra || {};
+    //   console.log(this.layers[name]);
+    // },
   },
 };
 </script>
