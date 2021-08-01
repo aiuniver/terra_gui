@@ -2,6 +2,7 @@
   <div :class="['t-field', { 't-inline': inline }]">
     <label class="t-field__label" :for="parse">{{ label }}</label>
     <input
+      v-model="input"
       class="t-field__input"
       :id="parse"
       :type="type"
@@ -29,6 +30,16 @@ export default {
     name: String,
     inline: Boolean,
   },
+  computed: {
+    input: {
+      set(value) {
+        this.$emit('input', value)
+      },
+      get() {
+        return this.value
+      }
+    }
+  }
 };
 </script>
 

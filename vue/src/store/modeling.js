@@ -1,5 +1,57 @@
 // import { scene } from "./const/typeBlock";
 // import { list, layers } from "./const/typeLayers";
+
+const nodes = [
+  {
+    group: "input",
+    inputs: [],
+    outputs: [{}],
+  },
+  {
+    group: "middle",
+    inputs: [{}],
+    outputs: [{}],
+  },
+  {
+    group: "output",
+    inputs: [{}],
+    outputs: [],
+  },
+]
+
+function prepareLayers(blocks) {
+  let last = 0    
+  const newBlock = blocks.map((block) => {
+      let node = nodes.find((n) => {
+        return n.group === block.group;
+      });
+      if (!node) {
+        return null;
+      }
+      let newBlock  = {
+        selected: false,
+        inputs: node.inputs,
+        outputs: node.outputs,
+      }
+      
+      const x = 0 // (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+      const y = 0 //(this.$el.clientHeight / 2 - this.centerY) / this.scale;
+
+      newBlock = { ...newBlock, ...block }
+      console.log(newBlock.position)
+      if (!newBlock.position) {
+        newBlock.position = [x + last,y + last]
+        last = last + 20
+      }
+      return newBlock;
+    })
+    .filter((b) => {
+      return !!b;
+    });
+
+    return JSON.parse(JSON.stringify(newBlock))
+}
+
 const container = {
   centerX: 1042,
   centerY: 140,
@@ -133,14 +185,20 @@ export default {
       list: [],
       layers_types: {},
     },
+    blocks: []
   }),
   mutations: {
     SET_MODELING(state, value) {
       state.modeling = { ...value };
     },
     SET_MODEL(state, value) {
-      state.model = { ...value };
-      // state.scene.blocks = { ...value };
+      state.model = value;
+      const { layers } = value
+      console.log(layers)
+      state.blocks = prepareLayers(layers);
+    },
+    SET_BLOCKS(state, value) {
+      state.blocks = [ ...value ];
     },
     // SET_LAYERS(state, value) {
     //   state.layers = {...value};
@@ -179,6 +237,9 @@ export default {
     setDialog({ commit }, value) {
       commit("SET_DIALOG", value);
     },
+    setBlocks({ commit }, value) {
+      commit("SET_BLOCKS", value);
+    },
     setSelect({ commit }, value) {
       commit("SET_SELECT", value);
     },
@@ -198,18 +259,13 @@ export default {
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
     getDialog: ({ dialog }) => dialog,
     getToolbarEvent: ({ toolbarEvent }) => toolbarEvent,
-    // getTypeBlock: () => typeBlock,
-    // getBlocks: () => blocks,
+    getModel: ({ model }) => model,
+    getBlocks: ({ blocks }) => blocks,
     getScene: ({ scene }) => scene,
     getSelect: ({ select }) => select,
-    getBlock: ({ select, scene }) => {
-      const id = scene.blocks.reduce((value, { id }, i) => {
-        if (select === id) {
-          value = i;
-        }
-        return value;
-      }, -1);
-      return scene.blocks[id] || scene.blocks[0];
+    getBlock: ({ select, blocks }) => {
+      const id = blocks.findIndex(item => item.id == select)
+      return blocks[id];
     },
   },
 };
