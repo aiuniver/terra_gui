@@ -41,62 +41,91 @@ class CreateDTS(object):
         self.outputs = None
         self.input_names: dict = {}
         self.output_names: dict = {}
-
-        self._datatype = 'DIM'
-
         self.trds_path: str = ''
-        self.file_folder: str = ''
-
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
         self.user_tags: list = []
-        self.language: str = ''
-
         self.limit: int = 0
         self.num_classes: dict = {}
         self.classes_names: dict = {}
         self.classes_colors: dict = {}
         self.one_hot_encoding: dict = {}
         self.task_type: dict = {}
-        self.zip_params: dict = {}
         self.user_parameters: dict = {}
+        self.sequence: list = []
+        self.peg: list = []
+        self.split_sequence: dict = {}
         self.use_generator: bool = False
 
-        self.X: dict = {'train': {}, 'val': {}, 'test': {}}
-        self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
+        self.file_folder: str = ''
+        self.language: str = ''
+        self.y_cls: np.ndarray = np.array([])
+        self.mode: str = ''
+        self.iter: int = 0
+
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.df: dict = {}
         self.tsgenerator: dict = {}
-
-        self.limit: int
-        self.dataset: dict = {}
-
-        self.y_cls: np.ndarray = np.array([])
-        self.sequence: list = []
-        self.peg: list = []
-        self.iter: int = 0
-        self.mode: str = ''
-        self.split_sequence: dict = {}
         self.temporary: dict = {}
 
-        pass
+    def create_dataset(self, creation_data: CreationData):
 
-    @property
-    def datatype(self) -> str:
-        return self._datatype
+        self.dataset_user_data = creation_data
 
-    @datatype.setter
-    def datatype(self, shape: int):
-        self._datatype = DataType.get(shape, 'DIM')
+        self.name = creation_data.name
+        self.user_tags = creation_data.tags
+        self.use_generator = creation_data.use_generator
+        self.trds_path = creation_data.datasets_path
+        self.file_folder = str(creation_data.source_path)
 
-    def load_data(self, strict_object):
+        self.source = 'custom dataset'
 
-        dataset_loading.load(strict_object=strict_object)
+        # Устанавливаем пути
+        self.paths = self.set_paths(data=creation_data)
 
-        self.zip_params = json.loads(strict_object.json())
+        # Создаем инструкции
+        self.instructions = self.create_instructions(creation_data)
+
+        self.limit: int = len(self.instructions.inputs.get(1).instructions)
+
+        # Получаем входные параметры
+        self.inputs = self.create_inputs_parameters(creation_data=creation_data)
+
+        # Получаем выходные параметры
+        self.outputs = self.create_output_parameters(creation_data=creation_data)
+
+        # Разделение на три выборки
+        self.sequence_split(creation_data=creation_data)
+
+        data = {}
+        if creation_data.use_generator:
+            # Сохранение датасета для генератора
+            with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
+                      'w') as instruction:
+                json.dump(self.instructions.native(), instruction)
+            with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
+                json.dump(self.split_sequence, seq)
+            if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
+                with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
+                    json.dump(array_creator.txt_list, fp)
+        else:
+            # Сохранение датасета с NumPy
+            x_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.inputs)
+            y_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.outputs)
+
+            self.write_arrays(x_array, y_array)
+
+        # запись препроцессов (скейлер, токенайзер и т.п.)
+        self.write_preprocesses_to_files()
+
+        # создание и запись конфигурации датасета
+        output = DatasetData(**self.create_dataset_configure(creation_data=creation_data))
+
+        # print(output.json(indent=2))
+        return output
 
     def set_dataset_data(self, layer: Union[CreationInputData, CreationOutputData]):
         self.tags[layer.id] = decamelize.convert(layer.type)
@@ -106,7 +135,7 @@ class CreateDTS(object):
             self.output_names[layer.id] = layer.name
         self.user_parameters[layer.id] = layer.parameters
 
-    def set_paths(self, data: CreationData):
+    def set_paths(self, data: CreationData) -> PathsData:
         dataset_path = os.path.join(data.datasets_path, f'dataset {data.name}')
         instructions_path = None
         arrays_path = os.path.join(dataset_path, "arrays")
@@ -115,9 +144,9 @@ class CreateDTS(object):
         if data.use_generator:
             instructions_path = os.path.join(dataset_path, "instructions")
             os.makedirs(instructions_path, exist_ok=True)
-        self.paths = PathsData(datasets=dataset_path, instructions=instructions_path, arrays=arrays_path)
+        return PathsData(datasets=dataset_path, instructions=instructions_path, arrays=arrays_path)
 
-    def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]):
+    def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
         self.iter = 0
         self.mode = "input" if isinstance(data, CreationInputsList) else "output"
         instructions = {}
@@ -125,11 +154,11 @@ class CreateDTS(object):
             self.set_dataset_data(elem)
             self.iter += 1
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize.convert(elem.type)}"
-                                                           )(**elem.parameters.dict()))
+                                                           )(elem))
             instructions.update([(elem.id, instructions_data)])
         return instructions
 
-    def create_instructions(self, creation_data: CreationData):
+    def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
         inputs = self.create_put_instructions(data=creation_data.inputs)
         outputs = self.create_put_instructions(data=creation_data.outputs)
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
@@ -145,7 +174,7 @@ class CreateDTS(object):
                     if preprocess.get(key, {}):
                         joblib.dump(preprocess[key], os.path.join(preprocess_file_path, f'{key}.gz'))
 
-    def create_inputs_parameters(self, creation_data):
+    def create_inputs_parameters(self, creation_data: CreationData) -> dict:
         creating_inputs_data = {}
         for key in self.instructions.inputs.keys():
             array = getattr(array_creator, f'create_{self.tags[key]}')(
@@ -162,7 +191,7 @@ class CreateDTS(object):
             creating_inputs_data.update([(key, current_input.native())])
         return creating_inputs_data
 
-    def create_output_parameters(self, creation_data):
+    def create_output_parameters(self, creation_data: CreationData) -> dict:
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
             array = getattr(array_creator, f'create_{self.tags[key]}')(
@@ -189,31 +218,7 @@ class CreateDTS(object):
                 creating_outputs_data.update([(key, current_output.native())])
         return creating_outputs_data
 
-    def create_dataset(self, creation_data: CreationData):
-
-        self.dataset_user_data = creation_data
-
-        self.name = creation_data.name
-        self.user_tags = creation_data.tags
-        self.use_generator = creation_data.use_generator
-        self.trds_path = creation_data.datasets_path
-        self.file_folder = str(creation_data.source_path)
-
-        self.source = 'custom dataset'
-
-        # Устанавливаем пути
-        self.set_paths(data=creation_data)
-
-        # Создаем инструкции
-        self.instructions = self.create_instructions(creation_data)
-
-        # Получаем входные параметры
-        self.inputs = self.create_inputs_parameters(creation_data=creation_data)
-
-        # Получаем выходные параметры
-        self.outputs = self.create_output_parameters(creation_data=creation_data)
-
-        # Разделение на три выборки
+    def sequence_split(self, creation_data: CreationData):
         self.split_sequence['train'] = []
         self.split_sequence['val'] = []
         self.split_sequence['test'] = []
@@ -230,87 +235,38 @@ class CreateDTS(object):
             random.shuffle(self.split_sequence['val'])
             random.shuffle(self.split_sequence['test'])
 
-        self.limit: int = len(self.instructions.inputs.get(1).instructions)
-
-        data = {}
-        if creation_data.use_generator:
-            # Сохранение датасета для генератора
-            data['zip_params'] = self.zip_params
-            for key in self.instructions.keys():
-                os.makedirs(os.path.join(self.paths.instructions, key), exist_ok=True)
-                for inp in self.instructions[key].keys():
-                    with open(os.path.join(self.paths.instructions, key, f'{inp}.json'),
-                              'w') as instruction:
-                        json.dump(self.instructions[key][inp], instruction)
-            with open(os.path.join(self.paths.instructions, 'sequence.json'),
-                      'w') as seq:
-                json.dump(self.split_sequence, seq)
-            if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
-                with open(os.path.join(self.paths.instructions, 'txt_list.json'),
-                          'w') as fp:
-                    json.dump(array_creator.txt_list, fp)
-        else:
-            # Сохранение датасета с NumPy
-            for key in self.instructions.inputs.keys():
-                x: list = []
-                for i in range(self.limit):
-                    x.append(getattr(array_creator, f"create_{self.tags[key]}")(
-                        creation_data.source_path,
-                        self.instructions.inputs.get(key).instructions[i],
-                        **self.instructions.inputs.get(key).parameters))
-                self.X['train'][key] = np.array(x)[self.split_sequence['train']]
-                self.X['val'][key] = np.array(x)[self.split_sequence['val']]
-                self.X['test'][key] = np.array(x)[self.split_sequence['test']]
-
-            for key in self.instructions.outputs.keys():
-                if 'object_detection' in self.tags.values():
-                    y_1: list = []
-                    y_2: list = []
-                    y_3: list = []
-                    for i in range(self.limit):
-                        arrays = getattr(array_creator, f"create_{self.tags[key]}")(
-                            creation_data.source_path,
-                            self.instructions.outputs.get(key).instructions[i],
-                            **self.instructions.outputs.get(key).parameters)
-                        y_1.append(arrays[0])
-                        y_2.append(arrays[1])
-                        y_3.append(arrays[2])
-
-                    splits = ['train', 'val', 'test']
-                    for spl_seq in splits:
-                        for i in range(len(splits)):
-                            self.Y[spl_seq][key] = np.array(y_1)[
-                                self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key + 1] = np.array(y_2)[
-                                self.split_sequence[spl_seq]]
-                            self.Y[spl_seq][key + 2] = np.array(y_3)[
-                                self.split_sequence[spl_seq]]
+    def create_dataset_arrays(self, creation_data: CreationData, put_data: dict) -> dict:
+        out_array = {'train': {}, 'val': {}, 'test': {}}
+        splits = list(self.split_sequence.keys())
+        for key in put_data.keys():
+            current_arrays: list = []
+            for i in range(self.limit):
+                array = getattr(array_creator, f"create_{self.tags[key]}")(
+                    creation_data.source_path,
+                    put_data.get(key).instructions[i],
+                    **put_data.get(key).parameters)
+                if self.tags[key] == 'object_detection':
+                    for j in range(len(splits)):
+                        current_arrays.append(array[j])
                 else:
-                    y: list = []
-                    for i in range(self.limit):
-                        y.append(getattr(array_creator, f"create_{self.tags[key]}")(
-                            creation_data.source_path,
-                            self.instructions.outputs.get(key).instructions[i],
-                            **self.instructions.outputs.get(key).parameters))
-                    self.Y['train'][key] = np.array(y)[self.split_sequence['train']]
-                    self.Y['val'][key] = np.array(y)[self.split_sequence['val']]
-                    self.Y['test'][key] = np.array(y)[self.split_sequence['test']]
+                    current_arrays.append(array)
+            for spl_seq in splits:
+                if self.tags[key] == 'object_detection':
+                    for i in range(len(splits)):
+                        out_array[spl_seq][key + i] = np.array(current_arrays[i])[self.split_sequence[spl_seq]]
+                else:
+                    out_array[spl_seq][key] = np.array(current_arrays)[self.split_sequence[spl_seq]]
+        return out_array
 
-            for sample in self.X.keys():
-                # os.makedirs(os.path.join(self.trds_path, 'arrays', sample), exist_ok=True)
-                for inp in self.X[sample].keys():
+    def write_arrays(self, array_x, array_y):
+        for array in [array_x, array_y]:
+            for sample in array.keys():
+                for inp in array[sample].keys():
                     os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
-                    joblib.dump(self.X[sample][inp],
-                                os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
+                    joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
 
-            for sample in self.Y.keys():
-                for inp in self.Y[sample].keys():
-                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
-                    joblib.dump(self.Y[sample][inp],
-                                os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
-
-        self.write_preprocesses_to_files()
-
+    def create_dataset_configure(self, creation_data: CreationData) -> dict:
+        data = {}
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
                       'one_hot_encoding', 'task_type', 'limit', 'use_generator']
@@ -324,12 +280,10 @@ class CreateDTS(object):
             data[attr] = self.__dict__[attr]
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         data['alias'] = creation_data.alias
+
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
-
-        output = DatasetData(**data)
-        print(output)
-        return output
+        return data
 
     def instructions_images_obj_detection(self, folder_name: str) -> list:
         data: list = []
@@ -377,8 +331,8 @@ class CreateDTS(object):
     #
     #     return instructions
 
-    def instructions_image(self, **options):
-
+    def instructions_image(self, put_data: Union[CreationInputData, CreationOutputData]):
+        options = put_data.parameters.native()
         instructions: dict = {}
         instr: list = []
         y_cls: list = []
@@ -741,16 +695,16 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_segmentation(self, **options):
-        print(options)
+    def instructions_segmentation(self, put_data: Union[CreationInputData, CreationOutputData]):
+        options = put_data.parameters.native()
         folder_name = options.get('folder_name', '')
         instr: list = []
 
-        self.classes_names[f'{self.mode}_{self.iter}'] = options['classes_names']
-        self.classes_colors[f'{self.mode}_{self.iter}'] = options['classes_colors']
-        self.num_classes[f'{self.mode}_{self.iter}'] = len(options['classes_names'])
-        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = True
-        self.task_type[f'{self.mode}_{self.iter}'] = 'segmentation'
+        self.classes_names[put_data.id] = options['classes_names']
+        self.classes_colors[put_data.id] = options['classes_colors']
+        self.num_classes[put_data.id] = len(options['classes_names'])
+        self.one_hot_encoding[put_data.id] = True
+        self.task_type[put_data.id] = put_data.type
 
         if options['file_info']['path_type'] == 'path_folder':
             for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['file_info']['path'][0]))):
@@ -763,8 +717,8 @@ class CreateDTS(object):
         instructions = {'instructions': instr,
                         'parameters': {'mask_range': options['mask_range'],
                                        'num_classes': len(options['classes_names']),
-                                       'shape': (self.user_parameters['input_1']['height'],
-                                                 self.user_parameters['input_1']['width']),
+                                       'shape': (self.user_parameters.get(1).height,
+                                                 self.user_parameters.get(1).width),
                                        'classes_colors': options['classes_colors']
                                        }
                         }
