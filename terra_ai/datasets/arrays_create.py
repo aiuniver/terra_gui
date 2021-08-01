@@ -184,7 +184,7 @@ class CreateArray(object):
 
         pass
 
-    def create_segmentation(self, image_path: str, **options: dict) -> np.ndarray:
+    def create_segmentation(self, file_folder, image_path: str, **options: dict) -> np.ndarray:
 
         """
 
@@ -216,9 +216,9 @@ class CreateArray(object):
             cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
             cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
             cl_mask = cl_mask.reshape(options['shape'][0], options['shape'][1], cl_mask.shape[-1])
-
             mask_ohe = np.zeros(options['shape'])
             for k, rgb in enumerate(options['classes_colors']):
+                # rgb = rgb.as_rgb_tuple()
                 mask = np.zeros(options['shape'])
 
                 for j, cl_rgb in enumerate(cl_cent):
@@ -234,7 +234,7 @@ class CreateArray(object):
 
             return mask_ohe
 
-        img = load_img(path=os.path.join(self.file_folder, image_path), target_size=options['shape'])
+        img = load_img(path=os.path.join(file_folder, image_path), target_size=options['shape'])
         array = img_to_array(img, dtype=np.uint8)
         array = cluster_to_ohe(array)
 
