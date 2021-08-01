@@ -94,7 +94,6 @@ class CreateDTS(object):
         self.tsgenerator: dict = {}
 
         self.instructions: dict = {'inputs': {}, 'outputs': {}}
-        self.limit: int
         self.dataset: dict = {}
 
         self.y_cls: list = []
@@ -537,25 +536,9 @@ class CreateDTS(object):
             for file_name in options['file_info']['path']:
                 data = pd.read_csv(os.path.join(self.file_folder, file_name),
                                    usecols=options['file_info']['cols_name'])
-                column = data[options['file_info']['cols_name'][0]].to_list()  # TODO - dd
-
-        # if options['folder_name']:
-        #     for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['folder_name']))):
-        #         txt_list[os.path.join(options['folder_name'], file_name)] = read_text(
-        #             os.path.join(self.file_folder, options['folder_name'], file_name))
-        # else:
-        #     tree = os.walk(self.file_folder)
-        #     for directory, folder, file_name in sorted(tree):
-        #         if bool(file_name) is not False:
-        #             folder_name = directory.split(os.path.sep)[-1]
-        #             for name in sorted(file_name):
-        #                 text_file = read_text(os.path.join(directory, name))
-        #                 if text_file:
-        #                     txt_list[os.path.join(folder_name, name)] = text_file
-        #         else:
-        #             continue
-
-        #################################################
+                column = data[options['file_info']['cols_name'][0]].to_list()
+                for idx, elem in column:
+                    txt_list[str(idx)] = elem
 
         if options['pymorphy']:
             pymorphy = pymorphy2.MorphAnalyzer()
@@ -568,25 +551,14 @@ class CreateDTS(object):
         #         self.createarray.tokenizer[f'{self.mode}_{self.iter}'].texts_to_sequences([value])[0]
 
         if options['word_to_vec']:
-
-            # reverse_tok = {}
-            # for key, value in self.createarray.tokenizer[f'{self.mode}_{self.iter}'].word_index.items():
-            #     reverse_tok[value] = key
-            # words = []
-            # for key in self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys():
-            #     for lst in self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]:
-            #         tmp = []
-            #         for word in lst:
-            #             tmp.append(reverse_tok[word])
-            #         words.append(tmp)
-
             txt_list_w2v = []
             for elem in list(txt_list.values()):
                 txt_list_w2v.append(elem.split(' '))
-
-            self.createarray.create_word2vec(mode=self.mode, iteration=self.iter, words=txt_list_w2v,
-                                             size=options['word_to_vec_size'], window=10, min_count=1, workers=10,
-                                             iter=10)
+            self.createarray.create_word2vec(self.mode, self.iter, txt_list_w2v, **{'size': options['word_to_vec_size'],
+                                                                                    'window': 10,
+                                                                                    'min_count': 1,
+                                                                                    'workers': 10,
+                                                                                    'iter': 10})
         else:
             self.createarray.create_tokenizer(self.mode, self.iter, **{'num_words': options['max_words_count'],
                                                                        'filters': filters,
@@ -1163,7 +1135,8 @@ class CreateArray(object):
     def create_images(self, image_path: str, **options):
 
         shape = (options['height'], options['width'])
-        img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
+        # img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
+        img = load_img(os.path.join(self.file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
@@ -1570,9 +1543,9 @@ class CreateArray(object):
         output_levels = len(strides)
         train_input_sizes = 416
         anchor_per_scale = 3
-        yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-                        [[30, 61], [62, 45], [59, 119]],
-                        [[116, 90], [156, 198], [373, 326]]]
+        yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+                        [[36, 75], [76, 55], [72, 146]],
+                        [[142, 110], [192, 243], [459, 401]]]
         anchors = (np.array(yolo_anchors).T / strides).T
         max_bbox_per_scale = 100
         train_input_size = random.choice([train_input_sizes])
@@ -2166,8 +2139,8 @@ class PrepareDTS(object):
         self.one_hot_encoding['output_1'] = False
         if 'one_hot_encoding' in options.keys() and options['one_hot_encoding'] is True:
             if 'classification' in self.tags['output_1']:
-                y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)))
-                y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)))
+                y_train = utils.to_categorical(y_train, len(np.unique(y_train, axis=0)), dtype='uint8')
+                y_val = utils.to_categorical(y_val, len(np.unique(y_val, axis=0)), dtype='uint8')
                 self.one_hot_encoding['output_1'] = True
 
         self.input_shape['input_1'] = x_train.shape if len(x_train.shape) < 2 else x_train.shape[1:]
