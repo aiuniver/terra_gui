@@ -15,7 +15,7 @@ from ..progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
 DATASET_UNPACK_TITLE = "Распаковка исходников датасета"
-DATASETS_SOURCE_DIR = Path(gettempdir(), "terraai", "datasets")
+DATASETS_SOURCE_DIR = Path(gettempdir(), "terra_ai", "datasets")
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
 

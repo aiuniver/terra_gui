@@ -60,4 +60,3 @@ class PathsData(BaseMixinData):
     datasets: DirectoryPath
     instructions: Optional[DirectoryPath]
     arrays: DirectoryPath
-

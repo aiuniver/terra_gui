@@ -10,6 +10,8 @@ from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras import utils
+from librosa import load as librosa_load
+import librosa.feature as librosa_feature
 
 
 class CreateArray(object):
@@ -122,51 +124,63 @@ class CreateArray(object):
     def create_text(self, sample: dict, **options):
 
         """
-
         Args:
             sample: dict
                 - file: Название файла.
                 - slice: Индексы рассматриваемой части последовательности
             **options: Параметры обработки текста:
+                embedding: Tokenizer object, bool
+                    Перевод в числовую последовательность.
                 bag_of_words: Tokenizer object, bool
                     Перевод в формат bag_of_words.
                 word_to_vec: Word2Vec object, bool
                     Перевод в векторное представление Word2Vec.
                 put: str
                     Индекс входа или выхода.
-
         Returns:
             array: np.ndarray
                 Массив текстового вектора.
         """
 
-        filepath: str = sample['file']
-        slicing: list = sample['slice']
-        array = self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]
+        array = []
+        [[filepath, slicing]] = sample.items()
+        text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
-        for key, value in options.items():
-            if value:
-                if key == 'bag_of_words':
-                    array = self.tokenizer[options['put']].sequences_to_matrix([array]).astype('uint16')
-                elif key == 'word_to_vec':
-                    reverse_tok = {}
-                    words_list = []
-                    for word, index in self.tokenizer[options['put']].word_index.items():
-                        reverse_tok[index] = word
-                    for idx in array:
-                        words_list.append(reverse_tok[idx])
-                    array = []
-                    for word in words_list:
-                        array.append(self.word2vec[options['put']].wv[word])
-                break
+        if options['embedding']:
+            array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
+        elif options['bag_of_words']:
+            array = self.tokenizer[options['put']].texts_to_matrix([text])[0]
+        elif options['word_to_vec']:
+            for word in text:
+                array.append(self.word2vec[options['put']][word])
+
+        if len(array) < slicing[1] - slicing[0]:
+            words_to_add = [1 for _ in range((slicing[1] - slicing[0]) - len(array))]
+            array += words_to_add
 
         array = np.array(array)
 
         return array
 
-    def create_audio(self):
+    def create_audio(self, sample: dict, **options):
 
-        pass
+        array = []
+
+        [[filepath, slicing]] = sample.items()
+        y, sr = librosa_load(path=os.path.join(self.file_folder, filepath), sr=options.get('sample_rate'),
+                             offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
+
+        for feature in options.get('features', []):
+            if feature in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
+                array.append(getattr(librosa_feature, feature)(y=y, sr=sr))
+            elif feature == 'rms':
+                array.append(getattr(librosa_feature, feature)(y=y)[0])
+            elif feature == 'zero_crossing_rate':
+                array.append(getattr(librosa_feature, feature)(y=y))
+            elif feature == 'audio_signal':
+                array.append(y)
+
+        return tuple(array)
 
     def create_dataframe(self):
 
