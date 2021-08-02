@@ -80,6 +80,7 @@ export default {
     value: {
       handler(value){
         // console.log(value)
+        this.show = false
         this.search = value
       }
     }

@@ -6,7 +6,7 @@
       :key="block.id"
       v-bind.sync="block"
       :options="optionsForChild"
-      @update="updateScene"
+
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -22,8 +22,9 @@
 </template>
 
 <script>
-import merge from "deepmerge";
+// import merge from "deepmerge";
 import mouseHelper from "./helpers/mouse";
+import { createBlock } from "./helpers/default";
 
 import VueBlock from "./VueBlock";
 import VueLink from "./VueLink";
@@ -56,23 +57,6 @@ export default {
     centerY: 0,
     scale: 1,
     //
-    nodes: [
-      {
-        group: "input",
-        inputs: [],
-        outputs: [{}],
-      },
-      {
-        group: "middle",
-        inputs: [{}],
-        outputs: [{}],
-      },
-      {
-        group: "output",
-        inputs: [{}],
-        outputs: [],
-      },
-    ],
     // blocks: [],
     links: [],
     //
@@ -222,14 +206,19 @@ export default {
     },
   },
   methods: {
+    handleMauseOver(e) {
+      this.mouseIsOver = (e.type === 'mouseenter')
+    },
     keyup(event) {
       const { code, ctrlKey } = event;
-      if (code === "Delete") {
+      const mouseIsOver = this.mouseIsOver
+      console.log(mouseIsOver, code)
+      if (mouseIsOver && code === "Delete") {
         if (this.selectedBlock) {
           this.blockDelete(this.selectedBlock);
         }
       }
-      if (code === "KeyC" && ctrlKey) {
+      if (mouseIsOver && code === "KeyC" && ctrlKey) {
         if (this.selectedBlock) {
           this.blockDelete(this.selectedBlock);
         }
@@ -262,7 +251,7 @@ export default {
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
 
-      this.updateScene();
+      // this.updateScene();
     },
     handleMove(e) {
       let mouse = mouseHelper.getMousePosition(this.$el, e);
@@ -323,7 +312,7 @@ export default {
         this.dragging = false;
 
         if (this.hasDragged) {
-          this.updateScene();
+          // this.updateScene();
           this.hasDragged = false;
         }
       }
@@ -366,7 +355,7 @@ export default {
         this.centerX -= deltaOffsetX;
         this.centerY -= deltaOffsetY;
 
-        this.updateScene();
+        // this.updateScene();
       }
     },
     // Processing
@@ -487,7 +476,7 @@ export default {
           console.log(this.links);
           targetBlock.inputs[targetSlot].active = true
           targetBlock.inputs[targetSlot].active = true
-          this.updateScene();
+          // this.updateScene();
         }
       }
 
@@ -523,7 +512,7 @@ export default {
 
           this.linkingStart(findBlock, findLink.originSlot);
 
-          this.updateScene();
+          // this.updateScene();
         }
       }
     },
@@ -535,24 +524,13 @@ export default {
     },
     // Blocks
     addNewBlock(nodeName, x, y) {
-      let maxID = Math.max(
-        0,
-        ...this.blocks.map(function (o) {
-          return o.id;
-        })
-      );
-
-      let node = this.nodes.find((n) => {
-        console.log(n)
-        return n.group === nodeName;
-      });
-
-      if (!node) {
+      let maxID = Math.max(0, ...this.blocks.map(function (o) {return o.id;}));
+      let block = createBlock(nodeName, maxID + 1);
+      if (!block) {
+        console.warn("block not create: " + block)
         return;
       }
-      let block = this.createBlock(node, maxID + 1);
 
-      // if x or y not set, place block to center
       if (x === undefined || y === undefined) {
         x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
         y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
@@ -560,15 +538,13 @@ export default {
         x = (x - this.centerX) / this.scale;
         y = (y - this.centerY) / this.scale;
       }
-
-      console.log(block)
-      block.position[0] = x;
-      block.position[1] = y;
+      block.position = [x, y]
       this.blocks.push(block);
+      this.blocks = this.blocks  // eslint-disable-line
 
       // this.updateScene();
     },
-    createBlock(node, id) {
+    // createBlock(node, id) {
       // let inputs = [];
       // let outputs = [];
       // let values = {};
@@ -602,18 +578,18 @@ export default {
         // }
       // });
 
-      return {
-        id: id,
-        position: [0, 0],
-        group:node.group,
-        selected: false,
-        name: node.name,
-        title: node.title || node.name,
-        inputs: node.inputs,
-        outputs: node.outputs,
-        // values: values,
-      };
-    },
+    //   return {
+    //     id: id,
+    //     position: [0, 0],
+    //     group:node.group,
+    //     selected: false,
+    //     name: node.name,
+    //     title: node.title || node.name,
+    //     inputs: node.inputs,
+    //     outputs: node.outputs,
+    //     // values: values,
+    //   };
+    // },
     deselectAll(withoutID = null) {
       this.blocks.forEach((value) => {
         if (value.id !== withoutID && value.selected) {
@@ -650,153 +626,155 @@ export default {
       this.blocks = this.blocks.filter((b) => {
         return b.id !== block.id;
       });
-      this.updateScene();
+      // this.updateScene();
     },
     //
-    prepareBlocks(blocks) {
-      return blocks.map((block) => {
-          let node = this.nodes.find((n) => {
-            return n.group === block.group;
-          });
-          if (!node) {
-            return null;
-          }
+    // prepareBlocks(blocks) {
+    //   return blocks.map((block) => {
+    //       let node = this.nodes.find((n) => {
+    //         return n.group === block.group;
+    //       });
+    //       if (!node) {
+    //         return null;
+    //       }
 
-          let newBlock = this.createBlock(node, block.id);
+    //       let newBlock = this.createBlock(node, block.id);
 
-          newBlock = merge(newBlock, block, {
-            arrayMerge: (d, s) => {
-              return s.length === 0 ? d : s;
-            },
-          });
+    //       newBlock = merge(newBlock, block, {
+    //         arrayMerge: (d, s) => {
+    //           return s.length === 0 ? d : s;
+    //         },
+    //       });
 
-          return newBlock;
-        })
-        .filter((b) => {
-          return !!b;
-        });
-    },
+    //       return newBlock;
+    //     })
+    //     .filter((b) => {
+    //       return !!b;
+    //     });
+    // },
 
-    prepareLayers(blocks) {
-      let last = 0    
-      const newBlock = blocks.map((block) => {
-          let node = this.nodes.find((n) => {
-            return n.group === block.group;
-          });
-          if (!node) {
-            return null;
-          }
-          let newBlock  = {
-            selected: false,
-            inputs: node.inputs,
-            outputs: node.outputs,
-          }
+    // prepareLayers(blocks) {
+    //   let last = 0    
+    //   const newBlock = blocks.map((block) => {
+    //       let node = this.nodes.find((n) => {
+    //         return n.group === block.group;
+    //       });
+    //       if (!node) {
+    //         return null;
+    //       }
+    //       let newBlock  = {
+    //         selected: false,
+    //         inputs: node.inputs,
+    //         outputs: node.outputs,
+    //       }
           
-          const x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-          const y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+    //       const x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+    //       const y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
 
-          newBlock = { ...newBlock, ...block }
-          console.log(newBlock.position)
-          if (!newBlock.position) {
-            newBlock.position = [x + last,y + last]
-            last = last + 20
-          }
-          return newBlock;
-        })
-        .filter((b) => {
-          return !!b;
-        });
+    //       newBlock = { ...newBlock, ...block }
+    //       console.log(newBlock.position)
+    //       if (!newBlock.position) {
+    //         newBlock.position = [x + last,y + last]
+    //         last = last + 20
+    //       }
+    //       return newBlock;
+    //     })
+    //     .filter((b) => {
+    //       return !!b;
+    //     });
 
-        return JSON.parse(JSON.stringify(newBlock))
-    },
+    //     return JSON.parse(JSON.stringify(newBlock))
+    // },
 
-    prepareBlocksLinking(blocks, links) {
-      if (!blocks) {
-        return [];
-      }
+    // prepareBlocksLinking(blocks, links) {
+    //   if (!blocks) {
+    //     return [];
+    //   }
 
-      let newBlocks = [];
+    //   let newBlocks = [];
 
-      blocks.forEach((block) => {
-        let inputs = links.filter((link) => {
-          return link.targetID === block.id;
-        });
+    //   blocks.forEach((block) => {
+    //     let inputs = links.filter((link) => {
+    //       return link.targetID === block.id;
+    //     });
 
-        let outputs = links.filter((link) => {
-          return link.originID === block.id;
-        });
+    //     let outputs = links.filter((link) => {
+    //       return link.originID === block.id;
+    //     });
 
-        block.inputs.forEach((s, index) => {
-          // is linked
-          block.inputs[index].active = inputs.some((i) => i.targetSlot === index);
-        });
+    //     block.inputs.forEach((s, index) => {
+    //       // is linked
+    //       block.inputs[index].active = inputs.some((i) => i.targetSlot === index);
+    //     });
 
-        block.outputs.forEach((s, index) => {
-          // is linked
-          block.outputs[index].active = outputs.some((i) => i.originSlot === index);
-        });
+    //     block.outputs.forEach((s, index) => {
+    //       // is linked
+    //       block.outputs[index].active = outputs.some((i) => i.originSlot === index);
+    //     });
 
-        newBlocks.push(block);
-      });
+    //     newBlocks.push(block);
+    //   });
 
-      return newBlocks;
-    },
+    //   return newBlocks;
+    // },
     // importBlocksContent() {
     //   if (this.blocksContent) {
     //     this.nodes = merge([], this.blocksContent);
     //   }
     // },
-    importScene() {
-      let scene = {...this.defaultScene, ...this.scene};
+    // importScene() {
+    //   let scene = {...this.defaultScene, ...this.scene};
 
-      let blocks = this.prepareBlocks(scene.blocks);
-      blocks = this.prepareBlocksLinking(blocks, scene.links);
+    //   let blocks = this.prepareBlocks(scene.blocks);
+    //   blocks = this.prepareBlocksLinking(blocks, scene.links);
 
-      // set last selected after update blocks from props
-      if (this.selectedBlock) {
-        let block = blocks.find((b) => this.selectedBlock.id === b.id);
-        if (block) {
-          block.selected = true;
-        }
-      }
+    //   // set last selected after update blocks from props
+    //   if (this.selectedBlock) {
+    //     let block = blocks.find((b) => this.selectedBlock.id === b.id);
+    //     if (block) {
+    //       block.selected = true;
+    //     }
+    //   }
 
-      this.blocks = blocks;
-      this.links = merge([], scene.links);
+    //   this.blocks = blocks;
+    //   this.links = merge([], scene.links);
 
-      let container = scene.container;
-      if (container.centerX) {
-        this.centerX = container.centerX;
-      }
-      if (container.centerY) {
-        this.centerY = container.centerY;
-      }
-      if (container.scale) {
-        this.scale = container.scale;
-      }
-    },
-    exportScene() {
-      let clonedBlocks = merge([], this.blocks);
-      let blocks = clonedBlocks.map((value) => {
-        delete value["inputs"];
-        delete value["outputs"];
-        delete value["selected"];
+    //   let container = scene.container;
+    //   if (container.centerX) {
+    //     this.centerX = container.centerX;
+    //   }
+    //   if (container.centerY) {
+    //     this.centerY = container.centerY;
+    //   }
+    //   if (container.scale) {
+    //     this.scale = container.scale;
+    //   }
+    // },
+    // exportScene() {
+    //   let clonedBlocks = merge([], this.blocks);
+    //   let blocks = clonedBlocks.map((value) => {
+    //     delete value["inputs"];
+    //     delete value["outputs"];
+    //     delete value["selected"];
 
-        return value;
-      });
+    //     return value;
+    //   });
 
-      return {
-        blocks: blocks,
-        links: this.links,
-        container: this.container,
-      };
-    },
+    //   return {
+    //     blocks: blocks,
+    //     links: this.links,
+    //     container: this.container,
+    //   };
+    // },
     updateScene() {
-      // this.scene = this.exportScene()
-      // this.$emit("update:scene", this.exportScene());
+    //   // this.scene = this.exportScene()
+    //   // this.$emit("update:scene", this.exportScene());
     },
   },
 
   mounted() {
+    this.$el.addEventListener('mouseenter', this.handleMauseOver)
+    this.$el.addEventListener('mouseleave', this.handleMauseOver)
     document.documentElement.addEventListener("keyup", this.keyup);
     document.documentElement.addEventListener(
       "mousemove",
@@ -818,6 +796,8 @@ export default {
   },
   beforeDestroy() {
     document.documentElement.removeEventListener("keyup", this.keyup);
+    this.$el.removeEventListener("mouseenter", this.handleMauseOver);
+    this.$el.removeEventListener("mouseleave", this.handleMauseOver);
     document.documentElement.removeEventListener(
       "mousemove",
       this.handleMove,
@@ -840,12 +820,12 @@ export default {
     );
   },
 
-  watch: {
-    scene() {
-      console.log('scene')
-      this.importScene();
-    },
-  },
+  // watch: {
+  //   scene() {
+  //     console.log('scene')
+  //     this.importScene();
+  //   },
+  // },
 };
 </script>
 

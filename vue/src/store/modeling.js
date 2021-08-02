@@ -1,56 +1,5 @@
-// import { scene } from "./const/typeBlock";
+import { prepareBlocks } from "../components/modeling/block/helpers/default";
 // import { list, layers } from "./const/typeLayers";
-
-const nodes = [
-  {
-    group: "input",
-    inputs: [],
-    outputs: [{}],
-  },
-  {
-    group: "middle",
-    inputs: [{}],
-    outputs: [{}],
-  },
-  {
-    group: "output",
-    inputs: [{}],
-    outputs: [],
-  },
-]
-
-function prepareLayers(blocks) {
-  let last = 0    
-  const newBlock = blocks.map((block) => {
-      let node = nodes.find((n) => {
-        return n.group === block.group;
-      });
-      if (!node) {
-        return null;
-      }
-      let newBlock  = {
-        selected: false,
-        inputs: node.inputs,
-        outputs: node.outputs,
-      }
-      
-      const x = 0 // (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-      const y = 0 //(this.$el.clientHeight / 2 - this.centerY) / this.scale;
-
-      newBlock = { ...newBlock, ...block }
-      console.log(newBlock.position)
-      if (!newBlock.position) {
-        newBlock.position = [x + last,y + last]
-        last = last + 20
-      }
-      return newBlock;
-    })
-    .filter((b) => {
-      return !!b;
-    });
-
-    return JSON.parse(JSON.stringify(newBlock))
-}
 
 const container = {
   centerX: 1042,
@@ -195,11 +144,16 @@ export default {
       state.model = value;
       const { layers } = value
       console.log(layers)
-      state.blocks = prepareLayers(layers);
+      state.blocks = prepareBlocks(layers);
     },
     SET_BLOCKS(state, value) {
       state.blocks = [ ...value ];
     },
+    // SET_BLOCK(state, value) {
+    //   state
+    //   console.log(state, value)
+    //   // state.blocks = [ ...value ];
+    // },
     // SET_LAYERS(state, value) {
     //   state.layers = {...value};
     // },
@@ -239,6 +193,12 @@ export default {
     },
     setBlocks({ commit }, value) {
       commit("SET_BLOCKS", value);
+    },
+    setBlock({ commit, state: { blocks } }, value) {
+      const index = blocks.findIndex(item => item.id == value.id)
+      blocks[index] = value
+      console.log(blocks)
+      commit("SET_BLOCKS", blocks);
     },
     setSelect({ commit }, value) {
       commit("SET_SELECT", value);

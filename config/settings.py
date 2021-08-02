@@ -137,3 +137,9 @@ REST_FRAMEWORK = {
 TERRA_AI_EXCHANGE_API_URL = env.str("TERRA_AI_EXCHANGE_API_URL")
 TERRA_AI_DATA_PATH = env.str("TERRA_AI_DATA_PATH")
 TERRA_AI_PROJECT_PATH = f"{tempfile.gettempdir()}/tai-project"
+
+
+# User data
+USER_LOGIN = env.str("USER_LOGIN")
+USER_NAME = env.str("USER_NAME")
+USER_LASTNAME = env.str("USER_LASTNAME")

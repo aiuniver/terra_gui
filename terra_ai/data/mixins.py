@@ -27,7 +27,7 @@ class BaseMixinData(BaseModel):
         super().__init__(**data)
 
     def dict(self, **kwargs):
-        data = super().dict()
+        data = super().dict(**kwargs)
         for __name, __field in self.__fields__.items():
             __type = __field.type_
             if hasattr(__type, "__mro__") and UniqueListMixin in __type.__mro__:

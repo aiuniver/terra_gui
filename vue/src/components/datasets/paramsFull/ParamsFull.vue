@@ -1,11 +1,11 @@
 <template>
   <div class="params-full">
     <div class="params-full__inner">
-      <div class="params-full__btn">
+      <div class="params-full__btn" @click="full = !full">
         <i class="params-full__btn--icon"></i>
       </div>
-      <div class="params-full__files">
-        <BlockFiles />
+      <div :class="['params-full__files', {toggle: !toggle}]">
+        <BlockFiles @toggle="change"/>
       </div>
       <div class="params-full__main">
         <div class="main__header">
@@ -43,12 +43,27 @@ export default {
     BlockMainLeft,
     BlockMainRight,
   },
-  data: () => ({}),
+  data: () => ({
+    toggle: true
+  }),
   computed: {
     // ...mapGetters({
     //   settings: "datasets/getSettings",
     // }),
+    full: {
+      set(val) {
+        this.$store.dispatch("datasets/setFull", val);
+      },
+      get() {
+        return this.$store.getters["datasets/getFull"];
+      },
+    },
   },
+  methods: {
+    change(value){
+      this.toggle = value
+    }
+  }
 };
 </script>
 
@@ -71,7 +86,7 @@ export default {
   border-top: #0e1621 solid 1px;
   &__btn {
     position: absolute;
-    top: 0px;
+    bottom: 0px;
     left: -32px;
     width: 32px;
     height: 40px;
@@ -97,6 +112,9 @@ export default {
     display: -webkit-flex;
     display: flex;
     border-right: #0e1621 solid 1px;
+    &.toggle{
+      flex: 0 0 24px;
+    }
   }
   &__main {
     flex: 1 1 360px;
