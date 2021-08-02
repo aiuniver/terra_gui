@@ -12,8 +12,12 @@
           <BlockHeader />
         </div>
         <div class="main__center">
-          <BlockMainLeft />
-          <BlockMainRight />
+          <div class="main__center--left">
+            <BlockMainLeft />
+          </div>
+          <div class="main__center--right">
+            <BlockMainRight />
+          </div>
         </div>
         <div class="main__footer">
           <BlockFooter />
@@ -113,22 +117,28 @@ export default {
     }
   }
   &__main {
-    flex: 1 1 360px;
+    flex: 1 1;
     display: -webkit-flex;
     display: flex;
     flex-direction: column;
     width: 100%;
+    overflow: hidden;
     & .main__header {
       flex: 0 0 172px;
       // border-bottom: #0e1621 solid 1px;
     }
     & .main__center {
-      flex: auto;
-      border-top: #0e1621 solid 1px;
+      flex: 1 1;
       display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      width: 100%;
+      &--left {
+        flex: 1 1;
+        // border-right: #0e1621 solid 1px;
+                overflow: hidden;
+      }
+      &--right {
+        flex: 1 1;
+                overflow: hidden;
+      }
     }
     & .main__footer {
       flex: 0 0 96px;

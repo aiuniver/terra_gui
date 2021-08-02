@@ -299,9 +299,9 @@ export default {
 
 <style lang="scss" scoped>
 .block-left {
-  flex-basis: 50.000004%;
-  max-width: 50.000004%;
-  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   position: relative;
   &__header {
     position: absolute;
