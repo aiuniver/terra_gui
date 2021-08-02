@@ -110,7 +110,7 @@ export default {
     background-color: #17212b;
     border-radius: 4px 0px 0px 4px;
     border: 1px solid #A7BED3;
-    padding: 12px 7px;
+    padding: 10px 7px 12px 7px;
     cursor: pointer;
     &--icon {
       display: block;

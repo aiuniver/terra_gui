@@ -88,10 +88,28 @@ Vue.use(vuescroll, {
       disable: false
     },
     rail: {
+      gutterOfEnds: '3px',
+      gutterOfSide: '3px',
+      background: '#01a99a',
+      opacity: 0,
       size: '4px',
     }
   },
   name: 'scrollbar'
+});
+
+Vue.directive('click-outside', {
+  bind: function (el, binding, vnode) {
+    el.clickOutsideEvent = function (event) {
+      if (!(el == event.target || el.contains(event.target))) {
+        vnode.context[binding.expression](event);
+      }
+    };
+    document.body.addEventListener('click', el.clickOutsideEvent)
+  },
+  unbind: function (el) {
+    document.body.removeEventListener('click', el.clickOutsideEvent)
+  },
 });
 
 import FilesMenu from "@/components/datasets/paramsFull/components/forms/FilesMenu.vue";

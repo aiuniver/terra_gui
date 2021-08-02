@@ -62,12 +62,18 @@ export default {
 .t-field {
   margin-bottom: 20px;
   &__label {
+    width: 150px;
+    max-width: 130px;
+    padding: 0 10px 0 10px;
+    text-align: left;
     color: #a7bed3;
     display: block;
-    margin: 0 0 10px 0;
+    margin: 0;
     line-height: 1.25;
     font-size: 0.75rem;
-    user-select: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
   &__input {
     color: #fff;
@@ -103,9 +109,10 @@ export default {
   }
   > input {
     height: 22px;
-    font-size: 0.75rem;
-    max-width: 100px;
-    width: 100px;
+    font-size: 12px;
+    line-height: 24px;
+    width: 109px;
+
   }
 }
 </style>

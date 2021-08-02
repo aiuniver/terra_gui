@@ -32,10 +32,10 @@ export default {
 
 <style lang="scss" scoped>
 .card-file {
-  flex: 0 0 150px;
+  flex: 0 0 152px;
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 152px;
+  height: 152px;
   border: 1px solid #6c7883;
   box-sizing: border-box;
   border-radius: 4px;
