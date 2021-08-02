@@ -47,6 +47,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  height: 100%;
   &__header {
     position: absolute;
     height: 24px;

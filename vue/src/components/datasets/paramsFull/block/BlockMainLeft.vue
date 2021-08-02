@@ -289,9 +289,10 @@ export default {
     },
     heightForm(value) {
       // console.log(value, this.$el.clientHeight);
-      const clearHeight = this.$el.clientHeight - 56;
-      console.log(value, clearHeight, this.$el.clientHeight);
-      this.height = value > clearHeight ? clearHeight : value + 56;
+      // const clearHeight = this.$el.clientHeight - 56;
+      console.log(value,  this.$el.clientHeight);
+      // this.height = value > clearHeight ? clearHeight : value + 56;
+      // this.height = clearHeight
     },
   },
 };
@@ -303,6 +304,7 @@ export default {
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  height: 100%;
   &__header {
     position: absolute;
     height: 24px;
