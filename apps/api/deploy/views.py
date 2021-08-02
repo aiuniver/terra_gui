@@ -1,4 +1,7 @@
+from pathlib import Path
 from pydantic import ValidationError
+
+from django.conf import settings
 
 from terra_ai.agent import agent_exchange
 
@@ -18,20 +21,24 @@ class UploadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
+            # Подготовить zip-файл
+            # ...
+            filepath = Path("/tmp/aaa.zip")
             stage = agent_exchange(
-                "deploy_prepare",
+                "deploy_upload",
                 **{
                     "stage": 1,
                     "user": {
-                        "login": "bl146u",
-                        "name": "Юрий",
-                        "lastname": "Максимов",
+                        "login": settings.USER_LOGIN,
+                        "name": settings.USER_NAME,
+                        "lastname": settings.USER_LASTNAME,
                     },
-                    "project_name": "NoName",
+                    "project_name": request.project.name,
                     "url": serializer.validated_data.get("url"),
                     "replace": serializer.validated_data.get("replace"),
-                    "filename": "asdasdas.zip",
-                    "filesize": 38456,
+                    "file": {
+                        "path": filepath,
+                    },
                 }
             )
             return BaseResponseSuccess(stage.native())

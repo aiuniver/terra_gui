@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 import tensorflow
 
 from typing import Any
@@ -22,7 +23,7 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
-from ..data.deploy.stages import StagePrepareData
+from ..data.deploy.stages import StageUploadData
 
 from ..datasets import loading as datasets_loading
 
@@ -176,11 +177,13 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_deploy_prepare(self, **kwargs):
+    def _call_deploy_upload(self, **kwargs):
         """
-        Деплой: подготовка
+        Деплой: загрузка
         """
-        stage = StagePrepareData(**kwargs)
+        stage = StageUploadData(**kwargs)
+        requests.post()
+        print(stage)
         return stage
 
 
