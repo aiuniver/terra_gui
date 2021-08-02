@@ -1,5 +1,6 @@
 import os
 import json
+import requests
 import tensorflow
 
 from typing import Any
@@ -181,6 +182,8 @@ class Exchange:
         Деплой: загрузка
         """
         stage = StageUploadData(**kwargs)
+        requests.post()
+        print(stage)
         return stage
 
 

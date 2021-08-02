@@ -280,15 +280,15 @@ class DatasetData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
-    limit: PositiveInt # не нужен
+    limit: PositiveInt  # не нужен
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
     classes_names: Dict[PositiveInt, List[str]] = {}
     classes_colors: Dict[PositiveInt, List[Color]] = {}
     one_hot_encoding: Dict[PositiveInt, bool] = {}
     task_type: Dict[int, TaskChoice] = {}
-    inputs: Dict[PositiveInt, DatasetInputsData]
-    outputs: Dict[PositiveInt, DatasetOutputsData]
+    inputs: Dict[PositiveInt, DatasetInputsData] = {}
+    outputs: Dict[PositiveInt, DatasetOutputsData] = {}
 
 
 class DatasetsList(UniqueListMixin):
