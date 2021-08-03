@@ -33,7 +33,19 @@ class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
             request.project.model = agent_exchange(
-                "model_update", model=request.project.model, **kwargs
+                "model_update", model=request.project.model.native(), **kwargs
+            )
+            request.project.save()
+            return BaseResponseSuccess()
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+
+
+class LayerSaveAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            request.project.model = agent_exchange(
+                "model_layer_save", model=request.project.model.native(), **kwargs
             )
             request.project.save()
             return BaseResponseSuccess()

@@ -17,6 +17,7 @@ from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
 
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.modeling.layer import LayerData
 from ..data.modeling.extra import ModelGroupChoice
 
 from ..data.presets.datasets import DatasetsGroups
@@ -177,12 +178,21 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_model_update(self, model: ModelDetailsData, **kwargs) -> ModelDetailsData:
+    def _call_model_update(self, model: dict, **kwargs) -> ModelDetailsData:
         """
         Обновление модели
         """
         if len(kwargs.keys()):
-            model = ModelDetailsData(**model.native().update(**kwargs))
+            model.update(**kwargs)
+        return ModelDetailsData(**model)
+
+    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
+        """
+        Обновление слоя модели
+        """
+        model = ModelDetailsData(**model)
+        if len(kwargs.keys()):
+            model.layers.append(**kwargs)
         return model
 
     def _call_deploy_upload(self, **kwargs):
