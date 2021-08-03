@@ -8,4 +8,5 @@ app_name = "modeling"
 urlpatterns = [
     path("load/", views.LoadAPIView.as_view(), name="load"),
     path("info/", views.InfoAPIView.as_view(), name="info"),
+    path("update/", views.UpdateAPIView.as_view(), name="update"),
 ]

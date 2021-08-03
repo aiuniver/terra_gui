@@ -177,6 +177,14 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
+    def _call_model_update(self, model: ModelDetailsData, **kwargs) -> ModelDetailsData:
+        """
+        Обновление модели
+        """
+        if len(kwargs.keys()):
+            model = ModelDetailsData(**model.native().update(**kwargs))
+        return model
+
     def _call_deploy_upload(self, **kwargs):
         """
         Деплой: загрузка

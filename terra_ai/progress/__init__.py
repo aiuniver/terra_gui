@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Optional, Any
-from pydantic import BaseModel
 from threading import Thread
 
 from ..data.types import ConstrainedFloatValueGe0Le100
