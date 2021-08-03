@@ -1,9 +1,8 @@
 <template>
   <div class="block-file">
-    <div :class="['block-file__header', { toggle: !toggle }]">
+    <div :class="['block-file__header', { toggle: !toggle }]" @click="(toggle = !toggle), $emit('toggle', toggle)">
       <i
         class="block-file__header--icon"
-        @click="(toggle = !toggle), $emit('toggle', toggle)"
       ></i>
       {{ text }}
     </div>

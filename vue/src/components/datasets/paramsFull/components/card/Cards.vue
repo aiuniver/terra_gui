@@ -1,6 +1,6 @@
 <template>
-  <div class="t-cards" :style="style">
-    <scrollbar :ops="ops">
+  <div class="t-cards" :style="style" @wheel="wheel">
+    <scrollbar :ops="ops" ref="scrollCards">
       <div class="t-cards__items">
         <div class="t-cards__items--item">
           <slot> </slot>
@@ -29,6 +29,16 @@ export default {
   mounted() {
     this.wight = this.$el.clientWidth;
     console.log(this.$el.clientWidth);
+  },
+  methods: {
+    wheel(e) {
+      this.$refs.scrollCards.scrollBy(
+        {
+          dx: e.wheelDelta,
+        },
+        200
+      );
+    },
   },
 };
 </script>

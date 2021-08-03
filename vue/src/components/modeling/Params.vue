@@ -101,7 +101,7 @@ export default {
       }
     },
     height() {
-      return this.$store.getters["settings/height"](170);
+      return this.$store.getters["settings/height"]({clean: true});
     },
   },
   methods: {

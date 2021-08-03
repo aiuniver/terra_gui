@@ -11,7 +11,7 @@
         <div class="main__header">
           <BlockHeader />
         </div>
-        <div class="main__center">
+        <div class="main__center" :style="height">
           <div class="main__center--left">
             <BlockMainLeft />
           </div>
@@ -58,32 +58,42 @@ export default {
         return this.$store.getters["datasets/getFull"];
       },
     },
+    height() {
+      let height = this.$store.getters["settings/height"]({ style: false, clean: true});
+      height = height - 172 - 96
+      console.log(height)
+      return { flex: '0 0 ' + height + 'px', height: height + 'px' }
+    },
   },
   methods: {
     change(value) {
       this.toggle = value;
     },
   },
+  mounted() {
+    
+  }
 };
 </script>
 
 
 <style lang="scss">
-.params-full__inner {
-  width: 100%;
-  display: -webkit-flex;
-  display: flex;
-  position: relative;
-}
 .params-full {
   flex-shrink: 0;
   width: 100%;
-  margin-left: 41px;
+  padding-left: 41px;
   flex: auto;
   display: -webkit-flex;
   display: flex;
-  background-color: #17212b;
+  background-color: #0e1621;
   border-top: #0e1621 solid 1px;
+  &__inner {
+    width: 100%;
+    display: -webkit-flex;
+    display: flex;
+    position: relative;
+    background-color: #17212b;
+  }
   &__btn {
     position: absolute;
     bottom: 0px;
@@ -128,20 +138,22 @@ export default {
       // border-bottom: #0e1621 solid 1px;
     }
     & .main__center {
-      flex: 1 1;
+      flex: 0 0;
       display: flex;
       &--left {
         flex: 1 1;
-        // border-right: #0e1621 solid 1px;
-                overflow: hidden;
+        border-right: #0e1621 solid 1px;
+        overflow: hidden;
       }
       &--right {
         flex: 1 1;
-                overflow: hidden;
+        overflow: hidden;
       }
     }
     & .main__footer {
       flex: 0 0 96px;
+      height: 96px;
+      overflow: hidden;
       border-top: #0e1621 solid 1px;
     }
   }

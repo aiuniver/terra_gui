@@ -1,5 +1,5 @@
 <template>
-  <div class="card-layer" v-click-outside="outside">
+  <div class="card-layer" v-click-outside="outside" :style="height">
     <div class="card-layer__header" :style="bg">
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="dot"></i>
@@ -16,9 +16,9 @@
         <i :class="[icon]"></i>
       </div>
     </div>
-    <div class="card-layer__body" :style="style">
-      <scrollbar :ops="ops">
-        <div class="card-layer__body--inner" ref="form">
+    <div class="card-layer__body">
+      <scrollbar :ops="ops" >
+        <div class="card-layer__body--inner" ref="cardBody">
           <slot />
         </div>
       </scrollbar>
@@ -35,9 +35,9 @@ export default {
       default: "#242f3d",
     },
     title: String,
-    height: Number,
   },
   data: () => ({
+    height: { height: '100%'},
     toggle: false,
     items: [{ icon: "remove" }, { icon: "copy" }],
     ops: {
@@ -52,10 +52,6 @@ export default {
     bg() {
       return { backgroundColor: this.color };
     },
-    style() {
-      console.log(this.height)
-      return (this.height) ? { height: this.height + 'px'} : {}
-    }
   },
   methods: {
     outside() {
@@ -68,6 +64,13 @@ export default {
       this.$emit("click-btn", icon);
     },
   },
+  mounted() {
+    const heightCard = this.$el.clientHeight
+    const heightBody =this.$refs.cardBody.clientHeight + 36
+    if (heightCard > heightBody) {
+      this.height = { height: heightBody + 'px' }
+    }
+  }
 };
 </script>
 
@@ -86,7 +89,7 @@ export default {
     padding-top: 34px;
     // padding: 30px 8px 16px 8px;
     position: relative;
-    height: 150px;
+    height: 100%;
     overflow: hidden;
     &--inner {
       // position: absolute;

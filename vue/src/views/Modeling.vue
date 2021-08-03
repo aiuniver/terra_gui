@@ -31,6 +31,7 @@ export default {
   background: #17212B;
   padding: 0;
   display: flex;
+  height: 100%;
 }
 
 </style>

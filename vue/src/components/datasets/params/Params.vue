@@ -37,7 +37,6 @@ export default {
   computed: {
     ...mapGetters({
       settings: "datasets/getSettings",
-      height: "settings/autoHeight",
     }),
     inputLayer() {
       const int = +this.inputs;
