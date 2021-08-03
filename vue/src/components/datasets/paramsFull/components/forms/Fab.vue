@@ -12,8 +12,8 @@ export default {
 
 <style lang="scss" scoped>
 .fab {
-  width: 25px;
-  height: 25px;
+  width: 24px;
+  height: 24px;
   background: #2b5278;
   border: 1px solid #65b9f4;
   box-sizing: border-box;
@@ -23,8 +23,8 @@ export default {
   &__icon {
     // background-size: 24px 24px;
     display: block;
-    width: 15px;
-    height: 15px;
+    width: 14px;
+    height: 14px;
     background-position: center;
     background-repeat: no-repeat;
     -webkit-user-select: none;

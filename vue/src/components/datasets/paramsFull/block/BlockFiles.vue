@@ -22,7 +22,7 @@ export default {
       {
         title: "Cars",
         type: "folder",
-        isExpanded: true,
+        isExpanded: false,
         children: [
           { title: "BMW.jpg", type: "image" },
           { title: "AUDI.jpg", type: "image" },
@@ -31,6 +31,7 @@ export default {
       {
         title: "Music",
         type: "folder",
+        isExpanded: true,
         children: [
           { title: "1.mp3", type: "audio" },
           { title: "song.wav", type: "audio" },
@@ -39,6 +40,7 @@ export default {
       {
         title: "Text",
         type: "folder",
+        isExpanded: false,
         children: [{ title: "Table", type: "text" }],
       },
     ],

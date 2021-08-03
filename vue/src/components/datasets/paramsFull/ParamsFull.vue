@@ -4,8 +4,8 @@
       <div class="params-full__btn" @click="full = !full">
         <i class="params-full__btn--icon"></i>
       </div>
-      <div :class="['params-full__files', {toggle: !toggle}]">
-        <BlockFiles @toggle="change"/>
+      <div :class="['params-full__files', { toggle: !toggle }]">
+        <BlockFiles @toggle="change" />
       </div>
       <div class="params-full__main">
         <div class="main__header">
@@ -44,7 +44,7 @@ export default {
     BlockMainRight,
   },
   data: () => ({
-    toggle: true
+    toggle: true,
   }),
   computed: {
     // ...mapGetters({
@@ -60,10 +60,10 @@ export default {
     },
   },
   methods: {
-    change(value){
-      this.toggle = value
-    }
-  }
+    change(value) {
+      this.toggle = value;
+    },
+  },
 };
 </script>
 
@@ -112,30 +112,32 @@ export default {
     display: -webkit-flex;
     display: flex;
     border-right: #0e1621 solid 1px;
-    &.toggle{
+    &.toggle {
       flex: 0 0 24px;
     }
   }
   &__main {
-    flex: 1 1 360px;
+    flex: 1 1;
     display: -webkit-flex;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    overflow: hidden;
     & .main__header {
-      flex: 0 0 170px;
-      border-bottom: #0e1621 solid 1px;
+      flex: 0 0 172px;
+      // border-bottom: #0e1621 solid 1px;
     }
     & .main__center {
       flex: 1 1;
       display: flex;
       &--left {
         flex: 1 1;
-        border-right: #0e1621 solid 1px;
-        width: 100%;
-        height: 100%;
+        // border-right: #0e1621 solid 1px;
+                overflow: hidden;
       }
       &--right {
         flex: 1 1;
+                overflow: hidden;
       }
     }
     & .main__footer {

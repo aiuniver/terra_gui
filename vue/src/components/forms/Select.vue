@@ -1,7 +1,7 @@
 <template>
   <div class="field">
     <label class="field__label">{{ label }}</label>
-    <input style="display: none" :name="parse" :value="select"/>
+    <input style="display: none" :name="parse" :value="select" />
     <at-select
       v-model="select"
       clearable
@@ -9,7 +9,11 @@
       style="width: 100px"
       @on-change="change"
     >
-      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
+      <at-option
+        v-for="({ label, value }, key) in items"
+        :key="'item_' + key"
+        :value="value"
+      >
         {{ label }}
       </at-option>
     </at-select>
@@ -46,11 +50,11 @@ export default {
     select: "",
   }),
   computed: {
-    items () {
+    items() {
       if (Array.isArray(this.lists)) {
         return this.lists.map((i) => {
-          return i || ''
-        })
+          return i || "";
+        });
       } else {
         return Object.keys(this.lists);
       }
@@ -58,14 +62,14 @@ export default {
   },
   methods: {
     change(value) {
-      this.$emit('input', value)
-      this.$emit('change', { name: this.name, value })
-      
-    // bus.$emit("change", e);
+      this.$emit("input", value);
+      this.$emit("change", { name: this.name, value });
+
+      // bus.$emit("change", e);
     },
   },
   created() {
-    this.select = this.value
+    this.select = this.value;
 
     // console.log('created', this.select)
     // console.log('created', this.name);
@@ -90,20 +94,24 @@ export default {
   margin-bottom: 10px;
   align-items: center;
   &__label {
-    width: auto;
-    padding: 0 20px 0 10px;
+    width: 150px;
+    max-width: 130px;
+    padding: 0 10px 0 10px;
     text-align: left;
-    color: #A7BED3;
+    color: #a7bed3;
     display: block;
     margin: 0;
     line-height: 1.25;
-    font-size: .75rem;
+    font-size: 0.75rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
   &__input {
     height: 22px;
     font-size: 0.75rem;
-    max-width: 100px;
-    width: 100px;
+    max-width: 109px;
+    width: 109px;
   }
 }
 </style>

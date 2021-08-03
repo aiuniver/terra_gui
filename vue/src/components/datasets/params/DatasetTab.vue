@@ -10,6 +10,7 @@
         {{ title }}
       </li>
     </ul>
+    <div class="tabs__title">Создание датасета</div>
     <div v-show="select === 'GoogleDrive'" class="tabs__item">
       <Autocomplete
         :list="list"
@@ -21,7 +22,6 @@
     <div v-show="select === 'URL'" class="tabs__item">
       <TInput label="Введите URL на архив исходников" @blur="blur" />
     </div>
-    
   </div>
 </template>
 
@@ -36,7 +36,7 @@ export default {
   },
   props: {},
   data: () => ({
-    select: 'GoogleDrive',
+    select: "GoogleDrive",
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
@@ -51,30 +51,36 @@ export default {
       if (!data) {
         return;
       }
-      console.log(data)
-      this.list = data
+      console.log(data);
+      this.list = data;
     },
     selected({ value }) {
-      this.$emit('select', { mode: 'GoogleDrive', value })
+      this.$emit("select", { mode: "GoogleDrive", value });
     },
     blur(value) {
-      this.$emit('select', { mode: 'URL', value})
+      this.$emit("select", { mode: "URL", value });
     },
     click(mode) {
-      this.select = mode
+      this.select = mode;
       this.items = this.items.map((item) => {
-        return {...item, active: (item.mode === mode) }
-      })
-    }
-  }
+        return { ...item, active: item.mode === mode };
+      });
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .tabs {
   margin-bottom: 10px;
+  &__title {
+    padding: 20px;
+    font-size: 14px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+  }
   &__list {
-    margin-bottom: 10px;
     background-color: #0e1621;
     display: block;
     padding: 1px 0 0 0;
@@ -108,15 +114,22 @@ export default {
     -ms-flex-align: start;
     align-items: flex-start;
     &--item {
-      line-height: 1;
+      flex: 1;
       padding: 10px 20px;
-      font-weight: 600;
-      font-size: 0.875rem;
       cursor: pointer;
       user-select: none;
+      border-radius: 5px 5px 0px 0px;
+      font-family: Open Sans;
+      font-style: normal;
+      font-weight: normal;
+      font-size: 14px;
+      line-height: 19px;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
     }
   }
-  &__item{
+  &__item {
     padding: 0 20px;
   }
 }

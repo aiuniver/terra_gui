@@ -117,7 +117,7 @@ export default {
   border-radius: 8px;
   padding: 23px 0 2px 0;
   display: flex;
-  height: 150px;
+  height: 152px;
   flex-direction: column;
 
   .table__data{

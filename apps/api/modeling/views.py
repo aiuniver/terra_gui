@@ -27,3 +27,15 @@ class InfoAPIView(BaseAPIView):
         return BaseResponseSuccess(
             agent_exchange("models", path=str(data_path.modeling)).native()
         )
+
+
+class UpdateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            request.project.model = agent_exchange(
+                "model_update", model=request.project.model, **kwargs
+            )
+            request.project.save()
+            return BaseResponseSuccess()
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)

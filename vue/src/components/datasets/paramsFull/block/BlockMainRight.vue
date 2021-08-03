@@ -1,7 +1,7 @@
 <template>
   <div class="block-right">
     <div class="block-right__fab">
-      <Fab @click="add"/>
+      <Fab @click="add" />
     </div>
     <div class="block-right__header">Выходные параметры</div>
     <div class="block-right__body">
@@ -13,6 +13,7 @@
 </template>
 
 <script>
+import { getColor } from "../util/color";
 import Fab from "../components/forms/Fab.vue";
 import CardLayer from "../components/card/CardLayer.vue";
 export default {
@@ -26,7 +27,7 @@ export default {
   }),
   methods: {
     add() {
-      this.cardLayers.push({ title: "Name", color: this.getColor() })
+      this.cardLayers.unshift({ title: "Name", color: getColor() });
     },
     getColor() {
       var letters = "0123456789ABCDEF";
@@ -43,11 +44,10 @@ export default {
 <style lang="scss" scoped>
 .block-right {
   display: flex;
-  flex-direction: row;
-  // justify-content: center;
-  // align-items: center;
-  width: 100%;
+  flex-direction: column;
+  overflow: hidden;
   position: relative;
+  height: 100%;
   &__header {
     position: absolute;
     height: 24px;
@@ -67,7 +67,7 @@ export default {
   }
   &__body {
     display: flex;
-    padding: 40px 16px 16px 70px;
+    padding: 40px 16px 16px 72px;
     width: 100%;
     height: 100%;
     position: relative;
