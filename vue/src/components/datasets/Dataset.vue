@@ -42,7 +42,7 @@ export default {
       datasets: "datasets/getDatasets",
     }),
     height() {
-      return this.$store.getters['settings/height']({ deduct: 'filter', pading: 52, clean: true })
+      return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true })
     },
   },
   methods: {

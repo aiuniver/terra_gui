@@ -40,8 +40,8 @@ export default {
     //   };
     // },
     height: ({ height }) => (params = {}) => {
-      const { key = 'all', deduct, clean = false, style = true, pading = 0 } = params
-      const value = height[key] - (deduct ? height[deduct] : 0) - (clean ? 155 : 0) - (pading)
+      const { key = 'all', deduct, clean = false, style = true, padding = 0 } = params
+      const value = height[key] - (deduct ? height[deduct] : 0) - (clean ? 155 : 0) - (padding)
       console.log(height)
       return style ? { height: value + "px" } : value
     },

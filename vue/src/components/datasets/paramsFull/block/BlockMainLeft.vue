@@ -5,17 +5,18 @@
     </div>
     <div class="block-left__header">Входные параметры</div>
     <div class="block-left__body">
-      <template v-for="({ title, color }, i) of cardLayers">
-        <CardLayer
-          :title="title + ' ' + (i + 1)"
-          :color="color"
-          :key="'cardLayersLeft' + i"
-          :height="height"
-          @click-btn="click($event, i)"
-        >
-          <Forms :data="main" @change="change" @height="heightForm" />
-        </CardLayer>
-      </template>
+      <div class="block-left__body--inner">
+        <template v-for="({ title, color }, i) of cardLayers">
+          <CardLayer
+            :title="title + ' ' + (i + 1)"
+            :color="color"
+            :key="'cardLayersLeft' + i"
+            @click-btn="click($event, i)"
+          >
+            <Forms :data="main" @change="change" />
+          </CardLayer>
+        </template>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +40,86 @@ export default {
   computed: {
     main() {
       const items = [
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
         {
           type: "checkbox",
           name: "use_bias",
@@ -290,8 +371,10 @@ export default {
     heightForm(value) {
       // console.log(value, this.$el.clientHeight);
       // const clearHeight = this.$el.clientHeight - 56;
-      this.$store.dispatch('settings/setHeight', { center: this.$el.clientHeight })
-      console.log(value,  this.$el.clientHeight);
+      this.$store.dispatch("settings/setHeight", {
+        center: this.$el.clientHeight,
+      });
+      console.log(value, this.$el.clientHeight);
       // this.height = value > clearHeight ? clearHeight : value + 56;
       // this.height = clearHeight
     },
@@ -325,13 +408,18 @@ export default {
     justify-content: flex-end;
   }
   &__body {
-    display: flex;
     padding: 40px 70px 16px 16px;
     width: 100%;
     position: relative;
-    justify-content: flex-end;
-    overflow: auto;
-    // height: 100%;
+    &--inner {
+      display: flex;
+      padding: 40px 70px 16px 16px;
+      width: 100%;
+      justify-content: flex-end;
+      overflow: auto;
+      position: absolute;
+      height: 100%;
+    }
   }
   &__fab {
     position: absolute;

@@ -16,9 +16,9 @@
         <i :class="[icon]"></i>
       </div>
     </div>
-    <div class="card-layer__body" :style="height">
-      <scrollbar :ops="ops">
-        <div class="card-layer__body--inner" ref="form">
+    <div class="card-layer__body" >
+      <scrollbar :ops="ops" >
+        <div class="card-layer__body--inner">
           <slot />
         </div>
       </scrollbar>
@@ -90,7 +90,7 @@ export default {
     padding-top: 34px;
     // padding: 30px 8px 16px 8px;
     position: relative;
-    height: 150px;
+    height: 100%;
     overflow: hidden;
     &--inner {
       // position: absolute;

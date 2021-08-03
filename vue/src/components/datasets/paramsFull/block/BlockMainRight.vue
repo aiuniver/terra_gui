@@ -6,7 +6,14 @@
     <div class="block-right__header">Выходные параметры</div>
     <div class="block-right__body">
       <template v-for="({ title, color }, i) of cardLayers">
-        <CardLayer :title="title" :color="color" :key="'cardLayersRight' + i" />
+        <CardLayer
+          :title="title + ' ' + (i + 1)"
+          :color="color"
+          :key="'cardLayersRight' + i"
+          @click-btn="click($event, i)"
+        >
+          <Forms :data="main" @change="change" />
+        </CardLayer>
       </template>
     </div>
   </div>
@@ -15,12 +22,204 @@
 <script>
 import { getColor } from "../util/color";
 import Fab from "../components/forms/Fab.vue";
+import Forms from "../components/forms/Forms.vue";
 import CardLayer from "../components/card/CardLayer.vue";
 export default {
   name: "BlockMainRight",
   components: {
     Fab,
     CardLayer,
+    Forms
+  },
+  computed: {
+    main() {
+      const items = [
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "checkbox",
+          name: "use_bias",
+          label: "Use bias",
+          parse: "parameters[extra][use_bias]",
+          value: true,
+          list: null,
+        },
+        {
+          type: "select",
+          name: "bias_constraint",
+          label: "Bias constraint",
+          parse: "parameters[extra][bias_constraint]",
+          value: "",
+          list: [
+            {
+              value: "max_norm",
+              label: "Max norm",
+            },
+            {
+              value: "min_max_norm",
+              label: "Min max norm",
+            },
+            {
+              value: "non_neg",
+              label: "Non neg",
+            },
+            {
+              value: "unit_norm",
+              label: "Unit norm",
+            },
+            {
+              value: "radial_constraint",
+              label: "Radial constraint",
+            },
+          ],
+        },
+      ];
+      const value = {};
+      const type = "main";
+      return { type, items, value };
+    },
   },
   data: () => ({
     cardLayers: [{ title: "Name", color: "#8e51f2" }],
@@ -29,14 +228,9 @@ export default {
     add() {
       this.cardLayers.unshift({ title: "Name", color: getColor() });
     },
-    getColor() {
-      var letters = "0123456789ABCDEF";
-      var color = "#";
-      for (var i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    },
+    change(e) {
+      console.log(e)
+    }
   },
 };
 </script>
@@ -69,9 +263,10 @@ export default {
     display: flex;
     padding: 40px 16px 16px 72px;
     width: 100%;
-    height: 100%;
+    // height: 100%;
     position: relative;
     justify-content: flex-start;
+    overflow: auto
   }
   &__fab {
     position: absolute;
