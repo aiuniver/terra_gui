@@ -1,5 +1,5 @@
 <template>
-  <div class="card-layer" v-click-outside="outside" :style="{height: height}">
+  <div class="card-layer" v-click-outside="outside" :style="height">
     <div class="card-layer__header" :style="bg">
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="dot"></i>
@@ -37,7 +37,7 @@ export default {
     title: String,
   },
   data: () => ({
-    height: '100%',
+    height: { height: '100%'},
     toggle: false,
     items: [{ icon: "remove" }, { icon: "copy" }],
     ops: {
@@ -68,7 +68,7 @@ export default {
     const heightCard = this.$el.clientHeight
     const heightBody =this.$refs.cardBody.clientHeight + 36
     if (heightCard > heightBody) {
-      this.height = heightBody + 'px'
+      this.height = { height: heightBody + 'px' }
     }
   }
 };
