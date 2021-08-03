@@ -49,22 +49,19 @@ export default {
       }, []);
     },
     myEventHandler() {
-      const height = this.$refs.filters.clientHeight;
-      this.$store.dispatch("settings/setFilterHeight", height);
+      this.$store.dispatch("settings/setHeight", { filter:this.$refs.filters.clientHeight });
     },
   },
   watch: {
     tags() {
       this.$nextTick(() => {
-        const height = this.$refs.filters.clientHeight;
-        this.$store.dispatch("settings/setFilterHeight", height);
+        this.$store.dispatch("settings/setHeight", { filter:this.$refs.filters.clientHeight });
       });
     },
   },
   mounted() {
     setTimeout(() => {
-      const height = this.$refs.filters.clientHeight;
-      this.$store.dispatch("settings/setFilterHeight", height);
+      this.$store.dispatch("settings/setHeight", { filter:this.$refs.filters.clientHeight });
     }, 100);
   },
   created() {

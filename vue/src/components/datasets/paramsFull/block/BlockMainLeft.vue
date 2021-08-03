@@ -290,6 +290,7 @@ export default {
     heightForm(value) {
       // console.log(value, this.$el.clientHeight);
       // const clearHeight = this.$el.clientHeight - 56;
+      this.$store.dispatch('settings/setHeight', { center: this.$el.clientHeight })
       console.log(value,  this.$el.clientHeight);
       // this.height = value > clearHeight ? clearHeight : value + 56;
       // this.height = clearHeight

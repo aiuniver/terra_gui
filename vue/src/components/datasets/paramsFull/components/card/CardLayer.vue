@@ -16,7 +16,7 @@
         <i :class="[icon]"></i>
       </div>
     </div>
-    <div class="card-layer__body" :style="style">
+    <div class="card-layer__body" :style="height">
       <scrollbar :ops="ops">
         <div class="card-layer__body--inner" ref="form">
           <slot />
@@ -35,7 +35,6 @@ export default {
       default: "#242f3d",
     },
     title: String,
-    height: Number,
   },
   data: () => ({
     toggle: false,
@@ -55,7 +54,12 @@ export default {
     style() {
       console.log(this.height)
       return (this.height) ? { height: this.height + 'px'} : {}
-    }
+    },
+    height() {
+      const height = this.$store.getters['settings/height']({ key: 'center', pading: 58 })
+      console.log(height)
+      return height
+    },
   },
   methods: {
     outside() {

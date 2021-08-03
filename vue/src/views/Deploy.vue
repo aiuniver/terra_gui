@@ -15,16 +15,16 @@ export default {
   name: "Datasets",
   components: {
     Params,
-    Deploy
+    Deploy,
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.cont{
-  background: #17212B;
+.cont {
+  background: #17212b;
   padding: 0;
   display: flex;
+  height: 100%;
 }
-
 </style>

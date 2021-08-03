@@ -1,6 +1,6 @@
 <template>
   <div class="board">
-    <div class="canvas" :style="height">
+    <div class="canvas">
       <VueBlocksContainer
         ref="container"
         :scene.sync="scene"
@@ -29,7 +29,6 @@ export default {
   },
   computed: {
     ...mapGetters({
-      height: "settings/autoHeight",
       toolbar: "modeling/getToolbarEvent",
       typeBlock: "modeling/getTypeBlock",
       blocks: "modeling/getBlocks",
@@ -89,6 +88,9 @@ export default {
   width: 100%;
 }
 .cont {
+  height: 100%;
+}
+.canvas{
   height: 100%;
 }
 </style>

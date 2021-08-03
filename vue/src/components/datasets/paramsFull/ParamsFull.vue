@@ -133,15 +133,17 @@ export default {
       &--left {
         flex: 1 1;
         // border-right: #0e1621 solid 1px;
-                overflow: hidden;
+        overflow: hidden;
       }
       &--right {
         flex: 1 1;
-                overflow: hidden;
+        overflow: hidden;
       }
     }
     & .main__footer {
       flex: 0 0 96px;
+      height: 96px;
+      overflow: hidden;
       border-top: #0e1621 solid 1px;
     }
   }
