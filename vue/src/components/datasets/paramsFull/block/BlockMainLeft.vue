@@ -5,18 +5,21 @@
     </div>
     <div class="block-left__header">Входные параметры</div>
     <div class="block-left__body">
-      <div class="block-left__body--inner">
-        <template v-for="({ title, color }, i) of cardLayers">
-          <CardLayer
-            :title="title + ' ' + (i + 1)"
-            :color="color"
-            :key="'cardLayersLeft' + i"
-            @click-btn="click($event, i)"
-          >
-            <Forms :data="main" @change="change" />
-          </CardLayer>
-        </template>
-      </div>
+      <scrollbar :ops="ops" ref="scrollLeft">
+        <div class="block-left__body--inner" :style="height">
+          <template v-for="({ title, color }, i) of cardLayers">
+            <CardLayer
+              :title="title + ' ' + (i + 1)"
+              :color="color"
+              :key="'cardLayersLeft' + i"
+              @click-btn="click($event, i)"
+            >
+              <Forms :data="main" @change="change" />
+            </CardLayer>
+          </template>
+          <div class="block-left__body--empty"></div>
+        </div>
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -35,9 +38,25 @@ export default {
   },
   data: () => ({
     cardLayers: [{ title: "Input", color: "#FFB054" }],
-    height: 0,
+    ops: {
+      scrollPanel: {
+        scrollingX: true,
+        scrollingY: false,
+      },
+      rail: {
+        gutterOfEnds: "6px",
+      },
+    },
   }),
   computed: {
+    height() {
+      const height = this.$store.getters["settings/height"]({
+        clean: true,
+        padding: 172 + 90 + 62,
+      });
+      console.log(height);
+      return height;
+    },
     main() {
       const items = [
         {
@@ -356,6 +375,14 @@ export default {
   methods: {
     add() {
       this.cardLayers.push({ title: "Input", color: getColor() });
+      this.$nextTick(() => {
+        this.$refs.scrollLeft.scrollTo(
+          {
+            x: "100%",
+          },
+          100
+        );
+      });
     },
     click(comm, index) {
       console.log(comm, index);
@@ -408,17 +435,24 @@ export default {
     justify-content: flex-end;
   }
   &__body {
-    padding: 40px 70px 16px 16px;
     width: 100%;
-    position: relative;
+    /* position: absolute; */
+    /* height: 250px; */
+    /* top: 34px; */
+    padding: 40px 0px 0px 0px;
+    /* right: 70px; */
+    overflow: auto;
     &--inner {
       display: flex;
-      padding: 40px 70px 16px 16px;
       width: 100%;
       justify-content: flex-end;
       overflow: auto;
-      position: absolute;
+      // position: absolute;
       height: 100%;
+    }
+    &--empty {
+      height: 100%;
+      width: 70px;
     }
   }
   &__fab {

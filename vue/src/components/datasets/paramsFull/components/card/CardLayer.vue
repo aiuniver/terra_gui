@@ -1,5 +1,5 @@
 <template>
-  <div class="card-layer" v-click-outside="outside">
+  <div class="card-layer" v-click-outside="outside" :style="{height: height}">
     <div class="card-layer__header" :style="bg">
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="dot"></i>
@@ -16,9 +16,9 @@
         <i :class="[icon]"></i>
       </div>
     </div>
-    <div class="card-layer__body" >
+    <div class="card-layer__body">
       <scrollbar :ops="ops" >
-        <div class="card-layer__body--inner">
+        <div class="card-layer__body--inner" ref="cardBody">
           <slot />
         </div>
       </scrollbar>
@@ -37,6 +37,7 @@ export default {
     title: String,
   },
   data: () => ({
+    height: '100%',
     toggle: false,
     items: [{ icon: "remove" }, { icon: "copy" }],
     ops: {
@@ -51,15 +52,6 @@ export default {
     bg() {
       return { backgroundColor: this.color };
     },
-    style() {
-      console.log(this.height)
-      return (this.height) ? { height: this.height + 'px'} : {}
-    },
-    height() {
-      const height = this.$store.getters['settings/height']({ key: 'center', pading: 58 })
-      console.log(height)
-      return height
-    },
   },
   methods: {
     outside() {
@@ -72,6 +64,14 @@ export default {
       this.$emit("click-btn", icon);
     },
   },
+  mounted() {
+    console.log(this.$refs.cardBody.clientHeight)
+    console.log(this.$el.clientHeight)
+
+    if (this.$el.clientHeight > this.$refs.cardBody.clientHeight) {
+      this.height = (this.$refs.cardBody.clientHeight + 36 )+ 'px'
+    }
+  }
 };
 </script>
 
