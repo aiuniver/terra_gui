@@ -139,38 +139,6 @@ export default {
           value: true,
           list: null,
         },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
 
         {
           type: "select",

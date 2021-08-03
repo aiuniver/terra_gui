@@ -65,11 +65,10 @@ export default {
     },
   },
   mounted() {
-    console.log(this.$refs.cardBody.clientHeight)
-    console.log(this.$el.clientHeight)
-
-    if (this.$el.clientHeight > this.$refs.cardBody.clientHeight) {
-      this.height = (this.$refs.cardBody.clientHeight + 36 )+ 'px'
+    const heightCard = this.$el.clientHeight
+    const heightBody =this.$refs.cardBody.clientHeight + 36
+    if (heightCard > heightBody) {
+      this.height = heightBody + 'px'
     }
   }
 };
