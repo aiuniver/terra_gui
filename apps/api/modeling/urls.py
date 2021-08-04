@@ -6,6 +6,7 @@ from . import views
 app_name = "modeling"
 
 urlpatterns = [
+    path("get/", views.GetAPIView.as_view(), name="get"),
     path("load/", views.LoadAPIView.as_view(), name="load"),
     path("info/", views.InfoAPIView.as_view(), name="info"),
     path("update/", views.UpdateAPIView.as_view(), name="update"),

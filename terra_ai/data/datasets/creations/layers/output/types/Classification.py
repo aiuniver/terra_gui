@@ -9,4 +9,4 @@ from ......mixins import BaseMixinData
 class ParametersData(BaseMixinData):
     file_info: FileInfo
     one_hot_encoding: Optional[bool] = True
-    num_classes: Optional[PositiveInt]
+    # num_classes: Optional[PositiveInt]

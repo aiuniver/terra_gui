@@ -44,6 +44,7 @@ class UploadAPIView(BaseAPIView):
                     },
                 }
             )
+            print(stage)
             return BaseResponseSuccess(stage.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
