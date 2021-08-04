@@ -1,13 +1,17 @@
 <template>
-    <div class="range-slider" >
+    <div class="range-slider" @mousemove="slider">
       <div class="sliders">
-        <div class="first-slider" @mousedown="startDrag" @mousemove="slider"><div></div></div>
-        <div class="second-slider" @mousedown="startDrag"><div></div></div>
+        <div class="first-slider" @mousedown="startDrag($event, 'first')"></div>
+        <div class="second-slider" @mousedown="startDrag($event,'second')"></div>
       </div>
       <div class="scale">
         <div id="first-scale"></div>
         <div id="second-scale"></div>
         <div id="third-scale"></div>
+      </div>
+      <div class="inputs">
+        <input type="number" class="first-value">
+        <input type="number" class="second-value">
       </div>
     </div>
 </template>
@@ -17,6 +21,7 @@ export default {
   name: "DoubleSlider",
   data: () => ({
     dragging: false,
+    draggingObj: " ",
     CurrentX: 0,
     minValue: 0,
     maxValue: 100,
@@ -24,26 +29,43 @@ export default {
     secondSlider: 77,
   }),
   methods: {
-     startDrag(event) {
+     startDrag(event, block) {
       this.dragging = true;
+      this.draggingObj = block
       this.CurrentX = event.x;
     },
     stopDrag() {
       this.dragging = false;
+      this.draggingObj = " ";
     },
     slider(event){
-       if(this.dragging){
-         if(event.x > this.CurrentX){
-           console.log(event.target);
-           event.target.style.marginLeft = (parseInt((event.target.style.marginLeft) || parseInt(window.getComputedStyle(event.target).marginLeft))) + 2 + 'px';
+       let slider = document.querySelector(`.${this.draggingObj}-slider`),
+             scale  = document.querySelector(`#${this.draggingObj}-scale`);
+       if(this.dragging && slider.parentNode.getBoundingClientRect().x+5 < event.x && slider.parentNode.getBoundingClientRect().x + 225 > event.x){
+         let pos = event.x - slider.parentNode.getBoundingClientRect().x
+         slider.style.marginLeft = pos + 'px';
+         if(this.draggingObj == 'first'){
+           scale.style.width  = (pos / 231 * 100) + "%";
+           document.querySelector('#second-scale').style.width = 100 - (pos / 231 * 100) - (document.querySelector('#third-scale').offsetWidth / 231 * 100) + "%";
+
+           document.querySelector('.first-value').value = pos / 231 * 100;
+           document.querySelector('.second-value').value = (pos / 231 * 100) + (100 - (pos / 231 * 100) - (document.querySelector('#third-scale').offsetWidth / 231 * 100));
          } else{
-           event.target.style.marginLeft = (parseInt((event.target.style.marginLeft) || parseInt(window.getComputedStyle(event.target).marginLeft))) - 2 + 'px';
+           scale.style.width = (pos / 231 * 100) - document.querySelector('#first-scale').offsetWidth / 231 * 100 + "%";
+           document.querySelector('#third-scale').style.width = 100 - (document.querySelector('#second-scale').offsetWidth / 231 * 100) - (document.querySelector('#first-scale').offsetWidth / 231 * 100) + "%";
+
+           document.querySelector('.first-value').value = document.querySelector('#first-scale').offsetWidth / 231 * 100;
+           document.querySelector('.second-value').value = (pos / 231 * 100);
          }
+
        }
     }
   },
   mounted() {
     window.addEventListener('mouseup', this.stopDrag);
+  },
+  updated() {
+
   }
 }
 </script>
@@ -65,7 +87,10 @@ export default {
       width: 2px;
       background: #FFFFFF;
       cursor: pointer;
-      div{
+      position: absolute;
+      &:before{
+        content: ' ';
+        display: block;
         width: 6px;
         height: 6px;
         border: 1px solid #FFFFFF;
@@ -81,7 +106,7 @@ export default {
     margin-left: 50%;
   }
   .second-slider{
-    margin-left: 27%;
+    margin-left: 77%;
   }
   .scale{
     height: 24px;
@@ -100,6 +125,18 @@ export default {
       background: #5191F2;
       border-radius: 0 4px 4px 0;
       width: 23%;
+    }
+  }
+  .inputs{
+    display: flex;
+    input{
+      //display: none;
+      width: 60px;
+      height: 24px;
+      padding: 4px;
+      &:nth-child(2){
+        margin-left: 70px;
+      }
     }
   }
 </style>
