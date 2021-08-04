@@ -49,7 +49,7 @@
                 :src="'data:image/png;base64,' + info.image || ''"
               />
             </div>
-            <div class="model-save-arch-btn"><button @click="download">Загрузить</button></div>
+            <div class="model-save-arch-btn"><button :disabled="!model" @click="download">Загрузить</button></div>
           </div>
         </div>
       </div>
@@ -64,7 +64,8 @@ export default {
   name: "ModalWindowLoadModel",
   data: () => ({
     lists: [],
-    info: {}
+    info: {},
+    model: null
   }),
   computed: {
     ...mapGetters({}),
@@ -94,14 +95,16 @@ export default {
       }
     },
     async getModel(value) {
-      const data = await this.$store.dispatch("modeling/load", value );
+      const data = await this.$store.dispatch("modeling/getModel", value );
+      console.log(data)
       if (data) {
         this.info = data;
+        this.model = value
       }
-      this.dialog = false
     },
-    download() {
-      console.log(this.info);
+    async download() {
+      await this.$store.dispatch("modeling/load", this.model );
+      this.dialog = false
     },
   },
   watch: {

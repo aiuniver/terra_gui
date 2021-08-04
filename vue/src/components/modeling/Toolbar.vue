@@ -25,7 +25,7 @@ export default {
       {
         title: "Сохранить модель",
         name: "save",
-        disabled: true,
+        disabled: false,
         icon: "icon-model-save",
       },
       {

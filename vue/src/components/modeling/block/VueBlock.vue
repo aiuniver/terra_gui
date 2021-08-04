@@ -218,7 +218,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$blockBorder: 3px;
+$blockBorder: 2px;
 
 $ioPaddingInner: 2px 0;
 $ioHeight: 16px;
