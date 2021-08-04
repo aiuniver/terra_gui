@@ -20,6 +20,7 @@ from io import open as io_open
 from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
+import cv2
 
 # from terra_ai import out_exchange
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
@@ -60,7 +61,7 @@ class CreateDTS(object):
 
         self.file_folder: str = ''
         self.language: str = ''
-        self.y_cls: np.ndarray = np.array([])
+        self.y_cls: list = []
         self.mode: str = ''
         self.iter: int = 0
 
@@ -387,17 +388,96 @@ class CreateDTS(object):
         return instructions
 
     def instructions_video(self, **options: Any):
-        folder = options.get('folder_name', '')
+        """
+            Args:
+                **options: Параметры обработки:
+                    height: int
+                        Высота кадра.
+                    width: int
+                        Ширина кадра.
+                    fill_mode: int
+                        Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
+                    frame_mode: str
+                        Режим обработки кадра (Сохранить пропорции, Растянуть).
+            Returns:
+                instructions: dict
+                    Инструкции для создания массивов.
+            """
+
         instructions: dict = {}
-        class_mode = False
-        max_frames = None
+        instr: list = []
+        paths: list = []
+        y_cls: list = []
+        classes_names = []
+        cls_idx = 0
+        peg_idx = 0
+        self.peg.append(0)
 
-        if options.get('class_mode', '') == 'По каждому кадру':
-            class_mode = True
-            max_frames = options.get('max_frames', '')
+        options['put'] = f'{self.mode}_{self.iter}'
+        if options['file_info']['path_type'] == 'path_folder':
+            for folder_name in options['file_info']['path']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            paths.append(os.path.join(file_folder, name))
+                        classes_names.append(file_folder)
+            self.y_cls = y_cls
+        elif options['file_info']['path_type'] == 'path_file':
+            for file_name in options['file_info']['path']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
+                paths = data[options['file_info']['cols_name'][0]].to_list()
 
-        instructions['instructions'] = self.instructions_images_video(folder, class_mode, max_frames)
+        prev_class = paths[0].split('/')[-2]
+        for idx in range(len(paths)):
+            cur_class = paths[idx].split('/')[-2]
+            if options['video_mode'] == 'Целиком':
+                instr.append({paths[idx]: [0, options['max_frames']]})
+                peg_idx += 1
+                if cur_class != prev_class:
+                    cls_idx += 1
+                    self.peg.append(peg_idx)
+                    prev_class = cur_class
+                y_cls.append(cls_idx)
+            elif options['video_mode'] == 'По длине и шагу':
+                cur_step = 0
+                stop_flag = False
+                cap = cv2.VideoCapture(os.path.join(self.file_folder, paths[idx]))
+                frame_count = int(cap.get(7))
+                while not stop_flag:
+                    peg_idx += 1
+                    instr.append({paths[idx]: [cur_step, cur_step + options['length']]})
+                    if cur_class != prev_class:
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+                        prev_class = cur_class
+                    y_cls.append(cls_idx)
+                    cur_step += options['step']
+                    if cur_step + options['length'] > frame_count:
+                        stop_flag = True
+
+        self.peg.append(len(instr))
+
+        del options['video_mode']
+        del options['file_info']
+        del options['length']
+        del options['step']
+        del options['max_frames']
         instructions['parameters'] = options
+        instructions['instructions'] = instr
+
+        # Сделано Алексеем
+        # folder = options.get('folder_name', '')
+        # instructions: dict = {}
+        # class_mode = False
+        # max_frames = None
+        #
+        # if options.get('class_mode', '') == 'По каждому кадру':
+        #     class_mode = True
+        #     max_frames = options.get('max_frames', '')
+        #
+        # instructions['instructions'] = self.instructions_images_video(folder, class_mode, max_frames)
+        # instructions['parameters'] = options
 
         return instructions
 
@@ -540,69 +620,179 @@ class CreateDTS(object):
                         num_cols: число колонок
                         cols: номера колонок
                         col_(int): строка с диапазонами
+                        auto_ranges_(int): строка с номером классов для автоматической категоризации
                     one_hot_encoding: строка номеров колонок для перевода категорий в ОНЕ
                     file_name: имя файла.csv
-                    y_col: столбец датафрейма для классификации
             Returns:
                 instructions: dict      Словарь с инструкциями для create_dataframe.
         """
-
         def str_to_list(str_numbers, df_cols):
             """
             Получает строку из пользовательских номеров колонок,
             возвращает лист индексов данных колонок
             """
             merged = []
-            try:
-                str_numbers = str_numbers.split(' ')
-            except:
-                print('Разделите номера колонок ТОЛЬКО пробелами')
-            for i in range(len(str_numbers)):
-                if '-' in str_numbers[i]:
-                    idx = str_numbers[i].index('-')
-                    fi = int(str_numbers[i][:idx]) - 1
-                    si = int(str_numbers[i][idx + 1:])
-                    tmp = list(range(fi, si))
-                    merged.extend(tmp)
-                elif re.findall(r'\D', str_numbers[i]) != []:
-                    merged.append(df_cols.to_list().index(str_numbers[i]))
+            for i in range(len(str_numbers.split(' '))):
+                if '-' in str_numbers.split(' ')[i]:
+                    merged.extend(list(range(int(str_numbers.split(' ')[i].split('-')[0]) - 1, int(
+                        str_numbers.split(' ')[i].split('-')[1]))))
+                elif re.findall(r'\D', str_numbers.split(' ')[i]):
+                    merged.append(df_cols.to_list().index(str_numbers.split(' ')[i]))
                 else:
-                    merged.append(int(str_numbers[i]) - 1)
-
+                    merged.append(int(str_numbers.split(' ')[i]) - 1)
             return merged
 
-        general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]), nrows=1)
-        array_creator.df_with_y = pd.read_csv(
-            os.path.join(self.file_folder, options['file_info']['path'][0]), usecols=(str_to_list(
-                options['file_info']['cols_name'][0], general_df.columns) + str_to_list(options['y_col'],
-                                                                                        general_df.columns)))
-        array_creator.df_with_y.sort_values(by=options['y_col'], inplace=True, ignore_index=True)
+        transpose = options['file_info']['transpose']
+        for key, value in self.tags.items():
+            if value == 'classification' and not options['trend']:
+                step = 1
+                y_col = self.user_parameters[key]['file_info']['cols_name'][0]
+                if 'pad_sequences' in options.keys() or 'xlen_step' in options.keys():
+                    if 'pad_sequences' in options.keys():
+                        example_lengh = int(options['example_lengh'])
+                        if transpose:
+                            tmp_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                 sep=options['file_info']['separator']).T
+                            tmp_df.columns = tmp_df.iloc[0]
+                            tmp_df.drop(tmp_df.index[[0]], inplace=True)
+                            df_y = tmp_df.loc[:, list(range(example_lengh))]
+                        else:
+                            df_y = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                usecols=list(range(example_lengh)),
+                                                sep=options['file_info']['separator'])
 
-        self.peg.append(0)
-        for i in range(len(array_creator.df_with_y.loc[:, options['y_col']]) - 1):
-            if array_creator.df_with_y.loc[:, options['y_col']][i] != \
-                    array_creator.df_with_y.loc[:, options['y_col']][i + 1]:
-                self.peg.append(i + 1)
-        self.peg.append(len(array_creator.df_with_y))
+                        df_y.fillna(0, inplace=True)
+                        df_y.sort_values(by=y_col, inplace=True, ignore_index=True)
+                        self.peg.append(0)
+                        for i in range(len(df_y) - 1):
+                            if df_y[y_col][i] != df_y[y_col][i + 1]:
+                                self.peg.append(i + 1)
+                        self.peg.append(len(df_y))
 
-        array_creator.df = array_creator.df_with_y.iloc[:, str_to_list(
-            options['file_info']['cols_name'][0], array_creator.df_with_y.columns)]
+                        array_creator.df = df_y.iloc[:, 1:].values
+                    elif 'xlen_step' in options.keys():
+                        xlen = int(options['xlen'])
+                        step_len = int(options['step_len'])
+                        if transpose:
+                            df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                 sep=options['file_info']['separator']).T
+                            df.columns = df.iloc[0]
+                            df.drop(df.index[[0]], inplace=True)
+                        else:
+                            df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                sep=options['file_info']['separator'])
+                        xlen_array = []
+                        for i in range(len(df)):
+                            subdf = df.iloc[i, 1:]
+                            subdf = subdf.dropna().values.tolist()
+                            for j in range(0, len(subdf), step_len):
+                                if len(subdf[i:i+step_len]) < xlen:
+                                    xlen_array.append(subdf[-xlen:])
+                                    self.y_cls.append(i)
+                                else:
+                                    xlen_array.append(subdf[i:i+xlen])
+                                    self.y_cls.append(i)
+                        self.y_cls = np.array(self.y_cls)
+                        array_creator.df = np.array(xlen_array)
 
-        instructions = {'instructions': np.arange(0, len(array_creator.df)).tolist(),
-                        'parameters': {'put': f'{self.mode}_{self.iter}'}}
+                        self.peg.append(0)
+                        for i in range(len(self.y_cls) - 1):
+                            if self.y_cls[i] != self.y_cls[i + 1]:
+                                self.peg.append(i + 1)
+                        self.peg.append(len(self.y_cls))
 
-        if 'MinMaxScaler' or 'StandardScaler' in options.keys():
+                    if 'MinMaxScaler' in options.values():
+                        array_creator.scaler[f'{self.mode}_{self.iter}'] = MinMaxScaler()
+                        array_creator.scaler[f'{self.mode}_{self.iter}'].fit(
+                            array_creator.df.reshape(-1, 1))
+
+                    elif 'StandardScaler' in options.values():
+                        array_creator.scaler[f'{self.mode}_{self.iter}'] = StandardScaler()
+                        array_creator.scaler[f'{self.mode}_{self.iter}'].fit(
+                            array_creator.df.reshape(-1, 1))
+
+                    instructions = {'parameters': {'scaler': options['scaler'], 'put': f'{self.mode}_{self.iter}'}}
+
+                else:
+                    if transpose:
+                        general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                 sep=options['file_info']['separator']).T
+                        general_df.columns = general_df.iloc[0]
+                        general_df.drop(general_df.index[[0]], inplace=True)
+                        df_with_y = general_df.iloc[:, str_to_list(options['file_info']['cols_name'][0],
+                                                                          general_df.columns) + str_to_list(y_col,
+                                                                                                general_df.columns)]
+                    else:
+                        general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                    nrows=1,
+                                                    sep=options['file_info']['separator'])
+                        df_with_y = pd.read_csv(
+                            os.path.join(self.file_folder, options['file_info']['path'][0]), usecols=(str_to_list(
+                                options['file_info']['cols_name'][0], general_df.columns) + str_to_list(y_col,
+                                                                                                general_df.columns)),
+                            sep=options['file_info']['separator'])
+
+                    df_with_y.sort_values(by=y_col, inplace=True, ignore_index=True)
+
+                    self.peg.append(0)
+                    for i in range(len(df_with_y.loc[:, y_col]) - 1):
+                        if df_with_y.loc[:, y_col][i] != df_with_y.loc[:, y_col][i + 1]:
+                            self.peg.append(i + 1)
+                    self.peg.append(len(df_with_y))
+
+                    array_creator.df = df_with_y.iloc[:, str_to_list(
+                        options['file_info']['cols_name'][0], df_with_y.columns)]
+
+                    instructions = {'parameters': {}}
+                stop = len(array_creator.df)
+
+            elif value == 'timeseries' or options['trend']:
+                try:
+                    lengh = int(self.user_parameters[key]['lengh'])
+                    depth = int(self.user_parameters[key]['depth'])
+                    step = int(self.user_parameters[key]['step'])
+                except:
+                    lengh = int(options['lengh'])
+                    depth = 1
+                    step = int(options['step'])
+
+                if transpose:
+                    general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                    sep=options['file_info']['separator']).T
+                    general_df.columns = general_df.iloc[0]
+                    general_df.drop(general_df.index[[0]], inplace=True)
+                    array_creator.df = general_df.iloc[:, str_to_list(options['file_info']['cols_name'][0],
+                                       general_df.columns)]
+                else:
+                    general_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                nrows=1,
+                                                sep=options['file_info']['separator'])
+                    array_creator.df = pd.read_csv(
+                            os.path.join(self.file_folder, options['file_info']['path'][0]), usecols=(str_to_list(
+                                options['file_info']['cols_name'][0], general_df.columns)),
+                            sep=options['file_info']['separator'])
+
+                stop = len(array_creator.df) - lengh - depth
+                instructions = {'parameters': {'timeseries': True,
+                                                'lengh': lengh,
+                                                'depth': depth,
+                                                'step': step}}
+
+                self.peg.append(0)
+                self.peg.append(len(np.arange(0, len(array_creator.df) - lengh - depth - 1, step)))
+
+        if 'MinMaxScaler' in options.keys() or 'StandardScaler' in options.keys():
             array_creator.scaler[f'{self.mode}_{self.iter}'] = {}
             if 'MinMaxScaler' in options.keys():
-                instructions['parameters']['MinMaxScaler'] = str_to_list(str_numbers=options['MinMaxScaler'],
-                                                                         df_cols=array_creator.df.columns)
+                instructions['parameters']['MinMaxScaler'] = str_to_list(options['MinMaxScaler'],
+                                                                            array_creator.df.columns)
                 array_creator.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'] = MinMaxScaler()
                 array_creator.scaler[f'{self.mode}_{self.iter}']['MinMaxScaler'].fit(
                     array_creator.df.iloc[:, instructions['parameters']['MinMaxScaler']].to_numpy().reshape(-1, 1))
 
             if 'StandardScaler' in options.keys():
                 instructions['parameters']['StandardScaler'] = str_to_list(options['StandardScaler'],
-                                                                           array_creator.df.columns)
+                                                                            array_creator.df.columns)
                 array_creator.scaler[f'{self.mode}_{self.iter}']['StandardScaler'] = StandardScaler()
                 array_creator.scaler[f'{self.mode}_{self.iter}']['StandardScaler'].fit(
                     array_creator.df.iloc[:, instructions['parameters']['StandardScaler']].to_numpy().reshape(-1, 1))
@@ -616,58 +806,218 @@ class CreateDTS(object):
                     array_creator.df.iloc[:, i]).tolist()
 
         if 'Categorical_ranges' in options.keys():
+            self.minvalues = {}
+            self.maxvalues = {}
+
             instructions['parameters']['Categorical_ranges'] = {}
             instructions['parameters']['Categorical_ranges']['lst_cols'] = str_to_list(
                 options['Categorical_ranges']['cols'], array_creator.df.columns)
             for i in instructions['parameters']['Categorical_ranges']['lst_cols']:
+                self.minvalues[f'col_{i + 1}'] = array_creator.df.iloc[:, i].min()
+                self.maxvalues[f'col_{i + 1}'] = array_creator.df.iloc[:, i].max()
                 instructions['parameters']['Categorical_ranges'][f'col_{i}'] = {}
-                for j in range(len(options['Categorical_ranges'][f'col_{i + 1}'].split(' '))):
-                    instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = int(
-                        options['Categorical_ranges'][f'col_{i + 1}'].split(' ')[j])
+                if f'auto_ranges_{i + 1}' in options['Categorical_ranges']:
+                    for j in range(int(options['Categorical_ranges'][f'auto_ranges_{i + 1}'])):
+                        if (j + 1) == int(options['Categorical_ranges'][f'auto_ranges_{i + 1}']):
+                            instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = \
+                                array_creator.df.iloc[:, i].max()
+                        else:
+                            instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = ((
+                                                array_creator.df.iloc[:, i].max() - array_creator.df.iloc[
+                                                            :, i].min()) / int(
+                                options['Categorical_ranges'][f'auto_ranges_{i + 1}'])) * (j + 1)
+                else:
+                    for j in range(len(options['Categorical_ranges'][f'col_{i + 1}'].split(' '))):
+                        instructions['parameters']['Categorical_ranges'][f'col_{i}'][f'range_{j}'] = float(
+                            options['Categorical_ranges'][f'col_{i + 1}'].split(' ')[j])
 
         if 'one_hot_encoding' in options.keys():
             instructions['parameters']['one_hot_encoding'] = {}
             instructions['parameters']['one_hot_encoding']['lst_cols'] = str_to_list(options['one_hot_encoding'],
-                                                                                     array_creator.df.columns)
+                                                                                        array_creator.df.columns)
             for i in instructions['parameters']['one_hot_encoding']['lst_cols']:
                 if i in instructions['parameters']['Categorical_ranges']['lst_cols']:
                     instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
-                        options['Categorical_ranges'][f'col_{i + 1}'].split(' '))
+                        instructions['parameters']['Categorical_ranges'][f'col_{i}'])
                 else:
                     instructions['parameters']['one_hot_encoding'][f'col_{i}'] = len(
                         np.unique(array_creator.df.iloc[:, i]))
 
+        instructions['instructions'] = np.arange(0, stop, step).tolist()
+        instructions['parameters']['put'] = f'{self.mode}_{self.iter}'
+        array_creator.df = np.array(array_creator.df)
         return instructions
 
-    def instructions_classification(self, **options):
+    def instructions_timeseries(self, **options):
+        """
+            Args:
+                **options: Параметры временного ряда:
+                    lengh: количество примеров для обучения
+                    scaler: скейлер
+                    y_cols: колонки для предсказания
+                    depth: количество значений для предсказания
+                    file_name: имя файла.csv
+            Returns:
+                instructions: dict      Словарь с инструкциями для create_timeseries.
+        """
+        instructions = {'parameters': {}}
+        instructions['parameters']['lengh'] = int(options['lengh'])
+        instructions['parameters']['scaler'] = options['scaler']
+        instructions['parameters']['y_cols'] = options['file_info']['cols_name'][0]
+        instructions['parameters']['depth'] = int(options['depth'])
+        step = int(options['step'])
+        for key, value in self.tags.items():
+            if value == 'dataframe':
+                transpose = self.user_parameters[key]['file_info']['transpose']
+
+        if transpose:
+            tmp_df_ts = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                   sep=options['file_info']['separator']).T
+            tmp_df_ts.columns = tmp_df_ts.iloc[0]
+            tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
+            array_creator.y_subdf = tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')].values
+        else:
+            array_creator.y_subdf = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                   sep=options['file_info']['separator'],
+                                                   usecols=instructions['parameters']['y_cols'].split(' ')).values
+
+        instructions['parameters']['put'] = f'{self.mode}_{self.iter}'
+        instructions['instructions'] = np.arange(0, (len(array_creator.y_subdf) - 1 -
+                                                     instructions['parameters']['lengh'] -
+                                                     instructions['parameters']['depth']), step).tolist()
+
+        if 'MinMaxScaler' in instructions['parameters'].values():
+            array_creator.scaler[f'{self.mode}_{self.iter}'] = MinMaxScaler()
+            array_creator.scaler[f'{self.mode}_{self.iter}'].fit(
+                array_creator.y_subdf.reshape(-1, 1))
+
+        elif 'StandardScaler' in instructions['parameters'].values():
+            array_creator.scaler[f'{self.mode}_{self.iter}'] = StandardScaler()
+            array_creator.scaler[f'{self.mode}_{self.iter}'].fit(
+                array_creator.y_subdf.reshape(-1, 1))
+
+        return instructions
+
+    def instructions_classification(self, put_data: Union[CreationInputData, CreationOutputData]):
 
         instructions: dict = {}
         self.task_type[f'{self.mode}_{self.iter}'] = 'classification'
         self.one_hot_encoding[f'{self.mode}_{self.iter}'] = options['one_hot_encoding']
 
-        if options['file_info']['path_type'] == 'path_file':
-            for file_name in options['file_info']['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
-                column = data[options['file_info']['cols_name'][0]].to_list()
-                classes_names = []
-                for elem in column:
-                    if elem not in classes_names:
-                        classes_names.append(elem)
-                self.classes_names[f'{self.mode}_{self.iter}'] = classes_names
-                self.num_classes[f'{self.mode}_{self.iter}'] = len(classes_names)
-                for elem in column:
-                    self.y_cls.append(classes_names.index(elem))
+        if not self.y_cls:
+            if options['file_info']['path_type'] == 'path_file':
+                for key, value in self.tags.items():
+                    if value == 'dataframe':
+                        transpose = self.user_parameters[key]['file_info']['transpose']
+                        try:
+                            bool_trend = self.user_parameters[key]['trend']
+                            self.trend_limit = self.user_parameters[key]['trend_limit']
+                            lengh = int(self.user_parameters[key]['lengh'])
+                            step = int(self.user_parameters[key]['step'])
+                        except:
+                            pass
+                if bool_trend:
+                    if transpose:
+                        tmp_df = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                                sep=options['file_info']['separator']).T
+                        tmp_df.columns = tmp_df.iloc[0]
+                        tmp_df.drop(tmp_df.index[[0]], inplace=True)
+                        trend_subdf = tmp_df.loc[:, options['file_info']['cols_name'][0].split(' ')].values
+                    else:
+                        trend_subdf = pd.read_csv(os.path.join(self.file_folder, options['file_info']['path'][0]),
+                                              sep=options['file_info']['separator'],
+                                              usecols=options['file_info']['cols_name']).values
+                    self.y_cls = []
 
-        else:
-            for key, value in self.tags.items():
-                if value in ['images', 'text', 'audio', 'video']:
-                    self.classes_names[f'{self.mode}_{self.iter}'] = \
-                        sorted(self.user_parameters[key]['file_info']['path'])
-                    self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
+                    for i in range(0, len(trend_subdf) - 1 - lengh, step):
+                        if '%' in self.trend_limit:
+                            trend_limit = float(self.trend_limit[:self.trend_limit.find('%')])
+                            if abs((trend_subdf[i + lengh + 1] - trend_subdf[i]) /
+                                   trend_subdf[i]) * 100 <= trend_limit:
+                                self.y_cls.append(0)
+                            elif trend_subdf[i + lengh + 1] > trend_subdf[i]:
+                                self.y_cls.append(1)
+                            else:
+                                self.y_cls.append(2)
+                        else:
+                            trend_limit = float(self.trend_limit)
+                            if abs(trend_subdf[i + lengh + 1] - trend_subdf[i]) <= trend_limit:
+                                self.y_cls.append(0)
+                            elif trend_subdf[i + lengh + 1] > trend_subdf[i]:
+                                self.y_cls.append(1)
+                            else:
+                                self.y_cls.append(2)
+
+                    if options['one_hot_encoding']:
+                        tmp_uniq = list(np.unique(self.y_cls))
+                        for i in range(len(self.y_cls)):
+                            self.y_cls[i] = tmp_uniq.index(self.y_cls[i])
+
+                else:
+                    if 'categorical' in options.keys():
+                        for file_name in options['file_info']['path']:
+                            if transpose:
+                                tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                                     sep=options['file_info']['separator']).T
+                                tmp_df.columns = tmp_df.iloc[0]
+                                tmp_df.drop(tmp_df.index[[0]], inplace=True)
+                                data = tmp_df.loc[:, options['file_info']['cols_name'][0].split(' ')]
+                            else:
+                                data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                               usecols=options['file_info']['cols_name'],
+                                               sep=options['file_info']['separator'])
+                            column = data[options['file_info']['cols_name'][0]].to_list()
+                            classes_names = []
+                            for elem in column:
+                                if elem not in classes_names:
+                                    classes_names.append(elem)
+                            self.classes_names[f'{self.mode}_{self.iter}'] = classes_names
+                            self.num_classes[f'{self.mode}_{self.iter}'] = len(classes_names)
+                            for elem in column:
+                                self.y_cls.append(classes_names.index(elem))
+
+                    elif 'categorical_ranges' in options.keys():
+                        file_name = options['file_info']['path'][0]
+                        if transpose:
+                            tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                                 sep=options['file_info']['separator']).T
+                            tmp_df.columns = tmp_df.iloc[0]
+                            tmp_df.drop(tmp_df.index[[0]], inplace=True)
+                            data = tmp_df.loc[:, options['file_info']['cols_name'][0].split(' ')]
+                        else:
+                            data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                           usecols=options['file_info']['cols_name'],
+                                               sep=options['file_info']['separator'])
+                        column = data[options['file_info']['cols_name'][0]].to_list()
+                        self.minvalue_y = min(column)
+                        self.maxvalue_y = max(column)
+                        if 'auto_ranges' in options['categorical_ranges'].keys():
+                            border = max(column) / int(options['categorical_ranges']['auto_ranges'])
+                            self.classes_names[f'{self.mode}_{self.iter}'] = np.linspace(
+                                border, self.maxvalue_y, int(options['categorical_ranges']['auto_ranges'])).tolist()
+                        else:
+                            self.classes_names[f'{self.mode}_{self.iter}'] = options['categorical_ranges'][
+                                'ranges'].split(' ')
+
+                        self.num_classes[f'{self.mode}_{self.iter}'] = len(
+                            self.classes_names[f'{self.mode}_{self.iter}'])
+
+                        for elem in column:
+                            for i in range(len(self.classes_names[f'{self.mode}_{self.iter}'])):
+                                if elem <= int(self.classes_names[f'{self.mode}_{self.iter}'][i]):
+                                    self.y_cls.append(i)
+                                    break
+            else:
+                for key, value in self.tags.items():
+                    if value in ['images', 'text', 'audio', 'video']:
+                        self.classes_names[f'{self.mode}_{self.iter}'] = \
+                            sorted(self.user_parameters[key]['file_info']['path'])
+                        self.num_classes[f'{self.mode}_{self.iter}'] = len(
+                            self.classes_names[f'{self.mode}_{self.iter}'])
 
         instructions['parameters'] = {'num_classes': len(np.unique(self.y_cls)),
                                       'one_hot_encoding': options['one_hot_encoding']}
-        instructions['instructions'] = self.y_cls
+        instructions['instructions'] = np.array(self.y_cls)
 
         return instructions
 
