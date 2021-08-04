@@ -1,5 +1,5 @@
 from rest_framework import serializers
 
 
-class ModelLoadSerializer(serializers.Serializer):
+class ModelGetSerializer(serializers.Serializer):
     value = serializers.CharField(required=True)

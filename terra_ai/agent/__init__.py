@@ -168,9 +168,9 @@ class Exchange:
         )
         return models
 
-    def _call_model_load(self, value: str) -> ModelDetailsData:
+    def _call_model_get(self, value: str) -> ModelDetailsData:
         """
-        Загрузка модели
+        Получение модели
         """
         data = ModelLoadData(value=value)
         with open(data.value.absolute(), "r") as config_ref:
@@ -199,8 +199,10 @@ class Exchange:
         Деплой: загрузка
         """
         stage = StageUploadData(**kwargs)
-        # requests.post()
-        print(stage.native())
+        # response = requests.post(
+        #     "http://bl146u.xyz:8099/api/v1/test", data=stage.native()
+        # )
+        # print(response.json())
         return stage
 
 
