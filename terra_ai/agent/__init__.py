@@ -17,14 +17,13 @@ from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
 
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
-from ..data.modeling.layer import LayerData
 from ..data.modeling.extra import ModelGroupChoice
 
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
-from ..data.deploy.stages import StageUploadData
+from ..data.deploy.stages import StagePrepareData
 
 from ..datasets import loading as datasets_loading
 
@@ -199,9 +198,9 @@ class Exchange:
         """
         Деплой: загрузка
         """
-        stage = StageUploadData(**kwargs)
-        requests.post()
-        print(stage)
+        stage = StagePrepareData(**kwargs)
+        # requests.post()
+        print(stage.native())
         return stage
 
 
