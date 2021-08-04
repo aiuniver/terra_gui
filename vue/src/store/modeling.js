@@ -182,11 +182,11 @@ export default {
       );
     },
     async load({ dispatch }, value) {
-      return await dispatch(
-        "axios",
-        { url: "/modeling/load/", data: value },
-        { root: true }
-      );
+      const model = await dispatch("axios",{ url: "/modeling/load/", data: value }, { root: true });
+      if (model) {
+        await dispatch("projects/get",{}, { root: true });
+      }
+      return model
     },
     setDialog({ commit }, value) {
       commit("SET_DIALOG", value);
