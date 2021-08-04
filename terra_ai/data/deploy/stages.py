@@ -8,14 +8,14 @@ from ..types import confilepath
 from .extra import TaskTypeChoice
 
 
-class StagePrepareUserData(BaseMixinData):
+class StageUploadUserData(BaseMixinData):
     login: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
     name: str
     lastname: str
     sec: Optional[str]
 
 
-class StagePrepareProjectData(BaseMixinData):
+class StageUploadProjectData(BaseMixinData):
     name: str
     slug: Optional[constr(regex=r"^[a-z]+[a-z0-9\-_]*$")]
 
@@ -27,7 +27,7 @@ class StagePrepareProjectData(BaseMixinData):
         return slugify(name, language_code="ru")
 
 
-class StagePrepareFileData(BaseMixinData):
+class StageUploadFileData(BaseMixinData):
     path: confilepath(ext="zip")
     name: Optional[str]
     size: Optional[PositiveInt]
@@ -51,11 +51,11 @@ class StagePrepareFileData(BaseMixinData):
         return super().dict(**kwargs)
 
 
-class StagePrepareData(BaseMixinData):
+class StageUploadData(BaseMixinData):
     stage: PositiveInt
     deploy: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
-    user: StagePrepareUserData
-    project: StagePrepareProjectData
+    user: StageUploadUserData
+    project: StageUploadProjectData
     task: TaskTypeChoice
     replace: bool = False
-    file: StagePrepareFileData
+    file: StageUploadFileData

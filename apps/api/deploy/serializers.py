@@ -4,7 +4,7 @@ from rest_framework.exceptions import ValidationError
 from apps.api.validators import validate_slug
 
 
-class PrepareSerializer(serializers.Serializer):
+class UploadSerializer(serializers.Serializer):
     deploy = serializers.CharField(validators=[validate_slug])
     replace = serializers.BooleanField(default=False)
     use_sec = serializers.BooleanField(default=False)

@@ -23,7 +23,7 @@ from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 
-from ..data.deploy.stages import StagePrepareData
+from ..data.deploy.stages import StageUploadData
 
 from ..datasets import loading as datasets_loading
 
@@ -194,11 +194,11 @@ class Exchange:
             model.layers.append(**kwargs)
         return model
 
-    def _call_deploy_upload(self, **kwargs):
+    def _call_deploy_upload(self, **kwargs) -> StageUploadData:
         """
         Деплой: загрузка
         """
-        stage = StagePrepareData(**kwargs)
+        stage = StageUploadData(**kwargs)
         # requests.post()
         print(stage.native())
         return stage
