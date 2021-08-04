@@ -12,4 +12,3 @@ PyYAML~=5.4.1
 transliterate==1.10.2
 imgaug==0.4.0
 imgaug==0.4.0
-decamelize==0.1.2

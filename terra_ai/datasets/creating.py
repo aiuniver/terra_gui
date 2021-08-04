@@ -9,7 +9,6 @@ import pymorphy2
 import shutil
 import json
 import joblib
-import decamelize
 from pydantic import DirectoryPath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
@@ -22,6 +21,7 @@ from datetime import datetime
 from pytz import timezone
 
 # from terra_ai import out_exchange
+from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
 from . import loading as dataset_loading
@@ -128,7 +128,7 @@ class CreateDTS(object):
         return output
 
     def set_dataset_data(self, layer: Union[CreationInputData, CreationOutputData]):
-        self.tags[layer.id] = decamelize.convert(layer.type)
+        self.tags[layer.id] = decamelize(layer.type)
         if isinstance(layer, CreationInputData):
             self.input_names[layer.id] = layer.name
         else:
