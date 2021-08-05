@@ -303,7 +303,7 @@ class CreateArray(object):
 
         return array
 
-    def create_classification(self, index, **options):
+    def create_classification(self, file_folder, index, **options):
 
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
@@ -311,7 +311,7 @@ class CreateArray(object):
 
         return index
 
-    def create_regression(self, index, **options):
+    def create_regression(self, file_folder, index, **options):
 
         if 'scaler' in options.keys():
             index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
