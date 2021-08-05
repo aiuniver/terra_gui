@@ -14,7 +14,7 @@
       <div v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
       </div>
-      <div v-if="!filterList.length">Нет слоя</div>
+      <div v-if="!filterList.length">Нет данных</div>
     </div>
   </div>
 </template>

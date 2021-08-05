@@ -10,6 +10,11 @@
       <div class="params__items--item pa-0">
         <DatasetTab @select="select" />
       </div>
+      <div class="params__items--item">
+        <div class="params__items--btn">
+          <button @click="download" v-text="'Загрузить'"/>   
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -125,6 +130,12 @@ export default {
     }
   }
   &__items {
+    &--btn{
+      button{
+        width: 100px;
+        float: right;
+      }
+    }
     &--item {
       padding: 20px;
     }
