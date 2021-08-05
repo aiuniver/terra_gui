@@ -154,7 +154,7 @@ class CreateDTS(object):
         for elem in data:
             self.set_dataset_data(elem)
             self.iter += 1
-            instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize.convert(elem.type)}"
+            instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}"
                                                            )(elem))
             instructions.update([(elem.id, instructions_data)])
         return instructions
