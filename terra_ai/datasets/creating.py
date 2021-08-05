@@ -44,7 +44,7 @@ class CreateDTS(object):
         self.num_classes: dict = {}
         self.classes_names: dict = {}
         self.classes_colors: dict = {}
-        self.one_hot_encoding: dict = {}
+        self.encoding: dict = {}
         self.task_type: dict = {}
         self.user_parameters: dict = {}
         self.sequence: list = []
@@ -54,7 +54,7 @@ class CreateDTS(object):
 
         self.file_folder: str = ''
         self.language: str = ''
-        self.y_cls: np.ndarray = np.array([])
+        self.y_cls: list = []
         self.mode: str = ''
         self.iter: int = 0
 
@@ -262,7 +262,7 @@ class CreateDTS(object):
         data = {}
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
-                      'one_hot_encoding', 'task_type', 'use_generator']
+                      'encoding', 'task_type', 'use_generator']
 
         tags = []
         for value in self.tags.values():
@@ -370,8 +370,7 @@ class CreateDTS(object):
             aug_parameters = []
             for key, value in options['augmentation'].items():
                 aug_parameters.append(getattr(iaa, key)(**value))
-            array_creator.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters,
-                                                                                    random_order=True)
+            array_creator.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
         instructions['instructions'] = instr
@@ -394,7 +393,7 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_text(self, **options):
+    def instructions_text(self, put_data: Union[CreationInputData, CreationOutputData]):
 
         def read_text(file_path, lower, filters, split) -> str:
 
@@ -411,8 +410,12 @@ class CreateDTS(object):
 
             return ' '.join(words_list)
 
-        txt_mode = options.get('txt_mode', '')
+        options = put_data.parameters.native()
+        text_mode = options.get('text_mode', '')
         file_info = options.get('file_info', {})
+        max_words = options.get('max_words', int)
+        length = options.get('length', int)
+        step = options.get('step', int)
         txt_list: dict = {}
         lower: bool = True
         filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
@@ -427,7 +430,6 @@ class CreateDTS(object):
                     if ch in set(tags):
                         filters = filters.replace(ch, '')
                 break
-
         if file_info.get('path_type', '') == 'path_folder':
             for folder_name in file_info.get('path', ''):
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
@@ -494,21 +496,21 @@ class CreateDTS(object):
 
         for key, value in sorted(txt_list.items()):
             cur_class = key.split('/')[-2]
-            if txt_mode == 'Целиком':
-                instr.append({key: [0, options['max_words']]})
+            if text_mode == 'Целиком':
+                instr.append({key: [0, max_words]})
                 if cur_class != prev_class:
                     cls_idx += 1
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 peg_idx += 1
                 y_cls.append(cls_idx)
-            elif txt_mode == 'По длине и шагу':
+            elif text_mode == 'По длине и шагу':
                 max_length = len(value.split(' '))
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    instr.append({key: [cur_step, cur_step + options['length']]})
-                    cur_step += options['step']
+                    instr.append({key: [cur_step, cur_step + length]})
+                    cur_step += step
                     if cur_class != prev_class:
                         cls_idx += 1
                         self.peg.append(peg_idx)
@@ -531,8 +533,9 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_audio(self, **options):
+    def instructions_audio(self, put_data: Union[CreationInputData, CreationOutputData]):
 
+        options = put_data.parameters.native()
         file_info = options.get('file_info', dict)
         sample_rate = options.get('sample_rate', int)
         instructions: dict = {}
@@ -562,7 +565,7 @@ class CreateDTS(object):
         for idx in range(len(paths)):
             cur_class = paths[idx].split('/')[-2]
             if options.get('audio_mode', '') == 'Целиком':
-                instr.append({paths[idx]: [0, sample_rate * options.get('max_seconds', int)]})
+                instr.append({paths[idx]: [0.0, sample_rate * options.get('max_seconds', int)]})
                 if cur_class != prev_class:
                     cls_idx += 1
                     self.peg.append(peg_idx)
@@ -570,7 +573,7 @@ class CreateDTS(object):
                 peg_idx += 1
                 y_cls.append(cls_idx)
             elif options.get('audio_mode', '') == 'По длине и шагу':
-                cur_step = 0
+                cur_step = 0.0
                 stop_flag = False
                 y, sr = librosa_load(path=os.path.join(self.file_folder, paths[idx]), sr=sample_rate, res_type='scipy')
                 sample_length = len(y) / sample_rate
@@ -585,8 +588,15 @@ class CreateDTS(object):
                     cur_step += options.get('step', int)
                     if cur_step + options.get('length', int) > sample_length:
                         stop_flag = True
-
         self.peg.append(len(instr))
+
+        features = []
+        for elem in ['audio_signal', 'chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth',
+                     'spectral_rolloff', 'rms', 'zero_crossing_rate']:
+            if options[elem]:
+                features.append(elem)
+            del options[elem]
+        options['features'] = features
 
         for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
             if elem in options.keys():
@@ -608,7 +618,7 @@ class CreateDTS(object):
                         num_cols: число колонок
                         cols: номера колонок
                         col_(int): строка с диапазонами
-                    one_hot_encoding: строка номеров колонок для перевода категорий в ОНЕ
+                    encoding: строка номеров колонок для перевода категорий в ОНЕ
                     file_name: имя файла.csv
                     y_col: столбец датафрейма для классификации
             Returns:
@@ -707,11 +717,12 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_classification(self, **options):
+    def instructions_classification(self, put_data: Union[CreationInputData, CreationOutputData]):
 
+        options = put_data.parameters.native()
         instructions: dict = {}
-        self.task_type[f'{self.mode}_{self.iter}'] = 'classification'
-        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = options['one_hot_encoding']
+        self.task_type[put_data.id] = put_data.type
+        self.encoding[put_data.id] = 'ohe' if options['one_hot_encoding'] else None
 
         if options['file_info']['path_type'] == 'path_file':
             for file_name in options['file_info']['path']:
@@ -721,17 +732,17 @@ class CreateDTS(object):
                 for elem in column:
                     if elem not in classes_names:
                         classes_names.append(elem)
-                self.classes_names[f'{self.mode}_{self.iter}'] = classes_names
-                self.num_classes[f'{self.mode}_{self.iter}'] = len(classes_names)
+                self.classes_names[put_data.id] = classes_names
+                self.num_classes[put_data.id] = len(classes_names)
                 for elem in column:
                     self.y_cls.append(classes_names.index(elem))
 
-        else:
-            for key, value in self.tags.items():
-                if value in ['images', 'text', 'audio', 'video']:
-                    self.classes_names[f'{self.mode}_{self.iter}'] = \
-                        sorted(self.user_parameters[key]['file_info']['path'])
-                    self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
+        # else:
+        #     for key, value in self.tags.items():
+        #         if value in ['images', 'text', 'audio', 'video']:
+        #             self.classes_names[f'{self.mode}_{self.iter}'] = \
+        #                 sorted(self.user_parameters[key]['file_info']['path'])
+        #             self.num_classes[f'{self.mode}_{self.iter}'] = len(self.classes_names[f'{self.mode}_{self.iter}'])
 
         instructions['parameters'] = {'num_classes': len(np.unique(self.y_cls)),
                                       'one_hot_encoding': options['one_hot_encoding']}
@@ -744,7 +755,7 @@ class CreateDTS(object):
         instructions: dict = {}
         instr: list = []
 
-        self.one_hot_encoding[f'{self.mode}_{self.iter}'] = False
+        self.encoding[f'{self.mode}_{self.iter}'] = False
         self.task_type[f'{self.mode}_{self.iter}'] = 'regression'
 
         for file_name in options['file_info']['path']:
@@ -764,14 +775,14 @@ class CreateDTS(object):
         return instructions
 
     def instructions_segmentation(self, put_data: Union[CreationInputData, CreationOutputData]):
+
         options = put_data.parameters.native()
-        folder_name = options.get('folder_name', '')
         instr: list = []
 
         self.classes_names[put_data.id] = options['classes_names']
         self.classes_colors[put_data.id] = options['classes_colors']
         self.num_classes[put_data.id] = len(options['classes_names'])
-        self.one_hot_encoding[put_data.id] = True
+        self.encoding[put_data.id] = 'ohe'
         self.task_type[put_data.id] = put_data.type
 
         if options['file_info']['path_type'] == 'path_folder':

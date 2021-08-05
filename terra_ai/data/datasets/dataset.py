@@ -280,7 +280,7 @@ class DatasetData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
-    limit: PositiveInt # не нужен
+    # limit: PositiveInt # не нужен
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
     classes_names: Dict[PositiveInt, List[str]] = {}

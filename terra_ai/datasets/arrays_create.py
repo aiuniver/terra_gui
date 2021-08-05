@@ -121,7 +121,7 @@ class CreateArray(object):
 
         return array
 
-    def create_text(self, sample: dict, **options):
+    def create_text(self, _, sample: dict, **options):
 
         """
         Args:
@@ -144,6 +144,8 @@ class CreateArray(object):
 
         array = []
         [[filepath, slicing]] = sample.items()
+        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
+        print(filepath, slicing)
         text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
         if options['embedding']:
@@ -162,12 +164,12 @@ class CreateArray(object):
 
         return array
 
-    def create_audio(self, sample: dict, **options):
+    def create_audio(self, file_folder, sample: dict, **options):
 
         array = []
 
         [[filepath, slicing]] = sample.items()
-        y, sr = librosa_load(path=os.path.join(self.file_folder, filepath), sr=options.get('sample_rate'),
+        y, sr = librosa_load(path=os.path.join(file_folder, filepath), sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
 
         for feature in options.get('features', []):
@@ -186,7 +188,7 @@ class CreateArray(object):
 
         pass
 
-    def create_classification(self, index, **options):
+    def create_classification(self, _, index, **options):
 
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
