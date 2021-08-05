@@ -5,6 +5,7 @@ from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 
+from apps.plugins.frontend.base import FileManagerItem
 from ..base import (
     BaseAPIView,
     BaseResponseSuccess,
@@ -57,8 +58,10 @@ class SourceLoadAPIView(BaseAPIView):
 class SourceLoadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         progress = agent_exchange("dataset_source_load_progress")
-        if progress.finished:
-            print(progress.data)
+        if progress.finished and progress.data:
+            progress.data = FileManagerItem(path=progress.data).native().get("children")
+        else:
+            progress.data = []
         return BaseResponseSuccess(data=progress.native())
 
 
