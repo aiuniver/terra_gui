@@ -2,12 +2,16 @@
 ## Дополнительные структуры данных
 """
 
+import os
+
 from enum import Enum
-from typing import Optional, Tuple
-from pydantic import validator, BaseModel
+from pathlib import Path
+from typing import Optional, Tuple, Union
+from pydantic import validator
+from pydantic.types import FilePath, DirectoryPath
 from pydantic.color import Color
 
-from .mixins import BaseMixinData
+from .mixins import BaseMixinData, UniqueListMixin
 from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
 
@@ -24,6 +28,14 @@ class HardwareAcceleratorColorChoice(str, Enum):
     CPU = "FF0000"
     GPU = "2EA022"
     TPU = "B8C324"
+
+
+class FileManagerTypeChoice(str, Enum):
+    folder = "folder"
+    image = "image"
+    audio = "audio"
+    video = "video"
+    table = "table"
 
 
 class HardwareAcceleratorData(BaseMixinData):
@@ -82,3 +94,51 @@ class FileSizeData(BaseMixinData):
             return value
         short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
         return unit
+
+
+class FileManagerItem(BaseMixinData):
+    path: Union[FilePath, DirectoryPath]
+    title: Optional[str]
+    type: Optional[FileManagerTypeChoice]
+    children: list = []
+
+    @validator("title", always=True)
+    def _validate_title(cls, value: str, values) -> str:
+        fullpath = values.get("path")
+        if not fullpath:
+            return value
+        return fullpath.name
+
+    @validator("type", always=True)
+    def _validate_type(cls, value: str, values) -> str:
+        fullpath = values.get("path")
+        if not fullpath:
+            return value
+        if os.path.isdir(fullpath):
+            return FileManagerTypeChoice.folder
+        else:
+            return FileManagerTypeChoice.table
+
+    @validator("children", always=True)
+    def _validate_children(cls, value: list, values) -> list:
+        fullpath = values.get("path")
+        __items = []
+        if fullpath and os.path.isdir(fullpath):
+            for item in os.listdir(fullpath):
+                __items.append(
+                    FileManagerItem(**{"path": Path(fullpath, item).absolute()})
+                )
+        return __items
+
+    def dict(self, **kwargs):
+        __exclude = ["path"]
+        if self.type != FileManagerTypeChoice.folder:
+            __exclude.append("children")
+        kwargs.update({"exclude": set(__exclude)})
+        return super().dict(**kwargs)
+
+
+class FileManagerList(UniqueListMixin):
+    class Meta:
+        source = FileManagerItem
+        identifier = "title"

@@ -19,11 +19,15 @@ from ..data.datasets.extra import DatasetGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.modeling.extra import ModelGroupChoice
 
+from ..data.deploy.stages import StageUploadData
+
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
-from ..data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
-
-from ..data.deploy.stages import StageUploadData
+from ..data.extra import (
+    HardwareAcceleratorData,
+    HardwareAcceleratorChoice,
+    FileManagerItem,
+)
 
 from ..datasets import loading as datasets_loading
 
@@ -116,7 +120,16 @@ class Exchange:
         """
         Прогресс загрузки исходников датасета
         """
-        return progress.pool(progress.PoolName.dataset_source_load)
+        progress_data = progress.pool(progress.PoolName.dataset_source_load)
+        if progress_data.finished and progress_data.data:
+            progress_data.data = (
+                FileManagerItem(path=progress_data.data.absolute())
+                .native()
+                .get("children")
+            )
+        else:
+            progress.data = []
+        return progress_data
 
     def _call_dataset_source_create(self, **kwargs) -> dict:
         """

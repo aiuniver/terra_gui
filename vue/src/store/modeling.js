@@ -188,6 +188,20 @@ export default {
       }
       return model
     },
+    async saveModel({ state: { blocks }, dispatch }, value) {
+      console.log(blocks)
+      const model = await dispatch("axios",{ url: "/modeling/update/", data: value }, { root: true });
+      // if (model) {
+      //   await dispatch("projects/get",{}, { root: true });
+      // }
+      console.log(model)
+      return model
+    },
+    async getModel({ dispatch }, value) {
+
+      const model = await dispatch("axios",{ url: "/modeling/get/", data: value }, { root: true });
+      return model
+    },
     setDialog({ commit }, value) {
       commit("SET_DIALOG", value);
     },

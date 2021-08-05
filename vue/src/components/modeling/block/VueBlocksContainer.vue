@@ -6,7 +6,6 @@
       :key="block.id"
       v-bind.sync="block"
       :options="optionsForChild"
-
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -23,6 +22,7 @@
 
 <script>
 // import merge from "deepmerge";
+import domtoimage from "@/assets/js/dom-to-image.min.js";
 import mouseHelper from "./helpers/mouse";
 import { createBlock } from "./helpers/default";
 
@@ -85,7 +85,7 @@ export default {
     // layers() {
     //   const { layers } = this.$store.getters['modeling/getModel']
     //   if (layers) {
-    //     const newBlocks = this.prepareLayers(layers) 
+    //     const newBlocks = this.prepareLayers(layers)
     //     this.blocks = newBlocks; // eslint-disable-line
     //     // const links = newBlocks.map((block) => {
     //     //   if (block) {
@@ -94,16 +94,16 @@ export default {
     //     // })
     //     console.log(newBlocks)
     //   }
-      
+
     //   return []
     // },
     blocks: {
       set(value) {
-        this.$store.dispatch('modeling/setBlocks', value)
+        this.$store.dispatch("modeling/setBlocks", value);
       },
       get() {
-        return this.$store.getters['modeling/getBlocks']
-      }
+        return this.$store.getters["modeling/getBlocks"];
+      },
     },
     optionsForChild() {
       return {
@@ -193,7 +193,7 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {  // eslint-disable-line
+        this.tempLink.style = {          // eslint-disable-line
           stroke: "#8f8f8f",
           strokeWidth: 3 * this.scale,
           fill: "none",
@@ -207,12 +207,12 @@ export default {
   },
   methods: {
     handleMauseOver(e) {
-      this.mouseIsOver = (e.type === 'mouseenter')
+      this.mouseIsOver = e.type === "mouseenter";
     },
     keyup(event) {
       const { code, ctrlKey } = event;
-      const mouseIsOver = this.mouseIsOver
-      console.log(mouseIsOver, code)
+      const mouseIsOver = this.mouseIsOver;
+      console.log(mouseIsOver, code);
       if (mouseIsOver && code === "Delete") {
         if (this.selectedBlock) {
           this.blockDelete(this.selectedBlock);
@@ -416,7 +416,7 @@ export default {
     },
     // Linking
     linkingStart(block, slotNumber) {
-      console.log('linkingStart')
+      console.log("linkingStart");
       // block.outputs[slotNumber].active = true
       this.linkStartData = { block, slotNumber };
       let linkStartPos = this.getConnectionPos(
@@ -434,7 +434,7 @@ export default {
       this.linking = true;
     },
     linkingStop(targetBlock, slotNumber) {
-      console.log('linkingStop')
+      console.log("linkingStop");
       if (this.linkStartData && targetBlock && slotNumber > -1) {
         const {
           slotNumber: originSlot,
@@ -474,8 +474,8 @@ export default {
           });
           // console.log("adddd");
           console.log(this.links);
-          targetBlock.inputs[targetSlot].active = true
-          targetBlock.inputs[targetSlot].active = true
+          targetBlock.inputs[targetSlot].active = true;
+          targetBlock.inputs[targetSlot].active = true;
           // this.updateScene();
         }
       }
@@ -485,7 +485,7 @@ export default {
       this.linkStartData = null;
     },
     linkingBreak(targetBlock, slotNumber) {
-      console.log('linkingBreak')
+      console.log("linkingBreak");
       if (targetBlock && slotNumber > -1) {
         let findLink = this.links.find((value) => {
           return (
@@ -504,11 +504,11 @@ export default {
               value.targetSlot === slotNumber
             );
           });
-          targetBlock.inputs[findLink.targetSlot].active = false
-          findBlock.outputs[findLink.originSlot].active = false
+          targetBlock.inputs[findLink.targetSlot].active = false;
+          findBlock.outputs[findLink.originSlot].active = false;
           // console.log(targetBlock.inputs[slotNumber].active = false)
           // console.log(findBlock.outputs[slotNumber].active = false)
-          console.log(findLink)
+          console.log(findLink);
 
           this.linkingStart(findBlock, findLink.originSlot);
 
@@ -517,17 +517,37 @@ export default {
       }
     },
     removeLink(linkID) {
-      console.log('removeLink')
+      console.log("removeLink");
       this.links = this.links.filter((value) => {
         return !(value.id === linkID);
       });
     },
+    getImages() {
+      domtoimage
+        .toPng(this.$el, {
+          filter: (node) => {
+            console.log(node.tagName)
+            return node.className !== "btn-zoom";
+          },
+        })
+        .then(function (dataUrl) {
+          console.log(dataUrl);
+        })
+        .catch(function (error) {
+          console.error("oops, something went wrong!", error);
+        });
+    },
     // Blocks
     addNewBlock(nodeName, x, y) {
-      let maxID = Math.max(0, ...this.blocks.map(function (o) {return o.id;}));
+      let maxID = Math.max(
+        0,
+        ...this.blocks.map(function (o) {
+          return o.id;
+        })
+      );
       let block = createBlock(nodeName, maxID + 1);
       if (!block) {
-        console.warn("block not create: " + block)
+        console.warn("block not create: " + block);
         return;
       }
 
@@ -538,45 +558,45 @@ export default {
         x = (x - this.centerX) / this.scale;
         y = (y - this.centerY) / this.scale;
       }
-      block.position = [x, y]
+      block.position = [x, y];
       this.blocks.push(block);
-      this.blocks = this.blocks  // eslint-disable-line
+      this.blocks = this.blocks; // eslint-disable-line
 
       // this.updateScene();
     },
     // createBlock(node, id) {
-      // let inputs = [];
-      // let outputs = [];
-      // let values = {};
+    // let inputs = [];
+    // let outputs = [];
+    // let values = {};
 
-      // node.fields.forEach((field) => {
-      //   if (field.attr === "input") {
-      //     inputs.push({
-      //       name: field.name,
-      //       label: field.label || field.name,
-      //     });
-      //   } else if (field.attr === "output") {
-      //     outputs.push({
-      //       name: field.name,
-      //       label: field.label || field.name,
-      //     });
-      //   } 
-        // else {
-        //   if (!values[field.attr]) {
-        //     values[field.attr] = {};
-        //   }
+    // node.fields.forEach((field) => {
+    //   if (field.attr === "input") {
+    //     inputs.push({
+    //       name: field.name,
+    //       label: field.label || field.name,
+    //     });
+    //   } else if (field.attr === "output") {
+    //     outputs.push({
+    //       name: field.name,
+    //       label: field.label || field.name,
+    //     });
+    //   }
+    // else {
+    //   if (!values[field.attr]) {
+    //     values[field.attr] = {};
+    //   }
 
-        //   let newField = merge({}, field);
-        //   delete newField["name"];
-        //   delete newField["attr"];
+    //   let newField = merge({}, field);
+    //   delete newField["name"];
+    //   delete newField["attr"];
 
-        //   if (!values[field.attr][field.name]) {
-        //     values[field.attr][field.name] = {};
-        //   }
+    //   if (!values[field.attr][field.name]) {
+    //     values[field.attr][field.name] = {};
+    //   }
 
-        //   values[field.attr][field.name] = newField;
-        // }
-      // });
+    //   values[field.attr][field.name] = newField;
+    // }
+    // });
 
     //   return {
     //     id: id,
@@ -654,7 +674,7 @@ export default {
     // },
 
     // prepareLayers(blocks) {
-    //   let last = 0    
+    //   let last = 0
     //   const newBlock = blocks.map((block) => {
     //       let node = this.nodes.find((n) => {
     //         return n.group === block.group;
@@ -667,7 +687,7 @@ export default {
     //         inputs: node.inputs,
     //         outputs: node.outputs,
     //       }
-          
+
     //       const x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
     //       const y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
 
@@ -767,14 +787,14 @@ export default {
     //   };
     // },
     updateScene() {
-    //   // this.scene = this.exportScene()
-    //   // this.$emit("update:scene", this.exportScene());
+      //   // this.scene = this.exportScene()
+      //   // this.$emit("update:scene", this.exportScene());
     },
   },
 
   mounted() {
-    this.$el.addEventListener('mouseenter', this.handleMauseOver)
-    this.$el.addEventListener('mouseleave', this.handleMauseOver)
+    this.$el.addEventListener("mouseenter", this.handleMauseOver);
+    this.$el.addEventListener("mouseleave", this.handleMauseOver);
     document.documentElement.addEventListener("keyup", this.keyup);
     document.documentElement.addEventListener(
       "mousemove",
