@@ -30,12 +30,27 @@ class HardwareAcceleratorColorChoice(str, Enum):
     TPU = "B8C324"
 
 
-class FileManagerTypeChoice(str, Enum):
+class FileManagerTypeBaseChoice(str, Enum):
     folder = "folder"
     image = "image"
     audio = "audio"
     video = "video"
     table = "table"
+    text = "text"
+    unknown = "unknown"
+
+
+class FileManagerTypeChoice(str, Enum):
+    folder = FileManagerTypeBaseChoice.folder.value
+    jpg = FileManagerTypeBaseChoice.image.value
+    jpeg = FileManagerTypeBaseChoice.image.value
+    png = FileManagerTypeBaseChoice.image.value
+    wav = FileManagerTypeBaseChoice.audio.value
+    mp3 = FileManagerTypeBaseChoice.audio.value
+    webm = FileManagerTypeBaseChoice.video.value
+    csv = FileManagerTypeBaseChoice.table.value
+    txt = FileManagerTypeBaseChoice.text.value
+    undefined = FileManagerTypeBaseChoice.unknown.value
 
 
 class HardwareAcceleratorData(BaseMixinData):
@@ -117,7 +132,10 @@ class FileManagerItem(BaseMixinData):
         if os.path.isdir(fullpath):
             return FileManagerTypeChoice.folder
         else:
-            return FileManagerTypeChoice.table
+            __type = getattr(FileManagerTypeChoice, fullpath.suffix.lower()[1:], None)
+            if __type is None:
+                __type = FileManagerTypeChoice.undefined
+            return __type
 
     @validator("children", always=True)
     def _validate_children(cls, value: list, values) -> list:

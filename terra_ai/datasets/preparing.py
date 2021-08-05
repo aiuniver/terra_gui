@@ -199,8 +199,7 @@ class PrepareDTS(object):
                     x_train = x_train[..., None]
                     x_val = x_val[..., None]
 
-        if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
-                'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
+        if 'scaler' in options.keys() and options['scaler'] in ['MinMaxScaler', 'StandardScaler']:
 
             shape_xt = x_train.shape
             shape_xv = x_val.shape
