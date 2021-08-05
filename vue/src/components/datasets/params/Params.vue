@@ -66,11 +66,15 @@ export default {
     createInterval() {
       this.interval = setTimeout(async () => {
         const data = await this.$store.dispatch("datasets/loadProgress", {});
-        const { finished, message, percent } = data;
+        const { finished, message, percent, data: { file_manager } } = data;
         if (!data || finished) {
-          clearTimeout(this.interval);
+          // clearTimeout(this.interval);
           this.$store.dispatch("messages/setProgressMessage", message);
           this.$store.dispatch("messages/setProgress", percent);
+          if (file_manager) {
+            this.$store.dispatch("datasets/setFiles", file_manager);
+          }
+
         } else {
           this.$store.dispatch("messages/setProgress", percent);
           this.$store.dispatch("messages/setProgressMessage", message);
