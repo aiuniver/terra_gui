@@ -98,6 +98,7 @@ export default {
       if (data) {
         this.info = data;
       }
+      this.dialog = false
     },
     download() {
       console.log(this.info);
