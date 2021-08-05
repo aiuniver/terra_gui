@@ -122,11 +122,10 @@ class Exchange:
         """
         progress_data = progress.pool(progress.PoolName.dataset_source_load)
         if progress_data.finished and progress_data.data:
-            progress_data.data = (
-                FileManagerItem(path=progress_data.data.absolute())
-                .native()
-                .get("children")
-            )
+            __path = progress_data.data.absolute()
+            progress_data.data = {
+                "file_manager": (FileManagerItem(path=__path).native().get("children"))
+            }
         else:
             progress.data = []
         return progress_data
