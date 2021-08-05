@@ -1,7 +1,8 @@
 from enum import Enum
 from typing import Optional, List, Union
 
-from pydantic import PositiveInt, validator, DirectoryPath, FilePath
+from pydantic import validator
+from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
 from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData
@@ -27,7 +28,7 @@ class VideoModeChoice(str, Enum):
 
 class ParametersData(BaseMixinData):
     sources_paths: List[Union[DirectoryPath, FilePath]]
-    cols_names = Optional[List[str]]
+    cols_names: Optional[List[str]]
     width: PositiveInt
     height: PositiveInt
     frame_mode: FrameModeChoice = FrameModeChoice.keep_proportions
