@@ -10,8 +10,9 @@
         <div id="third-scale" :style="thirdScale">{{ 100 - sliders.second }}</div>
       </div>
       <div class="inputs">
-        <input type="number" class="first-value" v-model="sliders.first">
-        <input type="number" class="second-value" v-model="sliders.second">
+        <input type="number" :value="sliders.first">
+        <input type="number" :value="sliders.second - sliders.first">
+        <input type="number" :value="100 - sliders.second">
       </div>
     </div>
 </template>
@@ -21,11 +22,11 @@ export default {
   name: "DoubleSlider",
   data: () => ({
     dragging: false,
-    draggingObj: " ",
+    draggingObj: null,
     sliders: {
       first: 50,
       second: 77
-    },
+    }
   }),
   computed: {
     firstScale() {
@@ -65,6 +66,7 @@ export default {
       this.draggingObj = null;
     },
     slider(event){
+       event.preventDefault();
        if(this.dragging){
          let slider = document.querySelector(`.${this.draggingObj}-slider`);
          let pos = event.x - slider.parentNode.getBoundingClientRect().x
