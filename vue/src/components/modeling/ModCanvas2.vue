@@ -3,7 +3,6 @@
     <div class="canvas">
       <VueBlocksContainer
         ref="container"
-        :scene.sync="scene"
         class="cont"
         @blockSelect="selected"
         @blockDeselect="selected(null)"

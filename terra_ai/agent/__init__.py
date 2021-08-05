@@ -168,30 +168,41 @@ class Exchange:
         )
         return models
 
-    def _call_model_load(self, value: str) -> ModelDetailsData:
+    def _call_model_get(self, value: str) -> ModelDetailsData:
         """
-        Загрузка модели
+        Получение модели
         """
         data = ModelLoadData(value=value)
         with open(data.value.absolute(), "r") as config_ref:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_model_update(self, model: ModelDetailsData, **kwargs) -> ModelDetailsData:
+    def _call_model_update(self, model: dict, **kwargs) -> ModelDetailsData:
         """
         Обновление модели
         """
         if len(kwargs.keys()):
-            model = ModelDetailsData(**model.native().update(**kwargs))
+            model.update(**kwargs)
+        return ModelDetailsData(**model)
+
+    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
+        """
+        Обновление слоя модели
+        """
+        model = ModelDetailsData(**model)
+        if len(kwargs.keys()):
+            model.layers.append(**kwargs)
         return model
 
-    def _call_deploy_upload(self, **kwargs):
+    def _call_deploy_upload(self, **kwargs) -> StageUploadData:
         """
         Деплой: загрузка
         """
         stage = StageUploadData(**kwargs)
-        requests.post()
-        print(stage)
+        # response = requests.post(
+        #     "http://bl146u.xyz:8099/api/v1/test", data=stage.native()
+        # )
+        # print(response.json())
         return stage
 
 

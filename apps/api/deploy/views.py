@@ -1,3 +1,5 @@
+import hashlib
+
 from pathlib import Path
 from pydantic import ValidationError
 
@@ -9,12 +11,6 @@ from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 from .serializers import UploadSerializer
 
 
-class LoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        print(request.project)
-        return BaseResponseSuccess()
-
-
 class UploadAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = UploadSerializer(data=request.data)
@@ -24,23 +20,31 @@ class UploadAPIView(BaseAPIView):
             # Подготовить zip-файл
             # ...
             filepath = Path("/tmp/aaa.zip")
+            sec = serializer.validated_data.get("sec")
             stage = agent_exchange(
                 "deploy_upload",
                 **{
                     "stage": 1,
+                    "deploy": serializer.validated_data.get("deploy"),
                     "user": {
                         "login": settings.USER_LOGIN,
                         "name": settings.USER_NAME,
                         "lastname": settings.USER_LASTNAME,
+                        "sec": hashlib.md5(sec.encode("utf-8")).hexdigest()
+                        if sec
+                        else "",
                     },
-                    "project_name": request.project.name,
-                    "url": serializer.validated_data.get("url"),
+                    "project": {
+                        "name": request.project.name,
+                    },
+                    "task": "text_classification",
                     "replace": serializer.validated_data.get("replace"),
                     "file": {
                         "path": filepath,
                     },
                 }
             )
+            print(stage)
             return BaseResponseSuccess(stage.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
