@@ -18,7 +18,7 @@ export default {
     buttons: {
       type: Array,
       default: () => [
-        { name: "prepare", title: "Подготовить", disabled: true },
+        { name: "prepare", title: "Выбрать датасет", disabled: true },
         // { name: "delete", title: "Удалить", disabled: true },
         // { name: "change", title: "Редактировать", disabled: true },
       ],

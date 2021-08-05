@@ -4,13 +4,14 @@
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
-      v-bind.sync="block"
+      v-bind="block"
       :options="optionsForChild"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
       @select="blockSelect(block)"
       @delete="blockDelete(block)"
+      @position="position(block, $event)"
     />
     <div class="btn-zoom">
       <i class="icon icon-plus" @click="zoom(1)"></i>
@@ -254,6 +255,7 @@ export default {
       // this.updateScene();
     },
     handleMove(e) {
+      console.log('handleMove')
       let mouse = mouseHelper.getMousePosition(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;
@@ -287,6 +289,7 @@ export default {
       }
     },
     handleDown(e) {
+      console.log('handleDown')
       const target = e.target || e.srcElement;
       if (
         (target === this.$el || target.matches("svg, svg *")) &&
@@ -306,6 +309,7 @@ export default {
       }
     },
     handleUp(e) {
+      console.log('handleUp')
       const target = e.target || e.srcElement;
 
       if (this.dragging) {
@@ -610,6 +614,10 @@ export default {
     //     // values: values,
     //   };
     // },
+    position(block, event) {
+      // console.log(block, event)
+      block.position = event
+    },
     deselectAll(withoutID = null) {
       this.blocks.forEach((value) => {
         if (value.id !== withoutID && value.selected) {
