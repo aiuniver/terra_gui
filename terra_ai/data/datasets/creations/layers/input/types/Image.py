@@ -4,12 +4,11 @@ from pydantic.types import PositiveInt, DirectoryPath, FilePath
 from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData
 from .....extra import LayerNetChoice, LayerScalerChoice
-from ......types import confilepath
 
 
 class ParametersData(BaseMixinData):
     sources_paths: List[Union[DirectoryPath, FilePath]]
-    cols_names = Optional[List[str]]
+    cols_names: Optional[List[str]]
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.convolutional
