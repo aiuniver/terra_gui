@@ -3,6 +3,7 @@
 """
 
 import os
+import pandas
 
 from enum import Enum
 from pathlib import Path
@@ -117,6 +118,15 @@ class FileManagerItem(BaseMixinData):
     type: Optional[FileManagerTypeChoice]
     children: list = []
 
+    @property
+    def csv2data(self) -> Optional[dict]:
+        if self.type != FileManagerTypeChoice.csv:
+            return None
+        dataframe = pandas.read_csv(self.path, nrows=5)
+        data = dataframe.values.tolist()
+        data.insert(0, list(dataframe.columns))
+        return data
+
     @validator("title", always=True)
     def _validate_title(cls, value: str, values) -> str:
         fullpath = values.get("path")
@@ -153,7 +163,10 @@ class FileManagerItem(BaseMixinData):
         if self.type != FileManagerTypeChoice.folder:
             __exclude.append("children")
         kwargs.update({"exclude": set(__exclude)})
-        return super().dict(**kwargs)
+        data = super().dict(**kwargs)
+        if self.type == FileManagerTypeChoice.csv:
+            data.update({"data": self.csv2data})
+        return data
 
 
 class FileManagerList(UniqueListMixin):
