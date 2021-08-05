@@ -56,9 +56,10 @@ class SourceLoadAPIView(BaseAPIView):
 
 class SourceLoadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            data=agent_exchange("dataset_source_load_progress").native()
-        )
+        progress = agent_exchange("dataset_source_load_progress")
+        if progress.finished:
+            print(progress.data)
+        return BaseResponseSuccess(data=progress.native())
 
 
 class SourcesCreateAPIView(BaseAPIView):
