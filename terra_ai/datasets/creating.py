@@ -72,7 +72,7 @@ class CreateDTS(object):
         self.tsgenerator: dict = {}
         self.temporary: dict = {}
 
-    def create_dataset(self, creation_data: CreationData):
+    def create_dataset(self, creation_data: CreationData) -> DatasetData:
 
         self.dataset_user_data = creation_data
 
@@ -343,9 +343,9 @@ class CreateDTS(object):
         options['put'] = f'{self.mode}_{self.iter}'
         if 'object_detection' in self.tags.values():
             options['object_detection'] = True
-        if options['file_info']['path_type'] == 'path_folder':
-            for folder_name in options['file_info']['path']:
-                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+        for source_path in options.get('sources_paths', []):
+            if source_path.is_dir() or source_path.suffix[1:] != 'csv':
+                for directory, folder, file_name in sorted(os.walk(os.path.join(source_path))):
                     if file_name:
                         file_folder = directory.replace(self.file_folder, '')[1:]
                         for name in sorted(file_name):
@@ -359,20 +359,20 @@ class CreateDTS(object):
                             y_cls.append(cls_idx)
                         cls_idx += 1
                         self.peg.append(peg_idx)
-            self.y_cls = y_cls
-        elif options['file_info']['path_type'] == 'path_file':
-            for file_name in options['file_info']['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                   usecols=options['file_info']['cols_name'])
-                instr = data[options['file_info']['cols_name'][0]].to_list()
-                prev_elem = instr[0].split('/')[-2]
-                for elem in instr:
-                    cur_elem = elem.split('/')[-2]
-                    if cur_elem != prev_elem:
-                        self.peg.append(peg_idx)
-                    prev_elem = cur_elem
-                    peg_idx += 1
-                self.peg.append(len(instr))
+                self.y_cls = y_cls
+            else:
+                for file_name in options['file_info']['path']:
+                    data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                       usecols=options['file_info']['cols_name'])
+                    instr = data[options['file_info']['cols_name'][0]].to_list()
+                    prev_elem = instr[0].split('/')[-2]
+                    for elem in instr:
+                        cur_elem = elem.split('/')[-2]
+                        if cur_elem != prev_elem:
+                            self.peg.append(peg_idx)
+                        prev_elem = cur_elem
+                        peg_idx += 1
+                    self.peg.append(len(instr))
 
         if options.get('augmentation', None):
             aug_parameters = []
