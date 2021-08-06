@@ -144,8 +144,7 @@ class CreateArray(object):
 
         array = []
         [[filepath, slicing]] = sample.items()
-        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
-        print(filepath, slicing)
+        # slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
         text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
         if options['embedding']:
@@ -256,7 +255,7 @@ class CreateArray(object):
 
         return array
 
-    def create_text_segmentation(self, sample: dict, **options):
+    def create_text_segmentation(self, _, sample: dict, **options):
 
         array = []
 
@@ -352,14 +351,12 @@ class CreateArray(object):
 
         pass
 
-    def create_tokenizer(self, mode: str, iteration: int, **options):
+    def create_tokenizer(self, put_id: int, **options):
 
         """
 
         Args:
-            mode: str
-                Режим input/output.
-            iteration: int
+            put_id: int
                 Номер входа или выхода.
             **options: Параметры токенайзера:
                        num_words: int
@@ -381,18 +378,16 @@ class CreateArray(object):
 
         """
 
-        self.tokenizer[f'{mode}_{iteration}'] = Tokenizer(**options)
+        self.tokenizer[put_id] = Tokenizer(**options)
 
         pass
 
-    def create_word2vec(self, mode: str, iteration: int, words: list, **options) -> None:
+    def create_word2vec(self, put_id: int, words: list, **options) -> None:
 
         """
 
         Args:
-            mode: str
-                Режим input/output.
-            iteration: int
+            put_id: int
                 Номер входа или выхода.
             words: list
                 Список слов для обучения Word2Vec.
@@ -413,7 +408,7 @@ class CreateArray(object):
 
         """
 
-        self.word2vec[f'{mode}_{iteration}'] = Word2Vec(words, **options)
+        self.word2vec[put_id] = Word2Vec(words, **options)
 
         pass
 
