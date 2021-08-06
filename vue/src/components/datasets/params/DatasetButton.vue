@@ -38,7 +38,7 @@ export default {
           this.$store.dispatch("messages/setProgressMessage", message);
           this.$store.dispatch("messages/setProgress", percent);
           if (data) {
-            this.$store.dispatch('messages/setMessage', { message: `Датасет «${data.alias}» выбран`}, { root: true })
+            this.$store.dispatch('messages/setMessage', { message: `Датасет «${dataset.alias}» выбран`}, { root: true })
             this.$store.dispatch('projects/setProject', { dataset }, { root: true })
           }   
         } else {
