@@ -182,7 +182,7 @@ class Exchange:
         Обновление модели
         """
         if len(kwargs.keys()):
-            model.update(**kwargs)
+            model.update(kwargs)
         return ModelDetailsData(**model)
 
     def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
@@ -191,7 +191,7 @@ class Exchange:
         """
         model = ModelDetailsData(**model)
         if len(kwargs.keys()):
-            model.layers.append(**kwargs)
+            model.layers.append(kwargs)
         return model
 
     def _call_deploy_upload(self, **kwargs) -> StageUploadData:

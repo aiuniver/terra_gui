@@ -45,7 +45,7 @@ class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
             request.project.model = agent_exchange(
-                "model_update", model=request.project.model.native(), **kwargs
+                "model_update", model=request.project.model.native(), **request.data
             )
             request.project.save()
             return BaseResponseSuccess()
@@ -57,7 +57,7 @@ class LayerSaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
             request.project.model = agent_exchange(
-                "model_layer_save", model=request.project.model.native(), **kwargs
+                "model_layer_save", model=request.project.model.native(), **request.data
             )
             request.project.save()
             return BaseResponseSuccess()
