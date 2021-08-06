@@ -6,7 +6,12 @@
         :class="['files-menu-node', { 'files-menu-selected': node.isSelected }]"
         :key="'nodeInd_' + nodeInd"
       >
-        <div class="files-menu-node-item" draggable @dragstart="dragstart($event, node)" @dragover.stop>
+        <div
+          class="files-menu-node-item"
+          :draggable="node.type === 'folder'"
+          @dragstart="dragstart($event, node)"
+          @dragover.stop
+        >
           <div
             v-for="(gapInd, i) in gaps"
             class="files-menu-gap"
@@ -22,11 +27,13 @@
               v-if="node.children.length"
             >
             </span>
-            <span v-if="node.children.length" class="icons files-menu__title--folder" />
+            <span
+              v-if="node.children.length"
+              class="icons files-menu__title--folder"
+            />
             <span v-else class="icons files-menu__title--file" />
-            <span class="files-menu__title--text" v-text="node.title" />
+            <span class="files-menu__title--text" v-text="node.title" :style="{ cursor: node.type === 'folder' ? 'grab' : ''}" />
           </div>
-
         </div>
 
         <files-menu
@@ -189,7 +196,6 @@ export default {
       type: Boolean,
       default: true,
     },
-
   },
   data() {
     return {
@@ -204,7 +210,6 @@ export default {
   },
 
   computed: {
-
     nodes() {
       if (this.isRoot) {
         const nodeModels = this.copy(this.currentValue);
@@ -224,15 +229,13 @@ export default {
     isRoot() {
       return !this.level;
     },
-
-
   },
   methods: {
     dragstart(e, node) {
-      console.log(e)
+      console.log(e);
       const dataTransfer = e.dataTransfer;
-      dataTransfer.setData('CardDataType', JSON.stringify(node));
-      dataTransfer.effectAllowed = 'move';
+      dataTransfer.setData("CardDataType", JSON.stringify(node));
+      dataTransfer.effectAllowed = "move";
       // Add visual cues to show that the card is no longer in it's position.
       // e.target.style.opacity = 0.2;
     },
@@ -314,7 +317,6 @@ export default {
       event.stopPropagation();
     },
 
-
     getParent() {
       return this.$parent;
     },
@@ -339,8 +341,6 @@ export default {
 
       this.emitInput(newNodes);
     },
-
-   
 
     traverse(cb, nodeModels = null, parentPath = []) {
       if (!nodeModels) nodeModels = this.currentValue;

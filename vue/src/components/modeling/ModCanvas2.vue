@@ -63,7 +63,7 @@ export default {
       console.log(value)
     },
     async saveModel() {
-      await this.$store.dispatch('modelings/saveModel', {});
+      await this.$store.dispatch('modeling/saveModel', {});
     }
   },
   watch: {

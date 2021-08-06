@@ -14,7 +14,7 @@
     <div v-show="select === 'GoogleDrive'" class="tabs__item">
       <Autocomplete2
         :list="list"
-        label="Выберите файл из Google-диска"
+        label="Выберите файл из Google-диске"
         @focus="focus"
         @selected="selected"
       />
@@ -40,7 +40,7 @@ export default {
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
-      { title: "URL-ссылка", active: false, mode: "URL" },
+      { title: "URL", active: false, mode: "URL" },
     ],
   }),
   methods: {

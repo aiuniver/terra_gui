@@ -51,10 +51,10 @@ export default {
         },
       });
     }
-    // window.addEventListener("resize", this.myEventHandler);
+    window.addEventListener("resize", this.myEventHandler);
   },
   destroyed() {
-    // window.removeEventListener("resize", this.myEventHandler);
+    window.removeEventListener("resize", this.myEventHandler);
   },
 };
 </script>

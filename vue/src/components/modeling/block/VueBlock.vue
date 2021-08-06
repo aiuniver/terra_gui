@@ -198,9 +198,7 @@ export default {
     moveWithDiff(diffX, diffY) {
       let left = this.position[0] + diffX / this.options.scale;
       let top = this.position[1] + diffY / this.options.scale;
-
-      this.$emit("update:position", [left, top]);
-      // this.$emit("update:y", top);
+      this.$emit("position", [left, top]);
     },
   },
   computed: {
