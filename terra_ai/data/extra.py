@@ -163,10 +163,7 @@ class FileManagerItem(BaseMixinData):
         if self.type != FileManagerTypeChoice.folder:
             __exclude.append("children")
         kwargs.update({"exclude": set(__exclude)})
-        data = super().dict(**kwargs)
-        if self.type == FileManagerTypeChoice.csv:
-            data.update({"data": self.csv2data})
-        return data
+        return super().dict(**kwargs)
 
 
 class FileManagerList(UniqueListMixin):
