@@ -901,53 +901,26 @@ class CreateDTS(object):
         self.one_hot_encoding[put_data.id] = options['one_hot_encoding']
         instructions: dict = {}
         self.task_type[put_data.id] = put_data.type
-        # for source_path in options.get('sources_paths', []):
-        #     if source_path.is_dir() or source_path.suffix[1:] != 'csv':
-        #         for directory, folder, file_name in sorted(os.walk(os.path.join(source_path))):
-        #             if file_name:
-        #                 file_folder = directory.replace(self.file_folder, '')[1:]
-        #                 for name in sorted(file_name):
-        #                     if 'object_detection' in self.tags.values():
-        #                         if 'txt' not in name:
-        #                             instr.append(os.path.join(file_folder, name))
-        #                             peg_idx += 1
-        #                     else:
-        #                         instr.append(os.path.join(file_folder, name))
-        #                         peg_idx += 1
-        #                     y_cls.append(cls_idx)
-        #                 cls_idx += 1
-        #                 self.peg.append(peg_idx)
-        #         self.y_cls = y_cls
-        if options['path_type'] == 'path_file' and not self.y_cls:
+
+        if options['sources_paths'].is_file() and not self.y_cls:
             transpose = self.user_parameters.get(1).transpose
             bool_trend = self.user_parameters.get(1).bool_trend
-            trend_limit = self.user_parameters.get(1).trend_limit
-            lengh = self.user_parameters.get(1).lengh
-            step = self.user_parameters.get(1).step
-            # for key, value in self.tags.items():
-            #     if value == 'dataframe':
-            # transpose = self.user_parameters[key]['transpose']
-            # try:
-            #     bool_trend = self.user_parameters[key]['trend']
-            #     self.trend_limit = self.user_parameters[key]['trend_limit']
-            #     lengh = int(self.user_parameters[key]['lengh'])
-            #     step = int(self.user_parameters[key]['step'])
-            # except:
-            #     pass
             if bool_trend:
+                trend_limit = self.user_parameters.get(1).trend_limit
+                lengh = self.user_parameters.get(1).lengh
+                step = self.user_parameters.get(1).step
                 if transpose:
-                    tmp_df = pd.read_csv(os.path.join(self.file_folder, options['path'][0]),
+                    tmp_df = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                          sep=options['separator']).T
                     tmp_df.columns = tmp_df.iloc[0]
                     tmp_df.drop(tmp_df.index[[0]], inplace=True)
                     trend_subdf = tmp_df.loc[:, options['cols_names'][0].split(' ')].values
                 else:
-                    trend_subdf = pd.read_csv(os.path.join(self.file_folder, options['path'][0]),
+                    trend_subdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                               sep=options['separator'],
-                                              usecols=options['cols_names']).values
-                self.y_cls = []
+                                              usecols=options['cols_names'][0].split(' ')).values
 
-                for i in range(0, len(trend_subdf) - 1 - lengh, step):
+                for i in range(0, len(trend_subdf) - lengh, step):
                     if '%' in trend_limit:
                         trend_limit = float(trend_limit[:trend_limit.find('%')])
                         if abs((trend_subdf[i + lengh + 1] - trend_subdf[i]) /
@@ -975,7 +948,7 @@ class CreateDTS(object):
                 self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
             else:
                 if 'categorical' in options.keys():
-                    for file_name in options['path']:
+                    for file_name in options['sources_paths']:
                         if transpose:
                             tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
                                                  sep=options['separator']).T
@@ -996,7 +969,7 @@ class CreateDTS(object):
                         for elem in column:
                             self.y_cls.append(classes_names.index(elem))
                 elif 'categorical_ranges' in options.keys():
-                    file_name = options['path'][0]
+                    file_name = options['sources_paths'][0]
                     if transpose:
                         tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
                                              sep=options['separator']).T
@@ -1010,13 +983,12 @@ class CreateDTS(object):
                     column = data[options['cols_names'][0]].to_list()
                     self.minvalue_y = min(column)
                     self.maxvalue_y = max(column)
-                    if 'auto_ranges' in options['categorical_ranges'].keys():
-                        border = max(column) / int(options['categorical_ranges']['auto_ranges'])
+                    if 'auto_ranges' in options.keys():
+                        border = max(column) / int(options['auto_ranges'])
                         self.classes_names[put_data.id] = np.linspace(
-                            border, self.maxvalue_y, int(options['categorical_ranges']['auto_ranges'])).tolist()
+                            border, self.maxvalue_y, int(options['auto_ranges'])).tolist()
                     else:
-                        self.classes_names[put_data.id] = options['categorical_ranges'][
-                            'ranges'].split(' ')
+                        self.classes_names[put_data.id] = options['ranges'].split(' ')
 
                     self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
@@ -1025,18 +997,16 @@ class CreateDTS(object):
                             if elem <= int(self.classes_names[put_data.id][i]):
                                 self.y_cls.append(i)
                                 break
-        elif options['sources_paths'].is_dir() and not self.y_cls:
+        elif options['sources_paths'].is_dir():
             if ('image' or 'text' or 'audio' or 'video') in self.tags.values():
                 self.classes_names[put_data.id] = \
-                    sorted(self.user_parameters[2].sources_paths)
+                    sorted(options['sources_paths'])
                 self.num_classes[put_data.id] = len(
                     self.classes_names[put_data.id])
         else:
             self.classes_names[put_data.id] = np.unique(self.y_cls)
             self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
-        # for source_path in options.get('sources_paths', []):
-        # if source_path.is_dir() or source_path.suffix[1:] != 'csv':
-        #         for directory, folder, file_name in sorted(os.walk(os.path.join(source_path))):
+
         instructions['parameters'] = {'num_classes': self.num_classes[put_data.id],
                                       'one_hot_encoding': options['one_hot_encoding']}
         instructions['instructions'] = self.y_cls

@@ -391,7 +391,7 @@ class CreateArray(object):
 
         return array
 
-    def create_timeseries(self, row_number, **options):
+    def create_timeseries(self, file_folder, row_number, **options):
         """
             Args:
                 row_number: номер строки с сырыми данными для предсказания значения,

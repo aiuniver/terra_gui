@@ -13,7 +13,6 @@ class ParametersData(BaseMixinData):
     transpose: bool
     trend: bool
     trend_limit: Optional[str]
-    ohe_trend: Optional[bool]
     pad_sequences: Optional[bool]
     example_lengh: Optional[PositiveInt]
     xlen_step: Optional[bool]
