@@ -1,6 +1,6 @@
 from typing import Optional, List, Union
-
-from pydantic import PositiveInt, DirectoryPath, FilePath
+from pydantic.types import FilePath, PositiveInt, DirectoryPath
+from pydantic import PositiveInt
 
 from ......mixins import BaseMixinData
 

@@ -25,6 +25,10 @@ class LayerDataframeData(LayerBaseData, types.Dataframe.ParametersData):
     pass
 
 
+class LayerVideoData(LayerBaseData, types.Video.ParametersData):
+    pass
+
+
 Layer = Enum(
     "Layer",
     dict(
