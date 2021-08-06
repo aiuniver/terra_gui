@@ -294,28 +294,28 @@ class CreateDTS(object):
         self.y_cls = [0, ]
         return data
 
-    def instructions_images_video(self, folder_name: str, class_mode: bool = False, max_frames: int = None) -> list:
-        data: list = []
-        y_cls: list = []
-        cls_idx = 0
-        peg_idx = 0
-        self.peg.append(0)
-        path = os.path.join(self.file_folder, folder_name) if folder_name else self.file_folder
-
-        for directory, folder, file_name in sorted(os.walk(path)):
-            if file_name:
-                file_folder = directory.replace(self.file_folder, '')[1:]
-                for name in sorted(file_name):
-                    data.append(os.path.join(file_folder, name))
-                    peg_idx += 1
-                    if class_mode:
-                        y_cls.append(np.full((max_frames, 1), cls_idx).tolist())
-                    else:
-                        y_cls.append(cls_idx)
-                cls_idx += 1
-                self.peg.append(peg_idx)
-        self.y_cls = y_cls
-        return data
+    # def instructions_images_video(self, folder_name: str, class_mode: bool = False, max_frames: int = None) -> list:
+    #     data: list = []
+    #     y_cls: list = []
+    #     cls_idx = 0
+    #     peg_idx = 0
+    #     self.peg.append(0)
+    #     path = os.path.join(self.file_folder, folder_name) if folder_name else self.file_folder
+    #
+    #     for directory, folder, file_name in sorted(os.walk(path)):
+    #         if file_name:
+    #             file_folder = directory.replace(self.file_folder, '')[1:]
+    #             for name in sorted(file_name):
+    #                 data.append(os.path.join(file_folder, name))
+    #                 peg_idx += 1
+    #                 if class_mode:
+    #                     y_cls.append(np.full((max_frames, 1), cls_idx).tolist())
+    #                 else:
+    #                     y_cls.append(cls_idx)
+    #             cls_idx += 1
+    #             self.peg.append(peg_idx)
+    #     self.y_cls = y_cls
+    #     return data
 
     # def instructions_images(self, **options: Any):
     #     folder = options.get('folder_name', '')
@@ -422,7 +422,6 @@ class CreateDTS(object):
                         for name in sorted(file_name):
                             paths.append(os.path.join(file_folder, name))
                         classes_names.append(file_folder)
-            self.y_cls = y_cls
         elif options['sources_paths'][0].endswith('.csv'):
             for file_name in options['sources_paths']:
                 data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
@@ -456,6 +455,7 @@ class CreateDTS(object):
                     if cur_step + options['length'] > frame_count:
                         stop_flag = True
 
+        self.y_cls = y_cls
         self.peg.append(len(instr))
 
         del options['video_mode']
@@ -464,14 +464,6 @@ class CreateDTS(object):
         del options['max_frames']
         instructions['parameters'] = options
         instructions['instructions'] = instr
-
-        # folder = options.get('folder_name', '')
-        # if options.get('class_mode', '') == 'По каждому кадру':
-        #     class_mode = True
-        # else:
-        #     class_mode = False
-        # max_frames = options.get('max_frames', '')
-        # instructions['instructions'] = self.instructions_images_video(folder, class_mode, max_frames)
 
         return instructions
 
@@ -847,7 +839,7 @@ class CreateDTS(object):
     def instructions_timeseries(self, put_data: Union[CreationInputData, CreationOutputData]):
         """
             Args:
-                **options: Параметры временного ряда:
+                **put_data: Параметры временного ряда:
                     lengh: количество примеров для обучения
                     scaler: скейлер
                     y_cols: колонки для предсказания
@@ -947,8 +939,7 @@ class CreateDTS(object):
                 if 'categorical' in options.keys():
                     for file_name in options['sources_paths']:
                         if transpose:
-                            tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                                 sep=options['separator']).T
+                            tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
                             tmp_df.columns = tmp_df.iloc[0]
                             tmp_df.drop(tmp_df.index[[0]], inplace=True)
                             data = tmp_df.loc[:, options['cols_names'][0].split(' ')]
@@ -968,8 +959,7 @@ class CreateDTS(object):
                 elif 'categorical_ranges' in options.keys():
                     file_name = options['sources_paths'][0]
                     if transpose:
-                        tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                             sep=options['separator']).T
+                        tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
                         tmp_df.columns = tmp_df.iloc[0]
                         tmp_df.drop(tmp_df.index[[0]], inplace=True)
                         data = tmp_df.loc[:, options['cols_names'][0].split(' ')]
@@ -996,11 +986,8 @@ class CreateDTS(object):
                                 break
         elif not options['sources_paths'][0].endswith('.csv'):
             if any(i in self.tags.values() for i in ['image', 'text', 'audio', 'video']):
-                self.classes_names[put_data.id] = \
-                    sorted(options['sources_paths'])
-                self.num_classes[put_data.id] = len(
-                    self.classes_names[put_data.id])
-
+                self.classes_names[put_data.id] = sorted(options['sources_paths'])
+                self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
         else:
             self.classes_names[put_data.id] = np.unique(self.y_cls)
             self.num_classes[put_data.id] = len(self.classes_names[put_data.id])

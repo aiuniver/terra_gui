@@ -8,6 +8,7 @@ from pydantic import validator, DirectoryPath, FilePath, PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.data.types import ConstrainedFloatValueGe0
 
 DatasetArchives = {
     'трейдинг': 'trading.zip',
@@ -34,6 +35,7 @@ DataType = {0: 'DIM',
             }
 
 
+
 class Preprocesses(str, Enum):
     scaler = "scaler"
     tokenizer = "tokenizer"
@@ -42,10 +44,13 @@ class Preprocesses(str, Enum):
     # tsgenerator = "tsgenerator"
 
 
-class InstructionsData(BaseMixinData):
-    instructions: List[Union[str, PositiveInt, Dict[str, List[PositiveInt]]]]
-    parameters: Any
+# class InstructionsData(BaseMixinData):
+#     instructions: List[Union[str, PositiveInt, Dict[str, List[PositiveInt]]]]
+#     parameters: Any
 
+class InstructionsData(BaseMixinData):
+    instructions: List[Union[str, PositiveInt, Dict[str, List[PositiveInt]], Dict[str, List[ConstrainedFloatValueGe0]]]]
+    parameters: Any
     # @validator("parameters", always=True)
     # def _validate_parameters(cls, value: Any, values, field) -> Any:
     #     return field.type_(**value or {})
