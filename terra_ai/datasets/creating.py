@@ -859,29 +859,28 @@ class CreateDTS(object):
             Returns:
                 instructions: dict      Словарь с инструкциями для create_timeseries.
         """
+        options = put_data.parameters.native()
         instructions = {'parameters': {}}
         instructions['parameters']['lengh'] = int(options['lengh'])
         instructions['parameters']['scaler'] = options['scaler']
         instructions['parameters']['y_cols'] = options['cols_names'][0]
         instructions['parameters']['depth'] = int(options['depth'])
         step = int(options['step'])
-        for key, value in self.tags.items():
-            if value == 'dataframe':
-                transpose = self.user_parameters[key]['transpose']
 
+        transpose = self.user_parameters[1]['transpose']
         if transpose:
-            tmp_df_ts = pd.read_csv(os.path.join(self.file_folder, options['path'][0]),
+            tmp_df_ts = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                     sep=options['separator']).T
             tmp_df_ts.columns = tmp_df_ts.iloc[0]
             tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
             array_creator.y_subdf = tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')].values
         else:
-            array_creator.y_subdf = pd.read_csv(os.path.join(self.file_folder, options['path'][0]),
+            array_creator.y_subdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                                 sep=options['separator'],
                                                 usecols=instructions['parameters']['y_cols'].split(' ')).values
 
-        instructions['parameters']['put'] = f'{self.mode}_{self.iter}'
-        instructions['instructions'] = np.arange(0, (len(array_creator.y_subdf) - 1 -
+        instructions['parameters']['put'] = put_data.id
+        instructions['instructions'] = np.arange(0, (len(array_creator.y_subdf) -
                                                      instructions['parameters']['lengh'] -
                                                      instructions['parameters']['depth']), step).tolist()
 
