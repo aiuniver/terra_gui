@@ -9,8 +9,7 @@ class DatasetsMessages(str, Enum):
         "Undefined method for loading dataset sources in mode `%s`"
     )
     DatasetChoiceUndefinedMethod = "Undefined method for choice dataset from group `%s`"
-    UnknownKerasDataset = "Unknown keras dataset `%s`"
-    UnknownCustomDataset = "Unknown custom dataset `%s`"
+    UnknownDataset = "Unknown `%s` dataset `%s`"
 
 
 class DatasetsException(TerraBaseException):
@@ -34,17 +33,9 @@ class DatasetChoiceUndefinedMethodException(DatasetsException):
         super().__init__(self.Meta.message % str(__group), *args)
 
 
-class UnknownKerasDatasetException(DatasetsException):
+class UnknownDatasetException(DatasetsException):
     class Meta:
-        message: str = DatasetsMessages.UnknownKerasDataset
+        message: str = DatasetsMessages.UnknownDataset
 
-    def __init__(self, __name: str, *args):
-        super().__init__(self.Meta.message % str(__name), *args)
-
-
-class UnknownCustomDatasetException(DatasetsException):
-    class Meta:
-        message: str = DatasetsMessages.UnknownCustomDataset
-
-    def __init__(self, __name: str, *args):
-        super().__init__(self.Meta.message % str(__name), *args)
+    def __init__(self, __group: str, __name: str, *args):
+        super().__init__(self.Meta.message % (str(__group), str(__name)), *args)
