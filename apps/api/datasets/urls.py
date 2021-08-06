@@ -7,6 +7,11 @@ app_name = "datasets"
 
 urlpatterns = [
     path("choice/", views.ChoiceAPIView.as_view(), name="choice"),
+    path(
+        "choice/progress/",
+        views.ChoiceProgressAPIView.as_view(),
+        name="choice_progress",
+    ),
     path("info/", views.InfoAPIView.as_view(), name="info"),
     path(
         "source/load/progress/",

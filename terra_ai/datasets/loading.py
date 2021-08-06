@@ -5,19 +5,36 @@ import base64
 import requests
 
 from pathlib import Path
-from tempfile import gettempdir
+from pydantic import ValidationError
 from pydantic.networks import HttpUrl
+from pydantic.errors import PathNotExistsError
 
-from .. import progress
+from .. import progress, settings
 from ..data.datasets.creation import SourceData
-from ..exceptions.datasets import DatasetSourceLoadUndefinedMethodException
+from ..data.datasets.dataset import (
+    DatasetLoadData,
+    DatasetsGroupsList,
+    CustomDatasetConfigData,
+    DatasetData,
+)
+from ..data.datasets.extra import DatasetGroupChoice
+from ..data.presets.datasets import DatasetsGroups
+from ..exceptions.datasets import (
+    DatasetSourceLoadUndefinedMethodException,
+    DatasetChoiceUndefinedMethodException,
+    UnknownKerasDatasetException,
+    UnknownCustomDatasetException,
+)
 from ..progress import utils as progress_utils
 
 DOWNLOAD_SOURCE_TITLE = "Загрузка исходников датасета"
-DATASET_UNPACK_TITLE = "Распаковка исходников датасета"
-DATASETS_SOURCE_DIR = Path(gettempdir(), "terraai", "datasets")
+DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников датасета"
+DATASET_CHOICE_TITLE = "Загрузка датасета %s.%s"
+DATASETS_SOURCE_DIR = Path(settings.TMP_DIR, "datasets_sources")
+DATASETS_CHOICE_DIR = Path(settings.TMP_DIR, "datasets_choices")
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
+os.makedirs(DATASETS_CHOICE_DIR, exist_ok=True)
 
 
 # class Dataloader:
@@ -113,7 +130,7 @@ def __load_from_url(folder: Path, url: HttpUrl):
             progress_name, DOWNLOAD_SOURCE_TITLE, url
         )
         zip_destination = progress_utils.unpack(
-            progress_name, DATASET_UNPACK_TITLE, zipfile_path
+            progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
         )
         shutil.move(zip_destination, dataset_path)
         os.remove(zipfile_path.absolute())
@@ -145,7 +162,7 @@ def __load_from_googledrive(folder: Path, zipfile_path: Path):
     # Запускаем загрузку
     try:
         zip_destination = progress_utils.unpack(
-            progress_name, DATASET_UNPACK_TITLE, zipfile_path
+            progress_name, DATASET_SOURCE_UNPACK_TITLE, zipfile_path
         )
         shutil.move(zip_destination, dataset_path)
         progress.pool(progress_name, data=dataset_path.absolute(), finished=True)
@@ -162,3 +179,82 @@ def source(strict_object: SourceData):
         __method(mode_folder, strict_object.value)
     else:
         raise DatasetSourceLoadUndefinedMethodException(strict_object.mode.value)
+
+
+@progress.threading
+def __choice_from_keras(name: str, **kwargs):
+    # Имя прогресс-бара
+    progress_name = progress.PoolName.dataset_choice
+    progress.pool.reset(
+        progress_name,
+        message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.keras.value, name),
+        finished=False,
+    )
+
+    # Выбор датасета
+    dataset = (
+        DatasetsGroupsList(DatasetsGroups)
+        .get(DatasetGroupChoice.keras)
+        .datasets.get(name)
+    )
+    if dataset:
+        progress.pool(progress_name, percent=100, data=dataset, finished=True)
+    else:
+        progress.pool(progress_name, error=str(UnknownKerasDatasetException(name)))
+
+
+@progress.threading
+def __choice_from_custom(name: str, source: Path, **kwargs):
+    # Имя прогресс-бара
+    progress_name = progress.PoolName.dataset_choice
+    progress.pool.reset(
+        progress_name,
+        message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.custom.value, name),
+        finished=False,
+    )
+
+    # Выбор датасета
+    try:
+        data = CustomDatasetConfigData(
+            path=Path(source, f"{name}.{settings.DATASET_EXT}")
+        )
+        dataset = DatasetData(**data.config)
+        if dataset:
+            progress.pool(progress_name, percent=100, data=dataset, finished=True)
+        else:
+            progress.pool(progress_name, error=str(UnknownCustomDatasetException(name)))
+    except ValidationError as error:
+        for item in error.args[0]:
+            if isinstance(item.exc, PathNotExistsError):
+                progress.pool(
+                    progress_name, error=str(UnknownCustomDatasetException(name))
+                )
+                return
+        progress.pool(progress_name, error=str(error))
+
+
+@progress.threading
+def __choice_from_terra(name: str, **kwargs):
+    # Имя прогресс-бара
+    progress_name = progress.PoolName.dataset_choice
+    progress.pool.reset(
+        progress_name,
+        message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name),
+        finished=False,
+    )
+
+    # Выбор датасета
+    print(name)
+
+
+def choice(dataset_choice: DatasetLoadData):
+    __method_name = f"__choice_from_{dataset_choice.group.lower()}"
+    __method = getattr(sys.modules.get(__name__), __method_name, None)
+    if __method:
+        choice_folder = Path(DATASETS_CHOICE_DIR, dataset_choice.group.lower())
+        os.makedirs(choice_folder, exist_ok=True)
+        __method(
+            name=dataset_choice.alias, folder=choice_folder, source=dataset_choice.path
+        )
+    else:
+        raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)
