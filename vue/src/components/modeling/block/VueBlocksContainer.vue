@@ -255,7 +255,7 @@ export default {
       // this.updateScene();
     },
     handleMove(e) {
-      console.log('handleMove')
+      // console.log('handleMove')
       let mouse = mouseHelper.getMousePosition(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;

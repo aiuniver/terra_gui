@@ -1,6 +1,6 @@
 <template>
   <div class="params">
-    <div class="params__btn" @click="full = !full">
+    <div class="params__btn" @click="openFull">
       <i class="params__btn--icon"></i>
     </div>
     <div class="params__items">
@@ -87,11 +87,25 @@ export default {
       console.log(select);
       this.dataset = select;
     },
+    openFull() {
+      if (this.$store.state.datasets.files.length) {
+        this.full = true
+      } else {
+        this.$Modal.alert({
+          width: 250,
+          title: 'Внимание!',
+          content: 'Загрузите датасет'
+        })
+      }
+    },
     async download() {
       const { mode, value } = this.dataset;
       if (mode && value) {
-        this.createInterval();
-        await this.$store.dispatch("datasets/sourceLoad", { mode, value });
+        const data = await this.$store.dispatch("datasets/sourceLoad", { mode, value });
+        console.log(data)
+        if (data) {
+          this.createInterval()
+        }
       } else {
         this.$store.dispatch("messages/setMessage", {
           error: "Выберите файл",
