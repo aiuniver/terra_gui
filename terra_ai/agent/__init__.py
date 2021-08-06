@@ -75,25 +75,13 @@ class Exchange:
         """
         Выбор датасета
         """
-        dataset_choice = DatasetLoadData(path=path, group=group, alias=alias)
-        if dataset_choice.group == DatasetGroupChoice.keras:
-            dataset = (
-                DatasetsGroupsList(DatasetsGroups)
-                .get(DatasetGroupChoice.keras)
-                .datasets.get(dataset_choice.alias)
-            )
-            if not dataset:
-                raise exceptions.UnknownKerasDatasetException(dataset_choice.alias)
-            return dataset
-        elif dataset_choice.group == DatasetGroupChoice.custom:
-            data = CustomDatasetConfigData(
-                path=Path(path, f"{dataset_choice.alias}.{settings.DATASET_EXT}")
-            )
-            return DatasetData(**data.config)
-        else:
-            raise exceptions.DatasetGroupUndefinedMethodException(
-                dataset_choice.group.value
-            )
+        datasets_loading.choice(DatasetLoadData(path=path, group=group, alias=alias))
+
+    def _call_dataset_choice_progress(self) -> progress.ProgressData:
+        """
+        Прогресс выбора датасета
+        """
+        return progress.pool(progress.PoolName.dataset_choice)
 
     def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
