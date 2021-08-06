@@ -78,7 +78,7 @@ class CreateArray(object):
     #
     #     return array.astype('float32')
 
-    def create_video(self, video_path, **options) -> np.ndarray:
+    def create_video(self, file_folder, video_path, **options) -> np.ndarray:
         """
         Args:
             video_path: dict
@@ -233,7 +233,7 @@ class CreateArray(object):
 
         pass
 
-    def create_dataframe(self, row_number: int, **options):
+    def create_dataframe(self, file_folder, row_number: int, **options):
         """
                 Args:
                     row_number: номер строки с сырыми данными датафрейма,
