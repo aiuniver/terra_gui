@@ -5,7 +5,7 @@ from pydantic import validator
 
 from terra_ai.data.datasets.creations.layers.extra import FileInfo
 from ......mixins import BaseMixinData
-from .....extra import LayerScalerChoice
+from .....extra import LayerScalerChoice, LayerAudioParameterChoice
 
 
 class AudioModeChoice(str, Enum):
@@ -21,14 +21,7 @@ class ParametersData(BaseMixinData):
     length: PositiveFloat
     step: PositiveFloat
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
-    audio_signal: Optional[bool] = True
-    chroma_stft: Optional[bool] = False
-    mfcc: Optional[bool] = False
-    rms: Optional[bool] = False
-    spectral_centroid: Optional[bool] = False
-    spectral_bandwidth: Optional[bool] = False
-    spectral_rolloff: Optional[bool] = False
-    zero_crossing_rate: Optional[bool] = False
+    parameter: LayerAudioParameterChoice = LayerAudioParameterChoice.audio_signal
 
     @validator("audio_mode", allow_reuse=True)
     def _validate_prepare_method(

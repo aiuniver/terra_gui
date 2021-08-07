@@ -7,7 +7,7 @@ from typing import List, Any, Optional, Union, Dict
 from pydantic import validator, DirectoryPath, FilePath, PositiveInt
 
 from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.types import ConstrainedFloatValueGe0
+from terra_ai.data.types import StrictIntValueGe0, StrictFloatValueGe0
 from terra_ai.datasets.arrays_create import CreateArray
 
 DatasetArchives = {
@@ -44,7 +44,7 @@ class Preprocesses(str, Enum):
 
 
 class InstructionsData(BaseMixinData):
-    instructions: List[Union[str, PositiveInt, Dict[str, List[PositiveInt]], Dict[str, List[ConstrainedFloatValueGe0]]]]
+    instructions: List[Union[str, PositiveInt, Dict[str, List[Union[StrictIntValueGe0, StrictFloatValueGe0]]]]]
     parameters: Any
 
     # @validator("parameters", always=True)

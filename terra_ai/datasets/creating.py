@@ -247,29 +247,24 @@ class CreateDTS(object):
     def create_dataset_arrays(self, creation_data: CreationData, put_data: dict) -> dict:
         out_array = {'train': {}, 'val': {}, 'test': {}}
         splits = list(self.split_sequence.keys())
-        current_arrays: list = []
         num_arrays = 1
         for key in put_data.keys():
-            if self.tags[key] in ['object_detection', 'audio']:
-                test_array = getattr(array_creator, f"create_{self.tags[key]}")(
-                    creation_data.source_path,
-                    put_data.get(key).instructions[0],
-                    **put_data.get(key).parameters)
-                num_arrays = len(test_array)
-                for i in range(num_arrays):
+            current_arrays: list = []
+            if self.tags[key] == 'object_detection':
+                for i in range(6):
                     globals()[f'current_arrays_{i + 1}'] = []
             for i in range(self.limit):
                 array = getattr(array_creator, f"create_{self.tags[key]}")(
                     creation_data.source_path,
                     put_data.get(key).instructions[i],
                     **put_data.get(key).parameters)
-                if self.tags[key] in ['object_detection', 'audio']:
+                if self.tags[key] == 'object_detection':
                     for j in range(num_arrays):
                         globals()[f'current_arrays_{j + 1}'].append(array[j])
                 else:
                     current_arrays.append(array)
             for spl_seq in splits:
-                if self.tags[key] in ['object_detection', 'audio']:
+                if self.tags[key] == 'object_detection':
                     for i in range(len(splits)):
                         for j in range(num_arrays):
                             out_array[spl_seq][key + i] = np.array(globals()[f'current_arrays_{j + 1}'])[self.split_sequence[spl_seq]]
@@ -571,7 +566,6 @@ class CreateDTS(object):
         peg_idx = 0
         self.peg.append(0)
 
-        options['put'] = f'{self.mode}_{self.iter}'
         if file_info['path_type'] == 'path_folder':
             for folder_name in options['file_info']['path']:
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
@@ -615,18 +609,9 @@ class CreateDTS(object):
         self.peg.append(len(instr))
         self.y_cls = y_cls
 
-        features = []
-        for elem in ['audio_signal', 'chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth',
-                     'spectral_rolloff', 'rms', 'zero_crossing_rate']:
-            if options[elem]:
-                features.append(elem)
-            del options[elem]
-        options['features'] = features
-
         for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
             if elem in options.keys():
                 del options[elem]
-
         instructions['parameters'] = options
         instructions['instructions'] = instr
 

@@ -163,25 +163,29 @@ class CreateArray(object):
 
         return array
 
-    def create_audio(self, file_folder, sample: dict, **options):
+    def create_audio(self, file_folder: str, sample: dict, **options) -> np.ndarray:
 
         array = []
 
         [[filepath, slicing]] = sample.items()
         y, sr = librosa_load(path=os.path.join(file_folder, filepath), sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
+        parameter = options.get('parameter')
 
-        for feature in options.get('features', []):
-            if feature in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
-                array.append(getattr(librosa_feature, feature)(y=y, sr=sr))
-            elif feature == 'rms':
-                array.append(getattr(librosa_feature, feature)(y=y)[0])
-            elif feature == 'zero_crossing_rate':
-                array.append(getattr(librosa_feature, feature)(y=y))
-            elif feature == 'audio_signal':
-                array.append(y)
+        if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
+            array = getattr(librosa_feature, parameter)(y=y, sr=sr)
+        elif parameter == 'rms':
+            array = getattr(librosa_feature, parameter)(y=y)[0]
+        elif parameter == 'zero_crossing_rate':
+            array = getattr(librosa_feature, parameter)(y=y)
+        elif parameter == 'audio_signal':
+            array = y
 
-        return tuple(array)
+        array = np.array(array)
+        if array.dtype == 'float64':
+            array = array.astype('float32')
+
+        return array
 
     def create_dataframe(self):
 

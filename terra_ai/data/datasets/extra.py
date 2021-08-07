@@ -34,6 +34,17 @@ class LayerNetChoice(str, Enum):
     linear = "linear"
 
 
+class LayerAudioParameterChoice(str, Enum):
+    audio_signal = 'audio_signal'
+    chroma_stft = 'chroma_stft'
+    mfcc = 'mfcc'
+    rms = 'rms'
+    spectral_centroid = 'spectral_centroid'
+    spectral_bandwidth = 'spectral_bandwidth'
+    spectral_rolloff = 'spectral_rolloff'
+    zero_crossing_rate = 'zero_crossing_rate'
+
+
 class LayerScalerChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
