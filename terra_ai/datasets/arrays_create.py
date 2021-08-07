@@ -16,8 +16,9 @@ class CreateArray(object):
 
     def __init__(self):
 
-        self.y_subdf = None
-        self.df = None
+        self.temporary: dict = {'bounding_boxes': {}}
+        # self.y_subdf = None
+        # self.df = None
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
@@ -29,56 +30,45 @@ class CreateArray(object):
     def create_image(self, file_folder, image_path: str, **options):
 
         shape = (options['height'], options['width'])
+        # img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
         img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
+        if options['put'] in self.augmentation.keys():
+            if 'object_detection' in options.keys():
+                txt_path = image_path[:image_path.rfind('.')] + '.txt'
+                with open(os.path.join(file_folder, txt_path), 'r') as b_boxes:
+                    bounding_boxes = b_boxes.read()
 
-        return array
-    # def create_image(self, file_folder, image_path: str, **options):
-    #
-    #     shape = (options['height'], options['width'])
-    #     # img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
-    #     img = load_img(os.path.join(self.file_folder, image_path), target_size=shape)
-    #     array = img_to_array(img, dtype=np.uint8)
-    #     if options['net'] == 'Linear':
-    #         array = array.reshape(np.prod(np.array(array.shape)))
-    #     if options['put'] in self.augmentation.keys():
-    #         if 'object_detection' in options.keys():
-    #             txt_path = image_path[:image_path.rfind('.')] + '.txt'
-    #             with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
-    #                 bounding_boxes = b_boxes.read()
-    #
-    #             current_boxes = []
-    #             for elem in bounding_boxes.split('\n'):
-    #                 # b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
-    #                 if elem:
-    #                     b_box = elem.split(',')
-    #                     b_box = [int(x) for x in b_box]
-    #                     current_boxes.append(
-    #                         BoundingBox(
-    #                             **{'label': b_box[4], 'x1': b_box[0], 'y1': b_box[1], 'x2': b_box[2], 'y2': b_box[3]}))
-    #
-    #             bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
-    #             array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
-    #             list_of_bounding_boxes = []
-    #             for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
-    #                 bb = elem.__dict__
-    #                 # b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
-    #                 #                                   shape=array.shape[:2])
-    #                 # if b_box_coord != ():
-    #                 if bb:
-    #                     list_of_bounding_boxes.append([bb['x1'], bb['y1'], bb['x2'], bb['y2'], bb['label']])
-    #
-    #             self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
-    #         else:
-    #             array = self.augmentation[options['put']](image=array)
-    #
-    #     array = array / 255
-    #
-    #     return array.astype('float32')
+                current_boxes = []
+                for elem in bounding_boxes.split('\n'):
+                    # b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
+                    if elem:
+                        b_box = elem.split(',')
+                        b_box = [int(x) for x in b_box]
+                        current_boxes.append(
+                            BoundingBox(
+                                **{'label': b_box[4], 'x1': b_box[0], 'y1': b_box[1], 'x2': b_box[2], 'y2': b_box[3]}))
 
-    def create_video(self, video_path, **options) -> np.ndarray:
+                bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
+                array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
+                list_of_bounding_boxes = []
+                for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
+                    bb = elem.__dict__
+                    # b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
+                    #                                   shape=array.shape[:2])
+                    # if b_box_coord != ():
+                    if bb:
+                        list_of_bounding_boxes.append([bb['x1'], bb['y1'], bb['x2'], bb['y2'], bb['label']])
+
+                self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
+            else:
+                array = self.augmentation[options['put']](image=array)
+        array = array / 255
+        return array.astype('float32')
+
+    def create_video(self, file_folder, video_path, **options) -> np.ndarray:
         """
         Args:
             video_path: dict
@@ -111,7 +101,7 @@ class CreateArray(object):
                         original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
                 else:
                     black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
-                                        dtype='uint8')
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized))
                     resized = np.concatenate((resized, black_bar))
                 # width
@@ -120,7 +110,7 @@ class CreateArray(object):
                         original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
                 else:
                     black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
-                                        dtype='uint8')
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
 
@@ -152,10 +142,11 @@ class CreateArray(object):
         array = []
         shape = (options['height'], options['width'])
         [[file_name, video_range]] = video_path.items()
+        video_range = [int(x) for x in video_range]
         frames_count = video_range[1] - video_range[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(self.file_folder, file_name))
+        cap = cv2.VideoCapture(os.path.join(file_folder, file_name))
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
@@ -167,9 +158,9 @@ class CreateArray(object):
                     break
                 if shape != (height, width):
                     frame = resize_frame(one_frame=frame,
-                                            original_shape=(height, width),
-                                            target_shape=shape,
-                                            frame_mode=options['frame_mode'])
+                                         original_shape=(height, width),
+                                         target_shape=shape,
+                                         frame_mode=options['frame_mode'])
                 frame = frame[:, :, [2, 1, 0]]
                 array.append(frame)
         finally:
@@ -178,9 +169,9 @@ class CreateArray(object):
         array = np.array(array)
         if max_frames < frames_count:
             array = add_frames(video_array=array,
-                                fill_mode=options['fill_mode'],
-                                frames_to_add=frames_count - max_frames,
-                                total_frames=max_frames)
+                               fill_mode=options['fill_mode'],
+                               frames_to_add=frames_count - max_frames,
+                               total_frames=max_frames)
 
         return array
 
@@ -233,7 +224,7 @@ class CreateArray(object):
 
         pass
 
-    def create_dataframe(self, row_number: int, **options):
+    def create_dataframe(self, file_folder, row_number: int, **options):
         """
                 Args:
                     row_number: номер строки с сырыми данными датафрейма,
@@ -249,34 +240,36 @@ class CreateArray(object):
                         Массив вектора обработанных данных.
         """
         if 'timeseries' in options.keys():
-            lengh = options['lengh']
+            length = options['length']
         else:
-            lengh = 1
-        row = self.df[list(range(row_number, row_number + lengh))].tolist()
+            length = 1
+
+        row_number = int(row_number)
+        row = self.df[list(range(row_number, row_number + length))].tolist()
 
         if 'StandardScaler' in options.values() or 'MinMaxScaler' in options.values():
             array = self.scaler[options['put']].transform(row)
         else:
             if 'StandardScaler' in options.keys():
                 for i in options['StandardScaler']:
-                    for j in range(lengh):
+                    for j in range(length):
                         row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'MinMaxScaler' in options.keys():
                 for i in options['MinMaxScaler']:
-                    for j in range(lengh):
+                    for j in range(length):
                         row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
                 for i in options['Categorical']['lst_cols']:
-                    for j in range(lengh):
+                    for j in range(length):
                         row[j][i] = list(options['Categorical'][f'col_{i}']).index(row[j][i])
 
             if 'Categorical_ranges' in options.keys():
                 for i in options['Categorical_ranges']['lst_cols']:
-                    for j in range(lengh):
+                    for j in range(length):
                         for k in range(len(options['Categorical_ranges'][f'col_{i}'])):
                             if row[j][i] <= options['Categorical_ranges'][f'col_{i}'][f'range_{k}']:
                                 row[j][i] = k
@@ -284,7 +277,7 @@ class CreateArray(object):
 
             if 'one_hot_encoding' in options.keys():
                 for i in options['one_hot_encoding']['lst_cols']:
-                    for j in range(lengh):
+                    for j in range(length):
                         row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding'][f'col_{i}'],
                                                          dtype='uint8').tolist()
 
@@ -397,17 +390,17 @@ class CreateArray(object):
                 row_number: номер строки с сырыми данными для предсказания значения,
                 **options: Параметры обработки колонок:
                     depth: количество значений для предсказания
-                    lengh: количество примеров для обучения
+                    length: количество примеров для обучения
                     put: str  Индекс входа или выхода.
             Returns:
                 array: np.ndarray
                     Массив обработанных данных.
         """
-
+        row_number = int(row_number)
         array = self.y_subdf[list(range(
-            row_number + options['lengh'], row_number + options['lengh'] + options['depth']))]
+            row_number + options['length'], row_number + options['length'] + options['depth']))]
 
-        if 'StandardScaler' in options.values() or 'MinMaxScaler' in options.values():
+        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             array = self.scaler[options['put']].transform(array)
 
         return array
