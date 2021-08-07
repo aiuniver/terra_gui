@@ -8,6 +8,7 @@
       size="small"
       style="width: 100px"
       @on-change="change"
+      :disabled="disabled"
     >
       <at-option
         v-for="({ label, value }, key) in items"
@@ -45,6 +46,7 @@ export default {
     lists: {
       type: [Array, Object],
     },
+    disabled: Boolean
   },
   data: () => ({
     select: "",

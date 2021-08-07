@@ -1,5 +1,5 @@
 <template>
-  <div class="vue-container">
+  <div class="board">
     <VueLink :lines="lines" />
     <VueBlock
       v-for="block in blocks"
@@ -43,10 +43,6 @@ export default {
         return [];
       },
     },
-    scene: {
-      type: Object,
-      default: () => ({ blocks: [], links: [], container: {} }),
-    },
     options: {
       type: Object,
     },
@@ -83,21 +79,6 @@ export default {
   }),
 
   computed: {
-    // layers() {
-    //   const { layers } = this.$store.getters['modeling/getModel']
-    //   if (layers) {
-    //     const newBlocks = this.prepareLayers(layers)
-    //     this.blocks = newBlocks; // eslint-disable-line
-    //     // const links = newBlocks.map((block) => {
-    //     //   if (block) {
-
-    //     //   }
-    //     // })
-    //     console.log(newBlocks)
-    //   }
-
-    //   return []
-    // },
     blocks: {
       set(value) {
         this.$store.dispatch("modeling/setBlocks", value);
@@ -568,52 +549,6 @@ export default {
 
       // this.updateScene();
     },
-    // createBlock(node, id) {
-    // let inputs = [];
-    // let outputs = [];
-    // let values = {};
-
-    // node.fields.forEach((field) => {
-    //   if (field.attr === "input") {
-    //     inputs.push({
-    //       name: field.name,
-    //       label: field.label || field.name,
-    //     });
-    //   } else if (field.attr === "output") {
-    //     outputs.push({
-    //       name: field.name,
-    //       label: field.label || field.name,
-    //     });
-    //   }
-    // else {
-    //   if (!values[field.attr]) {
-    //     values[field.attr] = {};
-    //   }
-
-    //   let newField = merge({}, field);
-    //   delete newField["name"];
-    //   delete newField["attr"];
-
-    //   if (!values[field.attr][field.name]) {
-    //     values[field.attr][field.name] = {};
-    //   }
-
-    //   values[field.attr][field.name] = newField;
-    // }
-    // });
-
-    //   return {
-    //     id: id,
-    //     position: [0, 0],
-    //     group:node.group,
-    //     selected: false,
-    //     name: node.name,
-    //     title: node.title || node.name,
-    //     inputs: node.inputs,
-    //     outputs: node.outputs,
-    //     // values: values,
-    //   };
-    // },
     position(block, event) {
       // console.log(block, event)
       block.position = event
@@ -656,144 +591,7 @@ export default {
       });
       // this.updateScene();
     },
-    //
-    // prepareBlocks(blocks) {
-    //   return blocks.map((block) => {
-    //       let node = this.nodes.find((n) => {
-    //         return n.group === block.group;
-    //       });
-    //       if (!node) {
-    //         return null;
-    //       }
-
-    //       let newBlock = this.createBlock(node, block.id);
-
-    //       newBlock = merge(newBlock, block, {
-    //         arrayMerge: (d, s) => {
-    //           return s.length === 0 ? d : s;
-    //         },
-    //       });
-
-    //       return newBlock;
-    //     })
-    //     .filter((b) => {
-    //       return !!b;
-    //     });
-    // },
-
-    // prepareLayers(blocks) {
-    //   let last = 0
-    //   const newBlock = blocks.map((block) => {
-    //       let node = this.nodes.find((n) => {
-    //         return n.group === block.group;
-    //       });
-    //       if (!node) {
-    //         return null;
-    //       }
-    //       let newBlock  = {
-    //         selected: false,
-    //         inputs: node.inputs,
-    //         outputs: node.outputs,
-    //       }
-
-    //       const x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-    //       const y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
-
-    //       newBlock = { ...newBlock, ...block }
-    //       console.log(newBlock.position)
-    //       if (!newBlock.position) {
-    //         newBlock.position = [x + last,y + last]
-    //         last = last + 20
-    //       }
-    //       return newBlock;
-    //     })
-    //     .filter((b) => {
-    //       return !!b;
-    //     });
-
-    //     return JSON.parse(JSON.stringify(newBlock))
-    // },
-
-    // prepareBlocksLinking(blocks, links) {
-    //   if (!blocks) {
-    //     return [];
-    //   }
-
-    //   let newBlocks = [];
-
-    //   blocks.forEach((block) => {
-    //     let inputs = links.filter((link) => {
-    //       return link.targetID === block.id;
-    //     });
-
-    //     let outputs = links.filter((link) => {
-    //       return link.originID === block.id;
-    //     });
-
-    //     block.inputs.forEach((s, index) => {
-    //       // is linked
-    //       block.inputs[index].active = inputs.some((i) => i.targetSlot === index);
-    //     });
-
-    //     block.outputs.forEach((s, index) => {
-    //       // is linked
-    //       block.outputs[index].active = outputs.some((i) => i.originSlot === index);
-    //     });
-
-    //     newBlocks.push(block);
-    //   });
-
-    //   return newBlocks;
-    // },
-    // importBlocksContent() {
-    //   if (this.blocksContent) {
-    //     this.nodes = merge([], this.blocksContent);
-    //   }
-    // },
-    // importScene() {
-    //   let scene = {...this.defaultScene, ...this.scene};
-
-    //   let blocks = this.prepareBlocks(scene.blocks);
-    //   blocks = this.prepareBlocksLinking(blocks, scene.links);
-
-    //   // set last selected after update blocks from props
-    //   if (this.selectedBlock) {
-    //     let block = blocks.find((b) => this.selectedBlock.id === b.id);
-    //     if (block) {
-    //       block.selected = true;
-    //     }
-    //   }
-
-    //   this.blocks = blocks;
-    //   this.links = merge([], scene.links);
-
-    //   let container = scene.container;
-    //   if (container.centerX) {
-    //     this.centerX = container.centerX;
-    //   }
-    //   if (container.centerY) {
-    //     this.centerY = container.centerY;
-    //   }
-    //   if (container.scale) {
-    //     this.scale = container.scale;
-    //   }
-    // },
-    // exportScene() {
-    //   let clonedBlocks = merge([], this.blocks);
-    //   let blocks = clonedBlocks.map((value) => {
-    //     delete value["inputs"];
-    //     delete value["outputs"];
-    //     delete value["selected"];
-
-    //     return value;
-    //   });
-
-    //   return {
-    //     blocks: blocks,
-    //     links: this.links,
-    //     container: this.container,
-    //   };
-    // },
+    
     updateScene() {
       //   // this.scene = this.exportScene()
       //   // this.$emit("update:scene", this.exportScene());
@@ -848,17 +646,14 @@ export default {
     );
   },
 
-  // watch: {
-  //   scene() {
-  //     console.log('scene')
-  //     this.importScene();
-  //   },
-  // },
 };
 </script>
 
 <style lang="scss" scoped>
-.vue-container {
+.board {
+  flex-shrink: 1;
+  width: 100%;
+  background-color: #17212b;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
