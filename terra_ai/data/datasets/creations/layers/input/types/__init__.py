@@ -3,4 +3,5 @@ from . import (
     Text,
     Audio,
     Dataframe,
+    Video
 )

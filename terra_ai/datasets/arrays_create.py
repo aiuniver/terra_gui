@@ -16,6 +16,8 @@ class CreateArray(object):
 
     def __init__(self):
 
+        self.y_subdf = None
+        self.df = None
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
@@ -76,7 +78,7 @@ class CreateArray(object):
     #
     #     return array.astype('float32')
 
-    def create_video(self, video_path, **options) -> np.ndarray:
+    def create_video(self, file_folder, video_path, **options) -> np.ndarray:
         """
         Args:
             video_path: dict
@@ -109,7 +111,7 @@ class CreateArray(object):
                         original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
                 else:
                     black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
-                                        dtype='uint8')
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized))
                     resized = np.concatenate((resized, black_bar))
                 # width
@@ -118,7 +120,7 @@ class CreateArray(object):
                         original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
                 else:
                     black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
-                                        dtype='uint8')
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
 
@@ -150,10 +152,11 @@ class CreateArray(object):
         array = []
         shape = (options['height'], options['width'])
         [[file_name, video_range]] = video_path.items()
+        video_range = [int(x) for x in video_range]
         frames_count = video_range[1] - video_range[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(self.file_folder, file_name))
+        cap = cv2.VideoCapture(os.path.join(file_folder, file_name))
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
@@ -165,9 +168,9 @@ class CreateArray(object):
                     break
                 if shape != (height, width):
                     frame = resize_frame(one_frame=frame,
-                                            original_shape=(height, width),
-                                            target_shape=shape,
-                                            frame_mode=options['frame_mode'])
+                                         original_shape=(height, width),
+                                         target_shape=shape,
+                                         frame_mode=options['frame_mode'])
                 frame = frame[:, :, [2, 1, 0]]
                 array.append(frame)
         finally:
@@ -176,9 +179,9 @@ class CreateArray(object):
         array = np.array(array)
         if max_frames < frames_count:
             array = add_frames(video_array=array,
-                                fill_mode=options['fill_mode'],
-                                frames_to_add=frames_count - max_frames,
-                                total_frames=max_frames)
+                               fill_mode=options['fill_mode'],
+                               frames_to_add=frames_count - max_frames,
+                               total_frames=max_frames)
 
         return array
 
@@ -231,7 +234,7 @@ class CreateArray(object):
 
         pass
 
-    def create_dataframe(self, row_number: int, **options):
+    def create_dataframe(self, file_folder, row_number: int, **options):
         """
                 Args:
                     row_number: номер строки с сырыми данными датафрейма,
@@ -258,13 +261,13 @@ class CreateArray(object):
             if 'StandardScaler' in options.keys():
                 for i in options['StandardScaler']:
                     for j in range(lengh):
-                        row[j][i] = self.scaler[options['put']]['StandardScaler'].transform(
+                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'MinMaxScaler' in options.keys():
                 for i in options['MinMaxScaler']:
                     for j in range(lengh):
-                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'].transform(
+                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
@@ -389,7 +392,7 @@ class CreateArray(object):
 
         return array
 
-    def create_timeseries(self, row_number, **options):
+    def create_timeseries(self, file_folder, row_number, **options):
         """
             Args:
                 row_number: номер строки с сырыми данными для предсказания значения,

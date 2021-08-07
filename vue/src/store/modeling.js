@@ -188,9 +188,9 @@ export default {
       }
       return model
     },
-    async saveModel({ state: { blocks }, dispatch }, value) {
+    async saveModel({ state: { blocks }, dispatch }) {
       console.log(blocks)
-      const model = await dispatch("axios",{ url: "/modeling/update/", data: value }, { root: true });
+      const model = await dispatch("axios",{ url: "/modeling/update/", data: { layers: blocks } }, { root: true });
       // if (model) {
       //   await dispatch("projects/get",{}, { root: true });
       // }

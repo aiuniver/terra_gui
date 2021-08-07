@@ -3,6 +3,7 @@ export default {
   namespaced: true,
   state: () => ({
     datasets: [],
+    files: [],
     selected: null,
     tags: [],
     settings: {},
@@ -31,16 +32,16 @@ export default {
     SET_FULL(state, value) {
       state.full = value;
     },
+    SET_FILES(state, value) {
+      state.files = value;
+    },
   },
   actions: {
-    async choice({ commit, dispatch }, dataset) {
-      const data = await dispatch("axios", { url: "/datasets/choice/", data: dataset }, { root: true });
-      if (data) {
-        commit("projects/SET_PROJECT", { dataset: data }, { root: true })
-        dispatch('messages/setMessage', { message: `Датасет «${data.name}» загружен`}, { root: true })
-      }
-      // console.log(rootState)
-      return data;
+    async choice({ dispatch }, dataset) {
+      return await dispatch("axios", { url: "/datasets/choice/", data: dataset }, { root: true });
+    },
+    async choiceProgress({ dispatch }, source ) {
+      return await dispatch("axios",{ url: "/datasets/choice/progress/", data: source }, { root: true });
     },
     async sourceLoad({ dispatch }, source ) {
       return await dispatch("axios",{ url: "/datasets/source/load/", data: source }, { root: true });
@@ -91,6 +92,9 @@ export default {
     setFull({ commit }, value) {
       commit("SET_FULL", value);
     },
+    setFiles({ commit }, value) {
+      commit("SET_FILES", value);
+    },
   },
   getters: {
     getSettings() {
@@ -98,6 +102,9 @@ export default {
     },
     getSelected({ selected }) {
       return selected;
+    },
+    getFiles({ files }) {
+      return files;
     },
     getFull({ full }) {
       return full;
