@@ -61,6 +61,9 @@ export default {
     },
     doSomething(value) {
       console.log(value)
+    },
+    async saveModel() {
+      await this.$store.dispatch('modeling/saveModel', {});
     }
   },
   watch: {
@@ -69,8 +72,12 @@ export default {
         if (event === 'middle') {
           this.addBlock(event)
         }
+        if (event === 'save') {
+          this.saveModel()
+        }
         if (event === 'validation') {
-          this.$store.dispatch('test', 'sdsdsdsdsdsd')
+          console.log(this.$refs.container.getImages())
+
           // this.create = true
         }
         console.log(event)

@@ -1,7 +1,6 @@
 export default {
   namespaced: true,
   state: () => ({
-    filterHeight: 32,
     height: {
       all: document.documentElement.clientHeight,
       filter: 0, //datasetFilter
@@ -34,15 +33,9 @@ export default {
         navigator.userAgent
       );
     },
-    // autoHeight() {
-    //   return {
-    //     height: (document.documentElement.clientHeight - 155) + "px",
-    //   };
-    // },
     height: ({ height }) => (params = {}) => {
       const { key = 'all', deduct, clean = false, style = true, padding = 0 } = params
       const value = height[key] - (deduct ? height[deduct] : 0) - (clean ? 155 : 0) - (padding)
-      console.log(height)
       return style ? { height: value + "px" } : value
     },
     wigth: ({ wigth }) => (value) => {
@@ -50,8 +43,8 @@ export default {
         height: wigth - value + "px",
       };
     },
-    getFilterHeight({ filterHeight }) {
-      return filterHeight;
-    },
+    // getFilterHeight({ filterHeight }) {
+    //   return filterHeight;
+    // },
   },
 };

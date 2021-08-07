@@ -2,12 +2,17 @@
 ## Дополнительные структуры данных
 """
 
+import os
+import pandas
+
 from enum import Enum
-from typing import Optional, Tuple
-from pydantic import validator, BaseModel
+from pathlib import Path
+from typing import Optional, Tuple, Union
+from pydantic import validator
+from pydantic.types import FilePath, DirectoryPath
 from pydantic.color import Color
 
-from .mixins import BaseMixinData
+from .mixins import BaseMixinData, UniqueListMixin
 from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
 
@@ -24,6 +29,29 @@ class HardwareAcceleratorColorChoice(str, Enum):
     CPU = "FF0000"
     GPU = "2EA022"
     TPU = "B8C324"
+
+
+class FileManagerTypeBaseChoice(str, Enum):
+    folder = "folder"
+    image = "image"
+    audio = "audio"
+    video = "video"
+    table = "table"
+    text = "text"
+    unknown = "unknown"
+
+
+class FileManagerTypeChoice(str, Enum):
+    folder = FileManagerTypeBaseChoice.folder.value
+    jpg = FileManagerTypeBaseChoice.image.value
+    jpeg = FileManagerTypeBaseChoice.image.value
+    png = FileManagerTypeBaseChoice.image.value
+    wav = FileManagerTypeBaseChoice.audio.value
+    mp3 = FileManagerTypeBaseChoice.audio.value
+    webm = FileManagerTypeBaseChoice.video.value
+    csv = FileManagerTypeBaseChoice.table.value
+    txt = FileManagerTypeBaseChoice.text.value
+    undefined = FileManagerTypeBaseChoice.unknown.value
 
 
 class HardwareAcceleratorData(BaseMixinData):
@@ -82,3 +110,66 @@ class FileSizeData(BaseMixinData):
             return value
         short, unit = cls.__short_unit(kwargs.get("values", {}).get("value"))
         return unit
+
+
+class FileManagerItem(BaseMixinData):
+    path: Union[FilePath, DirectoryPath]
+    title: Optional[str]
+    type: Optional[FileManagerTypeChoice]
+    children: list = []
+
+    @property
+    def csv2data(self) -> Optional[dict]:
+        if self.type != FileManagerTypeChoice.csv:
+            return None
+        dataframe = pandas.read_csv(self.path, nrows=5)
+        data = dataframe.values.tolist()
+        data.insert(0, list(dataframe.columns))
+        return data
+
+    @validator("title", always=True)
+    def _validate_title(cls, value: str, values) -> str:
+        fullpath = values.get("path")
+        if not fullpath:
+            return value
+        return fullpath.name
+
+    @validator("type", always=True)
+    def _validate_type(cls, value: str, values) -> str:
+        fullpath = values.get("path")
+        if not fullpath:
+            return value
+        if os.path.isdir(fullpath):
+            return FileManagerTypeChoice.folder
+        else:
+            __type = getattr(FileManagerTypeChoice, fullpath.suffix.lower()[1:], None)
+            if __type is None:
+                __type = FileManagerTypeChoice.undefined
+            return __type
+
+    @validator("children", always=True)
+    def _validate_children(cls, value: list, values) -> list:
+        fullpath = values.get("path")
+        __items = []
+        if fullpath and os.path.isdir(fullpath):
+            for item in os.listdir(fullpath):
+                __items.append(
+                    FileManagerItem(**{"path": Path(fullpath, item).absolute()})
+                )
+        return __items
+
+    def dict(self, **kwargs):
+        __exclude = ["path"]
+        if self.type != FileManagerTypeChoice.folder:
+            __exclude.append("children")
+        kwargs.update({"exclude": set(__exclude)})
+        data = super().dict(**kwargs)
+        if self.type == FileManagerTypeChoice.csv:
+            data.update({"data": self.csv2data})
+        return data
+
+
+class FileManagerList(UniqueListMixin):
+    class Meta:
+        source = FileManagerItem
+        identifier = "title"

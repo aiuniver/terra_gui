@@ -16,6 +16,8 @@ class CreateArray(object):
 
     def __init__(self):
 
+        self.y_subdf = None
+        self.df = None
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
@@ -258,13 +260,13 @@ class CreateArray(object):
             if 'StandardScaler' in options.keys():
                 for i in options['StandardScaler']:
                     for j in range(lengh):
-                        row[j][i] = self.scaler[options['put']]['StandardScaler'].transform(
+                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'MinMaxScaler' in options.keys():
                 for i in options['MinMaxScaler']:
                     for j in range(lengh):
-                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'].transform(
+                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i+1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
@@ -389,7 +391,7 @@ class CreateArray(object):
 
         return array
 
-    def create_timeseries(self, row_number, **options):
+    def create_timeseries(self, file_folder, row_number, **options):
         """
             Args:
                 row_number: номер строки с сырыми данными для предсказания значения,

@@ -1,6 +1,6 @@
 <template>
   <div class="params">
-    <div class="params__btn" @click="full = !full">
+    <div class="params__btn" @click="openFull">
       <i class="params__btn--icon"></i>
     </div>
     <div class="params__items">
@@ -9,6 +9,11 @@
       </div>
       <div class="params__items--item pa-0">
         <DatasetTab @select="select" />
+      </div>
+      <div class="params__items--item">
+        <div class="params__items--btn">
+          <button @click="download" v-text="'Загрузить'"/>   
+        </div>
       </div>
     </div>
   </div>
@@ -59,16 +64,21 @@ export default {
   },
   methods: {
     createInterval() {
-      this.interval = setInterval(async () => {
+      this.interval = setTimeout(async () => {
         const data = await this.$store.dispatch("datasets/loadProgress", {});
-        const { finished, message, percent } = data;
+        const { finished, message, percent, data: { file_manager } } = data;
         if (!data || finished) {
-          clearTimeout(this.interval);
+          // clearTimeout(this.interval);
           this.$store.dispatch("messages/setProgressMessage", message);
           this.$store.dispatch("messages/setProgress", percent);
+          if (file_manager) {
+            this.$store.dispatch("datasets/setFiles", file_manager);
+          }
+
         } else {
           this.$store.dispatch("messages/setProgress", percent);
           this.$store.dispatch("messages/setProgressMessage", message);
+          this.createInterval()
         }
         console.log(data);
       }, 1000);
@@ -77,11 +87,25 @@ export default {
       console.log(select);
       this.dataset = select;
     },
+    openFull() {
+      if (this.$store.state.datasets.files.length) {
+        this.full = true
+      } else {
+        this.$Modal.alert({
+          width: 250,
+          title: 'Внимание!',
+          content: 'Загрузите датасет'
+        })
+      }
+    },
     async download() {
       const { mode, value } = this.dataset;
       if (mode && value) {
-        this.createInterval();
-        await this.$store.dispatch("datasets/sourceLoad", { mode, value });
+        const data = await this.$store.dispatch("datasets/sourceLoad", { mode, value });
+        console.log(data)
+        if (data) {
+          this.createInterval()
+        }
       } else {
         this.$store.dispatch("messages/setMessage", {
           error: "Выберите файл",
@@ -121,10 +145,16 @@ export default {
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
-      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxOCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3IDEySDZDNS40NSAxMiA1IDExLjU1IDUgMTFDNSAxMC40NSA1LjQ1IDEwIDYgMTBIMTdDMTcuNTUgMTAgMTggMTAuNDUgMTggMTFDMTggMTEuNTUgMTcuNTUgMTIgMTcgMTJaTTE3IDdIOUM4LjQ1IDcgOCA2LjU1IDggNkM4IDUuNDUgOC40NSA1IDkgNUgxN0MxNy41NSA1IDE4IDUuNDUgMTggNkMxOCA2LjU1IDE3LjU1IDcgMTcgN1pNMTggMUMxOCAxLjU1IDE3LjU1IDIgMTcgMkg2QzUuNDUgMiA1IDEuNTUgNSAxQzUgMC40NSA1LjQ1IDAgNiAwSDE3QzE3LjU1IDAgMTggMC40NSAxOCAxWk0wLjcwMDAwMSA4Ljg4TDMuNTggNkwwLjcwMDAwMSAzLjEyQzAuMzEwMDAxIDIuNzMgMC4zMTAwMDEgMi4xIDAuNzAwMDAxIDEuNzFDMS4wOSAxLjMyIDEuNzIgMS4zMiAyLjExIDEuNzFMNS43IDUuM0M2LjA5IDUuNjkgNi4wOSA2LjMyIDUuNyA2LjcxTDIuMTEgMTAuM0MxLjcyIDEwLjY5IDEuMDkgMTAuNjkgMC43MDAwMDEgMTAuM0MwLjMyMDAwMiA5LjkxIDAuMzEwMDAxIDkuMjcgMC43MDAwMDEgOC44OFoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==);
-    }
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxOCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTJIMTJDMTIuNTUgMTIgMTMgMTEuNTUgMTMgMTFDMTMgMTAuNDUgMTIuNTUgMTAgMTIgMTBIMUMwLjQ1IDEwIDAgMTAuNDUgMCAxMUMwIDExLjU1IDAuNDUgMTIgMSAxMlpNMSA3SDlDOS41NSA3IDEwIDYuNTUgMTAgNkMxMCA1LjQ1IDkuNTUgNSA5IDVIMUMwLjQ1IDUgMCA1LjQ1IDAgNkMwIDYuNTUgMC40NSA3IDEgN1pNMCAxQzAgMS41NSAwLjQ1IDIgMSAySDEyQzEyLjU1IDIgMTMgMS41NSAxMyAxQzEzIDAuNDUgMTIuNTUgMCAxMiAwSDFDMC40NSAwIDAgMC40NSAwIDFaTTE3LjMgOC44OEwxNC40MiA2TDE3LjMgMy4xMkMxNy42OSAyLjczIDE3LjY5IDIuMSAxNy4zIDEuNzFDMTYuOTEgMS4zMiAxNi4yOCAxLjMyIDE1Ljg5IDEuNzFMMTIuMyA1LjNDMTEuOTEgNS42OSAxMS45MSA2LjMyIDEyLjMgNi43MUwxNS44OSAxMC4zQzE2LjI4IDEwLjY5IDE2LjkxIDEwLjY5IDE3LjMgMTAuM0MxNy42OCA5LjkxIDE3LjY5IDkuMjcgMTcuMyA4Ljg4WiIgZmlsbD0iI0E3QkVEMyIvPgo8L3N2Zz4K)
+      }
   }
   &__items {
+    &--btn{
+      button{
+        width: 100px;
+        float: right;
+      }
+    }
     &--item {
       padding: 20px;
     }

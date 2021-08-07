@@ -7,7 +7,9 @@
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
-      <files-menu v-model="nodes" />
+      <scrollbar>
+      <files-menu v-model="files" />
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -47,6 +49,15 @@ export default {
   computed: {
     text() {
       return this.toggle ? "Выбор папки/файла" : "";
+    },
+    files: {
+      set(value) {
+        this.$store.dispatch('datasets/setFiles', value)
+      },
+      get() {
+        return this.$store.getters['datasets/getFiles']
+      }
+
     },
   },
 };

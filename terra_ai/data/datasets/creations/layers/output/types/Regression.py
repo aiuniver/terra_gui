@@ -1,11 +1,11 @@
-from typing import Optional
-from pydantic.types import PositiveInt
+from typing import Optional, Union, List
+from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
-from ...extra import FileInfo
 from .....extra import LayerScalerChoice
 from ......mixins import BaseMixinData
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler

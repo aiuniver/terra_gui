@@ -31,7 +31,7 @@ export default {
         const { data: { data, error, success } } = response
         if (success) {
           Vue.prototype.$Loading.finish()
-          return data;
+          return data ?? success;
         } else {
           dispatch('messages/setMessage', {error : JSON.stringify(error) })
           Vue.prototype.$Loading.error()

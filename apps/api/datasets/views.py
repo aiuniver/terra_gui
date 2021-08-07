@@ -3,7 +3,6 @@ from pydantic import ValidationError
 from apps.plugins.project import data_path
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
-from terra_ai.agent.exceptions import ExchangeBaseException
 
 from ..base import (
     BaseAPIView,
@@ -20,17 +19,25 @@ class ChoiceAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            request.project.dataset = agent_exchange(
+            agent_exchange(
                 "dataset_choice",
                 path=str(data_path.datasets),
                 **serializer.validated_data
             )
-            request.project.save()
-            return BaseResponseSuccess(request.project.dataset.native())
+            return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except ExchangeBaseException as error:
+        except TerraBaseException as error:
             return BaseResponseErrorGeneral(str(error))
+
+
+class ChoiceProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        progress = agent_exchange("dataset_choice_progress")
+        if progress.finished and progress.data:
+            request.project.dataset = progress.data
+            request.project.save()
+        return BaseResponseSuccess(data=progress.native())
 
 
 class InfoAPIView(BaseAPIView):
@@ -46,8 +53,8 @@ class SourceLoadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            data = agent_exchange("dataset_source_load", **serializer.validated_data)
-            return BaseResponseSuccess(data)
+            agent_exchange("dataset_source_load", **serializer.validated_data)
+            return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
         except TerraBaseException as error:

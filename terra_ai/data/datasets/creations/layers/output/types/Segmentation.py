@@ -1,9 +1,8 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 
-from pydantic.types import DirectoryPath, PositiveInt
+from pydantic.types import DirectoryPath, PositiveInt, FilePath
 from pydantic.color import Color
 
-from ...extra import FileInfo
 from ......mixins import BaseMixinData, UniqueListMixin
 
 
@@ -19,7 +18,8 @@ class MasksSegmentationList(UniqueListMixin):
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
     classes_names: List[str]
     classes_colors: List[Color]
     mask_range: PositiveInt

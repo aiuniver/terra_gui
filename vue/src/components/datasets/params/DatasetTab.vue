@@ -12,9 +12,9 @@
     </ul>
     <div class="tabs__title">Создание датасета</div>
     <div v-show="select === 'GoogleDrive'" class="tabs__item">
-      <Autocomplete
+      <Autocomplete2
         :list="list"
-        label="Выберите файл из Google-диска"
+        label="Выберите файл из Google-диске"
         @focus="focus"
         @selected="selected"
       />
@@ -27,12 +27,12 @@
 
 <script>
 import TInput from "@/components/forms/TInput";
-import Autocomplete from "@/components/forms/Autocomplete2.vue";
+import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
 export default {
   name: "DatasetTab",
   components: {
     TInput,
-    Autocomplete,
+    Autocomplete2,
   },
   props: {},
   data: () => ({
@@ -40,7 +40,7 @@ export default {
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
-      { title: "URL-ссылка", active: false, mode: "URL" },
+      { title: "URL", active: false, mode: "URL" },
     ],
   }),
   methods: {
