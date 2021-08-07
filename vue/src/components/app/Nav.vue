@@ -32,16 +32,19 @@ export default {
   },
   methods: {
     nav(path) {
-      if (this.project.dataset) {
-        if (this.$route.path !== path) {
-          this.$router.push(path);
+      if (!this.project.dataset) {
+        if (path === "/modeling" || path === "/datasets") {
+          if (this.$route.path !== path) {
+            this.$router.push(path);
+          }
+          return;
         }
-      } else {
         const text = {
           "/modeling": "редактирования модели",
           "/training": "обучения",
           "/deploy": "деплоя",
         };
+        const self = this
         this.$Modal.alert({
           title: "Предупреждение!",
           width: 300,
@@ -50,8 +53,15 @@ export default {
           okText: "Загрузить датасет",
           callback: function (action) {
             console.log(action);
+            if (self.$route.path !== '/datasets') {
+              self.$router.push('/datasets');
+            }
           },
         });
+      } else {
+        if (this.$route.path !== path) {
+          this.$router.push(path);
+        }
       }
     },
   },
@@ -72,28 +82,10 @@ export default {
     display: -ms-flexbox;
     display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: nowrap;
-    -ms-flex-wrap: nowrap;
     flex-wrap: nowrap;
-    -webkit-box-pack: start;
-    -moz-box-pack: start;
-    -webkit-justify-content: flex-start;
-    -ms-flex-pack: start;
     justify-content: flex-start;
-    -webkit-align-content: flex-start;
-    -ms-flex-line-pack: start;
     align-content: flex-start;
-    -webkit-box-align: center;
-    -moz-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
 
     &--item {

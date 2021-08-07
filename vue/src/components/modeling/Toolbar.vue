@@ -70,7 +70,7 @@ export default {
   }),
   methods: {
     click(event) {
-      this.$store.dispatch("modeling/setToolbarEvent", { event });
+      this.$emit('actions', event)
     },
   },
 };

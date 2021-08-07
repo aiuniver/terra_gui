@@ -1,9 +1,9 @@
 export default {
   namespaced: true,
   state: () => ({
-    color: "success",
-    message: "",
-    progressMessage: "",
+    color: 'success',
+    message: '',
+    progressMessage: '',
     progress: 0,
   }),
   mutations: {
@@ -25,14 +25,14 @@ export default {
   },
   actions: {
     setMessage({ commit }, { error, message }) {
-      commit("SET_COLOR", error ? "error" : "success");
-      commit("SET_MESSAGE", error || message);
+      commit('SET_COLOR', error ? 'error' : 'success');
+      commit('SET_MESSAGE', error || message);
     },
-    setProgressMessage({ commit }, message ) {
-      commit("SET_PROGRESS_MESSAGE", message);
+    setProgressMessage({ commit }, message) {
+      commit('SET_PROGRESS_MESSAGE', message);
     },
     setProgress({ commit }, progress) {
-      commit("SET_PROGRESS", progress);
+      commit('SET_PROGRESS', progress);
     },
   },
   getters: {

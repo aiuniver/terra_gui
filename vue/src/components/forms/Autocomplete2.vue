@@ -65,7 +65,7 @@ export default {
         this.show = false;
         this.search = item.label;
         this.$emit("input", this.selected.value);
-        this.$emit("selected", item);
+        this.$emit("change", item);
       } else {
         this.search = this.selected.label;
         this.show = false;
@@ -122,6 +122,7 @@ export default {
     &:disabled {
       border: 1px solid #6c7883;
       cursor: auto;
+      opacity: .35;
     }
   }
   .dropdown__content {

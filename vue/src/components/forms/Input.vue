@@ -9,6 +9,7 @@
       :name="parse"
       :value="value"
       @blur="change"
+      :disabled="disabled"
     />
   </div>
 </template>
@@ -30,6 +31,7 @@ export default {
     parse: String,
     name: String,
     inline: Boolean,
+    disabled: Boolean,
   },
   data: () => ({
     isChange: false
