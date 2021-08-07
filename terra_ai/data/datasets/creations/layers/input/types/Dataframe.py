@@ -11,17 +11,22 @@ class ParametersData(BaseMixinData):
     encoding: str = "utf-8"
     cols_names: Optional[List[str]]
     transpose: bool
+
     trend: bool
     trend_limit: Optional[str]
+    length: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+
     pad_sequences: Optional[bool]
-    example_lengh: Optional[PositiveInt]
+    example_length: Optional[PositiveInt]
     xlen_step: Optional[bool]
     xlen: Optional[PositiveInt]
     step_len: Optional[PositiveInt]
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
+
     StandardScaler: Optional[str]
     MinMaxScaler: Optional[str]
     Categorical: Optional[str]
     Categorical_ranges: Optional[str]
-    cols: Optional[Dict[PositiveInt, str]]
+    cat_cols: Optional[Dict[PositiveInt, str]]
     one_hot_encoding: Optional[str]

@@ -7,9 +7,10 @@ from .....extra import LayerScalerChoice, LayerTaskTypeChoice
 
 class ParametersData(BaseMixinData):
     sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
+    separator: Optional[str]
     length: PositiveInt
     depth: PositiveInt
     step: PositiveInt
-    y_cols: Optional[str]
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries
