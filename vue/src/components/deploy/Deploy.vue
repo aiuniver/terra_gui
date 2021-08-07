@@ -1,9 +1,9 @@
 <template>
   <div class="board">
     <div class="wrapper">
-      <h1>Cтраница в разработке</h1>
-      <h3></h3>
-
+      <div class="load-data">
+        <button>Загрузить данные</button>
+      </div>
     </div>
   </div>
 </template>
@@ -34,5 +34,17 @@ export default {
 .wrapper{
   text-align: center;
   padding: 50px;
+  height: 100%;
+}
+.load-data{
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  button{
+    width: 156px;
+    font-size: 14px;
+    line-height: 24px;
+  }
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="t-field t-inline">
-    <label class="t-field__label" :for="parse">{{ label }}</label>
+    <label class="t-field__label" :for="parse" >{{ label }}</label>
     <div class="t-field__switch">
       <input
         :id="parse"
@@ -40,7 +40,7 @@ export default {
     event: {
       type: Array,
       default: () => [],
-    },
+    }
   },
   data: () => ({
     checked: null,
@@ -79,7 +79,7 @@ export default {
   margin-bottom: 20px;
   &__label {
     width: 150px;
-    max-width: 130px;
+    max-width: 330px;
     padding: 0 10px 0 10px;
     text-align: left;
     color: #a7bed3;
