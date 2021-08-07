@@ -144,7 +144,7 @@ class CreateArray(object):
 
         array = []
         [[filepath, slicing]] = sample.items()
-        # slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
+        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
         text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
         if options['embedding']:
@@ -156,7 +156,7 @@ class CreateArray(object):
                 array.append(self.word2vec[options['put']][word])
 
         if len(array) < slicing[1] - slicing[0]:
-            words_to_add = [1 for _ in range((slicing[1] - slicing[0]) - len(array))]
+            words_to_add = [0 for _ in range((slicing[1] - slicing[0]) - len(array))]
             array += words_to_add
 
         array = np.array(array)
@@ -257,9 +257,11 @@ class CreateArray(object):
 
     def create_text_segmentation(self, _, sample: dict, **options):
 
+        [[filepath, slicing]] = sample.items()
+        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
         array = []
 
-        for elem in self.txt_list[options['put']][sample['file']][sample['slice'][0]:sample['slice'][1]]:
+        for elem in self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]:
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
                 for idx in elem:

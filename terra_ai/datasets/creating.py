@@ -56,8 +56,6 @@ class CreateDTS(object):
         self.split_sequence: dict = {}
         self.use_generator: bool = False
 
-        self.array_creator = arrays_create.CreateArray()
-
         self.file_folder: str = ''
         self.language: str = ''
         self.y_cls: list = []
@@ -80,8 +78,12 @@ class CreateDTS(object):
         self.use_generator = creation_data.use_generator
         self.trds_path = creation_data.datasets_path
         self.file_folder = str(creation_data.source_path)
-
         self.source = 'custom dataset'
+
+        for inp in creation_data.inputs:
+            self.set_dataset_data(inp)
+        for out in creation_data.outputs:
+            self.set_dataset_data(out)
 
         # Устанавливаем пути
         self.paths = self.set_paths(data=creation_data)
@@ -109,7 +111,7 @@ class CreateDTS(object):
                 json.dump(self.split_sequence, seq)
             if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
                 with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
-                    json.dump(self.array_creator.txt_list, fp)
+                    json.dump(array_creator.txt_list, fp)
         else:
             # Сохранение датасета с NumPy
             x_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.inputs)
@@ -152,19 +154,18 @@ class CreateDTS(object):
         return instructions
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
-        self.iter = 0
-        self.mode = "input" if isinstance(data, CreationInputsList) else "output"
+        # self.iter = 0
+        # self.mode = "input" if isinstance(data, CreationInputsList) else "output"
         instructions = {}
         for elem in data:
-            self.set_dataset_data(elem)
-            self.iter += 1
+            # self.iter += 1
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize.convert(elem.type)}")(elem))
             instructions.update([(elem.id, instructions_data)])
         return instructions
 
     def write_preprocesses_to_files(self):
         for preprocess_name in Preprocesses:
-            preprocess = getattr(self.array_creator, preprocess_name)
+            preprocess = getattr(array_creator, preprocess_name)
             preprocess_file_path = os.path.join(self.paths.datasets, preprocess_name)
             if preprocess:
                 os.makedirs(preprocess_file_path, exist_ok=True)
@@ -175,24 +176,34 @@ class CreateDTS(object):
     def create_inputs_parameters(self, creation_data: CreationData) -> dict:
         creating_inputs_data = {}
         for key in self.instructions.inputs.keys():
-            array = getattr(self.array_creator, f'create_{self.tags[key]}')(
+            array = getattr(array_creator, f'create_{self.tags[key]}')(
                 creation_data.source_path,
                 self.instructions.inputs.get(key).instructions[0],
                 **self.instructions.inputs.get(key).parameters
             )
-            current_input = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
-                                              dtype=str(array.dtype),
-                                              shape=array.shape,
-                                              name=self.input_names.get(key, ''),
-                                              task=creation_data.inputs.get(key).type
-                                              )
-            creating_inputs_data.update([(key, current_input.native())])
+            if isinstance(array, tuple):
+                for i in range(len(array)):
+                    current_input = DatasetInputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
+                                                      dtype=str(array[i].dtype),
+                                                      shape=array[i].shape,
+                                                      name=self.input_names.get(key, ''),
+                                                      task=creation_data.inputs.get(key).type
+                                                      )
+                    creating_inputs_data.update([(key, current_input.native())])
+            else:
+                current_input = DatasetInputsData(datatype=DataType.get(len(array.shape), 'DIM'),
+                                                  dtype=str(array.dtype),
+                                                  shape=array.shape,
+                                                  name=self.input_names.get(key, ''),
+                                                  task=creation_data.inputs.get(key).type
+                                                  )
+                creating_inputs_data.update([(key, current_input.native())])
         return creating_inputs_data
 
     def create_output_parameters(self, creation_data: CreationData) -> dict:
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
-            array = getattr(self.array_creator, f'create_{self.tags[key]}')(
+            array = getattr(array_creator, f'create_{self.tags[key]}')(
                 creation_data.source_path,
                 self.instructions.outputs.get(key).instructions[0],
                 **self.instructions.outputs.get(key).parameters
@@ -236,22 +247,32 @@ class CreateDTS(object):
     def create_dataset_arrays(self, creation_data: CreationData, put_data: dict) -> dict:
         out_array = {'train': {}, 'val': {}, 'test': {}}
         splits = list(self.split_sequence.keys())
+        current_arrays: list = []
+        num_arrays = 1
         for key in put_data.keys():
-            current_arrays: list = []
+            if self.tags[key] in ['object_detection', 'audio']:
+                test_array = getattr(array_creator, f"create_{self.tags[key]}")(
+                    creation_data.source_path,
+                    put_data.get(key).instructions[0],
+                    **put_data.get(key).parameters)
+                num_arrays = len(test_array)
+                for i in range(num_arrays):
+                    globals()[f'current_arrays_{i + 1}'] = []
             for i in range(self.limit):
-                array = getattr(self.array_creator, f"create_{self.tags[key]}")(
+                array = getattr(array_creator, f"create_{self.tags[key]}")(
                     creation_data.source_path,
                     put_data.get(key).instructions[i],
                     **put_data.get(key).parameters)
-                if self.tags[key] == 'object_detection':
-                    for j in range(len(splits)):
-                        current_arrays.append(array[j])
+                if self.tags[key] in ['object_detection', 'audio']:
+                    for j in range(num_arrays):
+                        globals()[f'current_arrays_{j + 1}'].append(array[j])
                 else:
                     current_arrays.append(array)
             for spl_seq in splits:
-                if self.tags[key] == 'object_detection':
+                if self.tags[key] in ['object_detection', 'audio']:
                     for i in range(len(splits)):
-                        out_array[spl_seq][key + i] = np.array(current_arrays[i])[self.split_sequence[spl_seq]]
+                        for j in range(num_arrays):
+                            out_array[spl_seq][key + i] = np.array(globals()[f'current_arrays_{j + 1}'])[self.split_sequence[spl_seq]]
                 else:
                     out_array[spl_seq][key] = np.array(current_arrays)[self.split_sequence[spl_seq]]
         return out_array
@@ -281,6 +302,7 @@ class CreateDTS(object):
 
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
+        print(data)
         return data
 
     def instructions_images_obj_detection(self, folder_name: str) -> list:
@@ -432,10 +454,11 @@ class CreateDTS(object):
         split: str = ' '
         open_symbol = None
         close_symbol = None
+        tags = None
         for i, value in self.tags.items():
             if value == 'text_segmentation':
-                open_tags = '<s1> <s2> <s3> <s4> <s5> <s6>'  # self.user_parameters.get(i).open_tags
-                close_tags = '</s1> </s2> </s3> </s4> </s5> </s6>'  # self.user_parameters.get(i).close_tags
+                open_tags = self.user_parameters.get(i).open_tags
+                close_tags = self.user_parameters.get(i).close_tags
                 open_symbol = open_tags.split(' ')[0][0]
                 close_symbol = open_tags.split(' ')[0][-1]
                 tags = f'{open_tags} {close_tags}'
@@ -443,9 +466,7 @@ class CreateDTS(object):
                     if ch in set(tags):
                         filters = filters.replace(ch, '')
                 break
-        filters: str = '–—!"#$%&()*+,-.:;=?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
-        open_symbol = '<'
-        close_symbol = '>'
+
         if file_info.get('path_type', '') == 'path_folder':
             for folder_name in file_info.get('path', ''):
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
@@ -471,43 +492,26 @@ class CreateDTS(object):
             txt_list_w2v = []
             for elem in list(txt_list.values()):
                 txt_list_w2v.append(elem.split(' '))
-            self.array_creator.create_word2vec(put_data.id, txt_list_w2v, **{'size': options.get('word_to_vec_size', ''),
+            array_creator.create_word2vec(put_data.id, txt_list_w2v, **{'size': options.get('word_to_vec_size', ''),
                                                                         'window': 10,
                                                                         'min_count': 1,
                                                                         'workers': 10,
                                                                         'iter': 10})
         else:
-            self.array_creator.create_tokenizer(put_data.id, **{'num_words': options.get('max_words_count', ''),
+            array_creator.create_tokenizer(put_data.id, **{'num_words': options.get('max_words_count', ''),
                                                            'filters': filters,
                                                            'lower': lower,
                                                            'split': split,
                                                            'char_level': False,
                                                            'oov_token': '<UNK>'})
-            self.array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
-
-        # if 'text_segmentation' not in self.tags.values():
-        #     y_cls = []
-        #     cls_idx = 0
-        #     length = options['x_len']
-        #     stride = options['step']
-        #     peg_idx = 0
-        #     self.peg.append(0)
-        #     for key in sorted(self.createarray.txt_list[f'{self.mode}_{self.iter}'].keys()):
-        #         index = 0
-        #         while index + length <= len(self.createarray.txt_list[f'{self.mode}_{self.iter}'][key]):
-        #             instr.append({'file': key, 'slice': [index, index + length]})
-        #             peg_idx += 1
-        #             index += stride
-        #             y_cls.append(cls_idx)
-        #         self.peg.append(peg_idx)
-        #         cls_idx += 1
+            array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
 
         instr: list = []
         y_cls: list = []
         peg_idx: int = 0
         cls_idx: int = 0
         prev_class: str = sorted(txt_list.keys())[0].split('/')[-2]
-        self.array_creator.txt_list[put_data.id] = txt_list
+        array_creator.txt_list[put_data.id] = txt_list
         self.peg.append(0)
 
         for key, value in sorted(txt_list.items()):
@@ -522,7 +526,12 @@ class CreateDTS(object):
                 y_cls.append(cls_idx)
             elif text_mode == 'По длине и шагу':
                 max_length = len(value.split(' '))
-                cur_step = 0
+                if 'text_segmentation' in self.tags.values():
+                    count = 0
+                    for elem in tags.split(' '):
+                        count += value.split(' ').count(elem)
+                    max_length -= count
+                cur_step: int = 0
                 stop_flag = False
                 while not stop_flag:
                     instr.append({key: [cur_step, cur_step + length]})
@@ -604,6 +613,7 @@ class CreateDTS(object):
                     if cur_step + options.get('length', int) > sample_length:
                         stop_flag = True
         self.peg.append(len(instr))
+        self.y_cls = y_cls
 
         features = []
         for elem in ['audio_signal', 'chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth',
@@ -905,25 +915,32 @@ class CreateDTS(object):
         instr: list = []
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
-        self.array_creator.txt_list[put_data.id] = {}
+        array_creator.txt_list[put_data.id] = {}
         for i, value in self.tags.items():
             if value == 'text':
-                for txt_file in self.array_creator.txt_list.get(i).keys():
-                    text_instr, segment_instr = get_samples(self.array_creator.txt_list.get(i)[txt_file], open_tags, close_tags)
-                    self.array_creator.txt_list.get(i)[txt_file] = text_instr
-                    self.array_creator.txt_list[put_data.id][txt_file] = segment_instr
+                for txt_file in array_creator.txt_list.get(i).keys():
+                    text_instr, segment_instr = get_samples(array_creator.txt_list.get(i)[txt_file],
+                                                            open_tags, close_tags)
+                    array_creator.txt_list.get(i)[txt_file] = text_instr
+                    array_creator.txt_list[put_data.id][txt_file] = segment_instr
 
                 length = self.user_parameters.get(i).dict()['length']
-                stride = self.user_parameters.get(i).dict()['step']
-                peg_idx = 0
-                self.peg = [0]
-                for path in sorted(self.array_creator.txt_list[put_data.id].keys()):
-                    index = 0
-                    while index + length <= len(self.array_creator.txt_list.get(i)[path]):
-                        instr.append({'file': path, 'slice': [index, index + length]})
-                        peg_idx += 1
-                        index += stride
-                    self.peg.append(peg_idx)
+                step = self.user_parameters.get(i).dict()['step']
+                text_mode = self.user_parameters.get(i).dict()['text_mode']
+                max_words = self.user_parameters.get(i).dict()['max_words']
+
+                for key, text in sorted(array_creator.txt_list.get(i).items()):
+                    if text_mode == 'Целиком':
+                        instr.append({key: [0, max_words]})
+                    elif text_mode == 'По длине и шагу':
+                        max_length = len(text.split(' '))
+                        cur_step = 0
+                        stop_flag = False
+                        while not stop_flag:
+                            instr.append({key: [cur_step, cur_step + length]})
+                            cur_step += step
+                            if cur_step + length > max_length:
+                                stop_flag = True
 
         instructions = {'instructions': instr,
                         'parameters': {'num_classes': len(open_tags),
