@@ -12,7 +12,7 @@
               :parse="'name'"
               :name="'name'"
               :disabled="!selectBlock"
-              @change="$emit('change')"
+              @change="saveModel"
             />
             <Autocomplete2
               v-model="block.type"
@@ -20,7 +20,7 @@
               label="Тип слоя"
               name="type"
               :disabled="!selectBlock"
-              @change="$emit('change')"
+              @change="saveModel"
             />
           </div>
           <at-collapse :value="[0, 1]">
@@ -102,7 +102,10 @@ export default {
     },
   },
   methods: {
-    change({ type, name, value}) {
+    async saveModel () {
+      await this.$store.dispatch("modeling/saveModel", {});
+    },
+    async change({ type, name, value}) {
       console.log({ type, name, value})
       if (this.block.parameters) {
         this.block.parameters[type][name] = value
@@ -110,6 +113,7 @@ export default {
         this.oldBlock.parameters[type][name] = value
       }
       this.$emit('change')
+      this.saveModel()
     },
   },
   watch: {
