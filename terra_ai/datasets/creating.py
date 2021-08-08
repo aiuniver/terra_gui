@@ -1,31 +1,35 @@
-from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
-from . import array_creator
-
-from . import arrays_create
-
-
-from . import loading as dataset_loading
-from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
-    CreationOutputData
-from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
-
 import os
 import random
 from typing import Any, Union
+
 import numpy as np
 import pandas as pd
 import re
 import pymorphy2
+import shutil
 import json
 import joblib
-import decamelize
 from pydantic import DirectoryPath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from librosa import load as librosa_load
 import imgaug.augmenters as iaa
+
+from tqdm.notebook import tqdm
+from io import open as io_open
+from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
+import cv2
+
+# from terra_ai import out_exchange
+from ..utils import decamelize
+from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
+from . import array_creator
+from . import loading as dataset_loading
+from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
+    CreationOutputData
+from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
 
 
 class CreateDTS(object):
@@ -129,7 +133,7 @@ class CreateDTS(object):
         return output
 
     def set_dataset_data(self, layer: Union[CreationInputData, CreationOutputData]):
-        self.tags[layer.id] = decamelize.convert(layer.type)
+        self.tags[layer.id] = decamelize(layer.type)
         if isinstance(layer, CreationInputData):
             self.input_names[layer.id] = layer.name
         else:
@@ -154,12 +158,9 @@ class CreateDTS(object):
         return instructions
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
-        # self.iter = 0
-        # self.mode = "input" if isinstance(data, CreationInputsList) else "output"
         instructions = {}
         for elem in data:
-            # self.iter += 1
-            instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize.convert(elem.type)}")(elem))
+            instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(elem))
             instructions.update([(elem.id, instructions_data)])
         return instructions
 
@@ -347,18 +348,52 @@ class CreateDTS(object):
     #     return instructions
 
     def instructions_image(self, put_data: Union[CreationInputData, CreationOutputData]):
+
         options = put_data.parameters.native()
         instructions: dict = {}
         instr: list = []
         y_cls: list = []
+        classes_names: list = []
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
         options['put'] = f'{self.mode}_{self.iter}'
         if 'object_detection' in self.tags.values():
             options['object_detection'] = True
-        if options['file_info']['path_type'] == 'path_folder':
-            for folder_name in options['file_info']['path']:
+
+        # if options['file_info']['path_type'] == 'path_folder':
+        #     for folder_name in options['file_info']['path']:
+        #         for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+        #             if file_name:
+        #                 file_folder = directory.replace(self.file_folder, '')[1:]
+        #                 for name in sorted(file_name):
+        #                     if 'object_detection' in self.tags.values():
+        #                         if 'txt' not in name:
+        #                             instr.append(os.path.join(file_folder, name))
+        #                             peg_idx += 1
+        #                     else:
+        #                         instr.append(os.path.join(file_folder, name))
+        #                         peg_idx += 1
+        #                     y_cls.append(cls_idx)
+        #                 cls_idx += 1
+        #                 self.peg.append(peg_idx)
+        #     self.y_cls = y_cls
+        # elif options['file_info']['path_type'] == 'path_file':
+        #     for file_name in options['file_info']['path']:
+        #         data = pd.read_csv(os.path.join(self.file_folder, file_name),
+        #                            usecols=options['file_info']['cols_name'])
+        #         instr = data[options['file_info']['cols_name'][0]].to_list()
+        #         prev_elem = instr[0].split('/')[-2]
+        #         for elem in instr:
+        #             cur_elem = elem.split('/')[-2]
+        #             if cur_elem != prev_elem:
+        #                 self.peg.append(peg_idx)
+        #             prev_elem = cur_elem
+        #             peg_idx += 1
+        #         self.peg.append(len(instr))
+
+        if not options['sources_paths'][0].endswith('.csv'):
+            for folder_name in options['sources_paths']:
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
                     if file_name:
                         file_folder = directory.replace(self.file_folder, '')[1:]
@@ -373,12 +408,12 @@ class CreateDTS(object):
                             y_cls.append(cls_idx)
                         cls_idx += 1
                         self.peg.append(peg_idx)
+                        classes_names.append(file_folder)
             self.y_cls = y_cls
-        elif options['file_info']['path_type'] == 'path_file':
-            for file_name in options['file_info']['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                   usecols=options['file_info']['cols_name'])
-                instr = data[options['file_info']['cols_name'][0]].to_list()
+        elif options['sources_paths'][0].endswith('.csv'):
+            for file_name in options['sources_paths']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
+                instr = data[options['cols_name'][0]].to_list()
                 prev_elem = instr[0].split('/')[-2]
                 for elem in instr:
                     cur_elem = elem.split('/')[-2]
@@ -392,7 +427,7 @@ class CreateDTS(object):
             aug_parameters = []
             for key, value in options['augmentation'].items():
                 aug_parameters.append(getattr(iaa, key)(**value))
-            array_creator.augmentation[f'{self.mode}_{self.iter}'] = iaa.Sequential(aug_parameters, random_order=True)
+            array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
         instructions['instructions'] = instr
@@ -400,18 +435,90 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_video(self, **options: Any):
-        folder = options.get('folder_name', '')
+    def instructions_video(self, put_data: Union[CreationInputData, CreationOutputData]):
+        """
+            Args:
+                put_data: Параметры обработки:
+                    height: int
+                        Высота кадра.
+                    width: int
+                        Ширина кадра.
+                    fill_mode: int
+                        Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
+                    frame_mode: str
+                        Режим обработки кадра (Сохранить пропорции, Растянуть).
+            Returns:
+                instructions: dict
+                    Инструкции для создания массивов.
+            """
+
+        options = put_data.parameters.native()
         instructions: dict = {}
-        class_mode = False
-        max_frames = None
+        instr: list = []
+        paths: list = []
+        y_cls: list = []
+        classes_names = []
+        cls_idx = 0
+        peg_idx = 0
+        self.peg.append(0)
 
-        if options.get('class_mode', '') == 'По каждому кадру':
-            class_mode = True
-            max_frames = options.get('max_frames', '')
+        if not options['sources_paths'][0].endswith('.csv'):
+            for folder_name in options['sources_paths']:
+                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                    if file_name:
+                        file_folder = directory.replace(self.file_folder, '')[1:]
+                        for name in sorted(file_name):
+                            paths.append(os.path.join(file_folder, name))
+                        classes_names.append(file_folder)
+        elif options['sources_paths'][0].endswith('.csv'):
+            for file_name in options['sources_paths']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
+                paths = data[options['cols_name'][0]].to_list()
 
-        instructions['instructions'] = self.instructions_images_video(folder, class_mode, max_frames)
+        prev_class = paths[0].split('/')[-2]
+        for idx in range(len(paths)):
+            cur_class = paths[idx].split('/')[-2]
+            if options['video_mode'] == 'Целиком':
+                instr.append({paths[idx]: [0, options['max_frames']]})
+                peg_idx += 1
+                if cur_class != prev_class:
+                    cls_idx += 1
+                    self.peg.append(peg_idx)
+                    prev_class = cur_class
+                y_cls.append(cls_idx)
+            elif options['video_mode'] == 'По длине и шагу':
+                cur_step = 0
+                stop_flag = False
+                cap = cv2.VideoCapture(os.path.join(self.file_folder, paths[idx]))
+                frame_count = int(cap.get(7))
+                while not stop_flag:
+                    peg_idx += 1
+                    instr.append({paths[idx]: [cur_step, cur_step + options['length']]})
+                    if cur_class != prev_class:
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+                        prev_class = cur_class
+                    y_cls.append(cls_idx)
+                    cur_step += options['step']
+                    if cur_step + options['length'] > frame_count:
+                        instr.append({paths[idx]: [frame_count - options['length'], frame_count]})
+                        stop_flag = True
+
+        self.y_cls = y_cls
+        self.peg.append(len(instr))
+        for key, value in self.tags.items():
+            if value == 'classification':
+                self.classes_names[key] = classes_names
+                self.num_classes[key] = len(classes_names)
+
+        del options['video_mode']
+        del options['length']
+        del options['step']
+        del options['max_frames']
+        options['put'] = put_data.id
+
         instructions['parameters'] = options
+        instructions['instructions'] = instr
 
         return instructions
 
@@ -439,7 +546,7 @@ class CreateDTS(object):
 
         options = put_data.parameters.native()
         text_mode = options.get('text_mode', '')
-        file_info = options.get('file_info', {})
+        sources_path = options.get('sources_path', {})
         max_words = options.get('max_words', int)
         length = options.get('length', int)
         step = options.get('step', int)
@@ -450,6 +557,8 @@ class CreateDTS(object):
         open_symbol = None
         close_symbol = None
         tags = None
+        classes_names = []
+
         for i, value in self.tags.items():
             if value == 'text_segmentation':
                 open_tags = self.user_parameters.get(i).open_tags
@@ -462,19 +571,35 @@ class CreateDTS(object):
                         filters = filters.replace(ch, '')
                 break
 
-        if file_info.get('path_type', '') == 'path_folder':
-            for folder_name in file_info.get('path', ''):
+        # if file_info.get('path_type', '') == 'path_folder':
+        #     for folder_name in file_info.get('path', ''):
+        #         for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+        #             if file_name:
+        #                 file_folder = directory.replace(self.file_folder, '')[1:]
+        #                 for name in sorted(file_name):
+        #                     file_path = os.path.join(file_folder, name)
+        #                     txt_list[file_path] = read_text(file_path, lower, filters, split, open_symbol, close_symbol)
+        # elif file_info.get('path_type', '') == 'path_file':
+        #     for file_name in file_info.get('path', ''):
+        #         data = pd.read_csv(os.path.join(self.file_folder, file_name),
+        #                            usecols=file_info.get('cols_name', ''))
+        #         column = data[file_info.get('cols_name', '')[0]].to_list()
+        #         for idx, elem in column:
+        #             txt_list[str(idx)] = elem
+
+        if not sources_path[0].endswith('.csv'):
+            for folder_name in options['sources_paths']:
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
                     if file_name:
                         file_folder = directory.replace(self.file_folder, '')[1:]
                         for name in sorted(file_name):
                             file_path = os.path.join(file_folder, name)
                             txt_list[file_path] = read_text(file_path, lower, filters, split, open_symbol, close_symbol)
-        elif file_info.get('path_type', '') == 'path_file':
-            for file_name in file_info.get('path', ''):
-                data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                   usecols=file_info.get('cols_name', ''))
-                column = data[file_info.get('cols_name', '')[0]].to_list()
+                        classes_names.append(file_folder)
+        elif sources_path[0].endswith('.csv'):
+            for file_name in options['sources_paths']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options.get('cols_name', ''))
+                column = data[options['cols_name'][0]].to_list()
                 for idx, elem in column:
                     txt_list[str(idx)] = elem
 
@@ -555,7 +680,6 @@ class CreateDTS(object):
     def instructions_audio(self, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
-        file_info = options.get('file_info', dict)
         sample_rate = options.get('sample_rate', int)
         instructions: dict = {}
         instr: list = []
@@ -566,19 +690,19 @@ class CreateDTS(object):
         peg_idx = 0
         self.peg.append(0)
 
-        if file_info['path_type'] == 'path_folder':
-            for folder_name in options['file_info']['path']:
+        if not options['sources_paths'][0].endswith('.csv'):
+            for folder_name in options['sources_paths']:
                 for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
                     if file_name:
                         file_folder = directory.replace(self.file_folder, '')[1:]
                         for name in sorted(file_name):
                             paths.append(os.path.join(file_folder, name))
                         classes_names.append(file_folder)
+        elif options['sources_paths'][0].endswith('.csv'):
+            for file_name in options['sources_paths']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
+                paths = data[options['cols_name'][0]].to_list()
 
-        elif file_info['path_type'] == 'path_file':
-            for file_name in file_info['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=file_info['cols_name'])
-                paths = data[file_info['cols_name'][0]].to_list()
         prev_class = paths[0].split('/')[-2]
         for idx in range(len(paths)):
             cur_class = paths[idx].split('/')[-2]
@@ -795,13 +919,13 @@ class CreateDTS(object):
         self.encoding[put_data.id] = 'ohe'
         self.task_type[put_data.id] = put_data.type
 
-        if options['file_info']['path_type'] == 'path_folder':
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['file_info']['path'][0]))):
-                instr.append(os.path.join(options['file_info']['path'][0], file_name))
-        elif options['file_info']['path_type'] == 'path_file':
-            for file_name in options['file_info']['path']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['file_info']['cols_name'])
-                instr = data[options['file_info']['cols_name'][0]].to_list()
+        if not options['sources_paths'][0].endswith('.csv'):
+            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['sources_paths'][0]))):
+                instr.append(os.path.join(options['sources_paths'][0], file_name))
+        elif options['sources_paths'][0].endswith('.csv'):
+            for file_name in options['sources_paths']:
+                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_names'])
+                instr = data[options['cols_names'][0]].to_list()
 
         instructions = {'instructions': instr,
                         'parameters': {'mask_range': options['mask_range'],
@@ -901,6 +1025,8 @@ class CreateDTS(object):
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
         array_creator.txt_list[put_data.id] = {}
+        self.encoding[put_data.id] = 'multi'
+
         for i, value in self.tags.items():
             if value == 'text':
                 for txt_file in array_creator.txt_list.get(i).keys():
