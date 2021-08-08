@@ -1,18 +1,16 @@
 <template>
-  <div class="toolbar project-training-toolbar">
-    <div class="wrapper">
-      <ul class="menu-section">
+  <div class="toolbar">
+    <ul class="toolbar__menu">
         <li
           v-for="({ title, active, disabled, icon }, index) of items"
           :key="'items_' + index"
-          :class="{ active: active }"
+          :class="['toolbar__menu--item']"
           :disabled="disabled"
           @click="click(index, active)"
         >
-          <span :title="title" :class="icon"></span>
+          <i :title="title" :class="['icon', icon,  { active: active }]" />
         </li>
       </ul>
-    </div>
   </div>
 </template>
 
@@ -36,5 +34,29 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.toolbar {
+  z-index: 10;
+  width: 41px;
+  flex-shrink: 0;
+  position: relative;
+  border-right: #0e1621 1px solid;
+  &__menu {
+    padding: 10px 0;
+    list-style: none;
+    &--item {
+      width: 40px;
+      height: 40px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      &[disabled='disabled'] {
+        opacity: 0.1;
+        cursor: default;
+      }
+    }
+  }
+}
 </style>

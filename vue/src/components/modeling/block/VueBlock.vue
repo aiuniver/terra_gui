@@ -6,8 +6,8 @@
     @mouseleave="hover = false"
   >
     <div :class="['header', group, { selected: selected }]">
-      <div class="title" :title="name">{{ id }}: {{ name }}</div>
-      <div class="parametr" :title="parameters">[dsd]sdsds</div>
+      <div class="title" :title="name">{{ name }}: {{ type }}</div>
+      <div class="parametr" :title="parameters">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
     <div
@@ -15,13 +15,13 @@
       v-show="hover || selected"
       class="hover-over"
     >
-      <i class="icon icon-link"></i>
-      <i class="icon icon-link-2"></i>
+      <i class="icon icon-modeling-link"></i>
+      <i class="icon icon-modeling-link-remove"></i>
     </div>
     <div v-else v-show="hover || selected" class="hover-sloy">
-      <i class="icon icon-link"></i>
-      <i class="icon icon-link-2"></i>
-      <i class="icon icon-trash-2" @click="deleteBlock"></i>
+      <i class="icon icon-modeling-link"></i>
+      <i class="icon icon-modeling-link-remove"></i>
+      <i class="icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
       <div
@@ -37,7 +37,7 @@
       <div
         v-for="(slot, index) in outputs"
         class="output"
-        :class="[{ active: slot.active }, type[index]]"
+        :class="[{ active: slot.active }, typeLink[index]]"
         :key="'output' + index"
         @mousedown="slotMouseDown($event, index)"
       ></div>
@@ -66,6 +66,7 @@ export default {
       },
     },
     selected: Boolean,
+    type: String,
     title: {
       type: String,
       default: "Title",
@@ -83,7 +84,7 @@ export default {
   data: () => ({
     hover: false,
     hasDragged: false,
-    type: ["bottom", "right", "left"],
+    typeLink: ["bottom", "right", "left"],
   }),
   created() {
     this.mouseX = 0;
@@ -245,7 +246,7 @@ $circleConnectedColor: #569dcf;
   .hover-over {
     position: absolute;
     top: 0px;
-    right: -69px;
+    right: -68px;
     height: 48px;
     background-color: #294c6f;
     border-radius: 5px;
@@ -253,6 +254,7 @@ $circleConnectedColor: #569dcf;
     padding: 10px 0px;
     cursor: context-menu;
     > i {
+      display: inline-flex;
       font-size: 1.5em;
       margin: 0 5px;
       cursor: pointer;
@@ -261,7 +263,7 @@ $circleConnectedColor: #569dcf;
   .hover-sloy {
     position: absolute;
     top: 0px;
-    right: -102px;
+    right: -101px;
     height: 48px;
     background-color: #294c6f;
     border-radius: 5px;
@@ -269,6 +271,7 @@ $circleConnectedColor: #569dcf;
     padding: 10px 0px;
     cursor: context-menu;
     > i {
+      display: inline-flex;
       font-size: 1.5em;
       margin: 0 5px;
       cursor: pointer;
@@ -283,7 +286,7 @@ $circleConnectedColor: #569dcf;
     color: #000;
     font-size: 0.9em;
     &:hover, &.selected {
-      color: rgb(211, 210, 210);
+      color: #fff;
      .parametr {
       color: #3098e7;
     }
