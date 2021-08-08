@@ -78,4 +78,13 @@ const prepareBlocks = function(blocks) {
   return JSON.parse(JSON.stringify(newBlock));
 };
 
-export { typeBlock, prepareBlocks, createBlock };
+const prepareLinks = function(blocks) {
+  let links = [];
+
+  blocks.forEach(({ bind }) => {
+    console.log(bind)        
+  });
+  return links      
+};
+
+export { typeBlock, prepareBlocks, createBlock, prepareLinks };

@@ -1,34 +1,18 @@
-import { prepareBlocks } from '../components/modeling/block/helpers/default';
-// import { list, layers } from "./const/typeLayers";
-
-// const container = {
-//   centerX: 1042,
-//   centerY: 140,
-//   scale: 1,
-// };
-
-// const links = [
-//   {
-//     id: 1,
-//     originID: 1,
-//     originSlot: 0,
-//     targetID: 2,
-//     targetSlot: 0,
-//   },
-// ]
+import { prepareBlocks, prepareLinks } from '../components/modeling/block/helpers/default';
+import { toolbar } from "./const/constModeling";
 
 export default {
   namespaced: true,
   state: () => ({
-    dialog: false,
-    toolbarEvent: {},
+    toolbar: toolbar,
     select: null,
     model: {},
+    blocks: [],
+    links: [],
     modeling: {
       list: [],
       layers_types: {},
     },
-    blocks: [],
   }),
   mutations: {
     SET_MODELING(state, value) {
@@ -39,21 +23,22 @@ export default {
       const { layers } = value;
       console.log(layers);
       state.blocks = prepareBlocks(layers);
+      state.links = prepareLinks(layers);
     },
     SET_BLOCKS(state, value) {
       state.blocks = [...value];
     },
+    SET_LINKS(state, value) {
+      state.linkd = [...value];
+    },
     SET_LIST(state, value) {
       state.list = [...value];
-    },
-    SET_DIALOG(state, value) {
-      state.dialog = value;
     },
     SET_SELECT(state, value) {
       state.select = value;
     },
-    SET_TOOLBAR_EVENT(state, value) {
-      state.toolbarEvent = value;
+    SET_TOOLBAR(state, value) {
+      state.toolbar = value;
     },
   },
   actions: {
@@ -80,11 +65,11 @@ export default {
       const model = await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
       return model;
     },
-    setDialog({ commit }, value) {
-      commit('SET_DIALOG', value);
-    },
     setBlocks({ commit }, value) {
       commit('SET_BLOCKS', value);
+    },
+    setLinks({ commit }, value) {
+      commit('SET_LINKS', value);
     },
     setBlock({ commit, state: { blocks } }, value) {
       const index = blocks.findIndex(item => item.id == value.id);
@@ -95,21 +80,17 @@ export default {
     setSelect({ commit }, value) {
       commit('SET_SELECT', value);
     },
-    setToolbarEvent({ commit }, value) {
-      const { event } = value;
-      if (event === 'load') {
-        commit('SET_DIALOG', true);
-      }
-      commit('SET_TOOLBAR_EVENT', { ...value });
+    setToolbar({ commit }, value) {
+      commit('SET_TOOLBAR', { ...value });
     },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
-    getDialog: ({ dialog }) => dialog,
-    getToolbarEvent: ({ toolbarEvent }) => toolbarEvent,
+    getToolbar: ({ toolbar }) => toolbar,
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
+    getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);

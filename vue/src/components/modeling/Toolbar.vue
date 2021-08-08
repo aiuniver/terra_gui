@@ -1,9 +1,9 @@
 <template>
   <div class="toolbar">
     <ul class="toolbar__menu">
-      <template v-for="({ title, name, disabled, icon, hr }, i) of lists">
-        <li :key="i" :disabled="disabled" @click.prevent="click(name)">
-          <span :title="title" :class="icon"></span>
+      <template v-for="({ title, name, disabled, icon, hr }, i) of toolbar">
+        <li class="toolbar__menu--item" :key="i" :disabled="disabled" @click.prevent="click(name)">
+          <i :class="['icon', icon]" :title="title"></i>
         </li>
         <hr v-if="hr" :key="`hr_${i}`" />
       </template>
@@ -13,64 +13,21 @@
 
 <script>
 export default {
-  name: "Toolbar",
-  data: () => ({
-    lists: [
-      {
-        title: "Загрузить модель",
-        name: "load",
-        disabled: false,
-        icon: "icon-model-load",
+  name: 'Toolbar',
+  data: () => ({}),
+  computed: {
+    toolbar: {
+      set(value) {
+        this.$store.dispatch('modeling/setToolbar', value);
       },
-      {
-        title: "Сохранить модель",
-        name: "save",
-        disabled: false,
-        icon: "icon-model-save",
+      get() {
+        return this.$store.getters['modeling/getToolbar'];
       },
-      {
-        title: "Валидация",
-        name: "validation",
-        disabled: false,
-        icon: "icon-model-validation",
-      },
-      {
-        title: "Очистить",
-        name: "clear",
-        disabled: false,
-        icon: "icon-clear-model",
-        hr: true,
-      },
-      {
-        title: "Входящий слой",
-        name: "input",
-        disabled: true,
-        icon: "icon-layer-input",
-      },
-      {
-        title: "Промежуточный слой",
-        name: "middle",
-        disabled: false,
-        icon: "icon-layer-middle",
-      },
-      {
-        title: "Исходящий слой",
-        name: "output",
-        disabled: true,
-        icon: "icon-layer-output",
-        hr: true,
-      },
-      {
-        title: "Код на Keras",
-        name: "keras",
-        disabled: true,
-        icon: "icon-keras-code",
-      },
-    ],
-  }),
+    },
+  },
   methods: {
     click(event) {
-      this.$emit('actions', event)
+      this.$emit('actions', event);
     },
   },
 };
@@ -86,25 +43,17 @@ export default {
   &__menu {
     padding: 10px 0;
     list-style: none;
-    li {
-      &[disabled="disabled"] > span {
+    &--item {
+      width: 40px;
+      height: 40px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      &[disabled='disabled'] {
         opacity: 0.1;
         cursor: default;
-      }
-      span {
-        display: block;
-        padding: 8px;
-        user-select: none;
-        cursor: pointer;
-      }
-      span:after {
-        display: block;
-        content: "";
-        width: 24px;
-        height: 24px;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: contain;
       }
     }
   }
