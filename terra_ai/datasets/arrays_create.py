@@ -307,11 +307,9 @@ class CreateArray(object):
         return index
 
     def create_regression(self, file_folder, index, **options):
-
-        if 'scaler' in options.keys():
+        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
         array = np.array(index)
-
         return array
 
     def create_segmentation(self, file_folder, image_path: str, **options: dict) -> np.ndarray:

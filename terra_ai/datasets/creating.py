@@ -735,7 +735,6 @@ class CreateDTS(object):
                 array_creator.df = df_with_y.iloc[:, str_to_list(options['cols_names'][0], df_with_y.columns)]
                 instructions = {'parameters': {}}
             stop = len(array_creator.df)
-
         elif 'timeseries' in self.tags.values() or options['trend']:
             if 'timeseries' in self.tags.values():
                 length = int(self.user_parameters[2].length)
@@ -770,7 +769,26 @@ class CreateDTS(object):
 
             self.peg.append(0)
             self.peg.append(len(np.arange(0, len(array_creator.df) - length - depth - 1, step)))
+        else:
+            step = 1
+            if transpose:
+                general_df = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+                                         sep=options['separator']).T
+                general_df.columns = general_df.iloc[0]
+                general_df.drop(general_df.index[[0]], inplace=True)
+                array_creator.df = general_df.iloc[:, str_to_list(options['cols_names'][0], general_df.columns)]
+            else:
+                general_df = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+                                         nrows=1,
+                                         sep=options['separator'])
+                array_creator.df = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+                                               usecols=(str_to_list(options['cols_names'][0], general_df.columns)),
+                                               sep=options['separator'])
 
+            self.peg.append(0)
+            self.peg.append(len(array_creator.df))
+            instructions = {'parameters': {}}
+            stop = len(array_creator.df)
         if options['MinMaxScaler'] or options['StandardScaler']:
             array_creator.scaler[put_data.id] = {'MinMaxScaler': {},
                                                  'StandardScaler': {}}
@@ -913,19 +931,20 @@ class CreateDTS(object):
                                                   sep=options['separator'],
                                                   usecols=options['cols_names'][0].split(' ')).values
 
-                    for i in range(0, len(trend_subdf) - length, step):
-                        if '%' in trend_limit:
-                            border = float(trend_limit[:trend_limit.find('%')])
+                    if '%' in trend_limit:
+                        trend_limit = float(trend_limit[:trend_limit.find('%')])
+                        for i in range(0, len(trend_subdf) - length, step):
                             if abs((trend_subdf[i + length + 1] - trend_subdf[i]) /
-                                   trend_subdf[i]) * 100 <= border:
+                                   trend_subdf[i]) * 100 <= trend_limit:
                                 self.y_cls.append(0)
                             elif trend_subdf[i + length + 1] > trend_subdf[i]:
                                 self.y_cls.append(1)
                             else:
                                 self.y_cls.append(2)
-                        else:
-                            border = float(trend_limit)
-                            if abs(trend_subdf[i + length + 1] - trend_subdf[i]) <= border:
+                    else:
+                        trend_limit = float(trend_limit)
+                        for i in range(0, len(trend_subdf) - length, step):
+                            if abs(trend_subdf[i + length + 1] - trend_subdf[i]) <= trend_limit:
                                 self.y_cls.append(0)
                             elif trend_subdf[i + length + 1] > trend_subdf[i]:
                                 self.y_cls.append(1)
@@ -975,9 +994,9 @@ class CreateDTS(object):
                         self.minvalue_y = min(column)
                         self.maxvalue_y = max(column)
                         if options['auto_ranges']:
-                            border = max(column) / int(options['auto_ranges'])
+                            border = max(column) / int(options['ranges'])
                             self.classes_names[put_data.id] = np.linspace(
-                                border, self.maxvalue_y, int(options['auto_ranges'])).tolist()
+                                border, self.maxvalue_y, int(options['ranges'])).tolist()
                         else:
                             self.classes_names[put_data.id] = options['ranges'].split(' ')
 
@@ -990,9 +1009,10 @@ class CreateDTS(object):
                                     break
             else:
                 if transpose:
-                    data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+                    tmpdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                        sep=options['separator'],
                                        nrows=1).values
+                    data = tmpdf.columns[1:]
                 else:
                     data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
                                    sep=options['separator'],
@@ -1012,9 +1032,8 @@ class CreateDTS(object):
 
     def instructions_regression(self, put_data: Union[CreationInputData, CreationOutputData]):
         options = put_data.parameters.native()
-        instructions: dict = {}
+        instructions: dict = {'parameters': {}}
         instr: list = []
-
         self.one_hot_encoding[put_data.id] = False
         self.task_type[put_data.id] = put_data.type
 
@@ -1031,6 +1050,7 @@ class CreateDTS(object):
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
+        instructions['parameters']['put'] = put_data.id
 
         return instructions
 
