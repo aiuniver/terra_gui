@@ -29,7 +29,7 @@ export default {
       state.blocks = [...value];
     },
     SET_LINKS(state, value) {
-      state.linkd = [...value];
+      state.links = [...value];
     },
     SET_LIST(state, value) {
       state.list = [...value];
