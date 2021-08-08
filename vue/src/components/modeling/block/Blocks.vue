@@ -97,6 +97,7 @@ export default {
     },
     links: {
       set(value) {
+        console.log(value)
         this.$store.dispatch('modeling/setLinks', value);
       },
       get() {
