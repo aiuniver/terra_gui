@@ -1,7 +1,28 @@
 <template>
-  <div class="card-layer">
-    <div class="card-layer__header" :style="bg">Названия слоя</div>
-    <div class="card-layer__body"></div>
+  <div class="card-layer" v-click-outside="outside" :style="height">
+    <div class="card-layer__header" :style="bg">
+      <div class="card-layer__header--icon" @click="toggle = !toggle">
+        <i class="dot"></i>
+      </div>
+      <div class="card-layer__header--title">Слой {{ title }}</div>
+    </div>
+    <div v-show="toggle" class="card-layer__dropdown">
+      <div
+        v-for="({ icon }, i) of items"
+        :key="'icon' + i"
+        class="card-layer__dropdown--item"
+        @click="click(icon)"
+      >
+        <i :class="[icon]"></i>
+      </div>
+    </div>
+    <div class="card-layer__body">
+      <scrollbar :ops="ops" >
+        <div class="card-layer__body--inner" ref="cardBody">
+          <slot />
+        </div>
+      </scrollbar>
+    </div>
   </div>
 </template>
 
@@ -10,35 +31,77 @@ export default {
   name: "card-layer",
   props: {
     color: {
-			type: String,
-			default: '#242f3d'
-		},
+      type: String,
+      default: "#242f3d",
+    },
     title: String,
   },
+  data: () => ({
+    height: { height: '100%'},
+    toggle: false,
+    items: [{ icon: "remove" }, { icon: "copy" }],
+    ops: {
+      bar: { background: "#17212b" },
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    },
+  }),
   computed: {
-		bg() {
-			return { backgroundColor: this.color }
-		},
-	},
+    bg() {
+      return { backgroundColor: this.color };
+    },
+  },
+  methods: {
+    outside() {
+      if (this.toggle) {
+        this.toggle = false;
+      }
+    },
+    click(icon) {
+      this.toggle = false;
+      this.$emit("click-btn", icon);
+    },
+  },
+  mounted() {
+    const heightCard = this.$el.clientHeight
+    const heightBody =this.$refs.cardBody.clientHeight + 36
+    if (heightCard > heightBody) {
+      this.height = { height: heightBody + 'px' }
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .card-layer {
-	flex: 0 0 240px;
+  flex: 0 0 242px;
+  width: 242px;
   position: relative;
-  height: 150px;
   border-radius: 4px;
-  border: 1px solid #6C7883;
-  background-color: #242F3D;
+  border: 1px solid #6c7883;
+  background-color: #242f3d;
   margin: 0 5px;
   min-height: 150px;
-
+  &__body {
+    width: 100%;
+    padding-top: 34px;
+    // padding: 30px 8px 16px 8px;
+    position: relative;
+    height: 100%;
+    overflow: hidden;
+    &--inner {
+      // position: absolute;
+      // height: 100%;
+      padding: 0px 8px 8px 8px;
+    }
+  }
   &__header {
     position: absolute;
     top: 0;
     height: 24px;
-    background-color: #6C7883;
+    background-color: #6c7883;
     width: 100%;
     border-radius: 3px 3px 0 0;
     font-family: Open Sans;
@@ -49,6 +112,53 @@ export default {
     display: flex;
     align-items: center;
     padding: 2px 6px 4px 6px;
+    z-index: 1;
+    &--icon {
+      cursor: pointer;
+      position: absolute;
+      right: 12px;
+      & .dot {
+        display: inline-block;
+        width: 16px;
+        height: 6px;
+        background-repeat: no-repeat;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iNCIgdmlld0JveD0iMCAwIDE2IDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yIDBDMC45IDAgMCAwLjkgMCAyQzAgMy4xIDAuOSA0IDIgNEMzLjEgNCA0IDMuMSA0IDJDNCAwLjkgMy4xIDAgMiAwWk0xNCAwQzEyLjkgMCAxMiAwLjkgMTIgMkMxMiAzLjEgMTIuOSA0IDE0IDRDMTUuMSA0IDE2IDMuMSAxNiAyQzE2IDAuOSAxNS4xIDAgMTQgMFpNOCAwQzYuOSAwIDYgMC45IDYgMkM2IDMuMSA2LjkgNCA4IDRDOS4xIDQgMTAgMy4xIDEwIDJDMTAgMC45IDkuMSAwIDggMFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=");
+      }
+    }
+  }
+  &__dropdown {
+    position: absolute;
+    background-color: #2b5278;
+    border-radius: 4px;
+    right: -34px;
+    top: -1px;
+    z-index: 100;
+    &--item {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.7;
+      }
+      & .remove {
+        display: inline-block;
+        width: 14px;
+        height: 18px;
+        background-repeat: no-repeat;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxNCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTZDMSAxNy4xIDEuOSAxOCAzIDE4SDExQzEyLjEgMTggMTMgMTcuMSAxMyAxNlY2QzEzIDQuOSAxMi4xIDQgMTEgNEgzQzEuOSA0IDEgNC45IDEgNlYxNlpNNCA2SDEwQzEwLjU1IDYgMTEgNi40NSAxMSA3VjE1QzExIDE1LjU1IDEwLjU1IDE2IDEwIDE2SDRDMy40NSAxNiAzIDE1LjU1IDMgMTVWN0MzIDYuNDUgMy40NSA2IDQgNlpNMTAuNSAxTDkuNzkgMC4yOUM5LjYxIDAuMTEgOS4zNSAwIDkuMDkgMEg0LjkxQzQuNjUgMCA0LjM5IDAuMTEgNC4yMSAwLjI5TDMuNSAxSDFDMC40NSAxIDAgMS40NSAwIDJDMCAyLjU1IDAuNDUgMyAxIDNIMTNDMTMuNTUgMyAxNCAyLjU1IDE0IDJDMTQgMS40NSAxMy41NSAxIDEzIDFIMTAuNVoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==");
+      }
+      & .copy {
+        display: inline-block;
+        width: 17px;
+        height: 20px;
+        background-repeat: no-repeat;
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAxNyAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjYzMTYgMEgxLjc4OTQ3QzAuODA1MjYzIDAgMCAwLjgxODE4MiAwIDEuODE4MThWMTMuNjM2NEMwIDE0LjEzNjQgMC40MDI2MzIgMTQuNTQ1NSAwLjg5NDczNyAxNC41NDU1QzEuMzg2ODQgMTQuNTQ1NSAxLjc4OTQ3IDE0LjEzNjQgMS43ODk0NyAxMy42MzY0VjIuNzI3MjdDMS43ODk0NyAyLjIyNzI3IDIuMTkyMTEgMS44MTgxOCAyLjY4NDIxIDEuODE4MThIMTEuNjMxNkMxMi4xMjM3IDEuODE4MTggMTIuNTI2MyAxLjQwOTA5IDEyLjUyNjMgMC45MDkwOTFDMTIuNTI2MyAwLjQwOTA5MSAxMi4xMjM3IDAgMTEuNjMxNiAwWk0xNS4yMTA1IDMuNjM2MzZINS4zNjg0MkM0LjM4NDIxIDMuNjM2MzYgMy41Nzg5NSA0LjQ1NDU1IDMuNTc4OTUgNS40NTQ1NVYxOC4xODE4QzMuNTc4OTUgMTkuMTgxOCA0LjM4NDIxIDIwIDUuMzY4NDIgMjBIMTUuMjEwNUMxNi4xOTQ3IDIwIDE3IDE5LjE4MTggMTcgMTguMTgxOFY1LjQ1NDU1QzE3IDQuNDU0NTUgMTYuMTk0NyAzLjYzNjM2IDE1LjIxMDUgMy42MzYzNlpNMTQuMzE1OCAxOC4xODE4SDYuMjYzMTZDNS43NzEwNSAxOC4xODE4IDUuMzY4NDIgMTcuNzcyNyA1LjM2ODQyIDE3LjI3MjdWNi4zNjM2NEM1LjM2ODQyIDUuODYzNjQgNS43NzEwNSA1LjQ1NDU1IDYuMjYzMTYgNS40NTQ1NUgxNC4zMTU4QzE0LjgwNzkgNS40NTQ1NSAxNS4yMTA1IDUuODYzNjQgMTUuMjEwNSA2LjM2MzY0VjE3LjI3MjdDMTUuMjEwNSAxNy43NzI3IDE0LjgwNzkgMTguMTgxOCAxNC4zMTU4IDE4LjE4MThaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=");
+      }
+    }
   }
 }
 </style>

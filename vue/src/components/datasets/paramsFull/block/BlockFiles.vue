@@ -1,14 +1,15 @@
 <template>
   <div class="block-file">
-    <div :class="['block-file__header', { toggle: !toggle }]">
+    <div :class="['block-file__header', { toggle: !toggle }]" @click="(toggle = !toggle), $emit('toggle', toggle)">
       <i
         class="block-file__header--icon"
-        @click="(toggle = !toggle), $emit('toggle', toggle)"
       ></i>
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
-      <files-menu v-model="nodes" />
+      <scrollbar>
+      <files-menu v-model="files" />
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -22,7 +23,7 @@ export default {
       {
         title: "Cars",
         type: "folder",
-        isExpanded: true,
+        isExpanded: false,
         children: [
           { title: "BMW.jpg", type: "image" },
           { title: "AUDI.jpg", type: "image" },
@@ -31,6 +32,7 @@ export default {
       {
         title: "Music",
         type: "folder",
+        isExpanded: true,
         children: [
           { title: "1.mp3", type: "audio" },
           { title: "song.wav", type: "audio" },
@@ -39,6 +41,7 @@ export default {
       {
         title: "Text",
         type: "folder",
+        isExpanded: false,
         children: [{ title: "Table", type: "text" }],
       },
     ],
@@ -46,6 +49,15 @@ export default {
   computed: {
     text() {
       return this.toggle ? "Выбор папки/файла" : "";
+    },
+    files: {
+      set(value) {
+        this.$store.dispatch('datasets/setFiles', value)
+      },
+      get() {
+        return this.$store.getters['datasets/getFiles']
+      }
+
     },
   },
 };

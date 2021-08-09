@@ -1,6 +1,5 @@
 from enum import Enum
 from typing import Optional, Any
-from pydantic import BaseModel
 from threading import Thread
 
 from ..data.types import ConstrainedFloatValueGe0Le100
@@ -17,6 +16,7 @@ def threading(method):
 
 class PoolName(str, Enum):
     dataset_source_load = "dataset_source_load"
+    dataset_choice = "dataset_choice"
     model_load = "model_load"
 
 
@@ -43,6 +43,7 @@ class ProgressData(BaseMixinData):
 
 class ProgressItems(BaseMixinData):
     dataset_source_load: ProgressData = ProgressData()
+    dataset_choice: ProgressData = ProgressData()
     model_load: ProgressData = ProgressData()
 
 

@@ -459,7 +459,9 @@ class LayerSpaceToDepthData(LayerMixinData):
 
 Layer = Enum(
     "Layer",
-    dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),
+    dict(
+        map(lambda item: (item.name, f"Layer{item.value}Data"), list(LayerTypeChoice))
+    ),
     type=str,
 )
 """

@@ -10,37 +10,37 @@
         {{ title }}
       </li>
     </ul>
+    <div class="tabs__title">Создание датасета</div>
     <div v-show="select === 'GoogleDrive'" class="tabs__item">
-      <Autocomplete
+      <Autocomplete2
         :list="list"
-        label="Выберите файл из Google-диска"
+        label="Выберите файл из Google-диске"
         @focus="focus"
-        @selected="selected"
+        @change="selected"
       />
     </div>
     <div v-show="select === 'URL'" class="tabs__item">
       <TInput label="Введите URL на архив исходников" @blur="blur" />
     </div>
-    
   </div>
 </template>
 
 <script>
 import TInput from "@/components/forms/TInput";
-import Autocomplete from "@/components/forms/Autocomplete2.vue";
+import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
 export default {
   name: "DatasetTab",
   components: {
     TInput,
-    Autocomplete,
+    Autocomplete2,
   },
   props: {},
   data: () => ({
-    select: 'GoogleDrive',
+    select: "GoogleDrive",
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
-      { title: "URL-ссылка", active: false, mode: "URL" },
+      { title: "URL", active: false, mode: "URL" },
     ],
   }),
   methods: {
@@ -51,72 +51,60 @@ export default {
       if (!data) {
         return;
       }
-      console.log(data)
-      this.list = data
+      console.log(data);
+      this.list = data;
     },
     selected({ value }) {
-      this.$emit('select', { mode: 'GoogleDrive', value })
+      this.$emit("select", { mode: "GoogleDrive", value });
     },
     blur(value) {
-      this.$emit('select', { mode: 'URL', value})
+      this.$emit("select", { mode: "URL", value });
     },
     click(mode) {
-      this.select = mode
+      this.select = mode;
       this.items = this.items.map((item) => {
-        return {...item, active: (item.mode === mode) }
-      })
-    }
-  }
+        return { ...item, active: item.mode === mode };
+      });
+    },
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .tabs {
   margin-bottom: 10px;
+  &__title {
+    padding: 20px;
+    font-size: 14px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+  }
   &__list {
-    margin-bottom: 10px;
     background-color: #0e1621;
-    display: block;
     padding: 1px 0 0 0;
     list-style: none;
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: wrap;
-    -ms-flex-wrap: wrap;
     flex-wrap: wrap;
-    -webkit-box-pack: start;
-    -moz-box-pack: start;
-    -webkit-justify-content: flex-start;
-    -ms-flex-pack: start;
     justify-content: flex-start;
-    -webkit-align-content: flex-start;
-    -ms-flex-line-pack: start;
     align-content: flex-start;
-    -webkit-box-align: start;
-    -moz-box-align: start;
-    -webkit-align-items: flex-start;
-    -ms-flex-align: start;
     align-items: flex-start;
     &--item {
-      line-height: 1;
-      padding: 10px 20px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      cursor: pointer;
-      user-select: none;
+    flex: 1;
+    padding: 10px 20px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    border-radius: 5px 5px 0px 0px;
+    font-size: 14px;
+    line-height: 19px;
+    text-align: center;
     }
   }
-  &__item{
+  &__item {
     padding: 0 20px;
   }
 }

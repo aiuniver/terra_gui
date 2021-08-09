@@ -1,7 +1,7 @@
 <template>
   <div class="params">
     <Navbar />
-    <scrollbar :style="height">
+    <scrollbar>
       <div class="params__items">
         <form novalidate="novalidate" ref="form">
           <div class="params__items--item">
@@ -11,15 +11,19 @@
               :type="'text'"
               :parse="'name'"
               :name="'name'"
+              :disabled="!selectBlock"
+              @change="saveModel"
             />
             <Autocomplete2
               v-model="block.type"
               :list="list"
               label="Тип слоя"
               name="type"
+              :disabled="!selectBlock"
+              @change="saveModel"
             />
           </div>
-          <at-collapse value="1">
+          <at-collapse :value="[0, 1]">
             <at-collapse-item class="mb-3" title="Параметры слоя">
               <Forms :data="main" @change="change"/>
             </at-collapse-item>
@@ -48,6 +52,9 @@ import { mapGetters } from "vuex";
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: "Params",
+  props: {
+    selectBlock: Object
+  },
   components: {
     Input,
     Autocomplete2,
@@ -56,28 +63,21 @@ export default {
     // Select
   },
   data: () => ({
-    type: "",
+    oldBlock: null,
   }),
   computed: {
     ...mapGetters({
       list: "modeling/getList",
       layers: "modeling/getLayersType",
+      block: "modeling/getBlock",
     }),
     block: {
       set(value) {
-        // console.log(value)
         this.$store.dispatch('modeling/setBlock', value)
       },
       get() {
         return this.$store.getters['modeling/getBlock'] || {}
       }
-    },
-    parametersMain() {
-      return this.block?.parameters?.main || {}
-    },
-    parametersExtra() {
-      // console.log(this.block?.parameters?.extra)
-      return this.block?.parameters?.extra || {}
     },
     main() {
       if (Object.keys(this.layers).length && this.block.type) {
@@ -100,29 +100,31 @@ export default {
         return { type: 'extra', items: [], value: {} };
       }
     },
-    height() {
-      return this.$store.getters["settings/height"](170);
-    },
   },
   methods: {
-    change({ type, name, value}) {
-      console.log({ type, name, value})
-      // if (this.block.parameters[type][name]) {
-        this.block.parameters[type][name] = value
-        console.log(this.block.parameters[type][name])
-        // this.block = { ...this.block }
-      // }
+    async saveModel () {
+      await this.$store.dispatch("modeling/saveModel", {});
     },
-    // selected({ name }) {
-    //   if (this.$refs.form) {
-    //     const data = serialize(this.$refs.form);
-    //     console.log(data);
-    //   }
-    //   this.main = this.layers[name].main || {};
-    //   this.extra = this.layers[name].extra || {};
-    //   console.log(this.layers[name]);
-    // },
+    async change({ type, name, value}) {
+      console.log({ type, name, value})
+      if (this.block.parameters) {
+        this.block.parameters[type][name] = value
+      } else {
+        this.oldBlock.parameters[type][name] = value
+      }
+      this.$emit('change')
+      this.saveModel()
+    },
   },
+  watch: {
+    selectBlock: {
+      handler(newBlock, oldBlock) {
+        this.oldBlock = oldBlock
+        this.$store.dispatch('modeling/setSelect', newBlock?.id)
+        console.log(newBlock, oldBlock)
+      }
+    }
+  }
 };
 </script>
 

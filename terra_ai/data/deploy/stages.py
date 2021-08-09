@@ -1,32 +1,61 @@
 from typing import Optional
 from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic.types import constr, PositiveInt
 from transliterate import slugify
 
-from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.types import confilename
+from ..mixins import BaseMixinData
+from ..types import confilepath
+from .extra import TaskTypeChoice
 
 
-class StagePrepareUserData(BaseMixinData):
-    login: str
+class StageUploadUserData(BaseMixinData):
+    login: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
     name: str
     lastname: str
+    sec: Optional[str]
 
 
-class StagePrepareData(BaseMixinData):
-    stage: PositiveInt
-    user: StagePrepareUserData
-    project_name: str
-    project_name_lat: Optional[str]
-    url: str
-    replace: bool = False
-    filename: confilename(ext="zip")
-    filesize: PositiveInt
+class StageUploadProjectData(BaseMixinData):
+    name: str
+    slug: Optional[constr(regex=r"^[a-z]+[a-z0-9\-_]*$")]
 
-    @validator("project_name_lat", always=True)
+    @validator("slug", always=True)
     def _validate_project_name_lat(cls, value: str, values) -> str:
-        project_name = values.get("project_name")
-        if not project_name:
+        name = values.get("name")
+        if not name:
             return value
-        value = slugify(project_name, language_code="ru")
-        return value
+        return slugify(name, language_code="ru")
+
+
+class StageUploadFileData(BaseMixinData):
+    path: confilepath(ext="zip")
+    name: Optional[str]
+    size: Optional[PositiveInt]
+
+    @validator("name", always=True)
+    def _validate_name(cls, value: str, values) -> str:
+        filepath = values.get("path")
+        if not filepath:
+            return value
+        return filepath.name
+
+    @validator("size", always=True)
+    def _validate_size(cls, value: str, values) -> str:
+        filepath = values.get("path")
+        if not filepath:
+            return value
+        return filepath.stat().st_size
+
+    def dict(self, **kwargs):
+        kwargs.update({"exclude": {"path"}})
+        return super().dict(**kwargs)
+
+
+class StageUploadData(BaseMixinData):
+    stage: PositiveInt
+    deploy: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    user: StageUploadUserData
+    project: StageUploadProjectData
+    task: TaskTypeChoice
+    replace: bool = False
+    file: StageUploadFileData

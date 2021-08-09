@@ -1,15 +1,14 @@
+import hashlib
+
+from pathlib import Path
 from pydantic import ValidationError
+
+from django.conf import settings
 
 from terra_ai.agent import agent_exchange
 
 from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 from .serializers import UploadSerializer
-
-
-class LoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        print(request.project)
-        return BaseResponseSuccess()
 
 
 class UploadAPIView(BaseAPIView):
@@ -18,20 +17,31 @@ class UploadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
+            # Подготовить zip-файл
+            # ...
+            filepath = Path("/tmp/sources.zip")
+            sec = serializer.validated_data.get("sec")
             stage = agent_exchange(
-                "deploy_prepare",
+                "deploy_upload",
                 **{
                     "stage": 1,
+                    "deploy": serializer.validated_data.get("deploy"),
                     "user": {
-                        "login": "bl146u",
-                        "name": "Юрий",
-                        "lastname": "Максимов",
+                        "login": settings.USER_LOGIN,
+                        "name": settings.USER_NAME,
+                        "lastname": settings.USER_LASTNAME,
+                        "sec": hashlib.md5(sec.encode("utf-8")).hexdigest()
+                        if sec
+                        else "",
                     },
-                    "project_name": "NoName",
-                    "url": serializer.validated_data.get("url"),
+                    "project": {
+                        "name": request.project.name,
+                    },
+                    "task": "text_classification",
                     "replace": serializer.validated_data.get("replace"),
-                    "filename": "asdasdas.zip",
-                    "filesize": 38456,
+                    "file": {
+                        "path": filepath,
+                    },
                 }
             )
             return BaseResponseSuccess(stage.native())

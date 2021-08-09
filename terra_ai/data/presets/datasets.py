@@ -127,7 +127,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "cars3",
+                "alias": "cars_3",
                 "name": "Автомобили 3",
                 "limit": 1,
                 "tags": [
@@ -137,7 +137,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "aircraft",
+                "alias": "planes",
                 "name": "Самолеты",
                 "limit": 1,
                 "tags": [
@@ -169,7 +169,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "contracts",
+                "alias": "docs",
                 "name": "Договоры",
                 "limit": 1,
                 "tags": [
@@ -202,7 +202,7 @@ DatasetsGroups = [
                 ],
             },
             {
-                "alias": "apartments",
+                "alias": "flats",
                 "name": "Квартиры",
                 "limit": 1,
                 "tags": [

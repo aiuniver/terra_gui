@@ -30,10 +30,10 @@ export default {
   async created() {
     await this.$store.dispatch("projects/get");
     await this.$store.dispatch("datasets/get");
-    if (
-      !this.$store?.state?.projects?.project?.dataset &&
-      this.$route.path !== "/datasets"
-    ) {
+    if (!this.$store?.state?.projects?.project?.dataset) {
+      if (this.$route.path === "/datasets" || this.$route.path === "/modeling") {
+        return;
+      }
       const text = {
         "/modeling": "редактирования модели",
         "/training": "обучения",
@@ -47,7 +47,9 @@ export default {
         showClose: false,
         okText: "Загрузить датасет",
         callback: function () {
+          if (self.$route.path !== '/datasets') {
           self.$router.push("/datasets");
+        }
         },
       });
     }

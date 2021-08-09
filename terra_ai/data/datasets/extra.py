@@ -48,6 +48,7 @@ class LayerAudioParameterChoice(str, Enum):
 class LayerScalerChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
 
 
 class DatasetGroupChoice(str, Enum):

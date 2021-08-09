@@ -10,8 +10,9 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 from terra_ai.data.datasets.creation import SourceData
-from . import arrays_create
+from . import arrays_create, array_creator
 from . import loading as datasets_loading
+from .data import Preprocesses
 
 
 class PrepareDTS(object):
@@ -199,8 +200,7 @@ class PrepareDTS(object):
                     x_train = x_train[..., None]
                     x_val = x_val[..., None]
 
-        if 'scaler' in options.keys() and options['scaler'] == 'MinMaxScaler' or \
-                'scaler' in options.keys() and options['scaler'] == 'StandardScaler':
+        if 'scaler' in options.keys() and options['scaler'] in ['MinMaxScaler', 'StandardScaler']:
 
             shape_xt = x_train.shape
             shape_xv = x_val.shape
@@ -410,4 +410,17 @@ class PrepareDTS(object):
 
         self.dts_prepared = True
 
-        pass
+    def load_preprocesses(self, dataset_name: str):
+        for preprocess_name in Preprocesses:
+            preprocess = getattr(array_creator, preprocess_name)
+            preprocess_data = []
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', preprocess_name)
+            if os.path.exists(folder_path):
+                for arr in os.listdir(folder_path):
+                    preprocess_data.append(arr[:-3])
+
+            for put in list(self.tags.keys()):
+                if put in preprocess_data:
+                    preprocess[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
+                else:
+                    preprocess[put] = None
