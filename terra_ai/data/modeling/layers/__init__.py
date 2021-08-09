@@ -36,6 +36,12 @@ class LayerMixinData(BaseMixinData):
     def defaults(self) -> Any:
         return self.__class__()
 
+    @property
+    def merged(self) -> dict:
+        data = self.main.native()
+        data.update(**self.extra.native())
+        return data
+
 
 class LayerInputData(LayerMixinData):
     main: types.Input.ParametersMainData = types.Input.ParametersMainData()
