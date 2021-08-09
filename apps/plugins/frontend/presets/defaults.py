@@ -20,8 +20,8 @@ Defaults = {
                 "parse": "type",
                 "list": list(
                     map(
-                        lambda item: {"value": item, "label": item},
-                        LayerTypeChoice.values(),
+                        lambda item: {"value": item.value, "label": item.name},
+                        list(LayerTypeChoice),
                     )
                 ),
             },
@@ -46,7 +46,7 @@ for layer in Layer:
     params = getattr(types, layer.name)
     Defaults["modeling"]["layers_types"].update(
         {
-            layer.name: {
+            layer.value: {
                 "main": __get_layer_type_params(params.ParametersMainData, "main"),
                 "extra": __get_layer_type_params(params.ParametersExtraData, "extra"),
             }
