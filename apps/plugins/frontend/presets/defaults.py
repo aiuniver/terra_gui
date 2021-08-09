@@ -46,7 +46,7 @@ for layer in Layer:
     params = getattr(types, layer.name)
     Defaults["modeling"]["layers_types"].update(
         {
-            layer.value: {
+            layer.name: {
                 "main": __get_layer_type_params(params.ParametersMainData, "main"),
                 "extra": __get_layer_type_params(params.ParametersExtraData, "extra"),
             }
