@@ -28,5 +28,5 @@ class ParametersData(BaseMixinData):
     MinMaxScaler: Optional[str]
     Categorical: Optional[str]
     Categorical_ranges: Optional[str]
-    cat_cols: Optional[Dict[PositiveInt, str]]
+    cat_cols: Optional[Dict[str, str]]
     one_hot_encoding: Optional[str]
