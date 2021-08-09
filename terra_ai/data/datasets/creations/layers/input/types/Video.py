@@ -33,9 +33,9 @@ class ParametersData(BaseMixinData):
     fill_mode: FillModeChoice = FillModeChoice.black_frames
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     video_mode: VideoModeChoice = VideoModeChoice.completely
-    max_frames: PositiveInt
-    step: PositiveInt
-    length: PositiveInt
+    max_frames: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+    length: Optional[PositiveInt]
 
     @validator("video_mode", allow_reuse=True)
     def _validate_prepare_method(

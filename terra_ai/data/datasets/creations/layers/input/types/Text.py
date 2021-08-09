@@ -21,9 +21,9 @@ class ParametersData(BaseMixinData):
     word_to_vec_size: Optional[PositiveInt]
     delete_symbols: Optional[str]
     text_mode: TextModeChoice = TextModeChoice.completely
-    length: PositiveInt
-    step: PositiveInt
-    max_words: PositiveInt
+    length: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+    max_words: Optional[PositiveInt]
     put: Optional[str]
 
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding

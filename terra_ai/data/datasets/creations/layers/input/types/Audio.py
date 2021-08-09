@@ -18,9 +18,9 @@ class ParametersData(BaseMixinData):
     cols_names: Optional[List[str]]
     audio_mode: AudioModeChoice = AudioModeChoice.completely
     sample_rate: PositiveInt
-    max_seconds: PositiveFloat
-    length: PositiveFloat
-    step: PositiveFloat
+    max_seconds: Optional[PositiveFloat]
+    length: Optional[PositiveFloat]
+    step: Optional[PositiveFloat]
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     parameter: LayerAudioParameterChoice = LayerAudioParameterChoice.audio_signal
 
