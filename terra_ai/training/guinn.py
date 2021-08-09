@@ -187,6 +187,10 @@ class GUINN:
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
         x_train_shape, num_classes
         """
+
+        # print("self.DTS.X", self.DTS.X)
+        # print("self.DTS.Y", self.DTS.Y)
+        print("\nself.DTS.classes_names", self.DTS.classes_names)
         x_shape = []
         v_shape = []
         t_shape = []
@@ -323,10 +327,6 @@ class GUINN:
             None
         """
         self.show_training_params()
-        # print("self.DTS.X", self.DTS.X)
-        # print("self.DTS.Y", self.DTS.Y)
-        print("\nself.DTS.classes_names", self.DTS.classes_names)
-
         self.epochs = training_params.epochs
         self.batch_size = training_params.batch
         self.optimizer_name = training_params.optimizer.type
