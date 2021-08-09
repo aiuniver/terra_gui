@@ -1,5 +1,5 @@
 from typing import Optional, List, Union
-from pydantic import DirectoryPath, PositiveInt, FilePath
+from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
 from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData

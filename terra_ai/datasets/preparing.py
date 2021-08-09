@@ -83,11 +83,11 @@ class PrepareDTS(object):
         else:
             return None
 
-    def generator_train(self):
+    def array_generator(self, sequence):
 
         inputs = {}
         outputs = {}
-        for idx in self.split_sequence['train']:
+        for idx in sequence:
             for key in self.instructions['inputs'].keys():
                 inputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
                     self.instructions['inputs'][key]['instructions'][idx],
@@ -98,53 +98,7 @@ class PrepareDTS(object):
                         self.instructions['outputs'][key]['instructions'][idx],
                         **self.instructions['outputs'][key]['parameters'])
                     for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
-                else:
-                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
-
-            yield inputs, outputs
-
-    def generator_val(self):
-
-        inputs = {}
-        outputs = {}
-        for idx in self.split_sequence['val']:
-            for key in self.instructions['inputs'].keys():
-                inputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['inputs'][key]['instructions'][idx],
-                    **self.instructions['inputs'][key]['parameters'])
-            for key in self.instructions['outputs'].keys():
-                if 'object_detection' in self.tags.values():
-                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
-                else:
-                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
-
-            yield inputs, outputs
-
-    def generator_test(self):
-
-        inputs = {}
-        outputs = {}
-        for idx in self.split_sequence['test']:
-            for key in self.instructions['inputs'].keys():
-                inputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['inputs'][key]['instructions'][idx],
-                    **self.instructions['inputs'][key]['parameters'])
-            for key in self.instructions['outputs'].keys():
-                if 'object_detection' in self.tags.values():
-                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
-                        outputs[f'output_{int(key[-1])+i}'] = np.array(arrays[i])
+                        outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
                 else:
                     outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
@@ -387,15 +341,12 @@ class PrepareDTS(object):
                     self.instructions['outputs'][out[:out.rfind('.')]] = data
                 self.createarray.file_folder = self.dataloader.file_folder
 
-                self.dataset['train'] = Dataset.from_generator(self.generator_train,
-                                                               output_shapes=(self.input_shape, self.output_shape),
-                                                               output_types=(self.input_dtype, self.output_dtype))
-                self.dataset['val'] = Dataset.from_generator(self.generator_val,
-                                                             output_shapes=(self.input_shape, self.output_shape),
-                                                             output_types=(self.input_dtype, self.output_dtype))
-                self.dataset['test'] = Dataset.from_generator(self.generator_test,
-                                                              output_shapes=(self.input_shape, self.output_shape),
-                                                              output_types=(self.input_dtype, self.output_dtype))
+                for part in ['train', 'val', 'test']:
+                    self.dataset['train'] = Dataset.from_generator(
+                        self.array_generator(sequence=self.split_sequence[part]),
+                        output_shapes=(self.input_shape, self.output_shape),
+                        output_types=(self.input_dtype, self.output_dtype)
+                    )
             else:
                 load_arrays()
 

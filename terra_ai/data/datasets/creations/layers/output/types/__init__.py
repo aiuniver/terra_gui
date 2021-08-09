@@ -5,6 +5,7 @@ from . import (
     Classification,
     Segmentation,
     TextSegmentation,
+    ObjectDetection,
     Regression,
     Timeseries,
 )

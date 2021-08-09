@@ -19,7 +19,7 @@ class UploadAPIView(BaseAPIView):
         try:
             # Подготовить zip-файл
             # ...
-            filepath = Path("/tmp/aaa.zip")
+            filepath = Path("/tmp/sources.zip")
             sec = serializer.validated_data.get("sec")
             stage = agent_exchange(
                 "deploy_upload",
@@ -44,7 +44,6 @@ class UploadAPIView(BaseAPIView):
                     },
                 }
             )
-            print(stage)
             return BaseResponseSuccess(stage.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
