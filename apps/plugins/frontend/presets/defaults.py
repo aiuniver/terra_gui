@@ -1,5 +1,4 @@
-from terra_ai.data.modeling.layers import Layer
-from terra_ai.data.modeling.layers import types
+from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 
 from ..utils import prepare_pydantic_field
@@ -47,7 +46,7 @@ for layer in Layer:
     params = getattr(types, layer.name)
     Defaults["modeling"]["layers_types"].update(
         {
-            layer.name: {
+            layer.value: {
                 "main": __get_layer_type_params(params.ParametersMainData, "main"),
                 "extra": __get_layer_type_params(params.ParametersExtraData, "extra"),
             }

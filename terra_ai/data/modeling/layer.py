@@ -40,8 +40,8 @@ class LayerBindData(BaseMixinData):
     Связи слоев сверху и снизу
     """
 
-    up: List[Optional[Tuple[PositiveInt, LayerBindPositionChoice]]] = []
-    down: List[Tuple[PositiveInt, LayerBindPositionChoice]] = []
+    up: List[Optional[PositiveInt]] = []
+    down: List[PositiveInt] = []
 
     @validator("up", allow_reuse=True)
     def _validate_bind(cls, value):

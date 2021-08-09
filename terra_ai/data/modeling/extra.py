@@ -106,7 +106,7 @@ class LayerTypeChoice(str, Enum):
     YOLOConvBlock = "YOLOConvBlock"
     VAEBlock = "VAEBlock"
     CustomBlock = "CustomBlock"
-    space_to_depth = "SpaceToDepth"
+    SpaceToDepth = "SpaceToDepth"
 
     @staticmethod
     def values() -> list:
