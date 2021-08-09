@@ -745,7 +745,6 @@ class CreateDTS(object):
             return merged
 
         options = put_data.parameters.native()
-        instructions = {'parameters': {}}
         transpose = options['transpose']
         if 'classification' in self.tags.values() and not options['trend']:
             step = 1
@@ -1043,19 +1042,20 @@ class CreateDTS(object):
                                                   sep=options['separator'],
                                                   usecols=options['cols_names'][0].split(' ')).values
 
-                    for i in range(0, len(trend_subdf) - length, step):
-                        if '%' in trend_limit:
-                            border = float(trend_limit[:trend_limit.find('%')])
+                    if '%' in trend_limit:
+                        trend_limit = float(trend_limit[:trend_limit.find('%')])
+                        for i in range(0, len(trend_subdf) - length, step):
                             if abs((trend_subdf[i + length + 1] - trend_subdf[i]) /
-                                   trend_subdf[i]) * 100 <= border:
+                                   trend_subdf[i]) * 100 <= trend_limit:
                                 self.y_cls.append(0)
                             elif trend_subdf[i + length + 1] > trend_subdf[i]:
                                 self.y_cls.append(1)
                             else:
                                 self.y_cls.append(2)
-                        else:
-                            border = float(trend_limit)
-                            if abs(trend_subdf[i + length + 1] - trend_subdf[i]) <= border:
+                    else:
+                        trend_limit = float(trend_limit)
+                        for i in range(0, len(trend_subdf) - length, step):
+                            if abs(trend_subdf[i + length + 1] - trend_subdf[i]) <= trend_limit:
                                 self.y_cls.append(0)
                             elif trend_subdf[i + length + 1] > trend_subdf[i]:
                                 self.y_cls.append(1)
@@ -1162,6 +1162,7 @@ class CreateDTS(object):
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
+        instructions['parameters']['put'] = put_data.id
 
         return instructions
 
