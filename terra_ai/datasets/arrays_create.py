@@ -49,7 +49,7 @@ class CreateArray(object):
         if options['put'] in self.augmentation.keys():
             if 'object_detection' in options.keys():
                 txt_path = image_path[:image_path.rfind('.')] + '.txt'
-                with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
+                with open(os.path.join(file_folder, txt_path), 'r') as b_boxes:
                     bounding_boxes = b_boxes.read()
 
                 current_boxes = []
@@ -257,7 +257,7 @@ class CreateArray(object):
 
         return array
 
-    def create_dataframe(self, file_folder, row_number: int, **options):
+    def create_dataframe(self, _, row_number: int, **options):
         """
                 Args:
                     row_number: номер строки с сырыми данными датафрейма,
@@ -280,19 +280,13 @@ class CreateArray(object):
         row_number = int(row_number)
         row = self.df[list(range(row_number, row_number + length))].tolist()
 
-        if 'StandardScaler' in options.values() or 'MinMaxScaler' in options.values():
+        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             array = self.scaler[options['put']].transform(row)
         else:
-            if 'StandardScaler' in options.keys():
-                for i in options['StandardScaler']:
-                    for j in range(length):
-                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i+1}'].transform(
-                            np.array(row[j][i]).reshape(-1, 1)).tolist()
-
             if 'MinMaxScaler' in options.keys():
                 for i in options['MinMaxScaler']:
                     for j in range(length):
-                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i+1}'].transform(
+                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i + 1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
@@ -339,9 +333,11 @@ class CreateArray(object):
 
         return index
 
-    def create_regression(self):
-
-        pass
+    def create_regression(self, _, index, **options):
+        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
+            index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
+        array = np.array(index)
+        return array
 
     def create_segmentation(self, file_folder, image_path: str, **options: dict) -> np.ndarray:
 
@@ -415,7 +411,7 @@ class CreateArray(object):
 
         return array
 
-    def create_timeseries(self, file_folder, row_number, **options):
+    def create_timeseries(self, _, row_number, **options):
         """
             Args:
                 row_number: номер строки с сырыми данными для предсказания значения,
