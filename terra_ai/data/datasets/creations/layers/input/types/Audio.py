@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Optional
-from pydantic.types import PositiveInt, PositiveFloat
+from typing import Optional, List, Union
+from pydantic.types import DirectoryPath, PositiveInt, PositiveFloat, FilePath
+
 from pydantic import validator
 
-from terra_ai.data.datasets.creations.layers.extra import FileInfo
 from ......mixins import BaseMixinData
 from .....extra import LayerScalerChoice, LayerAudioParameterChoice
 
@@ -14,7 +14,8 @@ class AudioModeChoice(str, Enum):
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
     audio_mode: AudioModeChoice = AudioModeChoice.completely
     sample_rate: PositiveInt
     max_seconds: PositiveFloat

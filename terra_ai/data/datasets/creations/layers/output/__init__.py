@@ -33,6 +33,10 @@ class LayerTextSegmentationData(LayerBaseData, types.TextSegmentation.Parameters
     pass
 
 
+class LayerObjectDetectionData(LayerBaseData, types.ObjectDetection.ParametersData):
+    pass
+
+
 class LayerRegressionData(LayerBaseData, types.Regression.ParametersData):
     pass
 

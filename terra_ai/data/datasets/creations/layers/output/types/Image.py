@@ -1,14 +1,14 @@
-from typing import Optional
-from pydantic.types import DirectoryPath, PositiveInt
+from typing import Optional, List, Union
+from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
-from ...extra import FileInfo
 from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData
 from .....extra import LayerNetChoice, LayerScalerChoice
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice = LayerNetChoice.convolutional

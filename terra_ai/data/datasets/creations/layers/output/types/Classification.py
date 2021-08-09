@@ -1,12 +1,14 @@
-from typing import Optional
-
-# from pydantic import PositiveInt
-
-from ...extra import FileInfo
+from typing import Optional, List, Union
+from pydantic.types import FilePath, PositiveInt, DirectoryPath
 from ......mixins import BaseMixinData
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    separator: Optional[str]
+    cols_names: Optional[List[str]]
     one_hot_encoding: Optional[bool] = True
-    # num_classes: Optional[PositiveInt]
+    categorical: Optional[bool] = True
+    categorical_ranges: Optional[bool]
+    auto_ranges: Optional[bool]
+    ranges: Optional[str]

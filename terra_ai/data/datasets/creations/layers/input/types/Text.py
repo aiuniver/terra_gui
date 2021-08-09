@@ -1,9 +1,7 @@
 from enum import Enum
-from typing import Optional
-from pydantic import validator
-from pydantic.types import DirectoryPath, PositiveInt
+from typing import Optional, List, Union
+from pydantic import validator, FilePath, DirectoryPath, PositiveInt
 
-from ...extra import FileInfo
 from ......mixins import BaseMixinData
 from .....extra import LayerPrepareMethodChoice
 
@@ -14,7 +12,8 @@ class TextModeChoice(str, Enum):
 
 
 class ParametersData(BaseMixinData):
-    file_info: FileInfo
+    sources_paths: List[Union[DirectoryPath, FilePath]]
+    cols_names: Optional[List[str]]
     pymorphy: Optional[bool] = False
     embedding: Optional[bool] = False
     bag_of_words: Optional[bool] = False
@@ -27,7 +26,7 @@ class ParametersData(BaseMixinData):
     max_words: PositiveInt
     put: Optional[str]
 
-    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding # ???
+    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
 
     @validator("prepare_method", allow_reuse=True)
     def _validate_prepare_method(

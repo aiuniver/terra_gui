@@ -1,17 +1,23 @@
 import os
 import cv2
 import numpy as np
+import random
 
 from sklearn.cluster import KMeans
 from gensim.models.word2vec import Word2Vec
 from tqdm.notebook import tqdm
+import imgaug.augmenters as iaa
+from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+from librosa import load as librosa_load
+import librosa.feature as librosa_feature
 
+from tensorflow import concat as tf_concat
+from tensorflow import maximum as tf_maximum
+from tensorflow import minimum as tf_minimum
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras import utils
-from librosa import load as librosa_load
-import librosa.feature as librosa_feature
 
 
 class CreateArray(object):
@@ -22,102 +28,166 @@ class CreateArray(object):
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.augmentation: dict = {}
+        self.temporary: dict = {'bounding_boxes': {}}
 
         self.file_folder = None
         self.txt_list: dict = {}
 
-    def create_image(self, file_folder, image_path: str, **options):
+    def create_image(self, file_folder: str, image_path: str, **options):
+
+        # shape = (options['height'], options['width'])
+        # img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
+        # array = img_to_array(img, dtype=np.uint8)
+        # if options['net'] == 'Linear':
+        #     array = array.reshape(np.prod(np.array(array.shape)))
 
         shape = (options['height'], options['width'])
-        img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
+        img = load_img(os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
+        if options['put'] in self.augmentation.keys():
+            if 'object_detection' in options.keys():
+                txt_path = image_path[:image_path.rfind('.')] + '.txt'
+                with open(os.path.join(self.file_folder, txt_path), 'r') as b_boxes:
+                    bounding_boxes = b_boxes.read()
 
-        return array
+                current_boxes = []
+                for elem in bounding_boxes.split('\n'):
+                    # b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
+                    if elem:
+                        b_box = elem.split(',')
+                        b_box = [int(x) for x in b_box]
+                        current_boxes.append(
+                            BoundingBox(
+                                **{'label': b_box[4], 'x1': b_box[0], 'y1': b_box[1], 'x2': b_box[2], 'y2': b_box[3]}))
 
-    def create_video(self, video_path, **options) -> np.ndarray:
+                bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
+                array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
+                list_of_bounding_boxes = []
+                for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
+                    bb = elem.__dict__
+                    # b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
+                    #                                   shape=array.shape[:2])
+                    # if b_box_coord != ():
+                    if bb:
+                        list_of_bounding_boxes.append([bb['x1'], bb['y1'], bb['x2'], bb['y2'], bb['label']])
+
+                self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
+            else:
+                array = self.augmentation[options['put']](image=array)
+
+        array = array / 255
+
+        return array.astype('float32')
+
+    def create_video(self, file_folder: str, sample: dict, **options) -> np.ndarray:
 
         """
-
         Args:
-            video_path: str
-                Путь к файлу
-            **options: Параметры сегментации:
+            file_folder: str
+                Путь к папке.
+            sample: dict
+                Путь к файлу: [начало, конец]
+            **options: Параметры обработки:
                 height: int
                     Высота кадра.
                 width: int
                     Ширина кадра.
-                max_frames: int
-                    Максимальное количество кадров.
-                mode: str
+                fill_mode: int
+                    Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
+                frame_mode: str
                     Режим обработки кадра (Сохранить пропорции, Растянуть).
-                x_len: int
-                    Длина окна выборки.
-                step: int
-                    Шаг окна выборки.
-
         Returns:
             array: np.ndarray
                 Массив видео.
-
         """
 
-        def resize_frame(one_frame, original_shape, target_shape, mode):
+        def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
             resized = None
 
-            if mode == 'Растянуть':
+            if frame_mode == 'Растянуть':
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
-            elif mode == 'Сохранить пропорции':
+            elif frame_mode == 'Сохранить пропорции':
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
-                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
+                    resized = resized[int(original_shape[0] / 2 - target_shape[0] / 2):int(
+                        original_shape[0] / 2 - target_shape[0] / 2) + target_shape[0], :]
                 else:
-                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3), dtype='uint8')
+                    black_bar = np.zeros((int((target_shape[0] - original_shape[0]) / 2), original_shape[1], 3),
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized))
                     resized = np.concatenate((resized, black_bar))
                 # width
                 if original_shape[1] > target_shape[1]:
-                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
+                    resized = resized[:, int(original_shape[1] / 2 - target_shape[1] / 2):int(
+                        original_shape[1] / 2 - target_shape[1] / 2) + target_shape[1]]
                 else:
-                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3), dtype='uint8')
+                    black_bar = np.zeros((target_shape[0], int((target_shape[1] - original_shape[1]) / 2), 3),
+                                         dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
 
-            # resized = resized.numpy().squeeze()
-
             return resized
+
+        def add_frames(video_array, fill_mode, frames_to_add, total_frames):
+
+            frames: np.ndarray = np.array([])
+
+            if fill_mode == 'Черными кадрами':
+                frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
+            elif fill_mode == 'Средним значением':
+                mean = np.mean(video_array, axis=0, dtype='uint16')
+                frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
+            elif fill_mode == 'Последними кадрами':
+                # cur_frames = video_array.shape[0]
+                if total_frames > frames_to_add:
+                    frames = np.flip(video_array[-frames_to_add:], axis=0)
+                elif total_frames <= frames_to_add:
+                    for i in range(frames_to_add // total_frames):
+                        frames = np.flip(video_array[-total_frames:], axis=0)
+                        video_array = np.concatenate((video_array, frames), axis=0)
+                    if frames_to_add + total_frames != video_array.shape[0]:
+                        frames = np.flip(video_array[-(frames_to_add + total_frames - video_array.shape[0]):], axis=0)
+            video_array = np.concatenate((video_array, frames), axis=0)
+
+            return video_array
 
         array = []
         shape = (options['height'], options['width'])
+        [[file_name, video_range]] = sample.items()
+        frames_count = video_range[1] - video_range[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(self.file_folder, video_path))
-        height = int(cap.get(4))
+        cap = cv2.VideoCapture(os.path.join(file_folder, file_name))
         width = int(cap.get(3))
-        # fps = int(cap.get(5))
-        frame_count = int(cap.get(7))
+        height = int(cap.get(4))
+        max_frames = int(cap.get(7))
+        cap.set(1, video_range[0])
         try:
-            while True:
+            for _ in range(frames_count):
                 ret, frame = cap.read()
                 if not ret:
                     break
                 if shape != (height, width):
-                    frame = resize_frame(frame, (height, width), shape, options['mode'])
+                    frame = resize_frame(one_frame=frame,
+                                         original_shape=(height, width),
+                                         target_shape=shape,
+                                         frame_mode=options['frame_mode'])
                 frame = frame[:, :, [2, 1, 0]]
                 array.append(frame)
-                if len(array) == options['max_frames']:
-                    break
         finally:
             cap.release()
 
         array = np.array(array)
-        if frame_count < options['max_frames']:
-            add_frames = np.zeros((options['max_frames'] - frame_count, *shape, 3), dtype='uint8')
-            array = np.concatenate((array, add_frames), axis=0)
+        if max_frames < frames_count:
+            array = add_frames(video_array=array,
+                               fill_mode=options['fill_mode'],
+                               frames_to_add=frames_count - max_frames,
+                               total_frames=max_frames)
 
         return array
 
@@ -279,79 +349,142 @@ class CreateArray(object):
 
         pass
 
-    def create_object_detection(self, txt_path: str, **options):
+    def create_object_detection(self, file_folder: str, txt_path: str, **options):
 
         """
-
         Args:
+            file_folder: str
+                Путь к файлу
             txt_path: str
                 Путь к файлу
             **options: Параметры сегментации:
-                height: int
+                height: int ######!!!!!!
                     Высота изображения.
-                width: int
+                width: int ######!!!!!!
                     Ширина изображения.
-                num_classes: tuple
+                num_classes: int
                     Количество классов.
-
         Returns:
             array: np.ndarray
                 Массивы в трёх выходах.
-
         """
 
-        height: int = options['height']
-        width: int = options['width']
+        def bbox_iou(boxes1, boxes2):
+
+            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
+            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
+
+            boxes1 = tf_concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
+                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
+            boxes2 = tf_concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
+                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
+
+            left_up = tf_maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = tf_minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+            inter_section = tf_maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
+
+            return 1.0 * inter_area / union_area
+
+        # height: int = options['height']
+        # width: int = options['width']
         num_classes: int = options['num_classes']
+        zero_boxes_flag: bool = False
+        strides = np.array([8, 16, 32])
+        output_levels = len(strides)
+        train_input_sizes = 416
+        anchor_per_scale = 3
+        yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+                        [[36, 75], [76, 55], [72, 146]],
+                        [[142, 110], [192, 243], [459, 401]]]
+        anchors = (np.array(yolo_anchors).T / strides).T
+        max_bbox_per_scale = 100
+        train_input_size = random.choice([train_input_sizes])
+        train_output_sizes = train_input_size // strides
 
-        with open(os.path.join(self.file_folder, txt_path), 'r') as txt:
-            bb_file = txt.read()
-        real_boxes = []
-        for elem in bb_file.split('\n'):
-            tmp = []
-            if elem:
-                for num in elem.split(' '):
-                    tmp.append(float(num))
-                real_boxes.append(tmp)
+        if self.temporary['bounding_boxes']:
+            real_boxes = self.temporary['bounding_boxes'][txt_path]
+        else:
+            with open(os.path.join(file_folder, txt_path), 'r') as txt:
+                bb_file = txt.read()
+            real_boxes = []
+            for elem in bb_file.split('\n'):
+                tmp = []
+                if elem:
+                    for num in elem.split(','):
+                        tmp.append(int(num))
+                    real_boxes.append(tmp)
+
+        if not real_boxes:
+            zero_boxes_flag = True
+            real_boxes = [[0, 0, 0, 0, 0]]
         real_boxes = np.array(real_boxes)
-        real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_layers = 3
-        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+        label = [np.zeros((train_output_sizes[i], train_output_sizes[i], anchor_per_scale,
+                           5 + num_classes)) for i in range(output_levels)]
+        bboxes_xywh = [np.zeros((max_bbox_per_scale, 4)) for _ in range(output_levels)]
+        bbox_count = np.zeros((output_levels,))
 
-        real_boxes = np.array(real_boxes, dtype='float32')
-        input_shape = np.array((height, width), dtype='int32')
+        for bbox in real_boxes:
+            bbox_class_ind = int(bbox[4])
+            bbox_coordinate = np.array(bbox[:4])
+            one_hot = np.zeros(num_classes, dtype=np.float)
+            one_hot[bbox_class_ind] = 0.0 if zero_boxes_flag else 1.0
+            uniform_distribution = np.full(num_classes, 1.0 / num_classes)
+            deta = 0.01
+            smooth_one_hot = one_hot * (1 - deta) + deta * uniform_distribution
 
-        boxes_wh = real_boxes[..., 2:4] * input_shape
+            bbox_xywh = np.concatenate([(bbox_coordinate[2:] + bbox_coordinate[:2]) * 0.5,
+                                        bbox_coordinate[2:] - bbox_coordinate[:2]], axis=-1)
+            bbox_xywh_scaled = 1.0 * bbox_xywh[np.newaxis, :] / strides[:, np.newaxis]
 
-        cells = [13, 26, 52]
-        y_true = [np.zeros((cells[n], cells[n], len(anchor_mask[n]), 5 + num_classes), dtype='float32') for n in
-                  range(num_layers)]
-        box_area = boxes_wh[:, 0] * boxes_wh[:, 1]
+            iou = []
+            exist_positive = False
+            for i in range(output_levels):  # range(3):
+                anchors_xywh = np.zeros((anchor_per_scale, 4))
+                anchors_xywh[:, 0:2] = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32) + 0.5
+                anchors_xywh[:, 2:4] = anchors[i]
 
-        anchor_area = anchors[:, 0] * anchors[:, 1]
-        for r in range(len(real_boxes)):
-            correct_anchors = []
-            for anchor in anchors:
-                correct_anchors.append([min(anchor[0], boxes_wh[r][0]), min(anchor[1], boxes_wh[r][1])])
-            correct_anchors = np.array(correct_anchors)
-            correct_anchors_area = correct_anchors[:, 0] * correct_anchors[:, 1]
-            iou = correct_anchors_area / (box_area[r] + anchor_area - correct_anchors_area)
-            best_anchor = np.argmax(iou, axis=-1)
+                iou_scale = bbox_iou(bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh)
+                iou.append(iou_scale)
+                iou_mask = iou_scale > 0.3
 
-            for m in range(num_layers):
-                if best_anchor in anchor_mask[m]:
-                    h = np.floor(real_boxes[r, 0] * cells[m]).astype('int32')
-                    j = np.floor(real_boxes[r, 1] * cells[m]).astype('int32')
-                    k = anchor_mask[m].index(int(best_anchor))
-                    c = real_boxes[r, 4].astype('int32')
-                    y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
-                    y_true[m][j, h, k, 4] = 1
-                    y_true[m][j, h, k, 5 + c] = 1
-                    break
+                if np.any(iou_mask):
+                    xind, yind = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32)
 
-        return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
+                    label[i][yind, xind, iou_mask, :] = 0
+                    label[i][yind, xind, iou_mask, 0:4] = bbox_xywh
+                    label[i][yind, xind, iou_mask, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                    label[i][yind, xind, iou_mask, 5:] = smooth_one_hot
+
+                    bbox_ind = int(bbox_count[i] % max_bbox_per_scale)
+                    bboxes_xywh[i][bbox_ind, :4] = bbox_xywh
+                    bbox_count[i] += 1
+
+                    exist_positive = True
+
+            if not exist_positive:
+                best_anchor_ind = np.argmax(np.array(iou).reshape(-1), axis=-1)
+                best_detect = int(best_anchor_ind / anchor_per_scale)
+                best_anchor = int(best_anchor_ind % anchor_per_scale)
+                xind, yind = np.floor(bbox_xywh_scaled[best_detect, 0:2]).astype(np.int32)
+
+                label[best_detect][yind, xind, best_anchor, :] = 0
+                label[best_detect][yind, xind, best_anchor, 0:4] = bbox_xywh
+                label[best_detect][yind, xind, best_anchor, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                label[best_detect][yind, xind, best_anchor, 5:] = smooth_one_hot
+
+                bbox_ind = int(bbox_count[best_detect] % max_bbox_per_scale)
+                bboxes_xywh[best_detect][bbox_ind, :4] = bbox_xywh
+                bbox_count[best_detect] += 1
+
+        label_sbbox, label_mbbox, label_lbbox = label
+        sbboxes, mbboxes, lbboxes = bboxes_xywh
+
+        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),\
+               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),\
+               np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
 
     def create_scaler(self):
 
