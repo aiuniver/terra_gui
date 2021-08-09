@@ -13,6 +13,8 @@ from terra_ai.data.datasets.creation import SourceData
 from . import arrays_create, array_creator
 from . import loading as datasets_loading
 from .data import Preprocesses
+from ..data.datasets.dataset import DatasetData
+from ..data.datasets.extra import DatasetGroupChoice
 
 
 class PrepareDTS(object):
@@ -45,7 +47,7 @@ class PrepareDTS(object):
         self.dts_prepared: bool = False
 
         self.dataloader = None
-        self.createarray = arrays_create
+        self.createarray = array_creator
 
         self.X: dict = {'train': {}, 'val': {}, 'test': {}}
         self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
@@ -218,30 +220,34 @@ class PrepareDTS(object):
 
         return self
 
-    def prepare_dataset(self, dataset_name: str, source: str):
+    def prepare_dataset(self, dataset_data: DatasetData):
+        dataset_name = dataset_data.name
+        source = dataset_data.group
+        puts = list(dataset_data.inputs.keys())
+        puts.extend(list(dataset_data.outputs.keys()))
+        print(puts)
 
         def load_arrays():
 
             for sample in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays')):
                 for arr in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample)):
-                    if 'input' in arr:
-                        self.X[sample][arr[:arr.rfind('.')]] = joblib.load(
+                    put_id = int(arr[:arr.rfind('.')])
+                    if put_id in list(dataset_data.inputs.keys()):
+                        self.X[sample][put_id] = joblib.load(
                             os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
-                    elif 'output' in arr:
-                        self.Y[sample][arr[:arr.rfind('.')]] = joblib.load(
+                    elif put_id in list(dataset_data.outputs.keys()):
+                        self.Y[sample][put_id] = joblib.load(
                             os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
 
             pass
 
-        def load_scalers():
-
+        def load_scalers(puts):
             scalers = []
             folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'scalers')
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     scalers.append(arr[:-3])
-
-            for put in list(self.tags.keys()):
+            for put in puts:
                 if put in scalers:
                     self.createarray.scaler[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
                 else:
@@ -249,15 +255,14 @@ class PrepareDTS(object):
 
             pass
 
-        def load_tokenizer():
-
+        def load_tokenizer(puts):
             tokenizer = []
             folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'tokenizer')
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     tokenizer.append(arr[:-3])
 
-            for put in list(self.tags.keys()):
+            for put in puts:
                 if put in tokenizer:
                     self.createarray.tokenizer[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
                 else:
@@ -265,7 +270,7 @@ class PrepareDTS(object):
 
             pass
 
-        def load_word2vec():
+        def load_word2vec(puts):
 
             word2v = []
             folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'word2vec')
@@ -273,7 +278,7 @@ class PrepareDTS(object):
                 for arr in os.listdir(folder_path):
                     word2v.append(arr[:-3])
 
-            for put in list(self.tags.keys()):
+            for put in puts:
                 if put in word2v:
                     self.createarray.word2vec[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
                 else:
@@ -281,7 +286,7 @@ class PrepareDTS(object):
 
             pass
 
-        def load_augmentation():
+        def load_augmentation(puts):
 
             augmentation = []
             folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'augmentation')
@@ -289,7 +294,7 @@ class PrepareDTS(object):
                 for aug in os.listdir(folder_path):
                     augmentation.append(aug[:-3])
 
-            for put in list(self.tags.keys()):
+            for put in puts:
                 if put in augmentation:
                     self.createarray.augmentation[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
                 else:
@@ -298,7 +303,7 @@ class PrepareDTS(object):
             pass
 
         if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and \
-                source != 'custom_dataset':
+                source != DatasetGroupChoice.custom:
             if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
                 self.keras_datasets(dataset_name, one_hot_encoding=True, scaler='MinMaxScaler', net='conv')
                 self.task_type['output_1'] = 'classification'
@@ -311,7 +316,7 @@ class PrepareDTS(object):
             elif dataset_name == 'boston_housing':
                 self.keras_datasets(dataset_name, scaler='StandardScaler')
                 self.task_type['output_1'] = 'regression'
-        elif source == 'custom_dataset':
+        elif source == DatasetGroupChoice.custom:
             with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'config.json'), 'r') as cfg:
                 data = json.load(cfg)
             for key, value in data.items():
@@ -322,7 +327,7 @@ class PrepareDTS(object):
                               'r') as txt:
                         self.createarray.txt_list = json.load(txt)
 
-                datasets_loading.load(strict_object=SourceData(**self.zip_params))
+                datasets_loading.source(strict_object=SourceData(**self.zip_params))
 
                 with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'sequence.json'),
                           'r') as cfg:
@@ -354,23 +359,24 @@ class PrepareDTS(object):
                 self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
                 self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
 
-        load_scalers()
-        load_tokenizer()
-        load_word2vec()
-        load_augmentation()
+        # load_scalers(puts)
+        # load_tokenizer(puts)
+        # load_word2vec(puts)
+        # load_augmentation(puts)
+        self.load_preprocesses(dataset_data, puts)
 
         self.dts_prepared = True
 
-    def load_preprocesses(self, dataset_name: str):
+    def load_preprocesses(self, dataset_data: DatasetData, puts: list):
         for preprocess_name in Preprocesses:
             preprocess = getattr(array_creator, preprocess_name)
             preprocess_data = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', preprocess_name)
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', preprocess_name)
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
-                    preprocess_data.append(arr[:-3])
+                    preprocess_data.append(int(arr[:-3]))
 
-            for put in list(self.tags.keys()):
+            for put in puts:
                 if put in preprocess_data:
                     preprocess[put] = joblib.load(os.path.join(folder_path, f'{put}.gz'))
                 else:

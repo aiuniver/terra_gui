@@ -6,6 +6,7 @@ from typing import List, Any, Optional, Union, Dict
 
 from pydantic import validator, DirectoryPath, FilePath, PositiveInt
 
+from terra_ai.data.datasets.extra import LayerInputTypeChoice
 from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import StrictIntValueGe0, StrictFloatValueGe0
 from terra_ai.datasets.arrays_create import CreateArray
@@ -61,3 +62,4 @@ class PathsData(BaseMixinData):
     datasets: DirectoryPath
     instructions: Optional[DirectoryPath]
     arrays: DirectoryPath
+

@@ -10,6 +10,7 @@ import shutil
 import json
 import joblib
 from pydantic import DirectoryPath
+from pydantic.types import FilePath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from librosa import load as librosa_load
@@ -23,12 +24,14 @@ from pytz import timezone
 import cv2
 
 # from terra_ai import out_exchange
+from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
+from ..data.datasets.extra import DatasetGroupChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
 from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
-    CreationOutputData
+    CreationOutputData, OneFileData
 from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
 
 
@@ -59,6 +62,7 @@ class CreateDTS(object):
         self.peg: list = []
         self.split_sequence: dict = {}
         self.use_generator: bool = False
+        self.one_file: bool = False
 
         self.file_folder: str = ''
         self.language: str = ''
@@ -72,6 +76,14 @@ class CreateDTS(object):
         self.df: dict = {}
         self.tsgenerator: dict = {}
         self.temporary: dict = {}
+
+    def create_one_file_array(self, file_data: OneFileData, source_path):
+        instructions_data = getattr(self, f"instructions_{decamelize(file_data.type)}")(file_data)
+        array = getattr(array_creator, f"create_{decamelize(file_data.type)}")(
+            source_path,
+            instructions_data.get("instructions")[0],
+            **instructions_data.get("parameters"))
+        return array
 
     def create_dataset(self, creation_data: CreationData):
 
@@ -296,9 +308,10 @@ class CreateDTS(object):
             data[attr] = self.__dict__[attr]
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         data['alias'] = creation_data.alias
+        data['group'] = DatasetGroupChoice.custom
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
-        print(data)
+        # print(data)
 
         return data
 
@@ -333,9 +346,7 @@ class CreateDTS(object):
         self.y_cls = y_cls
         return data
 
-    def instructions_image(self, put_data: Union[CreationInputData, CreationOutputData]):
-
-        options = put_data.parameters.native()
+    def instructions_image(self, put_data: Union[CreationInputData, CreationOutputData, OneFileData]):
         instructions: dict = {}
         instr: list = []
         y_cls: list = []
@@ -343,47 +354,59 @@ class CreateDTS(object):
         cls_idx = 0
         peg_idx = 0
         self.peg.append(0)
-        options['put'] = put_data.id
-        if 'object_detection' in self.tags.values():
-            options['object_detection'] = True
+        options = put_data.parameters.native()
 
-        if not options['sources_paths'][0].endswith('.csv'):
-            for folder_name in options['sources_paths']:
-                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
-                    if file_name:
-                        file_folder = directory.replace(self.file_folder, '')[1:]
-                        for name in sorted(file_name):
-                            if 'object_detection' in self.tags.values():
-                                if 'txt' not in name:
+        if isinstance(put_data, OneFileData):
+            directory = options.get('sources_paths')[0]
+            file_folder = os.path.split(directory)[0].split(os.path.sep)[-1]
+            name = os.path.split(directory)[1]
+            if 'object_detection' in self.tags.values():
+                if 'txt' not in name:
+                    instr.append(os.path.join(file_folder, name))
+            else:
+                instr.append(os.path.join(file_folder, name))
+        else:
+            options['put'] = put_data.id
+            if 'object_detection' in self.tags.values():
+                options['object_detection'] = True
+
+            if not options['sources_paths'][0].endswith('.csv'):
+                for folder_name in options['sources_paths']:
+                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
+                        if file_name:
+                            file_folder = directory.replace(self.file_folder, '')[1:]
+                            for name in sorted(file_name):
+                                if 'object_detection' in self.tags.values():
+                                    if 'txt' not in name:
+                                        instr.append(os.path.join(file_folder, name))
+                                        peg_idx += 1
+                                else:
                                     instr.append(os.path.join(file_folder, name))
                                     peg_idx += 1
-                            else:
-                                instr.append(os.path.join(file_folder, name))
-                                peg_idx += 1
-                            y_cls.append(cls_idx)
-                        cls_idx += 1
-                        self.peg.append(peg_idx)
-                        classes_names.append(file_folder)
-            self.y_cls = y_cls
-        elif options['sources_paths'][0].endswith('.csv'):
-            for file_name in options['sources_paths']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
-                instr = data[options['cols_name'][0]].to_list()
-                prev_elem = instr[0].split('/')[-2]
-                for elem in instr:
-                    cur_elem = elem.split('/')[-2]
-                    if cur_elem != prev_elem:
-                        self.peg.append(peg_idx)
-                    prev_elem = cur_elem
-                    peg_idx += 1
-                self.peg.append(len(instr))
+                                y_cls.append(cls_idx)
+                            cls_idx += 1
+                            self.peg.append(peg_idx)
+                            classes_names.append(file_folder)
+                self.y_cls = y_cls
+            elif options['sources_paths'][0].endswith('.csv'):
+                for file_name in options['sources_paths']:
+                    data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
+                    instr = data[options['cols_name'][0]].to_list()
+                    prev_elem = instr[0].split(os.path.sep)[-2]
+                    for elem in instr:
+                        cur_elem = elem.split(os.path.sep)[-2]
+                        if cur_elem != prev_elem:
+                            self.peg.append(peg_idx)
+                        prev_elem = cur_elem
+                        peg_idx += 1
+                    self.peg.append(len(instr))
 
-        if options.get('augmentation', None):
-            aug_parameters = []
-            for key, value in options['augmentation'].items():
-                aug_parameters.append(getattr(iaa, key)(**value))
-            array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
-            del options['augmentation']
+            if options.get('augmentation', None):
+                aug_parameters = []
+                for key, value in options['augmentation'].items():
+                    aug_parameters.append(getattr(iaa, key)(**value))
+                array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
+                del options['augmentation']
 
         instructions['instructions'] = instr
         instructions['parameters'] = options
@@ -482,7 +505,7 @@ class CreateDTS(object):
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
-            with open(os.path.join(self.file_folder, file_path), 'r') as txt:
+            with open(os.path.join(self.file_folder, file_path), 'r', encoding='utf-8') as txt:
                 text = txt.read()
 
             if open_symbol:
@@ -569,13 +592,14 @@ class CreateDTS(object):
         y_cls: list = []
         peg_idx: int = 0
         cls_idx: int = 0
-        prev_class: str = sorted(txt_list.keys())[0].split('/')[-2]
+
+        prev_class: str = sorted(txt_list.keys())[0].split(os.path.sep)[-2]
         array_creator.txt_list[put_data.id] = txt_list
         self.peg.append(0)
 
         for key, value in sorted(txt_list.items()):
-            cur_class = key.split('/')[-2]
-            if text_mode == 'Целиком':
+            cur_class = key.split(os.path.sep)[-2]
+            if text_mode == TextModeChoice.completely:
                 instr.append({key: [0, max_words]})
                 if cur_class != prev_class:
                     cls_idx += 1
@@ -583,7 +607,7 @@ class CreateDTS(object):
                     prev_class = cur_class
                 peg_idx += 1
                 y_cls.append(cls_idx)
-            elif text_mode == 'По длине и шагу':
+            elif text_mode == TextModeChoice.length_and_step:
                 max_length = len(value.split(' '))
                 if 'text_segmentation' in self.tags.values():
                     count = 0
