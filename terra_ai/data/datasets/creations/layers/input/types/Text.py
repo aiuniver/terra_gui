@@ -7,8 +7,8 @@ from .....extra import LayerPrepareMethodChoice
 
 
 class TextModeChoice(str, Enum):
-    completely = 'Целиком'
-    length_and_step = 'По длине и шагу'
+    completely = 'completely'
+    length_and_step = 'length_and_step'
 
 
 class ParametersData(BaseMixinData):

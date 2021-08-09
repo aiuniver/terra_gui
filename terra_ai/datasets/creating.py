@@ -62,7 +62,6 @@ class CreateDTS(object):
         self.peg: list = []
         self.split_sequence: dict = {}
         self.use_generator: bool = False
-        self.one_file: bool = False
 
         self.file_folder: str = ''
         self.language: str = ''
@@ -299,15 +298,22 @@ class CreateDTS(object):
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
                       'encoding', 'task_type', 'use_generator']
 
-        tags = []
+        size_bytes = 0
+        for path, dirs, files in os.walk(os.path.join(self.trds_path, f'dataset {self.name}')):
+            for file in files:
+                size_bytes += os.path.getsize(os.path.join(path, file))
+
+        tags_list = []
         for value in self.tags.values():
-            tags.append({'alias': value, 'name': value.title()})
-        self.tags = tags
+            tags_list.append({'alias': value, 'name': value.title()})
+        self.tags = tags_list
 
         for attr in attributes:
             data[attr] = self.__dict__[attr]
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         data['alias'] = creation_data.alias
+        data['size'] = {'value': size_bytes}
+
         data['group'] = DatasetGroupChoice.custom
         with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
             json.dump(data, fp)
