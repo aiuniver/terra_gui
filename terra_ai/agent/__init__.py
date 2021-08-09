@@ -199,10 +199,16 @@ class Exchange:
         Деплой: загрузка
         """
         stage = StageUploadData(**kwargs)
-        # response = requests.post(
-        #     "http://bl146u.xyz:8099/api/v1/test", data=stage.native()
-        # )
-        # print(response.json())
+        data = stage.native()
+        response = requests.post(
+            settings.DEPLOY_URL,
+            json=data,
+            headers={"Content-Type": "application/json"},
+        )
+        if response.ok:
+            print(response.json())
+        else:
+            print(response.status_code)
         return stage
 
 

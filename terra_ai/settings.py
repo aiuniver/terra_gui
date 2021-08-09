@@ -17,4 +17,6 @@ DATASET_CONFIG = "config.json"
 
 MODEL_EXT = "model"
 
+DEPLOY_URL = "https://dev.demo.neural-university.ru/autodeployterra_upload/"
+
 os.makedirs(TMP_DIR, exist_ok=True)
