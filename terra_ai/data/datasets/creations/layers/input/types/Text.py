@@ -26,7 +26,7 @@ class ParametersData(BaseMixinData):
     max_words: PositiveInt
     put: Optional[str]
 
-    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding # ???
+    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
 
     @validator("prepare_method", allow_reuse=True)
     def _validate_prepare_method(

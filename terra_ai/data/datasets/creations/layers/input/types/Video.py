@@ -4,10 +4,8 @@ from typing import Optional, List, Union
 from pydantic import validator
 from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
-from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData
 from .....extra import LayerScalerChoice
-from ......types import confilepath
 
 
 class FrameModeChoice(str, Enum):
