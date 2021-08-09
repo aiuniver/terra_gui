@@ -1,13 +1,18 @@
 <template>
-    <div class="range-slider" >
+    <div class="range-slider" @mousemove="slider">
       <div class="sliders">
-        <div class="first-slider" @mousedown="startDrag" @mousemove="slider"><div></div></div>
-        <div class="second-slider" @mousedown="startDrag"><div></div></div>
+        <div class="first-slider" @mousedown="startDrag($event, 'first')" :style="firstSlider"></div>
+        <div class="second-slider" @mousedown="startDrag($event,'second')" :style="secondSlider"></div>
       </div>
       <div class="scale">
-        <div id="first-scale"></div>
-        <div id="second-scale"></div>
-        <div id="third-scale"></div>
+        <div id="first-scale" :style="firstScale">{{ sliders.first }}</div>
+        <div id="second-scale" :style="secondScale">{{ sliders.second - sliders.first }}</div>
+        <div id="third-scale" :style="thirdScale">{{ 100 - sliders.second }}</div>
+      </div>
+      <div class="inputs">
+        <input type="number" :value="sliders.first">
+        <input type="number" :value="sliders.second - sliders.first">
+        <input type="number" :value="100 - sliders.second">
       </div>
     </div>
 </template>
@@ -17,29 +22,59 @@ export default {
   name: "DoubleSlider",
   data: () => ({
     dragging: false,
-    CurrentX: 0,
-    minValue: 0,
-    maxValue: 100,
-    firstSlider: 50,
-    secondSlider: 77,
+    draggingObj: null,
+    sliders: {
+      first: 50,
+      second: 77
+    }
   }),
+  computed: {
+    firstScale() {
+      return {
+        width: this.sliders.first + '%'
+      };
+    },
+    secondScale(){
+      return {
+        width: this.sliders.second - this.sliders.first + '%'
+      }
+    },
+    thirdScale(){
+      return {
+        width: 100 - this.sliders.second + '%'
+      }
+    },
+    firstSlider(){
+      return {
+        'margin-left': this.sliders.first + '%'
+      }
+    },
+    secondSlider(){
+      return {
+        'margin-left': this.sliders.second + '%'
+      }
+    }
+  },
   methods: {
-     startDrag(event) {
+     startDrag(event, block) {
       this.dragging = true;
+      this.draggingObj = block
       this.CurrentX = event.x;
     },
     stopDrag() {
       this.dragging = false;
+      this.draggingObj = null;
     },
     slider(event){
+       event.preventDefault();
        if(this.dragging){
-         if(event.x > this.CurrentX){
-           console.log(event.target);
-           event.target.style.marginLeft = (parseInt((event.target.style.marginLeft) || parseInt(window.getComputedStyle(event.target).marginLeft))) + 2 + 'px';
-         } else{
-           event.target.style.marginLeft = (parseInt((event.target.style.marginLeft) || parseInt(window.getComputedStyle(event.target).marginLeft))) - 2 + 'px';
-         }
+         let slider = document.querySelector(`.${this.draggingObj}-slider`);
+         let pos = event.x - slider.parentNode.getBoundingClientRect().x
+         this.sliders[this.draggingObj] = Math.round(pos / 231 * 100);
        }
+       if(this.sliders.first < 5) this.sliders.first = 5;
+       if(this.sliders.second > 95) this.sliders.second = 95;
+       if(this.sliders.first > this.sliders.second - 5) this.sliders.first = this.sliders.second - 5;
     }
   },
   mounted() {
@@ -65,7 +100,10 @@ export default {
       width: 2px;
       background: #FFFFFF;
       cursor: pointer;
-      div{
+      position: absolute;
+      &:before{
+        content: ' ';
+        display: block;
         width: 6px;
         height: 6px;
         border: 1px solid #FFFFFF;
@@ -81,12 +119,16 @@ export default {
     margin-left: 50%;
   }
   .second-slider{
-    margin-left: 27%;
+    margin-left: 77%;
   }
   .scale{
     height: 24px;
     width: 231px;
     display: flex;
+    div{
+      text-align: center;
+      line-height: 24px;
+    }
     #first-scale{
       background: #D6542C;
       border-radius: 4px 0 0 4px;
@@ -101,5 +143,8 @@ export default {
       border-radius: 0 4px 4px 0;
       width: 23%;
     }
+  }
+  .inputs{
+    display: none;
   }
 </style>
