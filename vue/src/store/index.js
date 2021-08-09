@@ -4,6 +4,7 @@ import datasets from "./datasets";
 import settings from "./settings";
 import projects from "./projects";
 import trainings from "./trainings";
+import deploy from "./deploy"
 import data from "./data";
 import axios from "axios";
 import Vue from 'vue';
@@ -15,6 +16,7 @@ export default {
     data,
     settings,
     trainings,
+    deploy,
     projects
   },
   actions: {
