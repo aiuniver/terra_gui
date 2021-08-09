@@ -78,12 +78,6 @@ class LayerData(IDMixinData):
     "Ссылка на блок, описанный в модели в поле `references`"
 
     @property
-    def parameters_dict(self) -> dict:
-        __data = json.loads(self.parameters.main.json())
-        __data.update(json.loads(self.parameters.extra.json()))
-        return __data
-
-    @property
     def bind_ids(self) -> LayerBindIDsData:
         return LayerBindIDsData(
             up=list(
