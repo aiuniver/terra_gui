@@ -4,10 +4,8 @@ from typing import Optional, List, Union
 from pydantic import validator
 from pydantic.types import PositiveInt, DirectoryPath, FilePath
 
-from ...image_augmentation import AugmentationData
 from ......mixins import BaseMixinData
 from .....extra import LayerScalerChoice
-from ......types import confilepath
 
 
 class FrameModeChoice(str, Enum):
@@ -35,9 +33,9 @@ class ParametersData(BaseMixinData):
     fill_mode: FillModeChoice = FillModeChoice.black_frames
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     video_mode: VideoModeChoice = VideoModeChoice.completely
-    max_frames: PositiveInt
-    step: PositiveInt
-    length: PositiveInt
+    max_frames: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+    length: Optional[PositiveInt]
 
     @validator("video_mode", allow_reuse=True)
     def _validate_prepare_method(

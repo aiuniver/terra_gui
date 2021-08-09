@@ -30,7 +30,7 @@ DatasetsGroups = [
             {
                 "alias": "mnist",
                 "name": "Mnist",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -40,7 +40,7 @@ DatasetsGroups = [
             {
                 "alias": "fashion_mnist",
                 "name": "Fashion mnist",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -50,7 +50,7 @@ DatasetsGroups = [
             {
                 "alias": "cifar10",
                 "name": "Cifar 10",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -60,7 +60,7 @@ DatasetsGroups = [
             {
                 "alias": "cifar100",
                 "name": "Cifar 100",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -70,7 +70,7 @@ DatasetsGroups = [
             {
                 "alias": "imdb",
                 "name": "IMDB",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -81,7 +81,7 @@ DatasetsGroups = [
             {
                 "alias": "boston_housing",
                 "name": "Boston housing",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.text,
                     Tags.regression,
@@ -92,7 +92,7 @@ DatasetsGroups = [
             {
                 "alias": "reuters",
                 "name": "Reuters",
-                "limit": 1,
+                "group": "keras",
                 "tags": [
                     Tags.text,
                     Tags.classification,
@@ -109,7 +109,7 @@ DatasetsGroups = [
             {
                 "alias": "sber",
                 "name": "Sber",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.timeseries,
                     Tags.regression,
@@ -119,7 +119,7 @@ DatasetsGroups = [
             {
                 "alias": "cars",
                 "name": "Автомобили",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -129,7 +129,7 @@ DatasetsGroups = [
             {
                 "alias": "cars_3",
                 "name": "Автомобили 3",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -139,7 +139,7 @@ DatasetsGroups = [
             {
                 "alias": "planes",
                 "name": "Самолеты",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -150,7 +150,7 @@ DatasetsGroups = [
             {
                 "alias": "lips",
                 "name": "Губы",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.image,
                     Tags.segmentation,
@@ -160,7 +160,7 @@ DatasetsGroups = [
             {
                 "alias": "diseases",
                 "name": "Заболевания",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.image,
                     Tags.classification,
@@ -171,7 +171,7 @@ DatasetsGroups = [
             {
                 "alias": "docs",
                 "name": "Договоры",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.text,
                     Tags.segmentation,
@@ -182,7 +182,7 @@ DatasetsGroups = [
             {
                 "alias": "smart_home",
                 "name": "Умный дом",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.audio,
                     Tags.classification,
@@ -194,7 +194,7 @@ DatasetsGroups = [
             {
                 "alias": "trading",
                 "name": "Трейдинг",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.trading,
                     Tags.timeseries,
@@ -204,7 +204,7 @@ DatasetsGroups = [
             {
                 "alias": "flats",
                 "name": "Квартиры",
-                "limit": 1,
+                "group": "terra",
                 "tags": [
                     Tags.text,
                     Tags.regression,

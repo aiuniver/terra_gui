@@ -1,5 +1,5 @@
 from typing import Optional, Union, List
-from pydantic.types import PositiveInt, DirectoryPath, FilePath
+from pydantic.types import DirectoryPath, FilePath
 
 from .....extra import LayerScalerChoice
 from ......mixins import BaseMixinData

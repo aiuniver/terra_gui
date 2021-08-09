@@ -40,8 +40,8 @@ class LayerBindData(BaseMixinData):
     Связи слоев сверху и снизу
     """
 
-    up: List[Optional[Tuple[PositiveInt, LayerBindPositionChoice]]] = []
-    down: List[Tuple[PositiveInt, LayerBindPositionChoice]] = []
+    up: List[Optional[PositiveInt]] = []
+    down: List[PositiveInt] = []
 
     @validator("up", allow_reuse=True)
     def _validate_bind(cls, value):
@@ -76,12 +76,6 @@ class LayerData(IDMixinData):
     "Параметры слоя"
     reference: Optional[ReferenceLayerType]
     "Ссылка на блок, описанный в модели в поле `references`"
-
-    @property
-    def parameters_dict(self) -> dict:
-        __data = json.loads(self.parameters.main.json())
-        __data.update(json.loads(self.parameters.extra.json()))
-        return __data
 
     @property
     def bind_ids(self) -> LayerBindIDsData:

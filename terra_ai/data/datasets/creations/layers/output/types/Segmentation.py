@@ -25,4 +25,3 @@ class ParametersData(BaseMixinData):
     mask_range: PositiveInt
     num_classes: Optional[PositiveInt]
     shape: Optional[Tuple[PositiveInt, ...]]
-

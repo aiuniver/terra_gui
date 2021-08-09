@@ -1,37 +1,48 @@
 import os
 import cv2
 import numpy as np
+import random
 
 from sklearn.cluster import KMeans
 from gensim.models.word2vec import Word2Vec
 from tqdm.notebook import tqdm
+import imgaug.augmenters as iaa
+from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+from librosa import load as librosa_load
+import librosa.feature as librosa_feature
 
+from tensorflow import concat as tf_concat
+from tensorflow import maximum as tf_maximum
+from tensorflow import minimum as tf_minimum
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras import utils
-from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
+
 
 class CreateArray(object):
 
     def __init__(self):
 
-        self.temporary: dict = {'bounding_boxes': {}}
-        # self.y_subdf = None
-        # self.df = None
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.augmentation: dict = {}
+        self.temporary: dict = {'bounding_boxes': {}}
 
         self.file_folder = None
         self.txt_list: dict = {}
 
-    def create_image(self, file_folder, image_path: str, **options):
+    def create_image(self, file_folder: str, image_path: str, **options):
+
+        # shape = (options['height'], options['width'])
+        # img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
+        # array = img_to_array(img, dtype=np.uint8)
+        # if options['net'] == 'Linear':
+        #     array = array.reshape(np.prod(np.array(array.shape)))
 
         shape = (options['height'], options['width'])
-        # img = cv2.imread(os.path.join(self.file_folder, image_path)).reshape(*shape, 3)
-        img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
+        img = load_img(os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == 'Linear':
             array = array.reshape(np.prod(np.array(array.shape)))
@@ -65,13 +76,18 @@ class CreateArray(object):
                 self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
             else:
                 array = self.augmentation[options['put']](image=array)
+
         array = array / 255
+
         return array.astype('float32')
 
-    def create_video(self, file_folder, video_path, **options) -> np.ndarray:
+    def create_video(self, file_folder: str, sample: dict, **options) -> np.ndarray:
+
         """
         Args:
-            video_path: dict
+            file_folder: str
+                Путь к папке.
+            sample: dict
                 Путь к файлу: [начало, конец]
             **options: Параметры обработки:
                 height: int
@@ -86,6 +102,7 @@ class CreateArray(object):
             array: np.ndarray
                 Массив видео.
         """
+
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
             resized = None
@@ -141,8 +158,7 @@ class CreateArray(object):
 
         array = []
         shape = (options['height'], options['width'])
-        [[file_name, video_range]] = video_path.items()
-        video_range = [int(x) for x in video_range]
+        [[file_name, video_range]] = sample.items()
         frames_count = video_range[1] - video_range[0]
         resize_layer = Resizing(*shape)
 
@@ -175,56 +191,73 @@ class CreateArray(object):
 
         return array
 
-    def create_text(self, sample: dict, **options):
+    def create_text(self, _, sample: dict, **options):
 
         """
-
         Args:
             sample: dict
                 - file: Название файла.
                 - slice: Индексы рассматриваемой части последовательности
             **options: Параметры обработки текста:
+                embedding: Tokenizer object, bool
+                    Перевод в числовую последовательность.
                 bag_of_words: Tokenizer object, bool
                     Перевод в формат bag_of_words.
                 word_to_vec: Word2Vec object, bool
                     Перевод в векторное представление Word2Vec.
                 put: str
                     Индекс входа или выхода.
-
         Returns:
             array: np.ndarray
                 Массив текстового вектора.
         """
 
-        filepath: str = sample['file']
-        slicing: list = sample['slice']
-        array = self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]
+        array = []
+        [[filepath, slicing]] = sample.items()
+        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
+        text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
 
-        for key, value in options.items():
-            if value:
-                if key == 'bag_of_words':
-                    array = self.tokenizer[options['put']].sequences_to_matrix([array]).astype('uint16')
-                elif key == 'word_to_vec':
-                    reverse_tok = {}
-                    words_list = []
-                    for word, index in self.tokenizer[options['put']].word_index.items():
-                        reverse_tok[index] = word
-                    for idx in array:
-                        words_list.append(reverse_tok[idx])
-                    array = []
-                    for word in words_list:
-                        array.append(self.word2vec[options['put']].wv[word])
-                break
+        if options['embedding']:
+            array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
+        elif options['bag_of_words']:
+            array = self.tokenizer[options['put']].texts_to_matrix([text])[0]
+        elif options['word_to_vec']:
+            for word in text:
+                array.append(self.word2vec[options['put']][word])
+
+        if len(array) < slicing[1] - slicing[0]:
+            words_to_add = [0 for _ in range((slicing[1] - slicing[0]) - len(array))]
+            array += words_to_add
 
         array = np.array(array)
 
         return array
 
-    def create_audio(self):
+    def create_audio(self, file_folder: str, sample: dict, **options) -> np.ndarray:
 
-        pass
+        array = []
 
-    def create_dataframe(self, file_folder, row_number: int, **options):
+        [[filepath, slicing]] = sample.items()
+        y, sr = librosa_load(path=os.path.join(file_folder, filepath), sr=options.get('sample_rate'),
+                             offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
+        parameter = options.get('parameter')
+
+        if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
+            array = getattr(librosa_feature, parameter)(y=y, sr=sr)
+        elif parameter == 'rms':
+            array = getattr(librosa_feature, parameter)(y=y)[0]
+        elif parameter == 'zero_crossing_rate':
+            array = getattr(librosa_feature, parameter)(y=y)
+        elif parameter == 'audio_signal':
+            array = y
+
+        array = np.array(array)
+        if array.dtype == 'float64':
+            array = array.astype('float32')
+
+        return array
+
+    def create_dataframe(self, _, row_number: int, **options):
         """
                 Args:
                     row_number: номер строки с сырыми данными датафрейма,
@@ -247,19 +280,13 @@ class CreateArray(object):
         row_number = int(row_number)
         row = self.df[list(range(row_number, row_number + length))].tolist()
 
-        if 'StandardScaler' in options.values() or 'MinMaxScaler' in options.values():
+        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             array = self.scaler[options['put']].transform(row)
         else:
-            if 'StandardScaler' in options.keys():
-                for i in options['StandardScaler']:
-                    for j in range(length):
-                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i+1}'].transform(
-                            np.array(row[j][i]).reshape(-1, 1)).tolist()
-
             if 'MinMaxScaler' in options.keys():
                 for i in options['MinMaxScaler']:
                     for j in range(length):
-                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i+1}'].transform(
+                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i + 1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
@@ -298,7 +325,7 @@ class CreateArray(object):
 
         return array
 
-    def create_classification(self, file_folder, index, **options):
+    def create_classification(self, _, index, **options):
 
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
@@ -306,7 +333,7 @@ class CreateArray(object):
 
         return index
 
-    def create_regression(self, file_folder, index, **options):
+    def create_regression(self, _, index, **options):
         if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
         array = np.array(index)
@@ -368,11 +395,13 @@ class CreateArray(object):
 
         return array
 
-    def create_text_segmentation(self, sample: dict, **options):
+    def create_text_segmentation(self, _, sample: dict, **options):
 
+        [[filepath, slicing]] = sample.items()
+        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
         array = []
 
-        for elem in self.txt_list[options['put']][sample['file']][sample['slice'][0]:sample['slice'][1]]:
+        for elem in self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]:
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
                 for idx in elem:
@@ -382,7 +411,7 @@ class CreateArray(object):
 
         return array
 
-    def create_timeseries(self, file_folder, row_number, **options):
+    def create_timeseries(self, _, row_number, **options):
         """
             Args:
                 row_number: номер строки с сырыми данными для предсказания значения,
@@ -403,92 +432,153 @@ class CreateArray(object):
 
         return array
 
-    def create_object_detection(self, txt_path: str, **options):
+    def create_object_detection(self, file_folder: str, txt_path: str, **options):
 
         """
-
         Args:
+            file_folder: str
+                Путь к файлу
             txt_path: str
                 Путь к файлу
             **options: Параметры сегментации:
-                height: int
+                height: int ######!!!!!!
                     Высота изображения.
-                width: int
+                width: int ######!!!!!!
                     Ширина изображения.
-                num_classes: tuple
+                num_classes: int
                     Количество классов.
-
         Returns:
             array: np.ndarray
                 Массивы в трёх выходах.
-
         """
 
-        height: int = options['height']
-        width: int = options['width']
+        def bbox_iou(boxes1, boxes2):
+
+            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
+            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
+
+            boxes1 = tf_concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
+                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
+            boxes2 = tf_concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
+                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
+
+            left_up = tf_maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = tf_minimum(boxes1[..., 2:], boxes2[..., 2:])
+
+            inter_section = tf_maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
+
+            return 1.0 * inter_area / union_area
+
+        # height: int = options['height']
+        # width: int = options['width']
         num_classes: int = options['num_classes']
+        zero_boxes_flag: bool = False
+        strides = np.array([8, 16, 32])
+        output_levels = len(strides)
+        train_input_sizes = 416
+        anchor_per_scale = 3
+        yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+                        [[36, 75], [76, 55], [72, 146]],
+                        [[142, 110], [192, 243], [459, 401]]]
+        anchors = (np.array(yolo_anchors).T / strides).T
+        max_bbox_per_scale = 100
+        train_input_size = random.choice([train_input_sizes])
+        train_output_sizes = train_input_size // strides
 
-        with open(os.path.join(self.file_folder, txt_path), 'r') as txt:
-            bb_file = txt.read()
-        real_boxes = []
-        for elem in bb_file.split('\n'):
-            tmp = []
-            if elem:
-                for num in elem.split(' '):
-                    tmp.append(float(num))
-                real_boxes.append(tmp)
+        if self.temporary['bounding_boxes']:
+            real_boxes = self.temporary['bounding_boxes'][txt_path]
+        else:
+            with open(os.path.join(file_folder, txt_path), 'r') as txt:
+                bb_file = txt.read()
+            real_boxes = []
+            for elem in bb_file.split('\n'):
+                tmp = []
+                if elem:
+                    for num in elem.split(','):
+                        tmp.append(int(num))
+                    real_boxes.append(tmp)
+
+        if not real_boxes:
+            zero_boxes_flag = True
+            real_boxes = [[0, 0, 0, 0, 0]]
         real_boxes = np.array(real_boxes)
-        real_boxes = real_boxes[:, [1, 2, 3, 4, 0]]
-        anchors = np.array(
-            [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
-        num_layers = 3
-        anchor_mask = [[6, 7, 8], [3, 4, 5], [0, 1, 2]]
+        label = [np.zeros((train_output_sizes[i], train_output_sizes[i], anchor_per_scale,
+                           5 + num_classes)) for i in range(output_levels)]
+        bboxes_xywh = [np.zeros((max_bbox_per_scale, 4)) for _ in range(output_levels)]
+        bbox_count = np.zeros((output_levels,))
 
-        real_boxes = np.array(real_boxes, dtype='float32')
-        input_shape = np.array((height, width), dtype='int32')
+        for bbox in real_boxes:
+            bbox_class_ind = int(bbox[4])
+            bbox_coordinate = np.array(bbox[:4])
+            one_hot = np.zeros(num_classes, dtype=np.float)
+            one_hot[bbox_class_ind] = 0.0 if zero_boxes_flag else 1.0
+            uniform_distribution = np.full(num_classes, 1.0 / num_classes)
+            deta = 0.01
+            smooth_one_hot = one_hot * (1 - deta) + deta * uniform_distribution
 
-        boxes_wh = real_boxes[..., 2:4] * input_shape
+            bbox_xywh = np.concatenate([(bbox_coordinate[2:] + bbox_coordinate[:2]) * 0.5,
+                                        bbox_coordinate[2:] - bbox_coordinate[:2]], axis=-1)
+            bbox_xywh_scaled = 1.0 * bbox_xywh[np.newaxis, :] / strides[:, np.newaxis]
 
-        cells = [13, 26, 52]
-        y_true = [np.zeros((cells[n], cells[n], len(anchor_mask[n]), 5 + num_classes), dtype='float32') for n in
-                  range(num_layers)]
-        box_area = boxes_wh[:, 0] * boxes_wh[:, 1]
+            iou = []
+            exist_positive = False
+            for i in range(output_levels):  # range(3):
+                anchors_xywh = np.zeros((anchor_per_scale, 4))
+                anchors_xywh[:, 0:2] = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32) + 0.5
+                anchors_xywh[:, 2:4] = anchors[i]
 
-        anchor_area = anchors[:, 0] * anchors[:, 1]
-        for r in range(len(real_boxes)):
-            correct_anchors = []
-            for anchor in anchors:
-                correct_anchors.append([min(anchor[0], boxes_wh[r][0]), min(anchor[1], boxes_wh[r][1])])
-            correct_anchors = np.array(correct_anchors)
-            correct_anchors_area = correct_anchors[:, 0] * correct_anchors[:, 1]
-            iou = correct_anchors_area / (box_area[r] + anchor_area - correct_anchors_area)
-            best_anchor = np.argmax(iou, axis=-1)
+                iou_scale = bbox_iou(bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh)
+                iou.append(iou_scale)
+                iou_mask = iou_scale > 0.3
 
-            for m in range(num_layers):
-                if best_anchor in anchor_mask[m]:
-                    h = np.floor(real_boxes[r, 0] * cells[m]).astype('int32')
-                    j = np.floor(real_boxes[r, 1] * cells[m]).astype('int32')
-                    k = anchor_mask[m].index(int(best_anchor))
-                    c = real_boxes[r, 4].astype('int32')
-                    y_true[m][j, h, k, 0:4] = real_boxes[r, 0:4]
-                    y_true[m][j, h, k, 4] = 1
-                    y_true[m][j, h, k, 5 + c] = 1
-                    break
+                if np.any(iou_mask):
+                    xind, yind = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32)
 
-        return np.array(y_true[0]), np.array(y_true[1]), np.array(y_true[2])
+                    label[i][yind, xind, iou_mask, :] = 0
+                    label[i][yind, xind, iou_mask, 0:4] = bbox_xywh
+                    label[i][yind, xind, iou_mask, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                    label[i][yind, xind, iou_mask, 5:] = smooth_one_hot
+
+                    bbox_ind = int(bbox_count[i] % max_bbox_per_scale)
+                    bboxes_xywh[i][bbox_ind, :4] = bbox_xywh
+                    bbox_count[i] += 1
+
+                    exist_positive = True
+
+            if not exist_positive:
+                best_anchor_ind = np.argmax(np.array(iou).reshape(-1), axis=-1)
+                best_detect = int(best_anchor_ind / anchor_per_scale)
+                best_anchor = int(best_anchor_ind % anchor_per_scale)
+                xind, yind = np.floor(bbox_xywh_scaled[best_detect, 0:2]).astype(np.int32)
+
+                label[best_detect][yind, xind, best_anchor, :] = 0
+                label[best_detect][yind, xind, best_anchor, 0:4] = bbox_xywh
+                label[best_detect][yind, xind, best_anchor, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                label[best_detect][yind, xind, best_anchor, 5:] = smooth_one_hot
+
+                bbox_ind = int(bbox_count[best_detect] % max_bbox_per_scale)
+                bboxes_xywh[best_detect][bbox_ind, :4] = bbox_xywh
+                bbox_count[best_detect] += 1
+
+        label_sbbox, label_mbbox, label_lbbox = label
+        sbboxes, mbboxes, lbboxes = bboxes_xywh
+
+        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),\
+               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),\
+               np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
 
     def create_scaler(self):
 
         pass
 
-    def create_tokenizer(self, mode: str, iteration: int, **options):
+    def create_tokenizer(self, put_id: int, **options):
 
         """
 
         Args:
-            mode: str
-                Режим input/output.
-            iteration: int
+            put_id: int
                 Номер входа или выхода.
             **options: Параметры токенайзера:
                        num_words: int
@@ -510,18 +600,16 @@ class CreateArray(object):
 
         """
 
-        self.tokenizer[f'{mode}_{iteration}'] = Tokenizer(**options)
+        self.tokenizer[put_id] = Tokenizer(**options)
 
         pass
 
-    def create_word2vec(self, mode: str, iteration: int, words: list, **options) -> None:
+    def create_word2vec(self, put_id: int, words: list, **options) -> None:
 
         """
 
         Args:
-            mode: str
-                Режим input/output.
-            iteration: int
+            put_id: int
                 Номер входа или выхода.
             words: list
                 Список слов для обучения Word2Vec.
@@ -542,7 +630,7 @@ class CreateArray(object):
 
         """
 
-        self.word2vec[f'{mode}_{iteration}'] = Word2Vec(words, **options)
+        self.word2vec[put_id] = Word2Vec(words, **options)
 
         pass
 

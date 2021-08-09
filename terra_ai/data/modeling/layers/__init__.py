@@ -3,6 +3,7 @@
 """
 
 from enum import Enum
+from typing import Any
 
 from ...mixins import BaseMixinData
 from ..extra import LayerTypeChoice
@@ -30,6 +31,16 @@ class LayerConfigDefaultData(LayerDefaultData):
 class LayerMixinData(BaseMixinData):
     main: LayerMainDefaultData = LayerMainDefaultData()
     extra: LayerExtraDefaultData = LayerExtraDefaultData()
+
+    @property
+    def defaults(self) -> Any:
+        return self.__class__()
+
+    @property
+    def merged(self) -> dict:
+        data = self.main.native()
+        data.update(**self.extra.native())
+        return data
 
 
 class LayerInputData(LayerMixinData):
@@ -451,9 +462,11 @@ class LayerCustomBlockData(LayerMixinData):
 
 
 class LayerSpaceToDepthData(LayerMixinData):
-    main: types.SpaceToDepth.ParametersMainData = types.CustomBlock.ParametersMainData()
+    main: types.SpaceToDepth.ParametersMainData = (
+        types.SpaceToDepth.ParametersMainData()
+    )
     extra: types.SpaceToDepth.ParametersExtraData = (
-        types.CustomBlock.ParametersExtraData()
+        types.SpaceToDepth.ParametersExtraData()
     )
 
 
