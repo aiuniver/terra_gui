@@ -3,12 +3,12 @@
 """
 
 from ..mixins import BaseMixinData
-from ..types import AliasType
+from ..types import IDType
 from .extra import CheckpointIndicatorChoice, CheckpointModeChoice, CheckpointTypeChoice
 
 
 class CheckpointData(BaseMixinData):
-    layer: AliasType
+    layer: IDType
     type: CheckpointTypeChoice = CheckpointTypeChoice.Metrics
     indicator: CheckpointIndicatorChoice = CheckpointIndicatorChoice.Val
     mode: CheckpointModeChoice = CheckpointModeChoice.Max
