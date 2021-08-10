@@ -9,7 +9,7 @@
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
                 <template v-for="(dataset, key) of datasets">
-                  <Card
+                  <CardDataset
                     :dataset="dataset"
                     :key="key"
                     @clickCard="click"
@@ -27,11 +27,11 @@
 <script>
 import Filters from "@/components/datasets/Filters.vue";
 import { mapGetters } from "vuex";
-import Card from "@/components/datasets/Card";
+import CardDataset from "@/components/datasets/cards/CardDataset";
 
 export default {
   components: {
-    Card,
+    CardDataset,
     Filters,
   },
   data: () => ({
