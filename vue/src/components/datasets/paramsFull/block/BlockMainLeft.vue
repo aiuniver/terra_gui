@@ -14,6 +14,7 @@
               :key="'cardLayersLeft' + i"
               @click-btn="click($event, i)"
             >
+              <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
               <template v-for="(data, index) of input">
                 <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
               </template>
@@ -53,6 +54,17 @@ export default {
     ...mapGetters({
       input: 'datasets/getTypeInput',
     }),
+    filesDrop: {
+      set(value) {
+        this.$store.dispatch('datasets/setFilesDrop', value);
+      },
+      get() {
+        const files = this.$store.getters['datasets/getFilesDrop'];
+        return files.map(({ title, path}) => {
+          return { label: title, value: path}
+        })
+      },
+    },
     height() {
       const height = this.$store.getters['settings/height']({
         clean: true,

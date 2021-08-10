@@ -1,58 +1,58 @@
 <template>
   <div class="block-header" @drop="onDrop($event)" @dragover.prevent>
-    <div v-if="files.length" class="block-header__main">
+    <div v-if="filesDrop.length" class="block-header__main">
       <Cards>
-          <template v-for="({ title, color, type }, i) of files">
-            <CardFile
-              v-if="type === 'folder'"
-              :title="title"
-              :color="color"
-              :type="type"
-              :key="'files_' + i"
-            />
-
-          </template>
-          <!-- <CardTable/> -->
+        <template v-for="({ title, color, type }, i) of filesDrop">
+          <CardFile v-if="type === 'folder'" :title="title" :color="color" :type="type" :key="'files_' + i" />
+        </template>
+        <!-- <CardTable/> -->
       </Cards>
       <div class="empty"></div>
     </div>
     <div v-else class="inner">
       <div class="block-header__overlay">
         <div class="block-header__overlay--icon"></div>
-        <div class="block-header__overlay--title">
-          Перетащите папку или файл для начала работы с содержимым архива
-        </div>
+        <div class="block-header__overlay--title">Перетащите папку или файл для начала работы с содержимым архива</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import CardFile from "../components/card/CardFile.vue";
+import CardFile from '../components/card/CardFile.vue';
 // import CardTable from "../components/card/CardTable";
-import Cards from "../components/card/Cards.vue";
+import Cards from '../components/card/Cards.vue';
 export default {
-  name: "BlockHeader",
+  name: 'BlockHeader',
   components: {
     CardFile,
     // CardTable,
     Cards,
   },
-  data: () => ({
-    files: [
-      // { title: 'BMW', color: '#FFB054'},
-      // { title: 'AUDI', color: '#8E51F2'},
-      // { title: 'Ferrari', color: '#89D764'}
-    ],
-  }),
+  data: () => ({}),
+  computed: {
+    filesDrop: {
+      set(value) {
+        this.$store.dispatch('datasets/setFilesDrop', value);
+      },
+      get() {
+        return this.$store.getters['datasets/getFilesDrop'];
+      },
+    },
+  },
   methods: {
-    onDrop(e) {
-      console.log(e);
-      // this.files.push({ title: '', color: ''})
-      const data = e.dataTransfer.getData("CardDataType");
-      const { title, color, type } = JSON.parse(data);
-      console.log(JSON.parse(data));
-      this.files.push({ title, color, type });
+    onDrop({ dataTransfer }) {
+      const data = JSON.parse(dataTransfer.getData('CardDataType'));
+      const index = this.filesDrop.findIndex(({ title }) => {
+        return data.title === title;
+      });
+      console.log(index);
+      if (index === -1) {
+        this.filesDrop.push({ ...data });
+        this.filesDrop = [...this.filesDrop];
+      } else {
+        this.$Notify.warning({ title: 'Внимание!', message: 'Каталог уже выбран' });
+      }
     },
   },
   mounted() {
@@ -62,7 +62,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.int{
+.int {
   padding: 10px;
 }
 .inner {

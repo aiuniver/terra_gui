@@ -4,7 +4,8 @@ export default {
   state: () => ({
     creation: {},
     datasets: [],
-    files: [],
+    filesSource: [],
+    filesDrop: [],
     selected: null,
     tags: [],
     settings: {},
@@ -33,8 +34,11 @@ export default {
     SET_FULL(state, value) {
       state.full = value;
     },
-    SET_FILES(state, value) {
-      state.files = value;
+    SET_FILES_SOURCE(state, value) {
+      state.filesSource = value;
+    },
+    SET_FILES_DROP(state, value) {
+      state.filesDrop = value;
     },
     SET_CREATION(state, value) {
       state.creation = value;
@@ -96,8 +100,11 @@ export default {
     setFull({ commit }, value) {
       commit("SET_FULL", value);
     },
-    setFiles({ commit }, value) {
-      commit("SET_FILES", value);
+    setFilesSource({ commit }, value) {
+      commit("SET_FILES_SOURCE", value);
+    },
+    setFilesDrop({ commit }, value) {
+      commit("SET_FILES_DROP", value);
     },
   },
   getters: {
@@ -110,8 +117,11 @@ export default {
     getSelected({ selected }) {
       return selected;
     },
-    getFiles({ files }) {
-      return files;
+    getFilesSource({ filesSource }) {
+      return filesSource;
+    },
+    getFilesDrop({ filesDrop }) {
+      return filesDrop;
     },
     getFull({ full }) {
       return full;

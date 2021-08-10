@@ -80,7 +80,7 @@ export default {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
           if (file_manager) {
-            this.$store.dispatch('datasets/setFiles', file_manager);
+            this.$store.dispatch('datasets/setFilesSource', file_manager);
           }
           this.loading = false;
           this.full = true;
@@ -97,7 +97,7 @@ export default {
       this.dataset = select;
     },
     openFull() {
-      if (this.$store.state.datasets.files.length) {
+      if (this.$store.state.datasets.filesSource.length) {
         this.full = true;
       } else {
         this.$Modal.alert({
