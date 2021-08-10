@@ -1,3 +1,4 @@
+from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 
@@ -5,6 +6,56 @@ from ..utils import prepare_pydantic_field
 
 
 Defaults = {
+    "datasets": {
+        "creation": {
+            "inputs": {
+                "base": [
+                    {
+                        "type": "text",
+                        "name": "name",
+                        "label": "Название входа",
+                        "parse": "name",
+                    },
+                    {
+                        "type": "select",
+                        "name": "type",
+                        "label": "Тип данных",
+                        "parse": "type",
+                        "list": list(
+                            map(
+                                lambda item: {"value": item.value, "label": item.name},
+                                list(LayerInputTypeChoice),
+                            )
+                        ),
+                    },
+                ],
+                "type": {},
+            },
+            "outputs": {
+                "base": [
+                    {
+                        "type": "text",
+                        "name": "name",
+                        "label": "Название выхода",
+                        "parse": "name",
+                    },
+                    {
+                        "type": "select",
+                        "name": "type",
+                        "label": "Тип данных",
+                        "parse": "type",
+                        "list": list(
+                            map(
+                                lambda item: {"value": item.value, "label": item.name},
+                                list(LayerOutputTypeChoice),
+                            )
+                        ),
+                    },
+                ],
+                "type": {},
+            },
+        },
+    },
     "modeling": {
         "layer_form": [
             {

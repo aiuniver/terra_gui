@@ -8,7 +8,7 @@ import binascii
 
 from typing import Type
 from pydantic import FilePath
-from pydantic.types import conint, confloat, PositiveInt
+from pydantic.types import conint, confloat, constr, PositiveInt
 
 from .exceptions import (
     AliasException,
@@ -22,11 +22,15 @@ ConstrainedIntValueGe0 = conint(ge=0)
 ConstrainedIntValueGe2 = conint(ge=2)
 ConstrainedIntValueGe0Le2 = conint(ge=0, le=2)
 StrictIntValueGe0 = conint(strict=True, ge=0)
+
 ConstrainedFloatValueGe0 = confloat(ge=0)
 ConstrainedFloatValueLe0 = confloat(le=0)
 ConstrainedFloatValueGe0Le1 = confloat(ge=0, le=1)
 ConstrainedFloatValueGe0Le100 = confloat(ge=0, le=100)
 StrictFloatValueGe0 = confloat(strict=True, ge=0)
+
+
+ConstrainedLayerNameValue = constr(max_length=16)
 
 
 class IDType(PositiveInt):
