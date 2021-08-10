@@ -1,61 +1,115 @@
-from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 
 from ..utils import prepare_pydantic_field
+from ..choices import (
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
+    LayerNetChoice,
+    LayerScalerChoice,
+)
 
 
 Defaults = {
     "datasets": {
         "creation": {
-            "inputs": {
-                "base": [
-                    {
-                        "type": "text",
-                        "name": "name",
-                        "label": "Название входа",
-                        "parse": "name",
+            "input": [
+                {
+                    "type": "text",
+                    "label": "Название входа",
+                    "name": "name",
+                    "parse": "name",
+                },
+                {
+                    "type": "select",
+                    "label": "Тип данных",
+                    "name": "type",
+                    "parse": "type",
+                    "value": "Image",
+                    "list": list(
+                        map(
+                            lambda item: {"value": item.name, "label": item.value},
+                            list(LayerInputTypeChoice),
+                        )
+                    ),
+                    "fields": {
+                        "Image": [
+                            {
+                                "type": "number",
+                                "label": "Высота",
+                                "name": "width",
+                                "parse": "width",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Ширина",
+                                "name": "height",
+                                "parse": "height",
+                            },
+                            {
+                                "type": "select",
+                                "label": "Сеть",
+                                "name": "net",
+                                "parse": "net",
+                                "value": "convolutional",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerNetChoice),
+                                    )
+                                ),
+                            },
+                            {
+                                "type": "select",
+                                "label": "Скейлер",
+                                "name": "scaler",
+                                "parse": "scaler",
+                                "value": "no_scaler",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerScalerChoice),
+                                    )
+                                ),
+                            },
+                            {
+                                "type": "checkbox",
+                                "label": "Аугментация",
+                                "name": "augmentation",
+                                "parse": "augmentation",
+                                "value": False,
+                            },
+                        ]
                     },
-                    {
-                        "type": "select",
-                        "name": "type",
-                        "label": "Тип данных",
-                        "parse": "type",
-                        "list": [{"value": "", "label": ""}]
-                        + list(
-                            map(
-                                lambda item: {"value": item.value, "label": item.name},
-                                list(LayerInputTypeChoice),
-                            )
-                        ),
-                    },
-                ],
-                "type": {},
-            },
-            "outputs": {
-                "base": [
-                    {
-                        "type": "text",
-                        "name": "name",
-                        "label": "Название выхода",
-                        "parse": "name",
-                    },
-                    {
-                        "type": "select",
-                        "name": "type",
-                        "label": "Тип данных",
-                        "parse": "type",
-                        "list": [{"value": "", "label": ""}]
-                        + list(
-                            map(
-                                lambda item: {"value": item.value, "label": item.name},
-                                list(LayerOutputTypeChoice),
-                            )
-                        ),
-                    },
-                ],
-                "type": {},
-            },
+                },
+            ],
+            "output": [
+                {
+                    "type": "text",
+                    "name": "name",
+                    "label": "Название выхода",
+                    "parse": "name",
+                },
+                {
+                    "type": "select",
+                    "name": "type",
+                    "label": "Тип данных",
+                    "parse": "type",
+                    "value": "Image",
+                    "list": list(
+                        map(
+                            lambda item: {"value": item.name, "label": item.value},
+                            list(LayerOutputTypeChoice),
+                        )
+                    ),
+                },
+            ],
         },
     },
     "modeling": {
