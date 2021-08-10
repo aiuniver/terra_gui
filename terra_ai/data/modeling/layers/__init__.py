@@ -7,7 +7,7 @@ from typing import Any
 
 from ...mixins import BaseMixinData
 from ..extra import LayerTypeChoice
-from .extra import ActivationChoice
+from .extra import ActivationChoice, LayerConfigData
 
 from . import types
 
@@ -31,6 +31,10 @@ class LayerConfigDefaultData(LayerDefaultData):
 class LayerMixinData(BaseMixinData):
     main: LayerMainDefaultData = LayerMainDefaultData()
     extra: LayerExtraDefaultData = LayerExtraDefaultData()
+
+    @property
+    def config(self) -> LayerConfigData:
+        return getattr(types, Layer(self.__class__.__name__).name).LayerConfig
 
     @property
     def defaults(self) -> Any:
