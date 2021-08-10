@@ -21,7 +21,8 @@ Defaults = {
                         "name": "type",
                         "label": "Тип данных",
                         "parse": "type",
-                        "list": list(
+                        "list": [{"value": "", "label": ""}]
+                        + list(
                             map(
                                 lambda item: {"value": item.value, "label": item.name},
                                 list(LayerInputTypeChoice),
@@ -44,7 +45,8 @@ Defaults = {
                         "name": "type",
                         "label": "Тип данных",
                         "parse": "type",
-                        "list": list(
+                        "list": [{"value": "", "label": ""}]
+                        + list(
                             map(
                                 lambda item: {"value": item.value, "label": item.name},
                                 list(LayerOutputTypeChoice),
