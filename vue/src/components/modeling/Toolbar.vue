@@ -3,7 +3,7 @@
     <ul class="toolbar__menu">
       <template v-for="({ title, name, disabled, icon, hr }, i) of toolbar">
         <li class="toolbar__menu--item" :key="i" :disabled="disabled" @click.prevent="click(name)">
-          <i :class="['icon', icon]" :title="title"></i>
+          <i :class="['t-icon', icon]" :title="title"></i>
         </li>
         <hr v-if="hr" :key="`hr_${i}`" />
       </template>
@@ -51,6 +51,7 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
+      cursor: pointer;
       &[disabled='disabled'] {
         opacity: 0.1;
         cursor: default;

@@ -1,21 +1,15 @@
-from typing import Optional, List, Dict, Union
-from pydantic.types import FilePath, PositiveInt, DirectoryPath
+from typing import Optional, List, Dict
+from pydantic.types import PositiveInt
 
-from ......mixins import BaseMixinData
+from ...extra import ParametersBaseData
 from .....extra import LayerScalerChoice
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     separator: Optional[str]
     encoding: str = "utf-8"
     cols_names: Optional[List[str]]
     transpose: bool
-
-    trend: bool
-    trend_limit: Optional[str]
-    length: Optional[PositiveInt]
-    step: Optional[PositiveInt]
 
     pad_sequences: Optional[bool]
     example_length: Optional[PositiveInt]
@@ -28,5 +22,5 @@ class ParametersData(BaseMixinData):
     MinMaxScaler: Optional[str]
     Categorical: Optional[str]
     Categorical_ranges: Optional[str]
-    cat_cols: Optional[Dict[PositiveInt, str]]
+    cat_cols: Optional[Dict[str, str]]
     one_hot_encoding: Optional[str]

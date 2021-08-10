@@ -1,6 +1,6 @@
 <template>
   <div class="t-input">
-    <label class="t-input__label">{{ label }}</label>
+    <label class="t-input__label" :style="{color: labelColor}">{{ label }}</label>
     <input v-model="input" class="t-input__input" :type="type" :name="parse" :value="value" @blur="$emit('blur', $event.target.value)" />
   </div>
 </template>
@@ -22,6 +22,10 @@ export default {
     },
     parse: {
       type: String,
+    },
+    labelColor: {
+      type: String,
+      default: 'A7BED3'
     },
   },
   data: () => ({

@@ -19,14 +19,8 @@
           ></div>
 
           <div class="files-menu__title" @click="onToggleHandler($event, node)">
-            <span
-              :class="[
-                'icons files-menu__title--toggle',
-                { rotate: node.isExpanded },
-              ]"
-              v-if="node.children.length"
-            >
-            </span>
+            <span v-if="node.children.length" :class="['icons files-menu__title--toggle', { rotate: node.isExpanded }]" />
+            <span v-else class="files-menu__title--empty" />
             <span
               v-if="node.children.length"
               class="icons files-menu__title--folder"
@@ -37,7 +31,7 @@
         </div>
 
         <files-menu
-          v-if="node.children && node.children.length && node.isExpanded"
+          v-if="node.children && node.children.length && !node.isExpanded"
           :value="node.children"
           :level="node.level"
           :parentInd="nodeInd"
@@ -75,8 +69,6 @@
     font-weight: normal;
     font-size: 14px;
     line-height: 17px;
-    /* identical to box height, or 121% */
-
     color: #ffffff;
     &--toggle {
       width: 15px;
@@ -86,6 +78,11 @@
       &.rotate {
         transform: rotate(90deg);
       }
+    }
+    &--empty {
+      width: 15px;
+      height: 15px;
+      margin-right: 7px;
     }
     &--folder {
       width: 20px;
@@ -141,7 +138,7 @@
 }
 
 .files-menu-gap {
-  width: 50px;
+  width: 25px;
   min-height: 1px;
 }
 
@@ -196,6 +193,7 @@ export default {
       type: Boolean,
       default: true,
     },
+    path: String,
   },
   data() {
     return {
@@ -231,13 +229,9 @@ export default {
     },
   },
   methods: {
-    dragstart(e, node) {
-      console.log(e);
-      const dataTransfer = e.dataTransfer;
-      dataTransfer.setData("CardDataType", JSON.stringify(node));
+    dragstart({ dataTransfer }, { path, title, type }) {
+      dataTransfer.setData("CardDataType", JSON.stringify({ path, title, type }));
       dataTransfer.effectAllowed = "move";
-      // Add visual cues to show that the card is no longer in it's position.
-      // e.target.style.opacity = 0.2;
     },
 
     getNodes(nodeModels, parentPath = [], isVisible = true) {
@@ -247,55 +241,56 @@ export default {
       });
     },
 
-    getNode(path, nodeModel = null, siblings = null, isVisible = null) {
-      const ind = path.slice(-1)[0];
+    getNode(fpath, nodeModel = null, siblings = null, isVisible = null) {
+      const ind = fpath.slice(-1)[0];
 
       // calculate nodeModel, siblings, isVisible fields if it is not passed as arguments
-      siblings = siblings || this.getNodeSiblings(this.currentValue, path);
+      siblings = siblings || this.getNodeSiblings(this.currentValue, fpath);
       nodeModel = nodeModel || (siblings && siblings[ind]) || null;
 
       if (isVisible == null) {
-        isVisible = this.isVisible(path);
+        isVisible = this.isVisible(fpath);
       }
 
       if (!nodeModel) return null;
 
       const isExpanded =
         nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
-      const isDraggable =
-        nodeModel.isDraggable == void 0 ? true : !!nodeModel.isDraggable;
-      const isSelectable =
-        nodeModel.isSelectable == void 0 ? true : !!nodeModel.isSelectable;
+      // const isDraggable =
+      //   nodeModel.isDraggable == void 0 ? true : !!nodeModel.isDraggable;
+      // const isSelectable =
+      //   nodeModel.isSelectable == void 0 ? true : !!nodeModel.isSelectable;
 
       const node = {
         // define the all ISlTreeNodeModel props
         title: nodeModel.title,
+        path: nodeModel.path,
         type: nodeModel.type,
         isLeaf: !!nodeModel.isLeaf,
         children: nodeModel.children
-          ? this.getNodes(nodeModel.children, path, isExpanded)
+          ? this.getNodes(nodeModel.children, fpath, isExpanded)
           : [],
         isSelected: !!nodeModel.isSelected,
         isExpanded,
         isVisible,
-        isDraggable,
-        isSelectable,
+        // isDraggable,
+        // isSelectable,
         data: nodeModel.data !== void 0 ? nodeModel.data : {},
 
         // define the all ISlTreeNode computed props
-        path: path,
-        pathStr: JSON.stringify(path),
-        level: path.length,
+        fpath: fpath,
+        pathStr: JSON.stringify(fpath),
+        level: fpath.length,
       };
       return node;
     },
 
-    isVisible(path) {
-      if (path.length < 2) return true;
+    isVisible(fpath) {
+      if (fpath.length < 2) return true;
       let nodeModels = this.currentValue;
 
-      for (let i = 0; i < path.length - 1; i++) {
-        let ind = path[i];
+      for (let i = 0; i < fpath.length - 1; i++) {
+        let ind = fpath[i];
         let nodeModel = nodeModels[ind];
         let isExpanded =
           nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
@@ -313,7 +308,7 @@ export default {
 
     onToggleHandler(event, node) {
       if (!this.allowToggleBranch) return;
-      this.updateNode(node.path, { isExpanded: !node.isExpanded });
+      this.updateNode(node.fpath, { isExpanded: !node.isExpanded });
       event.stopPropagation();
     },
 
@@ -326,13 +321,13 @@ export default {
       return this.getParent().getRoot();
     },
 
-    updateNode(path, patch) {
+    updateNode(fpath, patch) {
       if (!this.isRoot) {
-        this.getParent().updateNode(path, patch);
+        this.getParent().updateNode(fpath, patch);
         return;
       }
 
-      const pathStr = JSON.stringify(path);
+      const pathStr = JSON.stringify(fpath);
       const newNodes = this.copy(this.currentValue);
       this.traverse((node, nodeModel) => {
         if (node.pathStr !== pathStr) return;

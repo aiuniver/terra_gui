@@ -1,16 +1,17 @@
-from typing import Optional, List, Union
-from pydantic.types import PositiveInt, DirectoryPath, FilePath
+from typing import Optional, List
+from pydantic.types import PositiveInt
 
-from ......mixins import BaseMixinData
+from ...extra import ParametersBaseData
 from .....extra import LayerScalerChoice, LayerTaskTypeChoice
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
     separator: Optional[str]
+    trend: bool
+    trend_limit: Optional[str]
     length: PositiveInt
-    depth: PositiveInt
+    depth:  Optional[PositiveInt]
     step: PositiveInt
-    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
+    scaler: Optional[LayerScalerChoice] = LayerScalerChoice.no_scaler
     task_type: LayerTaskTypeChoice = LayerTaskTypeChoice.timeseries

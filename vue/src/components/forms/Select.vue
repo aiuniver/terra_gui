@@ -3,6 +3,7 @@
     <label class="field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
+      class="field__select"
       v-model="select"
       clearable
       size="small"
@@ -114,6 +115,9 @@ export default {
     font-size: 0.75rem;
     max-width: 109px;
     width: 109px;
+  }
+  &__select {
+    flex: 0 0 100px;
   }
 }
 </style>

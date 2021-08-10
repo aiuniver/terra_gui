@@ -6,16 +6,14 @@
         <input type="text" class="terra-input large-input" name="name" id="name">
       </div>
       <div class="dataset-field">
-        <label for="tags">Теги</label>
+        <label>Теги</label>
         <div class="tags">
-          <button type="button" class="add-btn"><i class="plus"></i><span>Добавить</span></button>
-          <input type="text" class="terra-input" onkeydown="this.style.width = ((this.value.length + 1) * 8) + 'px';">
-          <input type="text" class="terra-input" value="images" onkeydown="this.style.width = ((this.value.length + 1) * 8) + 'px';">
-          <input type="text" class="terra-input" value="images" onkeydown="this.style.width = ((this.value.length + 1) * 8) + 'px';">
+          <button type="button" class="add-btn" @click="tagsCount++"><i class="plus"></i><span>Добавить</span></button>
+          <input type="text" class="terra-input" @keydown="inputLength" v-for="tag in tagsCount" :key="tag">
         </div>
       </div>
       <div class="dataset-field">
-        <label for="slider">Train / Val / Test</label>
+        <label>Train / Val / Test</label>
         <div class="slider">
           <DoubleSlider/>
         </div>
@@ -49,6 +47,16 @@ export default {
   components: {
     DoubleSlider,
   },
+  data(){
+    return {
+      tagsCount: 2
+    }
+  },
+  methods: {
+    inputLength(e){
+      e.target.style.width = ((e.target.value.length + 1) * 8) + 'px';
+    }
+  }
 };
 </script>
 
@@ -103,6 +111,8 @@ export default {
   .tags{
     display: flex;
     font-size: 12px;
+    max-width: 400px;
+    flex-wrap: wrap;
     .terra-input{
       margin-left: 10px;
       padding: 2px 4px;
@@ -136,5 +146,8 @@ export default {
   }
   .checkout-switch{
     margin-top: 10px;
+  }
+  label{
+    white-space: nowrap;
   }
 </style>

@@ -15,7 +15,7 @@ export default {
       if (!data) {
         return;
       }
-      const { project, defaults: { modeling: { layers_types } } } = data;
+      const { project, defaults: { modeling: { layers_types }, datasets: { creation } } } = data;
       const { model } = project;
       const list = Object.keys(layers_types).map((key) => {
         return { label: key, value: key };
@@ -23,6 +23,7 @@ export default {
       commit("SET_PROJECT", project);
       commit("modeling/SET_MODELING", { layers_types, list }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
+      commit("datasets/SET_CREATION", creation, { root: true });
     },
     async saveProject({ dispatch }, name) {
       console.log(name);

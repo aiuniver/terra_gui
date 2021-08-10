@@ -12,7 +12,7 @@
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
-          <button @click="download" v-text="'Загрузить'"/>   
+          <TButton @click.native="download" :loading="loading" />
         </div>
       </div>
     </div>
@@ -20,28 +20,31 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import DatasetTab from "@/components/datasets/params/DatasetTab.vue";
-import DatasetButton from "./DatasetButton.vue";
+import { mapGetters } from 'vuex';
+import DatasetTab from '@/components/datasets/params/DatasetTab.vue';
+import DatasetButton from './DatasetButton.vue';
+import TButton from '@/components/forms/Button.vue';
 export default {
-  name: "Settings",
+  name: 'Settings',
   components: {
     DatasetTab,
     DatasetButton,
+    TButton,
   },
   data: () => ({
+    loading: false,
     dataset: {},
     interval: null,
     inputs: 1,
     outputs: 1,
     rules: {
-      length: (len) => (v) => (v || "").length >= len || `Length < ${len}`,
-      required: (len) => len.length !== 0 || `Not be empty`,
+      length: len => v => (v || '').length >= len || `Length < ${len}`,
+      required: len => len.length !== 0 || `Not be empty`,
     },
   }),
   computed: {
     ...mapGetters({
-      settings: "datasets/getSettings",
+      settings: 'datasets/getSettings',
     }),
     inputLayer() {
       const int = +this.inputs;
@@ -55,30 +58,36 @@ export default {
     },
     full: {
       set(val) {
-        this.$store.dispatch("datasets/setFull", val);
+        this.$store.dispatch('datasets/setFull', val);
       },
       get() {
-        return this.$store.getters["datasets/getFull"];
+        return this.$store.getters['datasets/getFull'];
       },
     },
   },
   methods: {
-    createInterval() {
+    async createInterval() {
       this.interval = setTimeout(async () => {
-        const data = await this.$store.dispatch("datasets/loadProgress", {});
-        const { finished, message, percent, data: { file_manager } } = data;
+        const data = await this.$store.dispatch('datasets/loadProgress', {});
+        const {
+          finished,
+          message,
+          percent,
+          data: { file_manager },
+        } = data;
         if (!data || finished) {
           // clearTimeout(this.interval);
-          this.$store.dispatch("messages/setProgressMessage", message);
-          this.$store.dispatch("messages/setProgress", percent);
+          this.$store.dispatch('messages/setProgressMessage', message);
+          this.$store.dispatch('messages/setProgress', percent);
           if (file_manager) {
-            this.$store.dispatch("datasets/setFiles", file_manager);
+            this.$store.dispatch('datasets/setFilesSource', file_manager);
           }
-
+          this.loading = false;
+          this.full = true;
         } else {
-          this.$store.dispatch("messages/setProgress", percent);
-          this.$store.dispatch("messages/setProgressMessage", message);
-          this.createInterval()
+          this.$store.dispatch('messages/setProgress', percent);
+          this.$store.dispatch('messages/setProgressMessage', message);
+          this.createInterval();
         }
         console.log(data);
       }, 1000);
@@ -88,27 +97,29 @@ export default {
       this.dataset = select;
     },
     openFull() {
-      if (this.$store.state.datasets.files.length) {
-        this.full = true
+      if (this.$store.state.datasets.filesSource.length) {
+        this.full = true;
       } else {
         this.$Modal.alert({
           width: 250,
           title: 'Внимание!',
-          content: 'Загрузите датасет'
-        })
+          content: 'Загрузите датасет',
+        });
       }
     },
     async download() {
+      console.log('dfdfdfdfdfdf');
       const { mode, value } = this.dataset;
       if (mode && value) {
-        const data = await this.$store.dispatch("datasets/sourceLoad", { mode, value });
-        console.log(data)
+        this.loading = true;
+        const data = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
+        console.log(data);
         if (data) {
-          this.createInterval()
+          this.createInterval();
         }
       } else {
-        this.$store.dispatch("messages/setMessage", {
-          error: "Выберите файл",
+        this.$store.dispatch('messages/setMessage', {
+          error: 'Выберите файл',
         });
       }
     },
@@ -132,7 +143,7 @@ export default {
     height: 38px;
     background-color: #17212b;
     border-radius: 4px 0px 0px 4px;
-    border: 1px solid #A7BED3;
+    border: 1px solid #a7bed3;
     padding: 10px 7px 12px 7px;
     cursor: pointer;
     &--icon {
@@ -145,15 +156,13 @@ export default {
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
-      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxOCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTJIMTJDMTIuNTUgMTIgMTMgMTEuNTUgMTMgMTFDMTMgMTAuNDUgMTIuNTUgMTAgMTIgMTBIMUMwLjQ1IDEwIDAgMTAuNDUgMCAxMUMwIDExLjU1IDAuNDUgMTIgMSAxMlpNMSA3SDlDOS41NSA3IDEwIDYuNTUgMTAgNkMxMCA1LjQ1IDkuNTUgNSA5IDVIMUMwLjQ1IDUgMCA1LjQ1IDAgNkMwIDYuNTUgMC40NSA3IDEgN1pNMCAxQzAgMS41NSAwLjQ1IDIgMSAySDEyQzEyLjU1IDIgMTMgMS41NSAxMyAxQzEzIDAuNDUgMTIuNTUgMCAxMiAwSDFDMC40NSAwIDAgMC40NSAwIDFaTTE3LjMgOC44OEwxNC40MiA2TDE3LjMgMy4xMkMxNy42OSAyLjczIDE3LjY5IDIuMSAxNy4zIDEuNzFDMTYuOTEgMS4zMiAxNi4yOCAxLjMyIDE1Ljg5IDEuNzFMMTIuMyA1LjNDMTEuOTEgNS42OSAxMS45MSA2LjMyIDEyLjMgNi43MUwxNS44OSAxMC4zQzE2LjI4IDEwLjY5IDE2LjkxIDEwLjY5IDE3LjMgMTAuM0MxNy42OCA5LjkxIDE3LjY5IDkuMjcgMTcuMyA4Ljg4WiIgZmlsbD0iI0E3QkVEMyIvPgo8L3N2Zz4K)
-      }
+      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxOCAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTJIMTJDMTIuNTUgMTIgMTMgMTEuNTUgMTMgMTFDMTMgMTAuNDUgMTIuNTUgMTAgMTIgMTBIMUMwLjQ1IDEwIDAgMTAuNDUgMCAxMUMwIDExLjU1IDAuNDUgMTIgMSAxMlpNMSA3SDlDOS41NSA3IDEwIDYuNTUgMTAgNkMxMCA1LjQ1IDkuNTUgNSA5IDVIMUMwLjQ1IDUgMCA1LjQ1IDAgNkMwIDYuNTUgMC40NSA3IDEgN1pNMCAxQzAgMS41NSAwLjQ1IDIgMSAySDEyQzEyLjU1IDIgMTMgMS41NSAxMyAxQzEzIDAuNDUgMTIuNTUgMCAxMiAwSDFDMC40NSAwIDAgMC40NSAwIDFaTTE3LjMgOC44OEwxNC40MiA2TDE3LjMgMy4xMkMxNy42OSAyLjczIDE3LjY5IDIuMSAxNy4zIDEuNzFDMTYuOTEgMS4zMiAxNi4yOCAxLjMyIDE1Ljg5IDEuNzFMMTIuMyA1LjNDMTEuOTEgNS42OSAxMS45MSA2LjMyIDEyLjMgNi43MUwxNS44OSAxMC4zQzE2LjI4IDEwLjY5IDE2LjkxIDEwLjY5IDE3LjMgMTAuM0MxNy42OCA5LjkxIDE3LjY5IDkuMjcgMTcuMyA4Ljg4WiIgZmlsbD0iI0E3QkVEMyIvPgo8L3N2Zz4K);
+    }
   }
   &__items {
-    &--btn{
-      button{
-        width: 100px;
-        float: right;
-      }
+    &--btn {
+      float: right;
+      width: 150px;
     }
     &--item {
       padding: 20px;
@@ -168,8 +177,5 @@ export default {
       background-color: #0e1621;
     }
   }
-}
-button {
-  font-size: 0.875rem;
 }
 </style>
