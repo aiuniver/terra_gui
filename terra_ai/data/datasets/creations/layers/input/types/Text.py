@@ -1,18 +1,17 @@
 from enum import Enum
-from typing import Optional, List, Union
-from pydantic import validator, FilePath, DirectoryPath, PositiveInt
+from typing import Optional, List
+from pydantic import validator, PositiveInt
 
-from ......mixins import BaseMixinData
+from ...extra import ParametersBaseData
 from .....extra import LayerPrepareMethodChoice
 
 
 class TextModeChoice(str, Enum):
-    completely = 'Целиком'
-    length_and_step = 'По длине и шагу'
+    completely = "Целиком"
+    length_and_step = "По длине и шагу"
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
     pymorphy: Optional[bool] = False
     embedding: Optional[bool] = False

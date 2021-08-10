@@ -1,12 +1,11 @@
-from typing import Optional, List, Dict, Union
-from pydantic.types import FilePath, PositiveInt, DirectoryPath
+from typing import Optional, List, Dict
+from pydantic.types import PositiveInt
 
-from ......mixins import BaseMixinData
+from ...extra import ParametersBaseData
 from .....extra import LayerScalerChoice
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     separator: Optional[str]
     encoding: str = "utf-8"
     cols_names: Optional[List[str]]
