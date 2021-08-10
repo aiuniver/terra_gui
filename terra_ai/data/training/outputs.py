@@ -2,7 +2,7 @@
 ## Структура данных параметров `output`-слоев
 """
 
-from typing import List, Optional, Any, Union
+from typing import List, Any
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError

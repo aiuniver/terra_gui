@@ -1,19 +1,19 @@
 from enum import Enum
-from typing import Optional, List, Union
-from pydantic import validator, FilePath, DirectoryPath, PositiveInt
+from typing import Optional, List
+from pydantic import validator, PositiveInt
 
-from ......mixins import BaseMixinData
+from ...extra import ParametersBaseData
 from .....extra import LayerPrepareMethodChoice
 
 
 class TextModeChoice(str, Enum):
-    completely = 'Целиком'
-    length_and_step = 'По длине и шагу'
+    completely = "completely"
+    length_and_step = "length_and_step"
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     embedding: Optional[bool] = False
     bag_of_words: Optional[bool] = False
@@ -21,9 +21,9 @@ class ParametersData(BaseMixinData):
     word_to_vec_size: Optional[PositiveInt]
     delete_symbols: Optional[str]
     text_mode: TextModeChoice = TextModeChoice.completely
-    length: PositiveInt
-    step: PositiveInt
-    max_words: PositiveInt
+    length: Optional[PositiveInt]
+    step: Optional[PositiveInt]
+    max_words: Optional[PositiveInt]
     put: Optional[str]
 
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding

@@ -1,10 +1,9 @@
-from typing import Optional, List, Union
-from pydantic.types import FilePath, PositiveInt, DirectoryPath
-from ......mixins import BaseMixinData
+from typing import Optional, List
+
+from ...extra import ParametersBaseData
 
 
-class ParametersData(BaseMixinData):
-    sources_paths: List[Union[DirectoryPath, FilePath]]
+class ParametersData(ParametersBaseData):
     separator: Optional[str]
     cols_names: Optional[List[str]]
     one_hot_encoding: Optional[bool] = True

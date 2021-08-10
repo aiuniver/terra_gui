@@ -145,12 +145,19 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 from math import fsum
 from pathlib import Path
 from typing import Union, Optional, Any
-from pydantic import validator, DirectoryPath
+from pydantic import validator
+from pydantic.types import DirectoryPath
 from pydantic.networks import HttpUrl
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, AliasMixinData, IDMixinData
-from ..types import confilepath, confilename, FilePathType, ConstrainedFloatValueGe0Le1
+from ..types import (
+    confilepath,
+    confilename,
+    FilePathType,
+    ConstrainedFloatValueGe0Le1,
+    ConstrainedLayerNameValue,
+)
 from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
@@ -241,7 +248,7 @@ class CreationInputData(IDMixinData):
     Информация о `input`-слое
     """
 
-    name: str
+    name: ConstrainedLayerNameValue
     "Название"
     type: LayerInputTypeChoice
     "Тип данных"
@@ -273,7 +280,7 @@ class CreationOutputData(IDMixinData):
     Информация о `output`-слое
     """
 
-    name: str
+    name: ConstrainedLayerNameValue
     "Название"
     type: LayerOutputTypeChoice
     "Тип данных"
@@ -291,6 +298,36 @@ class CreationOutputData(IDMixinData):
         ).name
         type_ = getattr(
             creations.layers.output, getattr(creations.layers.output.Layer, name)
+        )
+        cls.__fields__["parameters"].type_ = type_
+        return value
+
+    @validator("parameters", always=True)
+    def _validate_parameters(cls, value: Any, values, field) -> Any:
+        return field.type_(**value or {})
+
+
+class OneFileData(BaseMixinData):
+    """
+    Информация для формирования одиночного массива
+    """
+
+    type: LayerInputTypeChoice
+    "Тип данных"
+    parameters: Any
+    "Параметры. Тип данных будет зависеть от выбранного типа `type`"
+
+    @validator("type", pre=True)
+    def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
+        if value not in list(LayerInputTypeChoice):
+            raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
+        name = (
+            value
+            if isinstance(value, LayerInputTypeChoice)
+            else LayerInputTypeChoice(value)
+        ).name
+        type_ = getattr(
+            creations.layers.input, getattr(creations.layers.input.Layer, name)
         )
         cls.__fields__["parameters"].type_ = type_
         return value

@@ -220,6 +220,7 @@ class CustomDatasetConfigData(BaseMixinData):
             )
         with open(config_path, "r") as config_ref:
             value = json.load(config_ref)
+        value.update({"group": DatasetGroupChoice.custom})
         return value
 
 
@@ -280,7 +281,7 @@ class DatasetData(AliasMixinData):
     name: str
     date: Optional[datetime]
     size: Optional[FileSizeData]
-    # limit: PositiveInt  # не нужен
+    group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
     classes_names: Dict[PositiveInt, List[str]] = {}

@@ -51,6 +51,7 @@ export default {
       display: flex;
       justify-content: center;
       align-items: center;
+      cursor: pointer;
       &[disabled='disabled'] {
         opacity: 0.1;
         cursor: default;

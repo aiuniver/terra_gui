@@ -3,10 +3,11 @@
 """
 
 from enum import Enum
+from typing import Any
 
 from ...mixins import BaseMixinData
 from ..extra import LayerTypeChoice
-from .extra import ActivationChoice
+from .extra import ActivationChoice, LayerConfigData
 
 from . import types
 
@@ -30,6 +31,20 @@ class LayerConfigDefaultData(LayerDefaultData):
 class LayerMixinData(BaseMixinData):
     main: LayerMainDefaultData = LayerMainDefaultData()
     extra: LayerExtraDefaultData = LayerExtraDefaultData()
+
+    @property
+    def config(self) -> LayerConfigData:
+        return getattr(types, Layer(self.__class__.__name__).name).LayerConfig
+
+    @property
+    def defaults(self) -> Any:
+        return self.__class__()
+
+    @property
+    def merged(self) -> dict:
+        data = self.main.native()
+        data.update(**self.extra.native())
+        return data
 
 
 class LayerInputData(LayerMixinData):
@@ -451,17 +466,17 @@ class LayerCustomBlockData(LayerMixinData):
 
 
 class LayerSpaceToDepthData(LayerMixinData):
-    main: types.SpaceToDepth.ParametersMainData = types.CustomBlock.ParametersMainData()
+    main: types.SpaceToDepth.ParametersMainData = (
+        types.SpaceToDepth.ParametersMainData()
+    )
     extra: types.SpaceToDepth.ParametersExtraData = (
-        types.CustomBlock.ParametersExtraData()
+        types.SpaceToDepth.ParametersExtraData()
     )
 
 
 Layer = Enum(
     "Layer",
-    dict(
-        map(lambda item: (item.name, f"Layer{item.value}Data"), list(LayerTypeChoice))
-    ),
+    dict(map(lambda item: (item.name, f"Layer{item.name}Data"), list(LayerTypeChoice))),
     type=str,
 )
 """
