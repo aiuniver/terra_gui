@@ -9,7 +9,94 @@ const color = {
 const getColor = () => {
   const index = Math.floor(Math.random() * 4);
   const tone = Math.floor(Math.random() * 6);
-  return color[index][tone]
-}
+  return color[index][tone];
+};
 
-export { color , getColor }
+export { color, getColor };
+
+// const ee = [
+//   {
+//     type: "select",
+//     name: "type",
+//     label: "Тип данных",
+//     parse: "type",
+//     value: "Text",
+//     popit: "Какой-то текст",
+//     triger: {
+//       Text: [
+//         {
+//           target: "snow",
+//           value: true,
+//         },
+//         {
+//           target: "mount",
+//           value: 'Эльбрус',
+//         },
+//       ],
+//     },
+//     api: {
+//       Image: '/reboot'
+//     },
+//     list: [
+//       {
+//         value: "Text",
+//         label: "Text",
+//       },
+//       {
+//         value: "Image",
+//         label: "Image",
+//       },
+//     ],
+//     filds: {
+//       Text: [
+//         // если значению value = Text, то рендерим эту форму
+//         {
+//           type: "number",
+//           name: "mount",
+//           label: "Гора",
+//           parse: "mount",
+//           value: "",
+//         },
+//         {
+//           type: "text",
+//           name: "kids",
+//           label: "Дети",
+//           parse: "kids",
+//           popit: "Какой-то текст",
+//           value: "",
+//         },
+//       ],
+//       Image: [
+//         // если значению value = Image, то рендерим эту форму
+//         {
+//           type: "number",
+//           name: "mount",
+//           label: "Гора",
+//           parse: "mount",
+//           popit: "Какой-то текст",
+//           value: "Эверест",
+//         },
+//       ],
+//     },
+//   },
+//   {
+//     type: "checkbox",
+//     name: "snow",
+//     label: "Снег",
+//     parse: "snow",
+//     popit: "Какой-то текст",
+//     value: false,
+//     list: [],
+//     filds: {
+//       true: [
+//         {
+//           type: "text",
+//           name: "kids",
+//           label: "Дети",
+//           parse: "kids",
+//           value: "",
+//         },
+//       ],
+//     },
+//   },
+// ];

@@ -1,7 +1,8 @@
-import inputs from "./temp/json";
+// import inputs from "./temp/json";
 export default {
   namespaced: true,
   state: () => ({
+    creation: {},
     datasets: [],
     files: [],
     selected: null,
@@ -34,6 +35,9 @@ export default {
     },
     SET_FILES(state, value) {
       state.files = value;
+    },
+    SET_CREATION(state, value) {
+      state.creation = value;
     },
   },
   actions: {
@@ -97,8 +101,11 @@ export default {
     },
   },
   getters: {
-    getSettings() {
-      return inputs;
+    getTypeInput({ creation: { input } }) {
+      return input || [];
+    },
+    getTypeOutput({ creation: { output } }) {
+      return output || [];
     },
     getSelected({ selected }) {
       return selected;

@@ -31,7 +31,7 @@
         </div>
 
         <files-menu
-          v-if="node.children && node.children.length && node.isExpanded"
+          v-if="node.children && node.children.length && !node.isExpanded"
           :value="node.children"
           :level="node.level"
           :parentInd="nodeInd"

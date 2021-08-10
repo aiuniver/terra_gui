@@ -15,7 +15,7 @@
               :key="'cardLayersRight' + i"
               @click-btn="click($event, i)"
             >
-              <Forms :data="main" @change="change" />
+              <!-- <t-forms :data="main" @change="change" /> -->
             </CardLayer>
           </template>
         </div>
@@ -27,14 +27,12 @@
 <script>
 import { getColor } from "../util/color";
 import Fab from "../components/forms/Fab.vue";
-import Forms from "../components/forms/Forms.vue";
 import CardLayer from "../components/card/CardLayer.vue";
 export default {
   name: "BlockMainRight",
   components: {
     Fab,
     CardLayer,
-    Forms,
   },
   data: () => ({
     cardLayers: [{ title: "Name", color: "#8e51f2" }],

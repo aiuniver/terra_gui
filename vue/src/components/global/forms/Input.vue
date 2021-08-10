@@ -16,6 +16,7 @@
 
 <script>
 export default {
+  name: 't-input',
   props: {
     label: {
       type: String,

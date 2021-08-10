@@ -27,9 +27,9 @@ export default {
         config.method = config.method || 'post'
         config.url = '/api/v1' + config.url,
         config.data = config.data || {}
-        console.log('config: ', config)
+        // console.log('config: ', config)
         const response = await axios(config);
-        console.log('response', response)
+        // console.log('response', response)
         const { data: { data, error, success } } = response
         if (success) {
           Vue.prototype.$Loading.finish()
