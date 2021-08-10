@@ -44,6 +44,7 @@ class TaskChoice(str, Enum):
     Segmentation = "Segmentation"
     Regression = "Regression"
     Timeseries = "Timeseries"
+    ObjectDetection = "ObjectDetection"
 
 
 class LossChoice(str, Enum):
@@ -54,7 +55,7 @@ class LossChoice(str, Enum):
     Hinge = "Hinge"
     CategoricalHinge = "CategoricalHinge"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
-    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    KLDivergence = "KLDivergence"
     Poisson = "Poisson"
     MAE = "MAE"
     Mape = "Mape"
@@ -74,7 +75,7 @@ class MetricChoice(str, Enum):
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     Hinge = "Hinge"
-    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    KLDivergence = "KullbackLeiblerDivergence"
     Poisson = "Poisson"
     DiceCoef = "DiceCoef"
     MeanIOU = "MeanIOU"

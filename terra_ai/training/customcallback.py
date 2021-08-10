@@ -15,7 +15,8 @@ import numpy as np
 import types
 import time
 from terra_ai.guiexchange import Exchange
-from terra_ai.trds import DTS
+
+from terra_ai.training.data import task_type_defaults_dict
 
 __version__ = 0.13
 
@@ -599,106 +600,7 @@ class CustomCallback(keras.callbacks.Callback):
         self.retrain_flag = False
         self.stop_flag = False
         self.retrain_epochs = 0
-        self.task_type_defaults_dict = {
-            "classification": {
-                "optimizer_name": "Adam",
-                "loss": "categorical_crossentropy",
-                "metrics": ["accuracy"],
-                "batch_size": 32,
-                "epochs": 20,
-                "shuffle": True,
-                "clbck_object": ClassificationCallback,
-                "callback_kwargs": {
-                    "metrics": ["loss", "accuracy"],
-                    "step": 1,
-                    "class_metrics": [],
-                    "num_classes": 2,
-                    "data_tag": "images",
-                    "show_best": True,
-                    "show_worst": False,
-                    "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
-                },
-            },
-            "segmentation": {
-                "optimizer_name": "Adam",
-                "loss": "categorical_crossentropy",
-                "metrics": ["dice_coef"],
-                "batch_size": 16,
-                "epochs": 20,
-                "shuffle": True,
-                "clbck_object": SegmentationCallback,
-                "callback_kwargs": {
-                    "metrics": ["dice_coef"],
-                    "step": 1,
-                    "class_metrics": [],
-                    "num_classes": 2,
-                    "data_tag": "images",
-                    "show_best": True,
-                    "show_worst": False,
-                    "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
-                },
-            },
-            "regression": {
-                "optimizer_name": "Adam",
-                "loss": "mse",
-                "metrics": ["mae"],
-                "batch_size": 32,
-                "epochs": 20,
-                "shuffle": True,
-                "clbck_object": RegressionCallback,
-                "callback_kwargs": {
-                    "metrics": ["loss", "mse"],
-                    "step": 1,
-                    "plot_scatter": True,
-                    "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
-                },
-            },
-            "timeseries": {
-                "optimizer_name": "Adam",
-                "loss": "mse",
-                "metrics": ["mae"],
-                "batch_size": 32,
-                "epochs": 20,
-                "shuffle": True,
-                "clbck_object": TimeseriesCallback,
-                "callback_kwargs": {
-                    "metrics": ["loss", "mse"],
-                    "step": 1,
-                    "corr_step": 50,
-                    "plot_pred_and_true": True,
-                    "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
-                },
-            },
-            "object_detection": {
-                "optimizer_name": "Adam",
-                "loss": "yolo_loss",
-                "metrics": [],
-                "batch_size": 8,
-                "epochs": 20,
-                "shuffle": True,
-                "clbck_object": ObjectdetectionCallback,
-                "callback_kwargs": {
-                    "metrics": ["loss"],
-                    "step": 1,
-                    "class_metrics": [],
-                    "num_classes": 2,
-                    "data_tag": "images",
-                    "show_best": False,
-                    "show_worst": False,
-                    "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
-                },
-            },
-        }
+
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
