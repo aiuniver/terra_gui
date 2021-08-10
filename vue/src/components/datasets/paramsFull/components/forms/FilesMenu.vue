@@ -19,14 +19,8 @@
           ></div>
 
           <div class="files-menu__title" @click="onToggleHandler($event, node)">
-            <span
-              :class="[
-                'icons files-menu__title--toggle',
-                { rotate: node.isExpanded },
-              ]"
-              v-if="node.children.length"
-            >
-            </span>
+            <span v-if="node.children.length" :class="['icons files-menu__title--toggle', { rotate: node.isExpanded }]" />
+            <span v-else class="files-menu__title--empty" />
             <span
               v-if="node.children.length"
               class="icons files-menu__title--folder"
@@ -37,7 +31,7 @@
         </div>
 
         <files-menu
-          v-if="node.children && node.children.length && node.isExpanded"
+          v-if="node.children && node.children.length && !node.isExpanded"
           :value="node.children"
           :level="node.level"
           :parentInd="nodeInd"
@@ -75,8 +69,6 @@
     font-weight: normal;
     font-size: 14px;
     line-height: 17px;
-    /* identical to box height, or 121% */
-
     color: #ffffff;
     &--toggle {
       width: 15px;
@@ -86,6 +78,11 @@
       &.rotate {
         transform: rotate(90deg);
       }
+    }
+    &--empty {
+      width: 15px;
+      height: 15px;
+      margin-right: 7px;
     }
     &--folder {
       width: 20px;
@@ -141,7 +138,7 @@
 }
 
 .files-menu-gap {
-  width: 50px;
+  width: 25px;
   min-height: 1px;
 }
 

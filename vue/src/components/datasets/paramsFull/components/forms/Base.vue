@@ -1,23 +1,8 @@
 <template>
-  <div class="forms">
-    <template
-      v-for="({ type, value, list, event, label, parse, name }, key) of items"
-    >
+  <div class="base">
       <Input
-        v-if="type === 'tuple'"
         :value="getValue(valueDef[name], value)"
-        :label="label"
-        type="text"
-        :parse="parse"
-        :name="name"
-        :key="blockType + key"
-        inline
-        @change="change"
-      />
-      <Input
-        v-if="type === 'number' || type === 'text'"
-        :value="getValue(valueDef[name], value)"
-        :label="label"
+        :label="name"
         :type="type"
         :parse="parse"
         :name="name"
@@ -25,19 +10,7 @@
         inline
         @change="change"
       />
-      <Checkbox
-        v-if="type === 'checkbox'"
-        :value="getValue(valueDef[name], value)"
-        :label="label"
-        type="checkbox"
-        :parse="parse"
-        :name="name"
-        :event="event"
-        :key="blockType + key"
-        @change="change"
-      />
       <Select
-        v-if="type === 'select'"
         :value="getValue(valueDef[name], value)"
         :label="label"
         :lists="list"
@@ -46,7 +19,15 @@
         :key="blockType + key"
         @change="change"
       />
-    </template>
+      <Select
+        :value="getValue(valueDef[name], value)"
+        :label="label"
+        :lists="list"
+        :parse="parse"
+        :name="name"
+        :key="blockType + key"
+        @change="change"
+      />
   </div>
 </template>
 

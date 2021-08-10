@@ -8,7 +8,7 @@
           :disabled="disabled"
           @click="click(index, active)"
         >
-          <i :title="title" :class="['icon', icon,  { active: active }]" />
+          <i :title="title" :class="['t-icon', icon,  { active: active }]" />
         </li>
       </ul>
   </div>
