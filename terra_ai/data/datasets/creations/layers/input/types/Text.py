@@ -21,6 +21,7 @@ class ParametersData(ParametersBaseData):
     word_to_vec_size: Optional[PositiveInt]
     delete_symbols: Optional[str]
     text_mode: TextModeChoice = TextModeChoice.completely
+    max_words_count: PositiveInt
     length: Optional[PositiveInt]
     step: Optional[PositiveInt]
     max_words: Optional[PositiveInt]
@@ -34,4 +35,15 @@ class ParametersData(ParametersBaseData):
     ) -> LayerPrepareMethodChoice:
         if value == LayerPrepareMethodChoice.word_to_vec:
             cls.__fields__["word_to_vec_size"].required = True
+        return value
+
+    @validator("text_mode", allow_reuse=True)
+    def _validate_prepare_method(
+            cls, value: TextModeChoice
+    ) -> TextModeChoice:
+        if value == TextModeChoice.completely:
+            cls.__fields__["max_words"].required = True
+        else:
+            cls.__fields__["length"].required = True
+            cls.__fields__["step"].required = True
         return value

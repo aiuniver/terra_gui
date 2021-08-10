@@ -99,7 +99,7 @@ class PrepareDTS(object):
                     arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
                         self.instructions['outputs'][key]['instructions'][idx],
                         **self.instructions['outputs'][key]['parameters'])
-                    for i in range(3):
+                    for i in range(6):
                         outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
                 else:
                     outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
@@ -347,7 +347,7 @@ class PrepareDTS(object):
                 self.createarray.file_folder = self.dataloader.file_folder
 
                 for part in ['train', 'val', 'test']:
-                    self.dataset['train'] = Dataset.from_generator(
+                    self.dataset[part] = Dataset.from_generator(
                         self.array_generator(sequence=self.split_sequence[part]),
                         output_shapes=(self.input_shape, self.output_shape),
                         output_types=(self.input_dtype, self.output_dtype)
