@@ -159,7 +159,7 @@ class FileManagerItem(BaseMixinData):
         return __items
 
     def dict(self, **kwargs):
-        __exclude = ["path"]
+        __exclude = []
         if self.type != FileManagerTypeChoice.folder:
             __exclude.append("children")
         kwargs.update({"exclude": set(__exclude)})
