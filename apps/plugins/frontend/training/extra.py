@@ -35,7 +35,7 @@ class LossChoice(str, Enum):
     Hinge = "Hinge"
     CategoricalHinge = "CategoricalHinge"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
-    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    KLDivergence = "KLDivergence"
     Poisson = "Poisson"
     MAE = "MAE"
     Mape = "Mape"

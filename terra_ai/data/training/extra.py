@@ -75,7 +75,7 @@ class MetricChoice(str, Enum):
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
     Hinge = "Hinge"
-    KLDivergence = "KullbackLeiblerDivergence"
+    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
     Poisson = "Poisson"
     DiceCoef = "DiceCoef"
     MeanIOU = "MeanIOU"
