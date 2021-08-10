@@ -15,13 +15,13 @@
       v-show="hover || selected"
       class="hover-over"
     >
-      <i class="icon icon-modeling-link"></i>
-      <i class="icon icon-modeling-link-remove"></i>
+      <i class="t-icon icon-modeling-link"></i>
+      <i class="t-icon icon-modeling-link-remove"></i>
     </div>
     <div v-else v-show="hover || selected" class="hover-sloy">
-      <i class="icon icon-modeling-link"></i>
-      <i class="icon icon-modeling-link-remove"></i>
-      <i class="icon icon-modeling-remove" @click="deleteBlock"></i>
+      <i class="t-icon icon-modeling-link"></i>
+      <i class="t-icon icon-modeling-link-remove"></i>
+      <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
       <div
