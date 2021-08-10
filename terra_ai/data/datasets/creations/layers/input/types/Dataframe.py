@@ -11,11 +11,6 @@ class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
     transpose: bool
 
-    trend: bool
-    trend_limit: Optional[str]
-    length: Optional[PositiveInt]
-    step: Optional[PositiveInt]
-
     pad_sequences: Optional[bool]
     example_length: Optional[PositiveInt]
     xlen_step: Optional[bool]

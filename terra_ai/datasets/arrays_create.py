@@ -289,6 +289,12 @@ class CreateArray(object):
                         row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i + 1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
+            if 'StandardScaler' in options.keys():
+                for i in options['StandardScaler']:
+                    for j in range(length):
+                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i + 1}'].transform(
+                            np.array(row[j][i]).reshape(-1, 1)).tolist()
+
             if 'Categorical' in options.keys():
                 for i in options['Categorical']['lst_cols']:
                     for j in range(length):
@@ -423,12 +429,15 @@ class CreateArray(object):
                 array: np.ndarray
                     Массив обработанных данных.
         """
-        row_number = int(row_number)
-        array = self.y_subdf[list(range(
-            row_number + options['length'], row_number + options['length'] + options['depth']))]
+        if options['bool_trend']:
+            array = np.array(row_number)
+        else:
+            row_number = int(row_number)
+            array = self.y_subdf[list(range(
+                row_number + options['length'], row_number + options['length'] + options['depth']))]
 
-        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
-            array = self.scaler[options['put']].transform(array)
+            if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
+                array = self.scaler[options['put']].transform(array)
 
         return array
 
