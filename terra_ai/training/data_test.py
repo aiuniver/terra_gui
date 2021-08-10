@@ -16,11 +16,11 @@ TRAINDATA = {
         }
     },
     "architecture": {
-        "type": "Базовая",
+        "type": "Basic",
         "parameters": {
             "outputs": [
                 {
-                    "alias": "output_1",
+                    "id": 1,
                     "classes_quantity": 2,
                     "task": "Classification",
                     "loss": "CategoricalCrossentropy",
@@ -37,7 +37,7 @@ TRAINDATA = {
                 },
             ],
             "checkpoint": {
-                "layer": "output_1",
+                "layer": 1,
                 "type": "Metrics",
                 "indicator": "Val",
                 "mode": "Max",

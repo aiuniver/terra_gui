@@ -7,14 +7,14 @@ from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import UniqueListMixin, AliasMixinData
+from ..mixins import UniqueListMixin, IDMixinData
 from ..presets.training import TasksGroups
 from ..exceptions import ValueNotInListException
 from .extra import TaskChoice, LossChoice, MetricChoice, TasksGroupsList
 from . import callbacks
 
 
-class OutputData(AliasMixinData):
+class OutputData(IDMixinData):
     """
     Информация о `output`-слое
     """
@@ -69,4 +69,4 @@ class OutputsList(UniqueListMixin):
 
     class Meta:
         source = OutputData
-        identifier = "alias"
+        identifier = "id"
