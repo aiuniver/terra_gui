@@ -7,12 +7,13 @@ from .....extra import LayerPrepareMethodChoice
 
 
 class TextModeChoice(str, Enum):
-    completely = "Целиком"
-    length_and_step = "По длине и шагу"
+    completely = "completely"
+    length_and_step = "length_and_step"
 
 
 class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
+    max_words_count: PositiveInt
     pymorphy: Optional[bool] = False
     embedding: Optional[bool] = False
     bag_of_words: Optional[bool] = False

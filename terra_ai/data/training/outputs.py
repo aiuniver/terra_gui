@@ -7,7 +7,7 @@ from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import UniqueListMixin, AliasMixinData
+from ..mixins import UniqueListMixin, AliasMixinData, IDMixinData
 from ..presets.training import TasksGroups
 from ..exceptions import ValueNotInListException
 from .extra import TaskChoice, LossChoice, MetricChoice, TasksGroupsList
