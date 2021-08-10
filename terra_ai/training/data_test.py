@@ -52,7 +52,7 @@ TRAINDATA = {
 if __name__ == '__main__':
     traindata = TrainData(**TRAINDATA)
 
-    print(traindata.architecture.outputs_dict[0]["alias"])
+    print(traindata.architecture.outputs_dict[0]["id"])
     print(traindata.optimizer.parameters.main.learning_rate)
 
     # print(traindata.json(indent=2))
