@@ -199,17 +199,18 @@ class CreateDTS(object):
                             cls_idx += 1
                             self.peg.append(peg_idx) if not elem.type == 'ObjectDetection' else None
                             classes_names.append(file_folder)
-                elif paths.suffix == '.csv':
-                    data = pd.read_csv(os.path.join(self.file_folder, paths), usecols=elem.parameters.cols_name)
-                    paths_list = data[elem.parameters.cols_name[0]].to_list()
-                    prev_path = paths_list[0].split(os.path.sep)[-2]
-                    for path in paths_list:
-                        cur_path = path.split(os.path.sep)[-2]
-                        if cur_path != prev_path:
-                            self.peg.append(peg_idx)
-                        prev_path = cur_path
-                        peg_idx += 1
-                    self.peg.append(len(paths_list))
+                elif paths.suffix == '.csv' and elem.type not in ['Dataframe', 'Timeseries']:
+                    data = pd.read_csv(os.path.join(self.file_folder, paths),
+                                       usecols=elem.parameters.cols_names)
+                    paths_list = data[elem.parameters.cols_names[0]].to_list()
+                    # prev_path = paths_list[0].split(os.path.sep)[-2]
+                    # for path in paths_list:
+                    #     cur_path = path.split(os.path.sep)[-2]
+                    #     if cur_path != prev_path:
+                    #         self.peg.append(peg_idx)
+                    #     prev_path = cur_path
+                    #     peg_idx += 1
+                    # self.peg.append(len(paths_list))
             self.classes_names[elem.id] = classes_names if not elem.type == 'ObjectDetection' else None
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(paths_list,
                                                                                                           elem))
@@ -517,13 +518,13 @@ class CreateDTS(object):
         #         column = data[options['cols_name'][0]].to_list()
         #         for idx, elem in column:
         #             txt_list[str(idx)] = elem
-
+        table_flag = False
         for idx, path in enumerate(paths_list):
             if os.path.isfile(os.path.join(self.file_folder, path)):
                 txt_list[path] = read_text(path, lower, filters, split, open_symbol, close_symbol)
             else:
-                txt_list[idx] = path
-
+                txt_list[str(idx)] = path
+                table_flag = True
         if options.get('pymorphy', ''):
             pymorphy = pymorphy2.MorphAnalyzer()
             for key, value in txt_list.items():
@@ -551,21 +552,23 @@ class CreateDTS(object):
         y_cls: list = []
         peg_idx: int = 0
         cls_idx: int = 0
-
-        prev_class: str = sorted(txt_list.keys())[0].split(os.path.sep)[-2]
+        if not table_flag:
+            prev_class: str = sorted(txt_list.keys())[0].split(os.path.sep)[-2]
+            self.peg.append(0)
         array_creator.txt_list[put_data.id] = txt_list
-        self.peg.append(0)
 
         for key, value in sorted(txt_list.items()):
-            cur_class = key.split(os.path.sep)[-2]
+            if not table_flag:
+                cur_class = key.split(os.path.sep)[-2]
             if text_mode == TextModeChoice.completely:
                 instr.append({key: [0, max_words]})
-                if cur_class != prev_class:
-                    cls_idx += 1
-                    self.peg.append(peg_idx)
-                    prev_class = cur_class
-                peg_idx += 1
-                y_cls.append(cls_idx)
+                if not table_flag:
+                    if cur_class != prev_class:
+                        cls_idx += 1
+                        self.peg.append(peg_idx)
+                        prev_class = cur_class
+                    peg_idx += 1
+                    y_cls.append(cls_idx)
             elif text_mode == TextModeChoice.length_and_step:
                 max_length = len(value.split(' '))
                 if 'text_segmentation' in self.tags.values():
@@ -663,7 +666,7 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_dataframe(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_dataframe(self, _, put_data: Union[CreationInputData, CreationOutputData]):
         """
             Args:
                 **put_data: Параметры датафрейма:
@@ -921,7 +924,7 @@ class CreateDTS(object):
         array_creator.df = np.array(array_creator.df)
         return instructions
 
-    def instructions_timeseries(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_timeseries(self, _, put_data: Union[CreationInputData, CreationOutputData]):
         """
             Args:
                 **put_data: Параметры временного ряда:
@@ -1082,7 +1085,7 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_regression(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_regression(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
         instructions: dict = {}
@@ -1091,18 +1094,18 @@ class CreateDTS(object):
         self.encoding[put_data.id] = None
         self.task_type[put_data.id] = put_data.type
 
-        for file_name in options['sources_paths']:
-            data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_names'])
-            instr = data[options['cols_names'][0]].to_list()
+        # for file_name in options['sources_paths']:
+        #     data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_names'])
+        #     instr = data[options['cols_names'][0]].to_list()
 
         if options['scaler'] == 'min_max_scaler' or options['scaler'] == 'standard_scaler':
             if options['scaler'] == 'min_max_scaler':
                 array_creator.scaler[put_data.id] = MinMaxScaler()
             if options['scaler'] == 'standard_scaler':
                 array_creator.scaler[put_data.id] = StandardScaler()
-            array_creator.scaler[put_data.id].fit(np.array(instr).reshape(-1, 1))
+            array_creator.scaler[put_data.id].fit(np.array(paths_list).reshape(-1, 1))
 
-        instructions['instructions'] = instr
+        instructions['instructions'] = paths_list
         instructions['parameters'] = options
         instructions['parameters']['put'] = put_data.id
 
