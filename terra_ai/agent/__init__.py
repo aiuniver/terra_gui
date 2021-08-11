@@ -232,5 +232,11 @@ class Exchange:
             api_text="API text",
         )
 
+    def _call_deploy_upload_progress(self) -> progress.ProgressData:
+        """
+        Деплой: прогресс загрузки
+        """
+        return progress.pool(progress.PoolName.deploy_upload_progress)
+
 
 agent_exchange = Exchange()

@@ -15,6 +15,7 @@ from ..choices import (
     LayerVideoModeChoice,
     LayerPrepareMethodChoice,
     LayerDataframeAlignBaseMethodChoice,
+    LayerDefineClassesChoice,
 )
 
 
@@ -641,6 +642,169 @@ Defaults = {
                                 },
                             },
                         ],
+                        "Classification": [
+                            {
+                                "type": "checkbox",
+                                "label": "Разбить на категории",
+                                "name": "categorical",
+                                "parse": "categorical",
+                                "value": True,
+                            },
+                            {
+                                "type": "checkbox",
+                                "label": "Разбить на диапазоны",
+                                "name": "categorical_ranges",
+                                "parse": "categorical_ranges",
+                                "value": False,
+                                "fields": {
+                                    "true": [
+                                        {
+                                            "type": "checkbox",
+                                            "label": "Автоматически",
+                                            "name": "auto_ranges",
+                                            "parse": "auto_ranges",
+                                            "value": True,
+                                            "fields": {
+                                                "false": [
+                                                    {
+                                                        "type": "text",
+                                                        "label": "Диапазоны/число дипазонов",
+                                                        "name": "ranges",
+                                                        "parse": "ranges",
+                                                    }
+                                                ]
+                                            },
+                                        }
+                                    ]
+                                },
+                            },
+                            {
+                                "type": "checkbox",
+                                "label": "One-Hot encoding",
+                                "name": "one_hot_encoding",
+                                "parse": "one_hot_encoding",
+                                "value": True,
+                            },
+                        ],
+                        "Segmentation": [
+                            {
+                                "type": "number",
+                                "label": "Диапазон каналов",
+                                "name": "mask_range",
+                                "parse": "mask_range",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Количество классов",
+                                "name": "num_classes",
+                                "parse": "num_classes",
+                            },
+                            {
+                                "type": "select",
+                                "label": "Ввод данных",
+                                "name": "classes",
+                                "parse": "classes",
+                                "value": "handmade",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.value,
+                                            "label": item.name,
+                                        },
+                                        list(LayerDefineClassesChoice),
+                                    )
+                                ),
+                                "fields": {
+                                    "handmade": [
+                                        {
+                                            "type": "text",
+                                            "label": "Название класса",
+                                            "name": "classes_names",
+                                            "parse": "classes_names[]",
+                                        },
+                                        {
+                                            "type": "text",
+                                            "label": "Цвет",
+                                            "name": "classes_colors",
+                                            "parse": "classes_colors[]",
+                                        },
+                                    ],
+                                    "autosearch": [
+                                        {
+                                            "type": "button",
+                                            "label": "Найти",
+                                            "name": "search",
+                                            "parse": "search",
+                                        },
+                                    ],
+                                    "annotation": [
+                                        {
+                                            "type": "select",
+                                            "label": "Выберите файл",
+                                            "name": "annotation",
+                                            "parse": "annotation",
+                                            "list": [],
+                                        },
+                                        {
+                                            "type": "button",
+                                            "label": "Найти",
+                                            "name": "search",
+                                            "parse": "search",
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                        "TextSegmentation": [
+                            {
+                                "type": "text",
+                                "label": "Открывающие теги",
+                                "name": "open_tags",
+                                "parse": "open_tags",
+                            },
+                            {
+                                "type": "text",
+                                "label": "Закрывающие теги",
+                                "name": "close_tags",
+                                "parse": "close_tags",
+                            },
+                        ],
+                        "Regression": [
+                            {
+                                "type": "select",
+                                "label": "Скейлер",
+                                "name": "scaler",
+                                "parse": "scaler",
+                                "value": "no_scaler",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerScalerChoice),
+                                    )
+                                ),
+                            },
+                        ],
+                        # "Timeseries": [
+                        #     {
+                        #         "type": "select",
+                        #         "label": "Предсказывать тренд",
+                        #         "name": "scaler",
+                        #         "parse": "scaler",
+                        #         "value": "no_scaler",
+                        #         "list": list(
+                        #             map(
+                        #                 lambda item: {
+                        #                     "value": item.name,
+                        #                     "label": item.value,
+                        #                 },
+                        #                 list(LayerScalerChoice),
+                        #             )
+                        #         ),
+                        #     },
+                        # ],
                     },
                 },
             ],
