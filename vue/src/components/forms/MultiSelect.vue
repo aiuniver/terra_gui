@@ -1,5 +1,5 @@
 <template>
-  <div :class="['t-multi-select', { 't-inline': inline }]">
+  <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
     <label class="t-multi-select__label">{{ label }}</label>
     <input
       class="t-multi-select__input"
@@ -11,13 +11,22 @@
       @blur="select(false)"
     />
     <div class="t-multi-select__content" v-show="show">
+      <div v-if="filterList.length" class="t-multi__item">
+        <span
+          :class="['t-multi__item--check', { active: checkAll }]"
+          @click="(checkAll = !checkAll), $emit('checkAll', checkAll)"
+        ></span>
+        <span class="t-multi__item--title">Выбрать все</span>
+      </div>
       <template v-for="(item, i) in filterList">
         <div class="t-multi__item" :key="i">
-          <span class="t-multi-select__item--check"></span>
-          <span class="t-multi-select__item--title">{{ item.label }}</span>
+          <span :class="['t-multi__item--check', { active: item.active }]" @click="$emit('check', item)"></span>
+          <span class="t-multi__item--title">{{ item.label }}</span>
         </div>
       </template>
-      <div v-if="!filterList.length" class="t-multi-select__item">Нет данных</div>
+      <div v-if="!filterList.length" class="t-multi__item">
+        <span class="t-multi__item--title">Нет данных</span>
+      </div>
     </div>
   </div>
 </template>
@@ -40,12 +49,14 @@ export default {
     },
     inline: Boolean,
     value: String,
+    sloy: Number,
   },
   data() {
     return {
       selected: {},
       show: false,
       search: '',
+      checkAll: false,
     };
   },
   created() {
@@ -56,24 +67,37 @@ export default {
     filterList() {
       return this.lists
         ? this.lists.filter(item => {
-            const search = this.search;
-            return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+            return item.active !== true || item.sloy === this.sloy;
           })
         : [];
+      // return this.lists
+      //   ? this.lists.filter(item => {
+      //       const search = this.search;
+      //       return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+      //     })
+      //   : [];
     },
   },
   methods: {
+    outside() {
+      if (this.show) {
+        this.show = false;
+      }
+    },
+    check(i) {
+      console.log(i);
+    },
     select(item) {
       // console.log(item);
       if (item) {
         this.selected = item;
-        this.show = false;
+        // this.show = false;
         this.search = item.label;
         this.$emit('input', this.selected.value);
         this.$emit('change', item);
       } else {
         this.search = this.selected.label;
-        this.show = false;
+        // this.show = false;
       }
     },
     focus() {
@@ -141,30 +165,35 @@ export default {
     overflow: auto;
     border-radius: 0 0 4px 4px;
     z-index: 102;
-    color: #a7bed3;
-    font-size: 0.7em;
-    line-height: 1em;
-    padding: 8px;
-    text-decoration: none;
-    display: block;
   }
 }
 .t-multi__item {
-  padding: 2px 12px;
-  line-height: 1.5;
-  text-align: left;
-  cursor: pointer;
+  display: flex;
+  padding: 2px 6px;
+  align-items: center;
   &:hover {
     color: #e7ecf5;
     background-color: #6c7883;
   }
   &--check {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 25px;
-    width: 25px;
+    cursor: pointer;
+    height: 10px;
+    width: 10px;
     background-color: #eee;
+    margin-right: 5px;
+    border-radius: 2px;
+    &.active {
+      background-color: #5191f2;
+      width: 10px;
+      height: 10px;
+      border: 1px solid white;
+    }
+  }
+  &--title {
+    color: #a7bed3;
+    font-size: 0.7em;
+    line-height: 1.5;
+    text-align: left;
   }
 }
 .t-inline {
@@ -191,7 +220,8 @@ export default {
     width: 100px;
   }
   & .t-multi-select__content {
-
+    width: 100px;
+    top: 22px;
   }
 }
 </style>

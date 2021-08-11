@@ -4,7 +4,7 @@
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="dot"></i>
       </div>
-      <div class="card-layer__header--title">Слой {{ title }}</div>
+      <div class="card-layer__header--title">Входные данные {{ id }}</div>
     </div>
     <div v-show="toggle" class="card-layer__dropdown">
       <div
@@ -30,6 +30,7 @@
 export default {
   name: "card-layer",
   props: {
+    id: Number,
     color: {
       type: String,
       default: "#242f3d",

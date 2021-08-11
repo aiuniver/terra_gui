@@ -81,6 +81,7 @@ export default {
           this.$store.dispatch('messages/setProgress', percent);
           if (file_manager) {
             this.$store.dispatch('datasets/setFilesSource', file_manager);
+            this.$store.dispatch('datasets/setFilesDrop', []);
           }
           this.loading = false;
           this.full = true;
@@ -161,8 +162,7 @@ export default {
   }
   &__items {
     &--btn {
-      float: right;
-      width: 150px;
+      width: 100%;
     }
     &--item {
       padding: 20px;

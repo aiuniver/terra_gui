@@ -60,10 +60,7 @@ export default {
         this.$store.dispatch('datasets/setFilesDrop', value);
       },
       get() {
-        const files = this.$store.getters['datasets/getFilesDrop'];
-        return files.map(({ title, path}) => {
-          return { label: title, value: path}
-        })
+        return this.$store.getters['datasets/getFilesDrop'];
       },
     },
     height() {

@@ -2,8 +2,8 @@
   <div class="block-header" @drop="onDrop($event)" @dragover.prevent>
     <div v-if="filesDrop.length" class="block-header__main">
       <Cards>
-        <template v-for="({ title, color, type }, i) of filesDrop">
-          <CardFile v-if="type === 'folder'" :title="title" :color="color" :type="type" :key="'files_' + i" />
+        <template v-for="(file, i) of filesDrop">
+          <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
         </template>
         <!-- <CardTable/> -->
       </Cards>
@@ -29,7 +29,9 @@ export default {
     // CardTable,
     Cards,
   },
-  data: () => ({}),
+  data: () => ({
+    
+  }),
   computed: {
     filesDrop: {
       set(value) {
@@ -43,13 +45,14 @@ export default {
   methods: {
     onDrop({ dataTransfer }) {
       const data = JSON.parse(dataTransfer.getData('CardDataType'));
-      const index = this.filesDrop.findIndex(({ title }) => {
-        return data.title === title;
+      const index = this.filesDrop.findIndex(({ label }) => {
+        return data.label === label;
       });
       console.log(index);
       if (index === -1) {
-        this.filesDrop.push({ ...data });
+        this.filesDrop.push(data);
         this.filesDrop = [...this.filesDrop];
+        // console.log(this.filesDrop)
       } else {
         this.$Notify.warning({ title: 'Внимание!', message: 'Каталог уже выбран' });
       }

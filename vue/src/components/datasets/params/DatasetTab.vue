@@ -72,7 +72,6 @@ export default {
 
 <style lang="scss" scoped>
 .tabs {
-  margin-bottom: 10px;
   &__title {
     padding: 20px;
     font-size: 14px;

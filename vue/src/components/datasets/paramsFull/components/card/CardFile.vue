@@ -1,8 +1,8 @@
 <template>
   <div class="card-file" :style="bc">
-    <div v-if="isSelect" class="card-file__header" :style="bg">{{ name }}</div>
+    <div v-if="active" class="card-file__header" :style="bg">{{ 'Входные данные ' + sloy }}</div>
     <div :class="['card-file__body', type]"></div>
-    <div class="card-file__footer" :style="bg">{{ title }}</div>
+    <div class="card-file__footer">{{ label }}</div>
   </div>
 </template>
 
@@ -14,17 +14,18 @@ export default {
       type: String,
       default: "",
     },
-    title: String,
+    active: Boolean,
+    label: String,
     name: String,
     type: String,
-    isSelect: Boolean,
+    sloy: Number
   },
   computed: {
     bg() {
-      return { backgroundColor: this.color };
+      return { backgroundColor: this.active ? this.color : ''};
     },
     bc() {
-      return { borderColor: this.color };
+      return { borderColor: this.active ? this.color : '' };
     },
   },
 };

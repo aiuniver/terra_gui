@@ -9,6 +9,7 @@
         <div class="block-left__body--inner" :style="height">
           <template v-for="({ title, color }, i) of cardLayers">
             <CardLayer
+              :id="i + 1"
               :title="title + ' ' + (i + 1)"
               :color="color"
               :key="'cardLayersLeft' + i"
@@ -16,7 +17,14 @@
               @click-header="clickScroll"
             >
               <!-- <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" /> -->
-              <TMultiSelect inline label="Выберите путь" :lists="filesDrop" />
+              <TMultiSelect
+                inline
+                label="Выберите путь"
+                :lists="filesDrop"
+                :sloy="i + 1"
+                @check="check($event, color, i + 1)"
+                @checkAll="checkAll($event, color, i + 1)"
+              />
               <template v-for="(data, index) of input">
                 <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
               </template>
@@ -40,7 +48,7 @@ export default {
   components: {
     Fab,
     CardLayer,
-    TMultiSelect
+    TMultiSelect,
   },
   data: () => ({
     cardLayers: [{ title: 'Input', color: '#FFB054' }],
@@ -63,10 +71,7 @@ export default {
         this.$store.dispatch('datasets/setFilesDrop', value);
       },
       get() {
-        const files = this.$store.getters['datasets/getFilesDrop'];
-        return files.map(({ title, path}) => {
-          return { label: title, value: path}
-        })
+        return this.$store.getters['datasets/getFilesDrop'];
       },
     },
     height() {
@@ -79,6 +84,35 @@ export default {
     },
   },
   methods: {
+    check({ value }, color, id) {
+      console.log(value);
+      this.filesDrop = this.filesDrop.map(item => {
+        if (item.value === value) {
+          item.active = !item.active;
+          item.color = color;
+          item.sloy = id;
+        }
+        return item;
+      });
+    },
+    checkAll(state, color, id) {
+      this.filesDrop = this.filesDrop.map(item => {
+        if (state) {
+          if (!item.active) {
+            item.active = !item.active;
+            item.color = color;
+            item.sloy = id;
+          }
+        } else {
+          if (item.sloy === id) {
+            item.active = !item.active;
+            item.sloy = 0;
+          }
+        }
+
+        return item;
+      });
+    },
     add() {
       this.cardLayers.push({ title: 'Input', color: getColor() });
       this.$nextTick(() => {
@@ -100,6 +134,14 @@ export default {
         this.cardLayers = this.cardLayers.filter((_, i) => {
           return i !== index;
         });
+        this.filesDrop = this.filesDrop.map(item => {
+        if (item.sloy === index + 1) {
+          item.active = false;
+          item.color = '';
+          item.sloy = 0;
+        }
+        return item;
+      });
       }
     },
     change(e) {

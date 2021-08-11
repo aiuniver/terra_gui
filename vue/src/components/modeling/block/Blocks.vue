@@ -15,15 +15,15 @@
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
-        <i class="icon icon-zoom-inc" @click="zoom(1)"></i>
+        <i class="t-icon icon-zoom-inc" @click="zoom(1)"></i>
       </div>
       <hr />
       <div class="btn-zoom__item">
-        <i class="icon icon-zoom-reset" @click="zoom(0)"></i>
+        <i class="t-icon icon-zoom-reset" @click="zoom(0)"></i>
       </div>
       <hr />
       <div class="btn-zoom__item">
-        <i class="icon icon-zoom-dec" @click="zoom(-1)"></i>
+        <i class="t-icon icon-zoom-dec" @click="zoom(-1)"></i>
       </div>
     </div>
   </div>
@@ -642,16 +642,16 @@ export default {
   background-color: #0e1621;
   border: solid 2px #65b9f4;
   &__item {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer; 
     i {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
     }
   }
   hr {
