@@ -19,9 +19,9 @@ class UploadAPIView(BaseAPIView):
         try:
             # Подготовить zip-файл
             # ...
-            filepath = Path("/tmp/sources.zip")
+            filepath = Path("./TerraAI/datasets/sources/airplane.zip")
             sec = serializer.validated_data.get("sec")
-            stage = agent_exchange(
+            response = agent_exchange(
                 "deploy_upload",
                 **{
                     "stage": 1,
@@ -44,6 +44,6 @@ class UploadAPIView(BaseAPIView):
                     },
                 }
             )
-            return BaseResponseSuccess(stage.native())
+            return BaseResponseSuccess(response.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)

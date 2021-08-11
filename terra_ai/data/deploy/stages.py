@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import validator
 from pydantic.types import constr, PositiveInt
+from pydantic.networks import HttpUrl
 from transliterate import slugify
 
 from ..mixins import BaseMixinData
@@ -59,3 +60,17 @@ class StageUploadData(BaseMixinData):
     task: TaskTypeChoice
     replace: bool = False
     file: StageUploadFileData
+
+
+class StageCompleteData(BaseMixinData):
+    stage: PositiveInt
+    deploy: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    login: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+    project: constr(regex=r"^[a-z]+[a-z0-9\-_]*$")
+
+
+class StageResponseData(BaseMixinData):
+    stage: PositiveInt
+    success: bool
+    url: HttpUrl
+    api_text: str

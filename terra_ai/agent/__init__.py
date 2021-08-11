@@ -1,5 +1,6 @@
 import os
 import json
+import time
 import requests
 import tensorflow
 
@@ -19,7 +20,7 @@ from ..data.datasets.extra import DatasetGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.modeling.extra import ModelGroupChoice
 
-from ..data.deploy.stages import StageUploadData
+from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
 
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
@@ -194,22 +195,42 @@ class Exchange:
             model.layers.append(kwargs)
         return model
 
-    def _call_deploy_upload(self, **kwargs) -> StageUploadData:
+    def _call_deploy_upload(self, **kwargs) -> dict:
         """
         Деплой: загрузка
         """
-        stage = StageUploadData(**kwargs)
-        data = stage.native()
+        upload = StageUploadData(**kwargs)
         response = requests.post(
             settings.DEPLOY_URL,
-            json=data,
+            json=upload.native(),
             headers={"Content-Type": "application/json"},
         )
         if response.ok:
-            print(response.json())
+            response_data = response.json()
+            complete = StageCompleteData(
+                stage=2,
+                deploy=response_data.get("deploy"),
+                login=upload.user.login,
+                project=upload.project.slug,
+            )
+            time.sleep(2)
+            response = requests.post(
+                settings.DEPLOY_URL,
+                json=complete.native(),
+                headers={"Content-Type": "application/json"},
+            )
+            if response.ok:
+                print(response.json())
+            else:
+                print("ERROR:", response.status_code)
         else:
-            print(response.status_code)
-        return stage
+            print("ERROR:", response.status_code)
+        return StageResponseData(
+            stage=2,
+            success=True,
+            url="https://dev.demo.neural-university.ru/autodeployterra.html/login/project/deploy-name-1",
+            api_text="API text",
+        )
 
 
 agent_exchange = Exchange()
