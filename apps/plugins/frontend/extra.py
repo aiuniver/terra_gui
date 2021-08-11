@@ -9,3 +9,4 @@ class FieldTypeChoice(str, Enum):
     select_group = "select_group"
     multiselect = "multiselect"
     radio = "radio"
+    button = "button"

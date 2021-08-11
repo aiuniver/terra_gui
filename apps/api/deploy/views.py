@@ -47,3 +47,10 @@ class UploadAPIView(BaseAPIView):
             return BaseResponseSuccess(response.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class UploadProgressAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            data=agent_exchange("deploy_upload_progress").native()
+        )
