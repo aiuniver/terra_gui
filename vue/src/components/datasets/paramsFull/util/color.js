@@ -1,9 +1,9 @@
 // const index = ['orange', 'green', 'blue', 'purple']
 const color = {
-  0: ["#FFB054", "#FF9D2A", "#FE8900", "#D47200", "#A95C00", "#7F4500"],
-  1: ["#89D764", "#71CE45", "#5DBB31", "#4E9C29", "#3E7D21", "#2F5E18"],
-  2: ["#54A3FF", "#2A8CFF", "#0075FE", "#0062D4", "#004EAA", "#003B7F"],
-  3: ["#8E51F2", "#762BEF", "#6011E2", "#500EBC", "#400B96", "#300871"],
+  0: ['#FFB054', '#FF9D2A', '#FE8900', '#D47200', '#A95C00', '#7F4500'],
+  1: ['#89D764', '#71CE45', '#5DBB31', '#4E9C29', '#3E7D21', '#2F5E18'],
+  2: ['#54A3FF', '#2A8CFF', '#0075FE', '#0062D4', '#004EAA', '#003B7F'],
+  3: ['#8E51F2', '#762BEF', '#6011E2', '#500EBC', '#400B96', '#300871'],
 };
 
 const getColor = () => {
@@ -13,6 +13,17 @@ const getColor = () => {
 };
 
 export { color, getColor };
+
+// const list = [
+//   {
+//     title: 'Group',
+//     options: [
+//       { label: 'Text', value: 'text' },
+//       { label: 'Text', value: 'text' },
+//       { label: 'Text', value: 'text' },
+//     ],
+//   },
+// ];
 
 // const ee = [
 //   {

@@ -14,8 +14,12 @@
               :color="color"
               :key="'cardLayersRight' + i"
               @click-btn="click($event, i)"
+              @click-header="clickScroll"
             >
-              <!-- <t-forms :data="main" @change="change" /> -->
+              <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
+              <template v-for="(data, index) of output">
+                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+              </template>
             </CardLayer>
           </template>
         </div>
@@ -25,136 +29,71 @@
 </template>
 
 <script>
-import { getColor } from "../util/color";
-import Fab from "../components/forms/Fab.vue";
-import CardLayer from "../components/card/CardLayer.vue";
+import { mapGetters } from 'vuex'
+import { getColor } from '../util/color';
+import Fab from '../components/forms/Fab.vue';
+import CardLayer from '../components/card/CardLayer.vue';
 export default {
-  name: "BlockMainRight",
+  name: 'BlockMainRight',
   components: {
     Fab,
     CardLayer,
   },
   data: () => ({
-    cardLayers: [{ title: "Name", color: "#8e51f2" }],
+    cardLayers: [{ title: 'Output', color: '#8e51f2' }],
     ops: {
       scrollPanel: {
         scrollingX: true,
         scrollingY: false,
       },
       rail: {
-        gutterOfEnds: "6px",
+        gutterOfEnds: '6px',
       },
     },
   }),
   computed: {
+    ...mapGetters({
+      output: 'datasets/getTypeOutput',
+    }),
+    filesDrop: {
+      set(value) {
+        this.$store.dispatch('datasets/setFilesDrop', value);
+      },
+      get() {
+        const files = this.$store.getters['datasets/getFilesDrop'];
+        return files.map(({ title, path}) => {
+          return { label: title, value: path}
+        })
+      },
+    },
     height() {
-      const height = this.$store.getters["settings/height"]({
+      const height = this.$store.getters['settings/height']({
         clean: true,
         padding: 172 + 90 + 62,
       });
       console.log(height);
       return height;
     },
-    main() {
-      const items = [
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "checkbox",
-          name: "use_bias",
-          label: "Use bias",
-          parse: "parameters[extra][use_bias]",
-          value: true,
-          list: null,
-        },
-        {
-          type: "select",
-          name: "bias_constraint",
-          label: "Bias constraint",
-          parse: "parameters[extra][bias_constraint]",
-          value: "",
-          list: [
-            {
-              value: "max_norm",
-              label: "Max norm",
-            },
-            {
-              value: "min_max_norm",
-              label: "Min max norm",
-            },
-            {
-              value: "non_neg",
-              label: "Non neg",
-            },
-            {
-              value: "unit_norm",
-              label: "Unit norm",
-            },
-            {
-              value: "radial_constraint",
-              label: "Radial constraint",
-            },
-          ],
-        },
-      ];
-      const value = {};
-      const type = "main";
-      return { type, items, value };
-    },
   },
   methods: {
     add() {
-      this.cardLayers.unshift({ title: "Input", color: getColor() });
-      // this.$nextTick(() => {
-      //   this.$refs.scrollRight.scrollTo(
-      //     {
-      //       x: "100%",
-      //     },
-      //     100
-      //   );
-      // });
+      this.cardLayers.push({ title: 'Output', color: getColor() });
+      this.$nextTick(() => {
+        this.$refs.scrollRight.scrollTo(
+          {
+            x: "100%",
+          },
+          100
+        );
+      });
+    },
+    clickScroll(e) {
+      this.$refs.scrollRight.scrollIntoView(e.target, 100);
+      console.log(e);
     },
     click(comm, index) {
       console.log(comm, index);
-      if (comm === "remove") {
+      if (comm === 'remove') {
         this.cardLayers = this.cardLayers.filter((_, i) => {
           return i !== index;
         });

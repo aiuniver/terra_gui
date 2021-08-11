@@ -13,6 +13,7 @@
               :color="color"
               :key="'cardLayersLeft' + i"
               @click-btn="click($event, i)"
+              @click-header="clickScroll"
             >
               <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
               <template v-for="(data, index) of input">
@@ -85,6 +86,10 @@ export default {
           100
         );
       });
+    },
+    clickScroll(e) {
+      this.$refs.scrollLeft.scrollIntoView(e.target, 100);
+      console.log(e);
     },
     click(comm, index) {
       console.log(comm, index);

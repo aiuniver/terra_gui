@@ -1,6 +1,6 @@
 <template>
   <div class="card-layer" v-click-outside="outside" :style="height">
-    <div class="card-layer__header" :style="bg">
+    <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)">
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="dot"></i>
       </div>
