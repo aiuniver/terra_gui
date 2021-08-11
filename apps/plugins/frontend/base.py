@@ -20,8 +20,8 @@ class ListOptgroupData(BaseMixinData):
 class Field(BaseMixinData):
     type: FieldTypeChoice
     name: AliasType
-    label: str
-    parse: str
+    label: Optional[str]
+    parse: Optional[str]
     value: Any = ""
     list: Optional[List[Union[ListOptionData, ListOptgroupData]]]
     fields: Optional[Dict[str, List]]
