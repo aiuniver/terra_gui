@@ -37,7 +37,7 @@ export default {
   },
   methods: {
     async save() {
-      await this.$store.dispatch('modeling/load', this.model);
+      await this.$store.dispatch('deploy/SendDeploy', this.model);
       this.$emit('input', false);
     },
   },
