@@ -1,28 +1,31 @@
 <template>
   <div class="load__answer">
     <scrollbar>
-      <div class="terra-url">https://srv2.demo.neural-university.ru</div>
-      <div class="answer-url">
-        Чтобы получилось:
-        <span>
-              https://srv2.demo.neural-university.ru/media/check_od/output_files/34234452.jpg
-            </span>
+      <div class="apiBlock">
+        {{ moduleList }}
       </div>
-      <div class="module-list">
-        <div class="module-list__title">СПИСОК МОДУЛЕЙ:</div>
-        <div class="module-list__item" v-for="item in moduleList" :key="item">
-          <div class="item__title">{{ item.title }}</div>
-          <div class="item__url">{{ item.url }}</div>
-          <div class="item__input">
-            Вход:
-            <span>{{ item.input }}</span>
-          </div>
-          <div class="item__output">
-            Выход:
-            <span>{{ item.output }}</span>
-          </div>
-        </div>
-      </div>
+<!--      <div class="terra-url">https://srv2.demo.neural-university.ru</div>-->
+<!--      <div class="answer-url">-->
+<!--        Чтобы получилось:-->
+<!--        <span>-->
+<!--              https://srv2.demo.neural-university.ru/media/check_od/output_files/34234452.jpg-->
+<!--            </span>-->
+<!--      </div>-->
+<!--      <div class="module-list">-->
+<!--        <div class="module-list__title">СПИСОК МОДУЛЕЙ:</div>-->
+<!--        <div class="module-list__item" v-for="item in moduleList" :key="item">-->
+<!--          <div class="item__title">{{ item.title }}</div>-->
+<!--          <div class="item__url">{{ item.url }}</div>-->
+<!--          <div class="item__input">-->
+<!--            Вход:-->
+<!--            <span>{{ item.input }}</span>-->
+<!--          </div>-->
+<!--          <div class="item__output">-->
+<!--            Выход:-->
+<!--            <span>{{ item.output }}</span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
     </scrollbar>
   </div>
 </template>
@@ -32,8 +35,8 @@ export default {
   name: "ModuleList",
   props: {
     moduleList: {
-      type: Object,
-      default: () => ({})
+      type: String,
+      default: () => ""
     }
   },
 }

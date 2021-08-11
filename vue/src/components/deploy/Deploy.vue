@@ -1,8 +1,18 @@
 <template>
   <div class="board">
     <div class="wrapper">
-      <div class="load-data">
-        <button>Загрузить данные</button>
+      <div class="content" v-if="dataLoaded">
+        <button class="reload-all">Перезагрузить все</button>
+        <div class="data-field">
+          <div class="title">Исходные данные / Предсказанные данные</div>
+          <div class="data">
+            <IndexCard v-for="card in Cards" :key="card" :DataBlock="card"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="load-data" v-if="!dataLoaded">
+        <button @click="$store.dispatch('deploy/setDataLoaded', !dataLoaded)">Загрузить данные</button>
       </div>
     </div>
   </div>
@@ -10,11 +20,120 @@
 
 <script>
 import { mapGetters } from "vuex";
+import IndexCard from "./IndexCard";
 
 export default {
+  components: {
+    IndexCard
+  },
+  data: () => ({
+    loaded: false,
+    Cards: [
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "image",
+          data: ""
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "image",
+          data: ""
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "image",
+          data: ""
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "image",
+          data: ""
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "image",
+          data: ""
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: " "
+        },
+        result: {
+          type: "text",
+          data: "Дерево"
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: ""
+        },
+        result: {
+          type: "text",
+          data: "Дерево"
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: ""
+        },
+        result: {
+          type: "text",
+          data: "Дерево"
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: ""
+        },
+        result: {
+          type: "text",
+          data: "Дерево"
+        }
+      },
+      {
+        original: {
+          type: "image",
+          data: ""
+        },
+        result: {
+          type: "text",
+          data: "Дерево"
+        }
+      },
+    ]
+  }),
   computed: {
     ...mapGetters({
-      datasets: "datasets/getDatasets",
+      dataLoaded: "deploy/getDataLoaded",
       height: "settings/autoHeight",
     }),
   },
@@ -32,7 +151,6 @@ export default {
   width: 100%;
 }
 .wrapper{
-  text-align: center;
   padding: 50px;
   height: 100%;
 }
@@ -47,4 +165,20 @@ export default {
     line-height: 24px;
   }
 }
+.reload-all{
+  width: 174px;
+}
+.data-field{
+  padding-top: 30px;
+  .title{
+    font-size: 12px;
+    line-height: 24px;
+    color: #A7BED3;
+  }
+}
+.data{
+  display: flex;
+  flex-wrap: wrap;
+}
+
 </style>
