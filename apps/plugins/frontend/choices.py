@@ -77,3 +77,9 @@ class LayerPrepareMethodChoice(str, Enum):
 class LayerDataframeAlignBaseMethodChoice(str, Enum):
     pad_sequences = "Pad sequences"
     xlen_step = "XLen step"
+
+
+class LayerDefineClassesChoice(str, Enum):
+    handmade = "Ручной ввод"
+    autosearch = "Автоматический поиск"
+    annotation = "Файл аннотации"
