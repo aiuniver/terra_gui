@@ -14,6 +14,7 @@ from ..choices import (
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
     LayerPrepareMethodChoice,
+    LayerDataframeAlignBaseMethodChoice,
 )
 
 
@@ -119,7 +120,7 @@ Defaults = {
                                     "completely": [
                                         {
                                             "type": "number",
-                                            "label": "Длина",
+                                            "label": "Длина аудио",
                                             "name": "max_seconds",
                                             "parse": "max_seconds",
                                         },
@@ -218,7 +219,8 @@ Defaults = {
                                 "value": False,
                             },
                             {
-                                "type": "radio",
+                                "type": "select",
+                                "label": "Метод подготовки",
                                 "name": "prepare_method",
                                 "parse": "prepare_method",
                                 "value": "embedding",
@@ -232,7 +234,7 @@ Defaults = {
                                     )
                                 ),
                                 "fields": {
-                                    "true": [
+                                    "word_to_vec": [
                                         {
                                             "type": "number",
                                             "label": "Размер Word2Vec пространства",
@@ -352,46 +354,31 @@ Defaults = {
                                 "fields": {
                                     "true": [
                                         {
-                                            "type": "checkbox",
-                                            "label": "pad_sequences",
-                                            "name": "pad_sequences",
-                                            "parse": "pad_sequences",
-                                            "value": True,
+                                            "type": "radio",
+                                            "name": "align_base_method",
+                                            "parse": "align_base_method",
+                                            "value": "pad_sequences",
+                                            "list": list(
+                                                map(
+                                                    lambda item: {
+                                                        "value": item.name,
+                                                        "label": item.value,
+                                                    },
+                                                    list(
+                                                        LayerDataframeAlignBaseMethodChoice
+                                                    ),
+                                                )
+                                            ),
                                             "fields": {
-                                                "true": [
+                                                "pad_sequences": [
                                                     {
                                                         "type": "number",
                                                         "label": "Длина примера",
                                                         "name": "example_length",
                                                         "parse": "example_length",
                                                     },
-                                                    {
-                                                        "type": "select",
-                                                        "label": "Скейлер",
-                                                        "name": "scaler",
-                                                        "parse": "scaler",
-                                                        "value": "no_scaler",
-                                                        "list": list(
-                                                            map(
-                                                                lambda item: {
-                                                                    "value": item.name,
-                                                                    "label": item.value,
-                                                                },
-                                                                list(LayerScalerChoice),
-                                                            )
-                                                        ),
-                                                    },
-                                                ]
-                                            },
-                                        },
-                                        {
-                                            "type": "checkbox",
-                                            "label": "xlen_step",
-                                            "name": "xlen_step",
-                                            "parse": "xlen_step",
-                                            "value": False,
-                                            "fields": {
-                                                "true": [
+                                                ],
+                                                "xlen_step": [
                                                     {
                                                         "type": "number",
                                                         "label": "Длина",
@@ -404,24 +391,24 @@ Defaults = {
                                                         "name": "step",
                                                         "parse": "step",
                                                     },
-                                                    {
-                                                        "type": "select",
-                                                        "label": "Скейлер",
-                                                        "name": "scaler",
-                                                        "parse": "scaler",
-                                                        "value": "no_scaler",
-                                                        "list": list(
-                                                            map(
-                                                                lambda item: {
-                                                                    "value": item.name,
-                                                                    "label": item.value,
-                                                                },
-                                                                list(LayerScalerChoice),
-                                                            )
-                                                        ),
-                                                    },
-                                                ]
+                                                ],
                                             },
+                                        },
+                                        {
+                                            "type": "select",
+                                            "label": "Скейлер",
+                                            "name": "scaler",
+                                            "parse": "scaler",
+                                            "value": "no_scaler",
+                                            "list": list(
+                                                map(
+                                                    lambda item: {
+                                                        "value": item.name,
+                                                        "label": item.value,
+                                                    },
+                                                    list(LayerScalerChoice),
+                                                )
+                                            ),
                                         },
                                     ],
                                 },
@@ -529,7 +516,7 @@ Defaults = {
                                     "completely": [
                                         {
                                             "type": "number",
-                                            "label": "Длина",
+                                            "label": "Длина аудио",
                                             "name": "max_seconds",
                                             "parse": "max_seconds",
                                         },
@@ -628,7 +615,8 @@ Defaults = {
                                 "value": False,
                             },
                             {
-                                "type": "radio",
+                                "type": "select",
+                                "label": "Метод подготовки",
                                 "name": "prepare_method",
                                 "parse": "prepare_method",
                                 "value": "embedding",
@@ -642,7 +630,7 @@ Defaults = {
                                     )
                                 ),
                                 "fields": {
-                                    "true": [
+                                    "word_to_vec": [
                                         {
                                             "type": "number",
                                             "label": "Размер Word2Vec пространства",

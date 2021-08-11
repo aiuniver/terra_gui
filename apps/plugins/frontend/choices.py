@@ -72,3 +72,8 @@ class LayerPrepareMethodChoice(str, Enum):
     embedding = "Embedding"
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
+
+
+class LayerDataframeAlignBaseMethodChoice(str, Enum):
+    pad_sequences = "Pad sequences"
+    xlen_step = "XLen step"
