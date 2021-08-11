@@ -15,7 +15,8 @@
               @click-btn="click($event, i)"
               @click-header="clickScroll"
             >
-              <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
+              <!-- <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" /> -->
+              <TMultiSelect inline label="Выберите путь" :lists="filesDrop" />
               <template v-for="(data, index) of input">
                 <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
               </template>
@@ -33,11 +34,13 @@ import { mapGetters } from 'vuex';
 import { getColor } from '../util/color';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
+import TMultiSelect from '../../../forms/MultiSelect.vue';
 export default {
   name: 'BlockMainLeft',
   components: {
     Fab,
     CardLayer,
+    TMultiSelect
   },
   data: () => ({
     cardLayers: [{ title: 'Input', color: '#FFB054' }],
