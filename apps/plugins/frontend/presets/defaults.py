@@ -16,6 +16,7 @@ from ..choices import (
     LayerPrepareMethodChoice,
     LayerDataframeAlignBaseMethodChoice,
     LayerDefineClassesChoice,
+    LayerYoloVersionChoice,
 )
 
 
@@ -787,24 +788,85 @@ Defaults = {
                                 ),
                             },
                         ],
-                        # "Timeseries": [
-                        #     {
-                        #         "type": "select",
-                        #         "label": "Предсказывать тренд",
-                        #         "name": "scaler",
-                        #         "parse": "scaler",
-                        #         "value": "no_scaler",
-                        #         "list": list(
-                        #             map(
-                        #                 lambda item: {
-                        #                     "value": item.name,
-                        #                     "label": item.value,
-                        #                 },
-                        #                 list(LayerScalerChoice),
-                        #             )
-                        #         ),
-                        #     },
-                        # ],
+                        "Timeseries": [
+                            {
+                                "type": "text",
+                                "label": "Имена колонок",
+                                "name": "cols_names",
+                                "parse": "cols_names",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Длина примера выборки",
+                                "name": "length",
+                                "parse": "length",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Шаг",
+                                "name": "step",
+                                "parse": "step",
+                            },
+                            {
+                                "type": "checkbox",
+                                "label": "Предсказывать тренд",
+                                "name": "trend",
+                                "parse": "trend",
+                                "value": False,
+                                "fields": {
+                                    "true": [
+                                        {
+                                            "type": "text",
+                                            "label": "Отклонение нулевого тренда",
+                                            "name": "trend_limit",
+                                            "parse": "trend_limit",
+                                        },
+                                    ],
+                                    "false": [
+                                        {
+                                            "type": "number",
+                                            "label": "Глубина предсказания",
+                                            "name": "depth",
+                                            "parse": "depth",
+                                        },
+                                        {
+                                            "type": "select",
+                                            "label": "Скейлер",
+                                            "name": "scaler",
+                                            "parse": "scaler",
+                                            "value": "no_scaler",
+                                            "list": list(
+                                                map(
+                                                    lambda item: {
+                                                        "value": item.name,
+                                                        "label": item.value,
+                                                    },
+                                                    list(LayerScalerChoice),
+                                                )
+                                            ),
+                                        },
+                                    ],
+                                },
+                            },
+                        ],
+                        "ObjectDetection": [
+                            {
+                                "type": "select",
+                                "label": "Версия Yolo",
+                                "name": "yolo",
+                                "parse": "yolo",
+                                "value": "v4",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerYoloVersionChoice),
+                                    )
+                                ),
+                            },
+                        ],
                     },
                 },
             ],
