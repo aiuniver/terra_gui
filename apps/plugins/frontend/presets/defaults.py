@@ -13,6 +13,7 @@ from ..choices import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
+    LayerPrepareMethodChoice,
 )
 
 
@@ -86,7 +87,7 @@ Defaults = {
                             },
                             {
                                 "type": "checkbox",
-                                "label": "Аугментация",
+                                "label": "Аргументация",
                                 "name": "augmentation",
                                 "parse": "augmentation",
                                 "value": False,
@@ -217,25 +218,19 @@ Defaults = {
                                 "value": False,
                             },
                             {
-                                "type": "checkbox",
-                                "label": "Embedding",
-                                "name": "embedding",
-                                "parse": "embedding",
-                                "value": False,
-                            },
-                            {
-                                "type": "checkbox",
-                                "label": "Bag of words",
-                                "name": "bag_of_words",
-                                "parse": "bag_of_words",
-                                "value": False,
-                            },
-                            {
-                                "type": "checkbox",
-                                "label": "Word2Vec",
-                                "name": "word_to_vec",
-                                "parse": "word_to_vec",
-                                "value": False,
+                                "type": "radio",
+                                "name": "prepare_method",
+                                "parse": "prepare_method",
+                                "value": "embedding",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerPrepareMethodChoice),
+                                    )
+                                ),
                                 "fields": {
                                     "true": [
                                         {
@@ -502,7 +497,7 @@ Defaults = {
                             },
                             {
                                 "type": "checkbox",
-                                "label": "Аугментация",
+                                "label": "Аргументация",
                                 "name": "augmentation",
                                 "parse": "augmentation",
                                 "value": False,
@@ -633,25 +628,19 @@ Defaults = {
                                 "value": False,
                             },
                             {
-                                "type": "checkbox",
-                                "label": "Embedding",
-                                "name": "embedding",
-                                "parse": "embedding",
-                                "value": False,
-                            },
-                            {
-                                "type": "checkbox",
-                                "label": "Bag of words",
-                                "name": "bag_of_words",
-                                "parse": "bag_of_words",
-                                "value": False,
-                            },
-                            {
-                                "type": "checkbox",
-                                "label": "Word2Vec",
-                                "name": "word_to_vec",
-                                "parse": "word_to_vec",
-                                "value": False,
+                                "type": "radio",
+                                "name": "prepare_method",
+                                "parse": "prepare_method",
+                                "value": "embedding",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerPrepareMethodChoice),
+                                    )
+                                ),
                                 "fields": {
                                     "true": [
                                         {

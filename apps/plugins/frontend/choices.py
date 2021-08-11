@@ -66,3 +66,9 @@ class LayerVideoFrameModeChoice(str, Enum):
 class LayerVideoModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
+
+
+class LayerPrepareMethodChoice(str, Enum):
+    embedding = "Embedding"
+    bag_of_words = "Bag of words"
+    word_to_vec = "Word2Vec"
