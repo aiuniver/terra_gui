@@ -83,3 +83,8 @@ class LayerDefineClassesChoice(str, Enum):
     handmade = "Ручной ввод"
     autosearch = "Автоматический поиск"
     annotation = "Файл аннотации"
+
+
+class LayerYoloVersionChoice(str, Enum):
+    v3 = "V3"
+    v4 = "V4"
