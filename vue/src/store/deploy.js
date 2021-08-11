@@ -14,11 +14,12 @@ export default {
     },
     actions: {
       async SendDeploy({ state, dispatch }, data) {
-        console.log(data);
         const model = await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        console.log(model);
         state.moduleList = model;
-        return model;
+      },
+      async CheckProgress({ dispatch }) {
+        const data = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });
+        return data;
       },
       setDataLoaded({ commit }, value) {
         commit("SET_DATALOADED", value);

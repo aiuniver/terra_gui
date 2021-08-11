@@ -18,20 +18,21 @@
           </div>
         </div>
         <button :disabled="send_disabled || !dataLoaded" @click="SendData" v-if="!DataSent">Отправить</button>
-<!--        <div class="loader">-->
-<!--          <div class="loader__title">Дождитесь окончания загрузки</div>-->
-<!--          <div class="loader__time">-->
-<!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
-<!--          </div>-->
-<!--          <div class="loader__progress">-->
-<!--            <div class="progress-bar">-->
-<!--              <div class="loading">-->
-<!--                <span>78%</span>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
+        <div class="loader" v-if="DataLoading">
+          <div class="loader__title">Дождитесь окончания загрузки</div>
+          <div class="loader__time">
+            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты
+          </div>
+          <div class="loader__progress">
+            <div class="progress-bar">
+              <div class="loading">
+                <span>78%</span>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="req-ans" v-if="DataSent">
+          <div class="answer__success">Загрузка завершена!</div>
           <div class="answer__label">Ссылка на сформированную загрузку</div>
           <div class="answer__url"><i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i><span>{{ moduleList.url }}</span></div>
         </div>
@@ -45,6 +46,7 @@
 import { mapGetters } from 'vuex'
 import Checkbox from "@/components/forms/Checkbox";
 import ModuleList from "./ModuleList";
+import progress from "../../../at-ui/src/components/progress/src/progress";
 export default {
   name: "Settings",
   components: {
@@ -58,7 +60,8 @@ export default {
     sec: "",
     sec_accept: "",
     send_disabled: true,
-    DataSent: false
+    DataSent: false,
+    DataLoading: false,
   }),
   computed: {
   ...mapGetters({
@@ -86,6 +89,11 @@ export default {
     click() {
       console.log();
     },
+    Percents(number){
+      let loading = document.querySelector(".progress-bar > .loading");
+      loading.style.width = number + "%";
+      loading.find("span").value = number;
+    },
     Copy(text){
       var textArea = document.createElement("textarea");
       textArea.value = text;
@@ -112,6 +120,13 @@ export default {
     UseReplace(data) {
       this.replace = data.value;
     },
+    async progress(){
+        let answer = await this.$store.dispatch('deploy/CheckProgress');
+        if(!answer.finished){
+          this.Percents(answer.percent);
+          progress();
+        }
+    },
     async SendData(){
       let data = {
         deploy: this.deploy,
@@ -119,7 +134,10 @@ export default {
         use_sec: this.use_sec,
       }
       if(this.use_sec) data['sec'] = this.sec
+      this.DataLoading = true;
+      this.progress();
       await this.$store.dispatch('deploy/SendDeploy', data);
+      this.DataLoading = false;
       this.DataSent = true;
     }
   },
@@ -203,10 +221,17 @@ button {
   }
 }
 .req-ans{
+  .answer__success{
+    font-size: 14px;
+    line-height: 24px;
+    color: #FFFFFF;
+    padding-top: 10px;
+  }
   .answer__label{
     color: #A7BED3;
     font-size: 12px;
     line-height: 24px;
+    padding-top: 15px;
   }
   .answer__url{
     font-size: 14px;
@@ -214,10 +239,11 @@ button {
     color: #65B9F4;
     display: flex;
     span{
-      padding-left: 5px;
+      padding-left: 10px;
     }
     i{
       cursor: pointer;
+      width: 32px;
     }
   }
 }
