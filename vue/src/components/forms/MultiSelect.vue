@@ -19,7 +19,7 @@
         <span class="t-multi__item--title">Выбрать все</span>
       </div>
       <template v-for="(item, i) in filterList">
-        <div class="t-multi__item" :key="i">
+        <div class="t-multi__item" :key="i" :title="item.label">
           <span :class="['t-multi__item--check', { active: item.active }]" @click="$emit('check', item)"></span>
           <span class="t-multi__item--title">{{ item.label }}</span>
         </div>
@@ -129,7 +129,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -210,18 +210,16 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
     font-size: 0.75rem;
   }
   & input {
-    height: 22px;
+    height: 24px;
     font-size: 12px;
-    line-height: 24px;
     width: 100px;
   }
   & .t-multi-select__content {
     width: 100px;
-    top: 22px;
+    top: 24px;
   }
 }
 </style>

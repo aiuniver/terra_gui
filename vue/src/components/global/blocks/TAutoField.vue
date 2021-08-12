@@ -52,7 +52,7 @@
 
 <script>
 export default {
-  name: 'TAutoField',
+  name: 't-auto-field',
   props: {
     idKey: String,
     type: String,

@@ -1,9 +1,9 @@
 <template>
-  <div class="field">
-    <label class="field__label">{{ label }}</label>
+  <div class="t-field">
+    <label class="t-field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
-      class="field__select"
+      class="t-field__select"
       v-model="select"
       clearable
       size="small"
@@ -89,7 +89,7 @@ export default {
 
 
 <style lang="scss" scoped>
-.field {
+.t-field {
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-end;
@@ -104,14 +104,14 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
   }
   &__input {
-    height: 22px;
+    height: 24px;
     font-size: 0.75rem;
     max-width: 109px;
     width: 109px;

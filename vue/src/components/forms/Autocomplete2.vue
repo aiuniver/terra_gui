@@ -98,7 +98,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
   }
   &__input {

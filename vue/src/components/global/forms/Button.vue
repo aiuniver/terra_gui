@@ -22,6 +22,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: .875rem;
   width: 100%;
   color: #fff;
   background-color: #2b5278;
@@ -38,6 +39,13 @@ export default {
     border-color: #2b5278;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 50%);
   }
+  &:disabled {
+    cursor: auto;
+    color: #242f3d;
+    border-color: #2b5278;
+    background-color: #6c7883;
+    box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
+  }
   &__loading {
     display: inline-block;
     width: 30px;
@@ -52,5 +60,4 @@ export default {
     line-height: inherit;
   }
 }
-
 </style>

@@ -153,6 +153,7 @@ export default {
   div {
     text-align: center;
     line-height: 24px;
+    font-size: 12px;
   }
   #first-scale {
     background: #d6542c;

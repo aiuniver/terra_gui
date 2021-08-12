@@ -1,12 +1,15 @@
 <template>
   <div>
-    <t-button :disabled="!selected" @click="click">Выбрать датасет</t-button>
+    <t-button :disabled="!selected" :loading="loading" @click.native="click">Выбрать датасет</t-button>
   </div>
 </template>
 
 <script>
 export default {
   name: 'DatasetButton',
+  data: () => ({
+    loading: false
+  }),
   computed: {
     selected() {
       return this.$store.getters['datasets/getSelected'];
@@ -20,6 +23,7 @@ export default {
         if (!data || finished) {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
+          this.loading = false
           if (data) {
             this.$store.dispatch(
               'messages/setMessage',
@@ -44,15 +48,10 @@ export default {
       });
       const data = await this.$store.dispatch('datasets/choice', { alias, group });
       if (data) {
+        this.loading = true
         this.createInterval();
       }
     },
   },
 };
 </script>
-
-<style lang="scss" scoped>
-button {
-  font-size: 0.875rem;
-}
-</style>

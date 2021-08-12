@@ -30,10 +30,8 @@
 </template>
 
 <script>
-// import merge from "deepmerge";
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import mouseHelper from './helpers/mouse';
-import { createBlock } from './helpers/default';
+import { createBlock, mouseHelper } from './helpers/default';
 
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
@@ -246,7 +244,7 @@ export default {
     },
     handleMove(e) {
       // console.log('handleMove')
-      let mouse = mouseHelper.getMousePosition(this.$el, e);
+      let mouse = mouseHelper(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;
 
@@ -280,7 +278,7 @@ export default {
       if ((target === this.$el || target.matches('svg, svg *')) && e.which === 1) {
         this.dragging = true;
 
-        let mouse = mouseHelper.getMousePosition(this.$el, e);
+        let mouse = mouseHelper(this.$el, e);
         this.mouseX = mouse.x;
         this.mouseY = mouse.y;
 

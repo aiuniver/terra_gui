@@ -1,16 +1,23 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" :for="parse"><slot>{{ label }}</slot></label>
-    <input
+    <label class="t-field__label" :for="parse">{{ label }}</label>
+    <div class="tags">
+      <button class="tags__add" type="button"  @click="tagsCount++">
+        <i class="t-icon icon-tag-plus"></i>
+        <span>Добавить</span>
+      </button>
+      <input type="text" class="tags__item" @keydown="inputLength" v-for="tag in tagsCount" :key="tag" />
+      <!-- <input
       v-model="input"
-      :class="['t-field__input', {small: small}]"
+      class="t-field__input"
       :id="parse"
       :type="type"
       :name="parse"
       :value="value"
       @blur="change"
       :disabled="disabled"
-    />
+    /> -->
+    </div>
   </div>
 </template>
 
@@ -20,7 +27,7 @@ export default {
   props: {
     label: {
       type: String,
-      default: 'Label',
+      default: 'Теги',
     },
     type: {
       type: String,
@@ -33,30 +40,13 @@ export default {
     name: String,
     inline: Boolean,
     disabled: Boolean,
-    small: Boolean,
   },
   data: () => ({
-    isChange: false,
+    tagsCount: 0,
   }),
-  computed: {
-    input: {
-      set(value) {
-        this.$emit('input', value);
-        this.isChange = true;
-      },
-      get() {
-        return this.value;
-      },
-    },
-  },
   methods: {
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
-      }
+    inputLength(e) {
+      e.target.style.width = (e.target.value.length + 1) * 8 + 'px';
     },
   },
 };
@@ -76,6 +66,34 @@ export default {
     white-space: nowrap;
     overflow: hidden;
   }
+  .tags {
+    display: flex;
+    font-size: 12px;
+    max-width: 400px;
+    flex-wrap: wrap;
+    &__item {
+      margin-left: 10px;
+      padding: 2px 4px;
+      width: 60px;
+      color: #a7bed3;
+      height: 24px;
+      color: #ffffff;
+    }
+    &__add {
+      background: #242f3d;
+      height: 24px;
+      width: 90px;
+      padding: 2px 4px;
+      box-shadow: none;
+      border-color: #6c7883;
+      color: #a7bed3;
+      display: flex;
+      align-items: center;
+      span {
+        padding-left: 9px;
+      }
+    }
+  }
   &__input {
     color: #fff;
     border-color: #6c7883;
@@ -89,9 +107,6 @@ export default {
     &:focus {
       border-color: #fff;
     }
-  }
-  &__input.small{
-    height: 24px;
   }
 }
 .t-inline {
@@ -113,7 +128,7 @@ export default {
     font-size: 0.75rem;
   }
   > input {
-    height: 24px;
+    height: 22px;
     font-size: 12px;
     line-height: 24px;
     width: 100px;

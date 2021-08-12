@@ -1,5 +1,5 @@
-import { prepareBlocks, prepareLinks } from '../components/modeling/block/helpers/default';
-import { toolbar } from "./const/constModeling";
+import { prepareBlocks, prepareLinks } from '@/components/modeling/block/helpers/default';
+import { toolbar } from "../const/modeling";
 
 export default {
   namespaced: true,

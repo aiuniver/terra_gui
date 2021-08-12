@@ -1,139 +1,61 @@
 <template>
-  <div class="dataset-options">
-    <div class="dataset-field">
-      <label for="datasetName">Название датасета</label>
-      <input type="text" class="terra-input large-input" name="name" id="datasetName" />
+  <div class="block-footer">
+    <div class="block-footer__item">
+      <t-input name="name" small>
+        Название датасета
+      </t-input>
     </div>
-    <div class="dataset-field">
-      <label>Теги</label>
-      <div class="tags">
-        <button type="button" class="add-btn" @click="tagsCount++">
-          <i class="plus"></i>
-          <span>Добавить</span>
-        </button>
-        <input type="text" class="terra-input" @keydown="inputLength" v-for="tag in tagsCount" :key="tag" />
-      </div>
+    <div class="block-footer__item block-tags">
+      <TTags />
     </div>
-    <div class="dataset-field">
+    <div class="block-footer__item">
       <DoubleSlider />
     </div>
-    <div class="dataset-field">
+    <div class="block-footer__item">
       <t-checkbox name="subsequence">Сохранить последовательность</t-checkbox>
     </div>
-    <div class="dataset-field">
+    <div class="block-footer__item">
       <t-checkbox name="use_generator">Использовать генератор</t-checkbox>
     </div>
     <div class="action">
-      <button>Сформировать</button>
+      <t-button>Сформировать</t-button>
     </div>
   </div>
 </template>
 
 <script>
 import DoubleSlider from '@/components/forms/DoubleSlider';
+import TTags from '@/components/forms/TTags';
 
 export default {
   name: 'BlockFooter',
   components: {
     DoubleSlider,
-  },
-  data() {
-    return {
-      tagsCount: 2,
-    };
-  },
-  methods: {
-    inputLength(e) {
-      e.target.style.width = (e.target.value.length + 1) * 8 + 'px';
-    },
+    TTags,
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.plus {
-  width: 14px;
-  height: 14px;
-  margin-top: -2px;
-  &:before {
-    content: ' ';
-    display: block;
-    width: 2px;
-    height: 14px;
-    background: #a7bed3;
-    margin-left: 6px;
-  }
-
-  &:after {
-    content: ' ';
-    display: block;
-    width: 14px;
-    height: 2px;
-    background: #a7bed3;
-    margin-top: -8px;
-  }
-}
-.dataset-options {
+.block-footer {
   display: flex;
   justify-content: space-between;
-}
-.dataset-field {
-  padding: 16px 18px;
-  font-size: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  label {
-    color: #a7bed3;
+  padding: 22px 24px;
+  &__item {
+    flex: 0 0 150px;
+    margin-right: 36px;
+  }
+  &__item.block-tags{
+    flex: 0 0 250px;
   }
 }
-.large-input {
-  max-width: 150px;
-}
-.terra-input {
-  margin-top: 10px;
-  height: 24px;
-  color: #ffffff;
-}
-.tags {
-  display: flex;
-  font-size: 12px;
-  max-width: 400px;
-  flex-wrap: wrap;
-  .terra-input {
-    margin-left: 10px;
-    padding: 2px 4px;
-    width: 60px;
-    color: #a7bed3;
-  }
-}
-.add-btn {
-  background: #242f3d;
-  height: 24px;
-  width: 90px;
-  padding: 2px 4px;
-  margin-top: 10px;
-  box-shadow: none;
-  border-color: #6c7883;
-  color: #a7bed3;
-  display: flex;
-  align-items: center;
-  span {
-    padding-left: 9px;
-  }
-}
+
+
 .action {
-  padding-top: 26px;
-  padding-right: 20px;
   font-size: 0.8rem;
-  float: right;
   button {
     padding: 8px 16px;
   }
 }
-.checkout-switch {
-  margin-top: 10px;
-}
-label {
-  white-space: nowrap;
-}
+
 </style>
