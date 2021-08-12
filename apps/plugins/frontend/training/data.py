@@ -21,7 +21,7 @@ LossesData = {
         LossChoice.Hinge.value,
         LossChoice.CategoricalHinge.value,
         LossChoice.SparseCategoricalCrossentropy.value,
-        LossChoice.KullbackLeiblerDivergence.value,
+        LossChoice.KLDivergence.value,
         LossChoice.Poisson.value,
     ],
     TaskChoice.Segmentation.value: [
@@ -31,7 +31,7 @@ LossesData = {
         LossChoice.Hinge.value,
         LossChoice.CategoricalHinge.value,
         LossChoice.SparseCategoricalCrossentropy.value,
-        LossChoice.KullbackLeiblerDivergence.value,
+        LossChoice.KLDivergence.value,
         LossChoice.Poisson.value,
     ],
     TaskChoice.Regression.value: [
