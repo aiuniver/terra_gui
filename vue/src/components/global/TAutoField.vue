@@ -24,6 +24,7 @@
     />
     <t-checkbox
       v-if="type === 'checkbox'"
+      inline
       :value="valueInt"
       :label="label"
       type="checkbox"

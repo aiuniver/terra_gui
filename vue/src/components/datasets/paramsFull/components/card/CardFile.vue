@@ -8,21 +8,21 @@
 
 <script>
 export default {
-  name: "card-file",
+  name: 'card-file',
   props: {
     color: {
       type: String,
-      default: "",
+      default: '',
     },
     active: Boolean,
     label: String,
     name: String,
     type: String,
-    sloy: Number
+    sloy: Number,
   },
   computed: {
     bg() {
-      return { backgroundColor: this.active ? this.color : ''};
+      return { backgroundColor: this.active ? this.color : '' };
     },
     bc() {
       return { borderColor: this.active ? this.color : '' };
@@ -42,9 +42,12 @@ export default {
   border-radius: 4px;
   background-color: #17212b;
   margin: 0 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   &__footer,
   &__header {
-    position: absolute;
+    position: relative;
     height: 24px;
     background-color: #242f3d;
     width: 100%;

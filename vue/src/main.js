@@ -115,12 +115,14 @@ Vue.directive('click-outside', {
 import FilesMenu from "@/components/datasets/paramsFull/components/forms/FilesMenu.vue";
 Vue.component('files-menu', FilesMenu)
 
-import TInput from "./components/global/forms/Input.vue";
+import TInput from "@/components/global/forms/Input.vue";
 Vue.component('t-input', TInput)
-import TSelect from "./components/global/forms/Select.vue";
+import TSelect from "@/components/global/forms/Select.vue";
 Vue.component('t-select', TSelect)
-import TCheckbox from "./components/global/forms/Checkbox.vue";
+import TCheckbox from "@/components/global/forms/Checkbox.vue";
 Vue.component('t-checkbox', TCheckbox)
+import TButton from "@/components/global/forms/Button.vue";
+Vue.component('t-button', TButton)
 import TAutoField from "@/components/global/TAutoField.vue";
 Vue.component('t-auto-field', TAutoField)
 

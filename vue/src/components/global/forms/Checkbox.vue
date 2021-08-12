@@ -1,12 +1,12 @@
 <template>
-  <div class="t-field t-inline">
-    <label class="t-field__label" :for="parse" >{{ label }}</label>
+  <div :class="['t-field', { 't-inline': inline} ]">
+    <label class="t-field__label" :for="parse" ><slot>{{ label }}</slot></label>
     <div class="t-field__switch">
       <input
         :id="parse"
         class="t-field__input"
         :checked="checked ? 'checked' : ''"
-        :type="type"
+        type="checkbox"
         :value="checked"
         :name="parse"
         @change="change"
@@ -24,19 +24,10 @@ export default {
       type: String,
       default: "Label",
     },
-    type: {
-      type: String,
-      default: "text",
-    },
-    value: {
-      type: [Boolean],
-    },
-    name: {
-      type: String,
-    },
-    parse: {
-      type: String,
-    },
+    inline: Boolean,
+    value: Boolean,
+    name: String,
+    parse: String,
     event: {
       type: Array,
       default: () => [],
@@ -80,12 +71,12 @@ export default {
   &__label {
     width: 150px;
     max-width: 330px;
-    padding: 0 10px 0 10px;
+    padding-bottom: 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;

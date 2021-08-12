@@ -88,7 +88,7 @@ export default {
 </script>
 
 
-<style lang="scss" scope>
+<style lang="scss" scoped>
 .field {
   display: flex;
   flex-direction: row-reverse;

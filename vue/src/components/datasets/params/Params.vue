@@ -12,7 +12,7 @@
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
-          <TButton @click.native="download" :loading="loading" />
+          <t-button @click.native="download" :loading="loading" />
         </div>
       </div>
     </div>
@@ -23,13 +23,11 @@
 import { mapGetters } from 'vuex';
 import DatasetTab from '@/components/datasets/params/DatasetTab.vue';
 import DatasetButton from './DatasetButton.vue';
-import TButton from '@/components/forms/Button.vue';
 export default {
   name: 'Settings',
   components: {
     DatasetTab,
     DatasetButton,
-    TButton,
   },
   data: () => ({
     loading: false,

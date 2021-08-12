@@ -1,8 +1,8 @@
 <template>
-  <button class="t-btn">
+  <button class="t-button" :disabled="disabled">
     <i v-if="loading" class="t-btn__loading t-icon icon-loading-new"></i>
     <span v-else class="t-btn__text">
-      <slot>{{ name }}</slot>
+      <slot>Загрузить</slot>
     </span>
   </button>
 </template>
@@ -11,17 +11,14 @@
 export default {
   name: 't-button',
   props: {
-    name: {
-      type: String,
-      default: 'Загрузить',
-    },
     loading: Boolean,
+    disabled: Boolean,
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.t-btn {
+.t-button {
   display: flex;
   justify-content: center;
   align-items: center;

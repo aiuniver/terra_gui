@@ -63,10 +63,8 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  margin-bottom: 20px;
+  // margin-bottom: 20px;
   &__label {
-    width: 150px;
-    max-width: 130px;
     text-align: left;
     color: #a7bed3;
     display: block;
@@ -100,8 +98,9 @@ export default {
   margin-bottom: 10px;
   align-items: center;
   > label {
-    width: auto;
-    padding: 0 20px 0 10px;
+    width: 150px;
+    max-width: 130px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

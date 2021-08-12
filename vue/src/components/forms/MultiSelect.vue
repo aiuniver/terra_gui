@@ -118,7 +118,7 @@ export default {
 </script>
 
 
-<style lang="scss" scope>
+<style lang="scss" scoped>
 .t-multi-select {
   position: relative;
   margin-bottom: 10px;
