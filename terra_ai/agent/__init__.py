@@ -1,7 +1,5 @@
 import os
 import json
-import time
-import requests
 import tensorflow
 
 from typing import Any
@@ -20,8 +18,6 @@ from ..data.datasets.extra import DatasetGroupChoice
 from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
 from ..data.modeling.extra import ModelGroupChoice
 
-from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
-
 from ..data.presets.datasets import DatasetsGroups
 from ..data.presets.models import ModelsGroups
 from ..data.extra import (
@@ -31,6 +27,7 @@ from ..data.extra import (
 )
 
 from ..datasets import loading as datasets_loading
+from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
 from . import exceptions
@@ -195,48 +192,17 @@ class Exchange:
             model.layers.append(kwargs)
         return model
 
-    def _call_deploy_upload(self, **kwargs) -> dict:
+    def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
         """
-        upload = StageUploadData(**kwargs)
-        response = requests.post(
-            settings.DEPLOY_URL,
-            json=upload.native(),
-            headers={"Content-Type": "application/json"},
-        )
-        if response.ok:
-            response_data = response.json()
-            complete = StageCompleteData(
-                stage=2,
-                deploy=response_data.get("deploy"),
-                login=upload.user.login,
-                project=upload.project.slug,
-            )
-            time.sleep(2)
-            response = requests.post(
-                settings.DEPLOY_URL,
-                json=complete.native(),
-                headers={"Content-Type": "application/json"},
-            )
-            if response.ok:
-                print(response.json())
-            else:
-                print("ERROR:", response.status_code)
-        else:
-            print("ERROR:", response.status_code)
-        return StageResponseData(
-            stage=2,
-            success=True,
-            url="https://dev.demo.neural-university.ru/autodeployterra.html/login/project/deploy-name-1",
-            api_text="API text",
-        )
+        deploy_loading.upload(source, kwargs)
 
     def _call_deploy_upload_progress(self) -> progress.ProgressData:
         """
         Деплой: прогресс загрузки
         """
-        return progress.pool(progress.PoolName.deploy_upload_progress)
+        return progress.pool(progress.PoolName.deploy_upload)
 
 
 agent_exchange = Exchange()

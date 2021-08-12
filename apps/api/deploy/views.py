@@ -6,8 +6,14 @@ from pydantic import ValidationError
 from django.conf import settings
 
 from terra_ai.agent import agent_exchange
+from terra_ai.exceptions.base import TerraBaseException
 
-from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+from ..base import (
+    BaseAPIView,
+    BaseResponseSuccess,
+    BaseResponseErrorFields,
+    BaseResponseErrorGeneral,
+)
 from .serializers import UploadSerializer
 
 
@@ -17,13 +23,11 @@ class UploadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            # Подготовить zip-файл
-            # ...
-            filepath = Path("./TerraAI/datasets/sources/airplane.zip")
             sec = serializer.validated_data.get("sec")
-            response = agent_exchange(
+            agent_exchange(
                 "deploy_upload",
                 **{
+                    "source": Path("./TerraAI/datasets"),
                     "stage": 1,
                     "deploy": serializer.validated_data.get("deploy"),
                     "user": {
@@ -39,14 +43,13 @@ class UploadAPIView(BaseAPIView):
                     },
                     "task": "text_classification",
                     "replace": serializer.validated_data.get("replace"),
-                    "file": {
-                        "path": filepath,
-                    },
                 }
             )
-            return BaseResponseSuccess(response.native())
+            return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class UploadProgressAPIView(BaseAPIView):

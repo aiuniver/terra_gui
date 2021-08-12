@@ -20,7 +20,7 @@ class Loss(str, Enum):
     Hinge = "Hinge"
     CategoricalHinge = "CategoricalHinge"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
-    KullbackLeiblerDivergence = "KullbackLeiblerDivergence"
+    KLDivergence = "KLDivergence"
     Poisson = "Poisson"
     MAE = "MAE"
     Mape = "Mape"
@@ -63,7 +63,7 @@ TasksGroups = [
             Loss.Hinge,
             Loss.CategoricalHinge,
             Loss.SparseCategoricalCrossentropy,
-            Loss.KullbackLeiblerDivergence,
+            Loss.KLDivergence,
             Loss.Poisson,
         ],
         "metrics": [
@@ -90,7 +90,7 @@ TasksGroups = [
             Loss.Hinge,
             Loss.CategoricalHinge,
             Loss.SparseCategoricalCrossentropy,
-            Loss.KullbackLeiblerDivergence,
+            Loss.KLDivergence,
             Loss.Poisson,
         ],
         "metrics": [

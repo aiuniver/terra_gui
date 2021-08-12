@@ -34,6 +34,23 @@ def download(progress_name: str, title: str, url: HttpUrl) -> Path:
     return Path(file_destination.name)
 
 
+def pack(progress_name: str, title: str, source: Path) -> Path:
+    pool.reset(progress_name, message=title, finished=False)
+    zip_destination = NamedTemporaryFile(delete=False, suffix=".zip")
+    try:
+        with zipfile.ZipFile(zip_destination.name, "w") as zipfile_ref:
+            quantity = sum(list(map(lambda item: len(item[2]), os.walk(source))))
+            __num = 0
+            for path, dirs, files in os.walk(source):
+                for file in files:
+                    zipfile_ref.write(Path(path, file).absolute())
+                    __num += 1
+                    pool(progress_name, percent=__num / quantity * 100)
+    except Exception as error:
+        raise Exception(error)
+    return zip_destination
+
+
 def unpack(progress_name: str, title: str, zipfile_path: Path) -> Path:
     pool.reset(progress_name, message=title, finished=False)
     tmp_destination = mkdtemp()

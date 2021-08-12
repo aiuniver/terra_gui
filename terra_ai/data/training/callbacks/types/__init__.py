@@ -3,4 +3,5 @@ from . import (
     Segmentation,
     Regression,
     Timeseries,
+    ObjectDetection,
 )
