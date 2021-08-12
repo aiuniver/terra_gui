@@ -5,7 +5,7 @@ import os
 import gc
 # import copy
 import tensorflow as tf
-import operator
+import sys
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 from terra_ai.training.customcallback import CustomCallback
@@ -155,8 +155,16 @@ class GUINN:
         self.set_optimizer(training_params)
         self.set_chp_monitor(training_params)
         for output_layer in training_params.architecture.outputs_dict:
-            self.metrics.update({output_layer["alias"]: output_layer["metrics"]})
-            self.loss.update({output_layer["alias"]: output_layer["loss"]})
+            self.metrics.update({output_layer["id"]: list(map(lambda item:
+                                                              getattr(sys.modules.get("tensorflow.keras.metrics"),
+                                                                      item)(), output_layer["metrics"]))})
+
+
+
+            self.loss.update({output_layer["id"]: output_layer["loss"]})
+
+
+
 
         if self.model_is_trained:
             try:
