@@ -194,7 +194,7 @@ class CreateArray(object):
 
         return array
 
-    def create_text(self, _, sample: dict, **options):
+    def create_text(self, _, text: str, slicing: list, **options):
 
         """
         Args:
@@ -216,8 +216,13 @@ class CreateArray(object):
         """
 
         array = []
-        [[filepath, slicing]] = sample.items()
-        text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
+        # [[filepath, slicing]] = sample.items()
+        # text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
+        text = text.split(' ')
+        print(len(text))
+        print(slicing)
+        if slicing[1] - slicing[0] < len(text):
+            text = text[slicing[0]:slicing[1]]
 
         if options['embedding']:
             array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
