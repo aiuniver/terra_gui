@@ -1,26 +1,21 @@
 <template>
   <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
     <label class="t-multi-select__label">{{ label }}</label>
-    <input
-      class="t-multi-select__input"
-      v-model="search"
-      :name="name"
-      :disabled="disabled"
-      :placeholder="placeholder"
-      @focus="focus"
-      @blur="select(false)"
-    />
+    <div class="t-multi-select__input">
+      <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
+      <span :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]" :title="input" @click="show = true">
+        {{ input || 'Не выбрано' }}
+      </span>
+      <!-- <i v-show="input" class="icon icon-chevron-right" @click="next(1)"></i> -->
+    </div>
     <div class="t-multi-select__content" v-show="show">
       <div v-if="filterList.length" class="t-multi__item">
-        <span
-          :class="['t-multi__item--check', { active: checkAll }]"
-          @click="(checkAll = !checkAll), $emit('checkAll', checkAll)"
-        ></span>
+        <span :class="['t-multi__item--check', { active: checkAll }]" @click="select(checkAll)" />
         <span class="t-multi__item--title">Выбрать все</span>
       </div>
       <template v-for="(item, i) in filterList">
-        <div class="t-multi__item" :key="i">
-          <span :class="['t-multi__item--check', { active: item.active }]" @click="$emit('check', item)"></span>
+        <div class="t-multi__item" :key="i" :title="item.label">
+          <span :class="['t-multi__item--check', { active: active(item) }]" @click="select(item)"></span>
           <span class="t-multi__item--title">{{ item.label }}</span>
         </div>
       </template>
@@ -49,76 +44,54 @@ export default {
     },
     inline: Boolean,
     value: String,
-    sloy: Number,
+    id: Number,
   },
-  data() {
-    return {
-      selected: {},
-      show: false,
-      search: '',
-      checkAll: false,
-    };
-  },
+  data: () => ({
+    selected: [],
+    show: false,
+    pagination: 0,
+  }),
   created() {
     // this.$emit("selected", { name: this.value });
-    this.search = this.value;
   },
   computed: {
+    input() {
+      return this.selected.map(item => item.label).join();
+    },
+    checkAll() {
+      return this.lists.length === this.selected.length;
+    },
     filterList() {
-      return this.lists
-        ? this.lists.filter(item => {
-            return item.active !== true || item.sloy === this.sloy;
-          })
-        : [];
-      // return this.lists
-      //   ? this.lists.filter(item => {
-      //       const search = this.search;
-      //       return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
-      //     })
-      //   : [];
+      return this.lists.filter(item => !item.id || item.id === this.id);
     },
   },
   methods: {
+    active({ value }) {
+      return !!this.selected.find(item => item.value === value);
+    },
     outside() {
       if (this.show) {
         this.show = false;
       }
     },
-    check(i) {
-      console.log(i);
-    },
-    select(item) {
-      // console.log(item);
-      if (item) {
-        this.selected = item;
-        // this.show = false;
-        this.search = item.label;
-        this.$emit('input', this.selected.value);
-        this.$emit('change', item);
+    select(list) {
+      if (typeof list === 'boolean') {
+        this.selected = this.lists.map(item => (!list ? item : null)).filter(item => item);
       } else {
-        this.search = this.selected.label;
-        // this.show = false;
+        if (this.selected.find(item => item.value === list.value)) {
+          this.selected = this.selected.filter(item => item.value !== list.value);
+        } else {
+          this.selected = [...this.selected, list];
+        }
       }
-    },
-    focus() {
-      this.show = true;
-      this.$emit('focus', true);
-    },
-  },
-  watch: {
-    value: {
-      handler(value) {
-        // console.log(value)
-        this.show = false;
-        this.search = value;
-      },
+      this.$emit('change', this.selected)
     },
   },
 };
 </script>
 
 
-<style lang="scss" scope>
+<style lang="scss" scoped>
 .t-multi-select {
   position: relative;
   margin-bottom: 10px;
@@ -129,7 +102,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -141,18 +114,32 @@ export default {
     border-radius: 4px;
     background: #242f3d;
     height: 42px;
-    padding: 0 10px;
+    padding: 0;
     font-size: 0.875rem;
     font-weight: 400;
     width: 100%;
-    transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-    &:focus {
-      border: 1px solid #e7ecf5;
+    display: flex;
+    align-items: center;
+    &--text {
+      // text-align: center;
+      flex-grow: 1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      color: #747b82;
+      font-size: 0.75rem;
+      padding: 0 8px;
     }
-    &:disabled {
-      border: 1px solid #6c7883;
-      cursor: auto;
-      opacity: 0.35;
+    &--active {
+      color: #fff;
+    }
+    i {
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+      cursor: pointer;
+    }
+    &:hover i {
+      opacity: 1;
     }
   }
   &__content {
@@ -203,25 +190,23 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
-  & label {
+  & .t-multi-select__label {
     width: auto;
     padding: 0 20px 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
     font-size: 0.75rem;
   }
-  & input {
-    height: 22px;
+  & .t-multi-select__input {
+    height: 24px;
     font-size: 12px;
-    line-height: 24px;
     width: 100px;
   }
   & .t-multi-select__content {
     width: 100px;
-    top: 22px;
+    top: 24px;
   }
 }
 </style>

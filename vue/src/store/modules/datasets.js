@@ -1,29 +1,27 @@
-// import inputs from "./temp/json";
+import { createInputData } from "../const/datasets";
 export default {
   namespaced: true,
   state: () => ({
+    inputData: [],
+
     creation: {},
     datasets: [],
     filesSource: [],
     filesDrop: [],
     selected: null,
     tags: [],
-    settings: {},
-    sort: "",
     tagsFilter: [],
-    id: null,
-    dialog: false,
     full: false,
   }),
   mutations: {
     SET_DATASETS(state, value) {
       state.datasets = [...value];
     },
+    SET_INPUT_DATA(state, value) {
+      state.inputData = value;
+    },
     SET_SELECTED(state, value) {
       state.selected = value;
-    },
-    SET_SETTINGS(state, value) {
-      state.settings = { ...value };
     },
     SET_TAGS(state, tags) {
       state.tags = [...tags];
@@ -104,10 +102,21 @@ export default {
       commit("SET_FILES_SOURCE", value);
     },
     setFilesDrop({ commit }, value) {
+      console.log(value)
       commit("SET_FILES_DROP", value);
+    },
+    createInputData({ commit, state: { inputData } }, { layer }) {
+      let maxID = Math.max(0, ...inputData.map((o) => { return o.id}));
+      commit("SET_INPUT_DATA", [ ...inputData, createInputData(maxID+1, layer)]);
+    },
+    removeInputData({ commit, state: { inputData } }, id) {
+      commit("SET_INPUT_DATA", inputData.filter(item => item.id !== id))
     },
   },
   getters: {
+    getInputData({ inputData }) {
+      return inputData
+    },
     getTypeInput({ creation: { input } }) {
       return input || [];
     },

@@ -20,7 +20,7 @@
           </div>
         </div>
         <div class="main__footer">
-          <BlockFooter />
+          <BlockFooter @create="createObject"/>
         </div>
       </div>
     </div>
@@ -66,6 +66,9 @@ export default {
     },
   },
   methods: {
+    createObject(obj) {
+      console.log(obj)      
+    },
     change(value) {
       this.toggle = value;
     },

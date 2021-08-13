@@ -87,4 +87,30 @@ const prepareLinks = function(blocks) {
   return links      
 };
 
-export { typeBlock, prepareBlocks, createBlock, prepareLinks };
+const getOffsetRect = function (element) {
+  let box = element.getBoundingClientRect()
+
+  let scrollTop = window.pageYOffset
+  let scrollLeft = window.pageXOffset
+
+  let top = box.top + scrollTop
+  let left = box.left + scrollLeft
+
+  return {top: Math.round(top), left: Math.round(left)}
+}
+
+const mouseHelper = function (element, event) {
+  let mouseX = event.pageX || event.clientX + document.documentElement.scrollLeft
+  let mouseY = event.pageY || event.clientY + document.documentElement.scrollTop
+
+  let offset = getOffsetRect(element)
+  let x = mouseX - offset.left
+  let y = mouseY - offset.top
+
+  return {
+    x: x,
+    y: y
+  }
+}
+
+export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper };

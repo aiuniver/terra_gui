@@ -31,11 +31,8 @@ export default {
   name: "card-layer",
   props: {
     id: Number,
-    color: {
-      type: String,
-      default: "#242f3d",
-    },
-    title: String,
+    color: String,
+    name: String,
   },
   data: () => ({
     height: { height: '100%'},

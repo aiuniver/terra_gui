@@ -2,8 +2,8 @@
   <main class="page-datasets">
     <div class="cont">
       <Dataset v-show="!full" />
-      <ParamsFull v-if="full" />
-      <Params v-else />
+      <ParamsFull v-show="full" />
+      <Params v-show="!full" />
     </div>
   </main>
 </template>

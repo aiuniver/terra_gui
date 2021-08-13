@@ -35,20 +35,7 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  // console.log(router.app.$store)
-  // if (router?.app?.$store?.getters['projects/getProject']?.datatset) {
-  //   next()
-  // } else {
-  //   next('/dataset')
-  // }
-  // if (to.matched.some(route => route.meta.requiresAuth)) {
-  //   if (store.state.authStatus)
-  //     next()
-  //   else
-  //     next({name: 'home'})
-  // } else {
     next()
-  // }
 })
 
 export default router

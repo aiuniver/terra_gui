@@ -1,9 +1,9 @@
 <template>
-  <div class="field">
-    <label class="field__label">{{ label }}</label>
+  <div class="t-field">
+    <label class="t-field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
-      class="field__select"
+      class="t-field__select"
       v-model="select"
       clearable
       size="small"
@@ -25,7 +25,7 @@
 <script>
 // import { bus } from '@/main'
 export default {
-  name: "Select",
+  name: "TSelect",
   props: {
     label: {
       type: String,
@@ -88,8 +88,8 @@ export default {
 </script>
 
 
-<style lang="scss" scope>
-.field {
+<style lang="scss" scoped>
+.t-field {
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-end;

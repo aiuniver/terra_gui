@@ -20,18 +20,16 @@
       />
     </div>
     <div v-show="select === 'URL'" class="tabs__item">
-      <TInput label="Введите URL на архив исходников" @blur="blur" />
+      <t-input label="Введите URL на архив исходников" @blur="blur" />
     </div>
   </div>
 </template>
 
 <script>
-import TInput from "@/components/forms/TInput";
 import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
 export default {
   name: "DatasetTab",
   components: {
-    TInput,
     Autocomplete2,
   },
   props: {},

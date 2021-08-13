@@ -1,8 +1,8 @@
 <template>
-  <button class="t-btn">
+  <button class="t-button" :disabled="disabled">
     <i v-if="loading" class="t-btn__loading t-icon icon-loading-new"></i>
     <span v-else class="t-btn__text">
-      <slot>{{ name }}</slot>
+      <slot>Загрузить</slot>
     </span>
   </button>
 </template>
@@ -11,20 +11,18 @@
 export default {
   name: 't-button',
   props: {
-    name: {
-      type: String,
-      default: 'Загрузить',
-    },
     loading: Boolean,
+    disabled: Boolean,
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.t-btn {
+.t-button {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: .875rem;
   width: 100%;
   color: #fff;
   background-color: #2b5278;
@@ -41,6 +39,13 @@ export default {
     border-color: #2b5278;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 50%);
   }
+  &:disabled {
+    cursor: auto;
+    color: #242f3d;
+    border-color: #2b5278;
+    background-color: #6c7883;
+    box-shadow: 0 1px 3px 0 rgb(0 133 255 / 50%);
+  }
   &__loading {
     display: inline-block;
     width: 30px;
@@ -55,5 +60,4 @@ export default {
     line-height: inherit;
   }
 }
-
 </style>

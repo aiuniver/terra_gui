@@ -24,6 +24,7 @@
     />
     <t-checkbox
       v-if="type === 'checkbox'"
+      inline
       :value="valueInt"
       :label="label"
       type="checkbox"
@@ -51,7 +52,7 @@
 
 <script>
 export default {
-  name: 'TAutoField',
+  name: 't-auto-field',
   props: {
     idKey: String,
     type: String,

@@ -1,4 +1,4 @@
-import temp from "./temp/tempTraining";
+import temp from "../temp/training";
 import axios from "axios";
 export default {
   namespaced: true,
