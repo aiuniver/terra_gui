@@ -59,7 +59,7 @@ export default {
       return this.selected.map(item => item.label).join();
     },
     checkAll() {
-      return this.lists.length === this.selected.length;
+      return this.filterList.length === this.selected.length;
     },
     filterList() {
       return this.lists.filter(item => !item.id || item.id === this.id);
@@ -76,7 +76,7 @@ export default {
     },
     select(list) {
       if (typeof list === 'boolean') {
-        this.selected = this.lists.map(item => (!list ? item : null)).filter(item => item);
+        this.selected = this.filterList.map(item => (!list ? item : null)).filter(item => item);
       } else {
         if (this.selected.find(item => item.value === list.value)) {
           this.selected = this.selected.filter(item => item.value !== list.value);
