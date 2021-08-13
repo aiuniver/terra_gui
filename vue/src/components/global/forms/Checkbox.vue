@@ -1,13 +1,13 @@
 <template>
   <div :class="['t-field', { 't-inline': inline} ]">
-    <label class="t-field__label" :for="parse" ><slot>{{ label }}</slot></label>
+    <label class="t-field__label" @click="checVal = ! checVal"><slot>{{ label }}</slot></label>
     <div class="t-field__switch">
       <input
-        :id="parse"
+        v-model="checVal" 
         class="t-field__input"
-        :checked="checked ? 'checked' : ''"
+        :checked="checVal ? 'checked' : ''"
         type="checkbox"
-        :value="checked"
+        :value="checVal"
         :name="parse"
         @change="change"
       />
@@ -34,33 +34,13 @@ export default {
     }
   },
   data: () => ({
-    checked: null,
+    checVal: false,
   }),
   methods: {
     change(e) {
-      // console.log(e);
       const value = e.target.checked;
       this.$emit("change", { name: this.name, value });
-      // bus.$emit("change", { event: this.name, value });
     },
-  },
-  created() {
-    this.checked = this.value;
-    // console.log('created ' + this.name, this.checked)
-    if (this.event.length) {
-      // console.log("created", this.name);
-      // bus.$on("change", ({ event }) => {
-      //   if (this.event.includes(event)) {
-      //     this.checked = false;
-      //   }
-      // });
-    }
-  },
-  destroyed() {
-    if (this.event.length) {
-      // bus.$off();
-      console.log("destroyed", this.name);
-    }
   },
 };
 </script>

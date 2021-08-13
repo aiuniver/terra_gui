@@ -8,15 +8,22 @@
       <scrollbar :ops="ops" ref="scrollRight">
         <div class="block-right__body--inner" :style="height">
           <div class="block-right__body--empty"></div>
-          <template v-for="({ title, color }, i) of cardLayers">
+          <template v-for="{ id, color } of inputDataOutput">
             <CardLayer
-              :title="title + ' ' + (i + 1)"
+              :id="id"
               :color="color"
-              :key="'cardLayersRight' + i"
-              @click-btn="click($event, i)"
+              :key="'cardLayersRight' + id"
+              @click-btn="click($event, id)"
               @click-header="clickScroll"
             >
-              <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
+              <TMultiSelect
+                inline
+                label="Выберите путь"
+                :lists="filesDrop"
+                :sloy="id"
+                @check="check($event, color, id)"
+                @checkAll="checkAll($event, color, id)"
+              />
               <template v-for="(data, index) of output">
                 <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
               </template>
@@ -29,18 +36,18 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { getColor } from '../util/color';
+import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
+import TMultiSelect from '../../../forms/MultiSelect.vue';
 export default {
   name: 'BlockMainRight',
   components: {
     Fab,
     CardLayer,
+    TMultiSelect
   },
   data: () => ({
-    cardLayers: [{ title: 'Output', color: '#8e51f2' }],
     ops: {
       scrollPanel: {
         scrollingX: true,
@@ -54,7 +61,13 @@ export default {
   computed: {
     ...mapGetters({
       output: 'datasets/getTypeOutput',
+      inputData: 'datasets/getInputData',
     }),
+    inputDataOutput() {
+      return this.inputData.filter(item => {
+        return item.layer === 'output';
+      });
+    },
     filesDrop: {
       set(value) {
         this.$store.dispatch('datasets/setFilesDrop', value);
@@ -74,11 +87,11 @@ export default {
   },
   methods: {
     add() {
-      this.cardLayers.push({ title: 'Output', color: getColor() });
+      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
       this.$nextTick(() => {
         this.$refs.scrollRight.scrollTo(
           {
-            x: "100%",
+            x: '100%',
           },
           100
         );
@@ -96,9 +109,38 @@ export default {
         });
       }
     },
-    change(e) {
-      console.log(e);
+    check({ value }, color, id) {
+      console.log(value);
+      this.filesDrop = this.filesDrop.map(item => {
+        if (item.value === value) {
+          item.active = !item.active;
+          item.color = color;
+          item.sloy = id;
+        }
+        return item;
+      });
     },
+    checkAll(state, color, id) {
+      this.filesDrop = this.filesDrop.map(item => {
+        if (state) {
+          if (!item.active) {
+            item.active = !item.active;
+            item.color = color;
+            item.sloy = id;
+          }
+        } else {
+          if (item.sloy === id) {
+            item.active = !item.active;
+            item.sloy = 0;
+          }
+        }
+
+        return item;
+      });
+    },
+    change(e) {
+      console.log(e)
+    }
   },
 };
 </script>

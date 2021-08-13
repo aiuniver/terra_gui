@@ -6,7 +6,7 @@
       :class="['t-field__input', {small: small}]"
       :id="parse"
       :type="type"
-      :name="parse"
+      :name="name || parse"
       :value="value"
       @blur="change"
       :disabled="disabled"

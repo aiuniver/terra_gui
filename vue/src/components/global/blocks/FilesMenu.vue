@@ -230,7 +230,7 @@ export default {
   },
   methods: {
     dragstart({ dataTransfer }, { path, title, type }) {
-      dataTransfer.setData("CardDataType", JSON.stringify({ value: path, label: title, active: false, type, sloy: 0 }));
+      dataTransfer.setData("CardDataType", JSON.stringify({ value: path, label: title, type, id: 0, color: '' }));
       dataTransfer.effectAllowed = "move";
     },
 

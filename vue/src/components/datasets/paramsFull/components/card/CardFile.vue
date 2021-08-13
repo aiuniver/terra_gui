@@ -1,6 +1,6 @@
 <template>
   <div class="card-file" :style="bc">
-    <div v-if="active" class="card-file__header" :style="bg">{{ 'Входные данные ' + sloy }}</div>
+    <div v-if="id" class="card-file__header" :style="bg">{{ 'Входные данные ' + id }}</div>
     <div :class="['card-file__body', type]"></div>
     <div class="card-file__footer">{{ label }}</div>
   </div>
@@ -14,18 +14,17 @@ export default {
       type: String,
       default: '',
     },
-    active: Boolean,
     label: String,
     name: String,
     type: String,
-    sloy: Number,
+    id: Number,
   },
   computed: {
     bg() {
-      return { backgroundColor: this.active ? this.color : '' };
+      return { backgroundColor: this.id ? this.color : '' };
     },
     bc() {
-      return { borderColor: this.active ? this.color : '' };
+      return { borderColor: this.id ? this.color : '' };
     },
   },
 };

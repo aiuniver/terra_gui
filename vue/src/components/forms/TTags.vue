@@ -4,9 +4,9 @@
     <div class="tags">
       <button class="tags__add" type="button">
         <i class="tags__add--icon t-icon icon-tag-plus"></i>
-        <input type="text" class="tags__add--input" :placeholder="'Добавить'" @keypress.enter="create" />
+        <input type="text" class="tags__add--input" :placeholder="'Добавить'" @keypress.enter.prevent="create" />
       </button>
-      <input v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][]" type="text" class="tags__item" />
+      <input v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][][name]" type="text" class="tags__item" />
     </div>
   </div>
 </template>
