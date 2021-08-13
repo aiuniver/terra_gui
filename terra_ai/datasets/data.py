@@ -45,8 +45,10 @@ class Preprocesses(str, Enum):
 
 
 class InstructionsData(BaseMixinData):
-    instructions: List[Union[str, PositiveInt, Dict[str, List[Union[StrictIntValueGe0, StrictFloatValueGe0]]]]]
+    instructions: Any  # [Union[str, PositiveInt, Dict[str, List[Union[StrictIntValueGe0, StrictFloatValueGe0]]]]]
     parameters: Any
+
+    # instructions: Dict[str, Union[str, StrictIntValueGe0, StrictFloatValueGe0]]
 
     # @validator("parameters", always=True)
     # def _validate_parameters(cls, value: Any, values, field) -> Any:

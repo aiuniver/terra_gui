@@ -108,14 +108,22 @@ class CreateDTS(object):
         # Создаем инструкции
         self.instructions = self.create_instructions(creation_data)
 
-        self.limit: int = len(self.instructions.inputs.get(1).instructions)
+        self.limit: int = len(self.instructions.inputs.get(1).instructions[f'1_{self.tags[1]}'])
+
+        dataframe_dict = {}
+        for inp_idx in range(1, len(self.input_names)+1):  # TODO
+            dataframe_dict.update(self.instructions.inputs[inp_idx].instructions)
+        for out_idx in range(inp_idx+1, len(self.output_names)+inp_idx+1):
+            dataframe_dict.update(self.instructions.outputs[out_idx].instructions)
+
+        self.dataframe = pd.DataFrame(dataframe_dict)
 
         # Получаем входные параметры
         self.inputs = self.create_inputs_parameters(creation_data=creation_data)
 
         # Получаем выходные параметры
         self.outputs = self.create_output_parameters(creation_data=creation_data)
-
+        #
         # Разделение на три выборки
         self.sequence_split(creation_data=creation_data)
 
@@ -206,11 +214,19 @@ class CreateDTS(object):
     def create_inputs_parameters(self, creation_data: CreationData) -> dict:
         creating_inputs_data = {}
         for key in self.instructions.inputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.inputs.get(key).instructions[0],
-                **self.instructions.inputs.get(key).parameters
-            )
+            if self.tags[key] in ['video', 'text', 'audio']:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    **self.instructions.inputs.get(key).parameters
+                )
+            else:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    **self.instructions.inputs.get(key).parameters
+                )
             if isinstance(array, tuple):
                 for i in range(len(array)):
                     current_input = DatasetInputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
@@ -233,11 +249,20 @@ class CreateDTS(object):
     def create_output_parameters(self, creation_data: CreationData) -> dict:
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.outputs.get(key).instructions[0],
-                **self.instructions.outputs.get(key).parameters
-            )
+            if self.tags[key] in ['text', 'text_segmentation', 'audio']:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    **self.instructions.outputs.get(key).parameters
+                )
+            else:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    **self.instructions.outputs.get(key).parameters
+                )
+
             if isinstance(array, tuple):
                 for i in range(len(array)):
                     current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
@@ -284,10 +309,20 @@ class CreateDTS(object):
                 for i in range(6):
                     globals()[f'current_arrays_{i + 1}'] = []
             for i in range(self.limit):
-                array = getattr(array_creator, f"create_{self.tags[key]}")(
-                    creation_data.source_path,
-                    put_data.get(key).instructions[i],
-                    **put_data.get(key).parameters)
+                if self.tags[key] in ['video', 'text', 'audio', 'text_segmentation']:
+                    array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        creation_data.source_path,
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}_slice'],
+                        **put_data.get(key).parameters
+                    )
+                else:
+                    array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        creation_data.source_path,
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
+                        **put_data.get(key).parameters
+                    )
+
                 if self.tags[key] == 'object_detection':
                     for j in range(num_arrays):
                         globals()[f'current_arrays_{j + 1}'].append(array[j])
@@ -374,7 +409,7 @@ class CreateDTS(object):
             array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
-        instructions['instructions'] = paths_list
+        instructions['instructions'] = {f'{put_data.id}_image': paths_list}
         instructions['parameters'] = options
 
         return instructions
@@ -420,9 +455,8 @@ class CreateDTS(object):
         for idx, elem in enumerate(paths_list):
             cur_class = elem.split(os.path.sep)[-2]
             if options['video_mode'] == VideoModeChoice.completely:
-                instr.append({elem: [0, options['max_frames']]})
-                # video.append(elem)
-                # video_slice.append([0, options['max_frames']])
+                video.append(elem)
+                video_slice.append([0, options['max_frames']])
                 peg_idx += 1
                 if cur_class != prev_class:
                     self.peg.append(peg_idx)
@@ -434,9 +468,8 @@ class CreateDTS(object):
                 cap = cv2.VideoCapture(os.path.join(self.file_folder, elem))
                 frame_count = int(cap.get(7))
                 while not stop_flag:
-                    instr.append({elem: [cur_step, cur_step + options['length']]})
-                    # video.append(elem)
-                    # video_slice.append([cur_step, cur_step + options['length']])
+                    video.append(elem)
+                    video_slice.append([cur_step, cur_step + options['length']])
                     peg_idx += 1
                     if cur_class != prev_class:
                         self.peg.append(peg_idx)
@@ -446,13 +479,13 @@ class CreateDTS(object):
                     if cur_step + options['length'] > frame_count:
                         stop_flag = True
                         if options['length'] < frame_count:
-                            instr.append({elem: [frame_count - options['length'], frame_count]})
-                            # video.append(elem)
-                            # video_slice.append([frame_count - options['length'], frame_count])
+                            # instr.append({elem: [frame_count - options['length'], frame_count]})
+                            video.append(elem)
+                            video_slice.append([frame_count - options['length'], frame_count])
                             y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
 
         self.y_cls = y_cls
-        self.peg.append(len(instr))
+        self.peg.append(len(video))
 
         del options['video_mode']
         del options['length']
@@ -461,7 +494,8 @@ class CreateDTS(object):
         options['put'] = put_data.id
 
         instructions['parameters'] = options
-        instructions['instructions'] = instr
+        instructions['instructions'] = {f'{put_data.id}_video': video,
+                                        f'{put_data.id}_video_slice': video_slice}
 
         return instructions
 
@@ -489,6 +523,7 @@ class CreateDTS(object):
 
         options = put_data.parameters.native()
         filters = options.get('filters', '')
+        instructions: dict = {}
         txt_list: dict = {}
         lower: bool = True
         split: str = ' '
@@ -552,7 +587,6 @@ class CreateDTS(object):
 
         array_creator.txt_list[put_data.id] = txt_list
 
-        instr: list = []
         text: list = []
         text_slice: list = []
         peg_idx: int = 0
@@ -569,9 +603,8 @@ class CreateDTS(object):
             else:
                 cur_class = csv_y_cls[idx]
             if options['text_mode'] == TextModeChoice.completely:
-                instr.append({key: [0, options['max_words']]})
-                # text.append(elem)
-                # text_slice.append([0, options['max_words']])
+                text.append(value)
+                text_slice.append([0, options['max_words']])
                 if cur_class != prev_class:
                     self.peg.append(peg_idx)
                     prev_class = cur_class
@@ -592,9 +625,8 @@ class CreateDTS(object):
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    instr.append({key: [cur_step, cur_step + options['length']]})
-                    # text.append(elem)
-                    # text_slice.append([cur_step, cur_step + options['length']])
+                    text.append(' '.join(value.split(' ')[cur_step: cur_step + options['length']]))
+                    text_slice.append([cur_step, cur_step + options['length']])
                     peg_idx += 1
                     if cur_class != prev_class:
                         self.peg.append(peg_idx)
@@ -604,50 +636,16 @@ class CreateDTS(object):
                     if cur_step + options['length'] > max_length:
                         stop_flag = True
 
-        # for key, value in sorted(txt_list.items()):
-        #     if not table_flag:
-        #         cur_class = key.split(os.path.sep)[-2]
-        #     if text_mode == TextModeChoice.completely:
-        #         instr.append({key: [0, max_words]})
-        #         if not table_flag:
-        #             if cur_class != prev_class:
-        #                 cls_idx += 1
-        #                 self.peg.append(peg_idx)
-        #                 prev_class = cur_class
-        #             peg_idx += 1
-        #             y_cls.append(cls_idx)
-        #     elif text_mode == TextModeChoice.length_and_step:
-        #         max_length = len(value.split(' '))
-        #         if 'text_segmentation' in self.tags.values():
-        #             count = 0
-        #             for elem in tags.split(' '):
-        #                 count += value.split(' ').count(elem)
-        #             max_length -= count
-        #         cur_step: int = 0
-        #         stop_flag = False
-        #         while not stop_flag:
-        #             instr.append({key: [cur_step, cur_step + length]})
-        #             cur_step += step
-        #             if cur_class != prev_class:
-        #                 cls_idx += 1
-        #                 self.peg.append(peg_idx)
-        #                 prev_class = cur_class
-        #             peg_idx += 1
-        #             y_cls.append(cls_idx)
-        #             if cur_step + options['length'] > max_length:
-        #                 stop_flag = True
-
-        self.peg.append(len(instr))
+        self.peg.append(len(text))
         self.y_cls = y_cls
 
-        instructions = {'instructions': instr,
-                        'parameters': {'embedding': options.get('embedding', bool),
-                                       'bag_of_words': options.get('bag_of_words', bool),
-                                       'word_to_vec': options.get('word_to_vec', bool),
-                                       'put': put_data.id
-                                       }
-                        }
-
+        instructions['instructions'] = {f'{put_data.id}_text': text,
+                                        f'{put_data.id}_text_slice': text_slice}
+        instructions['parameters'] = {'embedding': options.get('embedding', bool),
+                                      'bag_of_words': options.get('bag_of_words', bool),
+                                      'word_to_vec': options.get('word_to_vec', bool),
+                                      'put': put_data.id
+                                      }
         return instructions
 
     def instructions_audio(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
@@ -678,9 +676,8 @@ class CreateDTS(object):
         for idx, elem in enumerate(paths_list):
             cur_class = elem.split(os.path.sep)[-2]
             if options['audio_mode'] == AudioModeChoice.completely:
-                instr.append({elem: [0, options['max_seconds']]})
-                # audio.append(elem)
-                # audio_slice.append([0, options['max_frames']])
+                audio.append(elem)
+                audio_slice.append([0, options['max_frames']])
                 peg_idx += 1
                 if cur_class != prev_class:
                     self.peg.append(peg_idx)
@@ -692,9 +689,8 @@ class CreateDTS(object):
                 y, sr = librosa_load(path=os.path.join(self.file_folder, elem), sr=sample_rate, res_type='scipy')
                 sample_length = len(y) / sample_rate
                 while not stop_flag:
-                    instr.append({elem: [cur_step, cur_step + options['length']]})
-                    # audio.append(elem)
-                    # audio_slice.append([cur_step, cur_step + options['length']])
+                    audio.append(elem)
+                    audio_slice.append([cur_step, cur_step + options['length']])
                     peg_idx += 1
                     if cur_class != prev_class:
                         self.peg.append(peg_idx)
@@ -705,13 +701,14 @@ class CreateDTS(object):
                         stop_flag = True
 
         self.y_cls = y_cls
-        self.peg.append(len(instr))
+        self.peg.append(len(audio))
 
         for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
             if elem in options.keys():
                 del options[elem]
+        instructions['instructions'] = {f'{put_data.id}_audio': audio,
+                                        f'{put_data.id}_audio_slice': audio_slice}
         instructions['parameters'] = options
-        instructions['instructions'] = instr
 
         return instructions
 
@@ -1129,7 +1126,7 @@ class CreateDTS(object):
         instructions['parameters'] = {'num_classes': self.num_classes[put_data.id],
                                       'one_hot_encoding': options['one_hot_encoding'],
                                       'classes_names': self.classes_names[put_data.id]}
-        instructions['instructions'] = self.y_cls
+        instructions['instructions'] = {f'{put_data.id}_classification': self.y_cls}
 
         return instructions
 
@@ -1157,6 +1154,7 @@ class CreateDTS(object):
     def instructions_segmentation(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
+        instructions: dict = {}
         shape: tuple = ()
 
         self.classes_names[put_data.id] = options['classes_names']
@@ -1169,13 +1167,12 @@ class CreateDTS(object):
             if value == 'image':
                 shape = (self.user_parameters.get(key).height, self.user_parameters.get(key).width)
 
-        instructions = {'instructions': paths_list,
-                        'parameters': {'mask_range': options['mask_range'],
-                                       'num_classes': len(options['classes_names']),
-                                       'shape': shape,
-                                       'classes_colors': options['classes_colors']
-                                       }
-                        }
+        instructions['instructions'] = {f'{put_data.id}_segmentation': paths_list}
+        instructions['parameters'] = {'mask_range': options['mask_range'],
+                                      'num_classes': len(options['classes_names']),
+                                      'shape': shape,
+                                      'classes_colors': options['classes_colors']
+                                      }
 
         return instructions
 
