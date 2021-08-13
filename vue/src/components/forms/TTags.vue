@@ -2,21 +2,11 @@
   <div :class="['t-field', { 't-inline': inline }]">
     <label class="t-field__label" :for="parse">{{ label }}</label>
     <div class="tags">
-      <button class="tags__add" type="button"  @click="tagsCount++">
-        <i class="t-icon icon-tag-plus"></i>
-        <span>Добавить</span>
+      <button class="tags__add" type="button">
+        <i class="tags__add--icon t-icon icon-tag-plus"></i>
+        <input type="text" class="tags__add--input" :placeholder="'Добавить'" @keypress.enter="create" />
       </button>
-      <input type="text" class="tags__item" @keydown="inputLength" v-for="tag in tagsCount" :key="tag" />
-      <!-- <input
-      v-model="input"
-      class="t-field__input"
-      :id="parse"
-      :type="type"
-      :name="parse"
-      :value="value"
-      @blur="change"
-      :disabled="disabled"
-    /> -->
+      <input v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][]" type="text" class="tags__item" />
     </div>
   </div>
 </template>
@@ -42,9 +32,17 @@ export default {
     disabled: Boolean,
   },
   data: () => ({
-    tagsCount: 0,
+    tags: [],
   }),
   methods: {
+    create(e) {
+      const value = e.target.value;
+      e.target.value = '';
+      if (this.tags.length < 3) {
+        this.tags.push({ value });
+        this.tags = [...this.tags];
+      }
+    },
     inputLength(e) {
       e.target.style.width = (e.target.value.length + 1) * 8 + 'px';
     },
@@ -65,34 +63,6 @@ export default {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
-  }
-  .tags {
-    display: flex;
-    font-size: 12px;
-    max-width: 400px;
-    flex-wrap: wrap;
-    &__item {
-      margin-left: 10px;
-      padding: 2px 4px;
-      width: 60px;
-      color: #a7bed3;
-      height: 24px;
-      color: #ffffff;
-    }
-    &__add {
-      background: #242f3d;
-      height: 24px;
-      width: 90px;
-      padding: 2px 4px;
-      box-shadow: none;
-      border-color: #6c7883;
-      color: #a7bed3;
-      display: flex;
-      align-items: center;
-      span {
-        padding-left: 9px;
-      }
-    }
   }
   &__input {
     color: #fff;
@@ -132,6 +102,48 @@ export default {
     font-size: 12px;
     line-height: 24px;
     width: 100px;
+  }
+}
+
+.tags {
+  display: flex;
+  max-width: 400px;
+  &__item {
+    margin-left: 10px;
+    padding: 2px 2px;
+    width: 60px;
+    height: 24px;
+    color: #a7bed3;
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 24px;
+    margin-left: 8px;
+  }
+  &__add {
+    background: #242f3d;
+    height: 24px;
+    width: 90px;
+    padding: 2px 4px;
+    box-shadow: none;
+    border-color: #6c7883;
+    color: #a7bed3;
+    display: flex;
+    align-items: center;
+    &--icon {
+      height: 16px;
+      width: 16px;
+    }
+    &--input {
+      height: 24px;
+      color: #a7bed3;
+      border: none;
+      background-color: transparent;
+      font-size: 12px;
+      padding: 0;
+      font-weight: normal;
+      line-height: 24px;
+      margin-left: 8px;
+    }
   }
 }
 </style>

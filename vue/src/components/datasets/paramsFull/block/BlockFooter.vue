@@ -1,7 +1,7 @@
 <template>
-  <div class="block-footer">
+  <form class="block-footer" @submit.prevent="getObj">
     <div class="block-footer__item">
-      <t-input name="name" small>
+      <t-input name="name" small :value="'Новый'">
         Название датасета
       </t-input>
     </div>
@@ -20,19 +20,29 @@
     <div class="action">
       <t-button>Сформировать</t-button>
     </div>
-  </div>
+  </form>
 </template>
 
 <script>
 import DoubleSlider from '@/components/forms/DoubleSlider';
 import TTags from '@/components/forms/TTags';
-
+import serialize from "@/assets/js/serialize";
 export default {
   name: 'BlockFooter',
   components: {
     DoubleSlider,
     TTags,
   },
+  methods: {
+    getObj() {
+      console.log(serialize(this.$el))
+      // console.log(this.$el.getElementsByTagName('input'))
+      // const inputs = this.$el.getElementsByTagName('input')
+      // inputs.forEach(element => {
+      //   console.log(element.value)
+      // });
+    }
+  }
 };
 </script>
 
@@ -44,9 +54,6 @@ export default {
   &__item {
     flex: 0 0 150px;
     margin-right: 36px;
-  }
-  &__item.block-tags{
-    flex: 0 0 250px;
   }
 }
 
