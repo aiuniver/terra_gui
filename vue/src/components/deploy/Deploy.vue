@@ -2,16 +2,16 @@
   <div class="board">
     <div class="wrapper">
       <div class="content" v-if="dataLoaded">
-        <button class="reload-all">Перезагрузить все</button>
-        <div class="data-field">
-          <div class="title">Исходные данные / Предсказанные данные</div>
-          <div class="data">
-            <IndexCard v-for="card in Cards" :key="card" :DataBlock="card"/>
+        <button class="board__reload-all">Перезагрузить все</button>
+        <div class="board__data-field">
+          <div class="board__title">Исходные данные / Предсказанные данные</div>
+          <div class="board__data">
+            <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
           </div>
         </div>
       </div>
 
-      <div class="load-data" v-if="!dataLoaded">
+      <div class="board__load-data" v-if="!dataLoaded">
         <button @click="$store.dispatch('deploy/setDataLoaded', !dataLoaded)">Загрузить данные</button>
       </div>
     </div>
@@ -31,102 +31,15 @@ export default {
     Cards: [
       {
         original: {
-          type: "image",
-          data: " "
-        },
-        result: {
-          type: "image",
-          data: ""
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: " "
-        },
-        result: {
-          type: "image",
-          data: ""
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: " "
-        },
-        result: {
-          type: "image",
-          data: ""
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: " "
-        },
-        result: {
-          type: "image",
-          data: ""
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: " "
-        },
-        result: {
-          type: "image",
-          data: ""
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: " "
+          type: "text",
+          data: "В белом плаще с кровавым подбоем, шаркающей кавалерийской походкой, ранним утром четырнадцатого числа весеннего месяца нисана в крытую колоннаду между двумя крыльями дворца ирода великого вышел прокуратор Иудеи Понтий Пилат.\n" +
+            "\n" +
+            "Более всего на свете прокуратор ненавидел запах розового масла, и все теперь предвещало нехороший день, так как запах этот начал преследовать прокуратора с рассвета. Прокуратору казалось, что розовый запах источают кипарисы и пальмы в саду, что к запаху кожи и конвоя примешивается проклятая розовая струя. От флигелей в тылу дворца, где расположилась пришедшая с прокуратором в Ершалаим первая когорта двенадцатого молниеносного легиона, заносило дымком в колоннаду через верхнюю площадку сада, и к горьковатому дыму, свидетельствовавшему о том, что кашевары в кентуриях начали готовить обед, примешивался все тот же жирный розовый дух. О боги, боги, за что вы наказываете меня?" +
+            "В белом плаще с кровавым подбоем, шаркающей кавалерийской походкой, ранним утром четырнадцатого числа весеннего месяца нисана в крытую колоннаду между двумя крыльями дворца ирода великого вышел прокуратор Иудеи Пон"
         },
         result: {
           type: "text",
-          data: "Дерево"
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: ""
-        },
-        result: {
-          type: "text",
-          data: "Дерево"
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: ""
-        },
-        result: {
-          type: "text",
-          data: "Дерево"
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: ""
-        },
-        result: {
-          type: "text",
-          data: "Дерево"
-        }
-      },
-      {
-        original: {
-          type: "image",
-          data: ""
-        },
-        result: {
-          type: "text",
-          data: "Дерево"
+          data: "Мастер и Маргарита, Михаил Афанасьевич Булгаков"
         }
       },
     ]
@@ -154,7 +67,7 @@ export default {
   padding: 50px;
   height: 100%;
 }
-.load-data{
+.board__load-data{
   height: 100%;
   display: flex;
   align-items: center;
@@ -165,18 +78,18 @@ export default {
     line-height: 24px;
   }
 }
-.reload-all{
+.board__reload-all{
   width: 174px;
 }
-.data-field{
+.board__data-field{
   padding-top: 30px;
-  .title{
+}
+.board__title{
     font-size: 12px;
     line-height: 24px;
     color: #A7BED3;
   }
-}
-.data{
+.board__data{
   display: flex;
   flex-wrap: wrap;
 }

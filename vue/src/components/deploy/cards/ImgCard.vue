@@ -1,6 +1,6 @@
 <template>
   <div class="img-card">
-    <img :src="require('@/../public/imgs/img.png')" :alt="ImgAlt">
+    <img class="img-card__image" :src="require('@/../public/imgs/img.png')" :alt="ImgAlt">
   </div>
 </template>
 
@@ -21,7 +21,7 @@ export default {
 </script>
 
 <style scoped>
-img{
+.img-card__image{
   border: 1px solid #6C7883;
   box-sizing: border-box;
   border-radius: 4px;
