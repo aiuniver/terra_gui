@@ -77,6 +77,7 @@ class CreateDTS(object):
         # self.df: dict = {}
         self.tsgenerator: dict = {}
         self.temporary: dict = {}
+        self.build_dataframe: dict = {}
 
     def create_one_file_array(self, file_data: OneFileData, source_path):
         instructions_data = getattr(self, f"instructions_{decamelize(file_data.type)}")(file_data)
@@ -108,15 +109,15 @@ class CreateDTS(object):
         # Создаем инструкции
         self.instructions = self.create_instructions(creation_data)
 
-        self.limit: int = len(self.instructions.inputs.get(1).instructions[f'1_{self.tags[1]}'])
+        self.limit: int = len(self.build_dataframe[f'1_{self.tags[1]}'])
 
-        dataframe_dict = {}
-        for inp_idx in range(1, len(self.input_names)+1):  # TODO
-            dataframe_dict.update(self.instructions.inputs[inp_idx].instructions)
-        for out_idx in range(inp_idx+1, len(self.output_names)+inp_idx+1):
-            dataframe_dict.update(self.instructions.outputs[out_idx].instructions)
+        # dataframe_dict = {}
+        # for inp_idx in range(1, len(self.input_names)+1):  # TODO
+        #     dataframe_dict.update(self.instructions.inputs[inp_idx].instructions)
+        # for out_idx in range(inp_idx+1, len(self.output_names)+inp_idx+1):
+        #     dataframe_dict.update(self.instructions.outputs[out_idx].instructions)
 
-        self.dataframe = pd.DataFrame(dataframe_dict)
+        self.dataframe = pd.DataFrame(self.build_dataframe)
 
         # Получаем входные параметры
         self.inputs = self.create_inputs_parameters(creation_data=creation_data)
@@ -585,7 +586,8 @@ class CreateDTS(object):
                                                            'oov_token': '<UNK>'})
             array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
 
-        array_creator.txt_list[put_data.id] = txt_list
+        # array_creator.txt_list[put_data.id] = txt_list
+        self.temporary[put_data.id] = txt_list
 
         text: list = []
         text_slice: list = []
@@ -612,10 +614,6 @@ class CreateDTS(object):
                 y_cls.append(cur_class)
 
             elif options['text_mode'] == TextModeChoice.length_and_step:
-                if not csv_flag:
-                    cur_class = key.split(os.path.sep)[-2]
-                else:
-                    cur_class = csv_y_cls[idx]
                 max_length = len(value.split(' '))
                 if 'text_segmentation' in self.tags.values():
                     count = 0
@@ -639,8 +637,10 @@ class CreateDTS(object):
         self.peg.append(len(text))
         self.y_cls = y_cls
 
-        instructions['instructions'] = {f'{put_data.id}_text': text,
-                                        f'{put_data.id}_text_slice': text_slice}
+        # instructions['instructions'] = {f'{put_data.id}_text': text,
+        #                                 f'{put_data.id}_text_slice': text_slice}
+        self.build_dataframe[f'{put_data.id}_text'] = text
+        self.build_dataframe[f'{put_data.id}_text_slice'] = text_slice
         instructions['parameters'] = {'embedding': options.get('embedding', bool),
                                       'bag_of_words': options.get('bag_of_words', bool),
                                       'word_to_vec': options.get('word_to_vec', bool),
@@ -1259,41 +1259,52 @@ class CreateDTS(object):
             return words, indexes
 
         options = put_data.parameters.native()
+        instructions: dict = {}
         instr: list = []
+        text: list = []
+        text_segm: dict = {}
+        text_segm_slice: list = []
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
-        array_creator.txt_list[put_data.id] = {}
         self.encoding[put_data.id] = 'multi'
+        self.peg = [0]
 
         for i, value in self.tags.items():
             if value == 'text':
-                for txt_file in array_creator.txt_list.get(i).keys():
-                    text_instr, segment_instr = get_samples(array_creator.txt_list.get(i)[txt_file],
-                                                            open_tags, close_tags)
-                    array_creator.txt_list.get(i)[txt_file] = text_instr
-                    array_creator.txt_list[put_data.id][txt_file] = segment_instr
-
+                self.build_dataframe[f'{i}_text'] = []
+                self.build_dataframe[f'{put_data.id}_text_segmentation'] = []
+                for key, txt_file in self.temporary[i].items():
+                    text_instr, segment_instr = get_samples(txt_file, open_tags, close_tags)
+                    self.build_dataframe[f'{i}_text'].append(text_instr)
+                    self.build_dataframe[f'{put_data.id}_text_segmentation'].append(segment_instr)
                 length = self.user_parameters.get(i).dict()['length']
                 step = self.user_parameters.get(i).dict()['step']
                 text_mode = self.user_parameters.get(i).dict()['text_mode']
                 max_words = self.user_parameters.get(i).dict()['max_words']
 
-                for key, text in sorted(array_creator.txt_list.get(i).items()):
+                for txt in self.build_dataframe[f'{i}_text']:
                     if text_mode == TextModeChoice.completely:
-                        instr.append({key: [0, max_words]})
+                        # instr.append({key: [0, max_words]})
+                        text_segm_slice.append([0, max_words])
                     elif text_mode == TextModeChoice.length_and_step:
-                        max_length = len(text.split(' '))
+                        max_length = len(txt.split(' '))
                         cur_step = 0
                         stop_flag = False
                         while not stop_flag:
-                            instr.append({key: [cur_step, cur_step + length]})
+                            # instr.append({key: [cur_step, cur_step + length]})
+                            text_segm_slice.append([cur_step, cur_step + length])
                             cur_step += step
                             if cur_step + length > max_length:
                                 stop_flag = True
 
-        instructions = {'instructions': instr,
-                        'parameters': {'num_classes': len(open_tags),
-                                       'put': put_data.id}
-                        }
+                self.build_dataframe[f'{i}_text_slice'] = text_segm_slice
+
+        self.peg.append(len(text_segm_slice))
+        # instructions['instructions'] = {f'{put_data.id}_text_segmentation': text_segm,
+        #                                 f'{put_data.id}_text_segmentation_slice': text_segm_slices}
+        # self.build_dataframe[f'{put_data.id}_text_segmentation'] = text_segm
+        self.build_dataframe[f'{put_data.id}_text_segmentation_slice'] = text_segm_slice
+        instructions['parameters'] = {'num_classes': len(open_tags),
+                                      'put': put_data.id}
 
         return instructions
