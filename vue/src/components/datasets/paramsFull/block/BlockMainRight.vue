@@ -1,34 +1,28 @@
 <template>
   <div class="block-right">
     <div class="block-right__fab">
-      <Fab @click="add" />
+      <Fab @click="addCard" />
     </div>
     <div class="block-right__header">Выходные параметры</div>
     <div class="block-right__body">
       <scrollbar :ops="ops" ref="scrollRight">
         <div class="block-right__body--inner" :style="height">
-          <div class="block-right__body--empty"></div>
           <template v-for="{ id, color } of inputDataOutput">
-            <CardLayer
-              :id="id"
-              :color="color"
-              :key="'cardLayersRight' + id"
-              @click-btn="click($event, id)"
-              @click-header="clickScroll"
-            >
+            <CardLayer :id="id" :color="color" :key="'cardLayersRight' + id" @click-btn="optionsCard($event, id)">
+              <template v-slot:header>Выходные данные {{ id }}</template>
               <TMultiSelect
-                inline
+                :id="id"
+                :lists="mixinFiles"
                 label="Выберите путь"
-                :lists="filesDrop"
-                :sloy="id"
-                @check="check($event, color, id)"
-                @checkAll="checkAll($event, color, id)"
+                inline
+                @change="mixinCheck($event, id)"
               />
               <template v-for="(data, index) of output">
-                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
+          <div class="block-right__body--empty"></div>
         </div>
       </scrollbar>
     </div>
@@ -40,13 +34,15 @@ import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '../../../forms/MultiSelect.vue';
+import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 'BlockMainRight',
   components: {
     Fab,
     CardLayer,
-    TMultiSelect
+    TMultiSelect,
   },
+  mixins: [blockMain],
   data: () => ({
     ops: {
       scrollPanel: {
@@ -68,14 +64,6 @@ export default {
         return item.layer === 'output';
       });
     },
-    filesDrop: {
-      set(value) {
-        this.$store.dispatch('datasets/setFilesDrop', value);
-      },
-      get() {
-        return this.$store.getters['datasets/getFilesDrop'];
-      },
-    },
     height() {
       const height = this.$store.getters['settings/height']({
         clean: true,
@@ -86,61 +74,23 @@ export default {
     },
   },
   methods: {
-    add() {
+    addCard() {
       this.$store.dispatch('datasets/createInputData', { layer: 'output' });
       this.$nextTick(() => {
         this.$refs.scrollRight.scrollTo(
           {
-            x: '100%',
+            x: '0%',
           },
           100
         );
       });
     },
-    clickScroll(e) {
-      this.$refs.scrollRight.scrollIntoView(e.target, 100);
-      console.log(e);
-    },
-    click(comm, index) {
-      console.log(comm, index);
+    optionsCard(comm, id) {
       if (comm === 'remove') {
-        this.cardLayers = this.cardLayers.filter((_, i) => {
-          return i !== index;
-        });
+        this.$store.dispatch('datasets/removeInputData', id);
+        this.mixinRemove(id);
       }
     },
-    check({ value }, color, id) {
-      console.log(value);
-      this.filesDrop = this.filesDrop.map(item => {
-        if (item.value === value) {
-          item.active = !item.active;
-          item.color = color;
-          item.sloy = id;
-        }
-        return item;
-      });
-    },
-    checkAll(state, color, id) {
-      this.filesDrop = this.filesDrop.map(item => {
-        if (state) {
-          if (!item.active) {
-            item.active = !item.active;
-            item.color = color;
-            item.sloy = id;
-          }
-        } else {
-          if (item.sloy === id) {
-            item.active = !item.active;
-            item.sloy = 0;
-          }
-        }
-
-        return item;
-      });
-    },
-    change(e) {
-      console.log(e)
-    }
   },
 };
 </script>
@@ -171,19 +121,15 @@ export default {
   }
   &__body {
     width: 100%;
-    /* position: absolute; */
-    /* height: 250px; */
-    /* top: 34px; */
     padding: 40px 0px 0px 0px;
-    /* right: 70px; */
     overflow: auto;
     &--inner {
       display: flex;
       width: 100%;
-      justify-content: flex-start;
+      justify-content: flex-end;
       overflow: auto;
-      // position: absolute;
       height: 100%;
+      flex-direction: row-reverse;
     }
     &--empty {
       height: 100%;

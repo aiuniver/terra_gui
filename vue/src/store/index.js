@@ -34,12 +34,12 @@ export default {
           Vue.prototype.$Loading.finish()
           return data ?? success;
         } else {
-          dispatch('messages/setMessage', {error : JSON.stringify(error) })
+          dispatch('messages/setMessage', {error : JSON.stringify(error, null, 2) })
           Vue.prototype.$Loading.error()
           return null;
         }  
       } catch (error) {
-        dispatch('messages/setMessage', { error: JSON.stringify(error) })
+        dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) })
         Vue.prototype.$Loading.error()
         return null;
       }

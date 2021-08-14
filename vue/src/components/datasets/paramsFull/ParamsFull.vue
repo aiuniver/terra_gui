@@ -66,8 +66,8 @@ export default {
     },
   },
   methods: {
-    createObject(obj) {
-      console.log(obj)      
+    async createObject(obj) {
+      await this.$store.dispatch('datasets/createDataset', obj)
     },
     change(value) {
       this.toggle = value;

@@ -1,7 +1,7 @@
 <template>
   <div class="block-left">
     <div class="block-left__fab">
-      <Fab @click="add" />
+      <Fab @click="addCard" />
     </div>
     <div class="block-left__header">Входные параметры</div>
     <div class="block-left__body">
@@ -12,13 +12,19 @@
               :id="id"
               :color="color"
               :key="'cardLayersLeft' + id"
-              @click-btn="click($event, id)"
-              @click-header="clickScroll"
+              @click-btn="optionsCard($event, id)"
             >
-              <!-- <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" /> -->
-              <TMultiSelect :lists="filesDrop" :id="id" label="Выберите путь" inline @change="check($event, color, id)"/>
+              <template v-slot:header>Входные данные {{ id }}</template>
+              <TMultiSelect
+                :id="id"
+                name="sources_paths"
+                :lists="mixinFiles"
+                label="Выберите путь"
+                inline
+                @change="mixinCheck($event, id)"
+              />
               <template v-for="(data, index) of input">
-                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
@@ -33,7 +39,8 @@
 import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
-import TMultiSelect from '../../../forms/MultiSelect.vue';
+import TMultiSelect from '@/components/forms/MultiSelect.vue';
+import blockMain from '@/mixins/datasets/blockMain';
 
 export default {
   name: 'BlockMainLeft',
@@ -42,6 +49,7 @@ export default {
     CardLayer,
     TMultiSelect,
   },
+  mixins: [blockMain],
   data: () => ({
     ops: {
       scrollPanel: {
@@ -63,14 +71,6 @@ export default {
         return item.layer === 'input';
       });
     },
-    filesDrop: {
-      set(value) {
-        this.$store.dispatch('datasets/setFilesDrop', value);
-      },
-      get() {
-        return this.$store.getters['datasets/getFilesDrop'];
-      },
-    },
     height() {
       const height = this.$store.getters['settings/height']({
         clean: true,
@@ -81,22 +81,7 @@ export default {
     },
   },
   methods: {
-    check(selected, color, id) {
-      this.filesDrop = this.filesDrop.map(file => {
-        if (selected.find(item => item.value === file.value)) {
-          file.color = color;
-          file.id = id;
-        } else {
-          if (file.id === id) {
-            file.id = 0
-            file.color = ''
-          }
-        }
-        return file;
-      });
-      console.log(this.filesDrop)
-    },
-    add() {
+    addCard() {
       this.$store.dispatch('datasets/createInputData', { layer: 'input' });
       this.$nextTick(() => {
         this.$refs.scrollLeft.scrollTo(
@@ -107,21 +92,10 @@ export default {
         );
       });
     },
-    clickScroll(e) {
-      this.$refs.scrollLeft.scrollIntoView(e.target, 100);
-      console.log(e);
-    },
-    click(comm, id) {
-      console.log(comm, id);
+    optionsCard(comm, id) {
       if (comm === 'remove') {
         this.$store.dispatch('datasets/removeInputData', id);
-        this.filesDrop = this.filesDrop.map(item => {
-          if (item.id === id) {
-            item.color = '';
-            item.id = 0;
-          }
-          return item;
-        });
+        this.mixinRemove(id);
       }
     },
     heightForm(value) {
@@ -133,9 +107,6 @@ export default {
       console.log(value, this.$el.clientHeight);
       // this.height = value > clearHeight ? clearHeight : value + 56;
       // this.height = clearHeight
-    },
-    change(e) {
-      console.log(e);
     },
   },
 };
