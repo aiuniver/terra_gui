@@ -3,11 +3,11 @@
   <div class="card__content">
     <div class="card__original">
       <ImgCard v-if="original.type == 'image'"/>
-      <TextCard v-if="original.type == 'text'" :text="original.data" :style="originaltextStyle"/>
+      <TextCard v-if="original.type == 'text'" :style="originaltextStyle">{{ original.data }}</TextCard>
     </div>
     <div class="card__result">
       <ImgCard v-if="result.type == 'image'"/>
-      <TextCard v-if="result.type == 'text'" :text="result.data"/>
+      <TextCard v-if="result.type == 'text'">{{ result.data }}</TextCard>
     </div>
   </div>
   <div class="card__reload"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
@@ -26,6 +26,7 @@ export default {
   data: () => ({
     originaltextStyle: {
       width: "600px",
+      height: "300px",
       color: "#A7BED3",
       padding: "10px 25px 12px 12px"
     }
@@ -62,7 +63,7 @@ export default {
     height: 32px;
     i{
       position: absolute;
-      margin-left: -8px;
+      margin-left: 7px;
       margin-top: -13px;
       width: 16px;
     }

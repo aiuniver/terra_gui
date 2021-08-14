@@ -1,7 +1,7 @@
 <template>
   <div class="text-card">
     <scrollbar>
-      {{ text }}
+      <slot>TEXT</slot>
     </scrollbar>
   </div>
 </template>
