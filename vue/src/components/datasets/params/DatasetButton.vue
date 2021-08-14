@@ -14,6 +14,9 @@ export default {
     selected() {
       return this.$store.getters['datasets/getSelected'];
     },
+    selectedIndex(){
+      return this.$store.getters['datasets/getSelectedIndex'];
+    }
   },
   methods: {
     createInterval() {
@@ -41,11 +44,11 @@ export default {
       }, 1000);
     },
     async click() {
-      console.log('sdsdsddsd')
       const { alias, group, name } = this.selected;
       this.$store.dispatch('messages/setMessage', {
         message: `Выбран датасет «${name}»`,
       });
+      this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
       const data = await this.$store.dispatch('datasets/choice', { alias, group });
       if (data) {
         this.loading = true

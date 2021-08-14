@@ -12,6 +12,8 @@
                   <CardDataset
                     :dataset="dataset"
                     :key="key"
+                    :cardIndex="key"
+                    :loaded="loaded == key ? true : false"
                     @clickCard="click"
                   />
                 </template>
@@ -44,10 +46,15 @@ export default {
     height() {
       return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true })
     },
+    loaded() {
+      return this.$store.getters['datasets/getLoaded']
+    }
   },
   methods: {
-    click(dataset){
-      this.$store.dispatch('datasets/setSelect', dataset)
+    click(dataset, key){
+      this.$store.dispatch('datasets/setSelect', dataset);
+      this.$store.dispatch('datasets/setSelectedIndex', key);
+      // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
   },

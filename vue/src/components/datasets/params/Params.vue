@@ -12,7 +12,7 @@
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
-          <t-button @click.native="download" :loading="loading" />
+          <t-button @click.native="download" :loading="loading" :disabled="Object.keys(dataset).length == 0"/>
         </div>
       </div>
     </div>

@@ -26,7 +26,7 @@
     </div>
     <at-modal v-model="dialogError" width="400">
       <div slot="header" style="text-align: center">
-        <span>Что-то пошло не так...</span>
+        <span>Ошибка!</span>
       </div>
       <div class="t-pre">
         <scrollbar>
@@ -142,6 +142,7 @@ export default {
     -ms-flex-item-align: auto;
     align-self: auto;
     &--text {
+      cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
       padding: 0 20px;
@@ -222,7 +223,8 @@ export default {
   }
 }
 .t-pre {
-  max-height: 400px;
+  height: 400px;
+  padding-bottom: 10px;
   p {
     white-space: break-spaces;
   }

@@ -44,7 +44,7 @@ export default {
   methods: {
     async focus() {
       const data = await this.$store.dispatch("axios", {
-        url: "/datasets/sources/?term=",
+        url: "/datasets/sources/",
       });
       if (!data) {
         return;

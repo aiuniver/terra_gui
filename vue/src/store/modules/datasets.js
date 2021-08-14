@@ -9,6 +9,8 @@ export default {
     filesSource: [],
     filesDrop: [],
     selected: null,
+    selectedIndex: null,
+    loaded: null,
     tags: [],
     tagsFilter: [],
     full: false,
@@ -43,6 +45,12 @@ export default {
     },
     SET_CREATION(state, value) {
       state.creation = value;
+    },
+    SET_SELECTED_INDEX(state, value) {
+      state.selectedIndex = value;
+    },
+    SET_LOADED(state, value) {
+      state.loaded = value;
     },
   },
   actions: {
@@ -117,6 +125,12 @@ export default {
     setFilesDrop({ commit }, value) {
       commit('SET_FILES_DROP', value);
     },
+    setSelectedIndex({ commit }, value) {
+      commit('SET_SELECTED_INDEX', value);
+    },
+    setLoaded({ commit }, value) {
+      commit('SET_LOADED', value);
+    },
     createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer)]);
@@ -174,6 +188,12 @@ export default {
     },
     getTags({ tags }) {
       return tags;
+    },
+    getSelectedIndex({ selectedIndex }) {
+      return selectedIndex;
+    },
+    getLoaded({ loaded }) {
+      return loaded;
     },
     getTagsFilter({ tagsFilter }) {
       return tagsFilter;
