@@ -19,6 +19,8 @@ export default {
         }
         return file;
       });
+      const value = selected.map(item => item.value)
+      this.mixinChange({ id, name: 'sources_paths', value})
     },
     mixinRemove(id) {
       this.mixinFiles = this.mixinFiles.map(item => {
@@ -26,5 +28,9 @@ export default {
         return item;
       });
     },
+    mixinChange(obj) {
+      // console.log(obj)
+      this.$store.dispatch('datasets/updateInputData', obj)
+    }
   },
 };

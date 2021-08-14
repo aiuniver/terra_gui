@@ -17,13 +17,14 @@
               <template v-slot:header>Входные данные {{ id }}</template>
               <TMultiSelect
                 :id="id"
+                name="sources_paths"
                 :lists="mixinFiles"
                 label="Выберите путь"
                 inline
                 @change="mixinCheck($event, id)"
               />
               <template v-for="(data, index) of input">
-                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
@@ -106,9 +107,6 @@ export default {
       console.log(value, this.$el.clientHeight);
       // this.height = value > clearHeight ? clearHeight : value + 56;
       // this.height = clearHeight
-    },
-    change(e) {
-      console.log(e);
     },
   },
 };

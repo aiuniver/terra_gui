@@ -22,48 +22,48 @@
       </div>
     </div>
     <div class="footer__copyright">
-      {{
-        `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}`
-      }}
+      {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
     </div>
     <at-modal v-model="dialogError" width="400">
       <div slot="header" style="text-align: center">
         <span>Что-то пошло не так...</span>
       </div>
-      <div class="inner form-inline-label">
-        <code>{{ message }}</code>
+      <div class="t-pre">
+        <scrollbar>
+          <p>{{ message }}</p>
+        </scrollbar>
       </div>
       <div slot="footer">
-        <button @click="dialogError = false">Понял</button>
+        <t-button @click.native="dialogError = false">Принято</t-button>
       </div>
     </at-modal>
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters } from 'vuex';
 export default {
   data: () => ({
     dialogError: false,
   }),
   computed: {
     ...mapGetters({
-      message: "messages/getMessage",
-      color: "messages/getColor",
-      progress: "messages/getProgress",
-      project: "projects/getProject",
-      progressMessage: "messages/getProgressMessage",
+      message: 'messages/getMessage',
+      color: 'messages/getColor',
+      progress: 'messages/getProgress',
+      project: 'projects/getProject',
+      progressMessage: 'messages/getProgressMessage',
     }),
     protsessor() {
-      return this.project?.hardware || "";
+      return this.project?.hardware || '';
     },
     style() {
-      return { backgroundColor: "#" + this.protsessor.color };
+      return { backgroundColor: '#' + this.protsessor.color };
     },
   },
   methods: {
     click(color) {
-      if (color === "error") {
+      if (color === 'error') {
         this.dialogError = true;
       }
     },
@@ -158,7 +158,7 @@ export default {
       width: 59px;
       & > span {
         display: inline-block;
-        content: "";
+        content: '';
         width: 10px;
         height: 10px;
         margin: 0 5px 0 0;
@@ -219,6 +219,12 @@ export default {
     font-size: 0.6875rem;
     text-align: right;
     background-color: #0e1621;
+  }
+}
+.t-pre {
+  max-height: 400px;
+  p {
+    white-space: break-spaces;
   }
 }
 </style>

@@ -8,7 +8,7 @@
       <scrollbar :ops="ops" ref="scrollRight">
         <div class="block-right__body--inner" :style="height">
           <template v-for="{ id, color } of inputDataOutput">
-            <CardLayer :id="id" :color="color" :key="'cardLayersRight' + id" @click-btn="optionsCard($event, id)" @mount="mount">
+            <CardLayer :id="id" :color="color" :key="'cardLayersRight' + id" @click-btn="optionsCard($event, id)">
               <template v-slot:header>Выходные данные {{ id }}</template>
               <TMultiSelect
                 :id="id"
@@ -18,7 +18,7 @@
                 @change="mixinCheck($event, id)"
               />
               <template v-for="(data, index) of output">
-                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
@@ -91,12 +91,6 @@ export default {
         this.mixinRemove(id);
       }
     },
-    change(e) {
-      console.log(e);
-    },
-    mount(e) {
-      console.log(e)
-    }
   },
 };
 </script>
