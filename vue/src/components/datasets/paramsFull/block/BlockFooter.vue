@@ -1,7 +1,7 @@
 <template>
-  <form class="block-footer" @submit.prevent="getObj">
+  <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input name="name" small :value="'Новый'">
+      <t-input parse="[name]" small :value="'Новый'">
         Название датасета
       </t-input>
     </div>
@@ -12,13 +12,13 @@
       <DoubleSlider />
     </div>
     <div class="block-footer__item">
-      <t-checkbox name="subsequence">Сохранить последовательность</t-checkbox>
+      <t-checkbox parse="subsequence">Сохранить последовательность</t-checkbox>
     </div>
     <div class="block-footer__item">
-      <t-checkbox name="use_generator">Использовать генератор</t-checkbox>
+      <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
     </div>
     <div class="action">
-      <t-button>Сформировать</t-button>
+      <t-button @click.native="getObj">Сформировать</t-button>
     </div>
   </form>
 </template>
@@ -35,12 +35,7 @@ export default {
   },
   methods: {
     getObj() {
-      console.log(serialize(this.$el))
-      // console.log(this.$el.getElementsByTagName('input'))
-      // const inputs = this.$el.getElementsByTagName('input')
-      // inputs.forEach(element => {
-      //   console.log(element.value)
-      // });
+      this.$emit('create', serialize(this.$el))
     }
   }
 };

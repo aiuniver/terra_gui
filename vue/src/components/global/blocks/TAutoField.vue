@@ -45,7 +45,7 @@
       @change="change"
     />
     <template v-for="(data, i) of dataFields">
-      <t-auto-field v-bind="data" :idKey="idKey + name + i" :key="(idKey + name) + i" @change="$emit('change', $event)"/>
+      <t-auto-field v-bind="data" :idKey="idKey + i" :key="idKey + i" :id="id" @change="$emit('change', $event)" />
     </template>
   </div>
 </template>
@@ -63,6 +63,8 @@ export default {
     parse: String,
     name: String,
     fields: Object,
+    id: Number,
+    root: Boolean,
   },
   data: () => ({
     valueIn: null,
@@ -78,21 +80,21 @@ export default {
   },
   methods: {
     change({ value, name }) {
-      this.valueIn = null
-      this.$emit('change', { value, name });
+      this.valueIn = null;
+      this.$emit('change', { id: this.id, value, name, root: this.root });
       this.$nextTick(() => {
-        this.valueIn = value
-      })
+        this.valueIn = value;
+      });
     },
   },
   created() {
-    console.log(this.name, this.value)
     this.valueInt = this.value;
   },
   mounted() {
+    this.$emit('change', { id: this.id, value: this.value, name: this.name, root: this.root });
     this.$nextTick(() => {
-        this.valueIn = this.value
-    })
+      this.valueIn = this.value;
+    });
     this.$emit('height', this.$el.clientHeight);
   },
 };

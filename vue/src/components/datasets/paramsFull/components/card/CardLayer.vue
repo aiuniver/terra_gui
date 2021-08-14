@@ -2,22 +2,17 @@
   <div class="card-layer" v-click-outside="outside" :style="height">
     <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)">
       <div class="card-layer__header--icon" @click="toggle = !toggle">
-        <i class="dot"></i>
+        <i class="t-icon icon-file-dot"></i>
       </div>
-      <div class="card-layer__header--title">Входные данные {{ id }}</div>
+      <div class="card-layer__header--title"><slot name="header"></slot></div>
     </div>
     <div v-show="toggle" class="card-layer__dropdown">
-      <div
-        v-for="({ icon }, i) of items"
-        :key="'icon' + i"
-        class="card-layer__dropdown--item"
-        @click="click(icon)"
-      >
+      <div v-for="({ icon }, i) of items" :key="'icon' + i" class="card-layer__dropdown--item" @click="click(icon)">
         <i :class="[icon]"></i>
       </div>
     </div>
     <div class="card-layer__body">
-      <scrollbar :ops="ops" >
+      <scrollbar :ops="ops">
         <div class="card-layer__body--inner" ref="cardBody">
           <slot />
         </div>
@@ -28,21 +23,17 @@
 
 <script>
 export default {
-  name: "card-layer",
+  name: 'card-layer',
   props: {
-    id: Number,
-    color: {
-      type: String,
-      default: "#242f3d",
-    },
-    title: String,
+    color: String,
+    name: String,
   },
   data: () => ({
-    height: { height: '100%'},
+    height: { height: '100%' },
     toggle: false,
-    items: [{ icon: "remove" }, { icon: "copy" }],
+    items: [{ icon: 'remove' }, { icon: 'copy' }],
     ops: {
-      bar: { background: "#17212b" },
+      bar: { background: '#17212b' },
       scrollPanel: {
         scrollingX: false,
         scrollingY: true,
@@ -62,16 +53,17 @@ export default {
     },
     click(icon) {
       this.toggle = false;
-      this.$emit("click-btn", icon);
+      this.$emit('click-btn', icon);
     },
   },
   mounted() {
-    const heightCard = this.$el.clientHeight
-    const heightBody =this.$refs.cardBody.clientHeight + 36
+    const heightCard = this.$el.clientHeight;
+    const heightBody = this.$refs.cardBody.clientHeight + 36;
     if (heightCard > heightBody) {
-      this.height = { height: heightBody + 'px' }
+      this.height = { height: heightBody + 'px' };
     }
-  }
+    this.$emit('mount', true);
+  },
 };
 </script>
 
@@ -118,12 +110,12 @@ export default {
       cursor: pointer;
       position: absolute;
       right: 12px;
-      & .dot {
-        display: inline-block;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      & .t-icon {
         width: 16px;
         height: 6px;
-        background-repeat: no-repeat;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iNCIgdmlld0JveD0iMCAwIDE2IDQiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxwYXRoIGQ9Ik0yIDBDMC45IDAgMCAwLjkgMCAyQzAgMy4xIDAuOSA0IDIgNEMzLjEgNCA0IDMuMSA0IDJDNCAwLjkgMy4xIDAgMiAwWk0xNCAwQzEyLjkgMCAxMiAwLjkgMTIgMkMxMiAzLjEgMTIuOSA0IDE0IDRDMTUuMSA0IDE2IDMuMSAxNiAyQzE2IDAuOSAxNS4xIDAgMTQgMFpNOCAwQzYuOSAwIDYgMC45IDYgMkM2IDMuMSA2LjkgNCA4IDRDOS4xIDQgMTAgMy4xIDEwIDJDMTAgMC45IDkuMSAwIDggMFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=");
       }
     }
   }
@@ -150,14 +142,14 @@ export default {
         width: 14px;
         height: 18px;
         background-repeat: no-repeat;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxNCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTZDMSAxNy4xIDEuOSAxOCAzIDE4SDExQzEyLjEgMTggMTMgMTcuMSAxMyAxNlY2QzEzIDQuOSAxMi4xIDQgMTEgNEgzQzEuOSA0IDEgNC45IDEgNlYxNlpNNCA2SDEwQzEwLjU1IDYgMTEgNi40NSAxMSA3VjE1QzExIDE1LjU1IDEwLjU1IDE2IDEwIDE2SDRDMy40NSAxNiAzIDE1LjU1IDMgMTVWN0MzIDYuNDUgMy40NSA2IDQgNlpNMTAuNSAxTDkuNzkgMC4yOUM5LjYxIDAuMTEgOS4zNSAwIDkuMDkgMEg0LjkxQzQuNjUgMCA0LjM5IDAuMTEgNC4yMSAwLjI5TDMuNSAxSDFDMC40NSAxIDAgMS40NSAwIDJDMCAyLjU1IDAuNDUgMyAxIDNIMTNDMTMuNTUgMyAxNCAyLjU1IDE0IDJDMTQgMS40NSAxMy41NSAxIDEzIDFIMTAuNVoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==");
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxNCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMTZDMSAxNy4xIDEuOSAxOCAzIDE4SDExQzEyLjEgMTggMTMgMTcuMSAxMyAxNlY2QzEzIDQuOSAxMi4xIDQgMTEgNEgzQzEuOSA0IDEgNC45IDEgNlYxNlpNNCA2SDEwQzEwLjU1IDYgMTEgNi40NSAxMSA3VjE1QzExIDE1LjU1IDEwLjU1IDE2IDEwIDE2SDRDMy40NSAxNiAzIDE1LjU1IDMgMTVWN0MzIDYuNDUgMy40NSA2IDQgNlpNMTAuNSAxTDkuNzkgMC4yOUM5LjYxIDAuMTEgOS4zNSAwIDkuMDkgMEg0LjkxQzQuNjUgMCA0LjM5IDAuMTEgNC4yMSAwLjI5TDMuNSAxSDFDMC40NSAxIDAgMS40NSAwIDJDMCAyLjU1IDAuNDUgMyAxIDNIMTNDMTMuNTUgMyAxNCAyLjU1IDE0IDJDMTQgMS40NSAxMy41NSAxIDEzIDFIMTAuNVoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==');
       }
       & .copy {
         display: inline-block;
         width: 17px;
         height: 20px;
         background-repeat: no-repeat;
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAxNyAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjYzMTYgMEgxLjc4OTQ3QzAuODA1MjYzIDAgMCAwLjgxODE4MiAwIDEuODE4MThWMTMuNjM2NEMwIDE0LjEzNjQgMC40MDI2MzIgMTQuNTQ1NSAwLjg5NDczNyAxNC41NDU1QzEuMzg2ODQgMTQuNTQ1NSAxLjc4OTQ3IDE0LjEzNjQgMS43ODk0NyAxMy42MzY0VjIuNzI3MjdDMS43ODk0NyAyLjIyNzI3IDIuMTkyMTEgMS44MTgxOCAyLjY4NDIxIDEuODE4MThIMTEuNjMxNkMxMi4xMjM3IDEuODE4MTggMTIuNTI2MyAxLjQwOTA5IDEyLjUyNjMgMC45MDkwOTFDMTIuNTI2MyAwLjQwOTA5MSAxMi4xMjM3IDAgMTEuNjMxNiAwWk0xNS4yMTA1IDMuNjM2MzZINS4zNjg0MkM0LjM4NDIxIDMuNjM2MzYgMy41Nzg5NSA0LjQ1NDU1IDMuNTc4OTUgNS40NTQ1NVYxOC4xODE4QzMuNTc4OTUgMTkuMTgxOCA0LjM4NDIxIDIwIDUuMzY4NDIgMjBIMTUuMjEwNUMxNi4xOTQ3IDIwIDE3IDE5LjE4MTggMTcgMTguMTgxOFY1LjQ1NDU1QzE3IDQuNDU0NTUgMTYuMTk0NyAzLjYzNjM2IDE1LjIxMDUgMy42MzYzNlpNMTQuMzE1OCAxOC4xODE4SDYuMjYzMTZDNS43NzEwNSAxOC4xODE4IDUuMzY4NDIgMTcuNzcyNyA1LjM2ODQyIDE3LjI3MjdWNi4zNjM2NEM1LjM2ODQyIDUuODYzNjQgNS43NzEwNSA1LjQ1NDU1IDYuMjYzMTYgNS40NTQ1NUgxNC4zMTU4QzE0LjgwNzkgNS40NTQ1NSAxNS4yMTA1IDUuODYzNjQgMTUuMjEwNSA2LjM2MzY0VjE3LjI3MjdDMTUuMjEwNSAxNy43NzI3IDE0LjgwNzkgMTguMTgxOCAxNC4zMTU4IDE4LjE4MThaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=");
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTciIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAxNyAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjYzMTYgMEgxLjc4OTQ3QzAuODA1MjYzIDAgMCAwLjgxODE4MiAwIDEuODE4MThWMTMuNjM2NEMwIDE0LjEzNjQgMC40MDI2MzIgMTQuNTQ1NSAwLjg5NDczNyAxNC41NDU1QzEuMzg2ODQgMTQuNTQ1NSAxLjc4OTQ3IDE0LjEzNjQgMS43ODk0NyAxMy42MzY0VjIuNzI3MjdDMS43ODk0NyAyLjIyNzI3IDIuMTkyMTEgMS44MTgxOCAyLjY4NDIxIDEuODE4MThIMTEuNjMxNkMxMi4xMjM3IDEuODE4MTggMTIuNTI2MyAxLjQwOTA5IDEyLjUyNjMgMC45MDkwOTFDMTIuNTI2MyAwLjQwOTA5MSAxMi4xMjM3IDAgMTEuNjMxNiAwWk0xNS4yMTA1IDMuNjM2MzZINS4zNjg0MkM0LjM4NDIxIDMuNjM2MzYgMy41Nzg5NSA0LjQ1NDU1IDMuNTc4OTUgNS40NTQ1NVYxOC4xODE4QzMuNTc4OTUgMTkuMTgxOCA0LjM4NDIxIDIwIDUuMzY4NDIgMjBIMTUuMjEwNUMxNi4xOTQ3IDIwIDE3IDE5LjE4MTggMTcgMTguMTgxOFY1LjQ1NDU1QzE3IDQuNDU0NTUgMTYuMTk0NyAzLjYzNjM2IDE1LjIxMDUgMy42MzYzNlpNMTQuMzE1OCAxOC4xODE4SDYuMjYzMTZDNS43NzEwNSAxOC4xODE4IDUuMzY4NDIgMTcuNzcyNyA1LjM2ODQyIDE3LjI3MjdWNi4zNjM2NEM1LjM2ODQyIDUuODYzNjQgNS43NzEwNSA1LjQ1NDU1IDYuMjYzMTYgNS40NTQ1NUgxNC4zMTU4QzE0LjgwNzkgNS40NTQ1NSAxNS4yMTA1IDUuODYzNjQgMTUuMjEwNSA2LjM2MzY0VjE3LjI3MjdDMTUuMjEwNSAxNy43NzI3IDE0LjgwNzkgMTguMTgxOCAxNC4zMTU4IDE4LjE4MThaIiBmaWxsPSIjQTdCRUQzIi8+Cjwvc3ZnPgo=');
       }
     }
   }

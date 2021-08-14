@@ -20,7 +20,7 @@
           </div>
         </div>
         <div class="main__footer">
-          <BlockFooter />
+          <BlockFooter @create="createObject"/>
         </div>
       </div>
     </div>
@@ -66,6 +66,9 @@ export default {
     },
   },
   methods: {
+    async createObject(obj) {
+      await this.$store.dispatch('datasets/createDataset', obj)
+    },
     change(value) {
       this.toggle = value;
     },
