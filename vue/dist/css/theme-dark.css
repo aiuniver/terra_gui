@@ -110,7 +110,10 @@ body.namespace-apps_project footer > .message > .wrapper > .error {
     border-color:#6C7883 !important;
 }
 .project-datasets-block.datasets .dataset-card-item.active > .dataset-card {
-    border-color:#65B9F4;
+  border-color:#65B9F4;
+}
+.project-datasets-block.datasets .dataset-card-item.selected > .dataset-card {
+    border-color:#3EBA31;
 }
 .project-datasets-block.datasets .card-extra > .wrapper {
     color:#A7BED3;
