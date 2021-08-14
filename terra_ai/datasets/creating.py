@@ -27,7 +27,7 @@ import cv2
 from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
 from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
 from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
-from ..data.datasets.extra import DatasetGroupChoice
+from ..data.datasets.extra import DatasetGroupChoice, LayerScalerChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
@@ -108,14 +108,22 @@ class CreateDTS(object):
         # Создаем инструкции
         self.instructions = self.create_instructions(creation_data)
 
-        self.limit: int = len(self.instructions.inputs.get(1).instructions)
+        self.limit: int = len(self.instructions.inputs.get(1).instructions[f'1_{self.tags[1]}'])
+
+        dataframe_dict = {}
+        for inp_idx in range(1, len(self.input_names)+1):  # TODO
+            dataframe_dict.update(self.instructions.inputs[inp_idx].instructions)
+        for out_idx in range(inp_idx+1, len(self.output_names)+inp_idx+1):
+            dataframe_dict.update(self.instructions.outputs[out_idx].instructions)
+
+        self.dataframe = pd.DataFrame(dataframe_dict)
 
         # Получаем входные параметры
         self.inputs = self.create_inputs_parameters(creation_data=creation_data)
 
         # Получаем выходные параметры
         self.outputs = self.create_output_parameters(creation_data=creation_data)
-
+        #
         # Разделение на три выборки
         self.sequence_split(creation_data=creation_data)
 
@@ -172,46 +180,21 @@ class CreateDTS(object):
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
 
-        paths_list: list = []
-        classes_names: list = []
-        cls_idx: int = 0
-        peg_idx: int = 0
         instructions: dict = {}
         for elem in data:
-            for paths in elem.parameters.sources_paths:
-                if not paths.suffix == '.csv' and not elem.type == 'Classification':
-                    self.peg.append(0) if not elem.type == 'ObjectDetection' else None
-                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, paths))):
-                        if file_name:
-                            file_folder = directory.replace(self.file_folder, '')[1:]
-                            for name in sorted(file_name):
-                                if elem.type == 'ObjectDetection':
-                                    if name.endswith('.txt'):
-                                        paths_list.append(os.path.join(file_folder, name))
-                                elif elem.type == 'Image' and 'object_detection' in self.tags.values():
-                                    if not name.endswith('.txt'):
-                                        paths_list.append(os.path.join(file_folder, name))
-                                        peg_idx += 1
-                                else:
+            paths_list: list = []
+            if decamelize(elem.type) not in ['text_segmentation']:
+                for paths in elem.parameters.sources_paths:
+                    if not paths.suffix == '.csv':
+                        for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, paths))):
+                            if file_name:
+                                file_folder = directory.replace(self.file_folder, '')[1:]
+                                for name in sorted(file_name):
                                     paths_list.append(os.path.join(file_folder, name))
-                                    peg_idx += 1
-                                self.y_cls.append(cls_idx)
-                            cls_idx += 1
-                            self.peg.append(peg_idx) if not elem.type == 'ObjectDetection' else None
-                            classes_names.append(file_folder)
-                elif paths.suffix == '.csv' and elem.type not in ['Dataframe', 'Timeseries']:
-                    data = pd.read_csv(os.path.join(self.file_folder, paths),
-                                       usecols=elem.parameters.cols_names)
-                    paths_list = data[elem.parameters.cols_names[0]].to_list()
-                    # prev_path = paths_list[0].split(os.path.sep)[-2]
-                    # for path in paths_list:
-                    #     cur_path = path.split(os.path.sep)[-2]
-                    #     if cur_path != prev_path:
-                    #         self.peg.append(peg_idx)
-                    #     prev_path = cur_path
-                    #     peg_idx += 1
-                    # self.peg.append(len(paths_list))
-            self.classes_names[elem.id] = classes_names if not elem.type == 'ObjectDetection' else None
+                    elif paths.suffix == '.csv' and elem.type not in ['Dataframe', 'Timeseries']:
+                        data = pd.read_csv(os.path.join(self.file_folder, paths),
+                                           usecols=elem.parameters.cols_names)
+                        paths_list = data[elem.parameters.cols_names[0]].to_list()
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(paths_list,
                                                                                                           elem))
             instructions.update([(elem.id, instructions_data)])
@@ -231,11 +214,19 @@ class CreateDTS(object):
     def create_inputs_parameters(self, creation_data: CreationData) -> dict:
         creating_inputs_data = {}
         for key in self.instructions.inputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.inputs.get(key).instructions[0],
-                **self.instructions.inputs.get(key).parameters
-            )
+            if self.tags[key] in ['video', 'text', 'audio']:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    **self.instructions.inputs.get(key).parameters
+                )
+            else:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    **self.instructions.inputs.get(key).parameters
+                )
             if isinstance(array, tuple):
                 for i in range(len(array)):
                     current_input = DatasetInputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
@@ -258,11 +249,20 @@ class CreateDTS(object):
     def create_output_parameters(self, creation_data: CreationData) -> dict:
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
-            array = getattr(array_creator, f'create_{self.tags[key]}')(
-                creation_data.source_path,
-                self.instructions.outputs.get(key).instructions[0],
-                **self.instructions.outputs.get(key).parameters
-            )
+            if self.tags[key] in ['text', 'text_segmentation', 'audio']:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    **self.instructions.outputs.get(key).parameters
+                )
+            else:
+                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                    creation_data.source_path,
+                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    **self.instructions.outputs.get(key).parameters
+                )
+
             if isinstance(array, tuple):
                 for i in range(len(array)):
                     current_output = DatasetOutputsData(datatype=DataType.get(len(array[i].shape), 'DIM'),
@@ -309,10 +309,20 @@ class CreateDTS(object):
                 for i in range(6):
                     globals()[f'current_arrays_{i + 1}'] = []
             for i in range(self.limit):
-                array = getattr(array_creator, f"create_{self.tags[key]}")(
-                    creation_data.source_path,
-                    put_data.get(key).instructions[i],
-                    **put_data.get(key).parameters)
+                if self.tags[key] in ['video', 'text', 'audio', 'text_segmentation']:
+                    array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        creation_data.source_path,
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}_slice'],
+                        **put_data.get(key).parameters
+                    )
+                else:
+                    array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        creation_data.source_path,
+                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
+                        **put_data.get(key).parameters
+                    )
+
                 if self.tags[key] == 'object_detection':
                     for j in range(num_arrays):
                         globals()[f'current_arrays_{j + 1}'].append(array[j])
@@ -366,10 +376,31 @@ class CreateDTS(object):
     def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData, OneFileData]):
 
         instructions: dict = {}
+        self.peg.append(0)
         options = put_data.parameters.native()
         options['put'] = put_data.id
         if 'object_detection' in self.tags.values():
             options['object_detection'] = True
+
+        for key, value in self.tags.items():
+            if value == 'classification':
+                if self.user_parameters[key].sources_paths and\
+                        os.path.isfile(self.user_parameters[key].sources_paths[0]):
+                    data = pd.read_csv(self.user_parameters[key].sources_paths[0],
+                                       usecols=self.user_parameters[key].cols_names)
+                    self.y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
+                else:
+                    peg_idx = 0
+                    prev_class = paths_list[0].split(os.path.sep)[-2]
+                    for elem in paths_list:
+                        cur_class = elem.split(os.path.sep)[-2]
+                        if cur_class != prev_class:
+                            prev_class = cur_class
+                            self.peg.append(peg_idx)
+                        self.y_cls.append(cur_class)
+                        peg_idx += 1
+                break
+        self.peg.append(len(paths_list))
 
         if options.get('augmentation', None):
             aug_parameters = []
@@ -378,7 +409,7 @@ class CreateDTS(object):
             array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
-        instructions['instructions'] = paths_list
+        instructions['instructions'] = {f'{put_data.id}_image': paths_list}
         instructions['parameters'] = options
 
         return instructions
@@ -403,47 +434,58 @@ class CreateDTS(object):
         options = put_data.parameters.native()
         instructions: dict = {}
         instr: list = []
+        video: list = []
+        video_slice: list = []
         y_cls: list = []
-        classes_names = []
-        cls_idx = 0
+        csv_y_cls: list = []
         peg_idx = 0
+        csv_flag = False
         self.peg.append(0)
 
+        for key, value in self.tags.items():
+            if value == 'classification':
+                if self.user_parameters[key].sources_paths and\
+                        os.path.isfile(self.user_parameters[key].sources_paths[0]):
+                    data = pd.read_csv(self.user_parameters[key].sources_paths[0],
+                                       usecols=self.user_parameters[key].cols_names)
+                    csv_y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
+                    csv_flag = True
+
         prev_class = paths_list[0].split(os.path.sep)[-2]
-        for idx in range(len(paths_list)):
-            cur_class = paths_list[idx].split(os.path.sep)[-2]
+        for idx, elem in enumerate(paths_list):
+            cur_class = elem.split(os.path.sep)[-2]
             if options['video_mode'] == VideoModeChoice.completely:
-                instr.append({paths_list[idx]: [0, options['max_frames']]})
+                video.append(elem)
+                video_slice.append([0, options['max_frames']])
                 peg_idx += 1
                 if cur_class != prev_class:
-                    cls_idx += 1
                     self.peg.append(peg_idx)
                     prev_class = cur_class
-                y_cls.append(cls_idx)
+                y_cls.append(cur_class)
             elif options['video_mode'] == VideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
-                cap = cv2.VideoCapture(os.path.join(self.file_folder, paths_list[idx]))
+                cap = cv2.VideoCapture(os.path.join(self.file_folder, elem))
                 frame_count = int(cap.get(7))
                 while not stop_flag:
+                    video.append(elem)
+                    video_slice.append([cur_step, cur_step + options['length']])
                     peg_idx += 1
-                    instr.append({paths_list[idx]: [cur_step, cur_step + options['length']]})
                     if cur_class != prev_class:
-                        cls_idx += 1
                         self.peg.append(peg_idx)
                         prev_class = cur_class
-                    y_cls.append(cls_idx)
+                    y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
                     cur_step += options['step']
                     if cur_step + options['length'] > frame_count:
-                        instr.append({paths_list[idx]: [frame_count - options['length'], frame_count]})
                         stop_flag = True
+                        if options['length'] < frame_count:
+                            # instr.append({elem: [frame_count - options['length'], frame_count]})
+                            video.append(elem)
+                            video_slice.append([frame_count - options['length'], frame_count])
+                            y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
 
         self.y_cls = y_cls
-        self.peg.append(len(instr))
-        for key, value in self.tags.items():
-            if value == 'classification':
-                self.classes_names[key] = classes_names
-                self.num_classes[key] = len(classes_names)
+        self.peg.append(len(video))
 
         del options['video_mode']
         del options['length']
@@ -452,7 +494,8 @@ class CreateDTS(object):
         options['put'] = put_data.id
 
         instructions['parameters'] = options
-        instructions['instructions'] = instr
+        instructions['instructions'] = {f'{put_data.id}_video': video,
+                                        f'{put_data.id}_video_slice': video_slice}
 
         return instructions
 
@@ -479,17 +522,17 @@ class CreateDTS(object):
             return ' '.join(words_list)
 
         options = put_data.parameters.native()
-        text_mode = options.get('text_mode', '')
-        max_words = options.get('max_words', int)
-        length = options.get('length', int)
-        step = options.get('step', int)
         filters = options.get('filters', '')
+        instructions: dict = {}
         txt_list: dict = {}
         lower: bool = True
         split: str = ' '
         open_symbol = None
         close_symbol = None
         tags = None
+        csv_flag = False
+        y_cls: list = []
+        csv_y_cls: list = []
 
         for i, value in self.tags.items():
             if value == 'text_segmentation':
@@ -503,28 +546,22 @@ class CreateDTS(object):
                         filters = filters.replace(ch, '')
                 break
 
-        # if not options['sources_paths'][0].endswith('.csv'):
-        #     for folder_name in options['sources_paths']:
-        #         for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
-        #             if file_name:
-        #                 file_folder = directory.replace(self.file_folder, '')[1:]
-        #                 for name in sorted(file_name):
-        #                     file_path = os.path.join(file_folder, name)
-        #                     txt_list[file_path] = read_text(file_path, lower, filters, split, open_symbol, close_symbol)
-        #                 classes_names.append(file_folder)
-        # elif options['sources_paths'][0].endswith('.csv'):
-        #     for file_name in options['sources_paths']:
-        #         data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options.get('cols_name', ''))
-        #         column = data[options['cols_name'][0]].to_list()
-        #         for idx, elem in column:
-        #             txt_list[str(idx)] = elem
-        table_flag = False
+        for key, value in self.tags.items():
+            if value == 'classification':
+                if self.user_parameters[key].sources_paths and\
+                        os.path.isfile(self.user_parameters[key].sources_paths[0]):
+                    data = pd.read_csv(self.user_parameters[key].sources_paths[0],
+                                       usecols=self.user_parameters[key].cols_names)
+                    csv_y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
+                    csv_flag = True
+
         for idx, path in enumerate(paths_list):
-            if os.path.isfile(os.path.join(self.file_folder, path)):
+            if not csv_flag:
+            # if os.path.isfile(os.path.join(self.file_folder, path)):
                 txt_list[path] = read_text(path, lower, filters, split, open_symbol, close_symbol)
             else:
                 txt_list[str(idx)] = path
-                table_flag = True
+
         if options.get('pymorphy', ''):
             pymorphy = pymorphy2.MorphAnalyzer()
             for key, value in txt_list.items():
@@ -548,121 +585,130 @@ class CreateDTS(object):
                                                            'oov_token': '<UNK>'})
             array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
 
-        instr: list = []
-        y_cls: list = []
-        peg_idx: int = 0
-        cls_idx: int = 0
-        if not table_flag:
-            prev_class: str = sorted(txt_list.keys())[0].split(os.path.sep)[-2]
-            self.peg.append(0)
         array_creator.txt_list[put_data.id] = txt_list
 
-        for key, value in sorted(txt_list.items()):
-            if not table_flag:
+        text: list = []
+        text_slice: list = []
+        peg_idx: int = 0
+
+        if not csv_flag:
+            prev_class: str = sorted(txt_list.keys())[0].split(os.path.sep)[-2]
+            self.peg.append(0)
+        else:
+            prev_class: str = csv_y_cls[0]
+
+        for idx, (key, value) in enumerate(sorted(txt_list.items())):
+            if not csv_flag:
                 cur_class = key.split(os.path.sep)[-2]
-            if text_mode == TextModeChoice.completely:
-                instr.append({key: [0, max_words]})
-                if not table_flag:
-                    if cur_class != prev_class:
-                        cls_idx += 1
-                        self.peg.append(peg_idx)
-                        prev_class = cur_class
-                    peg_idx += 1
-                    y_cls.append(cls_idx)
-            elif text_mode == TextModeChoice.length_and_step:
+            else:
+                cur_class = csv_y_cls[idx]
+            if options['text_mode'] == TextModeChoice.completely:
+                text.append(value)
+                text_slice.append([0, options['max_words']])
+                if cur_class != prev_class:
+                    self.peg.append(peg_idx)
+                    prev_class = cur_class
+                peg_idx += 1
+                y_cls.append(cur_class)
+
+            elif options['text_mode'] == TextModeChoice.length_and_step:
+                if not csv_flag:
+                    cur_class = key.split(os.path.sep)[-2]
+                else:
+                    cur_class = csv_y_cls[idx]
                 max_length = len(value.split(' '))
                 if 'text_segmentation' in self.tags.values():
                     count = 0
                     for elem in tags.split(' '):
                         count += value.split(' ').count(elem)
                     max_length -= count
-                cur_step: int = 0
+                cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    instr.append({key: [cur_step, cur_step + length]})
-                    cur_step += step
+                    text.append(' '.join(value.split(' ')[cur_step: cur_step + options['length']]))
+                    text_slice.append([cur_step, cur_step + options['length']])
+                    peg_idx += 1
                     if cur_class != prev_class:
-                        cls_idx += 1
                         self.peg.append(peg_idx)
                         prev_class = cur_class
-                    peg_idx += 1
-                    y_cls.append(cls_idx)
+                    y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
+                    cur_step += options['step']
                     if cur_step + options['length'] > max_length:
                         stop_flag = True
-        self.peg.append(len(instr))
+
+        self.peg.append(len(text))
         self.y_cls = y_cls
 
-        instructions = {'instructions': instr,
-                        'parameters': {'embedding': options.get('embedding', bool),
-                                       'bag_of_words': options.get('bag_of_words', bool),
-                                       'word_to_vec': options.get('word_to_vec', bool),
-                                       'put': put_data.id
-                                       }
-                        }
-
+        instructions['instructions'] = {f'{put_data.id}_text': text,
+                                        f'{put_data.id}_text_slice': text_slice}
+        instructions['parameters'] = {'embedding': options.get('embedding', bool),
+                                      'bag_of_words': options.get('bag_of_words', bool),
+                                      'word_to_vec': options.get('word_to_vec', bool),
+                                      'put': put_data.id
+                                      }
         return instructions
 
-    def instructions_audio(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_audio(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
         sample_rate = options.get('sample_rate', int)
+        options = put_data.parameters.native()
         instructions: dict = {}
         instr: list = []
-        paths: list = []
+        audio: list = []
+        audio_slice: list = []
         y_cls: list = []
-        classes_names = []
-        cls_idx = 0
+        csv_y_cls: list = []
         peg_idx = 0
-        self.peg.append(0)
+        csv_flag = False
+        self.peg.append(0) if not self.peg else None
 
-        if not options['sources_paths'][0].endswith('.csv'):
-            for folder_name in options['sources_paths']:
-                for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, folder_name))):
-                    if file_name:
-                        file_folder = directory.replace(self.file_folder, '')[1:]
-                        for name in sorted(file_name):
-                            paths.append(os.path.join(file_folder, name))
-                        classes_names.append(file_folder)
-        elif options['sources_paths'][0].endswith('.csv'):
-            for file_name in options['sources_paths']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_name'])
-                paths = data[options['cols_name'][0]].to_list()
+        for key, value in self.tags.items():
+            if value == 'classification':
+                if self.user_parameters[key].sources_paths and\
+                        os.path.isfile(self.user_parameters[key].sources_paths[0]):
+                    data = pd.read_csv(self.user_parameters[key].sources_paths[0],
+                                       usecols=self.user_parameters[key].cols_names)
+                    csv_y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
+                    csv_flag = True
 
-        prev_class = paths[0].split(os.path.sep)[-2]
-        for idx in range(len(paths)):
-            cur_class = paths[idx].split('/')[-2]
-            if options.get('audio_mode', '') == AudioModeChoice.completely:
-                instr.append({paths[idx]: [0.0, sample_rate * options.get('max_seconds', int)]})
+        prev_class = paths_list[0].split(os.path.sep)[-2]
+        for idx, elem in enumerate(paths_list):
+            cur_class = elem.split(os.path.sep)[-2]
+            if options['audio_mode'] == AudioModeChoice.completely:
+                audio.append(elem)
+                audio_slice.append([0, options['max_frames']])
+                peg_idx += 1
                 if cur_class != prev_class:
-                    cls_idx += 1
                     self.peg.append(peg_idx)
                     prev_class = cur_class
-                peg_idx += 1
-                y_cls.append(cls_idx)
-            elif options.get('audio_mode', '') == AudioModeChoice.length_and_step:
+                y_cls.append(cur_class)
+            elif options['audio_mode'] == AudioModeChoice.length_and_step:
                 cur_step = 0.0
                 stop_flag = False
-                y, sr = librosa_load(path=os.path.join(self.file_folder, paths[idx]), sr=sample_rate, res_type='scipy')
+                y, sr = librosa_load(path=os.path.join(self.file_folder, elem), sr=sample_rate, res_type='scipy')
                 sample_length = len(y) / sample_rate
                 while not stop_flag:
-                    instr.append({paths[idx]: [cur_step, cur_step + options.get('length', int)]})
+                    audio.append(elem)
+                    audio_slice.append([cur_step, cur_step + options['length']])
+                    peg_idx += 1
                     if cur_class != prev_class:
-                        cls_idx += 1
                         self.peg.append(peg_idx)
                         prev_class = cur_class
-                    peg_idx += 1
-                    y_cls.append(cls_idx)
-                    cur_step += options.get('step', int)
-                    if cur_step + options.get('length', int) > sample_length:
+                    y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
+                    cur_step += options['step']
+                    if cur_step + options['length'] > sample_length:
                         stop_flag = True
-        self.peg.append(len(instr))
+
         self.y_cls = y_cls
+        self.peg.append(len(audio))
 
         for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
             if elem in options.keys():
                 del options[elem]
+        instructions['instructions'] = {f'{put_data.id}_audio': audio,
+                                        f'{put_data.id}_audio_slice': audio_slice}
         instructions['parameters'] = options
-        instructions['instructions'] = instr
 
         return instructions
 
@@ -1011,13 +1057,11 @@ class CreateDTS(object):
         self.task_type[put_data.id] = put_data.type
         self.encoding[put_data.id] = 'ohe' if options['one_hot_encoding'] else None
 
-        if options['sources_paths'][0].endswith('.csv'):
-            transpose = self.user_parameters.get(1).transpose
-
+        if options['sources_paths'] and options['sources_paths'][0].endswith('.csv'):
             if not any(self.y_cls):
                 if options['categorical']:
                     for file_name in options['sources_paths']:
-                        if transpose:
+                        if self.user_parameters.get(1).transpose:
                             tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
                             tmp_df.columns = tmp_df.iloc[0]
                             tmp_df.drop(tmp_df.index[[0]], inplace=True)
@@ -1037,7 +1081,7 @@ class CreateDTS(object):
                             self.y_cls.append(classes_names.index(elem))
                 elif options['categorical_ranges']:
                     file_name = options['sources_paths'][0]
-                    if transpose:
+                    if self.user_parameters.get(1).transpose:
                         tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
                         tmp_df.columns = tmp_df.iloc[0]
                         tmp_df.drop(tmp_df.index[[0]], inplace=True)
@@ -1063,58 +1107,54 @@ class CreateDTS(object):
                             if elem <= int(self.classes_names[put_data.id][i]):
                                 self.y_cls.append(i)
                                 break
-            else:
-                if transpose:
-                    data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                       sep=options['separator'],
-                                       nrows=1).values
-                else:
-                    data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                       sep=options['separator'],
-                                       usecols=[0]).values
-                self.classes_names[put_data.id] = sorted(list(set(data)))
-                self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
-        else:
-            if any(i in self.tags.values() for i in ['image', 'text', 'audio', 'video']):
-                self.classes_names[put_data.id] = sorted(options['sources_paths'])
-                self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
+            # else:
+            #     if not True:  # TRANSPOSE!!!!!!
+            #         data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+            #                            sep=options['separator'],
+            #                            nrows=1).values
+            #     else:
+            #         data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
+            #                            sep=options['separator'],
+            #                            usecols=[0]).values
+        self.classes_names[put_data.id] = np.unique(self.y_cls).tolist()  # sorted(list(set(data)))
+        self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
+        # else:
+        #     if any(i in self.tags.values() for i in ['image', 'text', 'audio', 'video']):
+        #         self.classes_names[put_data.id] = sorted(options['sources_paths'])
+        #         self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
         instructions['parameters'] = {'num_classes': self.num_classes[put_data.id],
-                                      'one_hot_encoding': options['one_hot_encoding']}
-        instructions['instructions'] = self.y_cls
+                                      'one_hot_encoding': options['one_hot_encoding'],
+                                      'classes_names': self.classes_names[put_data.id]}
+        instructions['instructions'] = {f'{put_data.id}_classification': self.y_cls}
 
         return instructions
 
-    def instructions_regression(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_regression(self, number_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
         instructions: dict = {}
-        instr: list = []
+        options['put'] = put_data.id
 
         self.encoding[put_data.id] = None
         self.task_type[put_data.id] = put_data.type
-
-        # for file_name in options['sources_paths']:
-        #     data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_names'])
-        #     instr = data[options['cols_names'][0]].to_list()
 
         if options['scaler'] == 'min_max_scaler' or options['scaler'] == 'standard_scaler':
             if options['scaler'] == 'min_max_scaler':
                 array_creator.scaler[put_data.id] = MinMaxScaler()
             if options['scaler'] == 'standard_scaler':
                 array_creator.scaler[put_data.id] = StandardScaler()
-            array_creator.scaler[put_data.id].fit(np.array(paths_list).reshape(-1, 1))
+            array_creator.scaler[put_data.id].fit(np.array(number_list).reshape(-1, 1))
 
-        instructions['instructions'] = paths_list
+        instructions['instructions'] = number_list
         instructions['parameters'] = options
-        instructions['parameters']['put'] = put_data.id
 
         return instructions
 
-    def instructions_segmentation(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_segmentation(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
-        instr: list = []
+        instructions: dict = {}
         shape: tuple = ()
 
         self.classes_names[put_data.id] = options['classes_names']
@@ -1127,21 +1167,12 @@ class CreateDTS(object):
             if value == 'image':
                 shape = (self.user_parameters.get(key).height, self.user_parameters.get(key).width)
 
-        if not options['sources_paths'][0].endswith('.csv'):
-            for file_name in sorted(os.listdir(os.path.join(self.file_folder, options['sources_paths'][0]))):
-                instr.append(os.path.join(options['sources_paths'][0], file_name))
-        elif options['sources_paths'][0].endswith('.csv'):
-            for file_name in options['sources_paths']:
-                data = pd.read_csv(os.path.join(self.file_folder, file_name), usecols=options['cols_names'])
-                instr = data[options['cols_names'][0]].to_list()
-
-        instructions = {'instructions': instr,
-                        'parameters': {'mask_range': options['mask_range'],
-                                       'num_classes': len(options['classes_names']),
-                                       'shape': shape,
-                                       'classes_colors': options['classes_colors']
-                                       }
-                        }
+        instructions['instructions'] = {f'{put_data.id}_segmentation': paths_list}
+        instructions['parameters'] = {'mask_range': options['mask_range'],
+                                      'num_classes': len(options['classes_names']),
+                                      'shape': shape,
+                                      'classes_colors': options['classes_colors']
+                                      }
 
         return instructions
 
@@ -1191,7 +1222,7 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_text_segmentation(self, put_data: Union[CreationInputData, CreationOutputData]):
+    def instructions_text_segmentation(self, _, put_data: Union[CreationInputData, CreationOutputData]):
 
         """
 

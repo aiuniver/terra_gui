@@ -11,6 +11,9 @@ from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 import librosa.feature as librosa_feature
 
+from ..data.datasets.creations.layers.input.types.Video import FrameModeChoice, FillModeChoice
+from ..data.datasets.extra import LayerNetChoice
+
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
@@ -44,7 +47,7 @@ class CreateArray(object):
         shape = (options['height'], options['width'])
         img = load_img(os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
-        if options['net'] == 'Linear':
+        if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['put'] in self.augmentation.keys():
             if 'object_detection' in options.keys():
@@ -77,9 +80,9 @@ class CreateArray(object):
             else:
                 array = self.augmentation[options['put']](image=array)
 
-        array = array / 255
+        # array = array / 255
 
-        return array.astype('float32')
+        return array  # .astype('float32')
 
     def create_video(self, file_folder: str, sample: dict, **options) -> np.ndarray:
 
@@ -107,10 +110,10 @@ class CreateArray(object):
 
             resized = None
 
-            if frame_mode == 'Растянуть':
+            if frame_mode == FrameModeChoice.stretch:
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
-            elif frame_mode == 'Сохранить пропорции':
+            elif frame_mode == FrameModeChoice.keep_proportions:
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
@@ -137,12 +140,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == 'Черными кадрами':
+            if fill_mode == FillModeChoice.black_frames:
                 frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
-            elif fill_mode == 'Средним значением':
+            elif fill_mode == FillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == 'Последними кадрами':
+            elif fill_mode == FillModeChoice.last_frames:
                 # cur_frames = video_array.shape[0]
                 if total_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
@@ -191,7 +194,7 @@ class CreateArray(object):
 
         return array
 
-    def create_text(self, _, sample: dict, **options):
+    def create_text(self, _, text: str, slicing: list, **options):
 
         """
         Args:
@@ -213,9 +216,13 @@ class CreateArray(object):
         """
 
         array = []
-        [[filepath, slicing]] = sample.items()
-        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
-        text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
+        # [[filepath, slicing]] = sample.items()
+        # text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
+        text = text.split(' ')
+        print(len(text))
+        print(slicing)
+        if slicing[1] - slicing[0] < len(text):
+            text = text[slicing[0]:slicing[1]]
 
         if options['embedding']:
             array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
@@ -225,7 +232,7 @@ class CreateArray(object):
             for word in text:
                 array.append(self.word2vec[options['put']][word])
 
-        if len(array) < slicing[1] - slicing[0]:
+        if len(array) < slicing[1] - slicing[0]: #TODO - плохо сделано, но сейчас 3:25 ночи, сори
             words_to_add = [0 for _ in range((slicing[1] - slicing[0]) - len(array))]
             array += words_to_add
 
@@ -236,11 +243,14 @@ class CreateArray(object):
     def create_audio(self, file_folder: str, sample: dict, **options) -> np.ndarray:
 
         array = []
-
+        parameter = options['parameter']
+        sample_rate = options['sample_rate']
         [[filepath, slicing]] = sample.items()
         y, sr = librosa_load(path=os.path.join(file_folder, filepath), sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
-        parameter = options.get('parameter')
+        if sample_rate > len(y):
+            zeros = np.zeros((sample_rate - len(y),))
+            y = np.concatenate((y, zeros))
 
         if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
             array = getattr(librosa_feature, parameter)(y=y, sr=sr)
@@ -331,8 +341,9 @@ class CreateArray(object):
 
         return array
 
-    def create_classification(self, _, index, **options):
+    def create_classification(self, _, class_name, **options):
 
+        index = options['classes_names'].index(class_name)
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
         index = np.array(index)
