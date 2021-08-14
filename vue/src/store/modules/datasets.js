@@ -102,7 +102,6 @@ export default {
       commit("SET_FILES_SOURCE", value);
     },
     setFilesDrop({ commit }, value) {
-      console.log(value)
       commit("SET_FILES_DROP", value);
     },
     createInputData({ commit, state: { inputData } }, { layer }) {
@@ -116,6 +115,10 @@ export default {
   getters: {
     getInputData({ inputData }) {
       return inputData
+    },
+    getInputDataByID: ({ inputData }) => id => {
+      console.log(inputData, id)
+      return inputData.find(item => item.id === id)
     },
     getTypeInput({ creation: { input } }) {
       return input || [];

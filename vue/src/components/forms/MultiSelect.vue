@@ -1,25 +1,31 @@
 <template>
   <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
-    <label class="t-multi-select__label">{{ label }}</label>
+    <label class="t-multi-select__label">
+      <slot>{{ label }}</slot>
+    </label>
     <div class="t-multi-select__input">
       <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
-      <span :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]" :title="input" @click="show = true">
-        {{ input || 'Не выбрано' }}
+      <span
+        :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
+        :title="input"
+        @click="show = true"
+      >
+        {{ input || placeholder }}
       </span>
       <!-- <i v-show="input" class="icon icon-chevron-right" @click="next(1)"></i> -->
     </div>
     <div class="t-multi-select__content" v-show="show">
-      <div v-if="filterList.length" class="t-multi__item">
-        <span :class="['t-multi__item--check', { active: checkAll }]" @click="select(checkAll)" />
+      <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
+        <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
         <span class="t-multi__item--title">Выбрать все</span>
       </div>
       <template v-for="(item, i) in filterList">
-        <div class="t-multi__item" :key="i" :title="item.label">
-          <span :class="['t-multi__item--check', { active: active(item) }]" @click="select(item)"></span>
+        <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
+          <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
           <span class="t-multi__item--title">{{ item.label }}</span>
         </div>
       </template>
-      <div v-if="!filterList.length" class="t-multi__item">
+      <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
         <span class="t-multi__item--title">Нет данных</span>
       </div>
     </div>
@@ -31,29 +37,29 @@ export default {
   name: 'TMultiSelect',
   props: {
     name: String,
+    id: Number,
+    label: {
+      type: String,
+      default: 'Label',
+    },
     lists: {
       type: Array,
       required: true,
       default: () => [],
     },
-    placeholder: String,
-    disabled: Boolean,
-    label: {
+    placeholder: {
       type: String,
-      default: 'Label',
+      default: 'Не выбрано',
     },
+    disabled: Boolean,
     inline: Boolean,
     value: String,
-    id: Number,
   },
   data: () => ({
     selected: [],
     show: false,
     pagination: 0,
   }),
-  created() {
-    // this.$emit("selected", { name: this.value });
-  },
   computed: {
     input() {
       return this.selected.map(item => item.label).join();
@@ -84,7 +90,7 @@ export default {
           this.selected = [...this.selected, list];
         }
       }
-      this.$emit('change', this.selected)
+      this.$emit('change', this.selected);
     },
   },
 };
@@ -121,7 +127,6 @@ export default {
     display: flex;
     align-items: center;
     &--text {
-      // text-align: center;
       flex-grow: 1;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -158,29 +163,39 @@ export default {
   display: flex;
   padding: 2px 6px;
   align-items: center;
+  cursor: pointer;
+  &--empty {
+    cursor: auto;
+  }
   &:hover {
     color: #e7ecf5;
     background-color: #6c7883;
   }
+  &--empty:hover {
+    background-color: #242f3d;
+  }
   &--check {
-    cursor: pointer;
     height: 10px;
-    width: 10px;
     background-color: #eee;
     margin-right: 5px;
     border-radius: 2px;
-    &.active {
-      background-color: #5191f2;
-      width: 10px;
-      height: 10px;
-      border: 1px solid white;
-    }
+    flex: 0 0 10px;
+  }
+  &--active {
+    background-color: #5191f2;
+    width: 10px;
+    height: 10px;
+    border: 1px solid white;
   }
   &--title {
     color: #a7bed3;
     font-size: 0.7em;
     line-height: 1.5;
     text-align: left;
+    cursor: context-menu;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
   }
 }
 .t-inline {

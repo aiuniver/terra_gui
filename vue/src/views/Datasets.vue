@@ -9,24 +9,19 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Dataset from "@/components/datasets/Dataset.vue";
-import Params from "@/components/datasets/params/Params.vue";
-import ParamsFull from "@/components/datasets/paramsFull/ParamsFull.vue";
-
 export default {
   name: "Datasets",
   components: {
-    Dataset,
-    Params,
-    ParamsFull,
+    Dataset: () => import('@/components/datasets/Dataset.vue'),
+    Params: () => import('@/components/datasets/params/Params.vue'),
+    ParamsFull: () => import('@/components/datasets/paramsFull/ParamsFull.vue'),
   },
   data: () => ({
   }),
   computed: {
-    ...mapGetters({
-      full: 'datasets/getFull'
-    })
+    full() {
+      return this.$store.getters['datasets/getFull']
+    }
   }
 };
 </script>

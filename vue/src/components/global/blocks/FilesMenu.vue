@@ -12,21 +12,21 @@
           @dragstart="dragstart($event, node)"
           @dragover.stop
         >
-          <div
-            v-for="(gapInd, i) in gaps"
-            class="files-menu-gap"
-            :key="'gap_' + i"
-          ></div>
+          <div v-for="(gapInd, i) in gaps" class="files-menu-gap" :key="'gap_' + i"></div>
 
           <div class="files-menu__title" @click="onToggleHandler($event, node)">
-            <span v-if="node.children.length" :class="['icons files-menu__title--toggle', { rotate: node.isExpanded }]" />
-            <span v-else class="files-menu__title--empty" />
             <span
               v-if="node.children.length"
-              class="icons files-menu__title--folder"
+              :class="['icons files-menu__title--toggle', { rotate: node.isExpanded }]"
             />
+            <span v-else class="files-menu__title--empty" />
+            <span v-if="node.children.length" class="icons files-menu__title--folder" />
             <span v-else class="icons files-menu__title--file" />
-            <span class="files-menu__title--text" v-text="node.title" :style="{ cursor: node.type === 'folder' ? 'grab' : ''}" />
+            <span
+              class="files-menu__title--text"
+              v-text="node.title"
+              :style="{ cursor: node.type === 'folder' ? 'grab' : '' }"
+            />
           </div>
         </div>
 
@@ -40,8 +40,7 @@
           :edgeSize="edgeSize"
           :showBranches="showBranches"
           @dragover.prevent
-        >
-        </files-menu>
+        ></files-menu>
       </div>
     </div>
   </div>
@@ -164,7 +163,7 @@
 
 <script>
 export default {
-  name: "files-menu",
+  name: 'files-menu',
   props: {
     value: {
       type: Array,
@@ -223,15 +222,17 @@ export default {
       while (i-- > 0) gaps.push(i);
       return gaps;
     },
-
     isRoot() {
       return !this.level;
     },
   },
   methods: {
     dragstart({ dataTransfer }, { path, title, type }) {
-      dataTransfer.setData("CardDataType", JSON.stringify({ value: path, label: title, type, id: 0, color: '' }));
-      dataTransfer.effectAllowed = "move";
+      // var img = document.createElement('img');
+      // img.src = 'http://kryogenix.org/images/hackergotchi-simpler.png';
+      // dataTransfer.setDragImage(img, 0, 0);
+      dataTransfer.setData('CardDataType', JSON.stringify({ value: path, label: title, type, id: 0 }));
+      dataTransfer.effectAllowed = 'move';
     },
 
     getNodes(nodeModels, parentPath = [], isVisible = true) {
@@ -254,8 +255,7 @@ export default {
 
       if (!nodeModel) return null;
 
-      const isExpanded =
-        nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
+      const isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
       // const isDraggable =
       //   nodeModel.isDraggable == void 0 ? true : !!nodeModel.isDraggable;
       // const isSelectable =
@@ -267,9 +267,7 @@ export default {
         path: nodeModel.path,
         type: nodeModel.type,
         isLeaf: !!nodeModel.isLeaf,
-        children: nodeModel.children
-          ? this.getNodes(nodeModel.children, fpath, isExpanded)
-          : [],
+        children: nodeModel.children ? this.getNodes(nodeModel.children, fpath, isExpanded) : [],
         isSelected: !!nodeModel.isSelected,
         isExpanded,
         isVisible,
@@ -292,8 +290,7 @@ export default {
       for (let i = 0; i < fpath.length - 1; i++) {
         let ind = fpath[i];
         let nodeModel = nodeModels[ind];
-        let isExpanded =
-          nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
+        let isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
         if (!isExpanded) return false;
         nodeModels = nodeModel.children;
       }
@@ -303,7 +300,7 @@ export default {
 
     emitInput(newValue) {
       this.currentValue = newValue;
-      this.getRoot().$emit("input", newValue);
+      this.getRoot().$emit('input', newValue);
     },
 
     onToggleHandler(event, node) {
@@ -354,8 +351,7 @@ export default {
         if (shouldStop) break;
 
         if (nodeModel.children) {
-          shouldStop =
-            this.traverse(cb, nodeModel.children, itemPath) === false;
+          shouldStop = this.traverse(cb, nodeModel.children, itemPath) === false;
           if (shouldStop) break;
         }
       }
