@@ -5,8 +5,8 @@ import random
 
 from sklearn.cluster import KMeans
 from gensim.models.word2vec import Word2Vec
-from tqdm.notebook import tqdm
-import imgaug.augmenters as iaa
+# from tqdm.notebook import tqdm
+# import imgaug.augmenters as iaa
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 import librosa.feature as librosa_feature
@@ -37,12 +37,6 @@ class CreateArray(object):
         self.txt_list: dict = {}
 
     def create_image(self, file_folder: str, image_path: str, **options):
-
-        # shape = (options['height'], options['width'])
-        # img = load_img(path=os.path.join(file_folder, image_path), target_size=shape)
-        # array = img_to_array(img, dtype=np.uint8)
-        # if options['net'] == 'Linear':
-        #     array = array.reshape(np.prod(np.array(array.shape)))
 
         shape = (options['height'], options['width'])
         img = load_img(os.path.join(file_folder, image_path), target_size=shape)
@@ -198,9 +192,9 @@ class CreateArray(object):
 
         """
         Args:
-            sample: dict
-                - file: Название файла.
-                - slice: Индексы рассматриваемой части последовательности
+            _
+            text: str Название файла.
+            slicing: list Индексы рассматриваемой части последовательности
             **options: Параметры обработки текста:
                 embedding: Tokenizer object, bool
                     Перевод в числовую последовательность.
@@ -232,7 +226,7 @@ class CreateArray(object):
             for word in text:
                 array.append(self.word2vec[options['put']][word])
 
-        if len(array) < slicing[1] - slicing[0]: #TODO - плохо сделано, но сейчас 3:25 ночи, сори
+        if len(array) < slicing[1] - slicing[0]:
             words_to_add = [0 for _ in range((slicing[1] - slicing[0]) - len(array))]
             array += words_to_add
 
@@ -270,6 +264,7 @@ class CreateArray(object):
     def create_dataframe(self, _, row_number: int, **options):
         """
                 Args:
+                    _
                     row_number: номер строки с сырыми данными датафрейма,
                     **options: Параметры обработки колонок:
                         MinMaxScaler: лист индексов колонок для обработки
@@ -286,41 +281,42 @@ class CreateArray(object):
             length = options['length']
         else:
             length = 1
-
         row_number = int(row_number)
-        row = self.df[list(range(row_number, row_number + length))].tolist()
-
+        row = self.dataframe.iloc[list(range(row_number, row_number + length)),
+                                  list(range(len(self.df.columns)))].values.tolist()
+        if options['xlen_step']:
+            row = row[0]
         if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
             array = self.scaler[options['put']].transform(row)
         else:
             if 'MinMaxScaler' in options.keys():
-                for i in options['MinMaxScaler']:
-                    for j in range(length):
+                for j in range(length):
+                    for i in options['MinMaxScaler']:
                         row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i + 1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'StandardScaler' in options.keys():
-                for i in options['StandardScaler']:
-                    for j in range(length):
+                for j in range(length):
+                    for i in options['StandardScaler']:
                         row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i + 1}'].transform(
                             np.array(row[j][i]).reshape(-1, 1)).tolist()
 
             if 'Categorical' in options.keys():
-                for i in options['Categorical']['lst_cols']:
-                    for j in range(length):
+                for j in range(length):
+                    for i in options['Categorical']['lst_cols']:
                         row[j][i] = list(options['Categorical'][f'col_{i}']).index(row[j][i])
 
             if 'Categorical_ranges' in options.keys():
-                for i in options['Categorical_ranges']['lst_cols']:
-                    for j in range(length):
+                for j in range(length):
+                    for i in options['Categorical_ranges']['lst_cols']:
                         for k in range(len(options['Categorical_ranges'][f'col_{i}'])):
                             if row[j][i] <= options['Categorical_ranges'][f'col_{i}'][f'range_{k}']:
                                 row[j][i] = k
                                 break
 
             if 'one_hot_encoding' in options.keys():
-                for i in options['one_hot_encoding']['lst_cols']:
-                    for j in range(length):
+                for j in range(length):
+                    for i in options['one_hot_encoding']['lst_cols']:
                         row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding'][f'col_{i}'],
                                                          dtype='uint8').tolist()
 
@@ -361,6 +357,7 @@ class CreateArray(object):
         """
 
         Args:
+            file_folder
             image_path: str
                 Путь к файлу
             **options: Параметры сегментации:
@@ -431,6 +428,7 @@ class CreateArray(object):
     def create_timeseries(self, _, row_number, **options):
         """
             Args:
+                _
                 row_number: номер строки с сырыми данными для предсказания значения,
                 **options: Параметры обработки колонок:
                     depth: количество значений для предсказания
@@ -440,12 +438,15 @@ class CreateArray(object):
                 array: np.ndarray
                     Массив обработанных данных.
         """
+
         if options['bool_trend']:
             array = np.array(row_number)
+
         else:
             row_number = int(row_number)
-            array = self.y_subdf[list(range(
-                row_number + options['length'], row_number + options['length'] + options['depth']))]
+            array = self.dataframe.loc[
+                list(range(row_number + options['length'], row_number + options['length'] + options['depth'])),
+                list(self.y_subdf.columns)].values
 
             if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
                 array = self.scaler[options['put']].transform(array)
@@ -585,8 +586,8 @@ class CreateArray(object):
         label_sbbox, label_mbbox, label_lbbox = label
         sbboxes, mbboxes, lbboxes = bboxes_xywh
 
-        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),\
-               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),\
+        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'), \
+               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'), \
                np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
 
     def create_scaler(self):
