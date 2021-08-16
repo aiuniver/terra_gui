@@ -4,6 +4,7 @@ import tensorflow
 
 from typing import Any
 from pathlib import Path
+from transliterate import slugify
 
 from ..data.datasets.dataset import (
     DatasetLoadData,
@@ -27,6 +28,7 @@ from ..data.extra import (
 )
 
 from ..datasets import loading as datasets_loading
+from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
@@ -110,19 +112,25 @@ class Exchange:
         if progress_data.finished and progress_data.data:
             __path = progress_data.data.absolute()
             progress_data.data = {
-                "file_manager": (FileManagerItem(path=__path).native().get("children"))
+                "file_manager": (FileManagerItem(path=__path).native().get("children")),
+                "source_path": __path,
             }
         else:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_create(self, **kwargs) -> dict:
+    def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
         Создание датасета из исходников
         """
-        creation = CreationData(**kwargs)
-        print(creation)
-        return {}
+        kwargs.update(
+            {
+                "alias": slugify(kwargs.get("name")),
+            }
+        )
+        creation = CreateDTS()
+        dataset = creation.create_dataset(CreationData(**kwargs))
+        return dataset
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """

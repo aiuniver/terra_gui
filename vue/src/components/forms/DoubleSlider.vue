@@ -13,9 +13,9 @@
           <div id="third-scale" :style="thirdScale">{{ 100 - sliders.second }}</div>
         </div>
         <div class="inputs">
-          <input name="[info][part][train]" type="number" :value="sliders.first" />
-          <input name="[info][part][validation]" type="number" :value="sliders.second - sliders.first" />
-          <input name="[info][part][test]" type="number" :value="100 - sliders.second" />
+          <input name="[info][part][train]" type="number" :value="sliders.first" :data-degree="degree" />
+          <input name="[info][part][validation]" type="number" :value="sliders.second - sliders.first" :data-degree="degree" />
+          <input name="[info][part][test]" type="number" :value="100 - sliders.second" :data-degree="degree" />
         </div>
       </div>
     </div>
@@ -25,6 +25,9 @@
 <script>
 export default {
   name: 'DoubleSlider',
+  props: {
+    degree: Number
+  },
   data: () => ({
     dragging: false,
     draggingObj: null,

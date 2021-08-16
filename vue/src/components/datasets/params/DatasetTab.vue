@@ -11,7 +11,7 @@
       </li>
     </ul>
     <div class="tabs__title">Создание датасета</div>
-    <div v-show="select === 'GoogleDrive'" class="tabs__item">
+    <div v-show="value === 'GoogleDrive'" class="tabs__item">
       <Autocomplete2
         :list="list"
         :name="'gdrive'"
@@ -20,8 +20,12 @@
         @change="selected"
       />
     </div>
+<<<<<<< HEAD
     <div v-show="select === 'URL'" class="tabs__item">
 <<<<<<< Updated upstream
+=======
+    <div v-show="value === 'URL'" class="tabs__item">
+>>>>>>> features/new
       <t-input label="Введите URL на архив исходников" @blur="blur" />
 =======
       <t-input label="Введите URL на архив исходников" :id="'url'" @blur="blur" />
@@ -37,9 +41,14 @@ export default {
   components: {
     Autocomplete2,
   },
-  props: {},
+  props: {
+    value: {
+      type: String,
+      default: "GoogleDrive"
+    },
+  },
   data: () => ({
-    select: "GoogleDrive",
+    
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
@@ -65,6 +74,7 @@ export default {
     },
     click(mode) {
       this.select = mode;
+      this.$emit('input', mode)
       this.items = this.items.map((item) => {
         return { ...item, active: item.mode === mode };
       });

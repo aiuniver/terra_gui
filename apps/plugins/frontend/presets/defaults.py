@@ -88,13 +88,13 @@ Defaults = {
                                     )
                                 ),
                             },
-                            {
-                                "type": "checkbox",
-                                "label": "Аргументация",
-                                "name": "augmentation",
-                                "parse": "augmentation",
-                                "value": False,
-                            },
+                            # {
+                            #     "type": "checkbox",
+                            #     "label": "Аргументация",
+                            #     "name": "augmentation",
+                            #     "parse": "augmentation",
+                            #     "value": False,
+                            # },
                         ],
                         "Audio": [
                             {
@@ -484,13 +484,13 @@ Defaults = {
                                     )
                                 ),
                             },
-                            {
-                                "type": "checkbox",
-                                "label": "Аргументация",
-                                "name": "augmentation",
-                                "parse": "augmentation",
-                                "value": False,
-                            },
+                            # {
+                            #     "type": "checkbox",
+                            #     "label": "Аргументация",
+                            #     "name": "augmentation",
+                            #     "parse": "augmentation",
+                            #     "value": False,
+                            # },
                         ],
                         "Audio": [
                             {

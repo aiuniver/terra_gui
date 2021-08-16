@@ -1,6 +1,9 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" :for="parse"><slot>{{ label }}</slot></label>
+    <at-tooltip placement="top-left" :content="label">
+      <label class="t-field__label" :for="parse"><slot>{{ label }}</slot></label>
+    </at-tooltip>
+
     <input
       v-model="input"
       :class="['t-field__input', {small: small}]"
@@ -10,6 +13,7 @@
       :value="value"
       @blur="change"
       :disabled="disabled"
+      :data-degree="degree"
     />
   </div>
 </template>
@@ -34,6 +38,7 @@ export default {
     inline: Boolean,
     disabled: Boolean,
     small: Boolean,
+    degree: Number, // for serialize
   },
   data: () => ({
     isChange: false,
@@ -101,7 +106,7 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
-  > label {
+   .t-field__label {
     width: 150px;
     max-width: 130px;
     padding: 0 10px;
