@@ -1050,6 +1050,9 @@ class CreateDTS(object):
                                     sep=options['separator']).T
             tmp_df_ts.columns = tmp_df_ts.iloc[0]
             tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
+            tmp_df_ts.index = range(0, len(tmp_df_ts))
+            tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')] = \
+                tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')].astype('float64')
             array_creator.y_subdf = tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')]
         else:
             array_creator.y_subdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
