@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from apps.plugins.project import data_path
+from apps.plugins.project import data_path, project_path
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 
@@ -70,9 +70,15 @@ class SourceLoadProgressAPIView(BaseAPIView):
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        data = request.data
+        data.update(
+            {
+                "datasets_path": project_path.datasets,
+            }
+        )
         try:
             return BaseResponseSuccess(
-                data=agent_exchange("dataset_create", **request.data).native()
+                data=agent_exchange("dataset_create", **data).native()
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)

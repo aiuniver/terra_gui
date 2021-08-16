@@ -4,6 +4,7 @@ import tensorflow
 
 from typing import Any
 from pathlib import Path
+from transliterate import slugify
 
 from ..data.datasets.dataset import (
     DatasetLoadData,
@@ -110,7 +111,8 @@ class Exchange:
         if progress_data.finished and progress_data.data:
             __path = progress_data.data.absolute()
             progress_data.data = {
-                "file_manager": (FileManagerItem(path=__path).native().get("children"))
+                "file_manager": (FileManagerItem(path=__path).native().get("children")),
+                "source_path": __path,
             }
         else:
             progress.data = []
@@ -120,6 +122,11 @@ class Exchange:
         """
         Создание датасета из исходников
         """
+        kwargs.update(
+            {
+                "alias": slugify(kwargs.get("name")),
+            }
+        )
         creation = CreationData(**kwargs)
         print(creation)
         return {}
