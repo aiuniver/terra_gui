@@ -116,7 +116,7 @@ class Exchange:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_create(self, **kwargs) -> dict:
+    def _call_dataset_create(self, **kwargs) -> dict:
         """
         Создание датасета из исходников
         """
