@@ -153,8 +153,8 @@ export default {
         this.load = true;
       }
     },
-    change(value) {
-      console.log(value);
+    change(val) {
+      console.log(val);
     },
     handleFocusOut(e) {
       console.log(e);
