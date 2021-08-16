@@ -83,7 +83,7 @@ export default {
     dataLoaded: "deploy/getDataLoaded",
   }),
     checkCorrect(){
-      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect'
+      return this.sec == this.sec_accept && this.sec.length > 5 ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect'
     },
   },
   mounted() {
