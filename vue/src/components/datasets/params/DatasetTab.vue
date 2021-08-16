@@ -14,13 +14,18 @@
     <div v-show="select === 'GoogleDrive'" class="tabs__item">
       <Autocomplete2
         :list="list"
+        :name="'gdrive'"
         label="Выберите файл из Google-диске"
         @focus="focus"
         @change="selected"
       />
     </div>
     <div v-show="select === 'URL'" class="tabs__item">
+<<<<<<< Updated upstream
       <t-input label="Введите URL на архив исходников" @blur="blur" />
+=======
+      <t-input label="Введите URL на архив исходников" :id="'url'" @blur="blur" />
+>>>>>>> Stashed changes
     </div>
   </div>
 </template>
