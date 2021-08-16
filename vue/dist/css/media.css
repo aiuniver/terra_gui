@@ -1,6 +1,0 @@
-@media (max-width: 1920px) {
-    .project-datasets-block.filters > .inner > ul > li > span,
-    .project-datasets-block.datasets .dataset-card {
-        border-width: 1px;
-    }
-}

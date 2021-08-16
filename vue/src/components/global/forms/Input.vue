@@ -1,8 +1,8 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <at-tooltip placement="top-left" :content="label">
+    <!-- <at-tooltip placement="top-left" :content="label"> -->
       <label class="t-field__label" :for="parse"><slot>{{ label }}</slot></label>
-    </at-tooltip>
+    <!-- </at-tooltip> -->
 
     <input
       v-model="input"
