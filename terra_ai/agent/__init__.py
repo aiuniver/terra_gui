@@ -28,6 +28,7 @@ from ..data.extra import (
 )
 
 from ..datasets import loading as datasets_loading
+from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
@@ -118,7 +119,7 @@ class Exchange:
             progress.data = []
         return progress_data
 
-    def _call_dataset_create(self, **kwargs) -> dict:
+    def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
         Создание датасета из исходников
         """
@@ -127,9 +128,9 @@ class Exchange:
                 "alias": slugify(kwargs.get("name")),
             }
         )
-        creation = CreationData(**kwargs)
-        print(creation)
-        return {}
+        creation = CreateDTS()
+        dataset = creation.create_dataset(CreationData(**kwargs))
+        return dataset
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
