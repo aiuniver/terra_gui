@@ -10,6 +10,7 @@
       :value="value"
       @blur="change"
       :disabled="disabled"
+      :data-degree="degree"
     />
   </div>
 </template>
@@ -34,6 +35,7 @@ export default {
     inline: Boolean,
     disabled: Boolean,
     small: Boolean,
+    degree: Number, // for serialize
   },
   data: () => ({
     isChange: false,
