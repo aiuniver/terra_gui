@@ -13,7 +13,12 @@
               @input="change"
               >{{ nameProject }}</span
             > -->
-          <span @click="save = true">{{ nameProject }}</span>
+          <span
+            class="left--name_span"
+            @click="projectNameEdit = true"
+            :contenteditable="projectNameEdit"
+            v-click-outside="outside"
+            ref="nameProjectSpan">{{ nameProject }}</span>
           <i></i>
         </div>
       </div>
@@ -33,39 +38,39 @@
         <i class="profile"></i>
       </div>
     </div>
-    <at-modal
-      v-model="save"
-      width="400"
-      :maskClosable="false"
-      :showClose="true"
-    >
-      <div slot="header" style="text-align: center">
-        <span>Сохранить проект</span>
-      </div>
-      <div class="inner form-inline-label">
-        <div class="field-form">
-          <label>Название проекта</label
-          ><input v-model="nameProject" type="text" />
-        </div>
-        <div class="field-form field-inline field-reverse">
-          <label>Перезаписать</label>
-          <div class="checkout-switch">
-            <input type="checkbox" />
-            <span class="switcher"></span>
-          </div>
-        </div>
-      </div>
-      <div slot="footer">
-        <button @click="saveProject">Сохранить</button>
-      </div>
-    </at-modal>
-    <at-modal v-model="load" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Загрузить проект</span>
-      </div>
+<!--    <at-modal-->
+<!--      v-model="save"-->
+<!--      width="400"-->
+<!--      :maskClosable="false"-->
+<!--      :showClose="true"-->
+<!--    >-->
+<!--      <div slot="header" style="text-align: center">-->
+<!--        <span>Сохранить проект</span>-->
+<!--      </div>-->
+<!--      <div class="inner form-inline-label">-->
+<!--        <div class="field-form">-->
+<!--          <label>Название проекта</label-->
+<!--          ><input v-model="nameProject" type="text" />-->
+<!--        </div>-->
+<!--        <div class="field-form field-inline field-reverse">-->
+<!--          <label>Перезаписать</label>-->
+<!--          <div class="checkout-switch">-->
+<!--            <input type="checkbox" />-->
+<!--            <span class="switcher"></span>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--      <div slot="footer">-->
+<!--        <button @click="saveProject">Сохранить</button>-->
+<!--      </div>-->
+<!--    </at-modal>-->
+<!--    <at-modal v-model="load" width="400">-->
+<!--      <div slot="header" style="text-align: center">-->
+<!--        <span>Загрузить проект</span>-->
+<!--      </div>-->
 
-      <div slot="footer"></div>
-    </at-modal>
+<!--      <div slot="footer"></div>-->
+<!--    </at-modal>-->
   </div>
 </template>
 
@@ -74,6 +79,7 @@ export default {
   name: "THeader",
   data: () => ({
     clickProject: false,
+    projectNameEdit: false,
     name: "kjkjkjkj",
     items: [
       {
@@ -132,6 +138,11 @@ export default {
         });
       }
     },
+    outside(){
+      this.projectNameEdit = false;
+      this.nameProject = this.$refs.nameProjectSpan.innerText;
+      this.saveProject();
+    },
     click(type) {
       console.log(type);
       if (type === "project-new") {
@@ -142,8 +153,8 @@ export default {
         this.load = true;
       }
     },
-    change(value) {
-      console.log(value);
+    change(val) {
+      console.log(val);
     },
     handleFocusOut(e) {
       console.log(e);
@@ -345,5 +356,8 @@ export default {
 .value {
   padding: 0;
   max-width: 300px;
+}
+.left--name_span[contenteditable=true]{
+  border: 1px solid #FFFFFF;
 }
 </style>
