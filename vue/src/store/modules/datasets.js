@@ -62,7 +62,7 @@ export default {
       newDataset.outputs = outputs
       console.log(newDataset)
 
-      return await dispatch('axios', { url: '/datasets/source/create/', data: newDataset }, { root: true });
+      return await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
     },
     async choice({ dispatch }, dataset) {
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
