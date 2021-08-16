@@ -1,9 +1,10 @@
 <template>
   <div class="dropdown">
-    <label>{{ label }}</label>
+    <label :for="name">{{ label }}</label>
     <input
       class="dropdown__input"
       v-model="search"
+      :id="name"
       :name="name"
       :disabled="disabled"
       :placeholder="placeholder"

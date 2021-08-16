@@ -11,6 +11,7 @@
               :type="'text'"
               :parse="'name'"
               :name="'name'"
+              :id="'name'"
               :disabled="!selectBlock"
               @change="saveModel"
             />
