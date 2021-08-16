@@ -21,7 +21,6 @@
       />
     </div>
     <div v-show="select === 'URL'" class="tabs__item">
-    <div v-show="value === 'URL'" class="tabs__item">
       <t-input label="Введите URL на архив исходников" :id="'url'" @blur="blur" />
     </div>
   </div>
