@@ -1,7 +1,7 @@
 <template>
   <div class="board">
     <div class="wrapper">
-      <div class="content" v-if="dataLoaded">
+      <div class="content">
         <button class="board__reload-all">Перезагрузить все</button>
         <div class="board__data-field">
           <div class="board__title">Исходные данные / Предсказанные данные</div>
@@ -9,10 +9,6 @@
             <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
           </div>
         </div>
-      </div>
-
-      <div class="board__load-data" v-if="!dataLoaded">
-        <button @click="$store.dispatch('deploy/setDataLoaded', !dataLoaded)">Загрузить данные</button>
       </div>
     </div>
   </div>

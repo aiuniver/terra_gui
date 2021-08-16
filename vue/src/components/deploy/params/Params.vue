@@ -11,10 +11,22 @@
         <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec"/>
         <div class="password" v-if="use_sec">
           <div class="t-input">
-            <input type="password" placeholder="Введите пароль" v-model="sec">
+            <input :type="passwordShow ? 'text' : 'password' " placeholder="Введите пароль" v-model="sec">
+            <div class="password__icon">
+              <i
+                :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
+                :title="'show password'"
+                @click="passwordShow = !passwordShow">
+              </i>
+            </div>
           </div>
           <div class="t-input">
-            <input type="password" placeholder="Подтверждение пароля" v-model="sec_accept">
+            <input :type="passwordShow ? 'text' : 'password' " placeholder="Подтверждение пароля" v-model="sec_accept">
+            <div class="password__icon">
+              <i :class="['t-icon', checkCorrect]"
+                 :title="'is correct'">
+              </i>
+            </div>
           </div>
         </div>
         <button :disabled="send_disabled || !dataLoaded" @click="SendData" v-if="!DataSent">Отправить</button>
@@ -62,6 +74,7 @@ export default {
     send_disabled: true,
     DataSent: false,
     DataLoading: false,
+    passwordShow: false
   }),
   computed: {
   ...mapGetters({
@@ -69,6 +82,9 @@ export default {
     moduleList: "deploy/getModuleList",
     dataLoaded: "deploy/getDataLoaded",
   }),
+    checkCorrect(){
+      return this.sec == this.sec_accept ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect'
+    },
   },
   mounted() {
     // console.log(this.moduleList)
@@ -245,6 +261,15 @@ button {
       cursor: pointer;
       width: 32px;
     }
+  }
+}
+.password__icon{
+  position: absolute;
+  width: 415px;
+  i{
+    position: relative;
+    float: right;
+    margin-top: -34px;
   }
 }
 
