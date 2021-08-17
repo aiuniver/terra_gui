@@ -8,6 +8,10 @@ class LayerInputTypeChoice(str, Enum):
     Video = "Видео"
     Dataframe = "Таблицы"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerInputTypeChoice))
+
 
 class LayerOutputTypeChoice(str, Enum):
     Image = "Изображения"
@@ -19,6 +23,10 @@ class LayerOutputTypeChoice(str, Enum):
     Regression = "Регрессия"
     Timeseries = "Временные ряды"
     ObjectDetection = "Обнаружение объектов"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerOutputTypeChoice))
 
 
 class LayerNetChoice(str, Enum):
