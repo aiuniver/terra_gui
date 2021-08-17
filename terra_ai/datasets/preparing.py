@@ -2,6 +2,7 @@ import os
 import numpy as np
 import joblib
 import json
+import pandas as pd
 
 from tensorflow.keras.datasets import mnist, fashion_mnist, cifar10, cifar100, imdb, reuters, boston_housing
 from tensorflow.keras import utils
@@ -13,22 +14,25 @@ from terra_ai.data.datasets.creation import SourceData
 from . import arrays_create, array_creator
 from . import loading as datasets_loading
 from .data import Preprocesses
-from ..data.datasets.dataset import DatasetData
-from ..data.datasets.extra import DatasetGroupChoice
+from ..data.datasets.dataset import DatasetData, DatasetLoadData
+from ..data.datasets.extra import DatasetGroupChoice, SourceModeChoice
 
 
 class PrepareDTS(object):
 
-    def __init__(self, trds_path='/content/drive/MyDrive/TerraAI/datasets'):
+    def __init__(self, zip_params, trds_path='/content/drive/MyDrive/TerraAI/datasets'):
 
         self.name: str = ''
         self.source: str = ''
         self.language = None
         self.trds_path: str = trds_path
+        self.source_path: str = ''
+        self.inputs: dict = {}
         self.input_shape: dict = {}
         self.input_dtype: dict = {}
         self.input_datatype: str = ''
         self.input_names: dict = {}
+        self.outputs: dict = {}
         self.output_shape: dict = {}
         self.output_dtype: dict = {}
         self.output_datatype: dict = {}
@@ -39,12 +43,15 @@ class PrepareDTS(object):
         self.zip_params: dict = {}
         self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.tags: dict = {}
+        self.put_tags: dict = {'inputs': {}, 'outputs': {}}
         self.task_type: dict = {}
         self.one_hot_encoding: dict = {}
         self.num_classes: dict = {}
         self.classes_names: dict = {}
         self.classes_colors: dict = {}
         self.dts_prepared: bool = False
+        self.dataframe: dict = {}
+        self.zip_params = zip_params
 
         self.dataloader = None
         self.createarray = array_creator
@@ -85,26 +92,54 @@ class PrepareDTS(object):
         else:
             return None
 
-    def array_generator(self, sequence):
+    def train_generator(self):
 
         inputs = {}
         outputs = {}
-        for idx in sequence:
-            for key in self.instructions['inputs'].keys():
-                inputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                    self.instructions['inputs'][key]['instructions'][idx],
-                    **self.instructions['inputs'][key]['parameters'])
-            for key in self.instructions['outputs'].keys():
-                if 'object_detection' in self.tags.values():
-                    arrays = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
+        for idx in range(len(self.dataframe['train'])):
+            for key, value in self.put_tags['inputs'].items():
+                inputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['train'].loc[idx, f'{key}_{value}'], **self.instructions['inputs'][int(key)])
+            for key, value in self.put_tags['outputs'].items():
+                if 'object_detection' in self.put_tags['outputs'].values():
+                    arrays = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['train'].loc[idx, f'2_{value}'], **self.instructions['outputs'][int(key)])
                     for i in range(6):
-                        outputs[f'output_{int(key[-1]) + i}'] = np.array(arrays[i])
+                        outputs[int(key) + i] = np.array(arrays[i])
                 else:
-                    outputs[key] = getattr(self.createarray, f"create_{self.tags[key]}")(
-                        self.instructions['outputs'][key]['instructions'][idx],
-                        **self.instructions['outputs'][key]['parameters'])
+                    outputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['train'].loc[idx, f'{key}_{value}'], **self.instructions['outputs'][int(key)])
+
+            yield inputs, outputs
+
+    def val_generator(self):
+
+        inputs = {}
+        outputs = {}
+        for idx in range(len(self.dataframe['val'])):
+            for key, value in self.put_tags['inputs'].items():
+                inputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['val'].loc[idx, f'{key}_{value}'], **self.instructions['inputs'][int(key)])
+            for key, value in self.put_tags['outputs'].items():
+                if 'object_detection' in self.put_tags['outputs'].values():
+                    arrays = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['val'].loc[idx, f'2_{value}'], **self.instructions['outputs'][int(key)])
+                    for i in range(6):
+                        outputs[int(key) + i] = np.array(arrays[i])
+                else:
+                    outputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['val'].loc[idx, f'{key}_{value}'], **self.instructions['outputs'][int(key)])
+
+            yield inputs, outputs
+
+    def test_generator(self):
+
+        inputs = {}
+        outputs = {}
+        for idx in range(len(self.dataframe['test'])):
+            for key, value in self.put_tags['inputs'].items():
+                inputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['test'].loc[idx, f'{key}_{value}'], **self.instructions['inputs'][int(key)])
+            for key, value in self.put_tags['outputs'].items():
+                if 'object_detection' in self.put_tags['outputs'].values():
+                    arrays = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['test'].loc[idx, f'2_{value}'], **self.instructions['outputs'][int(key)])
+                    for i in range(6):
+                        outputs[int(key) + i] = np.array(arrays[i])
+                else:
+                    outputs[int(key)] = getattr(self.createarray, f"create_{value}")(self.source_path, self.dataframe['test'].loc[idx, f'{key}_{value}'], **self.instructions['outputs'][int(key)])
 
             yield inputs, outputs
 
@@ -220,30 +255,40 @@ class PrepareDTS(object):
 
         return self
 
-    def prepare_dataset(self, dataset_data: DatasetData):
-        dataset_name = dataset_data.name
-        source = dataset_data.group
-        puts = list(dataset_data.inputs.keys())
-        puts.extend(list(dataset_data.outputs.keys()))
-        print(puts)
+    def prepare_dataset(self, dataset_data: DatasetLoadData):
 
         def load_arrays():
 
-            for sample in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays')):
-                for arr in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample)):
-                    put_id = int(arr[:arr.rfind('.')])
-                    if put_id in list(dataset_data.inputs.keys()):
-                        self.X[sample][put_id] = joblib.load(
-                            os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
-                    elif put_id in list(dataset_data.outputs.keys()):
-                        self.Y[sample][put_id] = joblib.load(
-                            os.path.join(self.trds_path, f'dataset {dataset_name}', 'arrays', sample, arr))
+            # for sample in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays')):
+            #     for arr in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample)):
+            #         put_id = int(arr[:arr.rfind('.')])
+            #         if str(put_id) in self.put_tags['inputs'].keys():   #list(dataset_data.inputs.keys()):
+            #             self.X[sample][put_id] = joblib.load(
+            #                 os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, arr))
+            #         elif str(put_id) in self.put_tags['outputs'].keys():   #list(dataset_data.outputs.keys()):
+            #             if 'object_detection' in self.put_tags['outputs'][str(put_id)]:
+            #                 for i in range(6):
+            #                     self.Y[sample][put_id+i] = joblib.load(
+            #                         os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, arr))
+            #             else:
+            #                 self.Y[sample][put_id] = joblib.load(
+            #                     os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, arr))
+
+            for sample in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays')):
+                for index, tag in self.put_tags['inputs'].items():
+                    self.X[sample][int(index)] = joblib.load(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, f'{index}.gz'))
+                for index, tag in self.put_tags['outputs'].items():
+                    if tag == 'object_detection':
+                        for i in range(6):
+                            self.Y[sample][int(index)+i] = joblib.load(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, f'{index+i}.gz'))
+                    else:
+                        self.Y[sample][int(index)] = joblib.load(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'arrays', sample, f'{index}.gz'))
 
             pass
 
         def load_scalers(puts):
             scalers = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'scalers')
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'scalers')
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     scalers.append(arr[:-3])
@@ -257,7 +302,7 @@ class PrepareDTS(object):
 
         def load_tokenizer(puts):
             tokenizer = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'tokenizer')
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'tokenizer')
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     tokenizer.append(arr[:-3])
@@ -273,7 +318,7 @@ class PrepareDTS(object):
         def load_word2vec(puts):
 
             word2v = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'word2vec')
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'word2vec')
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     word2v.append(arr[:-3])
@@ -289,7 +334,7 @@ class PrepareDTS(object):
         def load_augmentation(puts):
 
             augmentation = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_name}', 'augmentation')
+            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'augmentation')
             if os.path.exists(folder_path):
                 for aug in os.listdir(folder_path):
                     augmentation.append(aug[:-3])
@@ -302,56 +347,67 @@ class PrepareDTS(object):
 
             pass
 
-        if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters'] and \
-                source != DatasetGroupChoice.custom:
-            if dataset_name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
-                self.keras_datasets(dataset_name, one_hot_encoding=True, scaler='MinMaxScaler', net='conv')
+        if dataset_data.group == DatasetGroupChoice.keras and dataset_data.name in \
+                ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:
+            if dataset_data.name in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
+                self.keras_datasets(dataset_data.name, one_hot_encoding=True, scaler='MinMaxScaler', net='conv')
                 self.task_type['output_1'] = 'classification'
-            elif dataset_name == 'imdb':
-                self.keras_datasets(dataset_name, one_hot_encoding=True)
+            elif dataset_data.name == 'imdb':
+                self.keras_datasets(dataset_data.name, one_hot_encoding=True)
                 self.task_type['output_1'] = 'classification'
-            elif dataset_name == 'reuters':
-                self.keras_datasets(dataset_name)
+            elif dataset_data.name == 'reuters':
+                self.keras_datasets(dataset_data.name)
                 self.task_type['output_1'] = 'classification'
-            elif dataset_name == 'boston_housing':
-                self.keras_datasets(dataset_name, scaler='StandardScaler')
+            elif dataset_data.name == 'boston_housing':
+                self.keras_datasets(dataset_data.name, scaler='StandardScaler')
                 self.task_type['output_1'] = 'regression'
-        elif source == DatasetGroupChoice.custom:
-            with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'config.json'), 'r') as cfg:
-                data = json.load(cfg)
+        elif dataset_data.group == DatasetGroupChoice.custom:
+
+            self.trds_path = os.path.join(os.path.sep, 'content', 'drive', 'MyDrive', 'TerraAI', 'datasets')
+            with open(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'config.json'), 'r') as config:
+                data = json.load(config)
             for key, value in data.items():
                 self.__dict__[key] = value
+
+            inp_datatype = ''
+            for key in self.inputs.keys():
+                self.input_names[int(key)] = self.inputs[key]['name']
+                self.input_shape[int(key)] = self.inputs[key]['shape']
+                self.input_datatype = ' '.join([inp_datatype, self.inputs[key]['datatype']])
+                self.input_dtype[int(key)] = self.inputs[key]['dtype']
+            for key in self.outputs.keys():
+                self.output_names[int(key)] = self.outputs[key]['name']
+                self.output_shape[int(key)] = self.outputs[key]['shape']
+                self.output_datatype[int(key)] = self.outputs[key]['datatype']
+                self.output_dtype[int(key)] = self.outputs[key]['dtype']
+                self.task_type[int(key)] = self.outputs[key]['task']
+
+            for put in ['train', 'val', 'test']:
+                self.dataframe[put] = pd.read_csv(os.path.join(self.trds_path, f'dataset {dataset_data.name}',
+                                                               'instructions', f'{put}.csv'), index_col=0)
             if self.use_generator:
-                if 'text' in self.tags.values():
-                    with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'txt_list.json'),
-                              'r') as txt:
-                        self.createarray.txt_list = json.load(txt)
-
+                for instr in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'instructions')):
+                    if instr.endswith('.json'):
+                        with open(os.path.join(self.trds_path, f'dataset {dataset_data.name}', 'instructions', instr), 'r') as instruction:
+                            ins = json.load(instruction)
+                        instr = instr[:instr.rfind('.')]
+                        idx, put = instr.split('_')
+                        self.instructions[put][int(idx)] = ins
                 datasets_loading.source(strict_object=SourceData(**self.zip_params))
+                self.source_path = '/tmp/terraai/datasets_sources/googledrive/chess'  # self.dataloader.file_folder
 
-                with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'sequence.json'),
-                          'r') as cfg:
-                    self.split_sequence = json.load(cfg)
-                for inp in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions',
-                                                   'inputs')):
-                    with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'inputs', inp),
-                              'r') as cfg:
-                        data = json.load(cfg)
-                    self.instructions['inputs'][inp[:inp.rfind('.')]] = data
-                for out in os.listdir(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions',
-                                                   'outputs')):
-                    with open(os.path.join(self.trds_path, f'dataset {dataset_name}', 'instructions', 'outputs', out),
-                              'r') as cfg:
-                        data = json.load(cfg)
-                    self.instructions['outputs'][out[:out.rfind('.')]] = data
-                self.createarray.file_folder = self.dataloader.file_folder
-
-                for part in ['train', 'val', 'test']:
-                    self.dataset[part] = Dataset.from_generator(
-                        self.array_generator(sequence=self.split_sequence[part]),
-                        output_shapes=(self.input_shape, self.output_shape),
-                        output_types=(self.input_dtype, self.output_dtype)
-                    )
+                self.dataset['train'] = Dataset.from_generator(self.train_generator,
+                                                               output_shapes=(self.input_shape, self.output_shape),
+                                                               output_types=(self.input_dtype, self.output_dtype)
+                                                               )
+                self.dataset['val'] = Dataset.from_generator(self.val_generator,
+                                                             output_shapes=(self.input_shape, self.output_shape),
+                                                             output_types=(self.input_dtype, self.output_dtype)
+                                                             )
+                self.dataset['test'] = Dataset.from_generator(self.test_generator,
+                                                              output_shapes=(self.input_shape, self.output_shape),
+                                                              output_types=(self.input_dtype, self.output_dtype)
+                                                              )
             else:
                 load_arrays()
 
@@ -363,9 +419,11 @@ class PrepareDTS(object):
         # load_tokenizer(puts)
         # load_word2vec(puts)
         # load_augmentation(puts)
-        self.load_preprocesses(dataset_data, puts)
+        # self.load_preprocesses(dataset_data, puts)
 
         self.dts_prepared = True
+
+        pass
 
     def load_preprocesses(self, dataset_data: DatasetData, puts: list):
         for preprocess_name in Preprocesses:
