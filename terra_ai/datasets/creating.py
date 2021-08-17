@@ -27,7 +27,7 @@ import cv2
 from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
 from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
 from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
-from ..data.datasets.extra import DatasetGroupChoice, LayerScalerChoice
+from ..data.datasets.extra import DatasetGroupChoice, LayerOutputTypeChoice, LayerScalerChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
@@ -52,8 +52,8 @@ class CreateDTS(object):
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
+        self.put_tags: dict = {'inputs': {}, 'outputs': {}}
         self.user_tags: list = []
-        self.limit: int = 0
         self.num_classes: dict = {}
         self.classes_names: dict = {}
         self.classes_colors: dict = {}
@@ -74,7 +74,7 @@ class CreateDTS(object):
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
-        # self.df: dict = {}
+        self.dataframe: dict = {}
         self.tsgenerator: dict = {}
         self.temporary: dict = {}
         self.build_dataframe: dict = {}
@@ -109,36 +109,27 @@ class CreateDTS(object):
         # Создаем инструкции
         self.instructions = self.create_instructions(creation_data)
 
-        self.limit: int = len(self.build_dataframe[f'1_{self.tags[1]}'])
-
-        # dataframe_dict = {}
-        # for inp_idx in range(1, len(self.input_names)+1):  # TODO
-        #     dataframe_dict.update(self.instructions.inputs[inp_idx].instructions)
-        # for out_idx in range(inp_idx+1, len(self.output_names)+inp_idx+1):
-        #     dataframe_dict.update(self.instructions.outputs[out_idx].instructions)
-
-        self.dataframe = pd.DataFrame(self.build_dataframe)
+        self.create_table(creation_data=creation_data)
 
         # Получаем входные параметры
         self.inputs = self.create_inputs_parameters(creation_data=creation_data)
 
         # Получаем выходные параметры
         self.outputs = self.create_output_parameters(creation_data=creation_data)
-        #
-        # Разделение на три выборки
-        self.sequence_split(creation_data=creation_data)
 
-        if creation_data.use_generator:
-            # Сохранение датасета для генератора
-            with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
-                      'w') as instruction:
-                json.dump(self.instructions.native(), instruction)
-            with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
-                json.dump(self.split_sequence, seq)
-            if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
-                with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
-                    json.dump(array_creator.txt_list, fp)
-        else:
+        for key in self.dataframe.keys():
+            self.dataframe[key].to_csv(os.path.join(self.paths.instructions, f'{key}.csv'))
+
+        # with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
+        #           'w') as instruction:
+        #     json.dump(self.instructions.native(), instruction)
+        # with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
+        #     json.dump(self.split_sequence, seq)
+        # if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
+        #     with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
+        #         json.dump(array_creator.txt_list, fp)
+
+        if not creation_data.use_generator:
             # Сохранение датасета с NumPy
             x_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.inputs)
             y_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.outputs)
@@ -148,6 +139,9 @@ class CreateDTS(object):
         # запись препроцессов (скейлер, токенайзер и т.п.)
         self.write_preprocesses_to_files()
 
+        # запись параметров в json
+        self.write_instructions_to_files()
+
         # создание и запись конфигурации датасета
         output = DatasetData(**self.create_dataset_configure(creation_data=creation_data))
 
@@ -155,28 +149,39 @@ class CreateDTS(object):
         return output
 
     def set_dataset_data(self, layer: Union[CreationInputData, CreationOutputData]):
+
         self.tags[layer.id] = decamelize(layer.type)
         if isinstance(layer, CreationInputData):
             self.input_names[layer.id] = layer.name
+            self.put_tags['inputs'][layer.id] = decamelize(layer.type)
         else:
             self.output_names[layer.id] = layer.name
+            # if layer.type == LayerOutputTypeChoice.ObjectDetection:
+            #     for i in range(6):
+            #         self.put_tags['outputs'][layer.id+i] = decamelize(layer.type)
+            # else:
+            self.put_tags['outputs'][layer.id] = decamelize(layer.type)
         self.user_parameters[layer.id] = layer.parameters
 
+        pass
+
     def set_paths(self, data: CreationData) -> PathsData:
+
         dataset_path = os.path.join(data.datasets_path, f'dataset {data.name}')
-        instructions_path = None
         arrays_path = os.path.join(dataset_path, "arrays")
+        instructions_path = os.path.join(dataset_path, "instructions")
         os.makedirs(dataset_path, exist_ok=True)
         os.makedirs(arrays_path, exist_ok=True)
-        if data.use_generator:
-            instructions_path = os.path.join(dataset_path, "instructions")
-            os.makedirs(instructions_path, exist_ok=True)
+        os.makedirs(instructions_path, exist_ok=True)
+
         return PathsData(datasets=dataset_path, instructions=instructions_path, arrays=arrays_path)
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
+
         inputs = self.create_put_instructions(data=creation_data.inputs)
         outputs = self.create_put_instructions(data=creation_data.outputs)
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
+
         return instructions
 
     def create_put_instructions(self, data: Union[CreationInputsList, CreationOutputsList]) -> dict:
@@ -202,6 +207,21 @@ class CreateDTS(object):
 
         return instructions
 
+    def write_instructions_to_files(self):
+
+        os.makedirs(self.paths.instructions, exist_ok=True)
+        for put in self.instructions.__dict__.keys():
+            for idx in self.instructions.__dict__[put].keys():
+                # if decamelize(LayerOutputTypeChoice.ObjectDetection) in self.tags[idx]:
+                #     for i in range(6):
+                #         with open(os.path.join(self.paths.instructions, f'{idx+i}_{put}.json'), 'w') as cfg:
+                #             json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
+                # else:
+                with open(os.path.join(self.paths.instructions, f'{idx}_{put}.json'), 'w') as cfg:
+                    json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
+
+        pass
+
     def write_preprocesses_to_files(self):
         for preprocess_name in Preprocesses:
             preprocess = getattr(array_creator, preprocess_name)
@@ -218,14 +238,14 @@ class CreateDTS(object):
             if self.tags[key] in ['video', 'text', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.inputs.get(key).parameters
                 )
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.inputs.get(key).parameters
                 )
             if isinstance(array, tuple):
@@ -253,14 +273,14 @@ class CreateDTS(object):
             if self.tags[key] in ['text', 'text_segmentation', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}_slice'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.outputs.get(key).parameters
                 )
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe.loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.outputs.get(key).parameters
                 )
 
@@ -283,59 +303,70 @@ class CreateDTS(object):
                 creating_outputs_data.update([(key, current_output.native())])
         return creating_outputs_data
 
-    def sequence_split(self, creation_data: CreationData):
-        self.split_sequence['train'] = []
-        self.split_sequence['val'] = []
-        self.split_sequence['test'] = []
+    def create_table(self, creation_data: CreationData):
+
+        split_sequence = {'train': [],
+                          'val': [],
+                          'test': []}
         for i in range(len(self.peg) - 1):
             indices = np.arange(self.peg[i], self.peg[i + 1])
             train_len = int(creation_data.info.part.train * len(indices))
             val_len = int(creation_data.info.part.validation * len(indices))
             indices = indices.tolist()
-            self.split_sequence['train'].extend(indices[:train_len])
-            self.split_sequence['val'].extend(indices[train_len:train_len + val_len])
-            self.split_sequence['test'].extend(indices[train_len + val_len:])
+            split_sequence['train'].extend(indices[:train_len])
+            split_sequence['val'].extend(indices[train_len:train_len + val_len])
+            split_sequence['test'].extend(indices[train_len + val_len:])
         if creation_data.info.shuffle:
-            random.shuffle(self.split_sequence['train'])
-            random.shuffle(self.split_sequence['val'])
-            random.shuffle(self.split_sequence['test'])
+            random.shuffle(split_sequence['train'])
+            random.shuffle(split_sequence['val'])
+            random.shuffle(split_sequence['test'])
+
+        dataframe = pd.DataFrame(self.build_dataframe)
+        for key, value in split_sequence.items():
+            self.dataframe[key] = dataframe.loc[value, :].reset_index(drop=True)
 
     def create_dataset_arrays(self, creation_data: CreationData, put_data: dict) -> dict:
-        out_array = {'train': {}, 'val': {}, 'test': {}}
-        splits = list(self.split_sequence.keys())
-        num_arrays = 1
-        for key in put_data.keys():
-            current_arrays: list = []
-            if self.tags[key] == 'object_detection':
-                for i in range(6):
-                    globals()[f'current_arrays_{i + 1}'] = []
-            for i in range(self.limit):
-                if self.tags[key] in ['video', 'text', 'audio', 'text_segmentation']:
-                    array = getattr(array_creator, f'create_{self.tags[key]}')(
-                        creation_data.source_path,
-                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
-                        self.dataframe.loc[i, f'{key}_{self.tags[key]}_slice'],
-                        **put_data.get(key).parameters
-                    )
-                else:
-                    array = getattr(array_creator, f'create_{self.tags[key]}')(
-                        creation_data.source_path,
-                        self.dataframe.loc[i, f'{key}_{self.tags[key]}'],
-                        **put_data.get(key).parameters
-                    )
 
+        out_array = {'train': {}, 'val': {}, 'test': {}}
+        splits = list(out_array.keys())
+        num_arrays = 1
+        for split in splits:
+            for key in put_data.keys():
+
+                current_arrays: list = []
+                if self.tags[key] == 'object_detection':
+                    num_arrays = 6
+                    for i in range(num_arrays):
+                        globals()[f'current_arrays_{i + 1}'] = []
+
+                for i in range(len(self.dataframe[split])):
+                    if self.tags[key] in ['video', 'text', 'audio', 'text_segmentation']:
+                        array = getattr(array_creator, f'create_{self.tags[key]}')(
+                            creation_data.source_path,
+                            self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
+                            self.dataframe[split].loc[i, f'{key}_{self.tags[key]}_slice'],
+                            **put_data.get(key).parameters
+                        )
+                    else:
+                        array = getattr(array_creator, f'create_{self.tags[key]}')(
+                            creation_data.source_path,
+                            self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
+                            **put_data.get(key).parameters
+                        )
+
+                    if self.tags[key] == 'object_detection':
+                        for j in range(num_arrays):
+                            globals()[f'current_arrays_{j + 1}'].append(array[j])
+                    else:
+                        current_arrays.append(array)
+
+                # for spl_seq in splits:
                 if self.tags[key] == 'object_detection':
                     for j in range(num_arrays):
-                        globals()[f'current_arrays_{j + 1}'].append(array[j])
+                        out_array[split][key + j] = np.array(globals()[f'current_arrays_{j + 1}'])
                 else:
-                    current_arrays.append(array)
-            for spl_seq in splits:
-                if self.tags[key] == 'object_detection':
-                    for i in range(len(splits)):
-                        for j in range(num_arrays):
-                            out_array[spl_seq][key + i] = np.array(globals()[f'current_arrays_{j + 1}'])[self.split_sequence[spl_seq]]
-                else:
-                    out_array[spl_seq][key] = np.array(current_arrays)[self.split_sequence[spl_seq]]
+                    out_array[split][key] = np.array(current_arrays)
+
         return out_array
 
     def write_arrays(self, array_x, array_y):
@@ -350,7 +381,7 @@ class CreateDTS(object):
         data = {}
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
-                      'encoding', 'task_type', 'use_generator']
+                      'encoding', 'task_type', 'put_tags', 'use_generator']
 
         size_bytes = 0
         for path, dirs, files in os.walk(os.path.join(self.trds_path, f'dataset {self.name}')):
@@ -382,6 +413,9 @@ class CreateDTS(object):
         options['put'] = put_data.id
         if 'object_detection' in self.tags.values():
             options['object_detection'] = True
+            for path in paths_list:
+                if path.endswith('.txt'):
+                    paths_list.remove(path)
 
         for key, value in self.tags.items():
             if value == 'classification':
@@ -410,14 +444,19 @@ class CreateDTS(object):
             array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
-        instructions['instructions'] = {f'{put_data.id}_image': paths_list}
         instructions['parameters'] = options
+        if options.get('deploy', bool):
+            instructions['instructions'] = {f'{put_data.id}_image': paths_list}
+        else:
+            self.build_dataframe[f'{put_data.id}_image'] = paths_list
 
         return instructions
 
     def instructions_video(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
         """
             Args:
+                paths_list: list
+                    Путь к файлам.
                 put_data: Параметры обработки:
                     height: int
                         Высота кадра.
@@ -434,7 +473,6 @@ class CreateDTS(object):
 
         options = put_data.parameters.native()
         instructions: dict = {}
-        instr: list = []
         video: list = []
         video_slice: list = []
         y_cls: list = []
@@ -480,7 +518,6 @@ class CreateDTS(object):
                     if cur_step + options['length'] > frame_count:
                         stop_flag = True
                         if options['length'] < frame_count:
-                            # instr.append({elem: [frame_count - options['length'], frame_count]})
                             video.append(elem)
                             video_slice.append([frame_count - options['length'], frame_count])
                             y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
@@ -495,8 +532,11 @@ class CreateDTS(object):
         options['put'] = put_data.id
 
         instructions['parameters'] = options
-        instructions['instructions'] = {f'{put_data.id}_video': video,
-                                        f'{put_data.id}_video_slice': video_slice}
+        if options.get('deploy', bool):
+            instructions['instructions'] = {f'{put_data.id}_video': video,
+                                            f'{put_data.id}_video_slice': video_slice}
+        else:
+            self.build_dataframe[f'{put_data.id}_image'] = paths_list
 
         return instructions
 
@@ -637,15 +677,18 @@ class CreateDTS(object):
         self.peg.append(len(text))
         self.y_cls = y_cls
 
-        # instructions['instructions'] = {f'{put_data.id}_text': text,
-        #                                 f'{put_data.id}_text_slice': text_slice}
-        self.build_dataframe[f'{put_data.id}_text'] = text
-        self.build_dataframe[f'{put_data.id}_text_slice'] = text_slice
         instructions['parameters'] = {'embedding': options.get('embedding', bool),
                                       'bag_of_words': options.get('bag_of_words', bool),
                                       'word_to_vec': options.get('word_to_vec', bool),
                                       'put': put_data.id
                                       }
+        if options.get('deploy', bool):
+            instructions['instructions'] = {f'{put_data.id}_text': text,
+                                            f'{put_data.id}_text_slice': text_slice}
+        else:
+            self.build_dataframe[f'{put_data.id}_text'] = text
+            self.build_dataframe[f'{put_data.id}_text_slice'] = text_slice
+
         return instructions
 
     def instructions_audio(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
@@ -654,7 +697,6 @@ class CreateDTS(object):
         sample_rate = options.get('sample_rate', int)
         options = put_data.parameters.native()
         instructions: dict = {}
-        instr: list = []
         audio: list = []
         audio_slice: list = []
         y_cls: list = []
@@ -706,9 +748,14 @@ class CreateDTS(object):
         for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
             if elem in options.keys():
                 del options[elem]
-        instructions['instructions'] = {f'{put_data.id}_audio': audio,
-                                        f'{put_data.id}_audio_slice': audio_slice}
+
         instructions['parameters'] = options
+        if options.get('deploy', bool):
+            instructions['instructions'] = {f'{put_data.id}_audio': audio,
+                                            f'{put_data.id}_audio_slice': audio_slice}
+        else:
+            self.build_dataframe[f'{put_data.id}_audio'] = audio
+            self.build_dataframe[f'{put_data.id}_audio_slice'] = audio_slice
 
         return instructions
 
@@ -1126,7 +1173,10 @@ class CreateDTS(object):
         instructions['parameters'] = {'num_classes': self.num_classes[put_data.id],
                                       'one_hot_encoding': options['one_hot_encoding'],
                                       'classes_names': self.classes_names[put_data.id]}
-        instructions['instructions'] = {f'{put_data.id}_classification': self.y_cls}
+        # if options.get('deploy', bool):
+        #     instructions['instructions'] = {f'{put_data.id}_classification': self.y_cls}
+        # else:
+        self.build_dataframe[f'{put_data.id}_classification'] = self.y_cls
 
         return instructions
 
@@ -1146,8 +1196,11 @@ class CreateDTS(object):
                 array_creator.scaler[put_data.id] = StandardScaler()
             array_creator.scaler[put_data.id].fit(np.array(number_list).reshape(-1, 1))
 
-        instructions['instructions'] = number_list
         instructions['parameters'] = options
+        # if options.get('deploy', bool):
+        #     instructions['instructions'] = {f'{put_data.id}_regression': number_list}
+        # else:
+        self.build_dataframe[f'{put_data.id}_regression'] = number_list
 
         return instructions
 
@@ -1167,12 +1220,16 @@ class CreateDTS(object):
             if value == 'image':
                 shape = (self.user_parameters.get(key).height, self.user_parameters.get(key).width)
 
-        instructions['instructions'] = {f'{put_data.id}_segmentation': paths_list}
+        # instructions['instructions'] = {f'{put_data.id}_segmentation': paths_list}
         instructions['parameters'] = {'mask_range': options['mask_range'],
                                       'num_classes': len(options['classes_names']),
                                       'shape': shape,
                                       'classes_colors': options['classes_colors']
                                       }
+        # if options.get('deploy', bool):
+        #     instructions['instructions'] = {f'{put_data.id}_segmentation': paths_list}
+        # else:
+        self.build_dataframe[f'{put_data.id}_segmentation'] = paths_list
 
         return instructions
 
@@ -1182,6 +1239,10 @@ class CreateDTS(object):
         instructions = {}
         parameters = {}
         class_names = []
+
+        for path in paths_list:
+            if not path.endswith('.txt'):
+                paths_list.remove(path)
 
         # obj.data
         with open(os.path.join(self.file_folder, 'obj.data'), 'r') as dt:
@@ -1208,17 +1269,8 @@ class CreateDTS(object):
             self.classes_names[put_data.id] = class_names
             self.num_classes[put_data.id] = int(data['classes'])
 
-        # # list of txt
-        # txt_list = []
-        # with open(os.path.join(self.file_folder, data["train"].split("/")[-1]), 'r') as dt:
-        #     images = dt.read()
-        # for elem in sorted(images.split('\n')):
-        #     if elem:
-        #         idx = elem.rfind('.')
-        #         elem = elem.replace(elem[idx:], '.txt')
-        #         txt_list.append(os.path.join(*elem.split('/')[1:]))
-        instructions['instructions'] = paths_list
         instructions['parameters'] = parameters
+        self.build_dataframe[f'{put_data.id}_object_detection'] = paths_list
 
         return instructions
 
@@ -1254,57 +1306,65 @@ class CreateDTS(object):
                 except ValueError:
                     print(word)
 
-            words = ' '.join(words)
+            # words = ' '.join(words)
 
             return words, indexes
 
         options = put_data.parameters.native()
         instructions: dict = {}
-        instr: list = []
         text: list = []
-        text_segm: dict = {}
-        text_segm_slice: list = []
+        text_sliced: list = []
+        text_segm: list = []
+        text_segm_data: list = []
+        text_segm_sliced: list = []
         open_tags: list = options['open_tags'].split(' ')
         close_tags: list = options['close_tags'].split(' ')
+        self.classes_names[put_data.id] = open_tags
+        self.num_classes[put_data.id] = len(open_tags)
         self.encoding[put_data.id] = 'multi'
         self.peg = [0]
 
         for i, value in self.tags.items():
             if value == 'text':
-                self.build_dataframe[f'{i}_text'] = []
-                self.build_dataframe[f'{put_data.id}_text_segmentation'] = []
                 for key, txt_file in self.temporary[i].items():
-                    text_instr, segment_instr = get_samples(txt_file, open_tags, close_tags)
-                    self.build_dataframe[f'{i}_text'].append(text_instr)
-                    self.build_dataframe[f'{put_data.id}_text_segmentation'].append(segment_instr)
+                    if txt_file:
+                        text_instr, segment_instr = get_samples(txt_file, open_tags, close_tags)
+                        text.append(text_instr)
+                        text_segm.append(segment_instr)
                 length = self.user_parameters.get(i).dict()['length']
                 step = self.user_parameters.get(i).dict()['step']
                 text_mode = self.user_parameters.get(i).dict()['text_mode']
                 max_words = self.user_parameters.get(i).dict()['max_words']
 
-                for txt in self.build_dataframe[f'{i}_text']:
+                for idx in range(len(text)):
                     if text_mode == TextModeChoice.completely:
-                        # instr.append({key: [0, max_words]})
-                        text_segm_slice.append([0, max_words])
+                        text_sliced.append(' '.join(text[idx][0:max_words]))
+                        text_segm_data.append(text_segm[idx][0:max_words])
+                        text_segm_sliced.append([0, max_words])
                     elif text_mode == TextModeChoice.length_and_step:
-                        max_length = len(txt.split(' '))
+                        max_length = len(text[idx])
                         cur_step = 0
                         stop_flag = False
                         while not stop_flag:
-                            # instr.append({key: [cur_step, cur_step + length]})
-                            text_segm_slice.append([cur_step, cur_step + length])
+                            text_sliced.append(' '.join(text[idx][cur_step:cur_step + length]))
+                            text_segm_data.append(text_segm[idx][cur_step:cur_step + length])
+                            text_segm_sliced.append([cur_step, cur_step + length])
                             cur_step += step
                             if cur_step + length > max_length:
                                 stop_flag = True
 
-                self.build_dataframe[f'{i}_text_slice'] = text_segm_slice
+                self.build_dataframe[f'{i}_text'] = text_sliced
+                self.build_dataframe[f'{i}_text_slice'] = text_segm_sliced
+                self.build_dataframe[f'{put_data.id}_text_segmentation'] = text_segm_data
+                self.build_dataframe[f'{put_data.id}_text_segmentation_slice'] = text_segm_sliced
 
-        self.peg.append(len(text_segm_slice))
-        # instructions['instructions'] = {f'{put_data.id}_text_segmentation': text_segm,
-        #                                 f'{put_data.id}_text_segmentation_slice': text_segm_slices}
-        # self.build_dataframe[f'{put_data.id}_text_segmentation'] = text_segm
-        self.build_dataframe[f'{put_data.id}_text_segmentation_slice'] = text_segm_slice
+            break
+
+        self.peg.append(len(text_segm_sliced))
         instructions['parameters'] = {'num_classes': len(open_tags),
                                       'put': put_data.id}
+        if options.get('deploy', bool):
+            instructions['instructions'] = {f'{put_data.id}_text_segmentation': text_segm_data,
+                                            f'{put_data.id}_text_segmentation_slice': text_segm_sliced}
 
         return instructions

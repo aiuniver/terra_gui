@@ -35,6 +35,7 @@ class ParametersData(ParametersBaseData):
     max_frames: Optional[PositiveInt]
     step: Optional[PositiveInt]
     length: Optional[PositiveInt]
+    deploy: Optional[bool] = False
 
     @validator("video_mode", allow_reuse=True)
     def _validate_prepare_method(cls, value: VideoModeChoice) -> VideoModeChoice:

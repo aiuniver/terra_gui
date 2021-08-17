@@ -8,6 +8,7 @@ from gensim.models.word2vec import Word2Vec
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 import librosa.feature as librosa_feature
+from pydantic.color import Color
 
 from ..data.datasets.creations.layers.input.types.Video import FrameModeChoice, FillModeChoice
 from ..data.datasets.extra import LayerNetChoice
@@ -378,8 +379,8 @@ class CreateArray(object):
             cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
             cl_mask = cl_mask.reshape(options['shape'][0], options['shape'][1], cl_mask.shape[-1])
             mask_ohe = np.zeros(options['shape'])
-            for k, rgb in enumerate(options['classes_colors']):
-                # rgb = rgb.as_rgb_tuple()
+            for k, color in enumerate(options['classes_colors']):
+                rgb = Color(color).as_rgb_tuple()
                 mask = np.zeros(options['shape'])
 
                 for j, cl_rgb in enumerate(cl_cent):
