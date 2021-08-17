@@ -1,11 +1,11 @@
-import messages from "./messages";
-import modeling from "./modeling";
-import datasets from "./datasets";
-import settings from "./settings";
-import projects from "./projects";
-import trainings from "./trainings";
-import deploy from "./deploy"
-import data from "./data";
+import messages from "./modules/messages";
+import modeling from "./modules/modeling";
+import datasets from "./modules/datasets";
+import settings from "./modules/settings";
+import projects from "./modules/projects";
+import trainings from "./modules/trainings";
+import deploy from "./modules/deploy"
+
 import axios from "axios";
 import Vue from 'vue';
 export default {
@@ -13,7 +13,6 @@ export default {
     messages,
     modeling,
     datasets,
-    data,
     settings,
     trainings,
     deploy,
@@ -35,12 +34,12 @@ export default {
           Vue.prototype.$Loading.finish()
           return data ?? success;
         } else {
-          dispatch('messages/setMessage', {error : JSON.stringify(error) })
+          dispatch('messages/setMessage', {error : JSON.stringify(error, null, 2) })
           Vue.prototype.$Loading.error()
           return null;
         }  
       } catch (error) {
-        dispatch('messages/setMessage', { error: JSON.stringify(error) })
+        dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) })
         Vue.prototype.$Loading.error()
         return null;
       }

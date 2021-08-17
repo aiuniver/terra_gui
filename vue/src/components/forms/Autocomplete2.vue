@@ -1,9 +1,10 @@
 <template>
   <div class="dropdown">
-    <label>{{ label }}</label>
+    <label :for="name">{{ label }}</label>
     <input
       class="dropdown__input"
       v-model="search"
+      :id="name"
       :name="name"
       :disabled="disabled"
       :placeholder="placeholder"
@@ -89,7 +90,7 @@ export default {
 </script>
 
 
-<style lang="scss" scope>
+<style lang="scss" scoped>
 .dropdown {
   position: relative;
   display: block;
@@ -98,7 +99,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.25;
+    line-height: 1.5;
     font-size: 0.75rem;
   }
   &__input {

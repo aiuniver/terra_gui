@@ -8,11 +8,11 @@
         <DatasetButton />
       </div>
       <div class="params__items--item pa-0">
-        <DatasetTab @select="select" />
+        <DatasetTab v-model="tab" @select="select" />
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
-          <TButton @click.native="download" :loading="loading" />
+          <t-button @click.native="download" :loading="loading" :disabled="Object.keys(dataset).length == 0"/>
         </div>
       </div>
     </div>
@@ -23,15 +23,14 @@
 import { mapGetters } from 'vuex';
 import DatasetTab from '@/components/datasets/params/DatasetTab.vue';
 import DatasetButton from './DatasetButton.vue';
-import TButton from '@/components/forms/Button.vue';
 export default {
   name: 'Settings',
   components: {
     DatasetTab,
     DatasetButton,
-    TButton,
   },
   data: () => ({
+    tab: 'GoogleDrive',
     loading: false,
     dataset: {},
     interval: null,
@@ -73,7 +72,7 @@ export default {
           finished,
           message,
           percent,
-          data: { file_manager },
+          data: { file_manager, source_path },
         } = data;
         if (!data || finished) {
           // clearTimeout(this.interval);
@@ -81,6 +80,7 @@ export default {
           this.$store.dispatch('messages/setProgress', percent);
           if (file_manager) {
             this.$store.dispatch('datasets/setFilesSource', file_manager);
+            this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
           }
           this.loading = false;

@@ -1,15 +1,19 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" :for="parse">{{ label }}</label>
+    <!-- <at-tooltip placement="top-left" :content="label"> -->
+      <label class="t-field__label" :for="parse"><slot>{{ label }}</slot></label>
+    <!-- </at-tooltip> -->
+
     <input
       v-model="input"
-      class="t-field__input"
+      :class="['t-field__input', {small: small}]"
       :id="parse"
       :type="type"
-      :name="parse"
+      :name="name || parse"
       :value="value"
       @blur="change"
       :disabled="disabled"
+      :data-degree="degree"
     />
   </div>
 </template>
@@ -33,6 +37,8 @@ export default {
     name: String,
     inline: Boolean,
     disabled: Boolean,
+    small: Boolean,
+    degree: Number, // for serialize
   },
   data: () => ({
     isChange: false,
@@ -63,15 +69,13 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  margin-bottom: 20px;
+  // margin-bottom: 20px;
   &__label {
-    width: 150px;
-    max-width: 130px;
     text-align: left;
     color: #a7bed3;
     display: block;
-    margin: 0 0 10px 0;
-    line-height: 1.25;
+    padding-bottom: 10px;
+    line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -91,6 +95,9 @@ export default {
       border-color: #fff;
     }
   }
+  &__input.small{
+    height: 24px;
+  }
 }
 .t-inline {
   display: flex;
@@ -99,9 +106,10 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
-  > label {
-    width: auto;
-    padding: 0 20px 0 10px;
+   .t-field__label {
+    width: 150px;
+    max-width: 130px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
@@ -110,7 +118,7 @@ export default {
     font-size: 0.75rem;
   }
   > input {
-    height: 22px;
+    height: 24px;
     font-size: 12px;
     line-height: 24px;
     width: 100px;

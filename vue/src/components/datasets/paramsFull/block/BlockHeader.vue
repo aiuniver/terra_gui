@@ -1,8 +1,8 @@
 <template>
   <div class="block-header" @drop="onDrop($event)" @dragover.prevent>
-    <div v-if="filesDrop.length" class="block-header__main">
+    <div v-if="mixinFiles.length" class="block-header__main">
       <Cards>
-        <template v-for="(file, i) of filesDrop">
+        <template v-for="(file, i) of mixinFiles">
           <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
         </template>
         <!-- <CardTable/> -->
@@ -22,6 +22,7 @@
 import CardFile from '../components/card/CardFile.vue';
 // import CardTable from "../components/card/CardTable";
 import Cards from '../components/card/Cards.vue';
+import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 'BlockHeader',
   components: {
@@ -29,37 +30,16 @@ export default {
     // CardTable,
     Cards,
   },
-  data: () => ({
-    
-  }),
-  computed: {
-    filesDrop: {
-      set(value) {
-        this.$store.dispatch('datasets/setFilesDrop', value);
-      },
-      get() {
-        return this.$store.getters['datasets/getFilesDrop'];
-      },
-    },
-  },
+  mixins: [blockMain],
   methods: {
     onDrop({ dataTransfer }) {
       const data = JSON.parse(dataTransfer.getData('CardDataType'));
-      const index = this.filesDrop.findIndex(({ label }) => {
-        return data.label === label;
-      });
-      console.log(index);
-      if (index === -1) {
-        this.filesDrop.push(data);
-        this.filesDrop = [...this.filesDrop];
-        // console.log(this.filesDrop)
+      if (!this.mixinFiles.find(item => item.value === data.value)) {
+        this.mixinFiles = [...this.mixinFiles, data];
       } else {
         this.$Notify.warning({ title: 'Внимание!', message: 'Каталог уже выбран' });
       }
     },
-  },
-  mounted() {
-    // console.log(this.$el.clientHeight);
   },
 };
 </script>

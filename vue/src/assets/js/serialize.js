@@ -54,10 +54,18 @@ function serialize(form, options) {
     var key = element.name;
     var val = element.value;
     if (element.type === "number") {
+      const degree = element.dataset.degree
+      console.log(degree)
       val = +val;
+      if (degree) {
+        val = val/(+degree)
+      }
     }
     if (element.type === "checkbox") {
+      const reverse = !!element.dataset.reverse
       val = val === "true";
+      val = reverse ? !val : val
+      console.log(val, reverse)
     }
     // console.log(element.type, key, val, typeof(val))
 
@@ -65,7 +73,8 @@ function serialize(form, options) {
     if (options.empty) {
       // for checkbox
       if (element.type === "checkbox" && !element.checked) {
-        val = false;
+        // console.log(val)
+        // val = false;
       }
 
       // for radio

@@ -1,153 +1,63 @@
 <template>
-  <div class="dataset-options">
-    <div class="form">
-      <div class="dataset-field">
-        <label for="name">Название датасета</label>
-        <input type="text" class="terra-input large-input" name="name" id="name">
-      </div>
-      <div class="dataset-field">
-        <label>Теги</label>
-        <div class="tags">
-          <button type="button" class="add-btn" @click="tagsCount++"><i class="plus"></i><span>Добавить</span></button>
-          <input type="text" class="terra-input" @keydown="inputLength" v-for="tag in tagsCount" :key="tag">
-        </div>
-      </div>
-      <div class="dataset-field">
-        <label>Train / Val / Test</label>
-        <div class="slider">
-          <DoubleSlider/>
-        </div>
-      </div>
-      <div class="dataset-field">
-        <label for="subsequence">Сохранить последовательность</label>
-        <div class="checkout-switch">
-          <input id="subsequence" type="checkbox" name="subsequence"/>
-          <span class="switcher"></span>
-        </div>
-      </div>
-      <div class="dataset-field">
-        <label for="generator">Использовать генератор</label>
-        <div class="checkout-switch">
-          <input id="generator" type="checkbox" name="generator"/>
-          <span class="switcher"></span>
-        </div>
-      </div>
+  <form class="block-footer" @submit.prevent>
+    <div class="block-footer__item">
+      <t-input parse="[name]" small :value="'Новый'">
+        Название датасета
+      </t-input>
+    </div>
+    <div class="block-footer__item block-tags">
+      <TTags />
+    </div>
+    <div class="block-footer__item">
+      <DoubleSlider :degree="100" />
+    </div>
+    <div class="block-footer__item">
+      <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
+    </div>
+    <div class="block-footer__item">
+      <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
     </div>
     <div class="action">
-      <button>Сформировать</button>
+      <t-button @click.native="getObj">Сформировать</t-button>
     </div>
-  </div>
+  </form>
 </template>
 
 <script>
-import DoubleSlider from "@/components/forms/DoubleSlider";
-
+import DoubleSlider from '@/components/forms/DoubleSlider';
+import TTags from '@/components/forms/TTags';
+import serialize from "@/assets/js/serialize";
 export default {
-  name: "BlockFooter",
+  name: 'BlockFooter',
   components: {
     DoubleSlider,
-  },
-  data(){
-    return {
-      tagsCount: 2
-    }
+    TTags,
   },
   methods: {
-    inputLength(e){
-      e.target.style.width = ((e.target.value.length + 1) * 8) + 'px';
+    getObj() {
+      this.$emit('create', serialize(this.$el))
     }
   }
 };
 </script>
 
 <style lang="scss" scoped>
-  .plus{
-    width: 14px;
-    height: 14px;
-    margin-top: -2px;
-    &:before{
-      content: ' ';
-      display: block;
-      width: 2px;
-      height: 14px;
-      background: #A7BED3;
-      margin-left: 6px;
-    }
+.block-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 22px 24px;
+  &__item {
+    flex: 0 0 150px;
+    margin-right: 36px;
+  }
+}
 
-    &:after{
-      content: ' ';
-      display: block;
-      width: 14px;
-      height: 2px;
-      background: #A7BED3;
-      margin-top: -8px;
-    }
 
+.action {
+  font-size: 0.8rem;
+  button {
+    padding: 8px 16px;
   }
-  .dataset-options{
-    display: flex;
-    justify-content: space-between;
-  }
-  .form{
-    display: flex;
-  }
-  .dataset-field{
-    padding: 16px 18px;
-    font-size: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    label{
-      color: #A7BED3;
-    }
-  }
-  .large-input{
-    max-width: 150px;
-  }
-  .terra-input{
-    margin-top: 10px;
-    height: 24px;
-    color: #FFFFFF;
-  }
-  .tags{
-    display: flex;
-    font-size: 12px;
-    max-width: 400px;
-    flex-wrap: wrap;
-    .terra-input{
-      margin-left: 10px;
-      padding: 2px 4px;
-      width: 60px;
-      color: #A7BED3;
-    }
-  }
-  .add-btn{
-      background: #242F3D;
-      height: 24px;
-      width: 90px;
-      padding: 2px 4px;
-      margin-top: 10px;
-      box-shadow: none;
-      border-color: #6C7883;
-      color: #A7BED3;
-      display: flex;
-      align-items: center;
-      span{
-        padding-left: 9px;
-      }
-    }
-  .action{
-    padding-top: 26px;
-    padding-right: 20px;
-    font-size: 0.8rem;
-    float: right;
-    button{
-      padding: 8px 16px;
-    }
-  }
-  .checkout-switch{
-    margin-top: 10px;
-  }
-  label{
-    white-space: nowrap;
-  }
+}
+
 </style>

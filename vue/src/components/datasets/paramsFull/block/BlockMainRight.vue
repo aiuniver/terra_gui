@@ -1,27 +1,28 @@
 <template>
   <div class="block-right">
     <div class="block-right__fab">
-      <Fab @click="add" />
+      <Fab @click="addCard" />
     </div>
     <div class="block-right__header">Выходные параметры</div>
     <div class="block-right__body">
       <scrollbar :ops="ops" ref="scrollRight">
         <div class="block-right__body--inner" :style="height">
-          <div class="block-right__body--empty"></div>
-          <template v-for="({ title, color }, i) of cardLayers">
-            <CardLayer
-              :title="title + ' ' + (i + 1)"
-              :color="color"
-              :key="'cardLayersRight' + i"
-              @click-btn="click($event, i)"
-              @click-header="clickScroll"
-            >
-              <t-select label="Выберите путь" :lists="filesDrop" name="path" @change="change" />
+          <template v-for="{ id, color } of inputDataOutput">
+            <CardLayer :id="id" :color="color" :key="'cardLayersRight' + id" @click-btn="optionsCard($event, id)">
+              <template v-slot:header>Выходные данные {{ id }}</template>
+              <TMultiSelect
+                :id="id"
+                :lists="mixinFiles"
+                label="Выберите путь"
+                inline
+                @change="mixinCheck($event, id)"
+              />
               <template v-for="(data, index) of output">
-                <t-auto-field v-bind="data" @change="change" :key="color + index" :idKey="color + index" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
+          <div class="block-right__body--empty"></div>
         </div>
       </scrollbar>
     </div>
@@ -29,18 +30,20 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import { getColor } from '../util/color';
+import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
+import TMultiSelect from '../../../forms/MultiSelect.vue';
+import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 'BlockMainRight',
   components: {
     Fab,
     CardLayer,
+    TMultiSelect,
   },
+  mixins: [blockMain],
   data: () => ({
-    cardLayers: [{ title: 'Output', color: '#8e51f2' }],
     ops: {
       scrollPanel: {
         scrollingX: true,
@@ -54,14 +57,12 @@ export default {
   computed: {
     ...mapGetters({
       output: 'datasets/getTypeOutput',
+      inputData: 'datasets/getInputData',
     }),
-    filesDrop: {
-      set(value) {
-        this.$store.dispatch('datasets/setFilesDrop', value);
-      },
-      get() {
-        return this.$store.getters['datasets/getFilesDrop'];
-      },
+    inputDataOutput() {
+      return this.inputData.filter(item => {
+        return item.layer === 'output';
+      });
     },
     height() {
       const height = this.$store.getters['settings/height']({
@@ -73,31 +74,22 @@ export default {
     },
   },
   methods: {
-    add() {
-      this.cardLayers.push({ title: 'Output', color: getColor() });
+    addCard() {
+      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
       this.$nextTick(() => {
         this.$refs.scrollRight.scrollTo(
           {
-            x: "100%",
+            x: '0%',
           },
           100
         );
       });
     },
-    clickScroll(e) {
-      this.$refs.scrollRight.scrollIntoView(e.target, 100);
-      console.log(e);
-    },
-    click(comm, index) {
-      console.log(comm, index);
+    optionsCard(comm, id) {
       if (comm === 'remove') {
-        this.cardLayers = this.cardLayers.filter((_, i) => {
-          return i !== index;
-        });
+        this.$store.dispatch('datasets/removeInputData', id);
+        this.mixinRemove(id);
       }
-    },
-    change(e) {
-      console.log(e);
     },
   },
 };
@@ -129,19 +121,15 @@ export default {
   }
   &__body {
     width: 100%;
-    /* position: absolute; */
-    /* height: 250px; */
-    /* top: 34px; */
     padding: 40px 0px 0px 0px;
-    /* right: 70px; */
     overflow: auto;
     &--inner {
       display: flex;
       width: 100%;
-      justify-content: flex-start;
+      justify-content: flex-end;
       overflow: auto;
-      // position: absolute;
       height: 100%;
+      flex-direction: row-reverse;
     }
     &--empty {
       height: 100%;

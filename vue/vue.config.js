@@ -6,6 +6,6 @@ const proxy = {
 module.exports = {
   productionSourceMap: false,
   devServer: {
-    proxy: proxy[process.env.USERNAME] || 'http://localhost:8000/'
+    proxy: proxy[process.env.USERNAME] || 'http://localhost:8099/'
   }
 }

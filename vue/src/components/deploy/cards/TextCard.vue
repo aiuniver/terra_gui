@@ -1,6 +1,8 @@
 <template>
   <div class="text-card">
-    {{ text }}
+    <scrollbar>
+      <slot>TEXT</slot>
+    </scrollbar>
   </div>
 </template>
 
@@ -21,7 +23,6 @@ export default {
   border: 1px solid #6C7883;
   box-sizing: border-box;
   border-radius: 4px;
-  width: 224px;
   min-height: 74px;
   padding: 6px;
   font-size: 14px;

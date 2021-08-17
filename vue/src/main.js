@@ -1,7 +1,6 @@
 import Vue from "vue";
 import App from "./App.vue";
 import Vuex from "vuex";
-// import VueRouter from "vue-router";
 import axios from "axios";
 import VueAxios from "vue-axios";
 
@@ -98,31 +97,13 @@ Vue.use(vuescroll, {
   name: 'scrollbar'
 });
 
-Vue.directive('click-outside', {
-  bind: function (el, binding, vnode) {
-    el.clickOutsideEvent = function (event) {
-      if (!(el == event.target || el.contains(event.target))) {
-        vnode.context[binding.expression](event);
-      }
-    };
-    document.body.addEventListener('click', el.clickOutsideEvent)
-  },
-  unbind: function (el) {
-    document.body.removeEventListener('click', el.clickOutsideEvent)
-  },
-});
+// import all directivs
+import directives from '@/utils/directives'
+directives.forEach(directive=>Vue.directive(directive.name, directive))
 
-import FilesMenu from "@/components/datasets/paramsFull/components/forms/FilesMenu.vue";
-Vue.component('files-menu', FilesMenu)
-
-import TInput from "./components/global/forms/Input.vue";
-Vue.component('t-input', TInput)
-import TSelect from "./components/global/forms/Select.vue";
-Vue.component('t-select', TSelect)
-import TCheckbox from "./components/global/forms/Checkbox.vue";
-Vue.component('t-checkbox', TCheckbox)
-import TAutoField from "@/components/global/TAutoField.vue";
-Vue.component('t-auto-field', TAutoField)
+// import global components
+import components from '@/components/global'
+components.forEach(component=>Vue.component(component.name, component))
 
 
 import VuePapaParse from "vue-papa-parse";

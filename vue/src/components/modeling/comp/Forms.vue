@@ -25,8 +25,9 @@
         inline
         @change="change"
       />
-      <Checkbox
+      <t-checkbox
         v-if="type === 'checkbox'"
+        inline
         :value="getValue(valueDef[name], value)"
         :label="label"
         type="checkbox"
@@ -52,7 +53,6 @@
 
 <script>
 import Input from "@/components/forms/Input.vue";
-import Checkbox from "@/components/forms/Checkbox.vue";
 import Select from "@/components/forms/Select.vue";
 
 export default {
@@ -60,7 +60,6 @@ export default {
   components: {
     Input,
     Select,
-    Checkbox,
   },
   props: {
     data: {

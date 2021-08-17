@@ -13,7 +13,15 @@
               @input="change"
               >{{ nameProject }}</span
             > -->
-          <span @click="save = true">{{ nameProject }}</span>
+          <span
+            class="left--name_span"
+            @click="projectNameEdit = true"
+            :contenteditable="projectNameEdit"
+            v-click-outside="outside"
+            ref="nameProjectSpan"
+          >
+            {{ nameProject }}
+          </span>
           <i></i>
         </div>
       </div>
@@ -33,63 +41,64 @@
         <i class="profile"></i>
       </div>
     </div>
-    <at-modal
-      v-model="save"
-      width="400"
-      :maskClosable="false"
-      :showClose="true"
-    >
-      <div slot="header" style="text-align: center">
-        <span>Сохранить проект</span>
-      </div>
-      <div class="inner form-inline-label">
-        <div class="field-form">
-          <label>Название проекта</label
-          ><input v-model="nameProject" type="text" />
-        </div>
-        <div class="field-form field-inline field-reverse">
-          <label>Перезаписать</label>
-          <div class="checkout-switch">
-            <input type="checkbox" />
-            <span class="switcher"></span>
-          </div>
-        </div>
-      </div>
-      <div slot="footer">
-        <button @click="saveProject">Сохранить</button>
-      </div>
-    </at-modal>
-    <at-modal v-model="load" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Загрузить проект</span>
-      </div>
+    <!--    <at-modal-->
+    <!--      v-model="save"-->
+    <!--      width="400"-->
+    <!--      :maskClosable="false"-->
+    <!--      :showClose="true"-->
+    <!--    >-->
+    <!--      <div slot="header" style="text-align: center">-->
+    <!--        <span>Сохранить проект</span>-->
+    <!--      </div>-->
+    <!--      <div class="inner form-inline-label">-->
+    <!--        <div class="field-form">-->
+    <!--          <label>Название проекта</label-->
+    <!--          ><input v-model="nameProject" type="text" />-->
+    <!--        </div>-->
+    <!--        <div class="field-form field-inline field-reverse">-->
+    <!--          <label>Перезаписать</label>-->
+    <!--          <div class="checkout-switch">-->
+    <!--            <input type="checkbox" />-->
+    <!--            <span class="switcher"></span>-->
+    <!--          </div>-->
+    <!--        </div>-->
+    <!--      </div>-->
+    <!--      <div slot="footer">-->
+    <!--        <button @click="saveProject">Сохранить</button>-->
+    <!--      </div>-->
+    <!--    </at-modal>-->
+    <!--    <at-modal v-model="load" width="400">-->
+    <!--      <div slot="header" style="text-align: center">-->
+    <!--        <span>Загрузить проект</span>-->
+    <!--      </div>-->
 
-      <div slot="footer"></div>
-    </at-modal>
+    <!--      <div slot="footer"></div>-->
+    <!--    </at-modal>-->
   </div>
 </template>
 
 <script>
 export default {
-  name: "THeader",
+  name: 'THeader',
   data: () => ({
     clickProject: false,
-    name: "kjkjkjkj",
+    projectNameEdit: false,
+    name: 'kjkjkjkj',
     items: [
       {
-        title: "Создать новый проект",
-        type: "project-new",
-        icon: "icon-project-new",
+        title: 'Создать новый проект',
+        type: 'project-new',
+        icon: 'icon-project-new',
       },
       {
-        title: "Сохранить проект",
-        type: "project-save",
-        icon: "icon-project-save",
+        title: 'Сохранить проект',
+        type: 'project-save',
+        icon: 'icon-project-save',
       },
       {
-        title: "Загрузить проект",
-        type: "project-load",
-        icon: "icon-project-load",
+        title: 'Загрузить проект',
+        type: 'project-load',
+        icon: 'icon-project-load',
       },
     ],
     save: false,
@@ -98,47 +107,54 @@ export default {
   computed: {
     nameProject: {
       set(name) {
-        this.$store.dispatch("projects/setProject", { name });
+        this.$store.dispatch('projects/setProject', { name });
       },
       get() {
-        return this.$store.getters["projects/getProject"].name;
+        return this.$store.getters['projects/getProject'].name;
       },
     },
     full: {
       set(val) {
-        this.$store.dispatch("datasets/setFull", val);
+        this.$store.dispatch('datasets/setFull', val);
       },
       get() {
-        return this.$store.getters["datasets/getFull"];
+        return this.$store.getters['datasets/getFull'];
       },
     },
   },
   methods: {
     async saveProject() {
       if (this.nameProject.length > 2) {
-        this.$store.dispatch("messages/setMessage", {
+        this.$store.dispatch('messages/setMessage', {
           message: `Изменение названия проекта на «${this.nameProject}»`,
         });
-        await this.$store.dispatch("projects/saveProject", {
+        await this.$store.dispatch('projects/saveProject', {
           name: this.nameProject,
         });
-        this.$store.dispatch("messages/setMessage", {
+        this.$store.dispatch('messages/setMessage', {
           message: `Название проекта изменено на «${this.nameProject}»`,
         });
         this.save = false;
       } else {
-        this.$store.dispatch("messages/setMessage", {
-          error: "Длина не может быть < 3 сим.",
+        this.$store.dispatch('messages/setMessage', {
+          error: 'Длина не может быть < 3 сим.',
         });
+      }
+    },
+    outside() {
+      if (this.projectNameEdit) {
+        this.projectNameEdit = false;
+        this.nameProject = this.$refs.nameProjectSpan.innerText;
+        this.saveProject();
       }
     },
     click(type) {
       console.log(type);
-      if (type === "project-new") {
+      if (type === 'project-new') {
         this.full = !this.full;
-      } else if (type === "project-save") {
+      } else if (type === 'project-save') {
         this.save = true;
-      } else if (type === "project-load") {
+      } else if (type === 'project-load') {
         this.load = true;
       }
     },
@@ -155,7 +171,7 @@ export default {
 
 <style lang="scss" scoped>
 .header {
-  background: #17212B;
+  background: #17212b;
   width: 100%;
   height: 52px;
   margin: 1px 0 0 0;
@@ -223,7 +239,7 @@ export default {
     align-items: center;
     &--logo {
       display: block;
-      content: "";
+      content: '';
       width: 28px;
       height: 28px;
       background-position: center;
@@ -239,7 +255,7 @@ export default {
     &--label {
       color: #a7bed3;
       margin: 0 5px 0 0;
-    user-select: none;
+      user-select: none;
     }
     &--name {
       position: relative;
@@ -345,5 +361,8 @@ export default {
 .value {
   padding: 0;
   max-width: 300px;
+}
+.left--name_span[contenteditable='true'] {
+  border: 1px solid #ffffff;
 }
 </style>

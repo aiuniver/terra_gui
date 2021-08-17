@@ -62,7 +62,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  margin-bottom: 20px;
+  // margin-bottom: 20px;
   &__label {
     width: 150px;
     max-width: 130px;
@@ -78,13 +78,13 @@ export default {
   }
   &__input {
     color: #fff;
-    border-color: #6c7883;
     background: #242f3d;
     height: 42px;
     padding: 0 10px;
     font-size: 0.875rem;
     font-weight: 400;
     border-radius: 4px;
+    border: 1px solid #6c7883;
     transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
     &:focus {
       border-color: #fff;
