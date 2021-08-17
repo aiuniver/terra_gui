@@ -4,7 +4,6 @@ import tensorflow
 
 from typing import Any
 from pathlib import Path
-from transliterate import slugify
 
 from ..data.datasets.dataset import (
     DatasetLoadData,
@@ -123,11 +122,6 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        kwargs.update(
-            {
-                "alias": slugify(kwargs.get("name")),
-            }
-        )
         creation = CreateDTS()
         dataset = creation.create_dataset(CreationData(**kwargs))
         return dataset
