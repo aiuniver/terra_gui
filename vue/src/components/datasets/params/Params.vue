@@ -8,7 +8,7 @@
         <DatasetButton />
       </div>
       <div class="params__items--item pa-0">
-        <DatasetTab @select="select" />
+        <DatasetTab v-model="tab" @select="select" />
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
@@ -30,6 +30,7 @@ export default {
     DatasetButton,
   },
   data: () => ({
+    tab: 'GoogleDrive',
     loading: false,
     dataset: {},
     interval: null,
@@ -71,7 +72,7 @@ export default {
           finished,
           message,
           percent,
-          data: { file_manager },
+          data: { file_manager, source_path },
         } = data;
         if (!data || finished) {
           // clearTimeout(this.interval);
@@ -79,6 +80,7 @@ export default {
           this.$store.dispatch('messages/setProgress', percent);
           if (file_manager) {
             this.$store.dispatch('datasets/setFilesSource', file_manager);
+            this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
           }
           this.loading = false;

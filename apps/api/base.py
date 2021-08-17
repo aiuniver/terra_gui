@@ -1,5 +1,6 @@
 from typing import Any
 from pydantic import BaseModel, ValidationError
+from dict_recursive_update import recursive_update
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -64,6 +65,6 @@ class BaseResponseErrorFields(BaseResponseError):
                     __loc = __locs[-1]
                     __loc_dict = {__loc: __loc_dict}
                     __locs = __locs[:-1]
-                __errors.update(__loc_dict)
+                __errors = recursive_update(__errors, __loc_dict)
             error = __errors
         super().__init__(error={"fields": error}, *args, **kwargs)

@@ -9,6 +9,7 @@
         type="checkbox"
         :value="checVal"
         :name="parse"
+        :data-reverse="reverse"
         @change="change"
       />
       <span></span>
@@ -28,6 +29,7 @@ export default {
     value: Boolean,
     name: String,
     parse: String,
+    reverse: Boolean,
     event: {
       type: Array,
       default: () => [],

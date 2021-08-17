@@ -1,18 +1,17 @@
 <template>
   <div class="board">
     <div class="wrapper">
-      <div class="content" v-if="dataLoaded">
-        <button class="board__reload-all">Перезагрузить все</button>
+      <div class="content">
+        <button class="board__reload-all">
+          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+          <span>Перезагрузить все</span>
+        </button>
         <div class="board__data-field">
           <div class="board__title">Исходные данные / Предсказанные данные</div>
           <div class="board__data">
             <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
           </div>
         </div>
-      </div>
-
-      <div class="board__load-data" v-if="!dataLoaded">
-        <button @click="$store.dispatch('deploy/setDataLoaded', !dataLoaded)">Загрузить данные</button>
       </div>
     </div>
   </div>
@@ -80,7 +79,19 @@ export default {
   }
 }
 .board__reload-all{
+  display: flex;
   width: 174px;
+  padding: 8px 10px 10px 10px;
+  justify-content: center;
+  align-items: center;
+  i{
+    width: 16px;
+  }
+  span{
+    font-size: 14px;
+    line-height: 24px;
+    padding-left: 8px;
+  }
 }
 .board__data-field{
   padding-top: 30px;

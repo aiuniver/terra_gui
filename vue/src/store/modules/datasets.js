@@ -7,6 +7,7 @@ export default {
     creation: {},
     datasets: [],
     filesSource: [],
+    sourcePath: '',
     filesDrop: [],
     selected: null,
     selectedIndex: null,
@@ -40,6 +41,9 @@ export default {
     SET_FILES_SOURCE(state, value) {
       state.filesSource = value;
     },
+    SET_SOURCE_PATH(state, value) {
+      state.sourcePath = value;
+    },
     SET_FILES_DROP(state, value) {
       state.filesDrop = value;
     },
@@ -54,15 +58,16 @@ export default {
     },
   },
   actions: {
-    async createDataset({ dispatch, state: { inputData } }, data) {
+    async createDataset({ dispatch, state: { inputData, sourcePath } }, data) {
       const newDataset = data
       const inputs = inputData.filter(item => item.layer === 'input')
       const outputs = inputData.filter(item => item.layer === 'output')
+      newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
       console.log(newDataset)
 
-      return await dispatch('axios', { url: '/datasets/source/create/', data: newDataset }, { root: true });
+      return await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
     },
     async choice({ dispatch }, dataset) {
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
@@ -121,6 +126,9 @@ export default {
     },
     setFilesSource({ commit }, value) {
       commit('SET_FILES_SOURCE', value);
+    },
+    setSourcePath({ commit }, value) {
+      commit('SET_SOURCE_PATH', value);
     },
     setFilesDrop({ commit }, value) {
       commit('SET_FILES_DROP', value);

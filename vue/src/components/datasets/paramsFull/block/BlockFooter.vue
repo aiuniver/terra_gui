@@ -9,10 +9,10 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <DoubleSlider />
+      <DoubleSlider :degree="100" />
     </div>
     <div class="block-footer__item">
-      <t-checkbox parse="subsequence">Сохранить последовательность</t-checkbox>
+      <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
