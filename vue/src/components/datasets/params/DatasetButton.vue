@@ -34,6 +34,7 @@ export default {
               { root: true }
             );
             this.$store.dispatch('projects/setProject', { dataset }, { root: true });
+            this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
           }
         } else {
           this.$store.dispatch('messages/setProgress', percent);
@@ -48,7 +49,6 @@ export default {
       this.$store.dispatch('messages/setMessage', {
         message: `Выбран датасет «${name}»`,
       });
-      this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
       const data = await this.$store.dispatch('datasets/choice', { alias, group });
       if (data) {
         this.loading = true
