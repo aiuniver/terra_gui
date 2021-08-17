@@ -4,7 +4,6 @@ from ...extra import ParametersBaseData
 
 
 class ParametersData(ParametersBaseData):
-    separator: Optional[str]
     cols_names: Optional[List[str]]
     one_hot_encoding: Optional[bool] = True
     categorical: Optional[bool] = True

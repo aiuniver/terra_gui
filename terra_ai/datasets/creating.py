@@ -1043,11 +1043,14 @@ class CreateDTS(object):
         instructions['parameters']['y_cols'] = options['cols_names'][0]
         bool_trend = options['trend']
         instructions['parameters']['bool_trend'] = bool_trend
-        transpose = self.user_parameters[1].transpose
+        transpose = self.user_parameters.get(
+            list(self.tags.keys())[list(self.tags.values()).index('dataframe')]).transpose
+        separator = self.user_parameters.get(
+            list(self.tags.keys())[list(self.tags.values()).index('dataframe')]).separator
         step = int(options['step'])
         if transpose:
             tmp_df_ts = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                    sep=options['separator']).T
+                                    sep=separator).T
             tmp_df_ts.columns = tmp_df_ts.iloc[0]
             tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
             tmp_df_ts.index = range(0, len(tmp_df_ts))
@@ -1056,7 +1059,7 @@ class CreateDTS(object):
             array_creator.y_subdf = tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')]
         else:
             array_creator.y_subdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                                sep=options['separator'],
+                                                sep=separator,
                                                 usecols=instructions['parameters']['y_cols'].split(' '))
         if bool_trend:
             trend_limit = options['trend_limit']
@@ -1123,40 +1126,33 @@ class CreateDTS(object):
         self.encoding[put_data.id] = 'ohe' if options['one_hot_encoding'] else None
 
         if 'dataframe' in self.tags.values():
-            transpose = self.user_parameters.get(1).transpose
+            transpose = self.user_parameters.get(
+                list(self.tags.keys())[list(self.tags.values()).index('dataframe')]).transpose
+            separator = self.user_parameters.get(
+                list(self.tags.keys())[list(self.tags.values()).index('dataframe')]).separator
             if not any(self.y_cls):
+                file_name = options['sources_paths'][0]
+                if transpose:
+                    tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=separator).T
+                    tmp_df.columns = tmp_df.iloc[0]
+                    tmp_df.drop(tmp_df.index[[0]], inplace=True)
+                    data = tmp_df.loc[:, options['cols_names'][0].split(' ')]
+                else:
+                    data = pd.read_csv(os.path.join(self.file_folder, file_name),
+                                       usecols=options['cols_names'],
+                                       sep=separator)
+                column = data[options['cols_names'][0]].to_list()
+
                 if options['categorical']:
-                    for file_name in options['sources_paths']:
-                        if transpose:
-                            tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
-                            tmp_df.columns = tmp_df.iloc[0]
-                            tmp_df.drop(tmp_df.index[[0]], inplace=True)
-                            data = tmp_df.loc[:, options['cols_names'][0].split(' ')]
-                        else:
-                            data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                               usecols=options['cols_names'],
-                                               sep=options['separator'])
-                        column = data[options['cols_names'][0]].to_list()
-                        classes_names = []
-                        for elem in column:
-                            if elem not in classes_names:
-                                classes_names.append(elem)
-                        self.classes_names[put_data.id] = classes_names
-                        self.num_classes[put_data.id] = len(classes_names)
-                        for elem in column:
-                            self.y_cls.append(classes_names.index(elem))
+                    classes_names = []
+                    for elem in column:
+                        if elem not in classes_names:
+                            classes_names.append(elem)
+                    self.classes_names[put_data.id] = classes_names
+                    self.num_classes[put_data.id] = len(classes_names)
+                    for elem in column:
+                        self.y_cls.append(classes_names.index(elem))
                 elif options['categorical_ranges']:
-                    file_name = options['sources_paths'][0]
-                    if transpose:
-                        tmp_df = pd.read_csv(os.path.join(self.file_folder, file_name), sep=options['separator']).T
-                        tmp_df.columns = tmp_df.iloc[0]
-                        tmp_df.drop(tmp_df.index[[0]], inplace=True)
-                        data = tmp_df.loc[:, options['cols_names'][0].split(' ')]
-                    else:
-                        data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                                           usecols=options['cols_names'],
-                                           sep=options['separator'])
-                    column = data[options['cols_names'][0]].to_list()
                     self.minvalue_y = min(column)
                     self.maxvalue_y = max(column)
                     if options['auto_ranges']:
@@ -1176,11 +1172,11 @@ class CreateDTS(object):
             else:
                 if transpose:
                     data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                           sep=options['separator'],
+                                           sep=separator,
                                            nrows=1).values
                 else:
                     data = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                           sep=options['separator'],
+                                           sep=separator,
                                            usecols=[0]).values
                 tmp = []
                 for i in data:
@@ -1189,9 +1185,9 @@ class CreateDTS(object):
                 self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
         elif options['sources_paths'][0].endswith('.csv'):
+            file_name = options['sources_paths'][0]
             data = pd.read_csv(os.path.join(self.file_folder, file_name),
-                               usecols=options['cols_names'],
-                               sep=options['separator'])
+                               usecols=options['cols_names'])
             column = data[options['cols_names'][0]].to_list()
             classes_names = []
             for elem in column:
