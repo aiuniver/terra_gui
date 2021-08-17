@@ -192,8 +192,7 @@ from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoi
 
 
 class DatasetLoadData(BaseMixinData):
-    # path: DirectoryPath
-    name: str
+    path: DirectoryPath
     group: DatasetGroupChoice
     alias: str
 

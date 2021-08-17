@@ -26,6 +26,11 @@ class CreateLayerSerializer(serializers.Serializer):
     name = serializers.CharField()
     parameters = serializers.Serializer()
 
+    def validate(self, attrs):
+        _type = attrs.get("type")
+        # print(attrs.get("parameters"))
+        return super().validate(attrs)
+
 
 class CreateInputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(choices=LayerInputTypeChoice.items_tuple())
