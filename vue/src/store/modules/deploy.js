@@ -1,17 +1,22 @@
+import temp from "../temp/deploy";
 export default {
     namespaced: true,
     state: () => ({
-        moduleList: {
-                api_text: "",
-                url: "",
-            }
+      graphicData: temp.data,
+      moduleList: {
+        api_text: "",
+        url: "",
+      }
     }),
     mutations: {
+      SET_MODULE_LIST(state, value) {
+        state.moduleList = value;
+      },
     },
     actions: {
-      async SendDeploy({ state, dispatch }, data) {
+      async SendDeploy({ commit, dispatch }, data) {
         const model = await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        state.moduleList = model;
+        commit("SET_MODULE_LIST", model);
       },
       async CheckProgress({ dispatch }) {
         const data = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });
@@ -19,6 +24,7 @@ export default {
       },
     },
     getters: {
-        getModuleList: ({ moduleList }) => moduleList,
+      getModuleList: ({ moduleList }) => moduleList,
+      getGraphicData: ({ graphicData }) => graphicData,
     }
 }
