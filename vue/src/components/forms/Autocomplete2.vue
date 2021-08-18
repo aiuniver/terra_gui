@@ -8,6 +8,7 @@
       :name="name"
       :disabled="disabled"
       :placeholder="placeholder"
+      :autocomplete="'off'"
       @focus="focus"
       @blur="select(false)"
     />

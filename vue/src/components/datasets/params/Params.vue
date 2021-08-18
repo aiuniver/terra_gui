@@ -64,7 +64,7 @@ export default {
   methods: {
     async createInterval() {
       this.interval = setTimeout(async () => {
-        const data = await this.$store.dispatch('datasets/loadProgress', {});
+        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
         const {
           finished,
           message,
@@ -110,8 +110,9 @@ export default {
       const { mode, value } = this.dataset;
       if (mode && value) {
         this.loading = true;
-        const data = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
-        if (data) {
+        const { data, success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
+        console.log(data)
+        if (data || success) {
           this.createInterval();
         } else {
           this.loading = false;

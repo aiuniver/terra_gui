@@ -29,15 +29,14 @@ export default {
         // console.log('config: ', config)
         const response = await axios(config);
         // console.log('response', response)
-        const { data: { data, error, success } } = response
+        const { error, success } = response.data
         if (success) {
           Vue.prototype.$Loading.finish()
-          return data ?? success;
         } else {
           dispatch('messages/setMessage', {error : JSON.stringify(error, null, 2) })
           Vue.prototype.$Loading.error()
-          return null;
-        }  
+        }
+        return response.data
       } catch (error) {
         dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) })
         Vue.prototype.$Loading.error()

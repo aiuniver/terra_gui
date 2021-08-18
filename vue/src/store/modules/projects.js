@@ -10,7 +10,7 @@ export default {
   },
   actions: {
     async get({ dispatch, commit }) {
-      const data = await dispatch("axios", { url: "/config/" }, { root: true });
+      const { data } = await dispatch("axios", { url: "/config/" }, { root: true });
       console.log(data);
       if (!data) {
         return;
@@ -28,7 +28,7 @@ export default {
     async saveProject({ dispatch }, name) {
       console.log(name);
       const res = { url: "/project/name/", data: name };
-      const data = await dispatch("axios", res, { root: true });
+      const { data } = await dispatch("axios", res, { root: true });
       if (!data) {
         return;
       }

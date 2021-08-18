@@ -49,7 +49,7 @@ export default {
   }),
   methods: {
     async focus() {
-      const data = await this.$store.dispatch("axios", {
+      const { data } = await this.$store.dispatch("axios", {
         url: "/datasets/sources/",
       });
       if (!data) {

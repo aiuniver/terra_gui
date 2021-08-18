@@ -1,22 +1,22 @@
 <template>
   <form class="block-footer" @submit.prevent>
-    <div class="block-footer__item">
+    <!-- <div class="block-footer__item">
       <t-input parse="[name]" small :value="'Новый'">
         Название датасета
       </t-input>
-    </div>
+    </div> -->
     <div class="block-footer__item block-tags">
       <TTags />
     </div>
     <div class="block-footer__item">
       <DoubleSlider :degree="100" />
     </div>
-    <div class="block-footer__item">
+    <!-- <div class="block-footer__item">
       <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
-    </div>
+    </div> -->
     <div class="action">
       <t-button @click.native="getObj">Сформировать</t-button>
     </div>

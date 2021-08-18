@@ -3,6 +3,7 @@ export default {
   namespaced: true,
   state: () => ({
     inputData: [],
+    errors: {},
 
     creation: {},
     datasets: [],
@@ -19,6 +20,9 @@ export default {
   mutations: {
     SET_DATASETS(state, value) {
       state.datasets = [...value];
+    },
+    SET_ERRORS(state, value) {
+      state.errors = {...value};
     },
     SET_INPUT_DATA(state, value) {
       state.inputData = value;
@@ -58,16 +62,22 @@ export default {
     },
   },
   actions: {
-    async createDataset({ dispatch, state: { inputData, sourcePath } }, data) {
+    async createDataset({ commit, dispatch, state: { inputData, sourcePath } }, data) {
       const newDataset = data
       const inputs = inputData.filter(item => item.layer === 'input')
       const outputs = inputData.filter(item => item.layer === 'output')
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
-      console.log(newDataset)
+      // console.log(newDataset)
+      const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
+      if (res?.error) {
+        const { error: { fields: { inputs, outputs } } } = res
+        console.log({ ...inputs, ...outputs })
+        commit('SET_ERRORS', { ...inputs, ...outputs })
 
-      return await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
+      }
+      return res
     },
     async choice({ dispatch }, dataset) {
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
@@ -82,7 +92,7 @@ export default {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },
     async get({ dispatch, commit, rootState }) {
-      const data = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
+      const { data } = await dispatch('axios', { url: '/datasets/info/' }, { root: true });
       if (!data) {
         return;
       }
@@ -169,6 +179,9 @@ export default {
   getters: {
     getInputData({ inputData }) {
       return inputData;
+    },
+    getErrors: ({ errors }) => ( id ) => {
+      return errors?.[id] || {};
     },
     getInputDataByID:
       ({ inputData }) =>
