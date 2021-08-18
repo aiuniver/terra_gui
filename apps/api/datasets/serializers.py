@@ -149,6 +149,8 @@ class CreateSerializer(serializers.Serializer):
 
     def validate_inputs(self, value: list) -> list:
         _errors = {}
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
         for item in value:
             _error = self._validate_layer(CreateLayerInputSerializer, item)
             if len(_error.keys()):
@@ -159,6 +161,8 @@ class CreateSerializer(serializers.Serializer):
 
     def validate_outputs(self, value: list) -> list:
         _errors = {}
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
         for item in value:
             _error = self._validate_layer(CreateLayerOutputSerializer, item)
             if len(_error.keys()):
