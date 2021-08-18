@@ -1,15 +1,13 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
     <!-- <at-tooltip placement="top-left" :content="label"> -->
-    <label class="t-field__label" :for="parse">
+    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">
       <slot>{{ label }}</slot>
     </label>
     <!-- </at-tooltip> -->
-
     <input
       v-model="input"
       :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-      :id="parse"
       :type="type"
       :name="name || parse"
       :value="value"
