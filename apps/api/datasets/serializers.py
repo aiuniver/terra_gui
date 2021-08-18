@@ -29,6 +29,11 @@ class SourceLoadSerializer(serializers.Serializer):
 class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
+    def validate_sources_paths(self, value):
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
+        return value
+
 
 class LayerParametersImageSerializer(LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
@@ -139,7 +144,7 @@ class CreateSerializer(serializers.Serializer):
             )
             if _serializer_class:
                 _serializer_parameters = _serializer_class(
-                    data=_serializer.validated_data.get("parameters", {})
+                    data=value.get("parameters", {})
                 )
                 if not _serializer_parameters.is_valid():
                     _errors.update({"parameters": _serializer_parameters.errors})
