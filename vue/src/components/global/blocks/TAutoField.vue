@@ -19,6 +19,7 @@
       :parse="parse"
       :name="name"
       :key="name + idKey"
+
       inline
       @change="change"
     />
@@ -65,6 +66,7 @@ export default {
     fields: Object,
     id: Number,
     root: Boolean,
+    errors: {}
   },
   data: () => ({
     valueIn: null,
@@ -86,6 +88,9 @@ export default {
         this.valueIn = value;
       });
     },
+    getError(key) {
+      return this.errors?.[key] ? this.errors[key] : ''
+    }
   },
   created() {
     this.valueInt = this.value;

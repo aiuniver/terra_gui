@@ -24,7 +24,7 @@
                 @change="mixinCheck($event, id)"
               />
               <template v-for="(data, index) of input">
-                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" :errors="errors" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
@@ -41,6 +41,7 @@ import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '@/components/forms/MultiSelect.vue';
 import blockMain from '@/mixins/datasets/blockMain';
+// import Error from '@/utils/core/Errors'
 
 export default {
   name: 'BlockMainLeft',
@@ -60,6 +61,7 @@ export default {
         gutterOfEnds: '6px',
       },
     },
+    errors: null
   }),
   computed: {
     ...mapGetters({
@@ -79,6 +81,13 @@ export default {
       console.log(height);
       return height;
     },
+  },
+  mounted() {
+    this.errors = {
+      key: 'sdsdsdds',
+      dssd: 'sdsdsdds',
+      sddd: 'sdsdsdds'
+    }
   },
   methods: {
     addCard() {
