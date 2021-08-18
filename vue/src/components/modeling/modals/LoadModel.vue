@@ -82,13 +82,13 @@ export default {
   },
   methods: {
     async load() {
-      const data = await this.$store.dispatch('modeling/info', {});
+      const { data } = await this.$store.dispatch('modeling/info', {});
       if (data) {
         this.lists = data;
       }
     },
     async getModel(value) {
-      const data = await this.$store.dispatch('modeling/getModel', value);
+      const { data } = await this.$store.dispatch('modeling/getModel', value);
       console.log(data);
       if (data) {
         this.info = data;

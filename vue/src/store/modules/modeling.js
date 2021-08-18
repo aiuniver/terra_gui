@@ -46,7 +46,7 @@ export default {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
     async load({ dispatch }, value) {
-      const model = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
+      const { data: model } = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
       if (model) {
         await dispatch('projects/get', {}, { root: true });
       }
@@ -54,7 +54,7 @@ export default {
     },
     async saveModel({ state: { blocks }, dispatch }) {
       console.log(blocks);
-      const model = await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
+      const { data: model } = await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
       // if (model) {
       //   await dispatch("projects/get",{}, { root: true });
       // }
@@ -62,7 +62,7 @@ export default {
       return model;
     },
     async getModel({ dispatch }, value) {
-      const model = await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
+      const { data: model } = await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
       return model;
     },
     setBlocks({ commit }, value) {

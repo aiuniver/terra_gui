@@ -1,23 +1,35 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <!-- <at-tooltip placement="top-left" :content="label"> -->
-    <label class="t-field__label" :for="parse">
+    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">
       <slot>{{ label }}</slot>
     </label>
-    <!-- </at-tooltip> -->
 
-    <input
+    <input v-if="!error"
       v-model="input"
       :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-      :id="parse"
       :type="type"
       :name="name || parse"
       :value="value"
       :disabled="disabled"
       :data-degree="degree"
+      :autocomplete="'off'"
       @blur="change"
       @focus="$emit('focus', $event)"
     />
+    <at-tooltip v-else placement="top-left" :content="error">
+      <input
+        v-model="input"
+        :class="['t-field__input', { small: small }, { 't-field__error': error }]"
+        :type="type"
+        :name="name || parse"
+        :value="value"
+        :disabled="disabled"
+        :data-degree="degree"
+        :autocomplete="'off'"
+        @blur="change"
+        @focus="$emit('focus', $event)"
+      />
+    </at-tooltip>
   </div>
 </template>
 
@@ -124,7 +136,7 @@ export default {
     line-height: 1.25;
     font-size: 0.75rem;
   }
-  > input {
+  .t-field__input {
     height: 24px;
     font-size: 12px;
     line-height: 24px;

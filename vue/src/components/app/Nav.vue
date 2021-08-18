@@ -33,7 +33,7 @@ export default {
   methods: {
     nav(path) {
       if (!this.project.dataset) {
-        if (path === "/modeling" || path === "/datasets") {
+        if (path === "/modeling" || path === "/datasets" || path === "/deploy") {
           if (this.$route.path !== path) {
             this.$router.push(path);
           }

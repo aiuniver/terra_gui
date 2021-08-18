@@ -2,16 +2,17 @@
   <div class="board">
     <div class="wrapper">
       <div class="content">
-        <button class="board__reload-all">
-          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
-          <span>Перезагрузить все</span>
-        </button>
-        <div class="board__data-field">
-          <div class="board__title">Исходные данные / Предсказанные данные</div>
-          <div class="board__data">
-            <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
-          </div>
-        </div>
+<!--        <button class="board__reload-all">-->
+<!--          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>-->
+<!--          <span>Перезагрузить все</span>-->
+<!--        </button>-->
+<!--        <div class="board__data-field">-->
+<!--          <div class="board__title">Исходные данные / Предсказанные данные</div>-->
+<!--          <div class="board__data">-->
+<!--            <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>-->
+<!--          </div>-->
+<!--        </div>-->
+        <Table/>
       </div>
     </div>
   </div>
@@ -19,11 +20,12 @@
 
 <script>
 import { mapGetters } from "vuex";
-import IndexCard from "./IndexCard";
-
+// import IndexCard from "./IndexCard";
+import Table from "./Table";
 export default {
   components: {
-    IndexCard
+    // IndexCard
+    Table
   },
   data: () => ({
     loaded: false,
@@ -42,7 +44,7 @@ export default {
           data: "Мастер и Маргарита, Михаил Афанасьевич Булгаков"
         }
       },
-    ]
+    ],
   }),
   computed: {
     ...mapGetters({
