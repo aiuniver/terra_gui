@@ -68,29 +68,14 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
 class CreateLayerSerializer(serializers.Serializer):
     id = serializers.IntegerField(min_value=1)
     name = serializers.CharField()
-    parameters = serializers.DictField()
-
-    def validate(self, attrs):
-        _type = attrs.get("type")
-        _classname = f"LayerParameters{_type}Serializer"
-        _serializer_class = getattr(
-            sys.modules.get(__name__, None), f"LayerParameters{_type}Serializer", None
-        )
-        if _serializer_class:
-            _serializer = _serializer_class(data=attrs.get("parameters"))
-            _serializer.is_valid(raise_exception=True)
-            _parameters = _serializer.data
-        else:
-            _parameters = {}
-        attrs.update({"parameters": _parameters})
-        return super().validate(attrs)
+    parameters = serializers.DictField(required=False)
 
 
-class CreateInputSerializer(CreateLayerSerializer):
+class CreateLayerInputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(choices=LayerInputTypeChoice.items_tuple())
 
 
-class CreateOutputSerializer(CreateLayerSerializer):
+class CreateLayerOutputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(choices=LayerOutputTypeChoice.items_tuple())
 
 
@@ -132,8 +117,52 @@ class CreateSerializer(serializers.Serializer):
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
     use_generator = serializers.BooleanField(default=False)
-    inputs = serializers.ListSerializer(child=CreateInputSerializer())
-    outputs = serializers.ListSerializer(child=CreateOutputSerializer())
+    inputs = serializers.ListSerializer(child=serializers.DictField())
+    outputs = serializers.ListSerializer(child=serializers.DictField())
 
     def get_alias(self, data):
         return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
+
+    def _validate_layer(self, test_class, value) -> dict:
+        _errors = {}
+        _serializer = test_class(data=value)
+        _id = value.get("id", 0)
+        _type = value.get("type")
+        if not _serializer.is_valid():
+            _errors.update(**_serializer.errors)
+        else:
+            _classname = f"LayerParameters{_type}Serializer"
+            _serializer_class = getattr(
+                sys.modules.get(__name__, None),
+                f"LayerParameters{_type}Serializer",
+                None,
+            )
+            if _serializer_class:
+                _serializer_parameters = _serializer_class(
+                    data=_serializer.validated_data.get("parameters", {})
+                )
+                if not _serializer_parameters.is_valid():
+                    _errors.update({"parameters": _serializer_parameters.errors})
+            else:
+                _errors.update({"parameters": ["Нет класса для обработки параметров"]})
+        return _errors
+
+    def validate_inputs(self, value: list) -> list:
+        _errors = {}
+        for item in value:
+            _error = self._validate_layer(CreateLayerInputSerializer, item)
+            if len(_error.keys()):
+                _errors.update({item.get("id", 0): _error})
+        if _errors:
+            raise serializers.ValidationError(_errors)
+        return value
+
+    def validate_outputs(self, value: list) -> list:
+        _errors = {}
+        for item in value:
+            _error = self._validate_layer(CreateLayerOutputSerializer, item)
+            if len(_error.keys()):
+                _errors.update({item.get("id", 0): _error})
+        if _errors:
+            raise serializers.ValidationError(_errors)
+        return value
