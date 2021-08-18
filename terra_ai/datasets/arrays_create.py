@@ -10,6 +10,7 @@ from gensim.models.word2vec import Word2Vec
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 import librosa.feature as librosa_feature
+from pydantic.color import Color
 
 from ..data.datasets.creations.layers.input.types.Video import FrameModeChoice, FillModeChoice
 from ..data.datasets.extra import LayerNetChoice
@@ -78,14 +79,16 @@ class CreateArray(object):
 
         return array  # .astype('float32')
 
-    def create_video(self, file_folder: str, sample: dict, **options) -> np.ndarray:
+    def create_video(self, file_folder: str, video: str, slicing: list, **options) -> np.ndarray:
 
         """
         Args:
             file_folder: str
                 Путь к папке.
-            sample: dict
-                Путь к файлу: [начало, конец]
+            video: str
+                Путь к файлу.
+            slicing: list
+                [начало: int, конец: int].
             **options: Параметры обработки:
                 height: int
                     Высота кадра.
@@ -140,7 +143,6 @@ class CreateArray(object):
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
             elif fill_mode == FillModeChoice.last_frames:
-                # cur_frames = video_array.shape[0]
                 if total_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
                 elif total_frames <= frames_to_add:
@@ -155,15 +157,14 @@ class CreateArray(object):
 
         array = []
         shape = (options['height'], options['width'])
-        [[file_name, video_range]] = sample.items()
-        frames_count = video_range[1] - video_range[0]
+        frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(file_folder, file_name))
+        cap = cv2.VideoCapture(os.path.join(file_folder, video))
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
-        cap.set(1, video_range[0])
+        cap.set(1, slicing[0])
         try:
             for _ in range(frames_count):
                 ret, frame = cap.read()
@@ -192,9 +193,12 @@ class CreateArray(object):
 
         """
         Args:
-            _
-            text: str Название файла.
-            slicing: list Индексы рассматриваемой части последовательности
+            _: None
+                Путь к файлу.
+            text: str
+                Отрывок текста.
+            slicing: list
+                [начало: int, конец: int].
             **options: Параметры обработки текста:
                 embedding: Tokenizer object, bool
                     Перевод в числовую последовательность.
@@ -210,11 +214,7 @@ class CreateArray(object):
         """
 
         array = []
-        # [[filepath, slicing]] = sample.items()
-        # text = self.txt_list[options['put']][filepath].split(' ')[slicing[0]:slicing[1]]
         text = text.split(' ')
-        print(len(text))
-        print(slicing)
         if slicing[1] - slicing[0] < len(text):
             text = text[slicing[0]:slicing[1]]
 
@@ -234,13 +234,12 @@ class CreateArray(object):
 
         return array
 
-    def create_audio(self, file_folder: str, sample: dict, **options) -> np.ndarray:
+    def create_audio(self, file_folder: str, audio: str, slicing: list, **options) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        [[filepath, slicing]] = sample.items()
-        y, sr = librosa_load(path=os.path.join(file_folder, filepath), sr=options.get('sample_rate'),
+        y, sr = librosa_load(path=os.path.join(file_folder, audio), sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
@@ -264,7 +263,7 @@ class CreateArray(object):
     def create_dataframe(self, _, row_number: int, **options):
         """
                 Args:
-                    _
+                    _: путь к файлу,
                     row_number: номер строки с сырыми данными датафрейма,
                     **options: Параметры обработки колонок:
                         MinMaxScaler: лист индексов колонок для обработки
@@ -337,7 +336,8 @@ class CreateArray(object):
 
         return array
 
-    def create_classification(self, _, class_name, **options):
+    @staticmethod
+    def create_classification(_, class_name, **options):
 
         index = options['classes_names'].index(class_name)
         if options['one_hot_encoding']:
@@ -352,13 +352,14 @@ class CreateArray(object):
         array = np.array(index)
         return array
 
-    def create_segmentation(self, file_folder, image_path: str, **options: dict) -> np.ndarray:
+    @staticmethod
+    def create_segmentation(file_folder: str, image_path: str, **options: dict) -> np.ndarray:
 
         """
 
         Args:
-            file_folder
-            image_path: str
+            file_folder: str
+                Путь к папке
                 Путь к файлу
             **options: Параметры сегментации:
                 mask_range: int
@@ -386,8 +387,8 @@ class CreateArray(object):
             cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
             cl_mask = cl_mask.reshape(options['shape'][0], options['shape'][1], cl_mask.shape[-1])
             mask_ohe = np.zeros(options['shape'])
-            for k, rgb in enumerate(options['classes_colors']):
-                # rgb = rgb.as_rgb_tuple()
+            for k, color in enumerate(options['classes_colors']):
+                rgb = Color(color).as_rgb_tuple()
                 mask = np.zeros(options['shape'])
 
                 for j, cl_rgb in enumerate(cl_cent):
@@ -409,13 +410,13 @@ class CreateArray(object):
 
         return array
 
-    def create_text_segmentation(self, _, sample: dict, **options):
+    def create_text_segmentation(self, _, text: str, slicing: list, **options):
 
-        [[filepath, slicing]] = sample.items()
-        slicing = [int(x) for x in slicing]  # [int(slicing[0]), int(slicing[1])]
         array = []
+        if slicing[1] - slicing[0] < len(text):
+            text = text[slicing[0]:slicing[1]]
 
-        for elem in self.txt_list[options['put']][filepath][slicing[0]:slicing[1]]:
+        for elem in text:
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
                 for idx in elem:
@@ -428,7 +429,7 @@ class CreateArray(object):
     def create_timeseries(self, _, row_number, **options):
         """
             Args:
-                _
+                _: путь к файлу,
                 row_number: номер строки с сырыми данными для предсказания значения,
                 **options: Параметры обработки колонок:
                     depth: количество значений для предсказания
