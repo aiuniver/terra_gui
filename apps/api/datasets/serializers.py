@@ -123,14 +123,14 @@ class CreateSerializer(serializers.Serializer):
     def get_alias(self, data):
         return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
 
-    def _validate_layer(self, test_class, value) -> dict:
+    def _validate_layer(self, create_class, value) -> dict:
         _errors = {}
-        _serializer = test_class(data=value)
-        _id = value.get("id", 0)
-        _type = value.get("type")
+        _serializer = create_class(data=value)
         if not _serializer.is_valid():
             _errors.update(**_serializer.errors)
-        else:
+        _id = value.get("id", 0)
+        _type = value.get("type")
+        if _id and _type:
             _classname = f"LayerParameters{_type}Serializer"
             _serializer_class = getattr(
                 sys.modules.get(__name__, None),
