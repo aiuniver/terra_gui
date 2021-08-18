@@ -16,3 +16,11 @@ def validate_directory_path(value: str) -> str:
     if not os.path.isdir(value):
         raise ValidationError("Неверный путь к директории")
     return value
+
+
+def validate_directory_or_file_path(value: str) -> str:
+    if not value:
+        return value
+    if not os.path.isdir(value) and not os.path.isfile(value):
+        raise ValidationError("Неверный путь к директории или файлу")
+    return value
