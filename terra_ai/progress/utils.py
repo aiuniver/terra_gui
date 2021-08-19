@@ -48,6 +48,7 @@ def pack(progress_name: str, title: str, source: Path) -> Path:
                     pool(progress_name, percent=__num / quantity * 100)
     except Exception as error:
         raise Exception(error)
+    os.chmod(zip_destination.name, 0o644)
     return zip_destination
 
 
