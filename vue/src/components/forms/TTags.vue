@@ -4,10 +4,28 @@
     <div class="tags">
       <button class="tags__add" type="button">
         <i class="tags__add--icon t-icon icon-tag-plus" @click="create"></i>
-        <input type="text" class="tags__add--input" :disabled="tags.length >= 3" :placeholder="'Добавить'" @keypress.enter.prevent="create" />
+        <input
+          type="text"
+          class="tags__add--input"
+          :disabled="tags.length >= 3"
+          :placeholder="'Добавить'"
+          @keypress.enter.prevent="create"
+        />
       </button>
-      <input v-show="false" v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][][name]" type="text" class="tags__item" />
-    
+      <template v-for="({ value }, i) in tags">
+      <input
+        :key="'tag_' + i"
+        :value="value"
+        :data-index="i"
+        name="[tags][][name]"
+        type="text"
+        :class="['tags__item']"
+        :style="{ width: ((value.length + 1) * 8) + 'px' }"
+        @input="change"
+        @blur="blur"
+      />
+      <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
+      </template>
     </div>
   </div>
 </template>
@@ -37,17 +55,26 @@ export default {
   }),
   methods: {
     create() {
-      const el = this.$el.getElementsByClassName('tags__add--input')?.[0]
-      console.log(el.value)
-      if (el.value && this.tags.length < 3) {
+      const el = this.$el.getElementsByClassName('tags__add--input')?.[0];
+      console.log(el.value);
+      if (el.value && el.value.length > 3 && this.tags.length < 3) {
         this.tags.push({ value: el.value });
         this.tags = [...this.tags];
         el.value = '';
       }
     },
-    inputLength(e) {
-      e.target.style.width = (e.target.value.length + 1) * 8 + 'px';
+    change(e) {
+      const index = e.target.dataset.index
+      console.log(index)
+      this.tags[+index].value = e.target.value
     },
+    blur(e) {
+      const index = e.target.dataset.index
+      if (e.target.value.length < 3 ) {
+        this.tags = this.tags.filter((item, i) => i !== +index)
+      }
+      console.log(index)
+    }
   },
 };
 </script>
@@ -120,6 +147,10 @@ export default {
     font-weight: normal;
     line-height: 24px;
     margin-left: 8px;
+    text-align: center;
+  }
+  &__error {
+    border-color: red;
   }
   &__add {
     background: #242f3d;
@@ -145,6 +176,21 @@ export default {
       font-weight: normal;
       line-height: 24px;
       margin-left: 8px;
+    }
+    &--span {
+      background: #242f3d;
+      height: 24px;
+      padding: 2px 8px;
+      box-shadow: none;
+      color: #a7bed3;
+      display: flex;
+      align-items: center;
+      border: 1px solid #6c7883;
+      border-radius: 4px;
+      margin-left: 10px;
+      font-size: 12px;
+      font-weight: normal;
+      line-height: 24px;
     }
   }
 }
