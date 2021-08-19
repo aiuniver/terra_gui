@@ -281,8 +281,8 @@ class CreateArray(object):
         else:
             length = 1
         row_number = int(row_number)
-        row = self.dataframe.iloc[list(range(row_number, row_number + length)),
-                                  list(range(len(self.df.columns)))].values.tolist()
+        row = self.df_ts.iloc[list(range(row_number, row_number + length)),
+                                  list(range(len(self.columns)))].values.tolist()
         if options['xlen_step']:
             row = row[0]
         if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
@@ -361,6 +361,7 @@ class CreateArray(object):
             file_folder: str
                 Путь к папке
                 Путь к файлу
+            image_path: str
             **options: Параметры сегментации:
                 mask_range: int
                     Диапазон для каждого из RGB каналов.
@@ -445,9 +446,9 @@ class CreateArray(object):
 
         else:
             row_number = int(row_number)
-            array = self.dataframe.loc[
+            array = self.df_ts.loc[
                 list(range(row_number + options['length'], row_number + options['length'] + options['depth'])),
-                list(self.y_subdf.columns)].values
+                list(self.y_cols)].values
 
             if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
                 array = self.scaler[options['put']].transform(array)
