@@ -11,6 +11,7 @@ from apps.plugins.frontend.choices import (
     LayerNetChoice,
     LayerScalerChoice,
     LayerTextModeChoice,
+    LayerPrepareMethodChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -49,25 +50,29 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
     max_words = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
+    pymorphy = serializers.BooleanField(default=False)
+    embedding = serializers.BooleanField(default=False)
+    bag_of_words = serializers.BooleanField(default=False)
+    word_to_vec = serializers.BooleanField(default=False)
+    prepare_method = serializers.ChoiceField(
+        choices=LayerPrepareMethodChoice.items_tuple()
+    )
+    word_to_vec_size = serializers.IntegerField(required=False, min_value=1)
 
-    # def run_validation(self, data):
-    #     self.max_words.required = True
-    #     return super().run_validation(data)
+    def __init__(self, instance=None, data=None, **kwargs):
+        _text_mode = data.get("text_mode")
+        if _text_mode == LayerTextModeChoice.completely.name:
+            self.fields.get("max_words").required = True
+        elif _text_mode == LayerTextModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
 
-    # def validate(self, attrs):
-    #     _errors = {}
-    #     text_mode = attrs.get("text_mode")
-    #     if text_mode == LayerTextModeChoice.completely.name:
-    #         if not attrs.get("max_words"):
-    #             _errors.update(
-    #                 {"max_words": self.get_fields().get("max_words").fail("required")}
-    #             )
-    #
-    #     elif text_mode == LayerTextModeChoice.length_and_step.name:
-    #         self.get_fields().get("max_words").required = True
-    #     if len(_errors.keys()):
-    #         raise ValidationError(_errors)
-    #     return super().validate(attrs)
+        _prepare_method = data.get("prepare_method")
+        if _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
+            self.fields.get("word_to_vec_size").required = True
+        data.update({_prepare_method: True})
+
+        super().__init__(instance=instance, data=data, **kwargs)
 
 
 class CreateLayerSerializer(serializers.Serializer):
