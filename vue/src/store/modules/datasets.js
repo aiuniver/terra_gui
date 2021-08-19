@@ -173,6 +173,14 @@ export default {
         inputData.filter(item => item.id !== id)
       );
     },
+    cleanError({ state: { errors }}, { id, name }) {
+      if(errors[id][name]) {
+        errors[id][name] = ''
+      }
+      if(errors[id]['parameters'][name]) {
+        errors[id]['parameters'][name] = ''
+      }
+    },
   },
   getters: {
     getInputData({ inputData }) {

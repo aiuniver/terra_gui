@@ -8,7 +8,7 @@
       <span
         :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
         :title="input"
-        @click="show = true"
+        @click="click"
       >
         {{ input || placeholder }}
       </span>
@@ -54,7 +54,6 @@ export default {
     disabled: Boolean,
     inline: Boolean,
     value: Array,
-    error: String,
   },
   data: () => ({
     selected: [],
@@ -62,6 +61,13 @@ export default {
     pagination: 0,
   }),
   computed: {
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
+    error() {
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
+    },
     input() {
       return this.selected.map(item => item.label).join();
     },
@@ -73,6 +79,13 @@ export default {
     },
   },
   methods: {
+    click() {
+      this.show = true;
+      if (this.error) {
+        console.log(this.id, this.name);
+        this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
+      }
+    },
     active({ value }) {
       return !!this.selected.find(item => item.value === value);
     },
@@ -97,7 +110,7 @@ export default {
   created() {
     console.log(this.value);
     console.log(this.filterList.filter(item => item));
-    const value = this.value
+    const value = this.value;
     if (Array.isArray(value)) {
       this.selected = this.filterList.filter(item => value.includes(item.value));
     }

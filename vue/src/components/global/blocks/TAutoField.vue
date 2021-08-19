@@ -11,6 +11,7 @@
       :error="error"
       inline
       @change="change"
+      @cleanError="cleanError"
     />
     <t-input
       v-if="type === 'number' || type === 'text'"
@@ -23,6 +24,7 @@
       :error="error"
       inline
       @change="change"
+      @cleanError="cleanError"
     />
     <t-checkbox
       v-if="type === 'checkbox'"
@@ -35,6 +37,7 @@
       :key="name + idKey"
       :event="event"
       :error="error"
+      @cleanError="cleanError"
       @change="change"
     />
     <t-select
@@ -46,10 +49,18 @@
       :name="name"
       :key="name + idKey"
       :error="error"
+      @cleanError="cleanError"
       @change="change"
     />
     <template v-for="(data, i) of dataFields">
-      <t-auto-field v-bind="data" :idKey="idKey + i" :key="idKey + i" :id="id" :parameters="parameters" @change="$emit('change', $event)" />
+      <t-auto-field
+        v-bind="data"
+        :idKey="idKey + i"
+        :key="idKey + i"
+        :id="id"
+        :parameters="parameters"
+        @change="$emit('change', $event)"
+      />
     </template>
   </div>
 </template>
@@ -69,7 +80,7 @@ export default {
     fields: Object,
     id: Number,
     root: Boolean,
-    parameters: Object
+    parameters: Object,
   },
   data: () => ({
     valueIn: null,
@@ -82,8 +93,8 @@ export default {
       return this.$store.getters['datasets/getErrors'](this.id);
     },
     error() {
-      const key = this.name
-      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || ''
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
     dataFields() {
       if (!!this.fields && !!this.fields[this.valueIn]) {
@@ -100,6 +111,10 @@ export default {
       this.$nextTick(() => {
         this.valueIn = value;
       });
+    },
+    cleanError() {
+      console.log(this.id, this.name);
+      this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
     },
   },
   created() {

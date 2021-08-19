@@ -14,7 +14,7 @@
     <div class="card-layer__body">
       <scrollbar :ops="ops">
         <div class="card-layer__body--inner" ref="cardBody">
-          <slot :parameters="data" />
+          <slot :data="data" />
         </div>
       </scrollbar>
     </div>
@@ -48,8 +48,12 @@ export default {
     },
   }),
   computed: {
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
     data() {
-      return { ...this.parameters, name: this.name, type: this.type }
+      console.log(this.errors)
+      return { errors: this.errors, parameters:{ ...this.parameters, name: this.name, type: this.type }}
     },
     bg() {
       return { backgroundColor: this.color };

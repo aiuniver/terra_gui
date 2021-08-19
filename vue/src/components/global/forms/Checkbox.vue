@@ -1,9 +1,11 @@
 <template>
-  <div :class="['t-field', { 't-inline': inline} ]">
-    <label class="t-field__label" @click="checVal = ! checVal"><slot>{{ label }}</slot></label>
+  <div :class="['t-field', { 't-inline': inline }]">
+    <label class="t-field__label" @click="checVal = !checVal">
+      <slot>{{ label }}</slot>
+    </label>
     <div class="t-field__switch">
       <input
-        v-model="checVal" 
+        v-model="checVal"
         class="t-field__input"
         :checked="checVal ? 'checked' : ''"
         type="checkbox"
@@ -23,7 +25,7 @@ export default {
   props: {
     label: {
       type: String,
-      default: "Label",
+      default: 'Label',
     },
     inline: Boolean,
     value: Boolean,
@@ -33,7 +35,7 @@ export default {
     event: {
       type: Array,
       default: () => [],
-    }
+    },
   },
   data: () => ({
     checVal: false,
@@ -41,12 +43,16 @@ export default {
   methods: {
     change(e) {
       const value = e.target.checked;
-      this.$emit("change", { name: this.name, value });
+      this.$emit('change', { name: this.name, value });
+      if (this.error) {
+        console.log(this.error);
+        this.$emit('cleanError', true);
+      }
     },
   },
   created() {
-    this.checVal = this.value
-  }
+    this.checVal = this.value;
+  },
 };
 </script>
 
@@ -81,7 +87,7 @@ export default {
     }
     &:checked + span:before {
       transform: translateX(12px);
-      background-color: #65B9F4;
+      background-color: #65b9f4;
     }
   }
   &__switch {
@@ -91,7 +97,7 @@ export default {
 
     span {
       background-color: #242f3d;
-      border-color: #6C7883 !important;
+      border-color: #6c7883 !important;
       display: block;
       position: relative;
       height: 100%;
@@ -102,7 +108,7 @@ export default {
       &:before {
         background-color: #6c7883;
         display: block;
-        content: "";
+        content: '';
         height: 10px;
         width: 10px;
         position: absolute;

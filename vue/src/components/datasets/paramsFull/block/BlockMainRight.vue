@@ -15,12 +15,13 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
-              <template v-slot:default="{ parameters }">
+              <template v-slot:default="{ data:{ parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
                   name="sources_paths"
                   :value="parameters.sources_paths"
                   :lists="mixinFiles"
+                  :errors="errors"
                   label="Выберите путь"
                   inline
                   @change="mixinCheck($event, inputData.id)"
@@ -29,6 +30,7 @@
                   <t-auto-field
                     v-bind="data"
                     :parameters="parameters"
+                    :errors="errors"
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"

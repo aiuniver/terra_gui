@@ -14,7 +14,7 @@
       :data-degree="degree"
       :autocomplete="'off'"
       @blur="change"
-      @focus="$emit('focus', $event)"
+      @focus="focus"
     />
   </div>
 </template>
@@ -58,6 +58,13 @@ export default {
     },
   },
   methods: {
+    focus(e) {
+      this.$emit('focus', e);
+      if (this.error) {
+        console.log(this.error);
+        this.$emit('cleanError', true);
+      }
+    },
     change(e) {
       // console.log(e)
       if (this.isChange) {

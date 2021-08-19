@@ -9,6 +9,7 @@
       size="small"
       style="width: 100px"
       @on-change="change"
+      @click="cleanError"
       :disabled="disabled"
     >
       <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
@@ -61,6 +62,11 @@ export default {
     },
   },
   methods: {
+    cleanError() {
+      if (this.error) {
+        this.$emit('cleanError')
+      }
+    },
     change(value) {
       this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
