@@ -14,4 +14,5 @@ class ParametersData(ParametersBaseData):
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     put: Optional[str]
     object_detection: Optional[bool] = False
+    deploy: Optional[bool] = False
     augmentation: Optional[AugmentationData]
