@@ -17,6 +17,7 @@ from apps.plugins.frontend.choices import (
     LayerVideoFillModeChoice,
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
+    LayerDataframeAlignBaseMethodChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -118,6 +119,40 @@ class LayerParametersVideoSerializer(LayerParametersSerializer):
         elif _video_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersDataframeSerializer(LayerParametersSerializer):
+    separator = serializers.CharField()
+    transpose = serializers.BooleanField(default=False)
+    align_base = serializers.BooleanField(default=False)
+    align_base_method = serializers.ChoiceField(
+        required=False, choices=LayerDataframeAlignBaseMethodChoice.items_tuple()
+    )
+    example_length = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+    scaler = serializers.ChoiceField(
+        required=False, choices=LayerScalerChoice.items_tuple()
+    )
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        if data.get("align_base"):
+            self.fields.get("align_base_method").required = True
+            self.fields.get("scaler").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersClassificationSerializer(LayerParametersSerializer):
+    categorical = serializers.BooleanField(default=True)
+    categorical_ranges = serializers.BooleanField(default=False)
+    ranges = serializers.CharField(required=False)
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        if data.get("categorical_ranges"):
+            self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
 

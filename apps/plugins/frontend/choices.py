@@ -126,13 +126,30 @@ class LayerDataframeAlignBaseMethodChoice(str, Enum):
     pad_sequences = "Pad sequences"
     xlen_step = "XLen step"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(
+                lambda item: (item.name, item.value),
+                LayerDataframeAlignBaseMethodChoice,
+            )
+        )
+
 
 class LayerDefineClassesChoice(str, Enum):
     handmade = "Ручной ввод"
     autosearch = "Автоматический поиск"
     annotation = "Файл аннотации"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerDefineClassesChoice))
+
 
 class LayerYoloVersionChoice(str, Enum):
     v3 = "V3"
     v4 = "V4"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
