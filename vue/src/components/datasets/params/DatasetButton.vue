@@ -21,7 +21,7 @@ export default {
   methods: {
     createInterval() {
       this.interval = setTimeout(async () => {
-        const data = await this.$store.dispatch('datasets/choiceProgress', {});
+        const { data } = await this.$store.dispatch('datasets/choiceProgress', {});
         const { finished, message, percent, data: dataset } = data;
         if (!data || finished) {
           this.$store.dispatch('messages/setProgressMessage', message);
@@ -49,7 +49,7 @@ export default {
       this.$store.dispatch('messages/setMessage', {
         message: `Выбран датасет «${name}»`,
       });
-      const data = await this.$store.dispatch('datasets/choice', { alias, group });
+      const { data } = await this.$store.dispatch('datasets/choice', { alias, group });
       if (data) {
         this.loading = true
         this.createInterval();

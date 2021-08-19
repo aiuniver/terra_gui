@@ -25,6 +25,7 @@ class ParametersData(ParametersBaseData):
     step: Optional[PositiveInt]
     max_words: Optional[PositiveInt]
     put: Optional[str]
+    deploy: Optional[bool] = False
 
     prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
 

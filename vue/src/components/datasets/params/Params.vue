@@ -12,7 +12,7 @@
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
-          <t-button @click.native="download" :loading="loading" :disabled="Object.keys(dataset).length == 0"/>
+          <t-button @click.native="download" :loading="loading" :disabled="disabled" />
         </div>
       </div>
     </div>
@@ -45,15 +45,12 @@ export default {
     ...mapGetters({
       settings: 'datasets/getSettings',
     }),
-    inputLayer() {
-      const int = +this.inputs;
-      const settings = this.settings;
-      return int > 0 && int < 100 && Object.keys(settings).length ? int : 0;
-    },
-    outputLayer() {
-      const int = +this.outputs;
-      const settings = this.settings;
-      return int > 0 && int < 100 && Object.keys(settings).length ? int : 0;
+    disabled() {
+      if (Object.keys(this.dataset).length === 0) {
+        return true
+      } else {
+        return this.tab !== this.dataset.mode;
+      }
     },
     full: {
       set(val) {
@@ -67,7 +64,7 @@ export default {
   methods: {
     async createInterval() {
       this.interval = setTimeout(async () => {
-        const data = await this.$store.dispatch('datasets/loadProgress', {});
+        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
         const {
           finished,
           message,
@@ -113,10 +110,12 @@ export default {
       const { mode, value } = this.dataset;
       if (mode && value) {
         this.loading = true;
-        const data = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
-        console.log(data);
-        if (data) {
+        const { data, success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
+        console.log(data)
+        if (data || success) {
           this.createInterval();
+        } else {
+          this.loading = false;
         }
       } else {
         this.$store.dispatch('messages/setMessage', {

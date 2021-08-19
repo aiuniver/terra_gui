@@ -8,6 +8,7 @@
       :parse="parse"
       :name="name"
       :key="name + idKey"
+      :error="error"
       inline
       @change="change"
     />
@@ -19,7 +20,7 @@
       :parse="parse"
       :name="name"
       :key="name + idKey"
-
+      :error="error"
       inline
       @change="change"
     />
@@ -33,6 +34,7 @@
       :name="name"
       :key="name + idKey"
       :event="event"
+      :error="error"
       @change="change"
     />
     <t-select
@@ -43,6 +45,7 @@
       :parse="parse"
       :name="name"
       :key="name + idKey"
+      :error="error"
       @change="change"
     />
     <template v-for="(data, i) of dataFields">
@@ -66,12 +69,18 @@ export default {
     fields: Object,
     id: Number,
     root: Boolean,
-    errors: {}
   },
   data: () => ({
     valueIn: null,
   }),
   computed: {
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
+    error() {
+      const key = this.name
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || ''
+    },
     dataFields() {
       if (!!this.fields && !!this.fields[this.valueIn]) {
         return this.fields[this.valueIn];
@@ -88,9 +97,6 @@ export default {
         this.valueIn = value;
       });
     },
-    getError(key) {
-      return this.errors?.[key] ? this.errors[key] : ''
-    }
   },
   created() {
     this.valueInt = this.value;
