@@ -44,6 +44,9 @@ export default {
       this.$emit("change", { name: this.name, value });
     },
   },
+  created() {
+    this.checVal = this.value
+  }
 };
 </script>
 

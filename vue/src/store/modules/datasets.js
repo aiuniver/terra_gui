@@ -150,12 +150,12 @@ export default {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer)]);
     },
-    updateInputData({ state: { inputData } }, { id, name, value, root }) {
+    updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
       if (index !== -1) {
         if (root && name === 'type') {
           const obj = inputData[index].parameters.sources_paths || []
-          inputData[index].parameters = {}
+          // inputData[index].parameters = {}
           inputData[index].parameters.sources_paths = obj
         }
         if (root) {
@@ -163,6 +163,7 @@ export default {
         } else {
           inputData[index].parameters[name] = value
         }
+        commit('SET_INPUT_DATA', [...inputData]);
         // console.log(inputData)
       }
     },
@@ -175,6 +176,7 @@ export default {
   },
   getters: {
     getInputData({ inputData }) {
+      // console.log(inputData)
       return inputData;
     },
     getErrors: ({ errors }) => ( id ) => {
@@ -183,7 +185,7 @@ export default {
     getInputDataByID:
       ({ inputData }) =>
       id => {
-        console.log(inputData, id);
+        // console.log(inputData, id);
         return inputData.find(item => item.id === id);
       },
     getTypeInput({ creation: { input } }) {

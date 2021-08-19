@@ -3,7 +3,7 @@
     <label class="t-multi-select__label">
       <slot>{{ label }}</slot>
     </label>
-    <div class="t-multi-select__input">
+    <div :class="['t-multi-select__input', { 't-multi-select__error': error }]">
       <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
       <span
         :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
@@ -53,7 +53,8 @@ export default {
     },
     disabled: Boolean,
     inline: Boolean,
-    value: String,
+    value: Array,
+    error: String,
   },
   data: () => ({
     selected: [],
@@ -92,6 +93,14 @@ export default {
       }
       this.$emit('change', this.selected);
     },
+  },
+  created() {
+    console.log(this.value);
+    console.log(this.filterList.filter(item => item));
+    const value = this.value
+    if (Array.isArray(value)) {
+      this.selected = this.filterList.filter(item => value.includes(item.value));
+    }
   },
 };
 </script>
@@ -146,6 +155,9 @@ export default {
     &:hover i {
       opacity: 1;
     }
+  }
+  &__error {
+    border-color: #b53b3b;
   }
   &__content {
     position: absolute;

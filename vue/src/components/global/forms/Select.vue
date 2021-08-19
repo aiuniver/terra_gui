@@ -3,19 +3,15 @@
     <label class="t-field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
-      class="t-field__select"
       v-model="select"
+      :class="['t-field__select', { 't-field__error': error }]"
       clearable
       size="small"
       style="width: 100px"
       @on-change="change"
       :disabled="disabled"
     >
-      <at-option
-        v-for="({ label, value }, key) in items"
-        :key="'item_' + key"
-        :value="value"
-      >
+      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
         {{ label }}
       </at-option>
     </at-select>
@@ -25,15 +21,15 @@
 <script>
 // import { bus } from '@/main'
 export default {
-  name: "t-select",
+  name: 't-select',
   props: {
     label: {
       type: String,
-      default: "Label",
+      default: 'Label',
     },
     type: {
       type: String,
-      default: "",
+      default: '',
     },
     value: {
       type: [String, Number],
@@ -47,16 +43,17 @@ export default {
     lists: {
       type: [Array, Object],
     },
-    disabled: Boolean
+    disabled: Boolean,
+    error: String,
   },
   data: () => ({
-    select: "",
+    select: '',
   }),
   computed: {
     items() {
       if (Array.isArray(this.lists)) {
-        return this.lists.map((i) => {
-          return i || "";
+        return this.lists.map(i => {
+          return i || '';
         });
       } else {
         return Object.keys(this.lists);
@@ -65,8 +62,8 @@ export default {
   },
   methods: {
     change(value) {
-      this.$emit("input", value);
-      this.$emit("change", { name: this.name, value });
+      this.$emit('input', value);
+      this.$emit('change', { name: this.name, value });
 
       // bus.$emit("change", e);
     },
@@ -118,6 +115,9 @@ export default {
   }
   &__select {
     flex: 0 0 100px;
+  }
+  &__error {
+    border-color: #b53b3b;
   }
 }
 </style>

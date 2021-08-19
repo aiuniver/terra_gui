@@ -17,7 +17,7 @@ const color = {
           id,
           layer,
           name: 'new_' + id,
-          type: '',
+          type: 'Image',
           color: getColor(),
           parameters: {}
       }

@@ -4,7 +4,7 @@
       <slot>{{ label }}</slot>
     </label>
 
-    <input v-if="!error"
+    <input
       v-model="input"
       :class="['t-field__input', { small: small }, { 't-field__error': error }]"
       :type="type"
@@ -16,20 +16,6 @@
       @blur="change"
       @focus="$emit('focus', $event)"
     />
-    <at-tooltip v-else placement="top-left" :content="error">
-      <input
-        v-model="input"
-        :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-        :type="type"
-        :name="name || parse"
-        :value="value"
-        :disabled="disabled"
-        :data-degree="degree"
-        :autocomplete="'off'"
-        @blur="change"
-        @focus="$emit('focus', $event)"
-      />
-    </at-tooltip>
   </div>
 </template>
 
@@ -62,6 +48,7 @@ export default {
   computed: {
     input: {
       set(value) {
+        // console.log(value)
         this.$emit('input', value);
         this.isChange = true;
       },
@@ -72,6 +59,7 @@ export default {
   },
   methods: {
     change(e) {
+      // console.log(e)
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;

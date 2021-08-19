@@ -4,7 +4,7 @@
       <div class="card-layer__header--icon" @click="toggle = !toggle">
         <i class="t-icon icon-file-dot"></i>
       </div>
-      <div class="card-layer__header--title"><slot name="header"></slot></div>
+      <div class="card-layer__header--title"><slot name="header" :id="id"></slot></div>
     </div>
     <div v-show="toggle" class="card-layer__dropdown">
       <div v-for="({ icon }, i) of items" :key="'icon' + i" class="card-layer__dropdown--item" @click="click(icon)">
@@ -14,7 +14,7 @@
     <div class="card-layer__body">
       <scrollbar :ops="ops">
         <div class="card-layer__body--inner" ref="cardBody">
-          <slot />
+          <slot :parameters="data" />
         </div>
       </scrollbar>
     </div>
@@ -25,8 +25,15 @@
 export default {
   name: 'card-layer',
   props: {
-    color: String,
+    id: Number,
+    layer: String,
     name: String,
+    type: String,
+    color: String,
+    parameters: {
+      type: Object,
+      default: () => {}
+    }
   },
   data: () => ({
     height: { height: '100%' },
@@ -41,6 +48,9 @@ export default {
     },
   }),
   computed: {
+    data() {
+      return { ...this.parameters, name: this.name, type: this.type }
+    },
     bg() {
       return { backgroundColor: this.color };
     },
