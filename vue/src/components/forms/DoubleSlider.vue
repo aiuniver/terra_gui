@@ -76,13 +76,22 @@ export default {
     slider(event) {
       event.preventDefault();
       if (this.dragging) {
+        if (this.sliders.first < 10){
+          this.sliders.first = 10;
+          return;
+        }
+        else if (this.sliders.second > 90){
+          this.sliders.second = 90;
+          return;
+        }
+        else if (this.sliders.first > this.sliders.second - 10){
+          if(this.draggingObj == "first") --this.sliders.first;
+          else ++this.sliders.second;
+          return;
+        }
         let slider = document.querySelector(`.${this.draggingObj}-slider`);
         let pos = event.x - slider.parentNode.getBoundingClientRect().x;
         this.sliders[this.draggingObj] = Math.round((pos / 231) * 100);
-
-      if (this.sliders.first < 5) this.sliders.first = 5;
-      if (this.sliders.second > 95) this.sliders.second = 95;
-      if (this.sliders.first > this.sliders.second - 5) this.sliders.first = this.sliders.second - 5;
       }
     },
   },
