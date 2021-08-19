@@ -27,9 +27,6 @@ export default {
     SET_INPUT_DATA(state, value) {
       state.inputData = value;
     },
-    SET_NEW_DATASET(state, value) {
-      state.inputData = value;
-    },
     SET_SELECTED(state, value) {
       state.selected = value;
     },

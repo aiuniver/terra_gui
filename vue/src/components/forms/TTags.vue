@@ -3,10 +3,11 @@
     <label class="t-field__label" :for="parse">{{ label }}</label>
     <div class="tags">
       <button class="tags__add" type="button">
-        <i class="tags__add--icon t-icon icon-tag-plus"></i>
+        <i class="tags__add--icon t-icon icon-tag-plus" @click="create"></i>
         <input type="text" class="tags__add--input" :disabled="tags.length >= 3" :placeholder="'Добавить'" @keypress.enter.prevent="create" />
       </button>
-      <input v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][][name]" type="text" class="tags__item" />
+      <input v-show="false" v-for="({ value }, i) in tags" :key="'tag_' + i" :value="value" name="[tags][][name]" type="text" class="tags__item" />
+    
     </div>
   </div>
 </template>
@@ -35,12 +36,13 @@ export default {
     tags: [],
   }),
   methods: {
-    create(e) {
-      const value = e.target.value;
-      e.target.value = '';
-      if (this.tags.length < 3) {
-        this.tags.push({ value });
+    create() {
+      const el = this.$el.getElementsByClassName('tags__add--input')?.[0]
+      console.log(el.value)
+      if (el.value && this.tags.length < 3) {
+        this.tags.push({ value: el.value });
         this.tags = [...this.tags];
+        el.value = '';
       }
     },
     inputLength(e) {

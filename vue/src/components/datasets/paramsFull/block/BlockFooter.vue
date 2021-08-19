@@ -1,7 +1,7 @@
 <template>
   <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input parse="[name]" small :value="'Новый'">
+      <t-input v-model="nameProject" parse="[name]" small>
         Название датасета
       </t-input>
     </div>
@@ -18,7 +18,7 @@
       <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
     </div>
     <div class="action">
-      <t-button @click.native="getObj">Сформировать</t-button>
+      <t-button :disabled="!!disabled" @click.native="getObj">Сформировать</t-button>
     </div>
   </form>
 </template>
@@ -32,6 +32,15 @@ export default {
   components: {
     DoubleSlider,
     TTags,
+  },
+  data: () => ({
+    nameProject: 'Новый'
+  }),
+  computed: {
+    disabled() {
+      const arr = this.$store.state.datasets.inputData.map(item => item.layer)
+      return !(this.nameProject && arr.includes('input') && arr.includes('output'))
+    }
   },
   methods: {
     getObj() {
