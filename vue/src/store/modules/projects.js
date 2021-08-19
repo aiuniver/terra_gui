@@ -19,11 +19,7 @@ export default {
       if (!data) {
         return;
       }
-<<<<<<< HEAD
-      const { project, defaults: { modeling: { layers_types, layer_form }, datasets: { creation } } } = data;
-=======
-      const { project, user, defaults: { modeling: { layers_types }, datasets: { creation } } } = data;
->>>>>>> svyat/svyat-dev
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation } } } = data;
       const { model } = project;
       const list = layer_form[1]['list'] || []
       commit("SET_PROJECT", project);

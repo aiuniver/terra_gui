@@ -14,15 +14,9 @@ export default {
       },
     },
     actions: {
-<<<<<<< HEAD
-      async SendDeploy({ state, dispatch }, data) {
-        const { data: model } = await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        state.moduleList = model;
-=======
       async SendDeploy({ dispatch }, data) {
         await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
         return;
->>>>>>> svyat/svyat-dev
       },
       async CheckProgress({ commit, dispatch }) {
         const { data } = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });
