@@ -174,10 +174,10 @@ export default {
       );
     },
     cleanError({ state: { errors }}, { id, name }) {
-      if(errors[id][name]) {
+      if(errors?.[id]?.[name]) {
         errors[id][name] = ''
       }
-      if(errors[id]['parameters'][name]) {
+      if(errors?.[id]?.['parameters']?.[name]) {
         errors[id]['parameters'][name] = ''
       }
     },

@@ -61,7 +61,6 @@ export default {
     focus(e) {
       this.$emit('focus', e);
       if (this.error) {
-        console.log(this.error);
         this.$emit('cleanError', true);
       }
     },

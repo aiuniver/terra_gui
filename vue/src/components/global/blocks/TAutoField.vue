@@ -113,7 +113,6 @@ export default {
       });
     },
     cleanError() {
-      console.log(this.id, this.name);
       this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
     },
   },

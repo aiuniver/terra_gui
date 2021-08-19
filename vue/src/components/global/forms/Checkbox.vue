@@ -45,7 +45,6 @@ export default {
       const value = e.target.checked;
       this.$emit('change', { name: this.name, value });
       if (this.error) {
-        console.log(this.error);
         this.$emit('cleanError', true);
       }
     },

@@ -52,7 +52,6 @@ export default {
       return this.$store.getters['datasets/getErrors'](this.id);
     },
     data() {
-      console.log(this.errors)
       return { errors: this.errors, parameters:{ ...this.parameters, name: this.name, type: this.type }}
     },
     bg() {
