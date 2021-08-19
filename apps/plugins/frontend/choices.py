@@ -51,6 +51,10 @@ class LayerAudioModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioModeChoice))
+
 
 class LayerAudioParameterChoice(str, Enum):
     audio_signal = "Audio signal"
@@ -61,6 +65,12 @@ class LayerAudioParameterChoice(str, Enum):
     spectral_centroid = "Spectral centroid"
     mfcc = "MFCC"
     chroma_stft = "Chroma STFT"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerAudioParameterChoice)
+        )
 
 
 class LayerTextModeChoice(str, Enum):

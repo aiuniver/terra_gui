@@ -12,6 +12,8 @@ from apps.plugins.frontend.choices import (
     LayerScalerChoice,
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
+    LayerAudioModeChoice,
+    LayerAudioParameterChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -71,6 +73,25 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
         if _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
             self.fields.get("word_to_vec_size").required = True
         data.update({_prepare_method: True})
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersAudioSerializer(LayerParametersSerializer):
+    sample_rate = serializers.IntegerField(min_value=1)
+    audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
+    max_seconds = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+    parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        _audio_mode = data.get("audio_mode")
+        if _audio_mode == LayerAudioModeChoice.completely.name:
+            self.fields.get("max_seconds").required = True
+        elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
 

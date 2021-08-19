@@ -25,7 +25,7 @@ class ParametersData(ParametersBaseData):
     deploy: Optional[bool] = False
 
     @validator("audio_mode", allow_reuse=True)
-    def _validate_prepare_method(cls, value: AudioModeChoice) -> AudioModeChoice:
+    def _validate_audio_mode(cls, value: AudioModeChoice) -> AudioModeChoice:
         if value == AudioModeChoice.completely:
             cls.__fields__["max_seconds"].required = True
         else:
