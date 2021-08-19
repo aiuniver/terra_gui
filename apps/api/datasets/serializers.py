@@ -11,6 +11,7 @@ from apps.plugins.frontend.choices import (
     LayerNetChoice,
     LayerScalerChoice,
     LayerTextModeChoice,
+    LayerPrepareMethodChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -29,6 +30,11 @@ class SourceLoadSerializer(serializers.Serializer):
 class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
+    def validate_sources_paths(self, value):
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
+        return value
+
 
 class LayerParametersImageSerializer(LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
@@ -44,53 +50,42 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
     max_words = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
+    pymorphy = serializers.BooleanField(default=False)
+    embedding = serializers.BooleanField(default=False)
+    bag_of_words = serializers.BooleanField(default=False)
+    word_to_vec = serializers.BooleanField(default=False)
+    prepare_method = serializers.ChoiceField(
+        choices=LayerPrepareMethodChoice.items_tuple()
+    )
+    word_to_vec_size = serializers.IntegerField(required=False, min_value=1)
 
-    # def run_validation(self, data):
-    #     self.max_words.required = True
-    #     return super().run_validation(data)
+    def __init__(self, instance=None, data=None, **kwargs):
+        _text_mode = data.get("text_mode")
+        if _text_mode == LayerTextModeChoice.completely.name:
+            self.fields.get("max_words").required = True
+        elif _text_mode == LayerTextModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
 
-    # def validate(self, attrs):
-    #     _errors = {}
-    #     text_mode = attrs.get("text_mode")
-    #     if text_mode == LayerTextModeChoice.completely.name:
-    #         if not attrs.get("max_words"):
-    #             _errors.update(
-    #                 {"max_words": self.get_fields().get("max_words").fail("required")}
-    #             )
-    #
-    #     elif text_mode == LayerTextModeChoice.length_and_step.name:
-    #         self.get_fields().get("max_words").required = True
-    #     if len(_errors.keys()):
-    #         raise ValidationError(_errors)
-    #     return super().validate(attrs)
+        _prepare_method = data.get("prepare_method")
+        if _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
+            self.fields.get("word_to_vec_size").required = True
+        data.update({_prepare_method: True})
+
+        super().__init__(instance=instance, data=data, **kwargs)
 
 
 class CreateLayerSerializer(serializers.Serializer):
     id = serializers.IntegerField(min_value=1)
     name = serializers.CharField()
-    parameters = serializers.DictField()
-
-    def validate(self, attrs):
-        _type = attrs.get("type")
-        _classname = f"LayerParameters{_type}Serializer"
-        _serializer_class = getattr(
-            sys.modules.get(__name__, None), f"LayerParameters{_type}Serializer", None
-        )
-        if _serializer_class:
-            _serializer = _serializer_class(data=attrs.get("parameters"))
-            _serializer.is_valid(raise_exception=True)
-            _parameters = _serializer.data
-        else:
-            _parameters = {}
-        attrs.update({"parameters": _parameters})
-        return super().validate(attrs)
+    parameters = serializers.DictField(required=False)
 
 
-class CreateInputSerializer(CreateLayerSerializer):
+class CreateLayerInputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(choices=LayerInputTypeChoice.items_tuple())
 
 
-class CreateOutputSerializer(CreateLayerSerializer):
+class CreateLayerOutputSerializer(CreateLayerSerializer):
     type = serializers.ChoiceField(choices=LayerOutputTypeChoice.items_tuple())
 
 
@@ -132,8 +127,56 @@ class CreateSerializer(serializers.Serializer):
     info = CreateInfoSerializer()
     tags = serializers.ListSerializer(child=CreateTagSerializer(), default=[])
     use_generator = serializers.BooleanField(default=False)
-    inputs = serializers.ListSerializer(child=CreateInputSerializer())
-    outputs = serializers.ListSerializer(child=CreateOutputSerializer())
+    inputs = serializers.ListSerializer(child=serializers.DictField())
+    outputs = serializers.ListSerializer(child=serializers.DictField())
 
     def get_alias(self, data):
         return re.sub(r"([\-]+)", "_", slugify(data.get("name"), language_code="ru"))
+
+    def _validate_layer(self, create_class, value) -> dict:
+        _errors = {}
+        _serializer = create_class(data=value)
+        if not _serializer.is_valid():
+            _errors.update(**_serializer.errors)
+        _id = value.get("id", 0)
+        _type = value.get("type")
+        if _id and _type:
+            _classname = f"LayerParameters{_type}Serializer"
+            _serializer_class = getattr(
+                sys.modules.get(__name__, None),
+                f"LayerParameters{_type}Serializer",
+                None,
+            )
+            if _serializer_class:
+                _serializer_parameters = _serializer_class(
+                    data=value.get("parameters", {})
+                )
+                if not _serializer_parameters.is_valid():
+                    _errors.update({"parameters": _serializer_parameters.errors})
+            else:
+                _errors.update({"parameters": ["Нет класса для обработки параметров"]})
+        return _errors
+
+    def validate_inputs(self, value: list) -> list:
+        _errors = {}
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
+        for item in value:
+            _error = self._validate_layer(CreateLayerInputSerializer, item)
+            if len(_error.keys()):
+                _errors.update({item.get("id", 0): _error})
+        if _errors:
+            raise serializers.ValidationError(_errors)
+        return value
+
+    def validate_outputs(self, value: list) -> list:
+        _errors = {}
+        if not len(value):
+            raise serializers.ValidationError("Этот список не может быть пустым.")
+        for item in value:
+            _error = self._validate_layer(CreateLayerOutputSerializer, item)
+            if len(_error.keys()):
+                _errors.update({item.get("id", 0): _error})
+        if _errors:
+            raise serializers.ValidationError(_errors)
+        return value

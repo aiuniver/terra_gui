@@ -3,7 +3,6 @@ from typing import Optional, List
 from pydantic import validator, PositiveInt
 
 from ...extra import ParametersBaseData
-from .....extra import LayerPrepareMethodChoice
 
 
 class TextModeChoice(str, Enum):
@@ -25,13 +24,19 @@ class ParametersData(ParametersBaseData):
     step: Optional[PositiveInt]
     max_words: Optional[PositiveInt]
     put: Optional[str]
+    deploy: Optional[bool] = False
 
-    prepare_method: LayerPrepareMethodChoice = LayerPrepareMethodChoice.embedding
+    @validator("text_mode")
+    def _validate_text_mode(cls, value: TextModeChoice) -> TextModeChoice:
+        if value == TextModeChoice.completely:
+            cls.__fields__["max_words"].required = True
+        else:
+            cls.__fields__["length"].required = True
+            cls.__fields__["step"].required = True
+        return value
 
-    @validator("prepare_method", allow_reuse=True)
-    def _validate_prepare_method(
-        cls, value: LayerPrepareMethodChoice
-    ) -> LayerPrepareMethodChoice:
-        if value == LayerPrepareMethodChoice.word_to_vec:
+    @validator("word_to_vec")
+    def _validate_word_to_vec(cls, value: bool) -> bool:
+        if value:
             cls.__fields__["word_to_vec_size"].required = True
         return value

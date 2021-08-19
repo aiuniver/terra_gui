@@ -93,6 +93,10 @@ class LayerPrepareMethodChoice(str, Enum):
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerPrepareMethodChoice))
+
 
 class LayerDataframeAlignBaseMethodChoice(str, Enum):
     pad_sequences = "Pad sequences"

@@ -7,7 +7,6 @@ from .....extra import LayerScalerChoice, LayerTaskTypeChoice
 
 class ParametersData(ParametersBaseData):
     cols_names: Optional[List[str]]
-    separator: Optional[str]
     trend: bool
     trend_limit: Optional[str]
     length: PositiveInt

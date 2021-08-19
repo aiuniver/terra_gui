@@ -1,3 +1,5 @@
+import re
+
 from typing import Optional
 from pydantic import validator
 from pydantic.types import constr, PositiveInt
@@ -18,14 +20,14 @@ class StageUploadUserData(BaseMixinData):
 
 class StageUploadProjectData(BaseMixinData):
     name: str
-    slug: Optional[constr(regex=r"^[a-z]+[a-z0-9\-_]*$")]
+    slug: Optional[constr(regex=r"^[a-z]+[a-z0-9_]*$")]
 
     @validator("slug", always=True)
-    def _validate_project_name_lat(cls, value: str, values) -> str:
+    def _validate_slug(cls, value: str, values) -> str:
         name = values.get("name")
         if not name:
             return value
-        return slugify(name, language_code="ru")
+        return re.sub(r"([\-]+)", "_", slugify(name, language_code="ru"))
 
 
 class StageUploadFileData(BaseMixinData):

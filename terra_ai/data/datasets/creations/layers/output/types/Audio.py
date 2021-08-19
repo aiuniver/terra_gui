@@ -22,6 +22,7 @@ class ParametersData(ParametersBaseData):
     step: Optional[PositiveFloat]
     scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
     parameter: LayerAudioParameterChoice = LayerAudioParameterChoice.audio_signal
+    deploy: Optional[bool] = False
 
     @validator("audio_mode", allow_reuse=True)
     def _validate_prepare_method(cls, value: AudioModeChoice) -> AudioModeChoice:
