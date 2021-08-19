@@ -33,10 +33,18 @@ class LayerNetChoice(str, Enum):
     convolutional = "Сверточная"
     linear = "Линейная"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerNetChoice))
+
 
 class LayerScalerChoice(str, Enum):
     no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerChoice))
 
 
 class LayerAudioModeChoice(str, Enum):
@@ -58,6 +66,10 @@ class LayerAudioParameterChoice(str, Enum):
 class LayerTextModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerTextModeChoice))
 
 
 class LayerVideoFillModeChoice(str, Enum):

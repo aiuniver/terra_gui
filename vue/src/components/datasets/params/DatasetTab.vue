@@ -20,8 +20,8 @@
         @change="selected"
       />
     </div>
-    <div v-show="select === 'URL'" class="tabs__item">
-      <t-input label="Введите URL на архив исходников" :id="'url'" @blur="blur" />
+    <div v-show="value === 'URL'" class="tabs__item">
+      <t-input label="Введите URL на архив исходников" @change="change" />
     </div>
   </div>
 </template>
@@ -49,7 +49,7 @@ export default {
   }),
   methods: {
     async focus() {
-      const data = await this.$store.dispatch("axios", {
+      const { data } = await this.$store.dispatch("axios", {
         url: "/datasets/sources/",
       });
       if (!data) {
@@ -61,12 +61,13 @@ export default {
     selected({ value }) {
       this.$emit("select", { mode: "GoogleDrive", value });
     },
-    blur(value) {
+    change(value) {
       this.$emit("select", { mode: "URL", value });
     },
     click(mode) {
       this.select = mode;
       this.$emit('input', mode)
+      // this.$emit("select", {});
       this.items = this.items.map((item) => {
         return { ...item, active: item.mode === mode };
       });

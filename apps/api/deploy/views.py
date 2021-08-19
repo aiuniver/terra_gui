@@ -27,7 +27,7 @@ class UploadAPIView(BaseAPIView):
             agent_exchange(
                 "deploy_upload",
                 **{
-                    "source": Path("./TerraAI/datasets"),
+                    "source": Path("./TerraAI/tmp"),
                     "stage": 1,
                     "deploy": serializer.validated_data.get("deploy"),
                     "user": {
@@ -41,7 +41,7 @@ class UploadAPIView(BaseAPIView):
                     "project": {
                         "name": request.project.name,
                     },
-                    "task": "text_classification",
+                    "task": "image_classification",
                     "replace": serializer.validated_data.get("replace"),
                 }
             )
