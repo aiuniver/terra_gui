@@ -8,5 +8,5 @@ class ParametersData(ParametersBaseData):
     one_hot_encoding: Optional[bool] = True
     categorical: Optional[bool] = True
     categorical_ranges: Optional[bool]
-    auto_ranges: Optional[bool]
+    # auto_ranges: Optional[bool]
     ranges: Optional[str]

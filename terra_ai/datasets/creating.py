@@ -1171,13 +1171,13 @@ class CreateDTS(object):
                     self.num_classes[put_data.id] = len(classes_names)
                     for elem in column:
                         self.y_cls.append(classes_names.index(elem))
-                elif options['categorical_ranges']:
+                else:
                     self.minvalue_y = min(column)
                     self.maxvalue_y = max(column)
-                    if options['auto_ranges']:
-                        border = max(column) / int(options['auto_ranges'])
+                    if len(options['ranges'].split(' ')) == 1:
+                        border = max(column) / int(options['ranges'])
                         self.classes_names[put_data.id] = np.linspace(
-                            border, self.maxvalue_y, int(options['auto_ranges'])).tolist()
+                            border, self.maxvalue_y, int(options['ranges'])).tolist()
                     else:
                         self.classes_names[put_data.id] = options['ranges'].split(' ')
 
