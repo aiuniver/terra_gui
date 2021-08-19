@@ -14,6 +14,9 @@ from apps.plugins.frontend.choices import (
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
     LayerAudioParameterChoice,
+    LayerVideoFillModeChoice,
+    LayerVideoFrameModeChoice,
+    LayerVideoModeChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -90,6 +93,29 @@ class LayerParametersAudioSerializer(LayerParametersSerializer):
         if _audio_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_seconds").required = True
         elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersVideoSerializer(LayerParametersSerializer):
+    width = serializers.IntegerField(min_value=1)
+    height = serializers.IntegerField(min_value=1)
+    fill_mode = serializers.ChoiceField(choices=LayerVideoFillModeChoice.items_tuple())
+    frame_mode = serializers.ChoiceField(
+        choices=LayerVideoFrameModeChoice.items_tuple()
+    )
+    video_mode = serializers.ChoiceField(choices=LayerVideoModeChoice.items_tuple())
+    max_frames = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        _video_mode = data.get("video_mode")
+        if _video_mode == LayerAudioModeChoice.completely.name:
+            self.fields.get("max_frames").required = True
+        elif _video_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
 

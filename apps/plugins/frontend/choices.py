@@ -87,15 +87,29 @@ class LayerVideoFillModeChoice(str, Enum):
     average_value = "Средним значением"
     last_frames = "Последними кадрами"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerVideoFillModeChoice))
+
 
 class LayerVideoFrameModeChoice(str, Enum):
     keep_proportions = "Сохранить пропорции"
     stretch = "Растянуть"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerVideoFrameModeChoice)
+        )
+
 
 class LayerVideoModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerVideoModeChoice))
 
 
 class LayerPrepareMethodChoice(str, Enum):
