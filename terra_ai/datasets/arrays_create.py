@@ -38,6 +38,7 @@ class CreateArray(object):
     def create_image(self, file_folder: str, image_path: str, **options):
 
         shape = (options['height'], options['width'])
+        # array = cv2.imread(os.path.join(file_folder, image_path)).reshape((shape[0], shape[1], 3)).astype('uint8')
         img = load_img(os.path.join(file_folder, image_path), target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
@@ -73,9 +74,9 @@ class CreateArray(object):
             else:
                 array = self.augmentation[options['put']](image=array)
 
-        # array = array / 255
+        array = array / 255
 
-        return array  # .astype('float32')
+        return array.astype('float32')
 
     def create_video(self, file_folder: str, video: str, slicing: list, **options) -> np.ndarray:
 

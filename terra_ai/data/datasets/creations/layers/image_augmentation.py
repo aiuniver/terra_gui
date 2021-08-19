@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from ....mixins import BaseMixinData
 from ....types import ConstrainedFloatValueGe0, ConstrainedFloatValueGe0Le1, ConstrainedIntValueGe0Le2
@@ -62,19 +62,19 @@ class TranslatePercentData(BaseMixinData):
 
 
 class AffineData(BaseMixinData):
-    scale: ScaleData
-    translate_percent: TranslatePercentData
+    scale: Optional[ScaleData]
+    translate_percent: Optional[TranslatePercentData]
 
 
 class AugmentationData(BaseMixinData):
-    Fliplr: FliplrData
-    Flipud: FlipudData
-    Crop: CropData
-    GaussianBlur: GaussianBlurData
-    LinearContrast: LinearContrastData
-    AdditiveGaussianNoise: AdditiveGaussianNoiseData
-    Multiply: MultiplyData
-    AddToHueAndSaturation: AddToHueAndSaturationData
-    ChannelShuffle: ChannelShuffleData
-    MotionBlur: MotionBlurData
-    Affine: AffineData
+    Fliplr: Optional[FliplrData]
+    Flipud: Optional[FlipudData]
+    Crop: Optional[CropData]
+    GaussianBlur: Optional[GaussianBlurData]
+    LinearContrast: Optional[LinearContrastData]
+    AdditiveGaussianNoise: Optional[AdditiveGaussianNoiseData]
+    Multiply: Optional[MultiplyData]
+    AddToHueAndSaturation: Optional[AddToHueAndSaturationData]
+    ChannelShuffle: Optional[ChannelShuffleData]
+    MotionBlur: Optional[MotionBlurData]
+    Affine: Optional[AffineData]
