@@ -12,7 +12,9 @@
             <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
           </div>
         </div>
-<!--        <Table/>-->
+        <div class="board__table">
+          <Table/>
+        </div>
       </div>
     </div>
   </div>
@@ -21,14 +23,11 @@
 <script>
 import { mapGetters } from "vuex";
 import IndexCard from "./IndexCard";
-// import Table from "./Table";
 export default {
   components: {
     IndexCard
-    // Table
   },
   data: () => ({
-    loaded: false,
     Cards: [
       {
         type: "graphic"

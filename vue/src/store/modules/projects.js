@@ -2,10 +2,14 @@ export default {
   namespaced: true,
   state: () => ({
     project: {},
+    user: {},
   }),
   mutations: {
     SET_PROJECT(state, value) {
       state.project = { ...state.project, ...value };
+    },
+    SET_USER(state, value) {
+      state.user = { ...state.user, ...value}
     },
   },
   actions: {
@@ -15,12 +19,13 @@ export default {
       if (!data) {
         return;
       }
-      const { project, defaults: { modeling: { layers_types }, datasets: { creation } } } = data;
+      const { project, user, defaults: { modeling: { layers_types }, datasets: { creation } } } = data;
       const { model } = project;
       const list = Object.keys(layers_types).map((key) => {
         return { label: key, value: key };
       });
       commit("SET_PROJECT", project);
+      commit("SET_USER", user);
       commit("modeling/SET_MODELING", { layers_types, list }, { root: true });
       commit("modeling/SET_MODEL", model, { root: true });
       commit("datasets/SET_CREATION", creation, { root: true });
@@ -41,6 +46,9 @@ export default {
   getters: {
     getProject({ project }) {
       return project;
+    },
+    getUser({ user }) {
+      return user;
     },
   },
 };

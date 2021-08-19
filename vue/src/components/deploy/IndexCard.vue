@@ -1,7 +1,7 @@
 <template>
 <div class="card">
   <div class="card__content">
-    <div v-if="type != 'graphic'">
+    <div v-if="type == 'card'">
       <div class="card__original" >
         <ImgCard v-if="original.type == 'image'"/>
         <TextCard v-if="original.type == 'text'" :style="originaltextStyle">{{ original.data }}</TextCard>
@@ -14,6 +14,9 @@
     <div class="card__graphic" v-if="type == 'graphic'">
        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
+    <div class="card__table" v-if="type == 'table'">
+      <Table/>
+    </div>
   </div>
   <div class="card__reload"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
@@ -22,6 +25,7 @@
 <script>
 import ImgCard from "./cards/ImgCard";
 import TextCard from "./cards/TextCard";
+import Table from "./Table";
 import { Plotly } from "vue-plotly";
 import {mapGetters} from "vuex";
 export default {
@@ -29,7 +33,8 @@ export default {
   components: {
     ImgCard,
     TextCard,
-    Plotly
+    Table,
+    Plotly,
   },
   data: () => ({
     originaltextStyle: {

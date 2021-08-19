@@ -10,17 +10,21 @@ export default {
     }),
     mutations: {
       SET_MODULE_LIST(state, value) {
-        state.moduleList = value;
+        state.moduleList = { ...state.moduleList, ...value};
       },
     },
     actions: {
-      async SendDeploy({ state, dispatch }, data) {
-        const { data: model } = await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        state.moduleList = model;
+      async SendDeploy({ dispatch }, data) {
+        await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
+        return;
       },
-      async CheckProgress({ dispatch }) {
+      async CheckProgress({ commit, dispatch }) {
         const { data } = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });
-        return data;
+        // console.log(data)
+        if(data.finished){
+          commit("SET_MODULE_LIST", data.data);
+        }
+        return data.finished;
       },
     },
     getters: {
