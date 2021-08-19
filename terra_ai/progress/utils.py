@@ -36,7 +36,7 @@ def download(progress_name: str, title: str, url: HttpUrl) -> Path:
 
 def pack(progress_name: str, title: str, source: Path) -> Path:
     pool.reset(progress_name, message=title, finished=False)
-    zip_destination = NamedTemporaryFile(delete=False, suffix=".zip")
+    zip_destination = NamedTemporaryFile(suffix=".zip")
     try:
         with zipfile.ZipFile(zip_destination.name, "w") as zipfile_ref:
             quantity = sum(list(map(lambda item: len(item[2]), os.walk(source))))

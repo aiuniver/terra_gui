@@ -1,10 +1,13 @@
+import re
+import time
 import requests
 
 from pathlib import Path
+from subprocess import Popen, PIPE, STDOUT
 
 from .. import progress, settings
 from ..data.deploy.stages import StageUploadData, StageCompleteData, StageResponseData
-from ..exceptions.deploy import RequestAPIException
+from ..exceptions.deploy import RequestAPIException, RsyncException
 
 from ..progress import utils as progress_utils
 
@@ -12,10 +15,25 @@ DEPLOY_PREPARE_TITLE = "Подготовка данных"
 DEPLOY_UPLOAD_TITLE = "Загрузка архива"
 
 
+def __run_rsync(progress_name: str, file: str, destination: str):
+    cmd = f'rsync -P -avz -e "ssh -i ./rsa.key -o StrictHostKeyChecking=no" {file} terra@188.124.47.137:{destination}'
+    proc = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+    while True:
+        output = proc.stdout.readline().decode("utf-8")
+        if re.search(r"error", output):
+            progress.pool(progress_name, error=output)
+            break
+        if output.startswith("total size"):
+            progress.pool(progress_name, percent=100)
+            break
+        time.sleep(1)
+
+
 @progress.threading
 def upload(source: Path, data: dict):
     # Сброс прогресс-бара
     progress_name = progress.PoolName.deploy_upload
+    progress.pool.reset(progress_name)
 
     try:
         # Подготовка данных (архивация исходников)
@@ -33,7 +51,11 @@ def upload(source: Path, data: dict):
             upload_response = upload_response.json()
             if upload_response.get("success"):
                 progress.pool(progress_name, message=DEPLOY_UPLOAD_TITLE, percent=0)
-                print("Run rsync to upload to:", upload_response.get("destination"))
+                __run_rsync(
+                    progress_name,
+                    upload_data.file.path,
+                    upload_response.get("destination"),
+                )
                 complete_data = StageCompleteData(
                     stage=2,
                     deploy=upload_response.get("deploy"),
@@ -58,4 +80,4 @@ def upload(source: Path, data: dict):
         else:
             raise RequestAPIException()
     except Exception as error:
-        progress.pool(progress_name, error=str(error))
+        progress.pool(progress_name, error=str(RsyncException(str(error))))

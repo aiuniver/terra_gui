@@ -1,9 +1,11 @@
 import os
+import re
 import json
 
 from typing import Optional
 from pathlib import Path
 from pydantic import validator, ValidationError, DirectoryPath
+from transliterate import slugify
 
 from django.conf import settings
 
@@ -85,6 +87,15 @@ class Project(BaseMixinData):
         super().__init__(**data)
         if save:
             self.save()
+
+    @property
+    def name_alias(self) -> str:
+        return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"name_alias": self.name_alias})
+        return data
 
     def save(self):
         with open(project_path.config, "w") as config_ref:

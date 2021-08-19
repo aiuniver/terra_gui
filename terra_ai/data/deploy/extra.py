@@ -4,7 +4,7 @@ from enum import Enum
 class TaskTypeChoice(str, Enum):
     text_classification = "text_classification"
     regression = "regression"
-    image_segmentation = "image_segmentation"
+    image_classification = "image_classification"
     object_detection = "object_detection"
     audio_classification = "audio_classification"
     text_segmentation = "text_segmentation"
