@@ -70,7 +70,7 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       if (res?.error) {
         const { error: { fields: { inputs, outputs } } } = res
-        console.log({ ...inputs, ...outputs })
+        // console.log({ ...inputs, ...outputs })
         commit('SET_ERRORS', { ...inputs, ...outputs })
 
       }

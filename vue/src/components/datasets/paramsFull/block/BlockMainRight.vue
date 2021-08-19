@@ -69,7 +69,7 @@ export default {
         clean: true,
         padding: 172 + 90 + 62,
       });
-      console.log(height);
+      // console.log(height);
       return height;
     },
   },

@@ -24,7 +24,7 @@
                 @change="mixinCheck($event, id)"
               />
               <template v-for="(data, index) of input">
-                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" :errors="errors" root @change="mixinChange" />
+                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
               </template>
             </CardLayer>
           </template>
@@ -61,7 +61,6 @@ export default {
         gutterOfEnds: '6px',
       },
     },
-    errors: null
   }),
   computed: {
     ...mapGetters({
@@ -81,13 +80,6 @@ export default {
       console.log(height);
       return height;
     },
-  },
-  mounted() {
-    this.errors = {
-      key: 'sdsdsdds',
-      dssd: 'sdsdsdds',
-      sddd: 'sdsdsdds'
-    }
   },
   methods: {
     addCard() {
