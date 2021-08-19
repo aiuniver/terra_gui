@@ -78,6 +78,9 @@ export default {
   }
   td{
     padding: 5px;
+    &:nth-child(1){
+      padding-left: 74px;
+    }
   }
 }
 .table__title-row{

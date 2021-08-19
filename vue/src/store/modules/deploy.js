@@ -1,12 +1,17 @@
+import temp from "../temp/deploy";
 export default {
     namespaced: true,
     state: () => ({
-        moduleList: {
-                api_text: "",
-                url: "",
-            }
+      graphicData: temp.data,
+      moduleList: {
+        api_text: "",
+        url: "",
+      }
     }),
     mutations: {
+      SET_MODULE_LIST(state, value) {
+        state.moduleList = value;
+      },
     },
     actions: {
       async SendDeploy({ state, dispatch }, data) {
@@ -19,6 +24,7 @@ export default {
       },
     },
     getters: {
-        getModuleList: ({ moduleList }) => moduleList,
+      getModuleList: ({ moduleList }) => moduleList,
+      getGraphicData: ({ graphicData }) => graphicData,
     }
 }
