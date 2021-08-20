@@ -5,78 +5,80 @@
 </template>
 <script>
 export default {
-  name: "load-spiner",
+  name: 'load-spiner',
   props: {
     size: {
-      default: '40px'
-    }
+      default: '40px',
+    },
   },
   computed: {
-    styles () {
+    styles() {
       return {
         width: this.size,
-        height: this.size
-      }
-    }
-  }
-}
+        height: this.size,
+      };
+    },
+  },
+};
 </script>
 <style lang="scss" scoped>
+@use "sass:math";
+$offset: 187;
+$duration: 1.4s;
 
-  $offset: 187;
-  $duration: 1.4s;
-
-  .spinner {
-    animation: circle-rotator $duration linear infinite;
-    * {
-      line-height: 0;
-      box-sizing: border-box;
-    }
+.spinner {
+  animation: circle-rotator $duration linear infinite;
+  * {
+    line-height: 0;
+    box-sizing: border-box;
   }
+}
 
-  @keyframes circle-rotator {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(270deg); }
+@keyframes circle-rotator {
+  0% {
+    transform: rotate(0deg);
   }
+  100% {
+    transform: rotate(270deg);
+  }
+}
 
-  .path {
-    stroke-dasharray: $offset;
-    stroke-dashoffset: 0;
-    transform-origin: center;
-    animation:
-            circle-dash $duration ease-in-out infinite,
-            circle-colors ($duration*4) ease-in-out infinite;
-  }
+.path {
+  stroke-dasharray: $offset;
+  stroke-dashoffset: 0;
+  transform-origin: center;
+  animation: circle-dash $duration ease-in-out infinite, circle-colors ($duration * 4) ease-in-out infinite;
+}
 
-  @keyframes circle-colors {
-    0% {
-      stroke: #22405B;
-    }
-    25% {
-      stroke: #195F9D;
-    }
-    50% {
-      stroke: #022849;
-    }
-    75% {
-      stroke: #094B86;
-    }
-    100% {
-      stroke: #35495e;
-    }
+@keyframes circle-colors {
+  0% {
+    stroke: #22405b;
   }
+  25% {
+    stroke: #195f9d;
+  }
+  50% {
+    stroke: #022849;
+  }
+  75% {
+    stroke: #094b86;
+  }
+  100% {
+    stroke: #35495e;
+  }
+}
 
-  @keyframes circle-dash {
-    0% {
-      stroke-dashoffset: $offset;
-    }
-    50% {
-      stroke-dashoffset: $offset/4;
-      transform:rotate(135deg);
-    }
-    100% {
-      stroke-dashoffset: $offset;
-      transform:rotate(450deg);
-    }
+@keyframes circle-dash {
+  0% {
+    stroke-dashoffset: $offset;
   }
+  50% {
+    stroke-dashoffset: math.div($offset, 4);
+    transform: rotate(135deg);
+  }
+  100% {
+    stroke-dashoffset: $offset;
+    transform: rotate(450deg);
+  }
+}
 </style>

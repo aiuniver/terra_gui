@@ -19,11 +19,9 @@ export default {
       if (!data) {
         return;
       }
-      const { project, user, defaults: { modeling: { layers_types }, datasets: { creation } } } = data;
+      const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation } } } = data;
       const { model } = project;
-      const list = Object.keys(layers_types).map((key) => {
-        return { label: key, value: key };
-      });
+      const list = layer_form[1]['list'] || []
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
       commit("modeling/SET_MODELING", { layers_types, list }, { root: true });

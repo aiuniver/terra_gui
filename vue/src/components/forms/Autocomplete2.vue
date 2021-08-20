@@ -69,7 +69,7 @@ export default {
         this.$emit("input", this.selected.value);
         this.$emit("change", item);
       } else {
-        this.search = this.selected.label;
+        this.search = this.selected.label || this.value;
         this.show = false;
       }
     },
