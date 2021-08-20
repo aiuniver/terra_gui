@@ -60,6 +60,16 @@ export default {
       if (btn === 'validation') {
         // this.create = true
       }
+      if (btn === 'clear') {
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Очистить модель?',
+          width: 300,
+          callback: function () {
+            // this.$Message(action)
+          }
+        })
+      }
       console.log(btn);
     },
   },
