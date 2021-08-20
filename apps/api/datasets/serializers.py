@@ -12,6 +12,12 @@ from apps.plugins.frontend.choices import (
     LayerScalerChoice,
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
+    LayerAudioModeChoice,
+    LayerAudioParameterChoice,
+    LayerVideoFillModeChoice,
+    LayerVideoFrameModeChoice,
+    LayerVideoModeChoice,
+    LayerDataframeAlignBaseMethodChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
@@ -71,6 +77,82 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
         if _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
             self.fields.get("word_to_vec_size").required = True
         data.update({_prepare_method: True})
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersAudioSerializer(LayerParametersSerializer):
+    sample_rate = serializers.IntegerField(min_value=1)
+    audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
+    max_seconds = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+    parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        _audio_mode = data.get("audio_mode")
+        if _audio_mode == LayerAudioModeChoice.completely.name:
+            self.fields.get("max_seconds").required = True
+        elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersVideoSerializer(LayerParametersSerializer):
+    width = serializers.IntegerField(min_value=1)
+    height = serializers.IntegerField(min_value=1)
+    fill_mode = serializers.ChoiceField(choices=LayerVideoFillModeChoice.items_tuple())
+    frame_mode = serializers.ChoiceField(
+        choices=LayerVideoFrameModeChoice.items_tuple()
+    )
+    video_mode = serializers.ChoiceField(choices=LayerVideoModeChoice.items_tuple())
+    max_frames = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        _video_mode = data.get("video_mode")
+        if _video_mode == LayerAudioModeChoice.completely.name:
+            self.fields.get("max_frames").required = True
+        elif _video_mode == LayerAudioModeChoice.length_and_step.name:
+            self.fields.get("length").required = True
+            self.fields.get("step").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersDataframeSerializer(LayerParametersSerializer):
+    separator = serializers.CharField()
+    transpose = serializers.BooleanField(default=False)
+    align_base = serializers.BooleanField(default=False)
+    align_base_method = serializers.ChoiceField(
+        required=False, choices=LayerDataframeAlignBaseMethodChoice.items_tuple()
+    )
+    example_length = serializers.IntegerField(required=False, min_value=1)
+    length = serializers.IntegerField(required=False, min_value=1)
+    step = serializers.IntegerField(required=False, min_value=1)
+    scaler = serializers.ChoiceField(
+        required=False, choices=LayerScalerChoice.items_tuple()
+    )
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        if data.get("align_base"):
+            self.fields.get("align_base_method").required = True
+            self.fields.get("scaler").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersClassificationSerializer(LayerParametersSerializer):
+    categorical = serializers.BooleanField(default=True)
+    categorical_ranges = serializers.BooleanField(default=False)
+    ranges = serializers.CharField(required=False)
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        if data.get("categorical_ranges"):
+            self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
 
