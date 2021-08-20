@@ -51,6 +51,10 @@ class LayerAudioModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerAudioModeChoice))
+
 
 class LayerAudioParameterChoice(str, Enum):
     audio_signal = "Audio signal"
@@ -61,6 +65,12 @@ class LayerAudioParameterChoice(str, Enum):
     spectral_centroid = "Spectral centroid"
     mfcc = "MFCC"
     chroma_stft = "Chroma STFT"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerAudioParameterChoice)
+        )
 
 
 class LayerTextModeChoice(str, Enum):
@@ -77,15 +87,29 @@ class LayerVideoFillModeChoice(str, Enum):
     average_value = "Средним значением"
     last_frames = "Последними кадрами"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerVideoFillModeChoice))
+
 
 class LayerVideoFrameModeChoice(str, Enum):
     keep_proportions = "Сохранить пропорции"
     stretch = "Растянуть"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerVideoFrameModeChoice)
+        )
+
 
 class LayerVideoModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerVideoModeChoice))
 
 
 class LayerPrepareMethodChoice(str, Enum):
@@ -93,10 +117,23 @@ class LayerPrepareMethodChoice(str, Enum):
     bag_of_words = "Bag of words"
     word_to_vec = "Word2Vec"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerPrepareMethodChoice))
+
 
 class LayerDataframeAlignBaseMethodChoice(str, Enum):
     pad_sequences = "Pad sequences"
     xlen_step = "XLen step"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(
+                lambda item: (item.name, item.value),
+                LayerDataframeAlignBaseMethodChoice,
+            )
+        )
 
 
 class LayerDefineClassesChoice(str, Enum):
@@ -104,7 +141,15 @@ class LayerDefineClassesChoice(str, Enum):
     autosearch = "Автоматический поиск"
     annotation = "Файл аннотации"
 
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerDefineClassesChoice))
+
 
 class LayerYoloVersionChoice(str, Enum):
     v3 = "V3"
     v4 = "V4"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
