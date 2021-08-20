@@ -1,10 +1,8 @@
 import { prepareBlocks, prepareLinks } from '@/components/modeling/block/helpers/default';
-import { toolbar } from "../const/modeling";
 
 export default {
   namespaced: true,
   state: () => ({
-    toolbar: toolbar,
     select: null,
     model: {},
     blocks: [],
@@ -36,9 +34,6 @@ export default {
     },
     SET_SELECT(state, value) {
       state.select = value;
-    },
-    SET_TOOLBAR(state, value) {
-      state.toolbar = value;
     },
   },
   actions: {
@@ -73,14 +68,10 @@ export default {
     setSelect({ commit }, value) {
       commit('SET_SELECT', value);
     },
-    setToolbar({ commit }, value) {
-      commit('SET_TOOLBAR', { ...value });
-    },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
-    getToolbar: ({ toolbar }) => toolbar,
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getLinks: ({ links }) => links,
