@@ -12,7 +12,7 @@
       @click="cleanError"
       :disabled="disabled"
     >
-      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
+      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value" :title="label">
         {{ label }}
       </at-option>
     </at-select>
