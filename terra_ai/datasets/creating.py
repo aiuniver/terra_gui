@@ -1,24 +1,21 @@
 import os
 import random
-from typing import Union
+from typing import Any, Union
 
 import numpy as np
 import pandas as pd
 import re
 import pymorphy2
-# import shutil
+import shutil
 import json
 import joblib
-# from pydantic import DirectoryPath
-# from pydantic.types import FilePath
+from pydantic import DirectoryPath
+from pydantic.types import FilePath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from librosa import load as librosa_load
 import imgaug.augmenters as iaa
 
-# from tqdm.notebook import tqdm
-# from io import open as io_open
-# from tempfile import mkdtemp
 from datetime import datetime
 from pytz import timezone
 import cv2
@@ -27,19 +24,19 @@ import cv2
 from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
 from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
 from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
-from ..data.datasets.extra import DatasetGroupChoice  # LayerScalerChoice
+from ..data.datasets.extra import DatasetGroupChoice, LayerOutputTypeChoice, LayerScalerChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
-# from . import loading as dataset_loading
-from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
+from . import loading as dataset_loading
+from ..data.datasets.creation import SourceData, CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
     CreationOutputData, OneFileData
-from ..data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData  # DatasetLayerData
+from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
 
 
 class CreateDTS(object):
 
-    def __init__(self):
+    def __init__(self, source_parameters: SourceData):
 
         self.dataset_user_data: CreationData
         self.paths: PathsData
@@ -52,7 +49,6 @@ class CreateDTS(object):
         self.name: str = ''
         self.source: str = ''
         self.tags: dict = {}
-        self.put_tags: dict = {'inputs': {}, 'outputs': {}}
         self.user_tags: list = []
         self.num_classes: dict = {}
         self.classes_names: dict = {}
@@ -64,6 +60,7 @@ class CreateDTS(object):
         self.peg: list = []
         self.split_sequence: dict = {}
         self.use_generator: bool = False
+        self.source_parameters = source_parameters
 
         self.file_folder: str = ''
         self.language: str = ''
@@ -74,6 +71,7 @@ class CreateDTS(object):
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
+        self.dataframe: dict = {}
         self.tsgenerator: dict = {}
         self.temporary: dict = {}
         self.minvalue_y: int = 0
@@ -85,7 +83,6 @@ class CreateDTS(object):
         self.paths = None
         self.dataset_user_data = None
         self.build_dataframe: dict = {}
-        self.dataframe: dict = {}
 
     def create_one_file_array(self, file_data: OneFileData, source_path):
         instructions_data = getattr(self, f"instructions_{decamelize(file_data.type)}")(file_data)
@@ -125,20 +122,15 @@ class CreateDTS(object):
         # Получаем выходные параметры
         self.outputs = self.create_output_parameters(creation_data=creation_data)
 
-        for key in self.dataframe.keys():
-            self.dataframe[key].to_csv(os.path.join(self.paths.instructions, f'{key}.csv'))
+        # with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
+        #           'w') as instruction:
+        #     json.dump(self.instructions.native(), instruction)
+        # with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
+        #     json.dump(self.split_sequence, seq)
+        # if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
+        #     with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
+        #         json.dump(array_creator.txt_list, fp)
 
-        # if creation_data.use_generator:
-        #     # Сохранение датасета для генератора
-        #     with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
-        #               'w') as instruction:
-        #         json.dump(self.instructions.native(), instruction)
-        #     with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
-        #         json.dump(self.split_sequence, seq)
-        #     if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
-        #         with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
-        #             json.dump(array_creator.txt_list, fp)
-        # else:
         if not creation_data.use_generator:
             # Сохранение датасета с NumPy
             x_array = self.create_dataset_arrays(creation_data=creation_data, put_data=self.instructions.inputs)
@@ -162,10 +154,8 @@ class CreateDTS(object):
         self.tags[layer.id] = decamelize(layer.type)
         if isinstance(layer, CreationInputData):
             self.input_names[layer.id] = layer.name
-            self.put_tags['inputs'][layer.id] = decamelize(layer.type)
         else:
             self.output_names[layer.id] = layer.name
-            self.put_tags['outputs'][layer.id] = decamelize(layer.type)
         self.user_parameters[layer.id] = layer.parameters
 
         pass
@@ -210,16 +200,16 @@ class CreateDTS(object):
 
     def write_instructions_to_files(self):
 
-        os.makedirs(self.paths.instructions, exist_ok=True)
+        os.makedirs(os.path.join(self.paths.instructions, 'parameters'), exist_ok=True)
         for put in self.instructions.__dict__.keys():
             for idx in self.instructions.__dict__[put].keys():
-                # if decamelize(LayerOutputTypeChoice.ObjectDetection) in self.tags[idx]:
-                #     for i in range(6):
-                #         with open(os.path.join(self.paths.instructions, f'{idx+i}_{put}.json'), 'w') as cfg:
-                #             json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
-                # else:
-                with open(os.path.join(self.paths.instructions, f'{idx}_{put}.json'), 'w') as cfg:
+                with open(os.path.join(self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
                     json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
+
+        os.makedirs(os.path.join(self.paths.instructions, 'tables'), exist_ok=True)
+        for key in self.dataframe.keys():
+            self.dataframe[key].to_csv(os.path.join(self.paths.instructions, 'tables', f'{key}.csv'))
+
         pass
 
     def write_preprocesses_to_files(self):
@@ -227,6 +217,7 @@ class CreateDTS(object):
             preprocess = getattr(array_creator, preprocess_name)
             preprocess_file_path = os.path.join(self.paths.datasets, preprocess_name)
             if preprocess:
+                print('Создаю папку', preprocess_name)
                 os.makedirs(preprocess_file_path, exist_ok=True)
                 for key in preprocess.keys():
                     if preprocess.get(key, {}):
@@ -320,7 +311,6 @@ class CreateDTS(object):
         split_sequence = {'train': [],
                           'val': [],
                           'test': []}
-        
         for i in range(len(self.peg) - 1):
             indices = np.arange(self.peg[i], self.peg[i + 1])
             train_len = int(creation_data.info.part.train * len(indices))
@@ -392,10 +382,10 @@ class CreateDTS(object):
 
     def create_dataset_configure(self, creation_data: CreationData) -> dict:
 
-        data = {}
+        data = {'source_parameters': {}}
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
-                      'encoding', 'task_type', 'put_tags', 'use_generator']
+                      'encoding', 'task_type', 'use_generator']
 
         size_bytes = 0
         for path, dirs, files in os.walk(os.path.join(self.trds_path, f'dataset {self.name}')):
@@ -409,6 +399,8 @@ class CreateDTS(object):
 
         for attr in attributes:
             data[attr] = self.__dict__[attr]
+        data['source_parameters']['mode'] = self.source_parameters.mode
+        data['source_parameters']['value'] = str(self.source_parameters.value)
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         data['alias'] = creation_data.alias
         data['size'] = {'value': size_bytes}
@@ -453,8 +445,11 @@ class CreateDTS(object):
 
         if options.get('augmentation', None):
             aug_parameters = []
-            for key, value in options['augmentation'].items():
-                aug_parameters.append(getattr(iaa, key)(**value))
+            for key, value in put_data.parameters.augmentation.__dict__.items():
+                try:
+                    aug_parameters.append(getattr(iaa, key)(**value.__dict__))
+                except AttributeError:
+                    pass
             array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
             del options['augmentation']
 
@@ -823,10 +818,10 @@ class CreateDTS(object):
                                              sep=options['separator']).T
                         tmp_df.columns = tmp_df.iloc[0]
                         tmp_df.drop(tmp_df.index[[0]], inplace=True)
-                        df_y = tmp_df.loc[:, list(range(example_length + 1))]
+                        df_y = tmp_df.loc[:, list(range(example_length+1))]
                     else:
                         df_y = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                           usecols=list(range(example_length + 1)),
+                                           usecols=list(range(example_length+1)),
                                            sep=options['separator'])
 
                     df_y.fillna(0, inplace=True)
@@ -901,8 +896,7 @@ class CreateDTS(object):
                         os.path.join(self.file_folder, options['sources_paths'][0]), usecols=str_to_list(
                             options['cols_names'][0], general_df.columns), sep=options['separator'])
                     ydf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
-                                      usecols=y_col, sep=options['separator'])
-
+                        usecols=y_col, sep=options['separator'])
                 df_with_y = pd.concat((xdf, ydf), axis=1)
                 df_with_y.sort_values(by=y_col[0], inplace=True, ignore_index=True)
 
@@ -1289,10 +1283,12 @@ class CreateDTS(object):
         instructions = {}
         parameters = {}
         class_names = []
+        self.encoding[put_data.id] = 'none'
 
         for path in paths_list:
             if not path.endswith('.txt'):
                 paths_list.remove(path)
+
         # obj.data
         with open(os.path.join(self.file_folder, 'obj.data'), 'r') as dt:
             d = dt.read()
