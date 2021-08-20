@@ -928,6 +928,9 @@ class CreateDTS(object):
                                          sep=options['separator']).T
                 general_df.columns = general_df.iloc[0]
                 general_df.drop(general_df.index[[0]], inplace=True)
+                general_df.index = range(0, len(general_df))
+                for i in str_to_list(options['cols_names'][0], general_df.columns):
+                    general_df = general_df.astype({general_df.columns[i]: np.float}, errors='ignore')
                 df = general_df.iloc[:, str_to_list(options['cols_names'][0],
                                                                   general_df.columns)]
             else:
@@ -1011,8 +1014,7 @@ class CreateDTS(object):
                                 df.iloc[:, tmp_lst[i]].max()
                         else:
                             instructions['parameters']['Categorical_ranges'][f'col_{tmp_lst[i]}'][f'range_{j}'] = \
-                                ((df.iloc[:, tmp_lst[i]].max() - df.iloc[:,
-                                                                               tmp_lst[i]].min()) / int(
+                                ((df.iloc[:, tmp_lst[i]].max() - df.iloc[:,tmp_lst[i]].min()) / int(
                                     list(options['cat_cols'].values())[i]) * (j + 1))
                 else:
                     for j in range(len(list(options['cat_cols'].values())[i].split(' '))):
@@ -1074,8 +1076,8 @@ class CreateDTS(object):
             tmp_df_ts.columns = tmp_df_ts.iloc[0]
             tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
             tmp_df_ts.index = range(0, len(tmp_df_ts))
-            tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')] = \
-                tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')].astype('float64')
+            for i in instructions['parameters']['y_cols'].split(' '):
+                tmp_df_ts = tmp_df_ts.astype({i: np.float}, errors='ignore')
             y_subdf = tmp_df_ts.loc[:, instructions['parameters']['y_cols'].split(' ')]
         else:
             y_subdf = pd.read_csv(os.path.join(self.file_folder, options['sources_paths'][0]),
