@@ -1,35 +1,42 @@
 <template>
 <div class="card">
   <div class="card__content">
-    <div class="card__original">
-      <ImgCard v-if="original.type == 'image'"/>
-      <TextCard v-if="original.type == 'text'" :style="originaltextStyle">{{ original.data }}</TextCard>
+    <div v-if="type == 'card'">
+      <div class="card__original" >
+        <ImgCard v-if="original.type == 'image'"/>
+        <TextCard v-if="original.type == 'text'" :style="origTextStyle">{{ original.data }}</TextCard>
+      </div>
+      <div class="card__result">
+        <ImgCard v-if="result.type == 'image'"/>
+        <TextCard v-if="result.type == 'text'">{{ result.data }}</TextCard>
+      </div>
     </div>
-    <div class="card__result">
-      <ImgCard v-if="result.type == 'image'"/>
-      <TextCard v-if="result.type == 'text'">{{ result.data }}</TextCard>
+    <div class="card__graphic" v-if="type == 'graphic'">
+       <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+    </div>
+    <div class="card__table" v-if="type == 'table'">
+      <Table/>
     </div>
   </div>
-  <div class="card__reload"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
 </template>
 
 <script>
 import ImgCard from "./cards/ImgCard";
 import TextCard from "./cards/TextCard";
+import Table from "./Table";
+import { Plotly } from "vue-plotly";
+import {mapGetters} from "vuex";
 export default {
   name: "IndexCard",
   components: {
     ImgCard,
     TextCard,
+    Table,
+    Plotly,
   },
   data: () => ({
-    originaltextStyle: {
-      width: "600px",
-      height: "300px",
-      color: "#A7BED3",
-      padding: "10px 25px 12px 12px"
-    }
   }),
   props: {
     original: {
@@ -39,7 +46,34 @@ export default {
     result: {
       type: Object,
       default: () => ({})
-    }
+    },
+    type: {
+      type: String,
+      default: ""
+    },
+  },
+  mounted() {
+    console.log(this.graphicData)
+  },
+  computed: {
+    ...mapGetters({
+      graphicData: 'deploy/getGraphicData',
+      defaultLayout: 'deploy/getDefaultLayout',
+      origTextStyle: 'deploy/getOrigTextStyle',
+    }),
+    layout() {
+      const layout = this.defaultLayout;
+      if (this.char) {
+        layout.title.text = this.char.title || "";
+        layout.xaxis.title = this.char.xaxis.title || "";
+        layout.yaxis.title = this.char.yaxis.title || "";
+      }
+      return layout;
+    },
+    data() {
+      const data = [this.graphicData] || [];
+      return data;
+    },
   },
 }
 </script>
@@ -51,6 +85,12 @@ export default {
 .card{
   padding: 15px 15px 15px 0;
   display: flex;
+}
+.card__graphic{
+  background: #242F3D;
+  border: 1px solid #6C7883;
+  box-sizing: border-box;
+  border-radius: 4px;
 }
 .card__original{
   background: #242F3D;
@@ -68,4 +108,7 @@ export default {
       width: 16px;
     }
   }
+.card__table{
+  width: 100%;
+}
 </style>

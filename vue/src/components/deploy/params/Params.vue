@@ -4,7 +4,7 @@
       <div class="params-container pa-5">
         <div class="label">Название папки</div>
         <div class="t-input">
-          <label class="t-input__label">https://demo.neural-university.ru/login/project/{{ deploy }}</label>
+          <label class="t-input__label">https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}</label>
           <input v-model="deploy" class="t-input__input" type="text" name="deploy[deploy]"  @blur="$emit('blur', $event.target.value)" />
         </div>
         <Checkbox :label="'Перезаписать с таким же названием папки'" :type="'checkbox'" class="pd__top" @change="UseReplace"/>
@@ -29,24 +29,27 @@
             </div>
           </div>
         </div>
-        <button :disabled="send_disabled || !dataLoaded" @click="SendData" v-if="!DataSent">Отправить</button>
+        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
         <div class="loader" v-if="DataLoading">
           <div class="loader__title">Дождитесь окончания загрузки</div>
-          <div class="loader__time">
-            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты
-          </div>
+<!--          <div class="loader__time">-->
+<!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
+<!--          </div>-->
           <div class="loader__progress">
-            <div class="progress-bar">
-              <div class="loading">
-                <span>78%</span>
-              </div>
-            </div>
+            <load-spiner></load-spiner>
           </div>
+<!--          <div class="loader__progress">-->
+<!--            <div class="progress-bar">-->
+<!--              <div class="loading">-->
+<!--                <span>78%</span>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
         <div class="req-ans" v-if="DataSent">
           <div class="answer__success">Загрузка завершена!</div>
           <div class="answer__label">Ссылка на сформированную загрузку</div>
-          <div class="answer__url"><i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i><span>{{ moduleList.url }}</span></div>
+          <div class="answer__url"><i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i><a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a></div>
         </div>
         <ModuleList v-if="DataSent" :moduleList="moduleList.api_text"/>
 
@@ -58,12 +61,13 @@
 import { mapGetters } from 'vuex'
 import Checkbox from "@/components/forms/Checkbox";
 import ModuleList from "./ModuleList";
-import progress from "../../../at-ui/src/components/progress/src/progress";
+import LoadSpiner from "../../forms/LoadSpiner";
 export default {
   name: "Settings",
   components: {
     Checkbox,
-    ModuleList
+    ModuleList,
+    LoadSpiner
   },
   data: () => ({
     deploy: "",
@@ -80,14 +84,15 @@ export default {
   ...mapGetters({
     height: "settings/height",
     moduleList: "deploy/getModuleList",
-    dataLoaded: "deploy/getDataLoaded",
+    projectData: "projects/getProject",
+    userData: "projects/getUser",
   }),
     checkCorrect(){
       return this.sec == this.sec_accept && this.sec.length > 5 ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect'
     },
   },
   mounted() {
-    // console.log(this.moduleList)
+    // console.log(this.projectData)
   },
   watch: {
     deploy(val){
@@ -138,10 +143,17 @@ export default {
     },
     async progress(){
         let answer = await this.$store.dispatch('deploy/CheckProgress');
-        if(!answer.finished){
-          this.Percents(answer.percent);
-          progress();
+        console.log(answer)
+        if(!answer){
+          // this.Percents(30);
+          this.getProgress();
+        }else {
+          this.DataLoading = false;
+          this.DataSent = true;
         }
+    },
+    getProgress(){
+      setTimeout(this.progress, 2000);
     },
     async SendData(){
       let data = {
@@ -151,10 +163,8 @@ export default {
       }
       if(this.use_sec) data['sec'] = this.sec
       this.DataLoading = true;
-      this.progress();
       await this.$store.dispatch('deploy/SendDeploy', data);
-      this.DataLoading = false;
-      this.DataSent = true;
+      this.getProgress();
     }
   },
 };
@@ -188,9 +198,13 @@ button {
 .t-input{
   padding-bottom: 10px;
 }
+.loader{
+  padding-top: 20px;
+}
 .loader__title{
   font-size: 14px;
   line-height: 24px;
+  text-align: center;
 }
 .loader__time{
   padding-top: 20px;
@@ -201,7 +215,7 @@ button {
   text-align: center;
 }
 .loader__progress{
-  padding-top: 10px;
+  padding-top: 20px;
   width: 100%;
   display: flex;
   justify-content: center;
@@ -254,8 +268,9 @@ button {
     line-height: 24px;
     color: #65B9F4;
     display: flex;
-    span{
+    a{
       padding-left: 10px;
+      color: #65B9F4;
     }
     i{
       cursor: pointer;
