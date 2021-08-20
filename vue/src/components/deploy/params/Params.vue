@@ -36,7 +36,7 @@
 <!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
 <!--          </div>-->
           <div class="loader__progress">
-            <circle2></circle2>
+            <load-spiner></load-spiner>
           </div>
 <!--          <div class="loader__progress">-->
 <!--            <div class="progress-bar">-->
@@ -61,13 +61,13 @@
 import { mapGetters } from 'vuex'
 import Checkbox from "@/components/forms/Checkbox";
 import ModuleList from "./ModuleList";
-import {Circle2} from 'vue-loading-spinner'
+import LoadSpiner from "../../forms/LoadSpiner";
 export default {
   name: "Settings",
   components: {
     Checkbox,
     ModuleList,
-    Circle2
+    LoadSpiner
   },
   data: () => ({
     deploy: "",

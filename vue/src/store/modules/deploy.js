@@ -1,8 +1,16 @@
 import temp from "../temp/deploy";
+import {defLayout, originaltextStyle} from "../const/deploy"
 export default {
     namespaced: true,
     state: () => ({
       graphicData: temp.data,
+      defaultLayout: defLayout,
+      origTextStyle: originaltextStyle,
+      Cards: [
+        {
+          type: "graphic"
+        }
+      ],
       moduleList: {
         api_text: "",
         url: "",
@@ -30,5 +38,8 @@ export default {
     getters: {
       getModuleList: ({ moduleList }) => moduleList,
       getGraphicData: ({ graphicData }) => graphicData,
+      getDefaultLayout: ({ defaultLayout }) => defaultLayout,
+      getOrigTextStyle: ({ origTextStyle }) => origTextStyle,
+      getCards: ({ Cards }) => Cards,
     }
 }

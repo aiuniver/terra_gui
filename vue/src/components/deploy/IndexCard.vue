@@ -4,7 +4,7 @@
     <div v-if="type == 'card'">
       <div class="card__original" >
         <ImgCard v-if="original.type == 'image'"/>
-        <TextCard v-if="original.type == 'text'" :style="originaltextStyle">{{ original.data }}</TextCard>
+        <TextCard v-if="original.type == 'text'" :style="origTextStyle">{{ original.data }}</TextCard>
       </div>
       <div class="card__result">
         <ImgCard v-if="result.type == 'image'"/>
@@ -18,7 +18,7 @@
       <Table/>
     </div>
   </div>
-  <div class="card__reload"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
 </template>
 
@@ -37,57 +37,6 @@ export default {
     Plotly,
   },
   data: () => ({
-    originaltextStyle: {
-      width: "600px",
-      height: "300px",
-      color: "#A7BED3",
-      padding: "10px 25px 12px 12px"
-    },
-    defLayout: {
-      autosize: true,
-      margin: {
-        l: 62,
-        r: 20,
-        t: 20,
-        b: 67,
-        pad: 0,
-        autoexpand: true,
-      },
-      font: {
-        color: "#A7BED3",
-      },
-      showlegend: true,
-      legend: {
-        y: -0.25,
-        itemsizing: "constant",
-        orientation: "h",
-        font: {
-          family: "Open Sans",
-          color: "#A7BED3",
-        },
-      },
-      paper_bgcolor: "transparent",
-      plot_bgcolor: "transparent",
-      title: {
-        text: "",
-      },
-      xaxis: {
-        title: "Эпоха",
-        showgrid: true,
-        zeroline: false,
-        linecolor: "#A7BED3",
-        gridcolor: "#0E1621",
-        gridwidth: 1,
-      },
-      yaxis: {
-        title: "accuracy",
-        showgrid: true,
-        zeroline: false,
-        linecolor: "#A7BED3",
-        gridcolor: "#0E1621",
-        gridwidth: 1,
-      },
-    },
   }),
   props: {
     original: {
@@ -108,10 +57,12 @@ export default {
   },
   computed: {
     ...mapGetters({
-      graphicData : 'deploy/getGraphicData'
+      graphicData: 'deploy/getGraphicData',
+      defaultLayout: 'deploy/getDefaultLayout',
+      origTextStyle: 'deploy/getOrigTextStyle',
     }),
     layout() {
-      const layout = this.defLayout;
+      const layout = this.defaultLayout;
       if (this.char) {
         layout.title.text = this.char.title || "";
         layout.xaxis.title = this.char.xaxis.title || "";
@@ -157,4 +108,7 @@ export default {
       width: 16px;
     }
   }
+.card__table{
+  width: 100%;
+}
 </style>
