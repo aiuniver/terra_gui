@@ -12,9 +12,6 @@
             <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
           </div>
         </div>
-        <div class="board__table">
-          <Table/>
-        </div>
       </div>
     </div>
   </div>
@@ -27,25 +24,11 @@ export default {
   components: {
     IndexCard
   },
-  data: () => ({
-    Cards: [
-      {
-        type: "graphic"
-      },
-      {
-        type: "graphic"
-      },
-      {
-        type: "graphic"
-      },
-      {
-        type: "graphic"
-      },
-    ],
-  }),
+  data: () => ({}),
   computed: {
     ...mapGetters({
       dataLoaded: "deploy/getDataLoaded",
+      Cards: 'deploy/getCards',
       height: "settings/autoHeight",
     }),
   },
