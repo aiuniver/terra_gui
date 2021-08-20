@@ -229,8 +229,8 @@ class CreateDTS(object):
             if self.tags[key] in ['video', 'text', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.inputs.get(key).parameters
                 )
             elif self.tags[key] == 'dataframe':
@@ -242,7 +242,7 @@ class CreateDTS(object):
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.inputs.get(key).parameters
                 )
             if isinstance(array, tuple):
@@ -270,8 +270,8 @@ class CreateDTS(object):
             if self.tags[key] in ['text', 'text_segmentation', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.outputs.get(key).parameters
                 )
             elif self.tags[key] == 'timeseries':
@@ -283,7 +283,7 @@ class CreateDTS(object):
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     creation_data.source_path,
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.outputs.get(key).parameters
                 )
 
