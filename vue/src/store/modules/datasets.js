@@ -27,9 +27,6 @@ export default {
     SET_INPUT_DATA(state, value) {
       state.inputData = value;
     },
-    SET_NEW_DATASET(state, value) {
-      state.inputData = value;
-    },
     SET_SELECTED(state, value) {
       state.selected = value;
     },
@@ -73,7 +70,7 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       if (res?.error) {
         const { error: { fields: { inputs, outputs } } } = res
-        console.log({ ...inputs, ...outputs })
+        // console.log({ ...inputs, ...outputs })
         commit('SET_ERRORS', { ...inputs, ...outputs })
 
       }
@@ -153,12 +150,12 @@ export default {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer)]);
     },
-    updateInputData({ state: { inputData } }, { id, name, value, root }) {
+    updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
       if (index !== -1) {
         if (root && name === 'type') {
           const obj = inputData[index].parameters.sources_paths || []
-          inputData[index].parameters = {}
+          // inputData[index].parameters = {}
           inputData[index].parameters.sources_paths = obj
         }
         if (root) {
@@ -166,6 +163,7 @@ export default {
         } else {
           inputData[index].parameters[name] = value
         }
+        commit('SET_INPUT_DATA', [...inputData]);
         // console.log(inputData)
       }
     },
@@ -175,9 +173,18 @@ export default {
         inputData.filter(item => item.id !== id)
       );
     },
+    cleanError({ state: { errors }}, { id, name }) {
+      if(errors?.[id]?.[name]) {
+        errors[id][name] = ''
+      }
+      if(errors?.[id]?.['parameters']?.[name]) {
+        errors[id]['parameters'][name] = ''
+      }
+    },
   },
   getters: {
     getInputData({ inputData }) {
+      // console.log(inputData)
       return inputData;
     },
     getErrors: ({ errors }) => ( id ) => {
@@ -186,7 +193,7 @@ export default {
     getInputDataByID:
       ({ inputData }) =>
       id => {
-        console.log(inputData, id);
+        // console.log(inputData, id);
         return inputData.find(item => item.id === id);
       },
     getTypeInput({ creation: { input } }) {

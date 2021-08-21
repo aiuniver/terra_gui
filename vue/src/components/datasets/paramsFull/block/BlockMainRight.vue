@@ -7,18 +7,37 @@
     <div class="block-right__body">
       <scrollbar :ops="ops" ref="scrollRight">
         <div class="block-right__body--inner" :style="height">
-          <template v-for="{ id, color } of inputDataOutput">
-            <CardLayer :id="id" :color="color" :key="'cardLayersRight' + id" @click-btn="optionsCard($event, id)">
-              <template v-slot:header>Выходные данные {{ id }}</template>
-              <TMultiSelect
-                :id="id"
-                :lists="mixinFiles"
-                label="Выберите путь"
-                inline
-                @change="mixinCheck($event, id)"
-              />
-              <template v-for="(data, index) of output">
-                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" root @change="mixinChange" />
+          <div class="block-right__body--empty"></div>
+          <template v-for="inputData of inputDataOutput">
+            <CardLayer
+              v-bind="inputData"
+              :key="'cardLayersRight' + inputData.id"
+              @click-btn="optionsCard($event, inputData.id)"
+            >
+              <template v-slot:header>Входные данные {{ inputData.id }}</template>
+              <template v-slot:default="{ data:{ parameters, errors } }">
+                <TMultiSelect
+                  :id="inputData.id"
+                  name="sources_paths"
+                  :value="parameters.sources_paths"
+                  :lists="mixinFiles"
+                  :errors="errors"
+                  label="Выберите путь"
+                  inline
+                  @change="mixinCheck($event, inputData.id)"
+                />
+                <template v-for="(data, index) of output">
+                  <t-auto-field
+                    v-bind="data"
+                    :parameters="parameters"
+                    :errors="errors"
+                    :key="inputData.color + index"
+                    :idKey="'key_' + index"
+                    :id="inputData.id"
+                    root
+                    @change="mixinChange"
+                  />
+                </template>
               </template>
             </CardLayer>
           </template>
@@ -69,7 +88,7 @@ export default {
         clean: true,
         padding: 172 + 90 + 62,
       });
-      console.log(height);
+      // console.log(height);
       return height;
     },
   },

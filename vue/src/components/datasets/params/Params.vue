@@ -87,11 +87,11 @@ export default {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.createInterval();
         }
-        console.log(data);
+        // console.log(data);
       }, 1000);
     },
     select(select) {
-      console.log(select);
+      // console.log(select);
       this.dataset = select;
     },
     openFull() {
@@ -106,12 +106,11 @@ export default {
       }
     },
     async download() {
-      console.log('dfdfdfdfdfdf');
       const { mode, value } = this.dataset;
       if (mode && value) {
         this.loading = true;
         const { data, success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
-        console.log(data)
+        // console.log(data)
         if (data || success) {
           this.createInterval();
         } else {

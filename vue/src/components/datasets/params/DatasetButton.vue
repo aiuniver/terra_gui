@@ -49,8 +49,8 @@ export default {
       this.$store.dispatch('messages/setMessage', {
         message: `Выбран датасет «${name}»`,
       });
-      const { data } = await this.$store.dispatch('datasets/choice', { alias, group });
-      if (data) {
+      const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
+      if (success) {
         this.loading = true
         this.createInterval();
       }

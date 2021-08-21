@@ -55,7 +55,7 @@ export default {
       if (!data) {
         return;
       }
-      console.log(data);
+      // console.log(data);
       this.list = data;
     },
     selected({ value }) {
