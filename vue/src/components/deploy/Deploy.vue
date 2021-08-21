@@ -1,6 +1,6 @@
 <template>
   <div class="board">
-    <div class="wrapper">
+    <div class="wrapper">Сей
       <div class="content">
 <!--        <button class="board__reload-all">-->
 <!--          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>-->
