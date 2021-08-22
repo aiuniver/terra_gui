@@ -8,7 +8,7 @@
       <div class="scales__third"></div>
     </div>
     <div class="slider__between" ref="between">
-      <button class="slider__btn-1" :style='sliderFirstStyle' @mousedown="firstBtn"></button>
+      <button class="slider__btn-1" :style='sliderFirstStyle' @mousedown="startDragFirst" @mouseup="stopDragFirst"></button>
       <button class="slider__btn-2" :style='sliderSecondStyle' @mousedown="secondBtn"></button>
     </div>
   </div>
@@ -21,23 +21,27 @@ export default {
   data: () => ({
     btnFirstVal: 50,
     btnSecondVal: 77,
+    firstBtnDrag: false
   }),
   props: {
     // degree: Number
   },
   methods: {
+    startDragFirst() {
+      this.firstBtnDrag = true;
+      window.addEventListener('mousemove', this.firstBtn);
+    },
+    stopDragFirst() {
+      window.removeEventListener('mousemove', this.firstBtn);
+      this.firstBtnDrag = false;
+    },
     firstBtn(e){
-      var btn = e.target;
-
-      document.onmousemove = function (e) {
+      if(this.firstBtnDrag){
+        var btn = e.target;
         let pos = e.x - btn.parentNode.getBoundingClientRect().x;
         this.btnFirstVal = Math.round((pos / 231) * 100);
-        console.log(this.btnFirstVal);
+        // console.log("asdasdas " + this.btnFirstVal);
       }
-      document.onmouseup = function() {
-        document.onmousemove = document.onmouseup = null;
-      };
-      return false;
     },
     secondBtn(){},
   },
@@ -53,6 +57,12 @@ export default {
       };
     },
   },
+  // mounted() {
+  //   window.addEventListener('mouseup', this.firstBtnDrag);
+  // },
+  // destroyed() {
+  //   window.removeEventListener('mouseup', this.firstBtnDrag);
+  // },
 }
 </script>
 
