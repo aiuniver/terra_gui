@@ -7,9 +7,9 @@
       <div class="scales__second"></div>
       <div class="scales__third"></div>
     </div>
-    <div class="slider__between">
-      <button class="slider__btn-1" style='left:50%;'></button>
-      <button class="slider__btn-2" style='left:77%;'></button>
+    <div class="slider__between" ref="between">
+      <button class="slider__btn-1" :style='sliderFirstStyle' @mousedown="firstBtn"></button>
+      <button class="slider__btn-2" :style='sliderSecondStyle' @mousedown="secondBtn"></button>
     </div>
   </div>
 </div>
@@ -18,11 +18,41 @@
 <script>
 export default {
   name: "Slider",
-  data: () => ({}),
+  data: () => ({
+    btnFirstVal: 50,
+    btnSecondVal: 77,
+  }),
   props: {
     // degree: Number
   },
+  methods: {
+    firstBtn(e){
+      var btn = e.target;
 
+      document.onmousemove = function (e) {
+        let pos = e.x - btn.parentNode.getBoundingClientRect().x;
+        this.btnFirstVal = Math.round((pos / 231) * 100);
+        console.log(this.btnFirstVal);
+      }
+      document.onmouseup = function() {
+        document.onmousemove = document.onmouseup = null;
+      };
+      return false;
+    },
+    secondBtn(){},
+  },
+  computed: {
+    sliderFirstStyle() {
+      return {
+        left: this.btnFirstVal + "%",
+      };
+    },
+    sliderSecondStyle() {
+      return {
+        left: this.btnSecondVal + "%",
+      };
+    },
+  },
 }
 </script>
 
