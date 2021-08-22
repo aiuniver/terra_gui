@@ -511,7 +511,9 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+        self.Exch.show_current_epoch(logs)
         self.Exch.show_current_epoch(self.last_epoch)
+        self.Exch.show_current_weigths(self.model.get_weights())
         self.last_epoch += 1
         # self.Exch.last_epoch_model(self.model)
 
@@ -3057,7 +3059,7 @@ if __name__ == "__main__":
     # dataset_variants = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing',
     #                     'reuters', 'трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
     #                     'заболевания', 'договоры', 'самолеты', 'губы', 'sber']
-    with open('E:/AI/terra_gui/TerraAI/datasets/dataset автомобили 3/config.json', 'r') as cfg:
+    with open('G:/Мой диск/Colab Notebooks/Стажировка/terra_gui/TerraAI/datasets/dataset автомобили 3/config.json', 'r') as cfg:
         ddd = json.load(cfg)
     print('\nconfig.json\n', ddd)
 
