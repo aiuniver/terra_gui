@@ -32,19 +32,19 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
   data: () => ({}),
   computed: {
     ...mapGetters({
-      blocks: 'modeling/getBlocks'
+      blocks: 'modeling/getBlocks',
     }),
     isInput() {
-      return this.blocks .find(item => item.group === 'input');
+      return this.blocks.find(item => item.group === 'input');
     },
     isOutput() {
-      return this.blocks .find(item => item.group === 'output');
+      return this.blocks.find(item => item.group === 'output');
     },
   },
   methods: {
