@@ -4,6 +4,8 @@
 
 import os
 import pandas
+import random
+import base64
 
 from enum import Enum
 from pathlib import Path
@@ -45,6 +47,9 @@ class FileManagerTypeBaseChoice(str, Enum):
 
 class FileManagerTypeChoice(str, Enum):
     folder = FileManagerTypeBaseChoice.folder.value
+    jpg = FileManagerTypeBaseChoice.image.value
+    jpeg = FileManagerTypeBaseChoice.image.value
+    png = FileManagerTypeBaseChoice.image.value
     csv = FileManagerTypeBaseChoice.table.value
     undefined = FileManagerTypeBaseChoice.unknown.value
 
@@ -125,10 +130,33 @@ class FileManagerItem(BaseMixinData):
 
     @property
     def cover(self) -> Optional[str]:
-        if self.type == FileManagerTypeChoice.folder:
-            # print(self.children)
-            pass
-        return None
+        if self.type != FileManagerTypeChoice.folder:
+            return None
+        _types = []
+        for item in self.children:
+            if item.type.value == FileManagerTypeBaseChoice.image:
+                _types.append(item.type.name)
+        if not len(_types):
+            return None
+        _images = []
+        for item in os.listdir(self.path):
+            try:
+                _type = FileManagerTypeChoice[item.split(".")[-1].lower()]
+                if _type.value == FileManagerTypeBaseChoice.image:
+                    _images.append(item)
+            except KeyError:
+                pass
+        _image = Path(self.path, random.choices(_images)[0])
+        _image_ext = _image.name.split(".")[-1].lower()
+        with open(_image, "rb") as _image_ref:
+            _image_base64 = base64.b64encode(_image_ref.read())
+            return f'data:image/{_image_ext};base64,{_image_base64.decode("utf-8")}'
+
+    @staticmethod
+    def is_usable(path: Path) -> bool:
+        return os.path.isdir(path) or (
+            os.path.isfile(path) and str(path).lower().endswith(".csv")
+        )
 
     @validator("title", always=True)
     def _validate_title(cls, value: str, values) -> str:
@@ -158,10 +186,7 @@ class FileManagerItem(BaseMixinData):
             files_grouped = {}
             for item in os.listdir(fullpath):
                 item_path = Path(fullpath, item).absolute()
-                if os.path.isdir(item_path) or (
-                    os.path.isfile(item_path)
-                    and str(item_path).lower().endswith(".csv")
-                ):
+                if FileManagerItem.is_usable(item_path):
                     __items.append(FileManagerItem(**{"path": item_path}))
                 else:
                     _ext = str(item_path).split(".")[-1].lower()
@@ -169,11 +194,15 @@ class FileManagerItem(BaseMixinData):
                     _count += 1
                     files_grouped.update({_ext: _count})
             for _ext, _count in files_grouped.items():
+                try:
+                    _type = FileManagerTypeChoice[_ext]
+                except KeyError:
+                    _type = FileManagerTypeChoice.undefined
                 __items.append(
                     FileManagerItem(
                         **{
                             "title": f"[{_count}] {_ext}",
-                            "type": FileManagerTypeChoice.undefined,
+                            "type": _type,
                         }
                     )
                 )
