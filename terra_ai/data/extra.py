@@ -12,6 +12,8 @@ from pydantic import validator
 from pydantic.types import FilePath, DirectoryPath
 from pydantic.color import Color
 
+from terra_ai.data.types import Base64Type
+
 from .mixins import BaseMixinData, UniqueListMixin
 from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
@@ -117,6 +119,8 @@ class FileManagerItem(BaseMixinData):
     title: Optional[str]
     type: Optional[FileManagerTypeChoice]
     children: list = []
+    cover: Optional[Base64Type]
+    dragndrop: bool = False
 
     @property
     def csv2data(self) -> Optional[dict]:
@@ -163,7 +167,14 @@ class FileManagerItem(BaseMixinData):
         if self.type != FileManagerTypeChoice.folder:
             __exclude.append("children")
         kwargs.update({"exclude": set(__exclude)})
-        return super().dict(**kwargs)
+        data = super().dict(**kwargs)
+        if self.type == FileManagerTypeChoice.csv:
+            data.update({"data": self.csv2data})
+        else:
+            data.update({"data": None})
+        if self.type in [FileManagerTypeChoice.folder, FileManagerTypeChoice.csv]:
+            data.update({"dragndrop": True})
+        return data
 
 
 class FileManagerList(UniqueListMixin):
