@@ -45,14 +45,7 @@ class FileManagerTypeBaseChoice(str, Enum):
 
 class FileManagerTypeChoice(str, Enum):
     folder = FileManagerTypeBaseChoice.folder.value
-    jpg = FileManagerTypeBaseChoice.image.value
-    jpeg = FileManagerTypeBaseChoice.image.value
-    png = FileManagerTypeBaseChoice.image.value
-    wav = FileManagerTypeBaseChoice.audio.value
-    mp3 = FileManagerTypeBaseChoice.audio.value
-    webm = FileManagerTypeBaseChoice.video.value
     csv = FileManagerTypeBaseChoice.table.value
-    txt = FileManagerTypeBaseChoice.text.value
     undefined = FileManagerTypeBaseChoice.unknown.value
 
 
@@ -115,11 +108,10 @@ class FileSizeData(BaseMixinData):
 
 
 class FileManagerItem(BaseMixinData):
-    path: Union[FilePath, DirectoryPath]
+    path: Optional[Union[FilePath, DirectoryPath]]
     title: Optional[str]
     type: Optional[FileManagerTypeChoice]
     children: list = []
-    cover: Optional[Base64Type]
     dragndrop: bool = False
 
     @property
@@ -130,6 +122,13 @@ class FileManagerItem(BaseMixinData):
         data = dataframe.values.tolist()
         data.insert(0, list(dataframe.columns))
         return data
+
+    @property
+    def cover(self) -> Optional[str]:
+        if self.type == FileManagerTypeChoice.folder:
+            # print(self.children)
+            pass
+        return None
 
     @validator("title", always=True)
     def _validate_title(cls, value: str, values) -> str:
@@ -156,9 +155,27 @@ class FileManagerItem(BaseMixinData):
         fullpath = values.get("path")
         __items = []
         if fullpath and os.path.isdir(fullpath):
+            files_grouped = {}
             for item in os.listdir(fullpath):
+                item_path = Path(fullpath, item).absolute()
+                if os.path.isdir(item_path) or (
+                    os.path.isfile(item_path)
+                    and str(item_path).lower().endswith(".csv")
+                ):
+                    __items.append(FileManagerItem(**{"path": item_path}))
+                else:
+                    _ext = str(item_path).split(".")[-1].lower()
+                    _count = files_grouped.get(_ext, 0)
+                    _count += 1
+                    files_grouped.update({_ext: _count})
+            for _ext, _count in files_grouped.items():
                 __items.append(
-                    FileManagerItem(**{"path": Path(fullpath, item).absolute()})
+                    FileManagerItem(
+                        **{
+                            "title": f"[{_count}] {_ext}",
+                            "type": FileManagerTypeChoice.undefined,
+                        }
+                    )
                 )
         return __items
 
@@ -174,6 +191,7 @@ class FileManagerItem(BaseMixinData):
             data.update({"data": None})
         if self.type in [FileManagerTypeChoice.folder, FileManagerTypeChoice.csv]:
             data.update({"dragndrop": True})
+        data.update({"cover": self.cover})
         return data
 
 
