@@ -9,7 +9,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <DoubleSlider :degree="100" />
+      <Slider :degree="degree"/>
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
@@ -24,13 +24,14 @@
 </template>
 
 <script>
-import DoubleSlider from '@/components/forms/DoubleSlider';
+// import DoubleSlider from '@/components/forms/DoubleSlider';
+import Slider from "@/components/forms/Slider";
 import TTags from '@/components/forms/TTags';
 import serialize from "@/assets/js/serialize";
 export default {
   name: 'BlockFooter',
   components: {
-    DoubleSlider,
+    Slider,
     TTags,
   },
   data: () => ({

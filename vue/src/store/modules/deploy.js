@@ -8,7 +8,7 @@ export default {
       origTextStyle: originaltextStyle,
       Cards: [
         {
-          type: "graphic"
+          type: "table"
         }
       ],
       moduleList: {
