@@ -1,7 +1,7 @@
 <template>
   <div class="t-card-file" :style="bc">
-    <div v-if="id" class="t-card-file__header" :style="bg">{{title}}</div>
-    <div :class="['t-card-file__body', 'icon-file-' + type]"></div>
+    <div v-if="id" class="t-card-file__header" :style="bg">{{ title }}</div>
+    <div :class="['t-card-file__body', 'icon-file-' + type]" :style="img"></div>
     <div class="t-card-file__footer">{{ label }}</div>
   </div>
 </template>
@@ -13,17 +13,24 @@ export default {
     label: String,
     type: String,
     id: Number,
+    cover: String,
   },
   computed: {
+    img() {
+      console.log(this.cover);
+      return this.cover
+        ? { backgroundImage: `url('${this.cover}')`, backgroundPosition: 'center', backgroundSize: 'cover' }
+        : {};
+    },
     selectInputData() {
-      return this.$store.getters['datasets/getInputDataByID'](this.id) || {}
+      return this.$store.getters['datasets/getInputDataByID'](this.id) || {};
     },
     title() {
-      const card = this.selectInputData
-      return card.name || card.layer === 'input' ? 'Входные данные ' + card.id : 'Выходные данные ' + card.id
+      const card = this.selectInputData;
+      return card.name || card.layer === 'input' ? 'Входные данные ' + card.id : 'Выходные данные ' + card.id;
     },
     color() {
-      return this.selectInputData.color || ''
+      return this.selectInputData.color || '';
     },
     bg() {
       return { backgroundColor: this.id ? this.color : '' };
@@ -81,5 +88,4 @@ export default {
     padding: 4px 6px 2px 6px;
   }
 }
-
 </style>

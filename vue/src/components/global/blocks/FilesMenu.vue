@@ -8,7 +8,7 @@
       >
         <div
           class="files-menu-node-item"
-          :draggable="node.type === 'folder'"
+          :draggable="node.dragndrop"
           @dragstart="dragstart($event, node)"
           @dragover.stop
         >
@@ -193,6 +193,9 @@ export default {
       default: true,
     },
     path: String,
+    dragndrop: Boolean,
+    cover: String,
+
   },
   data() {
     return {
@@ -227,11 +230,11 @@ export default {
     },
   },
   methods: {
-    dragstart({ dataTransfer }, { path, title, type }) {
+    dragstart({ dataTransfer }, { path, title, type, cover }) {
       // var img = document.createElement('img');
       // img.src = 'http://kryogenix.org/images/hackergotchi-simpler.png';
       // dataTransfer.setDragImage(img, 0, 0);
-      dataTransfer.setData('CardDataType', JSON.stringify({ value: path, label: title, type, id: 0 }));
+      dataTransfer.setData('CardDataType', JSON.stringify({ value: path, label: title, type, id: 0, cover }));
       dataTransfer.effectAllowed = 'move';
     },
 
@@ -266,6 +269,8 @@ export default {
         title: nodeModel.title,
         path: nodeModel.path,
         type: nodeModel.type,
+        dragndrop: nodeModel.dragndrop,
+        cover: nodeModel.cover,
         isLeaf: !!nodeModel.isLeaf,
         children: nodeModel.children ? this.getNodes(nodeModel.children, fpath, isExpanded) : [],
         isSelected: !!nodeModel.isSelected,

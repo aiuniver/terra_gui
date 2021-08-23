@@ -14,7 +14,7 @@
               :key="'cardLayersRight' + inputData.id"
               @click-btn="optionsCard($event, inputData.id)"
             >
-              <template v-slot:header>Входные данные {{ inputData.id }}</template>
+              <template v-slot:header>Выходные данные {{ inputData.id }}</template>
               <template v-slot:default="{ data:{ parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
