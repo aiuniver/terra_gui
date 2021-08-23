@@ -12,6 +12,7 @@
       @select="blockSelect(block)"
       @delete="blockDelete(block)"
       @position="position(block, $event)"
+      @moveBlock="moveBlock"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -582,6 +583,9 @@ export default {
         return b.id !== block.id;
       });
       // this.updateScene();
+    },
+    moveBlock() {
+      this.$store.dispatch('modeling/setButtons', {save: true})
     },
 
     updateScene() {

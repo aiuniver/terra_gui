@@ -11,6 +11,10 @@ export default {
       list: [],
       layers_types: {},
     },
+    buttons: {
+      save: false,
+      clone: false
+    }
   }),
   mutations: {
     SET_MODELING(state, value) {
@@ -35,6 +39,9 @@ export default {
     SET_SELECT(state, value) {
       state.select = value;
     },
+    SET_BUTTONS(state, value) {
+      state.buttons = {...state.buttons, ...value };
+    },
   },
   actions: {
     async info({ dispatch }, value) {
@@ -47,32 +54,16 @@ export default {
       }
       return model;
     },
-    async saveModel({ state: { blocks, links }, dispatch }) {
+    async saveModel({ commit, state: { blocks, links }, dispatch }) {
       blocks.forEach(block => {
-        const up = links.map(link => {
+        block.bind.up = links.map(link => {
           return link.targetID === block.id ? link.originID : null
         }).filter(link => link)
-        const down = links.map(link => {
+        block.bind.down = links.map(link => {
           return link.originID === block.id ? link.targetID : null
         }).filter(link => link)
-
-        block.bind.up = up
-        block.bind.down = down
-
-        // console.log(block.bind.down)
-        // console.log(down)
       })
-      console.log(blocks)
-
-      // links.forEach(link => {
-      //   const blockOrigin = block.
-      //   link.originID,
-      //   link.originSlot,
-      //   link.targetID,
-      //   link.targetSlot,
-                                
-      // });
-
+      commit('SET_BUTTONS', { save: false});
       return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
@@ -93,6 +84,9 @@ export default {
     setSelect({ commit }, value) {
       commit('SET_SELECT', value);
     },
+    setButtons({ commit }, value) {
+      commit('SET_BUTTONS', value);
+    },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
@@ -101,6 +95,7 @@ export default {
     getBlocks: ({ blocks }) => blocks,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
+    getButtons: ({ buttons }) => buttons,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id];
