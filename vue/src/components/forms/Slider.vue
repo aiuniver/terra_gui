@@ -56,7 +56,7 @@ export default {
         this.btnFirstVal = Math.round((pos / 231) * 100);
         if(this.btnFirstVal < 5) this.btnFirstVal = 5;
         if(this.btnFirstVal > 95) this.btnFirstVal = 95;
-        // if(this.btnFirstVal > this.btnSecondVal - 5) this.btnFirstVal = this.btnFirstVal - 5;
+        if(this.btnFirstVal > this.btnSecondVal - 5) this.btnFirstVal = this.btnSecondVal - 5;
       }
     },
     secondBtn(e){
@@ -66,6 +66,7 @@ export default {
         this.btnSecondVal = Math.round((pos / 231) * 100);
         if(this.btnSecondVal < 5) this.btnSecondVal = 5;
         if(this.btnSecondVal > 95) this.btnSecondVal = 95;
+        if(this.btnSecondVal < this.btnFirstVal - 5) this.btnSecondVal = this.btnFirstVal + 5;
       }
     },
   },
