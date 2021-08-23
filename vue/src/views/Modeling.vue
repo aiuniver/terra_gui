@@ -5,7 +5,7 @@
       <SaveModel v-model="dialogSaveModel" :image="imageModel"/>
       <Toolbar @actions="actions" />
       <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" />
-      <Params :selectBlock="selectBlock" />
+      <Params ref="params" :selectBlock="selectBlock" />
     </div>
   </main>
 </template>
@@ -59,6 +59,8 @@ export default {
       }
       if (btn === 'validation') {
         // this.create = true
+        console.log('hjkhjh')
+        this.$refs.params.saveModel()
       }
       if (btn === 'clear') {
         this.$Modal.confirm({
