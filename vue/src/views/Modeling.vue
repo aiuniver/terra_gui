@@ -4,7 +4,7 @@
       <LoadModel v-model="dialogLoadModel" />
       <SaveModel v-model="dialogSaveModel" :image="imageModel"/>
       <Toolbar @actions="actions" />
-      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" />
+      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
       <Params ref="params" :selectBlock="selectBlock" />
     </div>
   </main>

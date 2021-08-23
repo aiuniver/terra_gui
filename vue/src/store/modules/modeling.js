@@ -19,7 +19,7 @@ export default {
     SET_MODEL(state, value) {
       state.model = value;
       const { layers } = value;
-      console.log(layers);
+      // console.log(layers);
       state.blocks = prepareBlocks(layers);
       state.links = prepareLinks(layers);
     },
@@ -47,7 +47,32 @@ export default {
       }
       return model;
     },
-    async saveModel({ state: { blocks }, dispatch }) {
+    async saveModel({ state: { blocks, links }, dispatch }) {
+      blocks.forEach(block => {
+        const up = links.map(link => {
+          return link.targetID === block.id ? link.originID : null
+        }).filter(link => link)
+        const down = links.map(link => {
+          return link.originID === block.id ? link.targetID : null
+        }).filter(link => link)
+
+        block.bind.up = up
+        block.bind.down = down
+
+        // console.log(block.bind.down)
+        // console.log(down)
+      })
+      console.log(blocks)
+
+      // links.forEach(link => {
+      //   const blockOrigin = block.
+      //   link.originID,
+      //   link.originSlot,
+      //   link.targetID,
+      //   link.targetSlot,
+                                
+      // });
+
       return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
