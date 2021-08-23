@@ -27,7 +27,7 @@ export default {
     },
     title() {
       const card = this.selectInputData;
-      return card.name || card.layer === 'input' ? 'Входные данные ' + card.id : 'Выходные данные ' + card.id;
+      return card.layer === 'input' ? 'Входные данные ' + card.id : 'Выходные данные ' + card.id;
     },
     color() {
       return this.selectInputData.color || '';
