@@ -9,7 +9,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <Slider/>
+      <Slider :degree="degree"/>
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>

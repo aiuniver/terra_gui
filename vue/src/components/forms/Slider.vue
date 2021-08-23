@@ -2,14 +2,19 @@
 <div class="t-field">
   <div class="t-field__label">Train / Val / Test</div>
   <div class="slider">
+    <div class="slider__inputs">
+      <input name="[info][part][train]" type="number" :value="btnFirstVal" :data-degree="degree" />
+      <input name="[info][part][validation]" type="number" :value="btnSecondVal - btnFirstVal" :data-degree="degree" />
+      <input name="[info][part][test]" type="number" :value="100 - btnSecondVal" :data-degree="degree" />
+    </div>
     <div class="slider__scales">
-      <div class="scales__first"></div>
-      <div class="scales__second"></div>
-      <div class="scales__third"></div>
+      <div class="scales__first" :style="firstScale">{{ btnFirstVal }}</div>
+      <div class="scales__second" :style="secondScale">{{ btnSecondVal - btnFirstVal }}</div>
+      <div class="scales__third" :style="thirdScale">{{ 100 - btnSecondVal }}</div>
     </div>
     <div class="slider__between" ref="between">
       <button class="slider__btn-1" :style='sliderFirstStyle' @mousedown="startDragFirst" @mouseup="stopDragFirst"></button>
-      <button class="slider__btn-2" :style='sliderSecondStyle' @mousedown="secondBtn"></button>
+      <button class="slider__btn-2" :style='sliderSecondStyle' @mousedown="startDragSecond" @mouseup="stopDragSecond"></button>
     </div>
   </div>
 </div>
@@ -21,10 +26,11 @@ export default {
   data: () => ({
     btnFirstVal: 50,
     btnSecondVal: 77,
-    firstBtnDrag: false
+    firstBtnDrag: false,
+    secondBtnDrag: false,
   }),
   props: {
-    // degree: Number
+    degree: Number
   },
   methods: {
     startDragFirst() {
@@ -35,15 +41,33 @@ export default {
       window.removeEventListener('mousemove', this.firstBtn);
       this.firstBtnDrag = false;
     },
+    startDragSecond() {
+      this.secondBtnDrag = true;
+      window.addEventListener('mousemove', this.secondBtn);
+    },
+    stopDragSecond() {
+      window.removeEventListener('mousemove', this.secondBtn);
+      this.secondBtnDrag = false;
+    },
     firstBtn(e){
       if(this.firstBtnDrag){
-        var btn = e.target;
-        let pos = e.x - btn.parentNode.getBoundingClientRect().x;
+        var btn = document.querySelector(".slider__btn-1");
+        let pos = e.pageX - btn.parentNode.getBoundingClientRect().x;
         this.btnFirstVal = Math.round((pos / 231) * 100);
-        // console.log("asdasdas " + this.btnFirstVal);
+        if(this.btnFirstVal < 5) this.btnFirstVal = 5;
+        if(this.btnFirstVal > 95) this.btnFirstVal = 95;
+        // if(this.btnFirstVal > this.btnSecondVal - 5) this.btnFirstVal = this.btnFirstVal - 5;
       }
     },
-    secondBtn(){},
+    secondBtn(e){
+      if(this.secondBtnDrag){
+        var btn = document.querySelector(".slider__btn-2");
+        let pos = e.pageX - btn.parentNode.getBoundingClientRect().x;
+        this.btnSecondVal = Math.round((pos / 231) * 100);
+        if(this.btnSecondVal < 5) this.btnSecondVal = 5;
+        if(this.btnSecondVal > 95) this.btnSecondVal = 95;
+      }
+    },
   },
   computed: {
     sliderFirstStyle() {
@@ -56,13 +80,22 @@ export default {
         left: this.btnSecondVal + "%",
       };
     },
+    firstScale() {
+      return {
+        width: this.btnFirstVal + '%',
+      };
+    },
+    secondScale() {
+      return {
+        width: this.btnSecondVal - this.btnFirstVal + '%',
+      };
+    },
+    thirdScale() {
+      return {
+        width: 100 - this.btnSecondVal + '%',
+      };
+    },
   },
-  // mounted() {
-  //   window.addEventListener('mouseup', this.firstBtnDrag);
-  // },
-  // destroyed() {
-  //   window.removeEventListener('mouseup', this.firstBtnDrag);
-  // },
 }
 </script>
 
@@ -118,6 +151,12 @@ export default {
     width: 231px;
     height: 24px;
     position: absolute;
+    div{
+      text-align: center;
+    }
+  }
+  &__inputs{
+    display: none;
   }
 }
 .scales{
