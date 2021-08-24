@@ -21,14 +21,14 @@ from ..data.datasets.extra import DatasetGroupChoice, SourceModeChoice
 
 class PrepareDTS(object):
 
-    def __init__(self, data: DatasetData):
+    def __init__(self, data: DatasetData, datasets_path: str):
 
         self.data = data
         self.language = None
         self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.dts_prepared: bool = False
         self.dataframe: dict = {}
-        self.trds_path = ''
+        self.trds_path = datasets_path
         self.source_path: str = ''
         # self.zip_params = zip_params
 
@@ -263,9 +263,9 @@ class PrepareDTS(object):
 
             pass
 
-        parts = self.data.source_parameters.value.parts
-        finish = parts.index('sources')
-        self.trds_path = os.path.join(*parts[:finish])
+        # parts = self.data.source_parameters.value.parts
+        # finish = parts.index('sources')
+        # self.trds_path = os.path.join(*parts[:finish])
 
         if self.data.group == DatasetGroupChoice.keras and self.data.alias in \
                 ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:

@@ -1,4 +1,7 @@
 from tensorflow import keras
+
+from terra_ai.training.customcallback import ClassificationCallback, SegmentationCallback, RegressionCallback, \
+    TimeseriesCallback, ObjectdetectionCallback
 from terra_ai.training.customlosses import DiceCoefficient
 
 custom_losses_dict = {"dice_coef": DiceCoefficient, "mean_io_u": keras.metrics.MeanIoU}
@@ -21,8 +24,8 @@ task_type_defaults_dict = {
                     "show_best": True,
                     "show_worst": False,
                     "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
+                    "dataset": None,
+                    "exchange": None,
                 },
             },
             "segmentation": {
@@ -42,8 +45,8 @@ task_type_defaults_dict = {
                     "show_best": True,
                     "show_worst": False,
                     "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
+                    "dataset": None,
+                    "exchange": None,
                 },
             },
             "regression": {
@@ -59,8 +62,8 @@ task_type_defaults_dict = {
                     "step": 1,
                     "plot_scatter": True,
                     "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
+                    "dataset": None,
+                    "exchange": None,
                 },
             },
             "timeseries": {
@@ -77,8 +80,8 @@ task_type_defaults_dict = {
                     "corr_step": 50,
                     "plot_pred_and_true": True,
                     "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
+                    "dataset": None,
+                    "exchange": None,
                 },
             },
             "object_detection": {
@@ -98,8 +101,8 @@ task_type_defaults_dict = {
                     "show_best": False,
                     "show_worst": False,
                     "show_final": True,
-                    "dataset": self.DTS,
-                    "exchange": self.Exch,
+                    "dataset": None,
+                    "exchange": None,
                 },
             },
         }

@@ -97,7 +97,7 @@ class CreateDTS(object):
         self.dataset_user_data = creation_data
 
         self.name = creation_data.name
-        self.user_tags = creation_data.tags
+        self.user_tags = creation_data.tags.native()
         self.use_generator = creation_data.use_generator
         self.trds_path = creation_data.datasets_path
         self.file_folder = str(creation_data.source_path)

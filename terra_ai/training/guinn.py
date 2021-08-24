@@ -8,6 +8,8 @@ import tensorflow as tf
 import sys
 from tensorflow import keras
 from tensorflow.keras.models import load_model
+
+from terra_ai.data.training.train import TrainData
 from terra_ai.training.customcallback import CustomCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 
@@ -57,6 +59,32 @@ class GUINN:
         """
         self.history: dict = {}
 
+    def _set_training_params(self, dataset, params: TrainData, training_path: str) -> None:
+        self.dataset = dataset
+        self.training_path = training_path
+        self.epochs = params.epochs
+        self.batch_size = params.batch
+        self.set_optimizer(params)
+        self.set_chp_monitor(params)
+        for output_layer in params.architecture.outputs_dict:
+            self.metrics.update({output_layer["id"]: list(map(lambda item:
+                                                              getattr(sys.modules.get("tensorflow.keras.metrics"),
+                                                                      item)(), output_layer["metrics"]))})
+            self.loss.update({output_layer["id"]: output_layer["loss"]})
+
+    def _set_callbacks(self, y_sample) -> None:
+        self.Exch.print_2status_bar(('Добавление колбэков', '...'))
+        clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
+                                 exchange=self.Exch, samples_x=self.x_Val, samples_y=y_sample,
+                                 batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
+                                 model_name=self.nn_name)
+        self.callbacks = [clsclbk]
+        self.callbacks.append(keras.callbacks.ModelCheckpoint(
+            filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
+            verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
+            monitor=self.chp_monitor, mode=self.chp_mode))
+        self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+
     def set_optimizer(self, params) -> None:
         """
         Set optimizer method for using terra w/o gui
@@ -76,7 +104,9 @@ class GUINN:
                         self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
     def set_chp_monitor(self, params) -> None:
-        if len(self.x_Train) > 1:
+        layer_id = params.architecture.parameters.checkpoint.layer
+        output = params.architecture.parameters.outputs.get(layer_id)
+        if len(self.X_Train) > 1:
             if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
@@ -136,8 +166,8 @@ class GUINN:
         print(msg)
         pass
 
-    def terra_fit(self, dataset, nnmodel: object = keras.Model, training_params=None, training_path = "",
-                  verbose: int = 0) -> None:
+    def terra_fit(self, dataset, nnmodel: object = keras.Model, training_params: TrainData = None,
+                  training_path: str = "", verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -149,22 +179,7 @@ class GUINN:
         Return:
             None
         """
-        self.training_path = training_path
-        self.epochs = training_params.epochs
-        self.batch_size = training_params.batch
-        self.set_optimizer(training_params)
-        self.set_chp_monitor(training_params)
-        for output_layer in training_params.architecture.outputs_dict:
-            self.metrics.update({output_layer["id"]: list(map(lambda item:
-                                                              getattr(sys.modules.get("tensorflow.keras.metrics"),
-                                                                      item)(), output_layer["metrics"]))})
-
-
-
-            self.loss.update({output_layer["id"]: output_layer["loss"]})
-
-
-
+        self._set_training_params(training_params, training_path)
 
         if self.model_is_trained:
             try:
@@ -255,17 +270,7 @@ class GUINN:
         self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         if not retrain:
-            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val,
-                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-                                     model_name=self.nn_name)
-            self.callbacks = [clsclbk]
-            self.callbacks.append(keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
-                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
-                monitor=self.chp_monitor, mode=self.chp_mode))
-            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+            self._set_callbacks(y_sample=self.y_Val)
 
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         if self.x_Val['input_1'] is not None:
@@ -356,17 +361,7 @@ class GUINN:
         self.Exch.print_2status_bar(('Начало обучения', '...'))
 
         if not retrain:
-            self.Exch.print_2status_bar(('Добавление колбэков', '...'))
-            clsclbk = CustomCallback(params=self.output_params, step=1, show_final=True, dataset=self.DTS,
-                                     exchange=self.Exch, samples_x=self.x_Val, samples_y=self.y_Val_bbox,
-                                     batch_size=self.batch_size, epochs=self.epochs, save_model_path=self.training_path,
-                                     model_name=self.nn_name)
-            self.callbacks = [clsclbk]
-            self.callbacks.append(keras.callbacks.ModelCheckpoint(
-                filepath=os.path.join(self.training_path, f'model_{self.nn_name}.best.h5'),
-                verbose=1, save_best_only=self.chp_save_best, save_weights_only=self.chp_save_weights,
-                monitor=self.chp_monitor, mode=self.chp_mode))
-            self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+            self._set_callbacks(y_sample=self.y_Val_bbox)
 
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         self.history = model_YOLO.fit(

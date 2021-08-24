@@ -16,7 +16,7 @@ import types
 import time
 from terra_ai.guiexchange import Exchange
 
-from terra_ai.training.data import task_type_defaults_dict
+# from terra_ai.training.data import task_type_defaults_dict
 
 __version__ = 0.13
 
@@ -34,7 +34,7 @@ class BaseCallback():
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -535,7 +535,7 @@ class CustomCallback(keras.callbacks.Callback):
             params: dict = None,
             step=1,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
             samples_x: dict = None,
             samples_y: dict = None,
@@ -1000,7 +1000,7 @@ class ClassificationCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1146,7 +1146,7 @@ class SegmentationCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1519,7 +1519,7 @@ class TimeseriesCallback(BaseCallback):
             corr_step=50,
             show_final=True,
             plot_pred_and_true=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1717,7 +1717,7 @@ class RegressionCallback(BaseCallback):
             step=1,
             show_final=True,
             plot_scatter=False,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1859,7 +1859,7 @@ class ObjectdetectionCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
