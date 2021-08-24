@@ -3,7 +3,7 @@
     <Navbar />
     <scrollbar>
       <div class="params__items">
-        <form novalidate="novalidate" ref="form">
+        <!-- <form novalidate="novalidate" ref="form"> -->
           <div class="params__items--item">
             <t-input
               v-model="block.name"
@@ -32,10 +32,10 @@
             </at-collapse-item>
           </at-collapse>
           <div class="params__items--item">
-            <button class="mb-1" disabled="disabled">Сохранить</button>
+            <button class="mb-1" :disabled="!buttonSave" @click="saveModel">Сохранить</button>
             <button disabled="disabled">Клонировать</button>
           </div>
-        </form>
+        <!-- </form> -->
       </div>
     </scrollbar>
   </div>
@@ -69,6 +69,7 @@ export default {
     ...mapGetters({
       list: 'modeling/getList',
       layers: 'modeling/getLayersType',
+      buttons: 'modeling/getButtons',
       // block: "modeling/getBlock",
     }),
     block: {
@@ -79,6 +80,9 @@ export default {
         return this.$store.getters['modeling/getBlock'] || {};
       },
     },
+    buttonSave () {
+      return this.buttons?.save || false
+    },  
     main() {
       const blockType = this.block?.type;
       if (Object.keys(this.layers).length && blockType) {

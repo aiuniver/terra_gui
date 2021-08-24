@@ -35,6 +35,7 @@ export default {
     TTags,
   },
   data: () => ({
+    degree: 100,
     nameProject: 'Новый'
   }),
   computed: {

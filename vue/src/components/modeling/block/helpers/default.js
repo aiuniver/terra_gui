@@ -80,10 +80,29 @@ const prepareBlocks = function(blocks) {
 
 const prepareLinks = function(blocks) {
   let links = [];
+  let linksID = 0
+  blocks.forEach(({ id, bind }) => {
+    // console.log(id)
+    // console.log(bind)
+    if (bind?.down && Array.isArray(bind.down)) {
+      const arr = bind.down
+      arr.forEach(item => {
+        if (item) {
+          links.push({
+            id: ++linksID,
+            originID: id,
+            originSlot: 0,
+            targetID: item,
+            targetSlot: 0,
+          });
+        }
+      })
+      
+    }
 
-  blocks.forEach(({ bind }) => {
-    console.log(bind)        
+
   });
+  // console.log(links)
   return links      
 };
 

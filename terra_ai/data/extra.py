@@ -14,8 +14,6 @@ from pydantic import validator
 from pydantic.types import FilePath, DirectoryPath
 from pydantic.color import Color
 
-from terra_ai.data.types import Base64Type
-
 from .mixins import BaseMixinData, UniqueListMixin
 from .types import ConstrainedFloatValueGe0, ConstrainedIntValueGe0
 
