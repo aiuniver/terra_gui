@@ -7,24 +7,36 @@
     <div class="block-left__body">
       <scrollbar :ops="ops" ref="scrollLeft">
         <div class="block-left__body--inner" :style="height">
-          <template v-for="{ id, color } of inputDataInput">
+          <template v-for="inputData of inputDataInput">
             <CardLayer
-              :id="id"
-              :color="color"
-              :key="'cardLayersLeft' + id"
-              @click-btn="optionsCard($event, id)"
+              v-bind="inputData"
+              :key="'cardLayersLeft' + inputData.id"
+              @click-btn="optionsCard($event, inputData.id)"
             >
-              <template v-slot:header>Входные данные {{ id }}</template>
-              <TMultiSelect
-                :id="id"
-                name="sources_paths"
-                :lists="mixinFiles"
-                label="Выберите путь"
-                inline
-                @change="mixinCheck($event, id)"
-              />
-              <template v-for="(data, index) of input">
-                <t-auto-field v-bind="data" :key="color + index" :idKey="color + index" :id="id" :errors="errors" root @change="mixinChange" />
+              <template v-slot:header>Входные данные {{ inputData.id }}</template>
+              <template v-slot:default="{ data:{ parameters, errors } }">
+                <TMultiSelect
+                  :id="inputData.id"
+                  name="sources_paths"
+                  :value="parameters.sources_paths"
+                  :lists="mixinFiles"
+                  label="Выберите путь"
+                  :errors="errors"
+                  inline
+                  @change="mixinCheck($event, inputData.id)"
+                />
+                <template v-for="(data, index) of input">
+                  <t-auto-field
+                    v-bind="data"
+                    :parameters="parameters"
+                    :errors="errors"
+                    :key="inputData.color + index"
+                    :idKey="'key_' + index"
+                    :id="inputData.id"
+                    root
+                    @change="mixinChange"
+                  />
+                </template>
               </template>
             </CardLayer>
           </template>
@@ -61,35 +73,34 @@ export default {
         gutterOfEnds: '6px',
       },
     },
-    errors: null
   }),
   computed: {
     ...mapGetters({
       input: 'datasets/getTypeInput',
       inputData: 'datasets/getInputData',
     }),
+
     inputDataInput() {
-      return this.inputData.filter(item => {
+      const arr =  this.inputData.filter(item => {
         return item.layer === 'input';
       });
+
+      return arr;
     },
     height() {
       const height = this.$store.getters['settings/height']({
         clean: true,
         padding: 172 + 90 + 62,
       });
-      console.log(height);
+      // console.log(height);
       return height;
     },
   },
-  mounted() {
-    this.errors = {
-      key: 'sdsdsdds',
-      dssd: 'sdsdsdds',
-      sddd: 'sdsdsdds'
-    }
-  },
   methods: {
+    error(id, key) {
+      const errors = this.$store.getters['datasets/getErrors'](id);
+      return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';
+    },
     addCard() {
       this.$store.dispatch('datasets/createInputData', { layer: 'input' });
       this.$nextTick(() => {

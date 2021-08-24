@@ -3,12 +3,12 @@
     <label class="t-multi-select__label">
       <slot>{{ label }}</slot>
     </label>
-    <div class="t-multi-select__input">
+    <div :class="['t-multi-select__input', { 't-multi-select__error': error }]">
       <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
       <span
         :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
         :title="input"
-        @click="show = true"
+        @click="click"
       >
         {{ input || placeholder }}
       </span>
@@ -53,7 +53,7 @@ export default {
     },
     disabled: Boolean,
     inline: Boolean,
-    value: String,
+    value: Array,
   },
   data: () => ({
     selected: [],
@@ -61,6 +61,13 @@ export default {
     pagination: 0,
   }),
   computed: {
+    errors() {
+      return this.$store.getters['datasets/getErrors'](this.id);
+    },
+    error() {
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
+    },
     input() {
       return this.selected.map(item => item.label).join();
     },
@@ -72,6 +79,13 @@ export default {
     },
   },
   methods: {
+    click() {
+      this.show = true;
+      if (this.error) {
+        console.log(this.id, this.name);
+        this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
+      }
+    },
     active({ value }) {
       return !!this.selected.find(item => item.value === value);
     },
@@ -92,6 +106,14 @@ export default {
       }
       this.$emit('change', this.selected);
     },
+  },
+  created() {
+    console.log(this.value);
+    console.log(this.filterList.filter(item => item));
+    const value = this.value;
+    if (Array.isArray(value)) {
+      this.selected = this.filterList.filter(item => value.includes(item.value));
+    }
   },
 };
 </script>
@@ -146,6 +168,9 @@ export default {
     &:hover i {
       opacity: 1;
     }
+  }
+  &__error {
+    border-color: #b53b3b;
   }
   &__content {
     position: absolute;

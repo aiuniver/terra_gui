@@ -1,6 +1,6 @@
-from ...extra import ParametersBaseData
-from .....extra import YoloVersionChoice
+from ...extra import SourcesPathsData
+from .....extra import LayerYoloChoice
 
 
-class ParametersData(ParametersBaseData):
-    yolo_version: YoloVersionChoice = YoloVersionChoice.yolo_v3
+class ParametersData(SourcesPathsData):
+    yolo: LayerYoloChoice = LayerYoloChoice.v4

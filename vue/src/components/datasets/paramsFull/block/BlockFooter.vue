@@ -1,7 +1,7 @@
 <template>
   <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input parse="[name]" small :value="'Новый'">
+      <t-input v-model="nameProject" parse="[name]" small>
         Название датасета
       </t-input>
     </div>
@@ -9,7 +9,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <DoubleSlider :degree="100" />
+      <Slider :degree="degree"/>
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
@@ -18,20 +18,31 @@
       <t-checkbox parse="use_generator">Использовать генератор</t-checkbox>
     </div>
     <div class="action">
-      <t-button @click.native="getObj">Сформировать</t-button>
+      <t-button :disabled="!!disabled" @click.native="getObj">Сформировать</t-button>
     </div>
   </form>
 </template>
 
 <script>
-import DoubleSlider from '@/components/forms/DoubleSlider';
+// import DoubleSlider from '@/components/forms/DoubleSlider';
+import Slider from "@/components/forms/Slider";
 import TTags from '@/components/forms/TTags';
 import serialize from "@/assets/js/serialize";
 export default {
   name: 'BlockFooter',
   components: {
-    DoubleSlider,
+    Slider,
     TTags,
+  },
+  data: () => ({
+    degree: 100,
+    nameProject: 'Новый'
+  }),
+  computed: {
+    disabled() {
+      const arr = this.$store.state.datasets.inputData.map(item => item.layer)
+      return !(this.nameProject && arr.includes('input') && arr.includes('output'))
+    }
   },
   methods: {
     getObj() {

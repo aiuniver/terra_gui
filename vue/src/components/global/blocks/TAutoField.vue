@@ -2,7 +2,7 @@
   <div class="forms">
     <t-input
       v-if="type === 'tuple'"
-      :value="valueInt"
+      :value="getValue"
       :label="label"
       type="text"
       :parse="parse"
@@ -11,10 +11,11 @@
       :error="error"
       inline
       @change="change"
+      @cleanError="cleanError"
     />
     <t-input
       v-if="type === 'number' || type === 'text'"
-      :value="valueInt"
+      :value="getValue"
       :label="label"
       :type="type"
       :parse="parse"
@@ -23,11 +24,12 @@
       :error="error"
       inline
       @change="change"
+      @cleanError="cleanError"
     />
     <t-checkbox
       v-if="type === 'checkbox'"
       inline
-      :value="valueInt"
+      :value="getValue"
       :label="label"
       type="checkbox"
       :parse="parse"
@@ -35,21 +37,30 @@
       :key="name + idKey"
       :event="event"
       :error="error"
+      @cleanError="cleanError"
       @change="change"
     />
     <t-select
       v-if="type === 'select'"
-      :value="valueInt"
+      :value="getValue"
       :label="label"
       :lists="list"
       :parse="parse"
       :name="name"
       :key="name + idKey"
       :error="error"
+      @cleanError="cleanError"
       @change="change"
     />
     <template v-for="(data, i) of dataFields">
-      <t-auto-field v-bind="data" :idKey="idKey + i" :key="idKey + i" :id="id" @change="$emit('change', $event)" />
+      <t-auto-field
+        v-bind="data"
+        :idKey="idKey + i"
+        :key="idKey + i"
+        :id="id"
+        :parameters="parameters"
+        @change="$emit('change', $event)"
+      />
     </template>
   </div>
 </template>
@@ -69,17 +80,21 @@ export default {
     fields: Object,
     id: Number,
     root: Boolean,
+    parameters: Object,
   },
   data: () => ({
     valueIn: null,
   }),
   computed: {
+    getValue() {
+      return this.parameters?.[this.name] ?? this.value;
+    },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);
     },
     error() {
-      const key = this.name
-      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || ''
+      const key = this.name;
+      return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
     dataFields() {
       if (!!this.fields && !!this.fields[this.valueIn]) {
@@ -97,14 +112,18 @@ export default {
         this.valueIn = value;
       });
     },
+    cleanError() {
+      this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
+    },
   },
   created() {
-    this.valueInt = this.value;
+    // console.log(this.parameters)
   },
   mounted() {
-    this.$emit('change', { id: this.id, value: this.value, name: this.name, root: this.root });
+    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
+    // console.log(this.name, this.parameters, this.getValue)
     this.$nextTick(() => {
-      this.valueIn = this.value;
+      this.valueIn = this.getValue;
     });
     this.$emit('height', this.$el.clientHeight);
   },

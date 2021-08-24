@@ -113,14 +113,6 @@ export default {
         return this.$store.getters['projects/getProject'].name;
       },
     },
-    full: {
-      set(val) {
-        this.$store.dispatch('datasets/setFull', val);
-      },
-      get() {
-        return this.$store.getters['datasets/getFull'];
-      },
-    },
   },
   methods: {
     async saveProject() {
@@ -151,7 +143,7 @@ export default {
     click(type) {
       console.log(type);
       if (type === 'project-new') {
-        this.full = !this.full;
+        // this.full = !this.full;
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
@@ -264,7 +256,8 @@ export default {
       display: flex;
       align-items: center;
       > span {
-        min-width: 0;
+        min-width: 20px;
+        height: 100%;
         margin: 0 7px 0 0;
         cursor: text;
         user-select: none;

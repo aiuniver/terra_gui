@@ -3,15 +3,14 @@
     <Navbar />
     <scrollbar>
       <div class="params__items">
-        <form novalidate="novalidate" ref="form">
+        <!-- <form novalidate="novalidate" ref="form"> -->
           <div class="params__items--item">
-            <Input
+            <t-input
               v-model="block.name"
               :label="'Название слоя'"
               :type="'text'"
               :parse="'name'"
               :name="'name'"
-              :id="'name'"
               :disabled="!selectBlock"
               @change="saveModel"
             />
@@ -26,38 +25,38 @@
           </div>
           <at-collapse :value="[0, 1]">
             <at-collapse-item class="mb-3" title="Параметры слоя">
-              <Forms :data="main" @change="change"/>
+              <Forms :data="main" @change="change" />
             </at-collapse-item>
             <at-collapse-item class="mb-3" title="Дополнительные параметры">
               <Forms :data="extra" @change="change" />
             </at-collapse-item>
           </at-collapse>
           <div class="params__items--item">
-            <button class="mb-1" disabled="disabled">Сохранить</button>
+            <button class="mb-1" :disabled="!buttonSave" @click="saveModel">Сохранить</button>
             <button disabled="disabled">Клонировать</button>
           </div>
-        </form>
+        <!-- </form> -->
       </div>
     </scrollbar>
   </div>
 </template>
 
 <script>
-import Navbar from "@/components/modeling/comp/Navbar.vue";
-import Input from "@/components/forms/Input.vue";
-import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
-import Forms from "@/components/modeling/comp/Forms.vue";
-import { mapGetters } from "vuex";
+import Navbar from '@/components/modeling/comp/Navbar.vue';
+// import Input from "@/components/forms/Input.vue";
+import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
+import Forms from '@/components/modeling/comp/Forms.vue';
+import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
 
 // import Select from "@/components/forms/Select.vue";
 export default {
-  name: "Params",
+  name: 'Params',
   props: {
-    selectBlock: Object
+    selectBlock: Object,
   },
   components: {
-    Input,
+    // Input,
     Autocomplete2,
     Forms,
     Navbar,
@@ -68,34 +67,37 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      list: "modeling/getList",
-      layers: "modeling/getLayersType",
-      block: "modeling/getBlock",
+      list: 'modeling/getList',
+      layers: 'modeling/getLayersType',
+      buttons: 'modeling/getButtons',
+      // block: "modeling/getBlock",
     }),
     block: {
       set(value) {
-        this.$store.dispatch('modeling/setBlock', value)
+        this.$store.dispatch('modeling/setBlock', value);
       },
       get() {
-        return this.$store.getters['modeling/getBlock'] || {}
-      }
+        return this.$store.getters['modeling/getBlock'] || {};
+      },
     },
+    buttonSave () {
+      return this.buttons?.save || false
+    },  
     main() {
-      if (Object.keys(this.layers).length && this.block.type) {
-        const items = this.layers[this.block.type]?.main || []
-        const value = this.block?.parameters?.main || {}
-        const blockType = this.block.type
+      const blockType = this.block?.type;
+      if (Object.keys(this.layers).length && blockType) {
+        const items = this.layers[`Layer${blockType}Data`]?.main || [];
+        const value = this.block?.parameters?.main || {};
         return { type: 'main', items, value, blockType };
       } else {
         return { type: 'main', items: [], value: {} };
       }
     },
     extra() {
-      // console.log(this.block)
-      if (Object.keys(this.layers).length && this.block.type) {
-        const items = this.layers[this.block.type]?.extra || []
-        const value = this.block?.parameters?.extra || {}
-        const blockType = this.block.type
+      const blockType = this.block?.type;
+      if (Object.keys(this.layers).length && blockType) {
+        const items = this.layers[`Layer${blockType}Data`]?.extra || [];
+        const value = this.block?.parameters?.extra || {};
         return { type: 'extra', items, value, blockType };
       } else {
         return { type: 'extra', items: [], value: {} };
@@ -103,29 +105,29 @@ export default {
     },
   },
   methods: {
-    async saveModel () {
-      await this.$store.dispatch("modeling/saveModel", {});
+    async saveModel() {
+      await this.$store.dispatch('modeling/saveModel', {});
     },
-    async change({ type, name, value}) {
-      console.log({ type, name, value})
+    async change({ type, name, value }) {
+      console.log({ type, name, value });
       if (this.block.parameters) {
-        this.block.parameters[type][name] = value
+        this.block.parameters[type][name] = value;
       } else {
-        this.oldBlock.parameters[type][name] = value
+        this.oldBlock.parameters[type][name] = value;
       }
-      this.$emit('change')
-      this.saveModel()
+      this.$emit('change');
+      this.saveModel();
     },
   },
   watch: {
     selectBlock: {
       handler(newBlock, oldBlock) {
-        this.oldBlock = oldBlock
-        this.$store.dispatch('modeling/setSelect', newBlock?.id)
-        console.log(newBlock, oldBlock)
-      }
-    }
-  }
+        this.oldBlock = oldBlock;
+        this.$store.dispatch('modeling/setSelect', newBlock?.id);
+        console.log(newBlock, oldBlock);
+      },
+    },
+  },
 };
 </script>
 

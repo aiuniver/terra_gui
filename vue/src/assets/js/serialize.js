@@ -55,7 +55,7 @@ function serialize(form, options) {
     var val = element.value;
     if (element.type === "number") {
       const degree = element.dataset.degree
-      console.log(degree)
+      // console.log(degree)
       val = +val;
       if (degree) {
         val = val/(+degree)
@@ -65,7 +65,7 @@ function serialize(form, options) {
       const reverse = !!element.dataset.reverse
       val = val === "true";
       val = reverse ? !val : val
-      console.log(val, reverse)
+      // console.log(val, reverse)
     }
     // console.log(element.type, key, val, typeof(val))
 

@@ -89,7 +89,6 @@ export default {
     },
     async getModel(value) {
       const { data } = await this.$store.dispatch('modeling/getModel', value);
-      console.log(data);
       if (data) {
         this.info = data;
         this.model = value;

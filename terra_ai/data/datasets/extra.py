@@ -45,15 +45,74 @@ class LayerAudioParameterChoice(str, Enum):
     zero_crossing_rate = "zero_crossing_rate"
 
 
-class LayerScalerChoice(str, Enum):
+class LayerTextModeChoice(str, Enum):
+    completely = "completely"
+    length_and_step = "length_and_step"
+
+
+class LayerAudioModeChoice(str, Enum):
+    completely = "completely"
+    length_and_step = "length_and_step"
+
+
+class LayerScalerDataframeChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
     standard_scaler = "standard_scaler"
 
 
-class YoloVersionChoice(str, Enum):
-    yolo_v3 = "yolo_v3"
-    yolo_v4 = "yolo_v4"
+class LayerScalerTimeseriesChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
+
+
+class LayerScalerRegressionChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
+
+
+class LayerScalerImageChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+    terra_image_scaler = "terra_image_scaler"
+
+
+class LayerScalerAudioChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+
+
+class LayerScalerVideoChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+
+
+class LayerVideoFillModeChoice(str, Enum):
+    black_frames = "black_frames"
+    average_value = "average_value"
+    last_frames = "last_frames"
+
+
+class LayerVideoFrameModeChoice(str, Enum):
+    keep_proportions = "keep_proportions"
+    stretch = "stretch"
+
+
+class LayerVideoModeChoice(str, Enum):
+    completely = "completely"
+    length_and_step = "length_and_step"
+
+
+class LayerTypeProcessingClassificationChoice(str, Enum):
+    categorical = "categorical"
+    ranges = "ranges"
+
+
+class LayerYoloChoice(str, Enum):
+    v3 = "v3"
+    v4 = "v4"
 
 
 class DatasetGroupChoice(str, Enum):

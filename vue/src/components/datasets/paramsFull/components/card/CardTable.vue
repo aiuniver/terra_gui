@@ -11,17 +11,13 @@
       </div>
       <div class="selected__cols"></div>
       <div
-          class="table__col"
-          v-for="(row, index) in table_test"
-          :key="row"
-          @mousedown="select(index)"
-          :data-index="index"
+        class="table__col"
+        v-for="(row, index) in arr"
+        :key="'row_' + index"
+        @mousedown="select(index)"
+        :data-index="index"
       >
-        <div
-            class="table__row"
-            v-for="item in row"
-            :key="item"
-        >{{ item }}</div>
+        <div class="table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
       </div>
     </div>
     <div class="table__footer"><span>Папка с картинками</span></div>
@@ -30,31 +26,35 @@
 
 <script>
 export default {
-  name: "CardTable",
+  name: 'CardTable',
+  props: {
+    label: String,
+    type: String,
+    id: Number,
+    cover: String,
+    table: Array,
+  },
   data: () => ({
     table_test: [],
     selected_cols: [],
   }),
+  computed: {
+    arr() {
+      const newarr = [];
+      this.table.forEach((el, index) => {
+        el.forEach((elm, i) => {
+          if (!newarr[i]) {
+            newarr[i] = [];
+          }
+          newarr[i][index] = elm;
+        });
+      });
+      console.log(newarr);
+      return newarr;
+    },
+  },
   created() {
-    let file = "text;text larrrrrge;text normal;text;text;text;text\n" +
-        "1;text;text;text 2131;NaN;text 2131. dddd;2\n" +
-        "1;text;text;text 2131;text 2131. dddd;text 2131;2\n" +
-        "1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
-        "1;text;text;text 2131;text 2131. dddd;text 2131. dddd;2\n" +
-        "1;text;text;text 2131;NaN;text 2131;2";
-
-    let copy = this.$papa.parse(file).data;
-    this.table_test = []
-
-    let row = copy.length;
-    let col = copy[0].length
-
-    for(let i = 0; i < col; ++i){
-      this.table_test.push([]);
-      for(let j = 0; j < row; ++j){
-        this.table_test[i].push(copy[j][i] ? copy[j][i] : "-");
-      }
-    }
+    console.log(this.table);
   },
   methods: {
     compare(a, b) {
@@ -66,61 +66,62 @@ export default {
       }
       return 0;
     },
-    sortOnDataIndex(el){
-      let arr = [], i = el.children.length;
-      while(i--){
+    sortOnDataIndex(el) {
+      let arr = [],
+        i = el.children.length;
+      while (i--) {
         arr[i] = el.children[i];
-        el.children[i].remove()
+        el.children[i].remove();
       }
       arr.sort(this.compare);
       i = 0;
-      while(arr[i]) {
+      while (arr[i]) {
         el.appendChild(arr[i]);
         ++i;
       }
     },
-    select(index){
+    select(index) {
       event.preventDefault();
-      if(event.which == 1){
+      if (event.which == 1) {
         const key = this.selected_cols.indexOf(index);
-        const selected_cols = document.querySelector(".selected__cols");
-        const unselected_cols = document.querySelector(".table__data");
+        const selected_cols = document.querySelector('.selected__cols');
+        const unselected_cols = document.querySelector('.table__data');
         let col = document.querySelector(`.table__col[data-index='${index}']`);
         if (key !== -1) {
           this.selected_cols.splice(key, 1);
-          document.querySelector(`.selected__cols`).removeChild(col)
+          document.querySelector(`.selected__cols`).removeChild(col);
           unselected_cols.append(col);
           this.sortOnDataIndex(unselected_cols);
         } else {
           this.selected_cols.push(index);
-          document.querySelector(`.table__data`).removeChild(col)
+          document.querySelector(`.table__data`).removeChild(col);
           selected_cols.append(col);
           this.sortOnDataIndex(selected_cols);
         }
 
-        if(this.selected_cols.length == 0){
+        if (this.selected_cols.length == 0) {
           selected_cols.style.display = 'none';
-        }else{
+        } else {
           selected_cols.style.display = 'flex';
         }
       }
-    }
+    },
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>
 .csv-table {
   font-size: 0.75rem;
   border-collapse: collapse;
-  border: 1px solid #6C7883;
+  border: 1px solid #6c7883;
   border-radius: 8px;
   padding: 23px 0 2px 0;
   display: flex;
   height: 152px;
   flex-direction: column;
 
-  .table__data{
+  .table__data {
     display: flex;
   }
 
@@ -132,7 +133,7 @@ export default {
     height: 17px;
     padding: 0 8px;
     &:nth-child(even) {
-      background: #242F3D;
+      background: #242f3d;
     }
     &:first-child {
       font-weight: bold;
@@ -140,28 +141,28 @@ export default {
     }
   }
 
-  .table__footer{
+  .table__footer {
     height: 24px;
     width: 100%;
     padding: 3px 8px;
   }
 }
 
-.selected__cols{
+.selected__cols {
   display: flex;
-  border: 1px solid #89D764;
+  border: 1px solid #89d764;
   border-radius: 4px;
 }
 
-.selected{
-  border: 1px solid #89D764;
+.selected {
+  border: 1px solid #89d764;
   border-radius: 4px;
-  color:#fff;
+  color: #fff;
 
-  &:nth-child(1){
+  &:nth-child(1) {
     border-radius: 6px 0 0 6px;
   }
-  &:last-child{
+  &:last-child {
     border-radius: 0 6px 6px 0;
   }
 }
