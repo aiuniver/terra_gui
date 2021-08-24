@@ -12,3 +12,4 @@ PyYAML~=5.4.1
 transliterate==1.10.2
 imgaug==0.4.0
 dict-recursive-update==1.0.1
+pydub==0.25.1

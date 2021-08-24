@@ -62,6 +62,7 @@ class DatasetInstructionsData(BaseMixinData):
 
 class PathsData(BaseMixinData):
     datasets: DirectoryPath
-    instructions: Optional[DirectoryPath]
     arrays: DirectoryPath
-
+    instructions: Optional[DirectoryPath]
+    dataset_sources: DirectoryPath
+    tmp_sources: DirectoryPath
