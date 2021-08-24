@@ -293,14 +293,14 @@ class DataProcessing:
 
             for idx in indices:
                 # TODO нужно как то определять тип входа по тэгу (images)
-                sample = self.x_Val[input_key][idx]
+                sample = self.x_Val[output_key][idx]
                 true_idx = y_true[idx]
                 pred_idx = y_pred[idx]
 
                 # исходный формат примера
-                sample = self.inverse_scaler(sample, input_key)
+                sample = self.inverse_scaler(sample, output_key)
                 text_data = {
-                    "text": self.dataset.inverse_data(input_key, sample),
+                    "text": self.dataset.inverse_data(output_key, sample),
                     "title": f"{text_title + str(round(probs[idx], 4))}",
                     "info": [
                         {
@@ -480,7 +480,7 @@ class TrainingProcessData:
             underfit_flag = True
         else:
             underfit_flag = False
-        return overfit_flag
+        return underfit_flag
 
 
 def class_counter(y_array, classes_names: list, ohe=True):
