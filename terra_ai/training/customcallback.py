@@ -85,48 +85,6 @@ class MemoryUsage:
                   f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
 
 
-class OverFittingCallback(tf.keras.callbacks.Callback):
-
-    def __init__(self, target_metric='val_loss', epoch_gap=5, mode='min'):
-        super().__init__()
-        self.mean_history = []
-        self.metric_history = []
-        self.target_metric = target_metric
-        self.epoch_gap = epoch_gap
-        self.mode = mode
-        self.overfit_flag = False
-        self.count = 0
-        pass
-
-    def on_epoch_end(self, epoch, logs=None):
-        self.metric_history.append(logs.get(self.target_metric))
-        if epoch + 1 < self.epoch_gap:
-            self.mean_history.append(np.mean(self.metric_history))
-        else:
-            self.mean_history.append(np.mean(self.metric_history[-5:]))
-
-        if self.mode == 'min' and self.mean_history[-1] > min(self.mean_history):
-            self.count += 1
-        elif self.mode == 'max' and self.mean_history[-1] < min(self.mean_history):
-            self.count += 1
-        else:
-            self.count = 0
-            self.overfit_flag = False
-        # print('count', self.count, self.mean_history[-1], min(self.mean_history))
-
-        if self.count >= self.epoch_gap:
-            self.overfit_flag = True
-
-        print(epoch, self.metric_history[-1], self.mean_history[-1], self.overfit_flag)
-        pass
-
-    def on_train_end(self, logs=None):
-        plt.plot(self.mean_history, label='mean_history')
-        plt.plot(self.metric_history, label='metric_history')
-        plt.legend()
-        plt.show()
-
-
 class IntermediateResultCallback(tf.keras.callbacks.Callback):
 
     def __init__(self, x_train, y_train, x_val, y_val, custom_datapath=None,
@@ -255,94 +213,94 @@ class DataProcessing:
                 img_array = self.dts.createarray.scaler.get(key).inverse_transform(img_array)
         return self.image_to_base64(img_array)
 
-    def text_postprocessing(self, output_key):
-        """
-                Plot sample text based on indices in dataset
-                Returns:
-                    images
-                """
-        text = {"text": []}
+    # def text_postprocessing(self, output_key):
+    #     """
+    #             Plot sample text based on indices in dataset
+    #             Returns:
+    #                 images
+    #             """
+    #     text = {"text": []}
+    #
+    #     indices, probs = self.image_indices(output_key=output_key)
+    #     if self.show_best:
+    #         text_title = "лучшее по метрике: "
+    #     elif self.show_worst:
+    #         text_title = "худшее по метрике: "
+    #     else:
+    #         text_title = "случайное: "
+    #     classes_labels = self.dataset.classes_names.get(output_key)
+    #     if self.dataset.task_type.get(output_key) != "segmentation":
+    #         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+    #                 and (self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_true.shape[-1] > 1):
+    #             y_pred = np.argmax(self.y_pred, axis=-1)
+    #             y_true = np.argmax(self.y_true, axis=-1)
+    #         elif (len(self.y_true.shape) == 1) \
+    #                 and (not self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_pred.shape[-1] > 1):
+    #             y_pred = np.argmax(self.y_pred, axis=-1)
+    #             y_true = copy.deepcopy(self.y_true)
+    #         elif (len(self.y_true.shape) == 1) \
+    #                 and (not self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_pred.shape[-1] == 1):
+    #             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+    #             y_true = copy.deepcopy(self.y_true)
+    #         else:
+    #             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+    #             y_true = copy.deepcopy(self.y_true)
+    #
+    #         for idx in indices:
 
-        indices, probs = self.image_indices(output_key=output_key)
-        if self.show_best:
-            text_title = "лучшее по метрике: "
-        elif self.show_worst:
-            text_title = "худшее по метрике: "
-        else:
-            text_title = "случайное: "
-        classes_labels = self.dataset.classes_names.get(output_key)
-        if self.dataset.task_type.get(output_key) != "segmentation":
-            if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
-                    and (self.dataset.one_hot_encoding[output_key]) \
-                    and (self.y_true.shape[-1] > 1):
-                y_pred = np.argmax(self.y_pred, axis=-1)
-                y_true = np.argmax(self.y_true, axis=-1)
-            elif (len(self.y_true.shape) == 1) \
-                    and (not self.dataset.one_hot_encoding[output_key]) \
-                    and (self.y_pred.shape[-1] > 1):
-                y_pred = np.argmax(self.y_pred, axis=-1)
-                y_true = copy.deepcopy(self.y_true)
-            elif (len(self.y_true.shape) == 1) \
-                    and (not self.dataset.one_hot_encoding[output_key]) \
-                    and (self.y_pred.shape[-1] == 1):
-                y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-                y_true = copy.deepcopy(self.y_true)
-            else:
-                y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
-                y_true = copy.deepcopy(self.y_true)
-
-            for idx in indices:
-                # TODO нужно как то определять тип входа по тэгу (images)
-                sample = self.x_Val[output_key][idx]
-                true_idx = y_true[idx]
-                pred_idx = y_pred[idx]
-
-                # исходный формат примера
-                sample = self.inverse_scaler(sample, output_key)
-                text_data = {
-                    "text": self.dataset.inverse_data(output_key, sample),
-                    "title": f"{text_title + str(round(probs[idx], 4))}",
-                    "info": [
-                        {
-                            "label": "Выход",
-                            "value": output_key,
-                        },
-                        {
-                            "label": "Распознано",
-                            "value": classes_labels[pred_idx],
-                        },
-                        {
-                            "label": "Верный ответ",
-                            "value": classes_labels[true_idx],
-                        }
-                    ]
-                }
-                text["text"].append(text_data)
-
-        else:
-            y_pred = copy.deepcopy(self.y_pred)
-            y_true = copy.deepcopy(self.y_true)
-
-            #######################
-            # Функция, выводящая точность распознавания каждой категории отдельно
-            #######################
-            def recognizeSet(tagI, pred, tags, length, value, num_classes):
-                total = 0
-
-                for j in range(num_classes):  # общее количество тегов
-                    correct = 0
-                    for i in range(len(tagI)):  # проходимся по каждому списку списка тегов
-                        for k in range(length):  # проходимся по каждому тегу
-                            if tagI[i][k][j] == (pred[i][k][j] > value).astype(
-                                    int):  # если соответствующие индексы совпадают, значит сеть распознала верно
-                                correct += 1
-                    print("Сеть распознала категорию '{}' на {}%".format(tags[j], 100 * correct / (len(tagI) * length)))
-                    total += 100 * correct / (len(tagI) * length)
-                print("средняя точность {}%".format(total / num_classes))
-
-            recognizeSet(y_true, y_pred, classes_labels, y_true.shape[1], 0.999,
-                         self.dataset.num_classes.get(output_key))
-        return text
+    #             sample = self.x_Val[input_key][idx]
+    #             true_idx = y_true[idx]
+    #             pred_idx = y_pred[idx]
+    #
+    #             # исходный формат примера
+    #             sample = self.inverse_scaler(sample, input_key)
+    #             text_data = {
+    #                 "text": self.dataset.inverse_data(input_key, sample),
+    #                 "title": f"{text_title + str(round(probs[idx], 4))}",
+    #                 "info": [
+    #                     {
+    #                         "label": "Выход",
+    #                         "value": output_key,
+    #                     },
+    #                     {
+    #                         "label": "Распознано",
+    #                         "value": classes_labels[pred_idx],
+    #                     },
+    #                     {
+    #                         "label": "Верный ответ",
+    #                         "value": classes_labels[true_idx],
+    #                     }
+    #                 ]
+    #             }
+    #             text["text"].append(text_data)
+    #
+    #     else:
+    #         y_pred = copy.deepcopy(self.y_pred)
+    #         y_true = copy.deepcopy(self.y_true)
+    #
+    #         #######################
+    #         # Функция, выводящая точность распознавания каждой категории отдельно
+    #         #######################
+    #         def recognizeSet(tagI, pred, tags, length, value, num_classes):
+    #             total = 0
+    #
+    #             for j in range(num_classes):  # общее количество тегов
+    #                 correct = 0
+    #                 for i in range(len(tagI)):  # проходимся по каждому списку списка тегов
+    #                     for k in range(length):  # проходимся по каждому тегу
+    #                         if tagI[i][k][j] == (pred[i][k][j] > value).astype(
+    #                                 int):  # если соответствующие индексы совпадают, значит сеть распознала верно
+    #                             correct += 1
+    #                 print("Сеть распознала категорию '{}' на {}%".format(tags[j], 100 * correct / (len(tagI) * length)))
+    #                 total += 100 * correct / (len(tagI) * length)
+    #             print("средняя точность {}%".format(total / num_classes))
+    #
+    #         recognizeSet(y_true, y_pred, classes_labels, y_true.shape[1], 0.999,
+    #                      self.dataset.num_classes.get(output_key))
+    #     return text
 
     def audio_postprocessing(self):
         pass
