@@ -2,30 +2,7 @@
   <div class="header">
     <div class="header__left">
       <a href="#" class="header__left--logo"></a>
-      <!-- <div class="header__left--title">
-        <div class="header__left--label">Project:</div>
-        <div class="header__left--name"> -->
-          <!-- <span
-              ref="project"
-              :contenteditable="clickProject"
-              @click="save = true"
-              @focusout="handleFocusOut(false)"
-              @input="change"
-              >{{ nameProject }}</span
-            > -->
-          <!-- <span
-            class="left--name_span"
-            @click="projectNameEdit = true"
-            :contenteditable="projectNameEdit"
-            v-click-outside="outside"
-            ref="nameProjectSpan"
-          >
-            {{ nameProject }}
-          </span> -->
-          <t-project-name/>
-          <!-- <i></i>
-        </div>
-      </div> -->
+      <TProjectName />
     </div>
     <div class="header__center">Название задачи / Название эксперимента</div>
     <div class="header__right">
@@ -79,12 +56,12 @@
 </template>
 
 <script>
-import TProjectName from '../forms/t-project-name.vue'
+import TProjectName from '../forms/TProjectName.vue';
 
 export default {
   name: 'THeader',
   components: {
-    TProjectName
+    TProjectName,
   },
   data: () => ({
     clickProject: false,
