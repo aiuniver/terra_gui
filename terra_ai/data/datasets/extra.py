@@ -51,6 +51,11 @@ class LayerScalerChoice(str, Enum):
     standard_scaler = "standard_scaler"
 
 
+class YoloVersionChoice(str, Enum):
+    yolo_v3 = "yolo_v3"
+    yolo_v4 = "yolo_v4"
+
+
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"

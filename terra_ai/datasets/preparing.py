@@ -17,6 +17,7 @@ from . import loading as datasets_loading
 from .data import Preprocesses
 from ..data.datasets.dataset import DatasetData, DatasetLoadData
 from ..data.datasets.extra import DatasetGroupChoice, SourceModeChoice
+from ..settings import DATASET_EXT
 
 
 class PrepareDTS(object):
@@ -235,22 +236,22 @@ class PrepareDTS(object):
 
         def load_arrays():
 
-            for sample in os.listdir(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays')):
+            for sample in os.listdir(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'arrays')):
                 for index in self.data.inputs.keys():
-                    self.X[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                    self.X[sample][index] = joblib.load(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'arrays', sample, f'{index}.gz'))
                 for index, data in self.data.outputs.items():
                     if data.task == 'ObjectDetection':
                         for i in range(6):
-                            self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                            self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'arrays', sample, f'{index}.gz'))
                     else:
-                        self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                        self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'arrays', sample, f'{index}.gz'))
 
             pass
 
         def load_preprocess(parameter):
 
             sample_list = []
-            folder_path = os.path.join(self.trds_path, f'dataset {self.data.name}', parameter)
+            folder_path = os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', parameter)
             if os.path.exists(folder_path):
                 for sample in os.listdir(folder_path):
                     sample_list.append(int(sample[:sample.rfind('.')]))
@@ -284,11 +285,11 @@ class PrepareDTS(object):
         elif self.data.group == DatasetGroupChoice.custom:
 
             for put in ['train', 'val', 'test']:
-                self.dataframe[put] = pd.read_csv(os.path.join(self.trds_path, f'dataset {self.data.name}',
+                self.dataframe[put] = pd.read_csv(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}',
                                                                'instructions', 'tables', f'{put}.csv'), index_col=0)
             if self.data.use_generator:
-                for instr in os.listdir(os.path.join(self.trds_path, f'dataset {self.data.name}', 'instructions', 'parameters')):
-                    with open(os.path.join(self.trds_path, f'dataset {self.data.name}', 'instructions', instr), 'r') as instruction:
+                for instr in os.listdir(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'instructions', 'parameters')):
+                    with open(os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', 'instructions', 'parameters', instr), 'r') as instruction:
                         ins = json.load(instruction)
                     instr = instr[:instr.rfind('.')]
                     idx, put = instr.split('_')
@@ -350,7 +351,7 @@ class PrepareDTS(object):
         for preprocess_name in Preprocesses:
             preprocess = getattr(array_creator, preprocess_name)
             preprocess_data = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', preprocess_name)
+            folder_path = os.path.join(self.trds_path, f'{self.data.name}.{DATASET_EXT}', preprocess_name)
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
                     preprocess_data.append(int(arr[:-3]))

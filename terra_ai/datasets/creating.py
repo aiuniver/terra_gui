@@ -18,25 +18,27 @@ import imgaug.augmenters as iaa
 
 from datetime import datetime
 from pytz import timezone
+from PIL import Image
 import cv2
-
+from time import time
 # from terra_ai import out_exchange
 from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
 from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
 from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
-from ..data.datasets.extra import DatasetGroupChoice, LayerOutputTypeChoice, LayerScalerChoice
+from ..data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, LayerScalerChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
 from . import loading as dataset_loading
-from ..data.datasets.creation import SourceData, CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
+from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
     CreationOutputData, OneFileData
 from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData
+from ..settings import DATASET_EXT, DATASET_CONFIG
 
 
 class CreateDTS(object):
 
-    def __init__(self, source_parameters: SourceData):
+    def __init__(self):
 
         self.dataset_user_data: CreationData
         self.paths: PathsData
@@ -60,7 +62,6 @@ class CreateDTS(object):
         self.peg: list = []
         self.split_sequence: dict = {}
         self.use_generator: bool = False
-        self.source_parameters = source_parameters
 
         self.file_folder: str = ''
         self.language: str = ''
@@ -89,7 +90,7 @@ class CreateDTS(object):
         self.dataset_user_data = creation_data
 
         self.name = creation_data.name
-        self.user_tags = creation_data.tags
+        self.user_tags = creation_data.tags.native()
         self.use_generator = creation_data.use_generator
         self.trds_path = creation_data.datasets_path
         self.file_folder = str(creation_data.source_path)
@@ -113,15 +114,6 @@ class CreateDTS(object):
 
         # Получаем выходные параметры
         self.outputs = self.create_output_parameters(creation_data=creation_data)
-
-        # with open(os.path.join(self.paths.instructions, f'generator_instructions.json'),
-        #           'w') as instruction:
-        #     json.dump(self.instructions.native(), instruction)
-        # with open(os.path.join(self.paths.instructions, 'sequence.json'), 'w') as seq:
-        #     json.dump(self.split_sequence, seq)
-        # if 'text' in self.tags.keys():  # if 'txt_list' in self.createarray.__dict__.keys():
-        #     with open(os.path.join(self.paths.instructions, 'txt_list.json'), 'w') as fp:
-        #         json.dump(array_creator.txt_list, fp)
 
         if not creation_data.use_generator:
             # Сохранение датасета с NumPy
@@ -155,14 +147,20 @@ class CreateDTS(object):
 
     def set_paths(self, data: CreationData) -> PathsData:
 
-        dataset_path = os.path.join(data.datasets_path, f'dataset {data.name}')
-        arrays_path = os.path.join(dataset_path, "arrays")
-        instructions_path = os.path.join(dataset_path, "instructions")
+        dataset_path = os.path.join(data.datasets_path, f"{data.name}.{DATASET_EXT}")  # TerraAI/datasets/DATASET_NAME.trds
+        arrays_path = os.path.join(dataset_path, "arrays")  # TerraAI/datasets/DATASET_NAME.trds/arrays
+        instructions_path = os.path.join(dataset_path, "instructions")  # TerraAI/datasets/DATASET_NAME.trds/instructions
+        dataset_sources_path = os.path.join(dataset_path, "sources")  # /tmp/terraai/datasets_sources/googledrive/DATASET_NAME
+        tmp_sources_path = os.path.join(data.source_path)  # /tmp/terraai/datasets_sources/googledrive/DATASET_NAME
+
         os.makedirs(dataset_path, exist_ok=True)
         os.makedirs(arrays_path, exist_ok=True)
         os.makedirs(instructions_path, exist_ok=True)
+        os.makedirs(dataset_sources_path, exist_ok=True)
+        os.makedirs(tmp_sources_path, exist_ok=True)
 
-        return PathsData(datasets=dataset_path, instructions=instructions_path, arrays=arrays_path)
+        return PathsData(datasets=dataset_path, arrays=arrays_path, instructions=instructions_path,
+                         dataset_sources=dataset_sources_path, tmp_sources=tmp_sources_path)
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
 
@@ -189,11 +187,80 @@ class CreateDTS(object):
                         data = pd.read_csv(os.path.join(self.file_folder, paths),
                                            usecols=elem.parameters.cols_names)
                         paths_list = data[elem.parameters.cols_names[0]].to_list()
+            if elem.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
+                             LayerInputTypeChoice.Audio, LayerOutputTypeChoice.Audio,
+                             LayerInputTypeChoice.Video]:
+                cur_time = time()
+                self.write_sources_to_files(tmp_sources=self.paths.tmp_sources, dataset_sources=self.paths.dataset_sources,
+                                            paths_list=paths_list, put_data=elem)
+                print(time() - cur_time)
+            paths_list = [os.path.join(self.paths.dataset_sources, f'{elem.id}_{decamelize(elem.type)}', path) for path in paths_list]
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(paths_list,
                                                                                                           elem))
             instructions.update([(elem.id, instructions_data)])
 
         return instructions
+
+    def write_sources_to_files(self, tmp_sources, dataset_sources, paths_list, put_data):
+
+        cur_time = time()
+        options = put_data.parameters.native()
+        print(tmp_sources)
+        print(dataset_sources)
+        for elem in paths_list:
+            if put_data.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image]:
+                img = cv2.imread(os.path.join(tmp_sources, elem), cv2.IMREAD_UNCHANGED)
+                img = cv2.resize(img, (put_data.parameters.width, put_data.parameters.height), interpolation=cv2.INTER_AREA)
+                os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
+                cv2.imwrite(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', elem), img)
+            elif put_data.type == LayerInputTypeChoice.Video:
+                cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
+                cur_step = 0
+                frame_count = int(cap.get(7))
+                name, ext = os.path.splitext(os.path.basename(elem))
+                if put_data.parameters.video_mode == VideoModeChoice.length_and_step:
+                    for i in range(((frame_count - put_data.parameters.length) // put_data.parameters.step) + 1):
+                        os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
+                        output_movie = cv2.VideoWriter(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
+                                                       f'{name}_{cur_step}_{put_data.parameters.length + cur_step}{ext}'),
+                                                       cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)),
+                                                       (int(cap.get(3)), int(cap.get(4))))
+                        cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
+                        cap.set(1, cur_step)
+                        frame_number = 0
+                        stop_flag = False
+                        while not stop_flag:
+                            ret, frame = cap.read()
+                            frame_number += 1
+                            if not ret or frame_number > put_data.parameters.length:
+                                stop_flag = True
+                            output_movie.write(frame)
+
+                        output_movie.release()
+                        cur_step += put_data.parameters.step
+                elif put_data.parameters.video_mode == VideoModeChoice.completely:
+                    print(elem)
+                    frame_count = put_data.parameters.max_frames if frame_count > put_data.parameters.max_frames else frame_count
+                    frame_number = 0
+                    os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
+                    output_movie = cv2.VideoWriter(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
+                                                                f'{name}_{cur_step}_{frame_count}{ext}'),
+                                                   cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)),
+                                                   (int(cap.get(3)), int(cap.get(4))))
+                    stop_flag = False
+                    while not stop_flag:
+                        ret, frame = cap.read()
+                        frame_number += 1
+                        if not ret or frame_number > frame_count:
+                            stop_flag = True
+                        output_movie.write(frame)
+                    output_movie.release()
+                pass
+        print('Файлы готовились', time() - cur_time)
+        if not os.path.isdir(os.path.join(dataset_sources, f'{put_data.id}_{decamelize(put_data.type)}')):
+            shutil.move(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}'), dataset_sources)
+
+        pass
 
     def write_instructions_to_files(self):
 
@@ -225,14 +292,14 @@ class CreateDTS(object):
         for key in self.instructions.inputs.keys():
             if self.tags[key] in ['video', 'text', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
-                    creation_data.source_path,
+                    self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.inputs.get(key).parameters
                 )
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
-                    creation_data.source_path,
+                    self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.inputs.get(key).parameters
                 )
@@ -260,14 +327,14 @@ class CreateDTS(object):
         for key in self.instructions.outputs.keys():
             if self.tags[key] in ['text', 'text_segmentation', 'audio']:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
-                    creation_data.source_path,
+                    self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.outputs.get(key).parameters
                 )
             else:
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
-                    creation_data.source_path,
+                    self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.outputs.get(key).parameters
                 )
@@ -330,14 +397,14 @@ class CreateDTS(object):
                 for i in range(len(self.dataframe[split])):
                     if self.tags[key] in ['video', 'text', 'audio', 'text_segmentation']:
                         array = getattr(array_creator, f'create_{self.tags[key]}')(
-                            creation_data.source_path,
+                            self.paths.datasets,
                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}_slice'],
                             **put_data.get(key).parameters
                         )
                     else:
                         array = getattr(array_creator, f'create_{self.tags[key]}')(
-                            creation_data.source_path,
+                            self.paths.datasets,
                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
                             **put_data.get(key).parameters
                         )
@@ -366,13 +433,13 @@ class CreateDTS(object):
 
     def create_dataset_configure(self, creation_data: CreationData) -> dict:
 
-        data = {'source_parameters': {}}
+        data = {}
         attributes = ['name', 'source', 'tags', 'user_tags', 'language',
                       'inputs', 'outputs', 'num_classes', 'classes_names', 'classes_colors',
                       'encoding', 'task_type', 'use_generator']
 
         size_bytes = 0
-        for path, dirs, files in os.walk(os.path.join(self.trds_path, f'dataset {self.name}')):
+        for path, dirs, files in os.walk(os.path.join(self.trds_path, f'{self.name}.{DATASET_EXT}')):
             for file in files:
                 size_bytes += os.path.getsize(os.path.join(path, file))
 
@@ -383,14 +450,12 @@ class CreateDTS(object):
 
         for attr in attributes:
             data[attr] = self.__dict__[attr]
-        data['source_parameters']['mode'] = self.source_parameters.mode
-        data['source_parameters']['value'] = str(self.source_parameters.value)
         data['date'] = datetime.now().astimezone(timezone('Europe/Moscow')).isoformat()
         data['alias'] = creation_data.alias
         data['size'] = {'value': size_bytes}
 
         data['group'] = DatasetGroupChoice.custom
-        with open(os.path.join(self.trds_path, f'dataset {self.name}', 'config.json'), 'w') as fp:
+        with open(os.path.join(self.trds_path, f'{self.name}.{DATASET_EXT}', DATASET_CONFIG), 'w') as fp:
             json.dump(data, fp)
 
         return data
@@ -399,10 +464,9 @@ class CreateDTS(object):
 
         instructions: dict = {}
         self.peg.append(0)
-        options = put_data.parameters.native()
-        options['put'] = put_data.id
+
         if 'object_detection' in self.tags.values():
-            options['object_detection'] = True
+            put_data.parameters.object_detection = True
             for path in paths_list:
                 if path.endswith('.txt'):
                     paths_list.remove(path)
@@ -416,9 +480,9 @@ class CreateDTS(object):
                     self.y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
                 else:
                     peg_idx = 0
-                    prev_class = paths_list[0].split(os.path.sep)[-2]
+                    prev_class = os.path.dirname(paths_list[0]).split(os.path.sep)[-1]
                     for elem in paths_list:
-                        cur_class = elem.split(os.path.sep)[-2]
+                        cur_class = os.path.dirname(elem).split(os.path.sep)[-1]
                         if cur_class != prev_class:
                             prev_class = cur_class
                             self.peg.append(peg_idx)
@@ -427,7 +491,7 @@ class CreateDTS(object):
                 break
         self.peg.append(len(paths_list))
 
-        if options.get('augmentation', None):
+        if put_data.parameters.augmentation:
             aug_parameters = []
             for key, value in put_data.parameters.augmentation.__dict__.items():
                 try:
@@ -435,13 +499,17 @@ class CreateDTS(object):
                 except AttributeError:
                     pass
             array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
-            del options['augmentation']
+        else:
+            array_creator.augmentation[put_data.id] = None
 
+        options = put_data.parameters.native()
+        options['put'] = put_data.id
+        del options['augmentation']
         instructions['parameters'] = options
         if options.get('deploy', bool):
-            instructions['instructions'] = {f'{put_data.id}_image': paths_list}
+            instructions['instructions'] = {f'{put_data.id}_{decamelize(put_data.type)}': paths_list}
         else:
-            self.build_dataframe[f'{put_data.id}_image'] = paths_list
+            self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}'] = paths_list
 
         return instructions
 
@@ -464,7 +532,6 @@ class CreateDTS(object):
                     Инструкции для создания массивов.
             """
 
-        options = put_data.parameters.native()
         instructions: dict = {}
         video: list = []
         video_slice: list = []
@@ -483,41 +550,42 @@ class CreateDTS(object):
                     csv_y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
                     csv_flag = True
 
-        prev_class = paths_list[0].split(os.path.sep)[-2]
+        prev_class = os.path.dirname(paths_list[0]).split(os.path.sep)[-1]
         for idx, elem in enumerate(paths_list):
-            cur_class = elem.split(os.path.sep)[-2]
-            if options['video_mode'] == VideoModeChoice.completely:
+            cur_class = os.path.dirname(elem).split(os.path.sep)[-1]
+            if put_data.parameters.video_mode == VideoModeChoice.completely:
                 video.append(elem)
-                video_slice.append([0, options['max_frames']])
+                video_slice.append([0, put_data.parameters.max_frames])
                 peg_idx += 1
                 if cur_class != prev_class:
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 y_cls.append(cur_class)
-            elif options['video_mode'] == VideoModeChoice.length_and_step:
+            elif put_data.parameters.video_mode == VideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
                 cap = cv2.VideoCapture(os.path.join(self.file_folder, elem))
                 frame_count = int(cap.get(7))
                 while not stop_flag:
                     video.append(elem)
-                    video_slice.append([cur_step, cur_step + options['length']])
+                    video_slice.append([cur_step, cur_step + put_data.parameters.length])
                     peg_idx += 1
                     if cur_class != prev_class:
                         self.peg.append(peg_idx)
                         prev_class = cur_class
                     y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
-                    cur_step += options['step']
-                    if cur_step + options['length'] > frame_count:
+                    cur_step += put_data.parameters.step
+                    if cur_step + put_data.parameters.length > frame_count:
                         stop_flag = True
-                        if options['length'] < frame_count:
+                        if put_data.parameters.length < frame_count:
                             video.append(elem)
-                            video_slice.append([frame_count - options['length'], frame_count])
+                            video_slice.append([frame_count - put_data.parameters.length, frame_count])
                             y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
 
         self.y_cls = y_cls
         self.peg.append(len(video))
 
+        options = put_data.parameters.native()
         del options['video_mode']
         del options['length']
         del options['step']
@@ -526,10 +594,11 @@ class CreateDTS(object):
 
         instructions['parameters'] = options
         if options.get('deploy', bool):
-            instructions['instructions'] = {f'{put_data.id}_video': video,
-                                            f'{put_data.id}_video_slice': video_slice}
+            instructions['instructions'] = {f'{put_data.id}_{decamelize(put_data.type)}': video,
+                                            f'{put_data.id}_{decamelize(put_data.type)}_slice': video_slice}
         else:
-            self.build_dataframe[f'{put_data.id}_image'] = paths_list
+            self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}'] = video
+            self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}_slice'] = video_slice
 
         return instructions
 
@@ -1228,9 +1297,9 @@ class CreateDTS(object):
 
     def instructions_object_detection(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
+        options = put_data.parameters.native()
         data = {}
         instructions = {}
-        parameters = {}
         class_names = []
         self.encoding[put_data.id] = 'none'
 
@@ -1250,7 +1319,7 @@ class CreateDTS(object):
         #     if value == 'images':
         #         parameters['height'] = self.user_parameters.get(key).height
         #         parameters['width'] = self.user_parameters.get(key).width
-        parameters['num_classes'] = int(data['classes'])
+        options['num_classes'] = int(data['classes'])
 
         # obj.names
         with open(os.path.join(self.file_folder, data["names"].split("/")[-1]), 'r') as dt:
@@ -1263,7 +1332,7 @@ class CreateDTS(object):
             self.classes_names[put_data.id] = class_names
             self.num_classes[put_data.id] = int(data['classes'])
 
-        instructions['parameters'] = parameters
+        instructions['parameters'] = options
         self.build_dataframe[f'{put_data.id}_object_detection'] = paths_list
 
         return instructions
