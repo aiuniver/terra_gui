@@ -41,39 +41,39 @@
         <i class="profile"></i>
       </div>
     </div>
-    <!--    <at-modal-->
-    <!--      v-model="save"-->
-    <!--      width="400"-->
-    <!--      :maskClosable="false"-->
-    <!--      :showClose="true"-->
-    <!--    >-->
-    <!--      <div slot="header" style="text-align: center">-->
-    <!--        <span>Сохранить проект</span>-->
-    <!--      </div>-->
-    <!--      <div class="inner form-inline-label">-->
-    <!--        <div class="field-form">-->
-    <!--          <label>Название проекта</label-->
-    <!--          ><input v-model="nameProject" type="text" />-->
-    <!--        </div>-->
-    <!--        <div class="field-form field-inline field-reverse">-->
-    <!--          <label>Перезаписать</label>-->
-    <!--          <div class="checkout-switch">-->
-    <!--            <input type="checkbox" />-->
-    <!--            <span class="switcher"></span>-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--      <div slot="footer">-->
-    <!--        <button @click="saveProject">Сохранить</button>-->
-    <!--      </div>-->
-    <!--    </at-modal>-->
-    <!--    <at-modal v-model="load" width="400">-->
-    <!--      <div slot="header" style="text-align: center">-->
-    <!--        <span>Загрузить проект</span>-->
-    <!--      </div>-->
+       <at-modal
+         v-model="save"
+         width="400"
+         :maskClosable="false"
+         :showClose="true"
+       >
+         <div slot="header" style="text-align: center">
+           <span>Сохранить проект</span>
+         </div>
+         <div class="inner form-inline-label">
+           <div class="field-form">
+             <label>Название проекта</label
+             ><input v-model="nameProject" type="text" />
+           </div>
+           <div class="field-form field-inline field-reverse">
+             <label>Перезаписать</label>
+             <div class="checkout-switch">
+               <input type="checkbox" />
+               <span class="switcher"></span>
+             </div>
+           </div>
+         </div>
+         <div slot="footer" class="d-flex">
+           <button @click="saveProject">Сохранить</button>
+         </div>
+       </at-modal>
+       <at-modal v-model="load" width="400">
+         <div slot="header" style="text-align: center">
+           <span>Загрузить проект</span>
+         </div>
 
-    <!--      <div slot="footer"></div>-->
-    <!--    </at-modal>-->
+         <div slot="footer"></div>
+       </at-modal>
   </div>
 </template>
 
@@ -143,7 +143,15 @@ export default {
     click(type) {
       console.log(type);
       if (type === 'project-new') {
-        // this.full = !this.full;
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Очистить проект?',
+          width: 300
+        }).then(() => {
+          console.log('ok')
+        }).catch(() => {
+          console.log('cancel')
+        })
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
