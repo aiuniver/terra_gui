@@ -30,7 +30,7 @@ ConstrainedFloatValueGe0Le100 = confloat(ge=0, le=100)
 StrictFloatValueGe0 = confloat(strict=True, ge=0)
 
 
-ConstrainedLayerNameValue = constr(max_length=16)
+ConstrainedLayerNameValue = constr(max_length=32)
 
 
 class IDType(PositiveInt):

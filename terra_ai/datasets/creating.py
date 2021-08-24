@@ -1,34 +1,27 @@
 import os
-import random
-from typing import Any, Union
-
-import numpy as np
-import pandas as pd
 import re
-import pymorphy2
-import shutil
+import cv2
 import json
 import joblib
-from pydantic import DirectoryPath
-from pydantic.types import FilePath
+import random
+import numpy as np
+import pandas as pd
+import pymorphy2
+import imgaug.augmenters as iaa
+
+from typing import Union
+from pytz import timezone
+from datetime import datetime
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from librosa import load as librosa_load
-import imgaug.augmenters as iaa
 
-from datetime import datetime
-from pytz import timezone
-import cv2
-
-# from terra_ai import out_exchange
-from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
-from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
-from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
 from ..data.datasets.extra import (
-    DatasetGroupChoice,
-    LayerOutputTypeChoice,
-    LayerScalerChoice,
+    LayerTextModeChoice,
+    LayerAudioModeChoice,
+    LayerVideoModeChoice,
 )
+from ..data.datasets.extra import DatasetGroupChoice
 from ..utils import decamelize
 from .data import (
     DataType,
@@ -38,9 +31,7 @@ from .data import (
     DatasetInstructionsData,
 )
 from . import array_creator
-from . import loading as dataset_loading
 from ..data.datasets.creation import (
-    SourceData,
     CreationData,
     CreationInputsList,
     CreationOutputsList,
@@ -48,12 +39,7 @@ from ..data.datasets.creation import (
     CreationOutputData,
     OneFileData,
 )
-from ..data.datasets.dataset import (
-    DatasetData,
-    DatasetLayerData,
-    DatasetInputsData,
-    DatasetOutputsData,
-)
+from ..data.datasets.dataset import DatasetData, DatasetInputsData, DatasetOutputsData
 
 
 class CreateDTS(object):
@@ -605,7 +591,7 @@ class CreateDTS(object):
         prev_class = paths_list[0].split(os.path.sep)[-2]
         for idx, elem in enumerate(paths_list):
             cur_class = elem.split(os.path.sep)[-2]
-            if options["video_mode"] == VideoModeChoice.completely:
+            if options["video_mode"] == LayerVideoModeChoice.completely:
                 video.append(elem)
                 video_slice.append([0, options["max_frames"]])
                 peg_idx += 1
@@ -613,7 +599,7 @@ class CreateDTS(object):
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 y_cls.append(cur_class)
-            elif options["video_mode"] == VideoModeChoice.length_and_step:
+            elif options["video_mode"] == LayerVideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
                 cap = cv2.VideoCapture(os.path.join(self.file_folder, elem))
@@ -789,7 +775,7 @@ class CreateDTS(object):
                 cur_class = key.split(os.path.sep)[-2]
             else:
                 cur_class = csv_y_cls[idx]
-            if options["text_mode"] == TextModeChoice.completely:
+            if options["text_mode"] == LayerTextModeChoice.completely:
                 text.append(value)
                 text_slice.append([0, options["max_words"]])
                 if cur_class != prev_class:
@@ -798,7 +784,7 @@ class CreateDTS(object):
                 peg_idx += 1
                 y_cls.append(cur_class)
 
-            elif options["text_mode"] == TextModeChoice.length_and_step:
+            elif options["text_mode"] == LayerTextModeChoice.length_and_step:
                 max_length = len(value.split(" "))
                 if "text_segmentation" in self.tags.values():
                     count = 0
@@ -876,7 +862,7 @@ class CreateDTS(object):
         prev_class = paths_list[0].split(os.path.sep)[-2]
         for idx, elem in enumerate(paths_list):
             cur_class = elem.split(os.path.sep)[-2]
-            if options["audio_mode"] == AudioModeChoice.completely:
+            if options["audio_mode"] == LayerAudioModeChoice.completely:
                 audio.append(elem)
                 audio_slice.append([0, options["max_frames"]])
                 peg_idx += 1
@@ -884,7 +870,7 @@ class CreateDTS(object):
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 y_cls.append(cur_class)
-            elif options["audio_mode"] == AudioModeChoice.length_and_step:
+            elif options["audio_mode"] == LayerAudioModeChoice.length_and_step:
                 cur_step = 0.0
                 stop_flag = False
                 y, sr = librosa_load(
@@ -1692,11 +1678,11 @@ class CreateDTS(object):
                 max_words = self.user_parameters.get(i).dict()["max_words"]
 
                 for idx in range(len(text)):
-                    if text_mode == TextModeChoice.completely:
+                    if text_mode == LayerTextModeChoice.completely:
                         text_sliced.append(" ".join(text[idx][0:max_words]))
                         text_segm_data.append(text_segm[idx][0:max_words])
                         text_segm_sliced.append([0, max_words])
-                    elif text_mode == TextModeChoice.length_and_step:
+                    elif text_mode == LayerTextModeChoice.length_and_step:
                         max_length = len(text[idx])
                         cur_step = 0
                         stop_flag = False
