@@ -4,6 +4,8 @@
 
 import os
 import pandas
+import random
+import base64
 
 from enum import Enum
 from pathlib import Path
@@ -46,11 +48,7 @@ class FileManagerTypeChoice(str, Enum):
     jpg = FileManagerTypeBaseChoice.image.value
     jpeg = FileManagerTypeBaseChoice.image.value
     png = FileManagerTypeBaseChoice.image.value
-    wav = FileManagerTypeBaseChoice.audio.value
-    mp3 = FileManagerTypeBaseChoice.audio.value
-    webm = FileManagerTypeBaseChoice.video.value
     csv = FileManagerTypeBaseChoice.table.value
-    txt = FileManagerTypeBaseChoice.text.value
     undefined = FileManagerTypeBaseChoice.unknown.value
 
 
@@ -113,10 +111,11 @@ class FileSizeData(BaseMixinData):
 
 
 class FileManagerItem(BaseMixinData):
-    path: Union[FilePath, DirectoryPath]
+    path: Optional[Union[FilePath, DirectoryPath]]
     title: Optional[str]
     type: Optional[FileManagerTypeChoice]
     children: list = []
+    dragndrop: bool = False
 
     @property
     def csv2data(self) -> Optional[dict]:
@@ -126,6 +125,36 @@ class FileManagerItem(BaseMixinData):
         data = dataframe.values.tolist()
         data.insert(0, list(dataframe.columns))
         return data
+
+    @property
+    def cover(self) -> Optional[str]:
+        if self.type != FileManagerTypeChoice.folder:
+            return None
+        _types = []
+        for item in self.children:
+            if item.type.value == FileManagerTypeBaseChoice.image:
+                _types.append(item.type.name)
+        if not len(_types):
+            return None
+        _images = []
+        for item in os.listdir(self.path):
+            try:
+                _type = FileManagerTypeChoice[item.split(".")[-1].lower()]
+                if _type.value == FileManagerTypeBaseChoice.image:
+                    _images.append(item)
+            except KeyError:
+                pass
+        _image = Path(self.path, random.choices(_images)[0])
+        _image_ext = _image.name.split(".")[-1].lower()
+        with open(_image, "rb") as _image_ref:
+            _image_base64 = base64.b64encode(_image_ref.read())
+            return f'data:image/{_image_ext};base64,{_image_base64.decode("utf-8")}'
+
+    @staticmethod
+    def is_usable(path: Path) -> bool:
+        return os.path.isdir(path) or (
+            os.path.isfile(path) and str(path).lower().endswith(".csv")
+        )
 
     @validator("title", always=True)
     def _validate_title(cls, value: str, values) -> str:
@@ -152,9 +181,28 @@ class FileManagerItem(BaseMixinData):
         fullpath = values.get("path")
         __items = []
         if fullpath and os.path.isdir(fullpath):
+            files_grouped = {}
             for item in os.listdir(fullpath):
+                item_path = Path(fullpath, item).absolute()
+                if FileManagerItem.is_usable(item_path):
+                    __items.append(FileManagerItem(**{"path": item_path}))
+                else:
+                    _ext = str(item_path).split(".")[-1].lower()
+                    _count = files_grouped.get(_ext, 0)
+                    _count += 1
+                    files_grouped.update({_ext: _count})
+            for _ext, _count in files_grouped.items():
+                try:
+                    _type = FileManagerTypeChoice[_ext]
+                except KeyError:
+                    _type = FileManagerTypeChoice.undefined
                 __items.append(
-                    FileManagerItem(**{"path": Path(fullpath, item).absolute()})
+                    FileManagerItem(
+                        **{
+                            "title": f"[{_count}] {_ext}",
+                            "type": _type,
+                        }
+                    )
                 )
         return __items
 
@@ -163,7 +211,15 @@ class FileManagerItem(BaseMixinData):
         if self.type != FileManagerTypeChoice.folder:
             __exclude.append("children")
         kwargs.update({"exclude": set(__exclude)})
-        return super().dict(**kwargs)
+        data = super().dict(**kwargs)
+        if self.type == FileManagerTypeChoice.csv:
+            data.update({"data": self.csv2data})
+        else:
+            data.update({"data": None})
+        if self.type in [FileManagerTypeChoice.folder, FileManagerTypeChoice.csv]:
+            data.update({"dragndrop": True})
+        data.update({"cover": self.cover})
+        return data
 
 
 class FileManagerList(UniqueListMixin):

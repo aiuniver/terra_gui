@@ -4,8 +4,8 @@
       <LoadModel v-model="dialogLoadModel" />
       <SaveModel v-model="dialogSaveModel" :image="imageModel"/>
       <Toolbar @actions="actions" />
-      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" />
-      <Params :selectBlock="selectBlock" />
+      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
+      <Params ref="params" :selectBlock="selectBlock" />
     </div>
   </main>
 </template>
@@ -59,6 +59,18 @@ export default {
       }
       if (btn === 'validation') {
         // this.create = true
+        console.log('hjkhjh')
+        this.$refs.params.saveModel()
+      }
+      if (btn === 'clear') {
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Очистить модель?',
+          width: 300,
+          callback: function () {
+            // this.$Message(action)
+          }
+        })
       }
       console.log(btn);
     },

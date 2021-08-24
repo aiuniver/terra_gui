@@ -2,18 +2,15 @@
 ## Структура данных слоев
 """
 
-import json
-
 from typing import Optional, List, Tuple, Any
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, IDMixinData, UniqueListMixin
-from ..types import ConstrainedIntValueGe0
 from ..exceptions import XYException
 from . import layers
-from .extra import LayerTypeChoice, LayerGroupChoice, LayerBindPositionChoice
+from .extra import LayerTypeChoice, LayerGroupChoice
 from .types import ReferenceLayerType
 
 
@@ -43,15 +40,6 @@ class LayerBindData(BaseMixinData):
     up: List[Optional[PositiveInt]] = []
     down: List[PositiveInt] = []
 
-    @validator("up", allow_reuse=True)
-    def _validate_bind(cls, value):
-        if not value:
-            return value
-        if None in value:
-            value = list(filter(None, value))
-            value.insert(0, None)
-        return value
-
 
 class LayerData(IDMixinData):
     """
@@ -68,9 +56,7 @@ class LayerData(IDMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
-    location: Optional[Tuple[ConstrainedIntValueGe0, ...]]
-    "Расположение слоя в сетке модели"
-    position: Optional[Tuple[int, ...]]
+    position: Tuple[int, int]
     "Расположение слоя в сетке модели"
     parameters: Any
     "Параметры слоя"
@@ -88,7 +74,7 @@ class LayerData(IDMixinData):
             ),
         )
 
-    @validator("location", "position", allow_reuse=True)
+    @validator("position", allow_reuse=True)
     def _validate_xy(cls, value: list, values) -> list:
         if value is None:
             return value
@@ -96,9 +82,10 @@ class LayerData(IDMixinData):
             raise XYException(values.get("alias"), value)
         return value
 
-    @validator("bind", allow_reuse=True)
+    @validator("bind", always=True)
     def _validate_bind(cls, value: LayerBindData, values) -> LayerBindData:
         if values.get("group") == LayerGroupChoice.input:
+            value.up = list(filter(None, value.up))
             value.up.insert(0, None)
         return value
 

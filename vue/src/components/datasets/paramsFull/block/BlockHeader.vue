@@ -4,8 +4,9 @@
       <Cards>
         <template v-for="(file, i) of mixinFiles">
           <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
+          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i"  />
         </template>
-        <!-- <CardTable/> -->
+
       </Cards>
       <div class="empty"></div>
     </div>
@@ -20,14 +21,14 @@
 
 <script>
 import CardFile from '../components/card/CardFile.vue';
-// import CardTable from "../components/card/CardTable";
+import CardTable from "../components/card/CardTable";
 import Cards from '../components/card/Cards.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 'BlockHeader',
   components: {
     CardFile,
-    // CardTable,
+    CardTable,
     Cards,
   },
   mixins: [blockMain],
