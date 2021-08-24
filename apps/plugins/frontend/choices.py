@@ -47,6 +47,58 @@ class LayerScalerChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerScalerChoice))
 
 
+class LayerScalerImageChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+    terra_image_scaler = "TerraImageScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerImageChoice))
+
+
+class LayerScalerAudioChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerAudioChoice))
+
+
+class LayerScalerVideoChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerVideoChoice))
+
+
+class LayerScalerRegressionChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerScalerRegressionChoice)
+        )
+
+
+class LayerScalerTimeseriesChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), LayerScalerTimeseriesChoice)
+        )
+
+
 class LayerAudioModeChoice(str, Enum):
     completely = "Целиком"
     length_and_step = "По длине и шагу"
@@ -58,13 +110,13 @@ class LayerAudioModeChoice(str, Enum):
 
 class LayerAudioParameterChoice(str, Enum):
     audio_signal = "Audio signal"
-    zero_crossing_rate = "Zero-crossing rate"
-    rms = "RMS"
-    spectral_rolloff = "Spectral roll-off"
-    spectral_bandwidth = "Spectral bandwidth"
-    spectral_centroid = "Spectral centroid"
-    mfcc = "MFCC"
     chroma_stft = "Chroma STFT"
+    mfcc = "MFCC"
+    rms = "RMS"
+    spectral_centroid = "Spectral centroid"
+    spectral_bandwidth = "Spectral bandwidth"
+    spectral_rolloff = "Spectral roll-off"
+    zero_crossing_rate = "Zero-crossing rate"
 
     @staticmethod
     def items_tuple() -> list:

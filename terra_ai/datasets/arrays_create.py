@@ -12,8 +12,7 @@ from librosa import load as librosa_load
 import librosa.feature as librosa_feature
 from pydantic.color import Color
 
-from ..data.datasets.creations.layers.input.types.Video import FrameModeChoice, FillModeChoice
-from ..data.datasets.extra import LayerNetChoice
+from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice
 
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
@@ -40,15 +39,15 @@ class CreateArray(object):
     def create_image(self, file_folder: str, image_path: str, **options):
 
         shape = (options['height'], options['width'])
-        # array = cv2.imread(os.path.join(file_folder, image_path)).reshape((shape[0], shape[1], 3)).astype('uint8')
-        img = load_img(os.path.join(file_folder, image_path), target_size=shape)
+        # img = load_img(os.path.join(file_folder, image_path), target_size=shape)
+        img = load_img(image_path, target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
-        if options['put'] in self.augmentation.keys():
-            if 'object_detection' in options.keys():
+        if self.augmentation[options['put']]:
+            if options['object_detection']:
                 txt_path = image_path[:image_path.rfind('.')] + '.txt'
-                with open(os.path.join(file_folder, txt_path), 'r') as b_boxes:
+                with open(os.path.join(file_folder, f'{options["put"]}_image', txt_path), 'r') as b_boxes:
                     bounding_boxes = b_boxes.read()
 
                 current_boxes = []
@@ -80,13 +79,11 @@ class CreateArray(object):
 
         return array.astype('float32')
 
-    def create_video(self, file_folder: str, video: str, slicing: list, **options) -> np.ndarray:
+    def create_video(self, _, video_path: str, slicing: list, **options) -> np.ndarray:
 
         """
         Args:
-            file_folder: str
-                Путь к папке.
-            video: str
+            video_path: str
                 Путь к файлу.
             slicing: list
                 [начало: int, конец: int].
@@ -108,10 +105,10 @@ class CreateArray(object):
 
             resized = None
 
-            if frame_mode == FrameModeChoice.stretch:
+            if frame_mode == LayerVideoFrameModeChoice.stretch:
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
-            elif frame_mode == FrameModeChoice.keep_proportions:
+            elif frame_mode == LayerVideoFrameModeChoice.keep_proportions:
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
@@ -138,12 +135,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == FillModeChoice.black_frames:
+            if fill_mode == LayerVideoFillModeChoice.black_frames:
                 frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
-            elif fill_mode == FillModeChoice.average_value:
+            elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == FillModeChoice.last_frames:
+            elif fill_mode == LayerVideoFillModeChoice.last_frames:
                 if total_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
                 elif total_frames <= frames_to_add:
@@ -161,7 +158,7 @@ class CreateArray(object):
         frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(os.path.join(file_folder, video))
+        cap = cv2.VideoCapture(video_path)
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
@@ -235,12 +232,13 @@ class CreateArray(object):
 
         return array
 
-    def create_audio(self, file_folder: str, audio: str, slicing: list, **options) -> np.ndarray:
+    def create_audio(self, file_folder: str, audio: str, **options) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=os.path.join(file_folder, audio), sr=options.get('sample_rate'),
+        slicing = [float(x) for x in audio[audio.index('[') + 1:audio.index(']')].split(', ')]
+        y, sr = librosa_load(path=audio, sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
@@ -503,9 +501,17 @@ class CreateArray(object):
         output_levels = len(strides)
         train_input_sizes = 416
         anchor_per_scale = 3
-        yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-                        [[36, 75], [76, 55], [72, 146]],
-                        [[142, 110], [192, 243], [459, 401]]]
+        yolo_anchors = None
+
+        if options['yolo_version'] == LayerYoloChoice.yolo_v3:
+            yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
+                            [[30, 61], [62, 45], [59, 119]],
+                            [[116, 90], [156, 198], [373, 326]]]
+        elif options['yolo_version'] == LayerYoloChoice.yolo_v4:
+            yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+                            [[36, 75], [76, 55], [72, 146]],
+                            [[142, 110], [192, 243], [459, 401]]]
+
         anchors = (np.array(yolo_anchors).T / strides).T
         max_bbox_per_scale = 100
         train_input_size = random.choice([train_input_sizes])
@@ -514,7 +520,7 @@ class CreateArray(object):
         if self.temporary['bounding_boxes']:
             real_boxes = self.temporary['bounding_boxes'][txt_path]
         else:
-            with open(os.path.join(file_folder, txt_path), 'r') as txt:
+            with open(os.path.join(file_folder, f'{options["put"]}_object_detection', txt_path), 'r') as txt:
                 bb_file = txt.read()
             real_boxes = []
             for elem in bb_file.split('\n'):
