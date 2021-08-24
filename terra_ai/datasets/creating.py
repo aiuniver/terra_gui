@@ -15,6 +15,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from librosa import load as librosa_load
 import imgaug.augmenters as iaa
+from pydub import AudioSegment
 
 from datetime import datetime
 from pytz import timezone
@@ -22,10 +23,7 @@ from PIL import Image
 import cv2
 from time import time
 # from terra_ai import out_exchange
-from ..data.datasets.creations.layers.input.types.Text import TextModeChoice
-from ..data.datasets.creations.layers.input.types.Audio import AudioModeChoice
-from ..data.datasets.creations.layers.input.types.Video import VideoModeChoice
-from ..data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, LayerScalerChoice
+from ..data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, PathsData, InstructionsData, DatasetInstructionsData
 from . import array_creator
@@ -218,7 +216,7 @@ class CreateDTS(object):
                 cur_step = 0
                 frame_count = int(cap.get(7))
                 name, ext = os.path.splitext(os.path.basename(elem))
-                if put_data.parameters.video_mode == VideoModeChoice.length_and_step:
+                if put_data.parameters.video_mode == LayerVideoModeChoice.length_and_step:
                     for i in range(((frame_count - put_data.parameters.length) // put_data.parameters.step) + 1):
                         os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
                         output_movie = cv2.VideoWriter(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
@@ -238,8 +236,7 @@ class CreateDTS(object):
 
                         output_movie.release()
                         cur_step += put_data.parameters.step
-                elif put_data.parameters.video_mode == VideoModeChoice.completely:
-                    print(elem)
+                elif put_data.parameters.video_mode == LayerVideoModeChoice.completely:
                     frame_count = put_data.parameters.max_frames if frame_count > put_data.parameters.max_frames else frame_count
                     frame_number = 0
                     os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
@@ -255,7 +252,28 @@ class CreateDTS(object):
                             stop_flag = True
                         output_movie.write(frame)
                     output_movie.release()
-                pass
+            elif put_data.type in [LayerInputTypeChoice.Audio, LayerOutputTypeChoice.Audio]:
+                name, ext = os.path.splitext(os.path.basename(elem))
+                if put_data.parameters.audio_mode == LayerAudioModeChoice.length_and_step:
+                    cur_step = 0.0
+                    stop_flag = False
+                    audio = AudioSegment.from_file(os.path.join(tmp_sources, elem))
+                    duration = audio.duration_seconds
+                    while not stop_flag:
+                        audio = AudioSegment.from_file(os.path.join(tmp_sources, elem), start_second=cur_step, duration=put_data.parameters.length)
+                        os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
+                        audio.export(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
+                                                  f'{name}_[{cur_step}, {cur_step + put_data.parameters.length}]{ext}'), format=ext[1:])
+                        cur_step += put_data.parameters.step
+                        cur_step = round(cur_step, 1)
+                        if cur_step + put_data.parameters.length > duration:
+                            stop_flag = True
+                elif put_data.parameters.audio_mode == LayerAudioModeChoice.completely:
+                    audio = AudioSegment.from_file(os.path.join(tmp_sources, elem), start_second=0.0, duration=put_data.parameters.max_seconds)
+                    os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)), exist_ok=True)
+                    audio.export(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
+                                              f'{name}_[0.0, {put_data.parameters.max_seconds}]{ext}'), format=ext[1:])
+
         print('Файлы готовились', time() - cur_time)
         if not os.path.isdir(os.path.join(dataset_sources, f'{put_data.id}_{decamelize(put_data.type)}')):
             shutil.move(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}'), dataset_sources)
@@ -294,7 +312,7 @@ class CreateDTS(object):
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
+                    # self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.inputs.get(key).parameters
                 )
             else:
@@ -329,7 +347,7 @@ class CreateDTS(object):
                 array = getattr(array_creator, f'create_{self.tags[key]}')(
                     self.paths.datasets,
                     self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}'],
-                    self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
+                    #self.dataframe['train'].loc[0, f'{key}_{self.tags[key]}_slice'],
                     **self.instructions.outputs.get(key).parameters
                 )
             else:
@@ -399,7 +417,7 @@ class CreateDTS(object):
                         array = getattr(array_creator, f'create_{self.tags[key]}')(
                             self.paths.datasets,
                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
-                            self.dataframe[split].loc[i, f'{key}_{self.tags[key]}_slice'],
+                            # self.dataframe[split].loc[i, f'{key}_{self.tags[key]}_slice'],
                             **put_data.get(key).parameters
                         )
                     else:
@@ -465,7 +483,7 @@ class CreateDTS(object):
         instructions: dict = {}
         self.peg.append(0)
 
-        if 'object_detection' in self.tags.values():
+        if decamelize(LayerOutputTypeChoice.ObjectDetection) in self.tags.values():
             put_data.parameters.object_detection = True
             for path in paths_list:
                 if path.endswith('.txt'):
@@ -553,7 +571,7 @@ class CreateDTS(object):
         prev_class = os.path.dirname(paths_list[0]).split(os.path.sep)[-1]
         for idx, elem in enumerate(paths_list):
             cur_class = os.path.dirname(elem).split(os.path.sep)[-1]
-            if put_data.parameters.video_mode == VideoModeChoice.completely:
+            if put_data.parameters.video_mode == LayerVideoModeChoice.completely:
                 video.append(elem)
                 video_slice.append([0, put_data.parameters.max_frames])
                 peg_idx += 1
@@ -561,7 +579,7 @@ class CreateDTS(object):
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 y_cls.append(cur_class)
-            elif put_data.parameters.video_mode == VideoModeChoice.length_and_step:
+            elif put_data.parameters.video_mode == LayerVideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
                 cap = cv2.VideoCapture(os.path.join(self.file_folder, elem))
@@ -706,7 +724,7 @@ class CreateDTS(object):
                 cur_class = key.split(os.path.sep)[-2]
             else:
                 cur_class = csv_y_cls[idx]
-            if options['text_mode'] == TextModeChoice.completely:
+            if options['text_mode'] == LayerTextModeChoice.completely:
                 text.append(value)
                 text_slice.append([0, options['max_words']])
                 if cur_class != prev_class:
@@ -715,7 +733,7 @@ class CreateDTS(object):
                 peg_idx += 1
                 y_cls.append(cur_class)
 
-            elif options['text_mode'] == TextModeChoice.length_and_step:
+            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
                 max_length = len(value.split(' '))
                 if 'text_segmentation' in self.tags.values():
                     count = 0
@@ -756,8 +774,6 @@ class CreateDTS(object):
     def instructions_audio(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
-        sample_rate = options.get('sample_rate', int)
-        options = put_data.parameters.native()
         instructions: dict = {}
         audio: list = []
         audio_slice: list = []
@@ -776,32 +792,32 @@ class CreateDTS(object):
                     csv_y_cls = data[self.user_parameters[key].cols_names[0]].to_list()
                     csv_flag = True
 
-        prev_class = paths_list[0].split(os.path.sep)[-2]
+        prev_class = os.path.dirname(paths_list[0]).split(os.path.sep)[-1]
         for idx, elem in enumerate(paths_list):
-            cur_class = elem.split(os.path.sep)[-2]
-            if options['audio_mode'] == AudioModeChoice.completely:
-                audio.append(elem)
-                audio_slice.append([0, options['max_frames']])
+            cur_class = os.path.dirname(elem).split(os.path.sep)[-1]
+            name, ext = os.path.splitext(os.path.basename(elem))
+            if put_data.parameters.audio_mode == LayerAudioModeChoice.completely:
+                audio.append(os.path.join(os.path.dirname(elem), f'{name}_[0.0, {put_data.parameters.max_seconds}]{ext}'))
+                audio_slice.append([0, put_data.parameters.max_seconds])
                 peg_idx += 1
                 if cur_class != prev_class:
                     self.peg.append(peg_idx)
                     prev_class = cur_class
                 y_cls.append(cur_class)
-            elif options['audio_mode'] == AudioModeChoice.length_and_step:
+            elif put_data.parameters.audio_mode == LayerAudioModeChoice.length_and_step:
                 cur_step = 0.0
                 stop_flag = False
-                y, sr = librosa_load(path=os.path.join(self.file_folder, elem), sr=sample_rate, res_type='scipy')
-                sample_length = len(y) / sample_rate
+                sample_length = AudioSegment.from_file(os.path.join(self.file_folder, elem)).duration_seconds
                 while not stop_flag:
-                    audio.append(elem)
-                    audio_slice.append([cur_step, cur_step + options['length']])
+                    audio.append(os.path.join(os.path.dirname(elem), f'{name}_[{cur_step}, {put_data.parameters.max_seconds}]{ext}'))
+                    audio_slice.append([cur_step, round(cur_step + put_data.parameters.length, 1)])
                     peg_idx += 1
                     if cur_class != prev_class:
                         self.peg.append(peg_idx)
                         prev_class = cur_class
                     y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
-                    cur_step += options['step']
-                    if cur_step + options['length'] > sample_length:
+                    cur_step += put_data.parameters.step
+                    if cur_step + put_data.parameters.length > sample_length:
                         stop_flag = True
 
         self.y_cls = y_cls
@@ -813,11 +829,11 @@ class CreateDTS(object):
 
         instructions['parameters'] = options
         if options.get('deploy', bool):
-            instructions['instructions'] = {f'{put_data.id}_audio': audio,
-                                            f'{put_data.id}_audio_slice': audio_slice}
+            instructions['instructions'] = {f'{put_data.id}_{decamelize(put_data.type)}': audio}
+                                            # f'{put_data.id}_{decamelize(put_data.type)}_slice': audio_slice}
         else:
-            self.build_dataframe[f'{put_data.id}_audio'] = audio
-            self.build_dataframe[f'{put_data.id}_audio_slice'] = audio_slice
+            self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}'] = audio
+            # self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}_slice'] = audio_slice
 
         return instructions
 
@@ -1400,11 +1416,11 @@ class CreateDTS(object):
                 max_words = self.user_parameters.get(i).dict()['max_words']
 
                 for idx in range(len(text)):
-                    if text_mode == TextModeChoice.completely:
+                    if text_mode == LayerTextModeChoice.completely:
                         text_sliced.append(' '.join(text[idx][0:max_words]))
                         text_segm_data.append(text_segm[idx][0:max_words])
                         text_segm_sliced.append([0, max_words])
-                    elif text_mode == TextModeChoice.length_and_step:
+                    elif text_mode == LayerTextModeChoice.length_and_step:
                         max_length = len(text[idx])
                         cur_step = 0
                         stop_flag = False

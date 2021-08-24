@@ -12,8 +12,7 @@ from librosa import load as librosa_load
 import librosa.feature as librosa_feature
 from pydantic.color import Color
 
-from ..data.datasets.creations.layers.input.types.Video import FrameModeChoice, FillModeChoice
-from ..data.datasets.extra import LayerNetChoice, YoloVersionChoice
+from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice
 
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
@@ -106,10 +105,10 @@ class CreateArray(object):
 
             resized = None
 
-            if frame_mode == FrameModeChoice.stretch:
+            if frame_mode == LayerVideoFrameModeChoice.stretch:
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
-            elif frame_mode == FrameModeChoice.keep_proportions:
+            elif frame_mode == LayerVideoFrameModeChoice.keep_proportions:
                 # height
                 resized = one_frame.copy()
                 if original_shape[0] > target_shape[0]:
@@ -136,12 +135,12 @@ class CreateArray(object):
 
             frames: np.ndarray = np.array([])
 
-            if fill_mode == FillModeChoice.black_frames:
+            if fill_mode == LayerVideoFillModeChoice.black_frames:
                 frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
-            elif fill_mode == FillModeChoice.average_value:
+            elif fill_mode == LayerVideoFillModeChoice.average_value:
                 mean = np.mean(video_array, axis=0, dtype='uint16')
                 frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == FillModeChoice.last_frames:
+            elif fill_mode == LayerVideoFillModeChoice.last_frames:
                 if total_frames > frames_to_add:
                     frames = np.flip(video_array[-frames_to_add:], axis=0)
                 elif total_frames <= frames_to_add:
@@ -233,12 +232,13 @@ class CreateArray(object):
 
         return array
 
-    def create_audio(self, file_folder: str, audio: str, slicing: list, **options) -> np.ndarray:
+    def create_audio(self, file_folder: str, audio: str, **options) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=os.path.join(file_folder, audio), sr=options.get('sample_rate'),
+        slicing = [float(x) for x in audio[audio.index('[') + 1:audio.index(']')].split(', ')]
+        y, sr = librosa_load(path=audio, sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
@@ -503,11 +503,11 @@ class CreateArray(object):
         anchor_per_scale = 3
         yolo_anchors = None
 
-        if options['yolo_version'] == YoloVersionChoice.yolo_v3:
+        if options['yolo_version'] == LayerYoloChoice.yolo_v3:
             yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
                             [[30, 61], [62, 45], [59, 119]],
                             [[116, 90], [156, 198], [373, 326]]]
-        elif options['yolo_version'] == YoloVersionChoice.yolo_v4:
+        elif options['yolo_version'] == LayerYoloChoice.yolo_v4:
             yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
                             [[36, 75], [76, 55], [72, 146]],
                             [[142, 110], [192, 243], [459, 401]]]
