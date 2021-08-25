@@ -1,11 +1,14 @@
 from typing import Optional, List, Dict
 from pydantic.types import PositiveInt
 
-from ...extra import SourcesPathsData
+from ...extra import MinMaxScalerData
 from .....extra import LayerScalerDataframeChoice
+from ......types import confilepath
 
 
-class ParametersData(SourcesPathsData):
+class ParametersData(MinMaxScalerData):
+    sources_paths: List[confilepath(ext="csv")]
+
     separator: Optional[str]
     encoding: str = "utf-8"
     cols_names: Optional[List[str]]

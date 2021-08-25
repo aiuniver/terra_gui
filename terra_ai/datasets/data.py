@@ -58,11 +58,3 @@ class InstructionsData(BaseMixinData):
 class DatasetInstructionsData(BaseMixinData):
     inputs: Dict[PositiveInt, InstructionsData]
     outputs: Dict[PositiveInt, InstructionsData]
-
-
-class PathsData(BaseMixinData):
-    datasets: DirectoryPath
-    arrays: DirectoryPath
-    instructions: Optional[DirectoryPath]
-    dataset_sources: DirectoryPath
-    tmp_sources: DirectoryPath
