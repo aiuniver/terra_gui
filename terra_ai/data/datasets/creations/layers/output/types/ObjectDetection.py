@@ -1,5 +1,6 @@
-from ...extra import ParametersBaseData
+from ...extra import SourcesPathsData
+from .....extra import LayerYoloChoice
 
 
-class ParametersData(ParametersBaseData):
-    pass
+class ParametersData(SourcesPathsData):
+    yolo: LayerYoloChoice = LayerYoloChoice.v4

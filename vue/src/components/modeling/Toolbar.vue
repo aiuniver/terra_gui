@@ -2,40 +2,51 @@
   <div class="toolbar">
     <ul class="toolbar__menu">
       <li class="toolbar__menu--item" @click.prevent="click('load')" title="Загрузить модель">
-          <i class="t-icon icon-model-load"></i>
+        <i class="t-icon icon-model-load"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click('save')" title="Сохранить модель">
-          <i class="t-icon icon-model-save"></i>
+        <i class="t-icon icon-model-save"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click('validation')" title="Валидация">
-          <i class="t-icon icon-model-validation"></i>
+        <i class="t-icon icon-model-validation"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
-          <i class="t-icon icon-clear-model"></i>
+        <i class="t-icon icon-clear-model"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('input')" title="Входящий слой">
-          <i class="t-icon icon-layer-input"></i>
+      <li class="toolbar__menu--item" @click.prevent="click('input')" :disabled="isInput" title="Входящий слой">
+        <i class="t-icon icon-layer-input"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click('middle')" title="Промежуточный слой">
-          <i class="t-icon icon-layer-middle"></i>
+        <i class="t-icon icon-layer-middle"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('output')" title="Исходящий слой">
-          <i class="t-icon icon-layer-output"></i>
+      <li class="toolbar__menu--item" @click.prevent="click('output')" :disabled="isOutput" title="Исходящий слой">
+        <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('keras')" title="Код на Keras">
-          <i class="t-icon icon-keras-code"></i>
+      <li class="toolbar__menu--item" @click.prevent="click('keras')" :disabled="true" title="Код на Keras">
+        <i class="t-icon icon-keras-code"></i>
       </li>
     </ul>
   </div>
 </template>
 
-  <script>
+<script>
+import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
   data: () => ({}),
   computed: {
+    ...mapGetters({
+      blocks: 'modeling/getBlocks',
+      project: 'projects/getProject',
+    }),
+    isInput() {
+      return this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
+    },
+    isOutput() {
+      return this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
+    },
   },
   methods: {
     click(event) {

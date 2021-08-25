@@ -2,29 +2,7 @@
   <div class="header">
     <div class="header__left">
       <a href="#" class="header__left--logo"></a>
-      <div class="header__left--title">
-        <div class="header__left--label">Project:</div>
-        <div class="header__left--name">
-          <!-- <span
-              ref="project"
-              :contenteditable="clickProject"
-              @click="save = true"
-              @focusout="handleFocusOut(false)"
-              @input="change"
-              >{{ nameProject }}</span
-            > -->
-          <span
-            class="left--name_span"
-            @click="projectNameEdit = true"
-            :contenteditable="projectNameEdit"
-            v-click-outside="outside"
-            ref="nameProjectSpan"
-          >
-            {{ nameProject }}
-          </span>
-          <i></i>
-        </div>
-      </div>
+      <TProjectName />
     </div>
     <div class="header__center">Название задачи / Название эксперимента</div>
     <div class="header__right">
@@ -41,45 +19,50 @@
         <i class="profile"></i>
       </div>
     </div>
-    <!--    <at-modal-->
-    <!--      v-model="save"-->
-    <!--      width="400"-->
-    <!--      :maskClosable="false"-->
-    <!--      :showClose="true"-->
-    <!--    >-->
-    <!--      <div slot="header" style="text-align: center">-->
-    <!--        <span>Сохранить проект</span>-->
-    <!--      </div>-->
-    <!--      <div class="inner form-inline-label">-->
-    <!--        <div class="field-form">-->
-    <!--          <label>Название проекта</label-->
-    <!--          ><input v-model="nameProject" type="text" />-->
-    <!--        </div>-->
-    <!--        <div class="field-form field-inline field-reverse">-->
-    <!--          <label>Перезаписать</label>-->
-    <!--          <div class="checkout-switch">-->
-    <!--            <input type="checkbox" />-->
-    <!--            <span class="switcher"></span>-->
-    <!--          </div>-->
-    <!--        </div>-->
-    <!--      </div>-->
-    <!--      <div slot="footer">-->
-    <!--        <button @click="saveProject">Сохранить</button>-->
-    <!--      </div>-->
-    <!--    </at-modal>-->
-    <!--    <at-modal v-model="load" width="400">-->
-    <!--      <div slot="header" style="text-align: center">-->
-    <!--        <span>Загрузить проект</span>-->
-    <!--      </div>-->
+       <at-modal
+         v-model="save"
+         width="400"
+         :maskClosable="false"
+         :showClose="true"
+       >
+         <div slot="header" style="text-align: center">
+           <span>Сохранить проект</span>
+         </div>
+         <div class="inner form-inline-label">
+           <div class="field-form">
+             <label>Название проекта</label
+             ><input v-model="nameProject" type="text" />
+           </div>
+           <div class="field-form field-inline field-reverse">
+             <label>Перезаписать</label>
+             <div class="checkout-switch">
+               <input type="checkbox" />
+               <span class="switcher"></span>
+             </div>
+           </div>
+         </div>
+         <div slot="footer" class="d-flex">
+           <button @click="saveProject">Сохранить</button>
+         </div>
+       </at-modal>
+       <at-modal v-model="load" width="400">
+         <div slot="header" style="text-align: center">
+           <span>Загрузить проект</span>
+         </div>
 
-    <!--      <div slot="footer"></div>-->
-    <!--    </at-modal>-->
+         <div slot="footer"></div>
+       </at-modal>
   </div>
 </template>
 
 <script>
+import TProjectName from '../forms/TProjectName.vue';
+
 export default {
   name: 'THeader',
+  components: {
+    TProjectName,
+  },
   data: () => ({
     clickProject: false,
     projectNameEdit: false,
@@ -143,7 +126,15 @@ export default {
     click(type) {
       console.log(type);
       if (type === 'project-new') {
-        // this.full = !this.full;
+        this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Очистить проект?',
+          width: 300
+        }).then(() => {
+          console.log('ok')
+        }).catch(() => {
+          console.log('cancel')
+        })
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {

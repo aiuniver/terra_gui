@@ -1,5 +1,5 @@
 <template>
-  <at-modal v-model="dialog" width="680" showClose>
+  <at-modal v-model="dialog" width="500" showClose>
     <div slot="header" style="text-align: center">
       <span>Сохранить модель</span>
     </div>
@@ -9,7 +9,10 @@
       </div>
       <Loading v-else />
     </div>
-    <div slot="footer"></div>
+    <template slot="footer">
+      <button>Отменить</button>
+      <button>Сохранить</button>
+    </template>
   </at-modal>
 </template>
 

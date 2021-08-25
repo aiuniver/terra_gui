@@ -12,6 +12,7 @@
       @select="blockSelect(block)"
       @delete="blockDelete(block)"
       @position="position(block, $event)"
+      @moveBlock="moveBlock"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -103,6 +104,7 @@ export default {
       },
     },
     optionsForChild() {
+      console.log(this.centerX, this.centerY)
       return {
         width: 200,
         titleHeight: 48,
@@ -453,20 +455,15 @@ export default {
           });
           // console.log("adddd");
           // console.log(originID);
-          const indexOriginBlock = this.findindexBlock(originID)
-          const indexTargetBlock = this.findindexBlock(targetID)
-          if (this.blocks[indexOriginBlock].bind.down.indexOf(targetID) === -1) {
-            this.blocks[indexOriginBlock].bind.down.push(+targetID)
-          }
-          if (this.blocks[indexTargetBlock].bind.up.indexOf(originID) === -1) {
-            this.blocks[indexTargetBlock].bind.up.push(+originID)
-          }
-
-          // console.log(indexOriginBlock)
-          // console.log(this.blocks[indexOriginBlock].bind.down.indexOf(originID))
-          // targetBlock.inputs[targetSlot].active = true;
-          // targetBlock.inputs[targetSlot].active = true;
-          // this.updateScene();
+          // const indexOriginBlock = this.findindexBlock(originID)
+          // const indexTargetBlock = this.findindexBlock(targetID)
+          // if (!this.blocks[indexOriginBlock].bind.down.includes(targetID)) {
+          //   this.blocks[indexOriginBlock].bind.down.push(+targetID)
+          // }
+          // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
+          //   this.blocks[indexTargetBlock].bind.up.push(+originID)
+          // }
+          this.$emit('save', true)
         }
       }
 
@@ -489,11 +486,10 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
+          
+          this.$emit('save', true)
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
-          // console.log(targetBlock.inputs[slotNumber].active = false)
-          // console.log(findBlock.outputs[slotNumber].active = false)
-          console.log(findLink);
 
           this.linkingStart(findBlock, findLink.originSlot);
 
@@ -589,6 +585,9 @@ export default {
       });
       // this.updateScene();
     },
+    moveBlock() {
+      this.$store.dispatch('modeling/setButtons', {save: true})
+    },
 
     updateScene() {
       //   // this.scene = this.exportScene()
@@ -606,7 +605,7 @@ export default {
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
     this.centerX = this.$el.clientWidth / 2;
-    this.centerY = this.$el.clientHeight / 2;
+    // this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
   },

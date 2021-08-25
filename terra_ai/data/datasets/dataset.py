@@ -189,7 +189,6 @@ from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from ..training.extra import TaskChoice
 from .tags import TagsList
 from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
-from ..datasets.creation import SourceData
 
 
 class DatasetLoadData(BaseMixinData):
@@ -266,6 +265,14 @@ class DatasetLayerData(BaseMixinData):
     name: str
 
 
+class DatasetPathsData(BaseMixinData):
+    datasets: DirectoryPath
+    arrays: DirectoryPath
+    instructions: DirectoryPath
+    dataset_sources: DirectoryPath
+    tmp_sources: Optional[DirectoryPath]
+
+
 class DatasetInputsData(DatasetLayerData):
     task: LayerInputTypeChoice
 
@@ -288,11 +295,11 @@ class DatasetData(AliasMixinData):
     num_classes: Optional[Dict[PositiveInt, PositiveInt]] = {}  # Поставить Optional чтобы не крашнулось. В будущем убрать.
     classes_names: Dict[PositiveInt, List[str]] = {}
     classes_colors: Dict[PositiveInt, List[Color]] = {}
-    encoding: Dict[PositiveInt, str] = {}  # Переименовано с one_hot_encoding на encoding + из bool в str
+    encoding: Dict[PositiveInt, str] = {}
     task_type: Dict[int, TaskChoice] = {}
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    source_parameters: Optional[SourceData]
+    paths: Optional[DatasetPathsData]
 
 
 class DatasetsList(UniqueListMixin):

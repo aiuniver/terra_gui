@@ -92,6 +92,8 @@
     padding: $modal-footer-padding;
     // border-top: 1px solid $modal-section-border-color;
     text-align: right;
+    display: flex;
+    gap: 20px;
 
     .at-btn + .at-btn {
       // margin-left: 8px;

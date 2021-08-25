@@ -164,6 +164,7 @@ export default {
         this.dragging = false;
 
         if (this.hasDragged) {
+          this.$emit('moveBlock')
           this.save();
           this.hasDragged = false;
         }

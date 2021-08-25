@@ -8,7 +8,7 @@
       >
         <div
           class="files-menu-node-item"
-          :draggable="node.type === 'folder'"
+          :draggable="node.dragndrop"
           @dragstart="dragstart($event, node)"
           @dragover.stop
         >
@@ -45,6 +45,226 @@
     </div>
   </div>
 </template>
+
+<script>
+export default {
+  name: 'files-menu',
+  props: {
+    value: {
+      type: Array,
+      default: () => [],
+    },
+    edgeSize: {
+      type: Number,
+      default: 3,
+    },
+    showBranches: {
+      type: Boolean,
+      default: false,
+    },
+    level: {
+      type: Number,
+      default: 0,
+    },
+    parentInd: {
+      type: Number,
+    },
+    allowMultiselect: {
+      type: Boolean,
+      default: true,
+    },
+    allowToggleBranch: {
+      type: Boolean,
+      default: true,
+    },
+    path: String,
+    dragndrop: Boolean,
+    cover: String,
+
+  },
+  data() {
+    return {
+      currentValue: this.value,
+    };
+  },
+
+  watch: {
+    value: function (newValue) {
+      this.currentValue = newValue;
+    },
+  },
+
+  computed: {
+    nodes() {
+      if (this.isRoot) {
+        const nodeModels = this.copy(this.currentValue);
+        return this.getNodes(nodeModels);
+      }
+
+      return this.getParent().nodes[this.parentInd].children;
+    },
+    gaps() {
+      const gaps = [];
+      let i = this.level - 1;
+      if (!this.showBranches) i++;
+      while (i-- > 0) gaps.push(i);
+      return gaps;
+    },
+    isRoot() {
+      return !this.level;
+    },
+  },
+  methods: {
+    dragstart({ dataTransfer }, { path, title, type, cover, table }) {
+      // var img = document.createElement('img');
+      // img.src = 'http://kr.org/images/hacker.png';
+      // dataTransfer.setDragImage(img, 0, 0);
+      dataTransfer.setData('CardDataType', JSON.stringify({ value: path, label: title, type, id: 0, cover, table }));
+      dataTransfer.effectAllowed = 'move';
+    },
+
+    getNodes(nodeModels, parentPath = [], isVisible = true) {
+      return nodeModels.map((nodeModel, ind) => {
+        const nodePath = parentPath.concat(ind);
+        return this.getNode(nodePath, nodeModel, nodeModels, isVisible);
+      });
+    },
+
+    getNode(fpath, nodeModel = null, siblings = null, isVisible = null) {
+      const ind = fpath.slice(-1)[0];
+
+      // calculate nodeModel, siblings, isVisible fields if it is not passed as arguments
+      siblings = siblings || this.getNodeSiblings(this.currentValue, fpath);
+      nodeModel = nodeModel || (siblings && siblings[ind]) || null;
+
+      if (isVisible == null) {
+        isVisible = this.isVisible(fpath);
+      }
+
+      if (!nodeModel) return null;
+
+      const isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
+      // const isDraggable =
+      //   nodeModel.isDraggable == void 0 ? true : !!nodeModel.isDraggable;
+      // const isSelectable =
+      //   nodeModel.isSelectable == void 0 ? true : !!nodeModel.isSelectable;
+
+      const node = {
+        // define the all ISlTreeNodeModel props
+        title: nodeModel.title,
+        path: nodeModel.path,
+        type: nodeModel.type,
+        dragndrop: nodeModel.dragndrop,
+        cover: nodeModel.cover,
+        table: nodeModel.data,
+        isLeaf: !!nodeModel.isLeaf,
+        children: nodeModel.children ? this.getNodes(nodeModel.children, fpath, isExpanded) : [],
+        isSelected: !!nodeModel.isSelected,
+        isExpanded,
+        isVisible,
+        // isDraggable,
+        // isSelectable,
+        data: nodeModel.data !== void 0 ? nodeModel.data : {},
+
+        // define the all ISlTreeNode computed props
+        fpath: fpath,
+        pathStr: JSON.stringify(fpath),
+        level: fpath.length,
+      };
+      return node;
+    },
+
+    isVisible(fpath) {
+      if (fpath.length < 2) return true;
+      let nodeModels = this.currentValue;
+
+      for (let i = 0; i < fpath.length - 1; i++) {
+        let ind = fpath[i];
+        let nodeModel = nodeModels[ind];
+        let isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
+        if (!isExpanded) return false;
+        nodeModels = nodeModel.children;
+      }
+
+      return true;
+    },
+
+    emitInput(newValue) {
+      this.currentValue = newValue;
+      this.getRoot().$emit('input', newValue);
+    },
+
+    onToggleHandler(event, node) {
+      if (!this.allowToggleBranch) return;
+      this.updateNode(node.fpath, { isExpanded: !node.isExpanded });
+      event.stopPropagation();
+    },
+
+    getParent() {
+      return this.$parent;
+    },
+
+    getRoot() {
+      if (this.isRoot) return this;
+      return this.getParent().getRoot();
+    },
+
+    updateNode(fpath, patch) {
+      if (!this.isRoot) {
+        this.getParent().updateNode(fpath, patch);
+        return;
+      }
+
+      const pathStr = JSON.stringify(fpath);
+      const newNodes = this.copy(this.currentValue);
+      this.traverse((node, nodeModel) => {
+        if (node.pathStr !== pathStr) return;
+        Object.assign(nodeModel, patch);
+      }, newNodes);
+
+      this.emitInput(newNodes);
+    },
+
+    traverse(cb, nodeModels = null, parentPath = []) {
+      if (!nodeModels) nodeModels = this.currentValue;
+
+      let shouldStop = false;
+
+      const nodes = [];
+
+      for (let nodeInd = 0; nodeInd < nodeModels.length; nodeInd++) {
+        const nodeModel = nodeModels[nodeInd];
+        const itemPath = parentPath.concat(nodeInd);
+        const node = this.getNode(itemPath, nodeModel, nodeModels);
+        shouldStop = cb(node, nodeModel, nodeModels) === false;
+        nodes.push(node);
+
+        if (shouldStop) break;
+
+        if (nodeModel.children) {
+          shouldStop = this.traverse(cb, nodeModel.children, itemPath) === false;
+          if (shouldStop) break;
+        }
+      }
+
+      return !shouldStop ? nodes : false;
+    },
+
+    traverseModels(cb, nodeModels) {
+      let i = nodeModels.length;
+      while (i--) {
+        const nodeModel = nodeModels[i];
+        if (nodeModel.children) this.traverseModels(cb, nodeModel.children);
+        cb(nodeModel, nodeModels, i);
+      }
+      return nodeModels;
+    },
+    copy(entity) {
+      return JSON.parse(JSON.stringify(entity));
+    },
+  },
+};
+</script>
 
 
 <style lang="scss" scoped>
@@ -160,217 +380,3 @@
   padding: 5px 10px;
 }
 </style>
-
-<script>
-export default {
-  name: 'files-menu',
-  props: {
-    value: {
-      type: Array,
-      default: () => [],
-    },
-    edgeSize: {
-      type: Number,
-      default: 3,
-    },
-    showBranches: {
-      type: Boolean,
-      default: false,
-    },
-    level: {
-      type: Number,
-      default: 0,
-    },
-    parentInd: {
-      type: Number,
-    },
-    allowMultiselect: {
-      type: Boolean,
-      default: true,
-    },
-    allowToggleBranch: {
-      type: Boolean,
-      default: true,
-    },
-    path: String,
-  },
-  data() {
-    return {
-      currentValue: this.value,
-    };
-  },
-
-  watch: {
-    value: function (newValue) {
-      this.currentValue = newValue;
-    },
-  },
-
-  computed: {
-    nodes() {
-      if (this.isRoot) {
-        const nodeModels = this.copy(this.currentValue);
-        return this.getNodes(nodeModels);
-      }
-
-      return this.getParent().nodes[this.parentInd].children;
-    },
-    gaps() {
-      const gaps = [];
-      let i = this.level - 1;
-      if (!this.showBranches) i++;
-      while (i-- > 0) gaps.push(i);
-      return gaps;
-    },
-    isRoot() {
-      return !this.level;
-    },
-  },
-  methods: {
-    dragstart({ dataTransfer }, { path, title, type }) {
-      // var img = document.createElement('img');
-      // img.src = 'http://kryogenix.org/images/hackergotchi-simpler.png';
-      // dataTransfer.setDragImage(img, 0, 0);
-      dataTransfer.setData('CardDataType', JSON.stringify({ value: path, label: title, type, id: 0 }));
-      dataTransfer.effectAllowed = 'move';
-    },
-
-    getNodes(nodeModels, parentPath = [], isVisible = true) {
-      return nodeModels.map((nodeModel, ind) => {
-        const nodePath = parentPath.concat(ind);
-        return this.getNode(nodePath, nodeModel, nodeModels, isVisible);
-      });
-    },
-
-    getNode(fpath, nodeModel = null, siblings = null, isVisible = null) {
-      const ind = fpath.slice(-1)[0];
-
-      // calculate nodeModel, siblings, isVisible fields if it is not passed as arguments
-      siblings = siblings || this.getNodeSiblings(this.currentValue, fpath);
-      nodeModel = nodeModel || (siblings && siblings[ind]) || null;
-
-      if (isVisible == null) {
-        isVisible = this.isVisible(fpath);
-      }
-
-      if (!nodeModel) return null;
-
-      const isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
-      // const isDraggable =
-      //   nodeModel.isDraggable == void 0 ? true : !!nodeModel.isDraggable;
-      // const isSelectable =
-      //   nodeModel.isSelectable == void 0 ? true : !!nodeModel.isSelectable;
-
-      const node = {
-        // define the all ISlTreeNodeModel props
-        title: nodeModel.title,
-        path: nodeModel.path,
-        type: nodeModel.type,
-        isLeaf: !!nodeModel.isLeaf,
-        children: nodeModel.children ? this.getNodes(nodeModel.children, fpath, isExpanded) : [],
-        isSelected: !!nodeModel.isSelected,
-        isExpanded,
-        isVisible,
-        // isDraggable,
-        // isSelectable,
-        data: nodeModel.data !== void 0 ? nodeModel.data : {},
-
-        // define the all ISlTreeNode computed props
-        fpath: fpath,
-        pathStr: JSON.stringify(fpath),
-        level: fpath.length,
-      };
-      return node;
-    },
-
-    isVisible(fpath) {
-      if (fpath.length < 2) return true;
-      let nodeModels = this.currentValue;
-
-      for (let i = 0; i < fpath.length - 1; i++) {
-        let ind = fpath[i];
-        let nodeModel = nodeModels[ind];
-        let isExpanded = nodeModel.isExpanded == void 0 ? true : !!nodeModel.isExpanded;
-        if (!isExpanded) return false;
-        nodeModels = nodeModel.children;
-      }
-
-      return true;
-    },
-
-    emitInput(newValue) {
-      this.currentValue = newValue;
-      this.getRoot().$emit('input', newValue);
-    },
-
-    onToggleHandler(event, node) {
-      if (!this.allowToggleBranch) return;
-      this.updateNode(node.fpath, { isExpanded: !node.isExpanded });
-      event.stopPropagation();
-    },
-
-    getParent() {
-      return this.$parent;
-    },
-
-    getRoot() {
-      if (this.isRoot) return this;
-      return this.getParent().getRoot();
-    },
-
-    updateNode(fpath, patch) {
-      if (!this.isRoot) {
-        this.getParent().updateNode(fpath, patch);
-        return;
-      }
-
-      const pathStr = JSON.stringify(fpath);
-      const newNodes = this.copy(this.currentValue);
-      this.traverse((node, nodeModel) => {
-        if (node.pathStr !== pathStr) return;
-        Object.assign(nodeModel, patch);
-      }, newNodes);
-
-      this.emitInput(newNodes);
-    },
-
-    traverse(cb, nodeModels = null, parentPath = []) {
-      if (!nodeModels) nodeModels = this.currentValue;
-
-      let shouldStop = false;
-
-      const nodes = [];
-
-      for (let nodeInd = 0; nodeInd < nodeModels.length; nodeInd++) {
-        const nodeModel = nodeModels[nodeInd];
-        const itemPath = parentPath.concat(nodeInd);
-        const node = this.getNode(itemPath, nodeModel, nodeModels);
-        shouldStop = cb(node, nodeModel, nodeModels) === false;
-        nodes.push(node);
-
-        if (shouldStop) break;
-
-        if (nodeModel.children) {
-          shouldStop = this.traverse(cb, nodeModel.children, itemPath) === false;
-          if (shouldStop) break;
-        }
-      }
-
-      return !shouldStop ? nodes : false;
-    },
-
-    traverseModels(cb, nodeModels) {
-      let i = nodeModels.length;
-      while (i--) {
-        const nodeModel = nodeModels[i];
-        if (nodeModel.children) this.traverseModels(cb, nodeModel.children);
-        cb(nodeModel, nodeModels, i);
-      }
-      return nodeModels;
-    },
-    copy(entity) {
-      return JSON.parse(JSON.stringify(entity));
-    },
-  },
-};
-</script>
