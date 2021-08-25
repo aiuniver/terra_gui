@@ -1,27 +1,16 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
-from ...extra import ParametersBaseData
-from ......mixins import BaseMixinData, UniqueListMixin
+from ...extra import SourcesPathsData
 
 
-class MaskSegmentationData(BaseMixinData):
-    name: str
-    color: Color
-
-
-class MasksSegmentationList(UniqueListMixin):
-    class Meta:
-        source = MaskSegmentationData
-        identifier = "name"
-
-
-class ParametersData(ParametersBaseData):
-    cols_names: Optional[List[str]]
+class ParametersData(SourcesPathsData):
+    mask_range: PositiveInt
     classes_names: List[str]
     classes_colors: List[Color]
-    mask_range: PositiveInt
-    num_classes: Optional[PositiveInt]
-    shape: Optional[Tuple[PositiveInt, ...]]
+    width: PositiveInt
+    height: PositiveInt
+
+    cols_names: Optional[List[str]]

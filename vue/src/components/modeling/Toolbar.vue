@@ -39,12 +39,13 @@ export default {
   computed: {
     ...mapGetters({
       blocks: 'modeling/getBlocks',
+      project: 'projects/getProject',
     }),
     isInput() {
-      return this.blocks.find(item => item.group === 'input');
+      return this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
     },
     isOutput() {
-      return this.blocks.find(item => item.group === 'output');
+      return this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
     },
   },
   methods: {

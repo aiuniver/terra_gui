@@ -1,11 +1,14 @@
 from typing import Optional, List, Dict
 from pydantic.types import PositiveInt
 
-from ...extra import ParametersBaseData
-from .....extra import LayerScalerChoice
+from ...extra import MinMaxScalerData
+from .....extra import LayerScalerDataframeChoice
+from ......types import confilepath
 
 
-class ParametersData(ParametersBaseData):
+class ParametersData(MinMaxScalerData):
+    sources_paths: List[confilepath(ext="csv")]
+
     separator: Optional[str]
     encoding: str = "utf-8"
     cols_names: Optional[List[str]]
@@ -16,7 +19,7 @@ class ParametersData(ParametersBaseData):
     xlen_step: Optional[bool]
     xlen: Optional[PositiveInt]
     step_len: Optional[PositiveInt]
-    scaler: LayerScalerChoice = LayerScalerChoice.no_scaler
+    scaler: LayerScalerDataframeChoice = LayerScalerDataframeChoice.no_scaler
 
     StandardScaler: Optional[str]
     MinMaxScaler: Optional[str]

@@ -11,12 +11,10 @@ from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
-from terra_ai.data.datasets.creation import SourceData
-from . import arrays_create, array_creator
-from . import loading as datasets_loading
+from . import array_creator
 from .data import Preprocesses
-from ..data.datasets.dataset import DatasetData, DatasetLoadData
-from ..data.datasets.extra import DatasetGroupChoice, SourceModeChoice
+from ..data.datasets.dataset import DatasetData
+from ..data.datasets.extra import DatasetGroupChoice
 
 
 class PrepareDTS(object):
@@ -28,13 +26,8 @@ class PrepareDTS(object):
         self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.dts_prepared: bool = False
         self.dataframe: dict = {}
-        self.trds_path = ''
-        self.source_path: str = ''
-        # self.zip_params = zip_params
 
-        self.dataloader = None
         self.createarray = array_creator
-
         self.X: dict = {'train': {}, 'val': {}, 'test': {}}
         self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
         self.dataset: dict = {}
@@ -77,13 +70,13 @@ class PrepareDTS(object):
         outputs = {}
         for idx in range(len(self.dataframe['train'])):
             for key, value in self.data.inputs.items():
-                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
+                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
             for key, value in self.data.outputs.items():
                 if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['train'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
+                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
                     outputs[key] = np.array(arrays[key-2])
                 else:
-                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
 
             yield inputs, outputs
 
@@ -93,13 +86,13 @@ class PrepareDTS(object):
         outputs = {}
         for idx in range(len(self.dataframe['val'])):
             for key, value in self.data.inputs.items():
-                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
+                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
             for key, value in self.data.outputs.items():
                 if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['val'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
+                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
                     outputs[key] = np.array(arrays[key-2])
                 else:
-                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
 
             yield inputs, outputs
 
@@ -109,13 +102,13 @@ class PrepareDTS(object):
         outputs = {}
         for idx in range(len(self.dataframe['test'])):
             for key, value in self.data.inputs.items():
-                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
+                inputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['inputs'][key])
             for key, value in self.data.outputs.items():
                 if self.data.tags[1].alias == 'object_detection':
-                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['test'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
+                    arrays = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'2_{decamelize(value.task)}'], **self.instructions['outputs'][2])
                     outputs[key] = np.array(arrays[key-2])
                 else:
-                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.source_path, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
+                    outputs[key] = getattr(self.createarray, f"create_{decamelize(value.task)}")(self.data.paths.dataset_sources, self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}'], **self.instructions['outputs'][key])
 
             yield inputs, outputs
 
@@ -235,25 +228,25 @@ class PrepareDTS(object):
 
         def load_arrays():
 
-            for sample in os.listdir(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays')):
+            for sample in os.listdir(self.data.paths.arrays):
                 for index in self.data.inputs.keys():
-                    self.X[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                    self.X[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
                 for index, data in self.data.outputs.items():
                     if data.task == 'ObjectDetection':
                         for i in range(6):
-                            self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                            self.Y[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
                     else:
-                        self.Y[sample][index] = joblib.load(os.path.join(self.trds_path, f'dataset {self.data.name}', 'arrays', sample, f'{index}.gz'))
+                        self.Y[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
 
             pass
 
         def load_preprocess(parameter):
 
             sample_list = []
-            folder_path = os.path.join(self.trds_path, f'dataset {self.data.name}', parameter)
+            folder_path = os.path.join(self.data.paths.datasets, parameter)
             if os.path.exists(folder_path):
                 for sample in os.listdir(folder_path):
-                    sample_list.append(int(sample[:sample.rfind('.')]))
+                    sample_list.append(int(os.path.splitext(sample)[0]))
 
             for key in self.data.inputs.keys():
                 if key in sample_list:
@@ -262,10 +255,6 @@ class PrepareDTS(object):
                     self.createarray.__dict__[parameter][key] = None
 
             pass
-
-        parts = self.data.source_parameters.value.parts
-        finish = parts.index('sources')
-        self.trds_path = os.path.join(*parts[:finish])
 
         if self.data.group == DatasetGroupChoice.keras and self.data.alias in \
                 ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing', 'reuters']:
@@ -284,21 +273,14 @@ class PrepareDTS(object):
         elif self.data.group == DatasetGroupChoice.custom:
 
             for put in ['train', 'val', 'test']:
-                self.dataframe[put] = pd.read_csv(os.path.join(self.trds_path, f'dataset {self.data.name}',
-                                                               'instructions', 'tables', f'{put}.csv'), index_col=0)
+                self.dataframe[put] = pd.read_csv(os.path.join(self.data.paths.instructions, 'tables', f'{put}.csv'), index_col=0)
             if self.data.use_generator:
-                for instr in os.listdir(os.path.join(self.trds_path, f'dataset {self.data.name}', 'instructions', 'parameters')):
-                    with open(os.path.join(self.trds_path, f'dataset {self.data.name}', 'instructions', instr), 'r') as instruction:
+                for instr in os.listdir(os.path.join(self.data.paths.instructions, 'parameters')):
+                    with open(os.path.join(self.data.paths.instructions, 'parameters', instr), 'r') as instruction:
                         ins = json.load(instruction)
                     instr = instr[:instr.rfind('.')]
                     idx, put = instr.split('_')
                     self.instructions[put][int(idx)] = ins
-                datasets_loading.source(strict_object=self.data.source_parameters)
-
-                #ЗАПЛАТКА
-                zip_name = self.data.source_parameters.value.parts[-1]
-                zip_name = zip_name[:zip_name.rfind('.')]
-                self.source_path = f'/tmp/terraai/datasets_sources/googledrive/{zip_name}'
 
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
@@ -350,10 +332,10 @@ class PrepareDTS(object):
         for preprocess_name in Preprocesses:
             preprocess = getattr(array_creator, preprocess_name)
             preprocess_data = []
-            folder_path = os.path.join(self.trds_path, f'dataset {dataset_data.name}', preprocess_name)
+            folder_path = os.path.join(self.data.paths.datasets, preprocess_name)
             if os.path.exists(folder_path):
                 for arr in os.listdir(folder_path):
-                    preprocess_data.append(int(arr[:-3]))
+                    preprocess_data.append(int(os.path.splitext(arr)[0]))
 
             for put in puts:
                 if put in preprocess_data:

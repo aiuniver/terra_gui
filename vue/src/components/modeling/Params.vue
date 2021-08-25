@@ -24,10 +24,10 @@
             />
           </div>
           <at-collapse :value="[0, 1]">
-            <at-collapse-item class="mb-3" title="Параметры слоя">
+            <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
               <Forms :data="main" @change="change" />
             </at-collapse-item>
-            <at-collapse-item class="mb-3" title="Дополнительные параметры">
+            <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
               <Forms :data="extra" @change="change" />
             </at-collapse-item>
           </at-collapse>
