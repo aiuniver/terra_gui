@@ -6,19 +6,22 @@ const color = {
     3: ['#8E51F2', '#762BEF', '#6011E2', '#500EBC', '#400B96', '#300871'],
   };
   
-  const getColor = () => {
-    const index = Math.floor(Math.random() * 4);
-    const tone = Math.floor(Math.random() * 6);
+  const getColor = usedColors => {
+    let index, tone;
+    do {
+      index = Math.floor(Math.random() * 4);
+      tone = Math.floor(Math.random() * 6);
+    } while (usedColors.includes(color[index][tone]))
     return color[index][tone];
   };
   
-  const createInputData = function (id, layer) {
+  const createInputData = function (id, layer, usedColors) {
       return {
           id,
           layer,
           name: 'new_' + id,
           type: 'Image',
-          color: getColor(),
+          color: getColor(usedColors),
           parameters: {}
       }
   }
