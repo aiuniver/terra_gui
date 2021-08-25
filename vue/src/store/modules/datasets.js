@@ -16,7 +16,6 @@ export default {
     tags: [],
     tagsFilter: [],
     full: false,
-    usedColors: []
   }),
   mutations: {
     SET_DATASETS(state, value) {
@@ -26,13 +25,7 @@ export default {
       state.errors = {...value};
     },
     SET_INPUT_DATA(state, value) {
-      const color = value[value.length-1].color;
-
-      if (state.usedColors.length >= 24) state.usedColors = [];
-      if (state.usedColors.includes(color)) return;
-
       state.inputData = value;
-      state.usedColors.push(color);
     },
     SET_SELECTED(state, value) {
       state.selected = value;
@@ -153,8 +146,9 @@ export default {
     setLoaded({ commit }, value) {
       commit('SET_LOADED', value);
     },
-    createInputData({ commit, state: { inputData, usedColors } }, { layer }) {
+    createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
+      const usedColors = inputData.map(item => item.color)
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
     },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
