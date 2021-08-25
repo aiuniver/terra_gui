@@ -148,7 +148,8 @@ export default {
     },
     createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
-      commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer)]);
+      const usedColors = inputData.map(item => item.color)
+      commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
     },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
