@@ -2,27 +2,11 @@ from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
 
 from ..utils import prepare_pydantic_field
-from ..choices import (
-    LayerInputTypeChoice,
-    LayerOutputTypeChoice,
-    LayerNetChoice,
-    LayerScalerChoice,
-    LayerScalerImageChoice,
-    LayerScalerAudioChoice,
-    LayerScalerVideoChoice,
-    LayerScalerRegressionChoice,
-    LayerScalerTimeseriesChoice,
-    LayerAudioModeChoice,
-    LayerAudioParameterChoice,
-    LayerTextModeChoice,
-    LayerVideoFillModeChoice,
-    LayerVideoFrameModeChoice,
-    LayerVideoModeChoice,
-    LayerPrepareMethodChoice,
-    LayerDataframeAlignBaseMethodChoice,
-    LayerDefineClassesChoice,
-    LayerYoloVersionChoice,
-)
+from apps.plugins.frontend.choices import LayerInputTypeChoice, LayerOutputTypeChoice, LayerNetChoice, \
+    LayerScalerChoice, LayerScalerImageChoice, LayerScalerAudioChoice, LayerScalerVideoChoice, \
+    LayerScalerRegressionChoice, LayerScalerTimeseriesChoice, LayerAudioModeChoice, LayerAudioParameterChoice, \
+    LayerTextModeChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerVideoModeChoice, \
+    LayerPrepareMethodChoice, LayerDataframeAlignBaseMethodChoice, LayerDefineClassesChoice, LayerYoloVersionChoice
 
 
 LayerImageDefaults = [
