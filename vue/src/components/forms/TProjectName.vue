@@ -1,7 +1,8 @@
 <template>
-  <div class="t-project">
+  <div class="t-project" v-click-outside="clickShow">
     <div class="t-project__label">Project:</div>
     <input
+      v-show="show"
       v-model="nameProject"
       ref="input"
       type="text"
@@ -10,6 +11,7 @@
       @blur="saveProject"
       @input="handleInput"
     />
+    <span v-show="!show" class="t-project__span" @click="clickShow(true)">{{ nameProject }}</span>
     <i class="t-icon icon-project-edit"></i>
   </div>
 </template>
@@ -19,10 +21,12 @@ export default {
   name: 't-project-name',
   data: () => ({
     toSave: false,
+    show: false
   }),
   computed: {
     nameProject: {
       set(name) {
+        if (name.length < 3) return;
         this.$store.dispatch('projects/setProject', { name });
       },
       get() {
@@ -31,14 +35,22 @@ export default {
     },
     width() {
       const len = this.nameProject?.length || 1
-      return { width: (len < 20 ? (len * 8) : 160) + 'px' };
+      return { width: (len < 20 ? (len * 10) : 160) + 'px' };
     },
   },
   methods: {
+    clickShow (value) {
+      console.log(value)
+      this.show = typeof value === 'boolean'
+      this.$nextTick(() => {
+        this.$refs.input.focus()
+      })
+    },
     handleInput() {
       this.toSave = true;
     },
     async saveProject() {
+      this.show = false
       if (!this.toSave) return;
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
@@ -91,6 +103,17 @@ export default {
     &:focus {
       border: 1px solid rgb(108, 120, 131);
     }
+  }
+  &__span {
+    height: 20px;
+    font-weight: 700;
+    font-size: .875rem;
+    max-width: 200px;
+    min-width: 50px;
+    max-width: 200px;
+    min-width: 50px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   & .icon-project-edit {
     display: block;
