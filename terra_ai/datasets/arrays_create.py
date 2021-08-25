@@ -4,6 +4,7 @@ import numpy as np
 import random
 
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import MinMaxScaler
 from gensim.models.word2vec import Word2Vec
 # from tqdm.notebook import tqdm
 # import imgaug.augmenters as iaa
@@ -12,7 +13,8 @@ from librosa import load as librosa_load
 import librosa.feature as librosa_feature
 from pydantic.color import Color
 
-from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice
+from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice, \
+    LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
 
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
@@ -39,15 +41,16 @@ class CreateArray(object):
     def create_image(self, file_folder: str, image_path: str, **options):
 
         shape = (options['height'], options['width'])
-        # img = load_img(os.path.join(file_folder, image_path), target_size=shape)
         img = load_img(image_path, target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if self.augmentation[options['put']]:
             if options['object_detection']:
-                txt_path = image_path[:image_path.rfind('.')] + '.txt'
-                with open(os.path.join(file_folder, f'{options["put"]}_image', txt_path), 'r') as b_boxes:
+                txt_name = os.path.splitext(os.path.basename(image_path))[0] + '.txt'
+                txt_path = os.path.join(os.path.sep, *os.path.dirname(image_path).split(os.path.sep)[:-2],
+                                        '2_object_detection', 'obj_train_data', txt_name)  # TODO - цифра 2 и OTD
+                with open(txt_path, 'r') as b_boxes:
                     bounding_boxes = b_boxes.read()
 
                 current_boxes = []
@@ -75,18 +78,18 @@ class CreateArray(object):
             else:
                 array = self.augmentation[options['put']](image=array)
 
-        array = array / 255
+        if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
+            arr_shape = array.shape
+            array = self.scaler[options['put']].transform(array.reshape(-1, 1)).reshape(arr_shape).astype('float32')
 
-        return array.astype('float32')
+        return array
 
-    def create_video(self, _, video_path: str, slicing: list, **options) -> np.ndarray:
+    def create_video(self, _, video: str, **options) -> np.ndarray:
 
         """
         Args:
-            video_path: str
+            video: str
                 Путь к файлу.
-            slicing: list
-                [начало: int, конец: int].
             **options: Параметры обработки:
                 height: int
                     Высота кадра.
@@ -155,10 +158,11 @@ class CreateArray(object):
 
         array = []
         shape = (options['height'], options['width'])
+        slicing = [int(x) for x in video[video.index('[') + 1:video.index(']')].split(', ')]
         frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(video_path)
+        cap = cv2.VideoCapture(video)
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
@@ -179,15 +183,20 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
+        print(array.shape)
         if max_frames < frames_count:
             array = add_frames(video_array=array,
                                fill_mode=options['fill_mode'],
                                frames_to_add=frames_count - max_frames,
                                total_frames=max_frames)
 
+        if options['scaler'] == LayerScalerVideoChoice.min_max_scaler:
+            arr_shape = array.shape
+            array = self.scaler[options['put']].transform(array.reshape(-1, 1)).reshape(arr_shape).astype('float32')
+
         return array
 
-    def create_text(self, _, text: str, slicing: list, **options):
+    def create_text(self, _, text: str, **options):
 
         """
         Args:
@@ -195,8 +204,6 @@ class CreateArray(object):
                 Путь к файлу.
             text: str
                 Отрывок текста.
-            slicing: list
-                [начало: int, конец: int].
             **options: Параметры обработки текста:
                 embedding: Tokenizer object, bool
                     Перевод в числовую последовательность.
@@ -213,19 +220,17 @@ class CreateArray(object):
 
         array = []
         text = text.split(' ')
-        if slicing[1] - slicing[0] < len(text):
-            text = text[slicing[0]:slicing[1]]
 
-        if options['embedding']:
+        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
             array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
-        elif options['bag_of_words']:
+        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
             array = self.tokenizer[options['put']].texts_to_matrix([text])[0]
-        elif options['word_to_vec']:
+        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
             for word in text:
                 array.append(self.word2vec[options['put']][word])
 
-        if len(array) < slicing[1] - slicing[0]:
-            words_to_add = [0 for _ in range((slicing[1] - slicing[0]) - len(array))]
+        if len(array) < options['length']:
+            words_to_add = [0 for _ in range((options['length']) - len(array))]
             array += words_to_add
 
         array = np.array(array)
@@ -281,7 +286,7 @@ class CreateArray(object):
             length = 1
         row_number = int(row_number)
         row = self.df_ts.iloc[list(range(row_number, row_number + length)),
-                                  list(range(len(self.columns)))].values.tolist()
+                              list(range(len(self.columns)))].values.tolist()
         if options['xlen_step']:
             row = row[0]
         if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
@@ -503,11 +508,11 @@ class CreateArray(object):
         anchor_per_scale = 3
         yolo_anchors = None
 
-        if options['yolo_version'] == LayerYoloChoice.yolo_v3:
+        if options['yolo'] == LayerYoloChoice.v3:
             yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
                             [[30, 61], [62, 45], [59, 119]],
                             [[116, 90], [156, 198], [373, 326]]]
-        elif options['yolo_version'] == LayerYoloChoice.yolo_v4:
+        elif options['yolo'] == LayerYoloChoice.v4:
             yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
                             [[36, 75], [76, 55], [72, 146]],
                             [[142, 110], [192, 243], [459, 401]]]
@@ -520,7 +525,7 @@ class CreateArray(object):
         if self.temporary['bounding_boxes']:
             real_boxes = self.temporary['bounding_boxes'][txt_path]
         else:
-            with open(os.path.join(file_folder, f'{options["put"]}_object_detection', txt_path), 'r') as txt:
+            with open(txt_path, 'r') as txt:
                 bb_file = txt.read()
             real_boxes = []
             for elem in bb_file.split('\n'):
@@ -599,9 +604,12 @@ class CreateArray(object):
                np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'), \
                np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
 
-    def create_scaler(self):
+    def create_scaler(self, put_id: int, **options):
 
-        pass
+        if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
+            self.scaler[put_id] = MinMaxScaler()
+            array = np.array([[0], [255]])
+            self.scaler[put_id].fit(array)
 
     def create_tokenizer(self, put_id: int, **options):
 
