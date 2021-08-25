@@ -104,6 +104,7 @@ export default {
       },
     },
     optionsForChild() {
+      console.log(this.centerX, this.centerY)
       return {
         width: 200,
         titleHeight: 48,
@@ -604,7 +605,7 @@ export default {
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
     this.centerX = this.$el.clientWidth / 2;
-    this.centerY = this.$el.clientHeight / 2;
+    // this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
   },

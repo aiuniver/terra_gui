@@ -17,7 +17,7 @@
         :key="'tag_' + i"
         :value="value"
         :data-index="i"
-        name="[tags][][name]"
+        name="[tags][]"
         type="text"
         :class="['tags__item']"
         :style="{ width: ((value.length + 1) * 8) + 'px' }"
