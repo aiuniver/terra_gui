@@ -205,3 +205,17 @@ class LayerYoloVersionChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
+
+
+class LayerTypeProcessingClassificationChoice(str, Enum):
+    categorical = "По категориям"
+    ranges = "По диапазонам"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(
+                lambda item: (item.name, item.value),
+                LayerTypeProcessingClassificationChoice,
+            )
+        )
