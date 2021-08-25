@@ -7,6 +7,20 @@
         <label class="t-radio__text">{{ label }}</label>
       </div>
     </div>
+
+    <!-- <at-select
+      class="t-field__select"
+      v-model="select"
+      clearable
+      size="small"
+      style="width: 100px"
+      @on-change="change"
+      :disabled="disabled"
+    >
+      <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value">
+        {{ label }}
+      </at-option>
+    </at-select> -->
   </div>
 </template>
 
@@ -63,7 +77,6 @@ export default {
   },
 };
 </script>
-
 
 <style lang="scss" scoped>
 .t-radio {
