@@ -58,8 +58,8 @@ export default {
       // console.log(data);
       this.list = data;
     },
-    selected({ value }) {
-      this.$emit("select", { mode: "GoogleDrive", value });
+    selected({ value, label }) {
+      this.$emit("select", { mode: "GoogleDrive", value, label });
     },
     change(value) {
       this.$emit("select", { mode: "URL", value });
