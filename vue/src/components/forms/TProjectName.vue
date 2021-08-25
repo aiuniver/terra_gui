@@ -7,10 +7,10 @@
       ref="input"
       type="text"
       class="t-project__name"
-      :style="width"
       @blur="saveProject"
       @input="handleInput"
     />
+    <span ref="span" class="t-project__span t-project__span--hide">{{ nameProject }}</span>
     <span v-show="!show" class="t-project__span" @click="clickShow(true)">{{ nameProject }}</span>
     <i class="t-icon icon-project-edit"></i>
   </div>
@@ -21,7 +21,7 @@ export default {
   name: 't-project-name',
   data: () => ({
     toSave: false,
-    show: false
+    show: false,
   }),
   computed: {
     nameProject: {
@@ -33,24 +33,24 @@ export default {
         return this.$store.getters['projects/getProject'].name;
       },
     },
-    width() {
-      const len = this.nameProject?.length || 1
-      return { width: (len < 20 ? (len * 10) : 160) + 'px' };
-    },
   },
   methods: {
-    clickShow (value) {
-      console.log(value)
-      this.show = typeof value === 'boolean'
+    clickShow(value) {
+      // console.log(value);
+      this.show = typeof value === 'boolean';
+      this.$refs.input.style.width = this.$refs?.span?.clientWidth + 10 + 'px';
       this.$nextTick(() => {
-        this.$refs.input.focus()
-      })
+        this.$refs.input.focus();
+      });
     },
-    handleInput() {
+    handleInput(e) {
+      // console.log(this.$refs.span.clientWidth);
+      var target = e.target || e.srcElement;
+      target.style.width = this.$refs?.span?.clientWidth + 10 + 'px';
       this.toSave = true;
     },
     async saveProject() {
-      this.show = false
+      this.show = false;
       if (!this.toSave) return;
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
@@ -88,33 +88,38 @@ export default {
     user-select: none;
   }
   &__name {
+    z-index: 1;
     position: relative;
     white-space: nowrap;
     font-weight: 700;
-    display: flex;
-    align-items: center;
+    font-size: 1rem;
     height: 100%;
-    max-width: 300px;
-    min-width: 50px;
+    width: auto;
     border: none;
-    padding: 0 5px;
-    box-sizing: content-box;
+    padding: 0;
     background: none;
     &:focus {
       border: 1px solid rgb(108, 120, 131);
     }
   }
   &__span {
-    height: 20px;
+    z-index: 1;
+    height: 24px;
     font-weight: 700;
-    font-size: .875rem;
-    max-width: 200px;
-    min-width: 50px;
-    max-width: 200px;
-    min-width: 50px;
+    // font-size: .875rem;
+    max-width: 400px;
+    min-width: 20px;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-left: 1px;
+    &--hide {
+      position: absolute;
+      margin-left: 61px;
+      opacity: 0;
+      z-index: 0;
+    }
   }
+
   & .icon-project-edit {
     display: block;
     width: 13px;
