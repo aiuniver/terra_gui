@@ -620,16 +620,16 @@ Defaults = {
                                     "handmade": [
                                         {
                                             "type": "segmentation_manual",
-                                            # "label": "Название класса",
+                                            "label": "Название класса",
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
                                         },
-                                        # {
-                                        #     "type": "text",
-                                        #     "label": "Цвет",
-                                        #     "name": "classes_colors",
-                                        #     "parse": "classes_colors[]",
-                                        # },
+                                        {
+                                            "type": "text",
+                                            "label": "Цвет",
+                                            "name": "classes_colors",
+                                            "parse": "classes_colors[]",
+                                        },
                                     ],
                                     "autosearch": [
                                         {
@@ -643,16 +643,16 @@ Defaults = {
                                     "annotation": [
                                         {
                                             "type": "segmentation_annotation",
-                                            # "label": "Выберите файл",
+                                            "label": "Выберите файл",
                                             "name": "annotation",
                                             "parse": "annotation",
                                         },
-                                        # {
-                                        #     "type": "button",
-                                        #     "label": "Найти",
-                                        #     "name": "search",
-                                        #     "parse": "search",
-                                        # },
+                                        {
+                                            "type": "button",
+                                            "label": "Найти",
+                                            "name": "search",
+                                            "parse": "search",
+                                        },
                                     ],
                                 },
                             },

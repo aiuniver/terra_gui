@@ -1,7 +1,7 @@
 <template>
   <div class="forms">
-    <t-button-api
-      v-if="type === 'button'"
+    <t-segmentation-manual
+      v-if="type === 'segmentation_manual'"
       :value="getValue"
       :label="label"
       type="text"
@@ -79,9 +79,7 @@
 </template>
 
 <script>
-import TButtonApi from '../forms/TButtonApi.vue';
 export default {
-  components: { TButtonApi },
   name: 't-auto-field',
   props: {
     idKey: String,
