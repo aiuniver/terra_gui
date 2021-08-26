@@ -74,6 +74,7 @@ export default {
 <style lang="scss" scoped>
 .error {
   color: #ffb054 !important;
+  cursor: pointer;
 }
 .success {
   color: #0f0 !important;
