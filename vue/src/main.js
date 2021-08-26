@@ -105,9 +105,10 @@ directives.forEach(directive=>Vue.directive(directive.name, directive))
 import components from '@/components/global'
 components.forEach(component=>Vue.component(component.name, component))
 
-
+import VueInputAutowidth from '@/assets/js/vue-input-autowidth'
 import VuePapaParse from "vue-papa-parse";
 Vue.use(VuePapaParse)
+Vue.use(VueInputAutowidth)
 
 Vue.config.productionTip = false;
 Vue.use(Vuex);

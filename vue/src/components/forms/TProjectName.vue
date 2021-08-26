@@ -4,11 +4,14 @@
     <input
       v-show="show"
       v-model="nameProject"
-      ref="input"
       type="text"
       class="t-project__name"
+      maxlength="50"
       @blur="saveProject"
-      @input="handleInput"
+      @input="toSave = true"
+      @keypress.enter="$event.target.blur()"
+      v-autowidth
+      @focus="latest = $store.getters['projects/getProject'].name"
     />
     <span ref="span" class="t-project__span t-project__span--hide">{{ nameProject }}</span>
     <span v-show="!show" class="t-project__span" @click="clickShow(true)">{{ nameProject }}</span>
@@ -21,7 +24,7 @@ export default {
   name: 't-project-name',
   data: () => ({
     toSave: false,
-    show: false,
+    latest: ''
   }),
   computed: {
     nameProject: {
@@ -32,26 +35,11 @@ export default {
       get() {
         return this.$store.getters['projects/getProject'].name;
       },
-    },
+    }
   },
   methods: {
-    clickShow(value) {
-      // console.log(value);
-      this.show = typeof value === 'boolean';
-      this.$refs.input.style.width = this.$refs?.span?.clientWidth + 10 + 'px';
-      this.$nextTick(() => {
-        this.$refs.input.focus();
-      });
-    },
-    handleInput(e) {
-      // console.log(this.$refs.span.clientWidth);
-      var target = e.target || e.srcElement;
-      target.style.width = this.$refs?.span?.clientWidth + 10 + 'px';
-      this.toSave = true;
-    },
     async saveProject() {
-      this.show = false;
-      if (!this.toSave) return;
+      if (!this.toSave || this.latest === this.nameProject) return;
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
           message: `Изменение названия проекта на «${this.nameProject}»`,
@@ -62,14 +50,16 @@ export default {
         this.$store.dispatch('messages/setMessage', {
           message: `Название проекта изменено на «${this.nameProject}»`,
         });
-        this.toSave = false;
+        this.latest = this.nameProject;
       } else {
         this.$store.dispatch('messages/setMessage', {
           error: 'Длина не может быть < 3 сим.',
         });
+        this.nameProject = this.latest
       }
+      this.toSave = false;
     },
-  },
+  }
 };
 </script>
 
@@ -92,9 +82,10 @@ export default {
     position: relative;
     white-space: nowrap;
     font-weight: 700;
+    display: flex;
     font-size: 1rem;
+    align-items: center;
     height: 100%;
-    width: auto;
     border: none;
     padding: 0;
     background: none;
