@@ -6,8 +6,8 @@
     <div class="dataset-card">
       <div class="card-title">{{ dataset.name }}</div>
       <div class="card-paggination">
-        <div @click="next">next</div>
-        <div @click="prev">prev</div>
+        <!-- <div @click="next">next</div> -->
+        <!-- <div @click="prev">prev</div> -->
       </div>
       <div class="card-body">
         <div v-for="({ name }, key) of activeCard" :key="`tag_${key}`" class="card-tag">
