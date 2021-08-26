@@ -102,8 +102,7 @@ export default {
       const errors = this.$store.getters['datasets/getErrors'](id);
       return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';
     },
-    addCard() {
-      this.$store.dispatch('datasets/createInputData', { layer: 'input' });
+    autoScroll() {
       this.$nextTick(() => {
         this.$refs.scrollLeft.scrollTo(
           {
@@ -113,10 +112,18 @@ export default {
         );
       });
     },
+    addCard() {
+      this.$store.dispatch('datasets/createInputData', { layer: 'input' });
+      this.autoScroll()
+    },
     optionsCard(comm, id) {
       if (comm === 'remove') {
         this.$store.dispatch('datasets/removeInputData', id);
         this.mixinRemove(id);
+      }
+      if (comm === 'copy') {
+        this.$store.dispatch('datasets/cloneInputData', id);
+        this.autoScroll()
       }
     },
     heightForm(value) {
