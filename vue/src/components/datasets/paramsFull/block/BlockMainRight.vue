@@ -15,7 +15,7 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Выходные данные {{ inputData.id }}</template>
-              <template v-slot:default="{ data:{ parameters, errors } }">
+              <template v-slot:default="{ data: { parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
                   name="sources_paths"
@@ -93,8 +93,7 @@ export default {
     },
   },
   methods: {
-    addCard() {
-      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
+    autoScroll() {
       this.$nextTick(() => {
         this.$refs.scrollRight.scrollTo(
           {
@@ -104,10 +103,18 @@ export default {
         );
       });
     },
+    addCard() {
+      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
+      this.autoScroll();
+    },
     optionsCard(comm, id) {
       if (comm === 'remove') {
         this.$store.dispatch('datasets/removeInputData', id);
         this.mixinRemove(id);
+      }
+      if (comm === 'copy') {
+        this.$store.dispatch('datasets/cloneInputData', id);
+        this.autoScroll();
       }
     },
   },
