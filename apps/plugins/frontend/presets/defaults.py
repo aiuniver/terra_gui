@@ -602,7 +602,7 @@ Defaults = {
                                 "parse": "mask_range",
                             },
                             {
-                                "type": "segmentation_classes",
+                                "type": "select",
                                 "label": "Ввод данных",
                                 "name": "classes",
                                 "parse": "classes",
