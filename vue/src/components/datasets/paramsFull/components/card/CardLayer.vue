@@ -1,7 +1,7 @@
 <template>
-  <div class="card-layer" v-click-outside="outside" :style="height">
-    <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)">
-      <div class="card-layer__header--icon" @click="toggle = !toggle">
+  <div class="card-layer" :style="height">
+    <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)" >
+      <div class="card-layer__header--icon" v-click-outside="outside" @click="toggle = !toggle">
         <i class="t-icon icon-file-dot"></i>
       </div>
       <div class="card-layer__header--title"><slot name="header" :id="id"></slot></div>
@@ -136,8 +136,8 @@ export default {
     position: absolute;
     background-color: #2b5278;
     border-radius: 4px;
-    right: -34px;
-    top: -1px;
+    right: 3px;
+    top: 3px;
     z-index: 100;
     &--item {
       position: relative;

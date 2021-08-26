@@ -7,6 +7,7 @@
     <div class="block-left__body">
       <scrollbar :ops="ops" ref="scrollLeft">
         <div class="block-left__body--inner" :style="height">
+          <div class="block-left__body--empty"></div>
           <template v-for="inputData of inputDataInput">
             <CardLayer
               v-bind="inputData"
@@ -169,7 +170,7 @@ export default {
   height: 100%;
   &__header {
     position: absolute;
-    height: 24px;
+    height: 32px;
     width: 100%;
     top: 0;
     background: #242f3d;
@@ -182,7 +183,7 @@ export default {
     align-items: center;
     text-align: center;
     color: #ffffff;
-    padding: 4px 16px;
+    padding: 4px 40px;
     justify-content: flex-end;
   }
   &__body {
@@ -203,13 +204,13 @@ export default {
     }
     &--empty {
       height: 100%;
-      width: 70px;
+      width: 10px;
     }
   }
   &__fab {
     position: absolute;
-    right: 16px;
-    top: 40px;
+    right: 6px;
+    top: 4px;
     z-index: 100;
   }
 }

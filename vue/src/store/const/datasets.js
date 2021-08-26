@@ -17,7 +17,7 @@ const createInputData = function (id, layer, usedColors) {
     return {
         id,
         layer,
-        name: 'new_' + id,
+        name: (layer === 'input' ? 'Вход ' : 'Выход ') + id,
         type: 'Image',
         color: getColor(usedColors),
         parameters: {}
