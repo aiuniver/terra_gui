@@ -624,12 +624,12 @@ Defaults = {
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
                                         },
-                                        {
-                                            "type": "text",
-                                            "label": "Цвет",
-                                            "name": "classes_colors",
-                                            "parse": "classes_colors[]",
-                                        },
+                                        # {
+                                        #     "type": "text",
+                                        #     "label": "Цвет",
+                                        #     "name": "classes_colors",
+                                        #     "parse": "classes_colors[]",
+                                        # },
                                     ],
                                     "autosearch": [
                                         {
@@ -647,12 +647,12 @@ Defaults = {
                                             "name": "annotation",
                                             "parse": "annotation",
                                         },
-                                        {
-                                            "type": "button",
-                                            "label": "Найти",
-                                            "name": "search",
-                                            "parse": "search",
-                                        },
+                                        # {
+                                        #     "type": "button",
+                                        #     "label": "Найти",
+                                        #     "name": "search",
+                                        #     "parse": "search",
+                                        # },
                                     ],
                                 },
                             },

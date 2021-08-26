@@ -2,7 +2,7 @@
   <div>
     <t-input
       :value="getValue"
-      :label="label"
+      label="Кол. групп"
       :type="type"
       :parse="parse"
       :name="name"
