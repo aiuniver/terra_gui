@@ -619,7 +619,7 @@ Defaults = {
                                 "fields": {
                                     "handmade": [
                                         {
-                                            "type": "segmentation_manual",
+                                            "type": "button",
                                             "label": "Название класса",
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
@@ -633,7 +633,7 @@ Defaults = {
                                     ],
                                     "autosearch": [
                                         {
-                                            "type": "segmentation_search",
+                                            "type": "button",
                                             "label": "Найти",
                                             "name": "search",
                                             "parse": "search",
@@ -642,7 +642,7 @@ Defaults = {
                                     ],
                                     "annotation": [
                                         {
-                                            "type": "segmentation_annotation",
+                                            "type": "button",
                                             "label": "Выберите файл",
                                             "name": "annotation",
                                             "parse": "annotation",
