@@ -23,35 +23,33 @@ export default {
       this.interval = setTimeout(async () => {
         const { data } = await this.$store.dispatch('datasets/choiceProgress', {});
         const { finished, message, percent, data: dataset } = data;
-        if (!data || finished) {
+        if (data) {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
           this.loading = false
-          if (data) {
-            this.$store.dispatch(
-              'messages/setMessage',
-              { message: `Датасет «${dataset.alias}» выбран` },
-              { root: true }
-            );
+          if (dataset && finished) {
+            this.$store.dispatch('messages/setMessage',{ message: `Датасет «${dataset.alias}» выбран` }, { root: true });
             this.$store.dispatch('projects/setProject', { dataset }, { root: true });
             this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
+            this.$store.dispatch('messages/setProgress', 0);
+            this.$store.dispatch('messages/setProgressMessage', '');
           }
         } else {
-          this.$store.dispatch('messages/setProgress', percent);
-          this.$store.dispatch('messages/setProgressMessage', message);
+          this.$store.dispatch('messages/setProgress', 0);
+          
           this.createInterval();
         }
         console.log(data);
       }, 1000);
     },
     async click() {
+      if (this.loading) return;
+      this.loading = true
       const { alias, group, name } = this.selected;
-      this.$store.dispatch('messages/setMessage', {
-        message: `Выбран датасет «${name}»`,
-      });
+      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${name}»`,});
       const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
       if (success) {
-        this.loading = true
+        // this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»`,});
         this.createInterval();
       }
     },

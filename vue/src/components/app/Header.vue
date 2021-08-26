@@ -4,7 +4,7 @@
       <a href="#" class="header__left--logo"></a>
       <TProjectName />
     </div>
-    <div class="header__center">Название задачи / Название эксперимента</div>
+    <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
       <div
         v-for="({ title, icon, type }, i) of items"
