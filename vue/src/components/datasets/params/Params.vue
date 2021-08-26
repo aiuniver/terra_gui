@@ -47,7 +47,7 @@ export default {
     }),
     disabled() {
       if (Object.keys(this.dataset).length === 0) {
-        return true
+        return true;
       } else {
         return this.tab !== this.dataset.mode;
       }
@@ -64,23 +64,24 @@ export default {
   methods: {
     async createInterval() {
       this.interval = setTimeout(async () => {
-        const { data, success } = await this.$store.dispatch('datasets/loadProgress', {});
-        const { finished, message, percent, data: { file_manager, source_path } } = data;
-        if (success && finished) {
-           // clearTimeout(this.interval);
+        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
+        console.log(data)
+        if (data) {
+          const { finished, message, percent } = data;
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
-          if (file_manager) {
+          if (finished) {
+            const { data: { file_manager, source_path } } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
+            this.$store.dispatch('messages/setProgressMessage', '');
+            this.$store.dispatch('messages/setProgress', 0);
+            this.loading = false;
+            this.full = true;
+          } else {
+            this.createInterval();
           }
-          this.loading = false;
-          this.full = true;
-        } else {
-          this.$store.dispatch('messages/setProgress', percent);
-          this.$store.dispatch('messages/setProgressMessage', message);
-          this.createInterval();
         }
         // console.log(data);
       }, 1000);
@@ -101,20 +102,20 @@ export default {
       }
     },
     async download() {
-      const { mode, value } = this.dataset;
+      if (this.loading) return;
+      const { mode, value, label } = this.dataset;
       if (mode && value) {
         this.loading = true;
-        const { data, success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });
+        const { success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
         // console.log(data)
-        if (data || success) {
+        if (success) {
           this.createInterval();
         } else {
           this.loading = false;
         }
       } else {
-        this.$store.dispatch('messages/setMessage', {
-          error: 'Выберите файл',
-        });
+        this.$store.dispatch('messages/setMessage', { error: 'Выберите файл' });
       }
     },
   },

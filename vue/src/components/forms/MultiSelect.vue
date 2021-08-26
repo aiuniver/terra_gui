@@ -187,7 +187,7 @@ export default {
 .t-multi__item {
   display: flex;
   padding: 2px 6px;
-  align-items: center;
+  // align-items: center;
   cursor: pointer;
   &--empty {
     cursor: auto;
@@ -229,10 +229,10 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  align-items: center;
+  // align-items: center;
   & .t-multi-select__label {
     width: auto;
-    padding: 0 20px 0 10px;
+    padding: 3px 0 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

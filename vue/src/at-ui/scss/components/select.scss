@@ -47,12 +47,13 @@
     border: 1px solid $border-color-base;
     border-radius: $border-radius-base;
     background-color: $select-bg-color;
-    transition: all .2s;
+    // transition: all .2s;
     cursor: pointer;
     overflow: hidden;
 
     &:hover {
-      border-color: $select-border-c-hover;
+      // border-color: $select-border-c-hover;
+      // border-color: #fff;
 
       .at-select__arrow {
         display: inline-block;
@@ -61,10 +62,14 @@
         display: inline-block;
       }
     }
+    &--active {
+      border-color: #fff;
+    }
   }
   &__selected {
     @include ellipsis();
     display: block;
+
   }
   &__arrow {
     display: inline-block;
@@ -74,7 +79,7 @@
     margin-top: -5px;
     font-size: 10px;
     cursor: pointer;
-    transition: transform .2s;
+    // transition: transform .2s;
   }
   &__clear {
     display: none;
@@ -93,7 +98,7 @@
     width: 100%;
     max-height: $select-dropdown-height;
     font-size: $select-dropdown-font-size-base;
-    border-radius: $border-radius-base;
+    border-radius: 0 0 4px 4px;
     background-color: $select-dropdown-bg-color;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
@@ -116,7 +121,7 @@
       text-align: left;
       color: $select-dropdown-text-color;
       white-space: nowrap;
-      transition: all .2s;
+      // transition: all .2s;
       overflow: hidden;
       cursor: pointer;
 
@@ -135,7 +140,7 @@
       }
     }
     &--bottom {
-      margin-top: 2px;
+      margin-top: 0px;
     }
     &--top {
       margin-bottom: 2px;
