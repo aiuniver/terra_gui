@@ -198,7 +198,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float32",
-                        "shape": (),  # TODO
+                        "shape": (1000,),  # TODO
                         "name": "Вход 1",
                         "task": "Text",
                     },
@@ -262,7 +262,7 @@ DatasetsGroups = [
                     1: {
                         "datatype": "DIM",
                         "dtype": "float32",
-                        "shape": (),  # TODO
+                        "shape": (500,),  # TODO
                         "name": "Вход 1",
                         "task": "Text",
                     },
