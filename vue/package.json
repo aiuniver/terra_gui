@@ -18,7 +18,8 @@
     "vue-papa-parse": "^2.0.0",
     "vue-plotly": "^1.1.0",
     "vue-router": "^3.5.1",
-    "vuex": "^3.6.2"
+    "vuex": "^3.6.2",
+    "es6-object-assign": "^1.1.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
