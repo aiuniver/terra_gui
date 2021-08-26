@@ -1,7 +1,11 @@
 <template>
   <div class="t-field">
     <div class="t-field__label">Train / Val / Test</div>
-    <div class="slider">
+    <div class="slider"
+    @mouseleave="stopDrag"
+    @mouseup="stopDrag"
+    ref="slider"
+    >
       <div class="slider__inputs">
         <input name="[info][part][train]" type="number" :value="btnFirstVal" :data-degree="degree" />
         <input
@@ -12,7 +16,8 @@
         />
         <input name="[info][part][test]" type="number" :value="100 - btnSecondVal" :data-degree="degree" />
       </div>
-      <div class="slider__scales">
+      <div class="slider__scales" 
+      >
         <div class="scales__first" :style="firstScale">{{ btnFirstVal }}</div>
         <div class="scales__second" :style="secondScale">{{ btnSecondVal - btnFirstVal }}</div>
         <div class="scales__third" :style="thirdScale">{{ 100 - btnSecondVal }}</div>
@@ -48,20 +53,24 @@ export default {
     degree: Number,
   },
   methods: {
+    stopDrag() {
+      this.$refs.slider.removeEventListener('mousemove', this.firstBtn);
+      this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
+    },
     startDragFirst() {
       this.firstBtnDrag = true;
-      window.addEventListener('mousemove', this.firstBtn);
+      this.$refs.slider.addEventListener('mousemove', this.firstBtn);
     },
     stopDragFirst() {
-      window.removeEventListener('mousemove', this.firstBtn);
+      this.$refs.slider.removeEventListener('mousemove', this.firstBtn);
       this.firstBtnDrag = false;
     },
     startDragSecond() {
       this.secondBtnDrag = true;
-      window.addEventListener('mousemove', this.secondBtn);
+      this.$refs.slider.addEventListener('mousemove', this.secondBtn);
     },
     stopDragSecond() {
-      window.removeEventListener('mousemove', this.secondBtn);
+      this.$refs.slider.removeEventListener('mousemove', this.secondBtn);
       this.secondBtnDrag = false;
     },
     firstBtn(e) {
@@ -81,7 +90,7 @@ export default {
         this.btnSecondVal = Math.round((pos / 231) * 100);
         if (this.btnSecondVal < 5) this.btnSecondVal = 5;
         if (this.btnSecondVal > 95) this.btnSecondVal = 95;
-        if (this.btnSecondVal < this.btnFirstVal - 5) this.btnSecondVal = this.btnFirstVal + 5;
+        if (this.btnSecondVal < this.btnFirstVal + 5) this.btnSecondVal = this.btnFirstVal + 5;
       }
     },
   },
