@@ -1,8 +1,7 @@
 <template>
-  <div class="t-project" v-click-outside="clickShow">
+  <div class="t-project">
     <div class="t-project__label">Project:</div>
     <input
-      v-show="show"
       v-model="nameProject"
       type="text"
       class="t-project__name"
@@ -13,8 +12,6 @@
       v-autowidth
       @focus="latest = $store.getters['projects/getProject'].name"
     />
-    <span ref="span" class="t-project__span t-project__span--hide">{{ nameProject }}</span>
-    <span v-show="!show" class="t-project__span" @click="clickShow(true)">{{ nameProject }}</span>
     <i class="t-icon icon-project-edit"></i>
   </div>
 </template>
@@ -24,18 +21,17 @@ export default {
   name: 't-project-name',
   data: () => ({
     toSave: false,
-    latest: ''
+    latest: '',
   }),
   computed: {
     nameProject: {
       set(name) {
-        if (name.length < 3) return;
         this.$store.dispatch('projects/setProject', { name });
       },
       get() {
         return this.$store.getters['projects/getProject'].name;
       },
-    }
+    },
   },
   methods: {
     async saveProject() {
@@ -55,11 +51,11 @@ export default {
         this.$store.dispatch('messages/setMessage', {
           error: 'Длина не может быть < 3 сим.',
         });
-        this.nameProject = this.latest
+        this.nameProject = this.latest;
       }
       this.toSave = false;
     },
-  }
+  },
 };
 </script>
 
@@ -78,7 +74,6 @@ export default {
     user-select: none;
   }
   &__name {
-    z-index: 1;
     position: relative;
     white-space: nowrap;
     font-weight: 700;
@@ -87,30 +82,13 @@ export default {
     align-items: center;
     height: 100%;
     border: none;
-    padding: 0;
+    padding: 0 5px;
+    box-sizing: content-box;
     background: none;
     &:focus {
       border: 1px solid rgb(108, 120, 131);
     }
   }
-  &__span {
-    z-index: 1;
-    height: 24px;
-    font-weight: 700;
-    // font-size: .875rem;
-    max-width: 400px;
-    min-width: 20px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-left: 1px;
-    &--hide {
-      position: absolute;
-      margin-left: 61px;
-      opacity: 0;
-      z-index: 0;
-    }
-  }
-
   & .icon-project-edit {
     display: block;
     width: 13px;
