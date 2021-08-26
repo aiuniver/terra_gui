@@ -69,7 +69,7 @@ export default {
     line-height: 1.5;
     font-size: 0.75rem;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    // white-space: nowrap;
     overflow: hidden;
   }
   &__input {
@@ -126,16 +126,16 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  align-items: center;
+  // align-items: center;
 
   > label {
     width: auto;
-    padding: 0 20px 0 10px;
+    padding: 3px 0 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1;
     font-size: 0.75rem;
   }
   > input {

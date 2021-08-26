@@ -81,7 +81,7 @@ export default {
     font-size: 1rem;
     align-items: center;
     height: 100%;
-    border: none;
+    border: 1px solid rgba(108, 120, 131, 0);
     padding: 0 5px;
     box-sizing: content-box;
     background: none;
