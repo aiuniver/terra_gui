@@ -1,23 +1,37 @@
 <template>
   <div>
     <t-input
-      :value="getValue"
+      v-model="qty"
       label="Кол. групп"
-      :type="type"
-      :parse="parse"
-      :name="name"
-      :key="name + idKey"
-      :error="error"
+      type="number"
+      name="classes"
       inline
       @change="change"
-      @cleanError="cleanError"
     />
+    <template v-for="item, i of +qty">
+      <t-input
+        v-model="model.classes_names[i]"
+        :value="'Новый ' + (i + 1)"
+        label="Название класса"
+        type="text"
+        name="classes_names"
+        :key="'classes_names_' + i"
+        :parse="'classes_names[]'"
+        inline
+        @change="change"
+      />
+      <Color v-model="model.classes_colors[i]" :value="'#FFFFFF'" label="Цвет" :key="'classes_colors_' + i" inline />
+    </template>
   </div>
 </template>
 
 <script>
+import Color from '../../forms/Color.vue'
 export default {
   name: 't-segmentation-manual',
+  components: {
+    Color,
+  },
   props: {
     label: {
       type: String,
@@ -38,17 +52,23 @@ export default {
     error: String,
   },
   data: () => ({
+    qty: 2,
     loading: false,
+    model: {
+      classes_names: [],
+      classes_colors: []
+    }
   }),
   computed: {},
   methods: {
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
-      }
+    change() {
+      console.log(this.model)
+      // if (this.isChange) {
+      //   let value = e.target.value;
+      //   value = this.type === 'number' ? +value : value;
+      //   this.$emit('change', { name: this.name, value });
+      //   this.isChange = false;
+      // }
     },
   },
 };
