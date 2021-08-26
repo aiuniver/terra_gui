@@ -151,6 +151,9 @@ export default {
       const usedColors = inputData.map(item => item.color)
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
     },
+    clearInputData({ commit }) {
+      commit('SET_INPUT_DATA', [] );
+    },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
       if (index !== -1) {
