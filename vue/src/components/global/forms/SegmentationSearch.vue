@@ -9,7 +9,7 @@
 
 <script>
 export default {
-  name: 't-button-api',
+  name: 't-segmentation-search',
   props: {
     label: {
       type: String,
