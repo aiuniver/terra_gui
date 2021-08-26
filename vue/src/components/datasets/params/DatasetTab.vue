@@ -40,7 +40,6 @@ export default {
     },
   },
   data: () => ({
-    
     list: [],
     items: [
       { title: "Google drive", active: true, mode: "GoogleDrive" },
