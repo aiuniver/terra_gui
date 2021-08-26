@@ -14,7 +14,7 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
-              <template v-slot:default="{ data:{ parameters, errors } }">
+              <template v-slot:default="{ data: { parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
                   name="sources_paths"
@@ -37,6 +37,7 @@
                     @change="mixinChange"
                   />
                 </template>
+                <t-radio :lists="testListRadio" @change="test" :parse="'test'" />
               </template>
             </CardLayer>
           </template>
@@ -52,6 +53,7 @@ import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '@/components/forms/MultiSelect.vue';
+import TRadio from '@/components/forms/Radio.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 // import Error from '@/utils/core/Errors'
 
@@ -60,6 +62,7 @@ export default {
   components: {
     Fab,
     CardLayer,
+    TRadio,
     TMultiSelect,
   },
   mixins: [blockMain],
@@ -73,6 +76,28 @@ export default {
         gutterOfEnds: '6px',
       },
     },
+    testListRadio: [
+      {
+        key: 'testKey1',
+        value: true,
+        label: 'Изображения',
+      },
+      {
+        key: 'testKey2',
+        value: false,
+        label: 'Текст',
+      },
+      {
+        key: 'testKey3',
+        value: false,
+        label: 'Аудио',
+      },
+      {
+        key: 'testKey4',
+        value: false,
+        label: 'Классификация',
+      },
+    ],
   }),
   computed: {
     ...mapGetters({
@@ -81,7 +106,7 @@ export default {
     }),
 
     inputDataInput() {
-      const arr =  this.inputData.filter(item => {
+      const arr = this.inputData.filter(item => {
         return item.layer === 'input';
       });
 
@@ -97,6 +122,9 @@ export default {
     },
   },
   methods: {
+    test(e) {
+      console.log(e);
+    },
     error(id, key) {
       const errors = this.$store.getters['datasets/getErrors'](id);
       return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';
