@@ -82,7 +82,7 @@ export default {
     click() {
       this.show = true;
       if (this.error) {
-        console.log(this.id, this.name);
+        // console.log(this.id, this.name);
         this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
       }
     },
@@ -108,8 +108,8 @@ export default {
     },
   },
   created() {
-    console.log(this.value);
-    console.log(this.filterList.filter(item => item));
+    // console.log(this.value);
+    // console.log(this.filterList.filter(item => item));
     const value = this.value;
     if (Array.isArray(value)) {
       this.selected = this.filterList.filter(item => value.includes(item.value));
@@ -187,7 +187,7 @@ export default {
 .t-multi__item {
   display: flex;
   padding: 2px 6px;
-  align-items: center;
+  // align-items: center;
   cursor: pointer;
   &--empty {
     cursor: auto;
@@ -229,10 +229,10 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  align-items: center;
+  // align-items: center;
   & .t-multi-select__label {
     width: auto;
-    padding: 0 20px 0 10px;
+    padding: 3px 0 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

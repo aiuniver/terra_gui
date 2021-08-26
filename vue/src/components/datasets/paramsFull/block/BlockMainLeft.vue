@@ -7,6 +7,7 @@
     <div class="block-left__body">
       <scrollbar :ops="ops" ref="scrollLeft">
         <div class="block-left__body--inner" :style="height">
+          <div class="block-left__body--empty"></div>
           <template v-for="inputData of inputDataInput">
             <CardLayer
               v-bind="inputData"
@@ -14,7 +15,7 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
-              <template v-slot:default="{ data:{ parameters, errors } }">
+              <template v-slot:default="{ data: { parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
                   name="sources_paths"
@@ -37,6 +38,9 @@
                     @change="mixinChange"
                   />
                 </template>
+                <!-- <t-radio :lists="testListRadio" @change="test" :parse="'test'" /> -->
+                <!-- <t-color @change="test" :parse="'test'" inline /> -->
+                <!-- <t-button>Тест</t-button> -->
               </template>
             </CardLayer>
           </template>
@@ -52,6 +56,9 @@ import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '@/components/forms/MultiSelect.vue';
+// import TButton from '@/components/forms/Button.vue';
+// import TRadio from '@/components/forms/Radio.vue';
+// import TColor from '@/components/forms/Color.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 // import Error from '@/utils/core/Errors'
 
@@ -60,6 +67,9 @@ export default {
   components: {
     Fab,
     CardLayer,
+    // TButton,
+    // TColor,
+    // TRadio,
     TMultiSelect,
   },
   mixins: [blockMain],
@@ -73,6 +83,28 @@ export default {
         gutterOfEnds: '6px',
       },
     },
+    testListRadio: [
+      {
+        key: 'testKey1',
+        value: true,
+        label: 'Изображения',
+      },
+      {
+        key: 'testKey2',
+        value: false,
+        label: 'Текст',
+      },
+      {
+        key: 'testKey3',
+        value: false,
+        label: 'Аудио',
+      },
+      {
+        key: 'testKey4',
+        value: false,
+        label: 'Классификация',
+      },
+    ],
   }),
   computed: {
     ...mapGetters({
@@ -81,7 +113,7 @@ export default {
     }),
 
     inputDataInput() {
-      const arr =  this.inputData.filter(item => {
+      const arr = this.inputData.filter(item => {
         return item.layer === 'input';
       });
 
@@ -97,12 +129,14 @@ export default {
     },
   },
   methods: {
+    test(e) {
+      console.log(e);
+    },
     error(id, key) {
       const errors = this.$store.getters['datasets/getErrors'](id);
       return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';
     },
-    addCard() {
-      this.$store.dispatch('datasets/createInputData', { layer: 'input' });
+    autoScroll() {
       this.$nextTick(() => {
         this.$refs.scrollLeft.scrollTo(
           {
@@ -112,10 +146,18 @@ export default {
         );
       });
     },
+    addCard() {
+      this.$store.dispatch('datasets/createInputData', { layer: 'input' });
+      this.autoScroll()
+    },
     optionsCard(comm, id) {
       if (comm === 'remove') {
         this.$store.dispatch('datasets/removeInputData', id);
         this.mixinRemove(id);
+      }
+      if (comm === 'copy') {
+        this.$store.dispatch('datasets/cloneInputData', id);
+        this.autoScroll()
       }
     },
     heightForm(value) {
@@ -141,7 +183,7 @@ export default {
   height: 100%;
   &__header {
     position: absolute;
-    height: 24px;
+    height: 32px;
     width: 100%;
     top: 0;
     background: #242f3d;
@@ -154,7 +196,7 @@ export default {
     align-items: center;
     text-align: center;
     color: #ffffff;
-    padding: 4px 16px;
+    padding: 4px 40px;
     justify-content: flex-end;
   }
   &__body {
@@ -175,13 +217,13 @@ export default {
     }
     &--empty {
       height: 100%;
-      width: 70px;
+      width: 10px;
     }
   }
   &__fab {
     position: absolute;
-    right: 16px;
-    top: 40px;
+    right: 6px;
+    top: 4px;
     z-index: 100;
   }
 }

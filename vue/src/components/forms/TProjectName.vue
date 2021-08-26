@@ -3,12 +3,14 @@
     <div class="t-project__label">Project:</div>
     <input
       v-model="nameProject"
-      ref="input"
       type="text"
       class="t-project__name"
-      :style="width"
+      maxlength="50"
       @blur="saveProject"
-      @input="handleInput"
+      @input="toSave = true"
+      @keypress.enter="$event.target.blur()"
+      v-autowidth
+      @focus="latest = $store.getters['projects/getProject'].name"
     />
     <i class="t-icon icon-project-edit"></i>
   </div>
@@ -19,6 +21,7 @@ export default {
   name: 't-project-name',
   data: () => ({
     toSave: false,
+    latest: '',
   }),
   computed: {
     nameProject: {
@@ -29,17 +32,10 @@ export default {
         return this.$store.getters['projects/getProject'].name;
       },
     },
-    width() {
-      const len = this.nameProject?.length || 1
-      return { width: (len < 20 ? (len * 8) : 160) + 'px' };
-    },
   },
   methods: {
-    handleInput() {
-      this.toSave = true;
-    },
     async saveProject() {
-      if (!this.toSave) return;
+      if (!this.toSave || this.latest === this.nameProject) return;
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
           message: `Изменение названия проекта на «${this.nameProject}»`,
@@ -50,12 +46,14 @@ export default {
         this.$store.dispatch('messages/setMessage', {
           message: `Название проекта изменено на «${this.nameProject}»`,
         });
-        this.toSave = false;
+        this.latest = this.nameProject;
       } else {
         this.$store.dispatch('messages/setMessage', {
           error: 'Длина не может быть < 3 сим.',
         });
+        this.nameProject = this.latest;
       }
+      this.toSave = false;
     },
   },
 };
@@ -80,11 +78,10 @@ export default {
     white-space: nowrap;
     font-weight: 700;
     display: flex;
+    font-size: 1rem;
     align-items: center;
     height: 100%;
-    max-width: 300px;
-    min-width: 50px;
-    border: none;
+    border: 1px solid rgba(108, 120, 131, 0);
     padding: 0 5px;
     box-sizing: content-box;
     background: none;

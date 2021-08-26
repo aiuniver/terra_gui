@@ -22,6 +22,7 @@ from ..choices import (
     LayerDataframeAlignBaseMethodChoice,
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
+    LayerTypeProcessingClassificationChoice,
 )
 
 
@@ -560,6 +561,15 @@ Defaults = {
                                 "name": "type_processing",
                                 "parse": "type_processing",
                                 "value": "categorical",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerTypeProcessingClassificationChoice),
+                                    )
+                                ),
                                 "fields": {
                                     "ranges": [
                                         {
@@ -575,12 +585,24 @@ Defaults = {
                         "Segmentation": [
                             {
                                 "type": "number",
+                                "label": "Ширина",
+                                "name": "width",
+                                "parse": "width",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Высота",
+                                "name": "height",
+                                "parse": "height",
+                            },
+                            {
+                                "type": "number",
                                 "label": "Диапазон каналов",
                                 "name": "mask_range",
                                 "parse": "mask_range",
                             },
                             {
-                                "type": "select",
+                                "type": "segmentation_classes",
                                 "label": "Ввод данных",
                                 "name": "classes",
                                 "parse": "classes",
@@ -615,6 +637,7 @@ Defaults = {
                                             "label": "Найти",
                                             "name": "search",
                                             "parse": "search",
+                                            "api": "/api/v1/config/",
                                         },
                                     ],
                                     "annotation": [

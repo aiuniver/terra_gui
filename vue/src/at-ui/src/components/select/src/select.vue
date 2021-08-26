@@ -14,7 +14,7 @@
     v-clickoutside="handleClose"
   >
     <!-- S Selection -->
-    <div class="at-select__selection" ref="trigger" @click="toggleMenu">
+    <div :class="['at-select__selection', {'at-select__selection--active': this.visible}]" ref="trigger" @click="toggleMenu">
       <span
         class="at-tag"
         v-for="(item, index) in selectedMultiple"

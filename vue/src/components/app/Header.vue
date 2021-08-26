@@ -4,7 +4,7 @@
       <a href="#" class="header__left--logo"></a>
       <TProjectName />
     </div>
-    <div class="header__center">Название задачи / Название эксперимента</div>
+    <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
       <div
         v-for="({ title, icon, type }, i) of items"
@@ -41,9 +41,9 @@
              </div>
            </div>
          </div>
-         <div slot="footer" class="d-flex">
+         <template slot="footer">
            <button @click="saveProject">Сохранить</button>
-         </div>
+         </template>
        </at-modal>
        <at-modal v-model="load" width="400">
          <div slot="header" style="text-align: center">
