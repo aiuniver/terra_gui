@@ -64,13 +64,14 @@ export default {
   methods: {
     async createInterval() {
       this.interval = setTimeout(async () => {
-        const { data, success } = await this.$store.dispatch('datasets/loadProgress', {});
-        const { finished, message, percent, data: { file_manager, source_path } } = data;
+        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
+        console.log(data)
         if (data) {
-          // clearTimeout(this.interval);
+          const { finished, message, percent } = data;
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
-          if (finished && success) {
+          if (finished) {
+            const { data: { file_manager, source_path } } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
