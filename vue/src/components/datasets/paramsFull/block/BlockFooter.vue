@@ -36,7 +36,7 @@ export default {
   },
   data: () => ({
     degree: 100,
-    nameProject: 'Новый'
+    nameProject: ''
   }),
   computed: {
     disabled() {
