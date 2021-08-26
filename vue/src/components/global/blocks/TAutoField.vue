@@ -1,5 +1,18 @@
 <template>
   <div class="forms">
+    <t-button-api
+      v-if="type === 'button'"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      inline
+      @change="change"
+      @cleanError="cleanError"
+    />
     <t-input
       v-if="type === 'tuple'"
       :value="getValue"
@@ -66,7 +79,9 @@
 </template>
 
 <script>
+import TButtonApi from '../forms/TButtonApi.vue';
 export default {
+  components: { TButtonApi },
   name: 't-auto-field',
   props: {
     idKey: String,
