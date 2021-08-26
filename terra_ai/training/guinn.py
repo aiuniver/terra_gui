@@ -277,28 +277,16 @@ class GUINN:
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         self.Exch.print_2status_bar(('Начало обучения', '...'))
-        if self.x_Val['input_1'] is not None:
-            self.history = self.model.fit(
-                self.x_Train,
-                self.y_Train,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle,
-                validation_data=(self.x_Val, self.y_Val),
-                epochs=self.epochs,
-                verbose=verbose,
-                callbacks=self.callbacks
-            )
-        else:
-            self.history = self.model.fit(
-                self.x_Train,
-                self.y_Train,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle,
-                validation_split=0.2,
-                epochs=self.epochs,
-                verbose=verbose,
-                callbacks=self.callbacks
-            )
+
+        self.history = self.model.fit(
+            self.dataset.dataset.get('train'),
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            validation_data=self.dataset.dataset.get('val'),
+            epochs=self.epochs,
+            verbose=verbose,
+            callbacks=self.callbacks
+        )
 
     def yolomodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
         # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
@@ -353,7 +341,7 @@ class GUINN:
 
         # Создаем модель
         model_YOLO = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
-                                  num_classes=self.DTS.num_classes['output_1'])
+                                  num_classes=list(self.dataset.data.num_classes.values())[0])
         print(model_YOLO.summary())
 
         # Компилируем модель
@@ -365,15 +353,15 @@ class GUINN:
         self.Exch.print_2status_bar(('Начало обучения', '...'))
 
         if not retrain:
-            self._set_callbacks(y_sample=self.y_Val_bbox)
+            self._set_callbacks(dataset=dataset, batch_size=params.batch,
+                                epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         self.Exch.print_2status_bar(('Начало обучения', '...'))
         self.history = model_YOLO.fit(
-            self.x_Train,
-            self.y_Train,
+            self.dataset.dataset.get('train'),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=(self.x_Val, self.y_Val),
+            validation_data=self.dataset.dataset.get('val'),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks
