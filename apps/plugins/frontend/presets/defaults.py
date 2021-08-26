@@ -619,21 +619,21 @@ Defaults = {
                                 "fields": {
                                     "handmade": [
                                         {
-                                            "type": "text",
-                                            "label": "Название класса",
+                                            "type": "segmentation_manual",
+                                            # "label": "Название класса",
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
                                         },
-                                        {
-                                            "type": "text",
-                                            "label": "Цвет",
-                                            "name": "classes_colors",
-                                            "parse": "classes_colors[]",
-                                        },
+                                        # {
+                                        #     "type": "text",
+                                        #     "label": "Цвет",
+                                        #     "name": "classes_colors",
+                                        #     "parse": "classes_colors[]",
+                                        # },
                                     ],
                                     "autosearch": [
                                         {
-                                            "type": "button",
+                                            "type": "segmentation_search",
                                             "label": "Найти",
                                             "name": "search",
                                             "parse": "search",
@@ -642,17 +642,17 @@ Defaults = {
                                     ],
                                     "annotation": [
                                         {
-                                            "type": "select",
-                                            "label": "Выберите файл",
+                                            "type": "segmentation_annotation",
+                                            # "label": "Выберите файл",
                                             "name": "annotation",
                                             "parse": "annotation",
                                         },
-                                        {
-                                            "type": "button",
-                                            "label": "Найти",
-                                            "name": "search",
-                                            "parse": "search",
-                                        },
+                                        # {
+                                        #     "type": "button",
+                                        #     "label": "Найти",
+                                        #     "name": "search",
+                                        #     "parse": "search",
+                                        # },
                                     ],
                                 },
                             },
