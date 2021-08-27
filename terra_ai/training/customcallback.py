@@ -875,6 +875,7 @@ class FitCallback(keras.callbacks.Callback):
         self.batch = 0
         self.num_batches = 0
         self.epoch = 0
+        self.last_epoch = 1
         self.history = {}
         self._start_time = time.time()
         self._time_batch_step = time.time()
@@ -923,8 +924,8 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if not self.stop_flag:
             self.batch = 0
-        self.num_batches = self.DTS.X.get('train')[1].shape[0] // self.batch_size
-        self.Exch.show_current_epoch(self.last_epoch)
+        self.num_batches = len(self.DTS.dataframe['train']) // self.batch_size
+        print(self.last_epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch

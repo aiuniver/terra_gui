@@ -76,11 +76,12 @@ class GUINN:
             self.loss.update({output_layer["id"]: output_layer["loss"]})
 
     def _set_callbacks(self, dataset: object, batch_size: int, epochs: int, checkpoint: dict) -> None:
-        self.Exch.print_2status_bar(('Добавление колбэков', '...'))
+        print(('Добавление колбэков', '...'))
         clsclbk = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
         self.callbacks = [clsclbk]
+        checkpoint.update([('filepath', 'F:\\tmp\\models\\test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
-        self.Exch.print_2status_bar(('Добавление колбэков', 'выполнено'))
+        print(('Добавление колбэков', 'выполнено'))
 
     @staticmethod
     def _prepare_dataset(dataset: DatasetData):
@@ -95,6 +96,8 @@ class GUINN:
 
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
+        print(params.optimizer.parameters_dict)
+        print(self.optimizer)
 
     def set_custom_metrics(self, params=None) -> None:
         for i_key in self.metrics.keys():
@@ -129,7 +132,7 @@ class GUINN:
                         if output.alias == params.architecture.parameters.checkpoint.layer:
                             self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
         else:
-            if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
+            if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
                         if output.alias == params.architecture.parameters.checkpoint.layer:
@@ -139,7 +142,7 @@ class GUINN:
             else:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if output.id == params.architecture.parameters.checkpoint.layer:
                             self.chp_monitor = f'val_{output.metrics[0].value}'
                 else:
                     self.chp_monitor = 'val_loss'
@@ -223,7 +226,7 @@ class GUINN:
             self.model.stop_training = False
             self.stop_training = False
             self.model_is_trained = False
-            if self.dataset.data.outputs.get(1).task == LayerOutputTypeChoice.ObjectDetection:
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
                 self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
@@ -231,7 +234,7 @@ class GUINN:
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
-            if self.dataset.data.outputs.get(1).task == LayerOutputTypeChoice.ObjectDetection:
+            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
                 self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
@@ -263,20 +266,19 @@ class GUINN:
         return self
 
     def basemodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
-
-        self.Exch.print_2status_bar(('Компиляция модели', '...'))
+        print(('Компиляция модели', '...'))
         self.set_custom_metrics()
         self.model.compile(loss=self.loss,
-                           optimizer=self.optimizer,
+                           optimizer='adam', #self.optimizer,
                            metrics=self.metrics
                            )
-        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        print(('Компиляция модели', 'выполнена'))
+        print(('Начало обучения', '...'))
         if not retrain:
             self._set_callbacks(dataset=dataset, batch_size=params.batch,
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
-        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        print(('Начало обучения', '...'))
 
         self.history = self.model.fit(
             self.dataset.dataset.get('train'),
@@ -345,18 +347,18 @@ class GUINN:
         print(model_YOLO.summary())
 
         # Компилируем модель
-        self.Exch.print_2status_bar(('Компиляция модели', '...'))
+        print(('Компиляция модели', '...'))
         # self.set_custom_metrics()
         model_YOLO.compile(optimizer=self.optimizer,
                            loss={'yolo_loss': lambda y_true, y_pred: y_pred})
-        self.Exch.print_2status_bar(('Компиляция модели', 'выполнена'))
-        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        print(('Компиляция модели', 'выполнена'))
+        print(('Начало обучения', '...'))
 
         if not retrain:
             self._set_callbacks(dataset=dataset, batch_size=params.batch,
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
-        self.Exch.print_2status_bar(('Начало обучения', '...'))
+        print(('Начало обучения', '...'))
         self.history = model_YOLO.fit(
             self.dataset.dataset.get('train'),
             batch_size=self.batch_size,
