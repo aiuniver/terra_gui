@@ -49,8 +49,8 @@ class GUINN:
         self.loss: dict = {}
         self.metrics: dict = {}
 
-        self.batch_size = 32
-        self.epochs = 20
+        self.batch_size = 128
+        self.epochs = 5
         self.sum_epoch = 0
         self.stop_training = False
         self.retrain_flag = False

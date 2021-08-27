@@ -895,9 +895,7 @@ class FitCallback(keras.callbacks.Callback):
             self.save_model_path, f"{model_name}"
         )
         self.model.save(file_path_model)
-        self.Exch.print_2status_bar(
-            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
-        )
+        print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
         pass
 
     def _estimate_step(self, current, start, now):
