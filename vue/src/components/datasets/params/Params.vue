@@ -91,7 +91,10 @@ export default {
       }, 1000);
     },
     saveSet() {
-      if (this.dataset.mode === 'GoogleDrive') this.prevSet = this.dataset
+      if (this.dataset.mode === 'GoogleDrive') {
+        this.prevSet = this.dataset
+        this.$el.querySelector('.t-field__input').value = ''
+      }
       if (this.dataset.mode === 'URL') this.dataset = this.prevSet
     },
     select(select) {
