@@ -1,5 +1,44 @@
 <template>
   <div class="forms">
+    <t-segmentation-manual
+      v-if="type === 'segmentation_manual'"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      inline
+      @change="change"
+      @cleanError="cleanError"
+    />
+    <t-segmentation-annotation
+      v-if="type === 'segmentation_annotation'"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      inline
+      @change="change"
+      @cleanError="cleanError"
+    />
+    <t-segmentation-search
+      v-if="type === 'segmentation_search'"
+      :value="getValue"
+      :label="label"
+      type="text"
+      :parse="parse"
+      :name="name"
+      :key="name + idKey"
+      :error="error"
+      inline
+      @change="change"
+      @cleanError="cleanError"
+    />
     <t-input
       v-if="type === 'tuple'"
       :value="getValue"

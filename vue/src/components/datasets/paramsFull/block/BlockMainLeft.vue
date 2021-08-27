@@ -39,8 +39,8 @@
                   />
                 </template>
                 <!-- <t-radio :lists="testListRadio" @change="test" :parse="'test'" /> -->
-                <!-- <t-color @change="test" :parse="'test'" inline /> -->
-                <!-- <t-button>Тест</t-button> -->
+                <t-color @change="test" :parse="'test'" inline />
+                <t-button-api />
               </template>
             </CardLayer>
           </template>
@@ -58,7 +58,7 @@ import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '@/components/forms/MultiSelect.vue';
 // import TButton from '@/components/forms/Button.vue';
 // import TRadio from '@/components/forms/Radio.vue';
-// import TColor from '@/components/forms/Color.vue';
+import TColor from '@/components/forms/Color.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 // import Error from '@/utils/core/Errors'
 
@@ -68,7 +68,7 @@ export default {
     Fab,
     CardLayer,
     // TButton,
-    // TColor,
+    TColor,
     // TRadio,
     TMultiSelect,
   },

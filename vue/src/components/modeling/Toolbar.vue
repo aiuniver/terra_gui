@@ -14,13 +14,23 @@
         <i class="t-icon icon-clear-model"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('input')" :disabled="isInput" title="Входящий слой">
+      <li
+        class="toolbar__menu--item"
+        @click.prevent="click('input', isInput)"
+        :disabled="isInput"
+        title="Входящий слой"
+      >
         <i class="t-icon icon-layer-input"></i>
       </li>
       <li class="toolbar__menu--item" @click.prevent="click('middle')" title="Промежуточный слой">
         <i class="t-icon icon-layer-middle"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('output')" :disabled="isOutput" title="Исходящий слой">
+      <li
+        class="toolbar__menu--item"
+        @click.prevent="click('output', isOutput)"
+        :disabled="isOutput"
+        title="Исходящий слой"
+      >
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
@@ -42,15 +52,17 @@ export default {
       project: 'projects/getProject',
     }),
     isInput() {
-      return this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
+      return !!this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
     },
     isOutput() {
-      return this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
+      return !!this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
     },
   },
   methods: {
-    click(event) {
-      this.$emit('actions', event);
+    click(event, idDisebled) {
+      if (!idDisebled) {
+        this.$emit('actions', event);
+      }
     },
   },
 };
