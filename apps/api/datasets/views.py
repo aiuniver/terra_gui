@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path
+from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 
@@ -40,7 +41,10 @@ class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
-            request.project.set_dataset(progress.data)
+            try:
+                request.project.set_dataset(progress.data)
+            except project_exceptions.ProjectException as error:
+                return BaseResponseErrorGeneral(str(error))
         return BaseResponseSuccess(data=progress.native())
 
 

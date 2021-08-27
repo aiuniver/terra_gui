@@ -1,5 +1,7 @@
 import os
 import json
+import shutil
+
 import tensorflow
 
 from typing import Any
@@ -86,7 +88,10 @@ class Exchange:
         """
         Удаление датасета
         """
-        pass
+        if group == DatasetGroupChoice.custom:
+            shutil.rmtree(
+                Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
+            )
 
     def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
