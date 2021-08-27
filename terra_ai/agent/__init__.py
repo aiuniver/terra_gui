@@ -82,6 +82,12 @@ class Exchange:
         """
         return progress.pool(progress.PoolName.dataset_choice)
 
+    def _call_dataset_delete(self, path: str, group: str, alias: str):
+        """
+        Удаление датасета
+        """
+        pass
+
     def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги

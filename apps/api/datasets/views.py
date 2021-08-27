@@ -10,7 +10,12 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import SourceLoadSerializer, ChoiceSerializer, CreateSerializer
+from .serializers import (
+    SourceLoadSerializer,
+    ChoiceSerializer,
+    CreateSerializer,
+    DeleteSerializer,
+)
 
 
 class ChoiceAPIView(BaseAPIView):
@@ -87,3 +92,21 @@ class SourcesAPIView(BaseAPIView):
         return BaseResponseSuccess(
             agent_exchange("datasets_sources", path=str(data_path.sources)).native()
         )
+
+
+class DeleteAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = DeleteSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        try:
+            agent_exchange(
+                "dataset_delete",
+                path=str(data_path.datasets),
+                **serializer.validated_data
+            )
+            return BaseResponseSuccess()
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
