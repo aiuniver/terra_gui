@@ -79,6 +79,11 @@ export default {
     async choice({ dispatch }, dataset) {
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
     },
+    async deleteDataset({ dispatch }, dataset) {
+      const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
+      dispatch('get')
+      return success
+    },
     async choiceProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/choice/progress/', data: source }, { root: true });
     },
