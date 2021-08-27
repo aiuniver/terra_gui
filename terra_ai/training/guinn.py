@@ -279,6 +279,7 @@ class GUINN:
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         print(('Начало обучения', '...'))
+        print(self.dataset.dataset.get('train'))
 
         self.history = self.model.fit(
             self.dataset.dataset.get('train'),

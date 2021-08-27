@@ -285,13 +285,13 @@ class PrepareDTS(object):
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
                 self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=({x: self.data.inputs[x].shape for x in
+                                                               output_shapes=({f"input_{str(x)}": self.data.inputs[x].shape for x in
                                                                                range(1, num_inputs+1)},
-                                                                              {x: self.data.outputs[x].shape for x in
+                                                                              {f"output_{str(x)}": self.data.outputs[x].shape for x in
                                                                                range(num_inputs + 1, num_outputs + 2)}),
-                                                               output_types=({x: self.data.inputs[x].dtype for x in
+                                                               output_types=({f"input_{str(x)}": self.data.inputs[x].dtype for x in
                                                                               range(1, num_inputs + 1)},
-                                                                             {x: self.data.outputs[x].dtype for x in
+                                                                             {f"output_{str(x)}": self.data.outputs[x].dtype for x in
                                                                               range(num_inputs + 1, num_outputs + 2)})
                                                                )
                 self.dataset['val'] = Dataset.from_generator(self.val_generator,
