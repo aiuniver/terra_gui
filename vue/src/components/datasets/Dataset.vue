@@ -59,8 +59,17 @@ export default {
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
-    remove(dataset) {
-      console.log(dataset)
+    async remove({ name, alias, group }) {
+      try {
+        await this.$Modal.confirm({
+          title: 'Внимание!',
+          content: `Удалить датасет ${name}?`,
+          width: 300,
+        })
+        await this.$store.dispatch('datasets/deleteDataset', { alias, group })
+      } catch (error) {
+        console.log(error)        
+      }
     }
   },
 };
