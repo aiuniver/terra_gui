@@ -292,7 +292,7 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    num_classes: Optional[Dict[PositiveInt, PositiveInt]] = {}  # Поставить Optional чтобы не крашнулось. В будущем убрать.
+    num_classes: Dict[PositiveInt, PositiveInt] = {}
     classes_names: Dict[PositiveInt, List[str]] = {}
     classes_colors: Dict[PositiveInt, List[Color]] = {}
     encoding: Dict[PositiveInt, str] = {}
@@ -300,6 +300,21 @@ class DatasetData(AliasMixinData):
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     paths: Optional[DatasetPathsData]
+
+    @property
+    def merged_layers_by_name(self) -> dict:
+        inputs = dict(
+            map(
+                lambda item: (f"input_{item[0]}", item[1].native()), self.inputs.items()
+            )
+        )
+        outputs = dict(
+            map(
+                lambda item: (f"output_{item[0]}", item[1].native()),
+                self.outputs.items(),
+            )
+        )
+        return {**inputs, **outputs}
 
 
 class DatasetsList(UniqueListMixin):
