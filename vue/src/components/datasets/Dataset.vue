@@ -14,7 +14,8 @@
                     :key="key"
                     :cardIndex="key"
                     :loaded="loaded == key ? true : false"
-                    @clickCard="click"
+                    @click="click"
+                    @remove="remove"
                   />
                 </template>
               </div>
@@ -52,11 +53,15 @@ export default {
   },
   methods: {
     click(dataset, key){
+      console.log(dataset, key)
       this.$store.dispatch('datasets/setSelect', dataset);
       this.$store.dispatch('datasets/setSelectedIndex', key);
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
+    remove(dataset) {
+      console.log(dataset)
+    }
   },
 };
 </script>

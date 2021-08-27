@@ -1,12 +1,9 @@
 <template>
-  <div
-    :class="['dataset-card-item', { active: dataset.active, selected: loaded }]"
-    @click="$emit('clickCard', dataset, cardIndex)"
-  >
-    <div class="dataset-card">
+  <div :class="['dataset-card-item', { active: dataset.active, selected: loaded }]">
+    <div class="dataset-card" @click.stop="$emit('click', dataset, cardIndex)">
       <div class="card-title">{{ dataset.name }}</div>
       <div class="card-body" @click="click">
-        <div v-for="({  name }, key) of getFour" :key="`tag_${key}`" class="card-tag">
+        <div v-for="({ name }, key) of getFour" :key="`tag_${key}`" class="card-tag">
           {{ name }}
         </div>
       </div>
@@ -15,7 +12,7 @@
         <div class="wrapper">
           <span>{{ dataset.size ? dataset.size : 'Предустановленный' }}</span>
         </div>
-        <div class="remove"></div>
+        <div class="remove" @click.stop="$emit('remove', dataset)"></div>
       </div>
     </div>
   </div>
