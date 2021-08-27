@@ -40,6 +40,7 @@ export default {
         return response.data
       } catch (error) {
         dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) })
+        dispatch('settings/setOverlay', false);
         Vue.prototype.$Loading.error()
         return null;
       }

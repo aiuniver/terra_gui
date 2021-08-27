@@ -76,6 +76,7 @@ export default {
           this.$store.dispatch('messages/setProgress', percent);
           if (error) {
             this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
             return;
           }
           if (finished) {
@@ -87,6 +88,7 @@ export default {
             this.$store.dispatch('messages/setProgressMessage', '');
             this.$store.dispatch('messages/setProgress', 0);
             this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
             this.full = true;
           } else {
             this.createInterval();
@@ -121,6 +123,7 @@ export default {
       const { mode, value, label } = this.dataset;
       if (mode && value) {
         this.loading = true;
+        this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });
         const { success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
         // console.log(data)
@@ -128,6 +131,7 @@ export default {
           this.createInterval();
         } else {
           this.loading = false;
+          this.$store.dispatch('settings/setOverlay', false);
         }
       } else {
         this.$store.dispatch('messages/setMessage', { error: 'Выберите файл' });

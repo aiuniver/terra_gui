@@ -38,6 +38,7 @@ export default {
             this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
             this.$store.dispatch('messages/setProgress', 0);
             this.$store.dispatch('messages/setProgressMessage', '');
+            this.$store.dispatch('projects/get');
           } else {
             if (error) {
               this.$store.dispatch('messages/setMessage', { error });
@@ -49,7 +50,7 @@ export default {
             this.createInterval();
           }
         }
-        console.log(data);
+        // console.log(data);
       }, 1000);
     },
     async click() {
