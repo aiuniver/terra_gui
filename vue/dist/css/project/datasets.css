@@ -126,7 +126,7 @@
 .dataset-card {
     display:block;
     width:160px;
-    height:100%;
+    height: 130px;
     position:relative;
     border:2px solid;
     box-sizing:border-box;

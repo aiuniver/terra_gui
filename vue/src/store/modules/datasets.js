@@ -1,4 +1,4 @@
-import { createInputData } from '../const/datasets';
+import { createInputData, cloneInputData } from '../const/datasets';
 export default {
   namespaced: true,
   state: () => ({
@@ -150,6 +150,15 @@ export default {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
+    },
+    cloneInputData({ commit, state: { inputData } }, id) {
+      let maxID = Math.max(0,...inputData.map(o => o.id));
+      const usedColors = inputData.map(item => item.color)
+      const layer = inputData.find(item => item.id === id)
+      commit('SET_INPUT_DATA', [...inputData, cloneInputData(maxID + 1, usedColors, layer )]);
+    },
+    clearInputData({ commit }) {
+      commit('SET_INPUT_DATA', [] );
     },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);

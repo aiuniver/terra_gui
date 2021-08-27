@@ -4,24 +4,28 @@
       <slot>{{ label }}</slot>
     </label>
 
-    <input
-      v-model="input"
-      :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-      :type="type"
-      :name="name || parse"
-      :value="value"
-      :disabled="disabled"
-      :data-degree="degree"
-      :autocomplete="'off'"
-      @blur="change"
-      @focus="focus"
-    />
+    <div class="t-field__content">
+      <input
+        v-model="input"
+        :class="['t-field__input', { small: small }, { 't-field__error': error }]"
+        :type="type"
+        :name="name || parse"
+        :value="value"
+        :disabled="disabled"
+        :data-degree="degree"
+        :autocomplete="'off'"
+        @blur="change"
+        @focus="focus"
+      />
+
+      <div class="t-field__box" :style="{ background: value }"></div>
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 't-input',
+  name: 't-color',
   props: {
     label: {
       type: String,
@@ -48,7 +52,6 @@ export default {
   computed: {
     input: {
       set(value) {
-        // console.log(value)
         this.$emit('input', value);
         this.isChange = true;
       },
@@ -65,10 +68,9 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
       if (this.isChange) {
         let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
+        value = /^#([0-9A-F]{3}){1,2}$/i.test(value) ? value : 'err';
         this.$emit('change', { name: this.name, value });
         this.isChange = false;
       }
@@ -79,6 +81,19 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
+  &__content {
+    position: relative;
+  }
+  &__box {
+    background: #59b9ff;
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    left: 2px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 2px;
+  }
   // margin-bottom: 20px;
   &__label {
     text-align: left;
@@ -95,7 +110,7 @@ export default {
     color: #fff;
     background: #242f3d;
     height: 42px;
-    padding: 0 10px;
+    padding: 0 10px 0 27px;
     font-size: 0.875rem;
     font-weight: 400;
     border-radius: 4px;
@@ -122,7 +137,7 @@ export default {
   .t-field__label {
     width: 150px;
     max-width: 130px;
-    padding: 6px 0 0 10px;
+    padding: 3px 0 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

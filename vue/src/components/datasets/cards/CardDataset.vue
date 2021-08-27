@@ -5,12 +5,8 @@
   >
     <div class="dataset-card">
       <div class="card-title">{{ dataset.name }}</div>
-      <div class="card-paggination">
-        <!-- <div @click="next">next</div> -->
-        <!-- <div @click="prev">prev</div> -->
-      </div>
-      <div class="card-body">
-        <div v-for="({ name }, key) of activeCard" :key="`tag_${key}`" class="card-tag">
+      <div class="card-body" @click="click">
+        <div v-for="({  name }, key) of getFour" :key="`tag_${key}`" class="card-tag">
           {{ name }}
         </div>
       </div>
@@ -40,63 +36,23 @@ export default {
       default: false,
     },
   },
-
   data: () => ({
-    paggination: {
-      totalPages: 0,
-      currentPage: 1,
-      to: 0,
-      from: 0,
-      countView: 4,
-    },
-
-    activeCard: [],
+    index: 0
   }),
-
-  created() {
-    this.paggination.totalPages = Math.ceil(this.dataset.tags.length / this.paggination.countView);
-    this.paggination.to =
-      this.dataset.tags.length > this.paggination.countView ? this.paggination.countView : this.dataset.tags.length;
-    this.paginateCard(0, this.paggination.to);
+  computed: {
+    getFour () {
+      const tags = this.dataset?.tags || []
+      return tags.filter((item, i) => i >= this.index && i < this.index + 4)
+    }
   },
-
   methods: {
-    paginateCard(from, to) {
-      this.activeCard = this.dataset.tags.slice(from, to);
-    },
-    next() {
-      if (this.paggination.totalPages <= this.paggination.currentPage) return;
-      this.paggination.currentPage++;
-      this.paggination.from += this.paggination.countView;
-      if (this.paggination.to + this.paggination.countView > this.dataset.tags.length)
-        this.paggination.to += this.dataset.tags.length;
-      else this.paggination.to += this.paggination.countView;
-      this.paginateCard(this.paggination.from, this.paggination.to);
-    },
-    prev() {
-      if (1 >= this.paggination.currentPage) return;
-      this.paggination.currentPage--;
-      this.paggination.from -= this.paggination.countView;
-      this.paggination.to -= this.paggination.countView + 1;
-      this.paginateCard(this.paggination.from, this.paggination.to);
-    },
-  },
+    click() {
+      if (this.dataset.tags.length > this.index + 4) {
+        this.index = this.index + 4       
+      } else {
+        this.index = 0
+      }
+    }
+  }
 };
 </script>
-
-<style lang="scss">
-// For tests
-.card-paggination {
-  display: flex;
-  margin-top: 30px;
-  div {
-    margin-right: 5px;
-  }
-}
-
-.card-body {
-  justify-content: inherit;
-}
-
-// For tests
-</style>
