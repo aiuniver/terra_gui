@@ -198,7 +198,6 @@ class ModelValidator:
             else:
                 self.layers_def[layer.id] = layer.parameters.defaults.merged
                 self.layers_config[layer.id] = layer.parameters.config
-        # print(self.layers_def)
         self._build_model_plan()
 
     def _build_model_plan(self):
@@ -417,22 +416,22 @@ class ModelValidator:
         """Create keras code from model plan"""
 
         self.keras_code = ''
-        layers_import = []
+        layers_import = {}
         name_dict = {}
         input_list = []
         output_list = []
         for layer in self.model_plan.plan:
             # керас код под block_plan пока не готов
-            layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
+            # layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
 
-            if layer_type not in layers_import and \
-                    getattr(types, layer_type).LayerConfig.module_type.value != ModuleTypeChoice.block_plan:
-                layers_import.append(layer[1])
+            if layer[1] not in layers_import.values() and \
+                    self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.block_plan:
+                layers_import[layer[0]] = layer[1]
 
-            if getattr(types, layer_type).LayerConfig.module_type.value == ModuleTypeChoice.block_plan:
+            if self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.block_plan:
                 for block_layer in self.model_plan.block_plans.get(layer[0]):
-                    if block_layer[1] not in layers_import:
-                        layers_import.append(block_layer[1])
+                    if block_layer[1] not in layers_import.values():
+                        layers_import[block_layer[0]] = block_layer[1]
 
             if layer[0] in self.start_row:
                 name_dict[layer[0]] = f"input_{layer[2].get('name')}"
@@ -444,9 +443,9 @@ class ModelValidator:
                 name_dict[layer[0]] = f'x_{layer[0]}'
 
         layers_str = ""
-        for i in layers_import:
-            layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
-            layers_str += f"from {getattr(types, layer_type).LayerConfig.module.value} import {i}\n"
+        for id, layer_name in layers_import:
+            # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
+            layers_str += f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
         inputs_str = ''
@@ -460,6 +459,7 @@ class ModelValidator:
         outputs_str = f"[{outputs_str[:-2]}]"
 
         def get_layer_str(layer, identificator="", block_uplinks=None):
+            layer_str = ''
             if block_uplinks:
                 block_uplinks[layer[0]] = f"{identificator}_{layer[1]}_{layer[0]}"
 
@@ -489,19 +489,13 @@ class ModelValidator:
                             uplink += f"{name_dict[up]}, "
                     uplink = f"{uplink[:-2]}]"
 
-                if getattr(
-                        types, layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
-                ).LayerConfig.module_type.value == ModuleTypeChoice.tensorflow:
+                if self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.tensorflow:
                     layer_str = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = " \
                                 f"{layer[1]}({uplink}, {params[:-2]})\n"
-                elif getattr(
-                        types, layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
-                ).LayerConfig.module_type.value != ModuleTypeChoice.keras_pretrained_model:
+                elif self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.keras_pretrained_model:
                     layer_str = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = " \
                                 f"{layer[1]}({params[:-2]})({uplink})\n"
-                elif getattr(
-                        types, layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
-                ).LayerConfig.module_type.value != ModuleTypeChoice.keras_pretrained_model:
+                elif self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model:
                     if 'trainable' in layer[2].keys():
                         block_name = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]}"
                         if layer[2].get('output_layer') == 'last':
@@ -559,7 +553,7 @@ class ModelValidator:
         }
 
     def get_keras_model(self):
-        mc = ModelCreator(self.model_plan)
+        mc = ModelCreator(self.model_plan, self.layers_config)
         return mc.create_model()
 
 
@@ -616,7 +610,7 @@ class LayerValidation:
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
                         new = []
                         for shape in output_shape[0]:
-                            new.append(shape)
+                            new.append(tensor_shape_to_tuple(shape))
                         return new, None
 
                     return output_shape, None
@@ -928,10 +922,11 @@ class CustomLayer(tensorflow.keras.layers.Layer):
 class ModelCreator:
     """Create model from plan object"""
 
-    def __init__(self, terra_model):
+    def __init__(self, terra_model, layer_config):
         super().__init__()
         self.terra_model = terra_model
         self.nnmodel = None
+        self.layer_config = layer_config
         # self.debug = False
         self._get_idx_line()
         self._get_model_links()
@@ -956,16 +951,17 @@ class ModelCreator:
         """Build keras model from plan"""
         for id in self.idx_line:
             layer_type = self.terra_model.plan[self.id_idx_dict.get(id)][1]
-            if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
-                layer_type = 'SpaceToDepth'
-            module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
-            if module_type == ModuleTypeChoice.tensorflow:
+            # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
+            #     layer_type = 'SpaceToDepth'
+            # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
+            if self.layer_config.get(id).module_type.value == ModuleTypeChoice.tensorflow:
                 self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
-            elif module_type == ModuleTypeChoice.keras_pretrained_model:
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras_pretrained_model:
                 self._pretrained_model_init_(self.terra_model.plan[self.id_idx_dict.get(id)])
-            elif module_type == ModuleTypeChoice.block_plan:
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.block_plan:
                 self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(id)])
-            elif module_type == ModuleTypeChoice.keras or module_type == ModuleTypeChoice.terra_layer:
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras or \
+                    self.layer_config.get(id).module_type.value == ModuleTypeChoice.terra_layer:
                 self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
@@ -976,7 +972,7 @@ class ModelCreator:
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
-        module = importlib.import_module(getattr(layers.types, terra_layer[1]).LayerConfig.module.value)
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module_type.value)
         if terra_layer[1] == LayerTypeChoice.Input:
             input_shape = self.terra_model.input_shape.get(int(terra_layer[2].get('name')))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(shape=input_shape,
@@ -992,10 +988,7 @@ class ModelCreator:
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
-        if terra_layer[1] == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
-            module = importlib.import_module(getattr(layers.types, 'SpaceToDepth').LayerConfig.module.value)
-        else:
-            module = importlib.import_module(getattr(layers.types, terra_layer[1]).LayerConfig.module.value)
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module_type.value)
 
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
@@ -1007,7 +1000,7 @@ class ModelCreator:
 
     def _pretrained_model_init_(self, terra_layer):
         """Create pretrained model as layer_obj from terra_plan layer"""
-        module = importlib.import_module(getattr(layers.types, terra_layer[1]).LayerConfig.module.value)
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         param2del = ["name", 'trainable', 'output_layer']
         attr = copy.deepcopy(terra_layer[2])
         for param in param2del:
@@ -1034,6 +1027,8 @@ class ModelCreator:
         block_object = CustomLayer()
         block_object.block_plan = self.terra_model.block_plans.get(terra_layer[0])
         for layer in block_object.block_plan:
+            # TODO: поправить на конфиг self.layer_config.get(terra_layer[0]).module.value
+            #  когда будет рабочая версия ModelData с блоками
             module = importlib.import_module(getattr(layers.types, layer[1]).LayerConfig.module.value)
             layer_object = getattr(module, layer[1])(**layer[2])
             setattr(block_object, f"x_{layer[0]}", layer_object)
