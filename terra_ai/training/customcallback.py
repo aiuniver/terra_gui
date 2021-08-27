@@ -476,22 +476,13 @@ class InteractiveCallback:
         self.progress_mode = progress_mode
         self.progress_threashold = progress_threashold
 
-        # self.get_metrics_list()
-        # self.epochs = []
         self.log_history = {}
         self._prepare_null_log_history_template()
 
-        # self.graphics_request = {
-        #     'total_metric': (['train', 'val'], ['Accuracy']),
-        #     'total_loss': ['train', 'val'],
-        #     'class_metric': (['train', 'val'], ['Accuracy']),
-        #     'class_loss': ['train', 'val']
-        # }
         self.show_examples = 10
         self.ex_type_choice = 'seed'
         self.current_weights = None
         self.current_epoch = None
-        # self.progress_state = {}
         self.seed_idx = {}
         self.class_idx = self._get_class_idx()
         pass
@@ -642,6 +633,9 @@ class InteractiveCallback:
                 for idx in range(len(y_true)):
                     class_idx[key][out][self.dataset.data.classes_names.get(out)[y_true[idx]]].append(idx)
         return class_idx
+
+    def _get_seed(self):
+        pass
 
     def update_state(self, current_epoch, current_weights):
         self.current_epoch = current_epoch
@@ -866,7 +860,8 @@ class InteractiveCallback:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None):
+    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
+                 save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
         self.Exch = exchange
         self.DTS = dataset
@@ -885,6 +880,25 @@ class FitCallback(keras.callbacks.Callback):
         self.retrain_flag = False
         self.stop_flag = False
         self.retrain_epochs = 0
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
+
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}"
+        )
+        self.model.save(file_path_model)
+        self.Exch.print_2status_bar(
+            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
+        )
+        pass
 
     def _estimate_step(self, current, start, now):
         if current:
