@@ -23,7 +23,6 @@
          v-model="save"
          width="400"
          :maskClosable="false"
-         :showClose="true"
        >
          <div slot="header" style="text-align: center">
            <span>Сохранить проект</span>
@@ -34,9 +33,9 @@
              ><input v-model="nameProject" type="text" />
            </div>
            <div class="field-form field-inline field-reverse">
-             <label>Перезаписать</label>
+             <label @click="checVal = !checVal">Перезаписать</label>
              <div class="checkout-switch">
-               <input type="checkbox" />
+               <input v-model="checVal" type="checkbox" />
                <span class="switcher"></span>
              </div>
            </div>
@@ -64,6 +63,7 @@ export default {
     TProjectName,
   },
   data: () => ({
+    checVal: false,
     clickProject: false,
     projectNameEdit: false,
     name: 'kjkjkjkj',

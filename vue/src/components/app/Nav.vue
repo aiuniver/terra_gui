@@ -49,7 +49,7 @@ export default {
           title: "Предупреждение!",
           width: 300,
           content: `Для ${text[path]} необходимо загрузить датасет.`,
-          showClose: false,
+          // showClose: false,
           okText: "Загрузить датасет",
           callback: function (action) {
             console.log(action);
