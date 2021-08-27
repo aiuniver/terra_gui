@@ -22,7 +22,6 @@ class ExceptionMessages(str, Enum):
     FilePathExtension = '%s: File name must have "%s" extension'
     FileNameExtension = '%s: File name must have "%s" extension'
     Base64Extension = "Incorrect base64 string value"
-    XY = "%s: Value must be a list with 2 elements, received %s"
     ValueNotInList = "%s: Value must be in list %s"
     TrdsDirExt = (
         f"Dataset dirname must have `.{settings.DATASET_EXT}` extension, received `%s`"
@@ -121,16 +120,6 @@ class FileNameExtensionException(TerraDataException):
 class Base64Exception(TerraDataException):
     def __init__(self):
         super().__init__(ExceptionMessages.Base64Extension.value)
-
-
-class XYException(TerraDataException):
-    def __init__(self, __name: Any, __position: Any, *args):
-        super().__init__(
-            (
-                (args[0] if len(args) else ExceptionMessages.XY)
-                % (str(__name), str(__position))
-            )
-        )
 
 
 class ValueNotInListException(TerraDataException):

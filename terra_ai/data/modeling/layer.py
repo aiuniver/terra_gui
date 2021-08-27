@@ -8,7 +8,6 @@ from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, IDMixinData, UniqueListMixin
-from ..exceptions import XYException
 from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
 from .types import ReferenceLayerType
