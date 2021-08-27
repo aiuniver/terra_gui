@@ -56,7 +56,7 @@ class LayerData(IDMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
-    position: Tuple[int, int]
+    position: Optional[Tuple[int, int]]
     "Расположение слоя в сетке модели"
     parameters: Any
     "Параметры слоя"
@@ -73,14 +73,6 @@ class LayerData(IDMixinData):
                 map(lambda item: item[0] if item is not None else None, self.bind.down)
             ),
         )
-
-    @validator("position", allow_reuse=True)
-    def _validate_xy(cls, value: list, values) -> list:
-        if value is None:
-            return value
-        if len(value) != 2:
-            raise XYException(values.get("alias"), value)
-        return value
 
     @validator("bind", always=True)
     def _validate_bind(cls, value: LayerBindData, values) -> LayerBindData:
