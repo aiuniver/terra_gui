@@ -13,7 +13,7 @@
       :disabled="disabled"
       :data-degree="degree"
       :autocomplete="'off'"
-      @input="change"
+      @blur="change"
       @focus="focus"
     />
   </div>
