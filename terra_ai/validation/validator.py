@@ -443,7 +443,7 @@ class ModelValidator:
                 name_dict[layer[0]] = f'x_{layer[0]}'
 
         layers_str = ""
-        for id, layer_name in layers_import:
+        for id, layer_name in layers_import.items():
             # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
             layers_str += f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
@@ -972,7 +972,7 @@ class ModelCreator:
 
     def _keras_layer_init(self, terra_layer):
         """Create keras layer_obj from terra_plan layer"""
-        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module_type.value)
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
         if terra_layer[1] == LayerTypeChoice.Input:
             input_shape = self.terra_model.input_shape.get(int(terra_layer[2].get('name')))[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(shape=input_shape,
@@ -988,7 +988,7 @@ class ModelCreator:
 
     def _tf_layer_init(self, terra_layer):
         """Create tensorflow layer_obj from terra_plan layer"""
-        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module_type.value)
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
 
         if len(terra_layer[3]) == 1:
             input_tensors = self.tensors[terra_layer[3][0]]
