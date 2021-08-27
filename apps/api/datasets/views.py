@@ -35,8 +35,7 @@ class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
-            request.project.dataset = progress.data
-            request.project.save()
+            request.project.set_dataset(progress.data)
         return BaseResponseSuccess(data=progress.native())
 
 

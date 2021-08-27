@@ -101,6 +101,10 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as config_ref:
             json.dump(json.loads(self.json()), config_ref)
 
+    def set_dataset(self, dataset: DatasetData):
+        self.dataset = dataset
+        self.model = dataset.model
+
 
 data_path = DataPathData(**DATA_PATH)
 
