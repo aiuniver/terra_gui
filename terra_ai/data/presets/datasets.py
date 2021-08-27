@@ -3,8 +3,12 @@
 """
 
 from enum import Enum
-from terra_ai.data.datasets.extra import DatasetGroupChoice
-from apps.plugins.frontend.choices import LayerOutputTypeChoice
+from terra_ai.data.datasets.extra import (
+    DatasetGroupChoice,
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
+)
+from terra_ai.data.training.extra import TaskChoice
 
 
 class Tags(dict, Enum):
@@ -41,16 +45,18 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 10},
-                "classes_names": {2: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]},
+                "classes_names": {
+                    2: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+                },
                 "encoding": {2: "ohe"},
-                "task_type": {2: "Classification"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (28, 28, 1),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     }
                 },
                 "outputs": {
@@ -74,26 +80,39 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 10},
-                "classes_names": {2: ["T-shirt/top", "Trouser", "Pullover",
-                                      "Dress", "Coat", "Sandal", "Shirt", "Sneaker", "Bag",
-                                      "Ankle boot"]},
-                "encoding": {2: "ohe"},
-                "task_type": {2: "Classification"},
-                "inputs": {1: {
-                    "datatype": "2D",
-                    "dtype": "float32",
-                    "shape": (28, 28, 1),
-                    "name": "Вход 1",
-                    "task": "Image"
-                }
+                "classes_names": {
+                    2: [
+                        "T-shirt/top",
+                        "Trouser",
+                        "Pullover",
+                        "Dress",
+                        "Coat",
+                        "Sandal",
+                        "Shirt",
+                        "Sneaker",
+                        "Bag",
+                        "Ankle boot",
+                    ]
                 },
-                "outputs": {2: {
-                    "datatype": "DIM",
-                    "dtype": "uint8",
-                    "shape": (10,),
-                    "name": "Выход 1",
-                    "task": LayerOutputTypeChoice.Classification
-                }
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
+                "inputs": {
+                    1: {
+                        "datatype": "2D",
+                        "dtype": "float32",
+                        "shape": (28, 28, 1),
+                        "name": "Вход 1",
+                        "task": LayerInputTypeChoice.Image,
+                    }
+                },
+                "outputs": {
+                    2: {
+                        "datatype": "DIM",
+                        "dtype": "uint8",
+                        "shape": (10,),
+                        "name": "Выход 1",
+                        "task": LayerOutputTypeChoice.Classification,
+                    }
                 },
             },
             {
@@ -106,17 +125,29 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 10},
-                "classes_names": {2: ['airplane', 'automobile', 'bird', 'cat', 'deer',
-                                      'dog', 'frog', 'horse', 'ship', 'truck']},
+                "classes_names": {
+                    2: [
+                        "airplane",
+                        "automobile",
+                        "bird",
+                        "cat",
+                        "deer",
+                        "dog",
+                        "frog",
+                        "horse",
+                        "ship",
+                        "truck",
+                    ]
+                },
                 "encoding": {2: "ohe"},
-                "task_type": {2: "Classification"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (32, 32, 3),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     },
                 },
                 "outputs": {
@@ -139,35 +170,119 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 100},
-                "classes_names": {2: ['apple', 'aquarium_fish', 'baby', 'bear', 'beaver',
-                                      'bed', 'bee', 'beetle', 'bicycle', 'bottle',
-                                      'bowl', 'boy', 'bridge', 'bus', 'butterfly',
-                                      'camel', 'can', 'castle', 'caterpillar', 'cattle',
-                                      'chair', 'chimpanzee', 'clock', 'cloud', 'cockroach',
-                                      'couch', 'cra', 'crocodile', 'cup', 'dinosaur',
-                                      'dolphin', 'elephant', 'flatfish', 'forest', 'fox',
-                                      'girl', 'hamster', 'house', 'kangaroo', 'keyboard',
-                                      'lamp', 'lawn_mower', 'leopard', 'lion', 'lizard',
-                                      'lobster', 'man', 'maple_tree', 'motorcycle', 'mountain',
-                                      'mouse', 'mushroom', 'oak_tree', 'orange', 'orchid',
-                                      'otter', 'palm_tree', 'pear', 'pickup_truck', 'pine_tree',
-                                      'plain', 'plate', 'poppy', 'porcupine', 'possum',
-                                      'rabbit', 'raccoon', 'ray', 'road', 'rocket',
-                                      'rose', 'sea', 'seal', 'shark', 'shrew',
-                                      'skunk', 'skyscraper', 'snail', 'snake', 'spider',
-                                      'squirrel', 'streetcar', 'sunflower', 'sweet_pepper', 'table',
-                                      'tank', 'telephone', 'television', 'tiger', 'tractor',
-                                      'train', 'trout', 'tulip', 'turtle', 'wardrobe',
-                                      'whale', 'willow_tree', 'wolf', 'woman', 'worm']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "classification"},
+                "classes_names": {
+                    2: [
+                        "apple",
+                        "aquarium_fish",
+                        "baby",
+                        "bear",
+                        "beaver",
+                        "bed",
+                        "bee",
+                        "beetle",
+                        "bicycle",
+                        "bottle",
+                        "bowl",
+                        "boy",
+                        "bridge",
+                        "bus",
+                        "butterfly",
+                        "camel",
+                        "can",
+                        "castle",
+                        "caterpillar",
+                        "cattle",
+                        "chair",
+                        "chimpanzee",
+                        "clock",
+                        "cloud",
+                        "cockroach",
+                        "couch",
+                        "cra",
+                        "crocodile",
+                        "cup",
+                        "dinosaur",
+                        "dolphin",
+                        "elephant",
+                        "flatfish",
+                        "forest",
+                        "fox",
+                        "girl",
+                        "hamster",
+                        "house",
+                        "kangaroo",
+                        "keyboard",
+                        "lamp",
+                        "lawn_mower",
+                        "leopard",
+                        "lion",
+                        "lizard",
+                        "lobster",
+                        "man",
+                        "maple_tree",
+                        "motorcycle",
+                        "mountain",
+                        "mouse",
+                        "mushroom",
+                        "oak_tree",
+                        "orange",
+                        "orchid",
+                        "otter",
+                        "palm_tree",
+                        "pear",
+                        "pickup_truck",
+                        "pine_tree",
+                        "plain",
+                        "plate",
+                        "poppy",
+                        "porcupine",
+                        "possum",
+                        "rabbit",
+                        "raccoon",
+                        "ray",
+                        "road",
+                        "rocket",
+                        "rose",
+                        "sea",
+                        "seal",
+                        "shark",
+                        "shrew",
+                        "skunk",
+                        "skyscraper",
+                        "snail",
+                        "snake",
+                        "spider",
+                        "squirrel",
+                        "streetcar",
+                        "sunflower",
+                        "sweet_pepper",
+                        "table",
+                        "tank",
+                        "telephone",
+                        "television",
+                        "tiger",
+                        "tractor",
+                        "train",
+                        "trout",
+                        "tulip",
+                        "turtle",
+                        "wardrobe",
+                        "whale",
+                        "willow_tree",
+                        "wolf",
+                        "woman",
+                        "worm",
+                    ]
+                },
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (32, 32, 3),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     },
                 },
                 "outputs": {
@@ -191,16 +306,16 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 2},
-                "classes_names": {2: ['Отрицательный', 'Положительный']},
+                "classes_names": {2: ["Отрицательный", "Положительный"]},
                 "encoding": {2: "ohe"},
-                "task_type": {2: "Classification"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "DIM",
                         "dtype": "float32",
                         "shape": (1000,),  # TODO
                         "name": "Вход 1",
-                        "task": "Text",
+                        "task": LayerInputTypeChoice.Text,
                     },
                 },
                 "outputs": {
@@ -223,15 +338,15 @@ DatasetsGroups = [
                     Tags.english,
                     Tags.tensorflow_keras,
                 ],
-                "encoding": {2: 'none'},
-                "task_type": {2: "Regression"},
+                "encoding": {2: "none"},
+                "task_type": {2: TaskChoice.Regression},
                 "inputs": {
                     1: {
                         "datatype": "DIM",
                         "dtype": "float32",
                         "shape": (13,),
                         "name": "Вход 1",
-                        "task": "Text",
+                        "task": LayerInputTypeChoice.Text,
                     },
                 },
                 "outputs": {
@@ -255,16 +370,16 @@ DatasetsGroups = [
                     Tags.tensorflow_keras,
                 ],
                 "num_classes": {2: 2},
-                "classes_names": {2: ['Отрицательный', 'Положительный']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Classification"},
+                "classes_names": {2: ["Отрицательный", "Положительный"]},
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "DIM",
                         "dtype": "float32",
                         "shape": (500,),  # TODO
                         "name": "Вход 1",
-                        "task": "Text",
+                        "task": LayerInputTypeChoice.Text,
                     },
                 },
                 "outputs": {
@@ -283,35 +398,35 @@ DatasetsGroups = [
         "alias": "terra",
         "name": "Terra",
         "datasets": [
-            {
-                "alias": "sber",  # TODO
-                "name": "Sber",
-                "group": DatasetGroupChoice.terra,
-                "tags": [
-                    Tags.timeseries,
-                    Tags.terra_ai,
-                ],
-                "encoding": {2: 'none'},
-                "task_type": {2: "Timeseries"},
-                "inputs": {
-                    1: {
-                        "datatype": "2D",
-                        "dtype": "float32",
-                        "shape": (32, 32, 3),
-                        "name": "Вход 1",
-                        "task": "",
-                    },
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "uint8",
-                        "shape": (100,),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Timeseries,
-                    },
-                },
-            },
+            # {
+            #     "alias": "sber",  # TODO
+            #     "name": "Sber",
+            #     "group": DatasetGroupChoice.terra,
+            #     "tags": [
+            #         Tags.timeseries,
+            #         Tags.terra_ai,
+            #     ],
+            #     "encoding": {2: "none"},
+            #     "task_type": {2: TaskChoice.Timeseries},
+            #     "inputs": {
+            #         1: {
+            #             "datatype": "2D",
+            #             "dtype": "float32",
+            #             "shape": (32, 32, 3),
+            #             "name": "Вход 1",
+            #             "task": "",
+            #         },
+            #     },
+            #     "outputs": {
+            #         2: {
+            #             "datatype": "DIM",
+            #             "dtype": "uint8",
+            #             "shape": (100,),
+            #             "name": "Выход 1",
+            #             "task": LayerOutputTypeChoice.Timeseries,
+            #         },
+            #     },
+            # },
             {
                 "alias": "cars",
                 "name": "Автомобили",
@@ -322,16 +437,16 @@ DatasetsGroups = [
                     Tags.terra_ai,
                 ],
                 "num_classes": {2: 3},
-                "classes_names": {2: ['Мерседес', 'Рено', 'Феррари']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Classification"},
+                "classes_names": {2: ["Мерседес", "Рено", "Феррари"]},
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (176, 220, 3),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     },
                 },
                 "outputs": {
@@ -354,17 +469,17 @@ DatasetsGroups = [
                     Tags.terra_ai,
                 ],
                 "num_classes": {2: 2},
-                'classes_colors': {2: [[0, 0, 0], [255, 0, 0]]},
-                "classes_names": {2: ['Небо', 'Самолет']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Segmentation"},
+                "classes_colors": {2: [[0, 0, 0], [255, 0, 0]]},
+                "classes_names": {2: ["Небо", "Самолет"]},
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Segmentation},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (176, 220, 3),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     },
                 },
                 "outputs": {
@@ -373,7 +488,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (176, 220, 2),
                         "name": "Выход 1",
-                        "task": "Segmentation",
+                        "task": LayerOutputTypeChoice.Segmentation,
                     },
                 },
             },
@@ -387,17 +502,17 @@ DatasetsGroups = [
                     Tags.terra_ai,
                 ],
                 "num_classes": {2: 2},
-                'classes_colors': {2: [[0, 0, 0], [0, 255, 0]]},
-                "classes_names": {2: ['Фон', 'Губы']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Segmentation"},
+                "classes_colors": {2: [[0, 0, 0], [0, 255, 0]]},
+                "classes_names": {2: ["Фон", "Губы"]},
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Segmentation},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (176, 220, 3),
                         "name": "Вход 1",
-                        "task": "Image",
+                        "task": LayerInputTypeChoice.Image,
                     },
                 },
                 "outputs": {
@@ -406,7 +521,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (176, 220, 2),
                         "name": "Выход 1",
-                        "task": "Segmentation",
+                        "task": LayerOutputTypeChoice.Segmentation,
                     },
                 },
             },
@@ -421,19 +536,29 @@ DatasetsGroups = [
                     Tags.terra_ai,
                 ],
                 "num_classes": {2: 10},
-                "classes_names": {2: ['Аппендицит', 'Гастрит', 'Гепатит',
-                                      'Дуоденит', 'Колит', 'Панкреатит',
-                                      'Холецистит', 'Эзофагит', 'Энтерит',
-                                      'Язва']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Classification"},
+                "classes_names": {
+                    2: [
+                        "Аппендицит",
+                        "Гастрит",
+                        "Гепатит",
+                        "Дуоденит",
+                        "Колит",
+                        "Панкреатит",
+                        "Холецистит",
+                        "Эзофагит",
+                        "Энтерит",
+                        "Язва",
+                    ]
+                },
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "DIM",
                         "dtype": "uint32",
                         "shape": (100,),
                         "name": "Вход 1",
-                        "task": "Text",
+                        "task": LayerInputTypeChoice.Text,
                     },
                 },
                 "outputs": {
@@ -456,14 +581,15 @@ DatasetsGroups = [
                     Tags.russian,
                     Tags.terra_ai,
                 ],
-                "encoding": {2: 'multi'},
-                "task_type": {2: "text_segmentation"},
-                "inputs": {1: {
+                "encoding": {2: "multi"},
+                "task_type": {2: TaskChoice.Segmentation},
+                "inputs": {
+                    1: {
                         "datatype": "DIM",
                         "dtype": "uint32",
                         "shape": (200,),
                         "name": "Вход 1",
-                        "task": "Text",
+                        "task": LayerInputTypeChoice.Text,
                     },
                 },
                 "outputs": {
@@ -472,7 +598,7 @@ DatasetsGroups = [
                         "dtype": "uint8",
                         "shape": (200, 6),
                         "name": "Выход 1",
-                        "task": "Text_segmentation",
+                        "task": LayerOutputTypeChoice.TextSegmentation,
                     },
                 },
             },
@@ -488,16 +614,18 @@ DatasetsGroups = [
                     Tags.terra_ai,
                 ],
                 "num_classes": {2: 4},
-                "classes_names": {2: ['1_Кондиционер', '2_Свет', '3_Телевизор', '4_Шум']},
-                "encoding": {2: 'ohe'},
-                "task_type": {2: "Classification"},
+                "classes_names": {
+                    2: ["1_Кондиционер", "2_Свет", "3_Телевизор", "4_Шум"]
+                },
+                "encoding": {2: "ohe"},
+                "task_type": {2: TaskChoice.Classification},
                 "inputs": {
                     1: {
                         "datatype": "2D",
                         "dtype": "float32",
                         "shape": (),  # TODO
                         "name": "Вход 1",
-                        "task": "Audio",
+                        "task": LayerInputTypeChoice.Audio,
                     },
                 },
                 "outputs": {
@@ -510,67 +638,67 @@ DatasetsGroups = [
                     },
                 },
             },
-            {
-                "alias": "trading",  #TODO
-                "name": "Трейдинг",
-                "group": DatasetGroupChoice.terra,
-                "tags": [
-                    Tags.trading,
-                    Tags.timeseries,
-                    Tags.terra_ai,
-                ],
-                "encoding": {2: 'none'},
-                "task_type": {2: "Timeseries"},
-                "inputs": {
-                    1: {
-                        "datatype": "2D",
-                        "dtype": "float32",
-                        "shape": (),
-                        "name": "Вход 1",
-                        "task": "",
-                    },
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "uint8",
-                        "shape": (100,),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Timeseries,
-                    },
-                },
-            },
-            {
-                "alias": "flats",  #TODO
-                "name": "Квартиры",
-                "group": DatasetGroupChoice.terra,
-                "tags": [
-                    Tags.text,
-                    Tags.regression,
-                    Tags.russian,
-                    Tags.terra_ai,
-                ],
-                "encoding": {2: 'none'},
-                "task_type": {2: "Regression"},
-                "inputs": {
-                    1: {
-                        "datatype": "1D",
-                        "dtype": "float32",
-                        "shape": (),
-                        "name": "Вход 1",
-                        "task": "",
-                    },
-                },
-                "outputs": {
-                    2: {
-                        "datatype": "DIM",
-                        "dtype": "uint8",
-                        "shape": (),
-                        "name": "Выход 1",
-                        "task": LayerOutputTypeChoice.Regression,
-                    },
-                },
-            },
+            # {
+            #     "alias": "trading",  # TODO
+            #     "name": "Трейдинг",
+            #     "group": DatasetGroupChoice.terra,
+            #     "tags": [
+            #         Tags.trading,
+            #         Tags.timeseries,
+            #         Tags.terra_ai,
+            #     ],
+            #     "encoding": {2: "none"},
+            #     "task_type": {2: "Timeseries"},
+            #     "inputs": {
+            #         1: {
+            #             "datatype": "2D",
+            #             "dtype": "float32",
+            #             "shape": (),
+            #             "name": "Вход 1",
+            #             "task": "",
+            #         },
+            #     },
+            #     "outputs": {
+            #         2: {
+            #             "datatype": "DIM",
+            #             "dtype": "uint8",
+            #             "shape": (100,),
+            #             "name": "Выход 1",
+            #             "task": LayerOutputTypeChoice.Timeseries,
+            #         },
+            #     },
+            # },
+            # {
+            #     "alias": "flats",  # TODO
+            #     "name": "Квартиры",
+            #     "group": DatasetGroupChoice.terra,
+            #     "tags": [
+            #         Tags.text,
+            #         Tags.regression,
+            #         Tags.russian,
+            #         Tags.terra_ai,
+            #     ],
+            #     "encoding": {2: "none"},
+            #     "task_type": {2: "Regression"},
+            #     "inputs": {
+            #         1: {
+            #             "datatype": "1D",
+            #             "dtype": "float32",
+            #             "shape": (),
+            #             "name": "Вход 1",
+            #             "task": "",
+            #         },
+            #     },
+            #     "outputs": {
+            #         2: {
+            #             "datatype": "DIM",
+            #             "dtype": "uint8",
+            #             "shape": (),
+            #             "name": "Выход 1",
+            #             "task": LayerOutputTypeChoice.Regression,
+            #         },
+            #     },
+            # },
         ],
     },
     {

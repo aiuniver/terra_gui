@@ -3,7 +3,7 @@
     <table class="table">
       <tr class="table__title-row">
         <td>
-          <button class="table__reload-all">
+          <button class="table__reload-all" @click="ReloadAll">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
             <span>Перезагрузить все</span>
           </button>
@@ -22,7 +22,7 @@
       </tr>
       <tr>
         <td class="table__td-reload">
-          <button class="td-reload__btn-reload">
+          <button class="td-reload__btn-reload" @click="ReloadRow">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
@@ -40,7 +40,7 @@
       </tr>
        <tr>
         <td class="table__td-reload">
-          <button class="td-reload__btn-reload">
+          <button class="td-reload__btn-reload" @click="ReloadRow">
             <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
           </button>
         </td>
@@ -62,7 +62,15 @@
 
 <script>
 export default {
-  name: "Table"
+  name: "Table",
+  methods: {
+    ReloadRow(){
+      console.log("RELOAD_ROW")
+    },
+    ReloadAll(){
+      this.$emit("ReloadAll")
+    }
+  },
 }
 </script>
 
