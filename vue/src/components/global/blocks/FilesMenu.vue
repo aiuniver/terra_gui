@@ -21,7 +21,7 @@
             />
             <span v-else class="files-menu__title--empty" />
             <span v-if="node.children.length" class="icons files-menu__title--folder" />
-            <span v-else class="icons files-menu__title--file" />
+            <span v-else class="icons files-menu__title--file" :class="getFileTypeClass(node)" />
             <span
               class="files-menu__title--text"
               v-text="node.title"
@@ -115,6 +115,11 @@ export default {
     },
   },
   methods: {
+    getFileTypeClass(node) {
+      return {
+        [`icon-file-${node.type}`]: true
+      }
+    },
     dragstart({ dataTransfer }, { path, title, type, cover, table }) {
       // var img = document.createElement('img');
       // img.src = 'http://kr.org/images/hacker.png';
@@ -313,7 +318,7 @@ export default {
       width: 18px;
       height: 18px;
       margin-right: 8px;
-      background-image: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjE3IDBIMkMwLjkgMCAwIDAuOSAwIDJWMTZDMCAxNy4xIDAuOSAxOCAyIDE4SDE2QzE3LjEgMTggMTggMTcuMSAxOCAxNlY2LjgzQzE4IDYuMyAxNy43OSA1Ljc5IDE3LjQxIDUuNDJMMTIuNTggMC41OUMxMi4yMSAwLjIxIDExLjcgMCAxMS4xNyAwWk01IDEySDEzQzEzLjU1IDEyIDE0IDEyLjQ1IDE0IDEzQzE0IDEzLjU1IDEzLjU1IDE0IDEzIDE0SDVDNC40NSAxNCA0IDEzLjU1IDQgMTNDNCAxMi40NSA0LjQ1IDEyIDUgMTJaTTUgOEgxM0MxMy41NSA4IDE0IDguNDUgMTQgOUMxNCA5LjU1IDEzLjU1IDEwIDEzIDEwSDVDNC40NSAxMCA0IDkuNTUgNCA5QzQgOC40NSA0LjQ1IDggNSA4Wk01IDRIMTBDMTAuNTUgNCAxMSA0LjQ1IDExIDVDMTEgNS41NSAxMC41NSA2IDEwIDZINUM0LjQ1IDYgNCA1LjU1IDQgNUM0IDQuNDUgNC40NSA0IDUgNFoiIGZpbGw9IiNBN0JFRDMiLz4KPC9zdmc+Cg==);
+      background-size: contain;
     }
   }
 }
