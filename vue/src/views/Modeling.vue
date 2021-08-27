@@ -67,8 +67,11 @@ export default {
           title: 'Внимание!',
           content: 'Очистить модель?',
           width: 300,
-          callback: function () {
+          callback: function (action) {
             // this.$Message(action)
+            if(action == "confirm"){
+              console.log("DELETE MODEL")
+            }
           }
         })
       }

@@ -1,16 +1,19 @@
 <template>
   <div class="board">
-    <div class="wrapper">Сей
+    <div class="wrapper">
       <div class="content">
-<!--        <button class="board__reload-all">-->
-<!--          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>-->
-<!--          <span>Перезагрузить все</span>-->
-<!--        </button>-->
-        <div class="board__data-field">
+        <button class="board__reload-all" v-if="Cards[0].type != 'table'" @click="ReloadAll">
+          <i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i>
+          <span>Перезагрузить все</span>
+        </button>
+        <div class="board__data-field" v-if="Cards[0].type != 'table'">
           <div class="board__title">Исходные данные / Предсказанные данные</div>
           <div class="board__data">
-            <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card"/>
+            <IndexCard v-for="(card, i) in Cards" :key="'card-'+i" v-bind="card" />
           </div>
+        </div>
+        <div class="board__table" v-else>
+          <Table @ReloadAll="ReloadAll"/>
         </div>
       </div>
     </div>
@@ -20,9 +23,11 @@
 <script>
 import { mapGetters } from "vuex";
 import IndexCard from "./IndexCard";
+import Table from "./Table";
 export default {
   components: {
-    IndexCard
+    IndexCard,
+    Table,
   },
   data: () => ({}),
   computed: {
@@ -35,7 +40,10 @@ export default {
   methods: {
     click(dataset){
       console.log(dataset)
-    }
+    },
+    ReloadAll(){
+      console.log("RELOAD_DATA")
+    },
   },
 };
 </script>

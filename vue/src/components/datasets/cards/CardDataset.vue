@@ -13,7 +13,7 @@
 
       <div :class="'card-extra ' + (dataset.size ? 'is-custom' : '')">
         <div class="wrapper">
-          <span>{{ dataset.size ? dataset.size : 'Предустановленный' }}</span>
+          <span>{{ dataset.size ? dataset.size.short.toFixed(2) + " " + dataset.size.unit : 'Предустановленный' }}</span>
         </div>
         <div class="remove"></div>
       </div>

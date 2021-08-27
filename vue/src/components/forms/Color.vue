@@ -1,31 +1,42 @@
 <template>
-  <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">
-      <slot>{{ label }}</slot>
-    </label>
+  <div :class="['t-field', { 't-color': inline }]">
+    <div class="t-field__wrapper">
+      <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">
+        <slot>{{ label }}</slot>
+      </label>
 
-    <div class="t-field__content">
-      <input
-        v-model="input"
-        :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-        :type="type"
-        :name="name || parse"
-        :value="value"
-        :disabled="disabled"
-        :data-degree="degree"
-        :autocomplete="'off'"
-        @blur="change"
-        @focus="focus"
-      />
-
-      <div class="t-field__box" :style="{ background: value }"></div>
+      <div class="t-field__content">
+        <input
+          v-model="input"
+          :class="['t-field__input', { small: small }, { 't-field__error': error }]"
+          :type="type"
+          :name="name || parse"
+          :value="value"
+          :disabled="disabled"
+          :data-degree="degree"
+          :autocomplete="'off'"
+          @blur="change"
+          @focus="focus"
+        />
+        <div class="t-field__box" :style="{ background: input }" @click="pickerShow = !pickerShow"></div>
+      </div>
     </div>
+    <transition name="fade">
+      <div class="t-field__color-picker" v-if="pickerShow">
+        <ColorPicker :width="200" :height="200" :disabled="false" startColor="#ff0000" @colorChange="onColorChange"></ColorPicker>
+      </div>
+    </transition>
   </div>
 </template>
 
 <script>
+import ColorPicker from 'vue-color-picker-wheel';
+
 export default {
   name: 't-color',
+  components: {
+    ColorPicker
+  },
   props: {
     label: {
       type: String,
@@ -48,9 +59,11 @@ export default {
   },
   data: () => ({
     isChange: false,
+    pickerShow: false,
+    input: "#FFFFFF"
   }),
   computed: {
-    input: {
+/*    input: {
       set(value) {
         this.$emit('input', value);
         this.isChange = true;
@@ -58,7 +71,7 @@ export default {
       get() {
         return this.value;
       },
-    },
+    },*/
   },
   methods: {
     focus(e) {
@@ -75,6 +88,10 @@ export default {
         this.isChange = false;
       }
     },
+    onColorChange(color) {
+      this.input = color.toUpperCase();
+      console.log("asdasdas     ", this.input)
+    }
   },
 };
 </script>
@@ -93,6 +110,16 @@ export default {
     top: 50%;
     transform: translateY(-50%);
     border-radius: 2px;
+  }
+  &__color-picker{
+    background-color: #1B2A3F;
+    border-radius: 4px;
+    border: 1px solid #6C7883;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
   }
   // margin-bottom: 20px;
   &__label {
@@ -126,15 +153,13 @@ export default {
   &__input.small {
     height: 24px;
   }
-}
-.t-inline {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  -webkit-box-pack: end;
-  margin-bottom: 10px;
-  // align-items: center;
-  .t-field__label {
+  &__wrapper{
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    -webkit-box-pack: end;
+    margin-bottom: 10px;
+      .t-field__label {
     width: 150px;
     max-width: 130px;
     padding: 3px 0 0 10px;
@@ -151,5 +176,21 @@ export default {
     line-height: 24px;
     width: 100px;
   }
+  }
+}
+.t-color {
+  display: flex;
+  flex-direction: column;
+  // align-items: center;
+}
+slide-fade-enter-active {
+  transition: all .3s ease;
+}
+.slide-fade-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+}
+.slide-fade-enter, .slide-fade-leave-to{
+  transform: translateX(10px);
+  opacity: 0;
 }
 </style>
