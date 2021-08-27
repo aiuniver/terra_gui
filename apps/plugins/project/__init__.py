@@ -112,6 +112,9 @@ class Project(BaseMixinData):
         if not self.model.inputs or not self.model.outputs:
             self.model = dataset.model
 
+    def set_model(self, model: ModelDetailsData):
+        print(model)
+
 
 data_path = DataPathData(**DATA_PATH)
 
