@@ -118,6 +118,9 @@ export default {
       }
     },
   },
+  mounted() {
+    console.log(this.output)
+  }
 };
 </script>
 
