@@ -1,9 +1,16 @@
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path
+from apps.plugins.project import exceptions as project_exceptions
+
 from terra_ai.agent import agent_exchange
 
-from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
+from ..base import (
+    BaseAPIView,
+    BaseResponseSuccess,
+    BaseResponseErrorFields,
+    BaseResponseErrorGeneral,
+)
 from .serializers import ModelGetSerializer
 
 
@@ -25,10 +32,12 @@ class LoadAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            request.project.model = agent_exchange(
-                "model_get", **serializer.validated_data
+            request.project.set_model(
+                agent_exchange("model_get", **serializer.validated_data)
             )
             return BaseResponseSuccess(request.project.model.native())
+        except project_exceptions.ProjectException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
