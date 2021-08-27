@@ -20,7 +20,7 @@
         <div class="table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
       </div>
     </div>
-    <div class="table__footer"><span>Папка с картинками</span></div>
+    <div class="table__footer"><span>Список файлов</span></div>
   </div>
 </template>
 
