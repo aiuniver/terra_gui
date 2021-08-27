@@ -87,7 +87,7 @@ class ModelDetailsData(AliasMixinData):
     "Название модели: `Распознавание автомобилей`"
     image: Optional[Base64Type]
     "Изображение схемы модели в `base64`"
-    layers: Optional[LayersList]
+    layers: LayersList = []
     "Список слоев"
     references: BlocksList = BlocksList()
     "Списки блоков, используемых в модели"

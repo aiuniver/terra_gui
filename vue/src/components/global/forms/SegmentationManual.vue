@@ -2,7 +2,7 @@
   <div>
     <t-input
       v-model="qty"
-      label="Кол. групп"
+      label="Количество классов"
       type="number"
       name="classes"
       inline
@@ -10,7 +10,7 @@
     />
     <template v-for="item, i of +qty">
       <t-input
-        :value="'Новый ' + (i + 1)"
+        :value="''"
         label="Название класса"
         type="text"
         name="classes_names"
@@ -19,7 +19,7 @@
         inline
         @change="change"
       />
-      <Color :value="'#FFFFFF'" label="Цвет" :key="'classes_colors_' + i" inline />
+      <Color :value="''" label="Цвет" :key="'classes_colors_' + i" inline />
     </template>
   </div>
 </template>

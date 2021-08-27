@@ -1,26 +1,17 @@
 <template>
-  <div
-    class="vue-block"
-    :style="style"
-    @mouseover="hover = true"
-    @mouseleave="hover = false"
-  >
+  <div class="vue-block" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['header', group, { selected: selected }]">
       <div class="title" :title="name">{{ name }}: {{ type }}</div>
       <div class="parametr" :title="parameters">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div
-      v-if="group.indexOf('middle') === -1"
-      v-show="hover || selected"
-      class="hover-over"
-    >
-      <i class="t-icon icon-modeling-link"></i>
+    <div v-if="group.includes('middle')" v-show="hover || selected" class="hover-over">
+      <!-- <i class="t-icon icon-modeling-link"></i> -->
       <i class="t-icon icon-modeling-link-remove"></i>
     </div>
     <div v-else v-show="hover || selected" class="hover-sloy">
-      <i class="t-icon icon-modeling-link"></i>
-      <i class="t-icon icon-modeling-link-remove"></i>
+      <!-- <i class="t-icon icon-modeling-link"></i> -->
+      <i class="t-icon icon-modeling-link-remove" ></i>
       <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
@@ -47,10 +38,10 @@
 
 <script>
 export default {
-  name: "VueBlock",
+  name: 'VueBlock',
   props: {
     id: {
-      type: Number
+      type: Number,
     },
     name: {
       type: String,
@@ -62,20 +53,20 @@ export default {
       type: Array,
       default: () => [],
       validator: function (arr) {
-        return (typeof arr[0] === "number") && (typeof arr[1] === "number");
+        return typeof arr[0] === 'number' && typeof arr[1] === 'number';
       },
     },
     selected: Boolean,
     type: String,
     title: {
       type: String,
-      default: "Title",
+      default: 'Title',
     },
     inputs: Array,
     outputs: Array,
     parameters: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
     options: {
       type: Object,
@@ -84,7 +75,7 @@ export default {
   data: () => ({
     hover: false,
     hasDragged: false,
-    typeLink: ["bottom", "right", "left"],
+    typeLink: ['bottom', 'right', 'left'],
   }),
   created() {
     this.mouseX = 0;
@@ -97,34 +88,14 @@ export default {
     this.dragging = false;
   },
   mounted() {
-    document.documentElement.addEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.addEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.addEventListener("mouseup", this.handleUp, true);
+    document.documentElement.addEventListener('mousemove', this.handleMove, true);
+    document.documentElement.addEventListener('mousedown', this.handleDown, true);
+    document.documentElement.addEventListener('mouseup', this.handleUp, true);
   },
   beforeDestroy() {
-    document.documentElement.removeEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mouseup",
-      this.handleUp,
-      true
-    );
+    document.documentElement.removeEventListener('mousemove', this.handleMove, true);
+    document.documentElement.removeEventListener('mousedown', this.handleDown, true);
+    document.documentElement.removeEventListener('mouseup', this.handleUp, true);
   },
   methods: {
     handleMove(e) {
@@ -152,10 +123,9 @@ export default {
 
       const target = e.target || e.srcElement;
       if (this.$el.contains(target) && e.which === 1) {
-
         this.dragging = true;
 
-        this.$emit("select");
+        this.$emit('select');
         if (e.preventDefault) e.preventDefault();
       }
     },
@@ -164,7 +134,7 @@ export default {
         this.dragging = false;
 
         if (this.hasDragged) {
-          this.$emit('moveBlock')
+          this.$emit('moveBlock');
           this.save();
           this.hasDragged = false;
         }
@@ -178,39 +148,39 @@ export default {
     slotMouseDown(e, index) {
       this.linking = true;
 
-      this.$emit("linkingStart", index);
+      this.$emit('linkingStart', index);
       if (e.preventDefault) e.preventDefault();
     },
     slotMouseUp(e, index) {
-      this.$emit("linkingStop", index);
+      this.$emit('linkingStop', index);
       if (e.preventDefault) e.preventDefault();
     },
     slotBreak(e, index) {
       this.linking = true;
 
-      this.$emit("linkingBreak", index);
+      this.$emit('linkingBreak', index);
       if (e.preventDefault) e.preventDefault();
     },
     save() {
-      this.$emit("update");
+      this.$emit('update');
     },
     deleteBlock() {
-      this.$emit("delete");
+      this.$emit('delete');
     },
     moveWithDiff(diffX, diffY) {
       let left = this.position[0] + diffX / this.options.scale;
       let top = this.position[1] + diffY / this.options.scale;
-      this.$emit("position", [left, top]);
+      this.$emit('position', [left, top]);
     },
   },
   computed: {
     style() {
       return {
-        left: this.options.center.x + this.position[0] * this.options.scale + "px",
-        top: this.options.center.y + this.position[1] * this.options.scale + "px",
-        width: this.options.width + "px",
-        transform: "scale(" + (this.options.scale + "") + ")",
-        transformOrigin: "top left",
+        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
+        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
+        width: this.options.width + 'px',
+        transform: 'scale(' + (this.options.scale + '') + ')',
+        transformOrigin: 'top left',
       };
     },
   },
@@ -247,13 +217,15 @@ $circleConnectedColor: #569dcf;
   .hover-over {
     position: absolute;
     top: 0px;
-    right: -68px;
+    right: -40px;
     height: 48px;
+    width: 40px;
     background-color: #294c6f;
     border-radius: 5px;
-    // width: 70px;
-    padding: 10px 0px;
     cursor: context-menu;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     > i {
       display: inline-flex;
       font-size: 1.5em;
@@ -264,13 +236,15 @@ $circleConnectedColor: #569dcf;
   .hover-sloy {
     position: absolute;
     top: 0px;
-    right: -101px;
+    right: -80px;
     height: 48px;
+    width: 80px;
     background-color: #294c6f;
     border-radius: 5px;
-    // width: 70px;
-    padding: 10px 0px;
     cursor: context-menu;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
     > i {
       display: inline-flex;
       font-size: 1.5em;
@@ -286,16 +260,17 @@ $circleConnectedColor: #569dcf;
     border-radius: 5px;
     color: #000;
     font-size: 0.9em;
-    &:hover, &.selected {
+    &:hover,
+    &.selected {
       color: #fff;
-     .parametr {
-      color: #3098e7;
-    }
+      .parametr {
+        color: #3098e7;
+      }
     }
 
     .title {
       white-space: nowrap;
-      overflow: hidden; 
+      overflow: hidden;
       text-overflow: ellipsis;
     }
     .parametr {

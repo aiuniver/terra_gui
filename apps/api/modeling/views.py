@@ -28,7 +28,6 @@ class LoadAPIView(BaseAPIView):
             request.project.model = agent_exchange(
                 "model_get", **serializer.validated_data
             )
-            request.project.save()
             return BaseResponseSuccess(request.project.model.native())
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -47,7 +46,6 @@ class UpdateAPIView(BaseAPIView):
             request.project.model = agent_exchange(
                 "model_update", model=request.project.model.native(), **request.data
             )
-            request.project.save()
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
@@ -59,7 +57,6 @@ class LayerSaveAPIView(BaseAPIView):
             request.project.model = agent_exchange(
                 "model_layer_save", model=request.project.model.native(), **request.data
             )
-            request.project.save()
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
