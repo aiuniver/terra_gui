@@ -543,7 +543,7 @@ class ModelValidator:
         if self.valid:
             self.compile_keras_code()
         else:
-            self.keras_code = 'Model is not valid. Please correct the model structure'
+            self.keras_code = None
 
         for idx, layer in enumerate(self.model.details.layers):
             if layer.group == LayerGroupChoice.input:
