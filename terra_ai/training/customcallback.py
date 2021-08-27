@@ -635,7 +635,7 @@ class InteractiveCallback:
         return class_idx
 
     def _get_seed(self):
-
+        pass
 
     def update_state(self, current_epoch, current_weights):
         self.current_epoch = current_epoch
@@ -860,7 +860,8 @@ class InteractiveCallback:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None):
+    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
+                 save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
         self.Exch = exchange
         self.DTS = dataset
@@ -878,6 +879,25 @@ class FitCallback(keras.callbacks.Callback):
         self.retrain_flag = False
         self.stop_flag = False
         self.retrain_epochs = 0
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
+
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}"
+        )
+        self.model.save(file_path_model)
+        self.Exch.print_2status_bar(
+            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
+        )
+        pass
 
     def _estimate_step(self, current, start, now):
         if current:
@@ -963,6 +983,7 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+        self.save_lastmodel()
         self.Exch.show_current_epoch(logs)
         self.Exch.show_current_epoch(self.last_epoch)
         self.Exch.show_current_weigths(self.model.get_weights())
