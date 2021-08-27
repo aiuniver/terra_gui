@@ -23,7 +23,6 @@
          v-model="save"
          width="400"
          :maskClosable="false"
-         :showClose="true"
        >
          <div slot="header" style="text-align: center">
            <span>Сохранить проект</span>
