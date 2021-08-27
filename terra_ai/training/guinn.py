@@ -70,10 +70,10 @@ class GUINN:
         self.set_optimizer(params)
         self.set_chp_monitor(params)
         for output_layer in params.architecture.outputs_dict:
-            self.metrics.update({output_layer["id"]: list(map(lambda item:
+            self.metrics.update({str(output_layer["id"]): list(map(lambda item:
                                                               getattr(sys.modules.get("tensorflow.keras.metrics"),
                                                                       item)(), output_layer["metrics"]))})
-            self.loss.update({output_layer["id"]: output_layer["loss"]})
+            self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
     def _set_callbacks(self, dataset: object, batch_size: int, epochs: int, checkpoint: dict) -> None:
         print(('Добавление колбэков', '...'))
@@ -116,33 +116,33 @@ class GUINN:
             if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
                 else:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
             else:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
                 else:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
         else:
             if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
-                        if output.alias == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'{output.metrics[0].value}'
                 else:
                     self.chp_monitor = 'loss'
             else:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
-                        if output.id == params.architecture.parameters.checkpoint.layer:
+                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
                             self.chp_monitor = f'val_{output.metrics[0].value}'
                 else:
                     self.chp_monitor = 'val_loss'
@@ -268,6 +268,8 @@ class GUINN:
     def basemodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
+        print(self.loss)
+        print(self.metrics)
         self.model.compile(loss=self.loss,
                            optimizer='adam', #self.optimizer,
                            metrics=self.metrics
@@ -279,13 +281,12 @@ class GUINN:
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         print(('Начало обучения', '...'))
-        print(self.dataset.dataset.get('train'))
 
         self.history = self.model.fit(
-            self.dataset.dataset.get('train'),
+            self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val'),
+            validation_data=self.dataset.dataset.get('val').batch(self.batch_size, drop_remainder=True).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks

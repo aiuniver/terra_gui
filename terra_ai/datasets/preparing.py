@@ -230,13 +230,15 @@ class PrepareDTS(object):
 
             for sample in os.listdir(self.data.paths.arrays):
                 for index in self.data.inputs.keys():
-                    self.X[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
+                    put_name = f"{index}"
+                    self.X[sample][put_name] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
                 for index, data in self.data.outputs.items():
+                    put_name = f"{index}"
                     if data.task == 'ObjectDetection':
                         for i in range(6):
-                            self.Y[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
+                            self.Y[sample][put_name] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
                     else:
-                        self.Y[sample][index] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
+                        self.Y[sample][put_name] = joblib.load(os.path.join(self.data.paths.arrays, sample, f'{index}.gz'))
 
             pass
 
@@ -285,33 +287,33 @@ class PrepareDTS(object):
                 num_inputs = len(self.data.inputs)
                 num_outputs = len(self.data.outputs)
                 self.dataset['train'] = Dataset.from_generator(self.train_generator,
-                                                               output_shapes=({f"input_{str(x)}": self.data.inputs[x].shape for x in
+                                                               output_shapes=({str(x): self.data.inputs[x].shape for x in
                                                                                range(1, num_inputs+1)},
-                                                                              {f"output_{str(x)}": self.data.outputs[x].shape for x in
+                                                                              {str(x): self.data.outputs[x].shape for x in
                                                                                range(num_inputs + 1, num_outputs + 2)}),
-                                                               output_types=({f"input_{str(x)}": self.data.inputs[x].dtype for x in
+                                                               output_types=({str(x): self.data.inputs[x].dtype for x in
                                                                               range(1, num_inputs + 1)},
-                                                                             {f"output_{str(x)}": self.data.outputs[x].dtype for x in
+                                                                             {str(x): self.data.outputs[x].dtype for x in
                                                                               range(num_inputs + 1, num_outputs + 2)})
                                                                )
                 self.dataset['val'] = Dataset.from_generator(self.val_generator,
-                                                             output_shapes=({x: self.data.inputs[x].shape for x in
+                                                             output_shapes=({str(x): self.data.inputs[x].shape for x in
                                                                              range(1, num_inputs + 1)},
-                                                                            {x: self.data.outputs[x].shape for x in
+                                                                            {str(x): self.data.outputs[x].shape for x in
                                                                              range(num_inputs + 1, num_outputs + 2)}),
-                                                             output_types=({x: self.data.inputs[x].dtype for x in
+                                                             output_types=({str(x): self.data.inputs[x].dtype for x in
                                                                             range(1, num_inputs + 1)},
-                                                                           {x: self.data.outputs[x].dtype for x in
+                                                                           {str(x): self.data.outputs[x].dtype for x in
                                                                             range(num_inputs + 1, num_outputs + 2)})
                                                              )
                 self.dataset['test'] = Dataset.from_generator(self.test_generator,
-                                                              output_shapes=({x: self.data.inputs[x].shape for x in
+                                                              output_shapes=({str(x): self.data.inputs[x].shape for x in
                                                                               range(1, num_inputs + 1)},
-                                                                             {x: self.data.outputs[x].shape for x in
+                                                                             {str(x): self.data.outputs[x].shape for x in
                                                                               range(num_inputs + 1, num_outputs + 2)}),
-                                                              output_types=({x: self.data.inputs[x].dtype for x in
+                                                              output_types=({str(x): self.data.inputs[x].dtype for x in
                                                                              range(1, num_inputs + 1)},
-                                                                            {x: self.data.outputs[x].dtype for x in
+                                                                            {str(x): self.data.outputs[x].dtype for x in
                                                                              range(num_inputs + 1, num_outputs + 2)})
                                                               )
             else:

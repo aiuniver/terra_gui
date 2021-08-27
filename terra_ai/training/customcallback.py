@@ -932,14 +932,14 @@ class FitCallback(keras.callbacks.Callback):
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-        stop = self.Exch.get_stop_training_flag()
+        stop = False
         if stop:
             self.model.stop_training = True
             self.stop_training = True
             self.stop_flag = True
             msg = f'ожидайте остановку...'
             self.batch += 1
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
+            print(('Обучение остановлено пользователем', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.last_epoch + 1}/{self.epochs}:' \
@@ -962,7 +962,7 @@ class FitCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(time_start)}, '
             self.batch += 1
-            self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
+            print(('Прогресс обучения', msg_progress_start +
                                          msg_progress_end + msg_epoch + msg_batch))
 
     def on_epoch_end(self, epoch, logs=None):
@@ -970,9 +970,9 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        self.Exch.show_current_epoch(logs)
-        self.Exch.show_current_epoch(self.last_epoch)
-        self.Exch.show_current_weigths(self.model.get_weights())
+        print(logs)
+        print(self.last_epoch)
+        print(self.model.get_weights())
         self.last_epoch += 1
         # self.Exch.last_epoch_model(self.model)
 
@@ -983,8 +983,8 @@ class FitCallback(keras.callbacks.Callback):
         self._sum_time += time_end
         if self.model.stop_training:
             msg = f'Модель сохранена.'
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем!', msg))
-            self.Exch.out_data['stop_flag'] = True
+            print(('Обучение остановлено пользователем!', msg))
+            # self.Exch.out_data['stop_flag'] = True
         else:
             if self.retrain_flag:
                 msg = f'Затрачено времени на обучение: ' \
@@ -992,7 +992,7 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 msg = f'Затрачено времени на обучение: ' \
                       f'{self.eta_format(self._sum_time)} '
-            self.Exch.show_text_data(msg)
+            print(msg)
 
 
 # class BaseCallback:
