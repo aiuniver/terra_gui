@@ -8,7 +8,7 @@
         <DatasetButton />
       </div>
       <div class="params__items--item pa-0">
-        <DatasetTab v-model="tab" @select="select" />
+        <DatasetTab v-model="tab" @input="saveSet" @select="select" />
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
@@ -33,6 +33,7 @@ export default {
     tab: 'GoogleDrive',
     loading: false,
     dataset: {},
+    prevSet: '',
     interval: null,
     inputs: 1,
     outputs: 1,
@@ -46,7 +47,9 @@ export default {
       settings: 'datasets/getSettings',
     }),
     disabled() {
-      if (Object.keys(this.dataset).length === 0) {
+      if (Object.keys(this.dataset).length === 0 && this.dataset.mode === 'GoogleDrive') {
+        return true;
+      } else if (!this.dataset.value?.value && this.dataset.mode === 'URL') {
         return true;
       } else {
         return this.tab !== this.dataset.mode;
@@ -87,8 +90,11 @@ export default {
         // console.log(data);
       }, 1000);
     },
+    saveSet() {
+      if (this.dataset.mode === 'GoogleDrive') this.prevSet = this.dataset
+      if (this.dataset.mode === 'URL') this.dataset = this.prevSet
+    },
     select(select) {
-      // console.log(select);
       this.dataset = select;
     },
     openFull() {
