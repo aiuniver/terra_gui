@@ -1,5 +1,7 @@
 import os
 import json
+import shutil
+
 import tensorflow
 
 from typing import Any
@@ -81,6 +83,15 @@ class Exchange:
         Прогресс выбора датасета
         """
         return progress.pool(progress.PoolName.dataset_choice)
+
+    def _call_dataset_delete(self, path: str, group: str, alias: str):
+        """
+        Удаление датасета
+        """
+        if group == DatasetGroupChoice.custom:
+            shutil.rmtree(
+                Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
+            )
 
     def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """

@@ -14,7 +14,8 @@
                     :key="key"
                     :cardIndex="key"
                     :loaded="loaded == key ? true : false"
-                    @clickCard="click"
+                    @click="click"
+                    @remove="remove"
                   />
                 </template>
               </div>
@@ -52,11 +53,24 @@ export default {
   },
   methods: {
     click(dataset, key){
+      console.log(dataset, key)
       this.$store.dispatch('datasets/setSelect', dataset);
       this.$store.dispatch('datasets/setSelectedIndex', key);
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
       // this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${dataset.name}»`})
     },
+    async remove({ name, alias, group }) {
+      try {
+        await this.$Modal.confirm({
+          title: 'Внимание!',
+          content: `Удалить датасет ${name}?`,
+          width: 300,
+        })
+        await this.$store.dispatch('datasets/deleteDataset', { alias, group })
+      } catch (error) {
+        console.log(error)        
+      }
+    }
   },
 };
 </script>

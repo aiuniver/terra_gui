@@ -44,7 +44,7 @@ export default {
         title: "Предупреждение!",
         width: 300,
         content: `Для ${text[this.$route.path]} необходимо загрузить датасет.`,
-        showClose: false,
+        // showClose: false,
         okText: "Загрузить датасет",
         callback: function () {
           if (self.$route.path !== '/datasets') {

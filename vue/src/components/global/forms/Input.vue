@@ -65,7 +65,6 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
@@ -85,7 +84,7 @@ export default {
     color: #a7bed3;
     display: block;
     padding-bottom: 10px;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     // text-overflow: ellipsis;
     // white-space: nowrap;

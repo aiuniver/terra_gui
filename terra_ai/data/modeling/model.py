@@ -9,8 +9,8 @@ from pydantic.types import PositiveInt
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
-from .layer import LayersList, LayerBindData
-from .extra import LayerBindPositionChoice
+from .layer import LayersList
+from .extra import LayerBindPositionChoice, LayerGroupChoice
 
 
 class LinkData(BaseMixinData):
@@ -87,10 +87,34 @@ class ModelDetailsData(AliasMixinData):
     "Название модели: `Распознавание автомобилей`"
     image: Optional[Base64Type]
     "Изображение схемы модели в `base64`"
-    layers: Optional[LayersList]
+    layers: LayersList = []
     "Список слоев"
     references: BlocksList = BlocksList()
     "Списки блоков, используемых в модели"
+
+    @property
+    def inputs(self) -> LayersList:
+        layers = LayersList()
+        for layer in self.layers:
+            if layer.group == LayerGroupChoice.input:
+                layers.append(layer)
+        return layers
+
+    @property
+    def middles(self) -> LayersList:
+        layers = LayersList()
+        for layer in self.layers:
+            if layer.group == LayerGroupChoice.middle:
+                layers.append(layer)
+        return layers
+
+    @property
+    def outputs(self) -> LayersList:
+        layers = LayersList()
+        for layer in self.layers:
+            if layer.group == LayerGroupChoice.output:
+                layers.append(layer)
+        return layers
 
 
 class ModelData(AliasMixinData):

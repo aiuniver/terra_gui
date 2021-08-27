@@ -14,18 +14,17 @@
     <div class="card__graphic" v-if="type == 'graphic'">
        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
-    <div class="card__table" v-if="type == 'table'">
-      <Table/>
-    </div>
+<!--    <div class="card__table" v-if="type == 'table'">-->
+<!--      <Table/>-->
+<!--    </div>-->
   </div>
-  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
+  <div class="card__reload" v-if="type != 'table'"><button class="btn-reload" @click="ReloadCard"><i :class="['t-icon', 'icon-deploy-reload']" :title="'reload'"></i></button></div>
 </div>
 </template>
 
 <script>
 import ImgCard from "./cards/ImgCard";
 import TextCard from "./cards/TextCard";
-import Table from "./Table";
 import { Plotly } from "vue-plotly";
 import {mapGetters} from "vuex";
 export default {
@@ -33,7 +32,6 @@ export default {
   components: {
     ImgCard,
     TextCard,
-    Table,
     Plotly,
   },
   data: () => ({
@@ -54,6 +52,11 @@ export default {
   },
   mounted() {
     console.log(this.graphicData)
+  },
+  methods: {
+    ReloadCard(){
+      console.log("RELOAD_CARD")
+    }
   },
   computed: {
     ...mapGetters({

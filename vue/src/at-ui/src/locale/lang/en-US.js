@@ -5,8 +5,8 @@ export default {
       notFoundText: 'No matching data'
     },
     modal: {
-      okText: 'OK',
-      cancelText: 'Cancel'
+      okText: 'ОК',
+      cancelText: 'Отмена'
     },
     pagination: {
       prevText: 'Previous Page',
@@ -21,7 +21,7 @@ export default {
       next5Text: 'Next 5 Pages'
     },
     table: {
-      emptyText: 'No data'
+      emptyText: 'Нет данных'
     }
   }
 }

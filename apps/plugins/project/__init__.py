@@ -17,6 +17,8 @@ from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
 
+from . import exceptions
+
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -100,6 +102,15 @@ class Project(BaseMixinData):
     def save(self):
         with open(project_path.config, "w") as config_ref:
             json.dump(json.loads(self.json()), config_ref)
+
+    def set_dataset(self, dataset: DatasetData):
+        self.dataset = dataset
+        if self.model.inputs and len(self.model.inputs) != len(dataset.model.inputs):
+            raise exceptions.DatasetModelInputsCountNotMatchException()
+        if self.model.outputs and len(self.model.outputs) != len(dataset.model.outputs):
+            raise exceptions.DatasetModelOutputsCountNotMatchException()
+        if not self.model.inputs or not self.model.outputs:
+            self.model = dataset.model
 
 
 data_path = DataPathData(**DATA_PATH)

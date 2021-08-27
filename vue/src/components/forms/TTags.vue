@@ -17,7 +17,7 @@
           :key="'tag_' + i"
           :value="value"
           :data-index="i"
-          name="[tags][]"
+          name="[tags][][name]"
           type="text"
           :class="['tags__item']"
           :style="{ width: (value.length + 1) * 8 + 'px' }"
@@ -87,7 +87,7 @@ export default {
     color: #a7bed3;
     display: block;
     padding-bottom: 10px;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;

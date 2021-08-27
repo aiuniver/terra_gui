@@ -130,7 +130,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;

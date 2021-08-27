@@ -21,4 +21,5 @@ urlpatterns = [
     ),
     path("source/load/", views.SourceLoadAPIView.as_view(), name="source_load"),
     path("sources/", views.SourcesAPIView.as_view(), name="sources"),
+    path("delete/", views.DeleteAPIView.as_view(), name="delete"),
 ]

@@ -262,3 +262,8 @@ class CreateSerializer(serializers.Serializer):
         if _errors:
             raise serializers.ValidationError(_errors)
         return value
+
+
+class DeleteSerializer(serializers.Serializer):
+    group = serializers.CharField()
+    alias = serializers.CharField()
