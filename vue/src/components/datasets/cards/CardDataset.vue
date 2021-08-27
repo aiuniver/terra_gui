@@ -15,7 +15,7 @@
         <div class="wrapper">
           <span>
             {{
-              dataset.size && isFinite(dataset.size) && dataset.size === parseInt(dataset.size, 10)
+              dataset.size && dataset.size?.short && dataset.size?.unit
                 ? dataset.size.short.toFixed(2) + ' ' + dataset.size.unit
                 : 'Предустановленный'
             }}
