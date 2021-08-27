@@ -75,6 +75,7 @@ export default {
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
+            this.$store.dispatch('datasets/clearInputData');
             this.$store.dispatch('messages/setProgressMessage', '');
             this.$store.dispatch('messages/setProgress', 0);
             this.loading = false;

@@ -102,7 +102,7 @@ export default {
   &__label {
     width: 150px;
     max-width: 130px;
-    padding: 3px 0 0 10px;
+    padding: 6px 0 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

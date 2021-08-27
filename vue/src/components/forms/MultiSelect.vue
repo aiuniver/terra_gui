@@ -82,7 +82,7 @@ export default {
     click() {
       this.show = true;
       if (this.error) {
-        console.log(this.id, this.name);
+        // console.log(this.id, this.name);
         this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
       }
     },
@@ -108,8 +108,8 @@ export default {
     },
   },
   created() {
-    console.log(this.value);
-    console.log(this.filterList.filter(item => item));
+    // console.log(this.value);
+    // console.log(this.filterList.filter(item => item));
     const value = this.value;
     if (Array.isArray(value)) {
       this.selected = this.filterList.filter(item => value.includes(item.value));
