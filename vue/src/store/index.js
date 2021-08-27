@@ -20,6 +20,7 @@ export default {
   },
   actions: {
     async axios( { dispatch } , config ) {
+      dispatch('messages/setMessage', { mesage: '' })
       Vue.prototype.$Loading.start()
       try {
         Vue.prototype.$Loading.start()
