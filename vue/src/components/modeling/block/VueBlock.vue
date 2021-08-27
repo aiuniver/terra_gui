@@ -5,7 +5,7 @@
       <div class="parametr" :title="parameters">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div v-if="group.includes('middle')" v-show="hover || selected" class="hover-over">
+    <div v-if="!group.includes('middle')" v-show="hover || selected" class="hover-over">
       <!-- <i class="t-icon icon-modeling-link"></i> -->
       <i class="t-icon icon-modeling-link-remove"></i>
     </div>

@@ -33,7 +33,8 @@ export default {
       commit('SET_PROGRESS_MESSAGE', message);
     },
     setProgress({ commit }, progress) {
-      commit('SET_PROGRESS', progress);
+      console.log(progress)
+      commit('SET_PROGRESS', ~~progress);
     },
   },
   getters: {

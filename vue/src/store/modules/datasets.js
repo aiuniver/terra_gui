@@ -60,20 +60,24 @@ export default {
   },
   actions: {
     async createDataset({ commit, dispatch, state: { inputData, sourcePath } }, data) {
+      commit("settings/SET_OVERLAY", true, { root: true });
       const newDataset = data
       const inputs = inputData.filter(item => item.layer === 'input')
       const outputs = inputData.filter(item => item.layer === 'output')
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
-      // console.log(newDataset)
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       if (res?.error) {
         const { error: { fields: { inputs, outputs } } } = res
-        // console.log({ ...inputs, ...outputs })
         commit('SET_ERRORS', { ...inputs, ...outputs })
-
+      } else {
+        commit('SET_INPUT_DATA', [] );
+        commit('SET_FILES_DROP', []);
+        commit('SET_ERRORS', {});
+        dispatch('get')
       }
+      commit("settings/SET_OVERLAY", false, { root: true });
       return res
     },
     async choice({ dispatch }, dataset) {
