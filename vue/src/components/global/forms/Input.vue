@@ -65,7 +65,6 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
