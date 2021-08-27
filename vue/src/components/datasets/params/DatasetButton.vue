@@ -41,12 +41,12 @@ export default {
           } else {
             if (error) {
               this.$store.dispatch('messages/setMessage', { error });
+              this.$store.dispatch('messages/setProgressMessage', '');
               this.$store.dispatch('messages/setProgress', 0);
+              this.loading = false;
               return;
             }
-            this.$store.dispatch('messages/setProgress', 0);
             this.createInterval();
-
           }
         }
         console.log(data);

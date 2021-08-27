@@ -70,9 +70,14 @@ export default {
         const { data } = await this.$store.dispatch('datasets/loadProgress', {});
         console.log(data)
         if (data) {
-          const { finished, message, percent } = data;
+          const { finished, message, percent, error } = data;
+          console.log(percent)
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
+          if (error) {
+            this.loading = false;
+            return;
+          }
           if (finished) {
             const { data: { file_manager, source_path } } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
