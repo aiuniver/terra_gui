@@ -51,7 +51,7 @@ export default {
     error: String,
   },
   data: () => ({
-    qty: 2,
+    qty: 0,
     loading: false,
     model: {
       classes_names: [],

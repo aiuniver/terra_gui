@@ -5,7 +5,7 @@
         <slot>{{ label }}</slot>
       </label>
 
-      <div class="t-field__content">
+      <div class="t-field__content" v-click-outside="outside">
         <input
           v-model="input"
           :class="['t-field__input', { small: small }, { 't-field__error': error }]"
@@ -18,24 +18,28 @@
           @blur="change"
           @focus="focus"
         />
-        <div class="t-field__box" :style="{ background: input }" @click="pickerShow = !pickerShow"></div>
+        <div class="t-field__box" :style="{ background: input }" @click="pickerShow = true"></div>
+        <div v-if="pickerShow" class="t-field__color-picker">
+          <ColorPicker
+            v-model="input"
+            :width="100"
+            :height="100"
+            :disabled="false"
+            startColor="#ff0000"
+          ></ColorPicker>
+        </div>
       </div>
     </div>
-    <transition name="fade">
-      <div class="t-field__color-picker" v-if="pickerShow">
-        <ColorPicker :width="200" :height="200" :disabled="false" startColor="#ff0000" @colorChange="onColorChange"></ColorPicker>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script>
-import ColorPicker from 'vue-color-picker-wheel';
+import ColorPicker from './ColorPicker.vue';
 
 export default {
   name: 't-color',
   components: {
-    ColorPicker
+    ColorPicker,
   },
   props: {
     label: {
@@ -60,10 +64,10 @@ export default {
   data: () => ({
     isChange: false,
     pickerShow: false,
-    input: "#FFFFFF"
+    input: '#FFFFFF',
   }),
   computed: {
-/*    input: {
+    /*    input: {
       set(value) {
         this.$emit('input', value);
         this.isChange = true;
@@ -74,6 +78,11 @@ export default {
     },*/
   },
   methods: {
+    outside() {
+      if (this.pickerShow) {
+        this.pickerShow = false;
+      }
+    },
     focus(e) {
       this.$emit('focus', e);
       if (this.error) {
@@ -90,14 +99,15 @@ export default {
     },
     onColorChange(color) {
       this.input = color.toUpperCase();
-      console.log("asdasdas     ", this.input)
-    }
+      // console.log("asdasdas     ", this.input)
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
 .t-field {
+  position: relative;
   &__content {
     position: relative;
   }
@@ -111,10 +121,13 @@ export default {
     transform: translateY(-50%);
     border-radius: 2px;
   }
-  &__color-picker{
-    background-color: #1B2A3F;
+  &__color-picker {
+    position: absolute;
+    top: -124px;
+
+    background-color: #1b2a3f;
     border-radius: 4px;
-    border: 1px solid #6C7883;
+    border: 1px solid #6c7883;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -153,29 +166,29 @@ export default {
   &__input.small {
     height: 24px;
   }
-  &__wrapper{
+  &__wrapper {
     display: flex;
     flex-direction: row-reverse;
     justify-content: flex-end;
     -webkit-box-pack: end;
     margin-bottom: 10px;
-      .t-field__label {
-    width: 150px;
-    max-width: 130px;
-    padding: 3px 0 0 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
-    font-size: 0.75rem;
-  }
-  .t-field__input {
-    height: 24px;
-    font-size: 12px;
-    line-height: 24px;
-    width: 100px;
-  }
+    .t-field__label {
+      width: 150px;
+      max-width: 130px;
+      padding: 3px 0 0 10px;
+      text-align: left;
+      color: #a7bed3;
+      display: block;
+      margin: 0;
+      line-height: 1;
+      font-size: 0.75rem;
+    }
+    .t-field__input {
+      height: 24px;
+      font-size: 12px;
+      line-height: 24px;
+      width: 100px;
+    }
   }
 }
 .t-color {
@@ -184,12 +197,13 @@ export default {
   // align-items: center;
 }
 slide-fade-enter-active {
-  transition: all .3s ease;
+  transition: all 0.3s ease;
 }
 .slide-fade-leave-active {
-  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+  transition: all 0.8s cubic-bezier(1, 0.5, 0.8, 1);
 }
-.slide-fade-enter, .slide-fade-leave-to{
+.slide-fade-enter,
+.slide-fade-leave-to {
   transform: translateX(10px);
   opacity: 0;
 }

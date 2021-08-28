@@ -22,6 +22,7 @@ export default {
       { title: "Данные", path: "/datasets" },
       { title: "Проектирование", path: "/modeling" },
       { title: "Обучение", path: "/training" },
+      { title: "Каскады", path: "/cascades" },
       { title: "Деплой", path: "/deploy" },
     ],
   }),
