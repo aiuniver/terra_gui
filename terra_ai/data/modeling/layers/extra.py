@@ -185,10 +185,8 @@ class VAELatentRegularizerChoice(str, Enum):
 
 class ModuleChoice(str, Enum):
     tensorflow_keras_layers = "tensorflow.keras.layers"
-    terra_custom_layers = "customLayers"
-    tensorflow_keras_layers_preprocessing = (
-        "tensorflow.keras.layers.experimental.preprocessing"
-    )
+    terra_custom_layers = "terra_ai.customLayers"
+    tensorflow_keras_layers_preprocessing = ("tensorflow.keras.layers.experimental.preprocessing")
     tensorflow_nn = "tensorflow.nn"
     inception_v3 = "tensorflow.keras.applications.inception_v3"
     xception = "tensorflow.keras.applications.xception"

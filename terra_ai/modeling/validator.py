@@ -1,17 +1,22 @@
 import copy
+import gc
 import importlib
+import sys
 
 import networkx as nx
 import numpy as np
 import tensorflow
 from dataclasses import dataclass
 
+from tensorflow.python.keras.backend import clear_session
+from tensorflow.python.keras.models import Model
+
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 
 from terra_ai.data.modeling.layers import types
 
-__version__ = 0.051
+__version__ = 0.052
 
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice
@@ -44,9 +49,8 @@ def get_links(model_plan):
 
 
 def get_idx_line(model_plan):
-    start_row, uplinks, downlinks, all_indexes, _ = get_links(model_plan)
+    start_row, uplinks, downlinks, idx2remove, _ = get_links(model_plan)
     distribution = []  # distribution plan, show rows with layers
-    idx2remove = copy.deepcopy(all_indexes)
 
     for i in start_row:
         if uplinks[i] != [-1]:
@@ -57,21 +61,26 @@ def get_idx_line(model_plan):
     distribution.append(start_row)
 
     # get other rows
+    count=1
     while idx2remove:
+        count += 1
         row_idxs = []
         for idx in distribution[-1]:
-            for downlink in downlinks[idx]:
+            for downlink in downlinks.get(idx):
                 if downlink not in row_idxs:
                     row_idxs.append(downlink)
 
         for link in row_idxs:
-            if len(uplinks[link]) > 1 and len(set(idx2remove) & set(uplinks[link])) != 0:
+            
+            if len(uplinks.get(link)) > 1 and len(set(idx2remove) & set(uplinks.get(link))) != 0:
+                print(set(idx2remove) & set(uplinks.get(link)))
                 row_idxs.pop(row_idxs.index(link))
 
         distribution.append(row_idxs)
         for idx in row_idxs:
             idx2remove.pop(idx2remove.index(idx))
-
+        if count > 100:
+          idx2remove = None
     idx_line = []
     for row in distribution:
         idx_line.extend(row)
@@ -82,7 +91,6 @@ def reorder_plan(model_plan):
     idx_line = get_idx_line(model_plan)
     order_plan = []
     for idx in idx_line:
-        # order_plan.append(model_plan[idx])
         for layer in model_plan:
             if idx == layer[0]:
                 order_plan.append(layer)
@@ -128,14 +136,21 @@ def get_layer_info(layer_strict, block_name=None):
     params_dict = layer_strict.parameters.merged
     if layer_strict.group == LayerGroupChoice.input or \
             layer_strict.group == LayerGroupChoice.output:
-        params_dict["name"] = f"{layer_strict.group}_{layer_strict.id}"
+        params_dict["name"] = f"{layer_strict.id}"
     elif block_name:
         params_dict["name"] = f"{block_name}_{layer_strict.name}"
     else:
-        params_dict["name"] = f'{layer_strict.name}'
+        params_dict["name"] = f'{layer_strict.type}_{layer_strict.id}'
     return (layer_strict.id, layer_strict.type.value, params_dict,
             [-1] if not layer_strict.bind.up else [-1 if x is None else x for x in layer_strict.bind.up],
             [x for x in layer_strict.bind.down])
+
+
+def tensor_shape_to_tuple(tensor_shape):
+    tuple_shape = []
+    for dim in tensor_shape:
+        tuple_shape.append(dim)
+    return tuple(tuple_shape)
 
 
 class ModelValidator:
@@ -143,7 +158,8 @@ class ModelValidator:
 
     def __init__(self, model, output_shape=None, **kwargs):
         self.validator = LayerValidation()
-        self.model_plan = TerraModel()
+        self.model_plan = None
+        self.filled_model = None
         self.maxwordcount = None
 
         self.all_indexes = []
@@ -156,47 +172,53 @@ class ModelValidator:
         self.layers_state = {}
         self.layer_input_shapes = {}
         self.layer_output_shapes = {}
+        self.model = model
+        self.filled_model = model
+        self.model_plan = TerraModel()
+        self.model_plan.plan = []
+        self.model_plan.plan_name = ''
+        self.model_plan.input_shape = {}
+        self.model_plan.block_plans = {}
 
         self.keras_code = ''
         self.valid = True
 
-        self.model_plan = TerraModel()
         self.output_shape = output_shape
         self.maxwordcount = kwargs.get('maxwordcount')
 
         self.val_dictionary = {}
-        for layer in model.details.layers:
+        for layer in self.model.details.layers:
             self.val_dictionary[layer.id] = None
             self.layer_input_shapes[layer.id] = []
             self.layer_output_shapes[layer.id] = []
             self.layers_state[layer.id] = ""
             if layer.reference:
-                for block in model.details.references:
+                for block in self.model.details.references:
                     if layer.reference == block.name:
                         block_def = {}
                         block_config = {}
                         for block_layer in block.details.layers:
                             block_def[block_layer.id] = block_layer.parameters.defaults.merged
                             block_config[block_layer.id] = block_layer.parameters.config
-                        break
-                self.layers_def[layer.id] = block_def
-                self.layers_config[layer.id] = block_config
+                        self.layers_def[layer.id] = block_def
+                        self.layers_config[layer.id] = block_config
+                    break
             else:
                 self.layers_def[layer.id] = layer.parameters.defaults.merged
                 self.layers_config[layer.id] = layer.parameters.config
-        self._build_model_plan(model)
-
-    def _build_model_plan(self, model):
+        self._build_model_plan()
+        
+    def _build_model_plan(self):
         # оставить описание
-        self.model_plan.plan_name = model.name
-        for layer in model.details.layers:
+        self.model_plan.plan_name = self.model.name
+        for layer in self.model.details.layers:
             if layer.group == LayerGroupChoice.input:
-                self.model_plan.input_shape[layer.name] = layer.shape.input
+                self.model_plan.input_shape[layer.id] = layer.shape.input
                 self.layer_input_shapes[layer.id].extend(reformat_input_shape(layer.shape.input))
             self.layers_state[layer.id] = layer.group.value
             self.model_plan.plan.append(get_layer_info(layer))
             if layer.reference:
-                for block in model.details.references:
+                for block in self.model.details.references:
                     if layer.reference == block.name:
                         block_plan = []
                         for block_layer in block.details.layers:
@@ -221,9 +243,9 @@ class ModelValidator:
         for cycle in nx.simple_cycles(G):
             if cycle:
                 self.valid = False
-            comment = f"Layers {cycle} make a cycle! Please correct the structure!"
-            for cycle_layer in cycle:
-                self.val_dictionary[cycle_layer] = comment
+                comment = f"Layers {cycle} make a cycle! Please correct the structure!"
+                for cycle_layer in cycle:
+                    self.val_dictionary[cycle_layer] = comment
 
     def _get_full_connection_check(self):
         """
@@ -254,7 +276,7 @@ class ModelValidator:
         """Check empty input shapes"""
         input_layers = {}
         for layer in self.model_plan.plan:
-            if layer[2].get('name') in self.model_plan.input_shape.keys():
+            if layer[0] in self.model_plan.input_shape.keys():
                 input_layers[layer[0]] = layer[2].get('name')
 
         for idx in self.start_row:
@@ -274,13 +296,13 @@ class ModelValidator:
         if self.output_shape:
             outputs = []
             for layer in self.model_plan.plan:
-                if layer[2].get('name', None) in self.output_shape.keys():
+                if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
-                    if self.output_shape[layer[2].get('name', None)] != self.layer_output_shapes[layer[0]][0][1:]:
+                    if self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
                         self.valid = False
                         self.val_dictionary[layer[0]] = \
                             f"Output shape Error: Expected output shape " \
-                            f"{self.output_shape[layer[2].get('name', None)]} " \
+                            f"{self.output_shape[layer[0]][0]} " \
                             f"but got output shape {self.layer_output_shapes[layer[0]][0][1:]}!"
 
             # check unspecified output layers
@@ -290,7 +312,7 @@ class ModelValidator:
                     self.val_dictionary[idx] = "Output shape Error: Unspecified output layer!"
 
     def _model_validation(self):
-        """Full model validation"""
+        """Full model modeling"""
         # check for cycles
         self._get_cycles_check()
         if not self.valid:
@@ -338,7 +360,7 @@ class ModelValidator:
         return self.validator.get_validated()
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
-        """block validation"""
+        """block modeling"""
         _, _, downlinks, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
@@ -372,60 +394,41 @@ class ModelValidator:
 
         return block_output, block_comment
 
-    def return_links(self):
-        """Return list of tuples of model links, parameters and shapes to GUI
-
-        links:     list of tuples ('updated idx',
-                                    'uplink_idx',
-                                    'downlink_idx',
-                                    'parameters',
-                                    'input_shape',
-                                    'output_shape',
-                                    'layer type',
-                                    'layer position',
-                                    'initial idx')
-        """
-
-        links = []
-        for layer in self.model_plan.plan:
-            links.append((layer[0], layer[3], layer[4], layer[2],
-                          self.layer_input_shapes.get(layer[0]), self.layer_output_shapes.get(layer[0]),
-                          layer[1], self.layers_state.get(layer[0]), layer[0]))
-        return links
 
     def compile_keras_code(self):
         """Create keras code from model plan"""
 
         self.keras_code = ''
-        layers_import = []
-        count = 1
+        layers_import = {}
         name_dict = {}
         input_list = []
         output_list = []
         for layer in self.model_plan.plan:
             # керас код под block_plan пока не готов
-            if layer[1] not in layers_import and \
-                    getattr(types, layer[1]).LayerConfig.module_type.value != ModuleTypeChoice.block_plan:
-                layers_import.append(layer[1])
+            # layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
 
-            if getattr(types, layer[1]).LayerConfig.module_type.value == ModuleTypeChoice.block_plan:
+            if layer[1] not in layers_import.values() and \
+                    self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.block_plan:
+                layers_import[layer[0]] = layer[1]
+
+            if self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.block_plan:
                 for block_layer in self.model_plan.block_plans.get(layer[0]):
-                    if block_layer[1] not in layers_import:
-                        layers_import.append(block_layer[1])
+                    if block_layer[1] not in layers_import.values():
+                        layers_import[block_layer[0]] = block_layer[1]
 
-            if 'input' in layer[2].get('name', None):
-                name_dict[layer[0]] = layer[2].get('name')
-                input_list.append(layer[2].get('name'))
-            elif 'output' in layer[2].get('name'):
-                name_dict[layer[0]] = layer[2].get('name')
-                output_list.append(layer[2].get('name'))
+            if layer[0] in self.start_row:
+                name_dict[layer[0]] = f"input_{layer[2].get('name')}"
+                input_list.append(f"input_{layer[2].get('name')}")
+            elif layer[0] in self.end_row:
+                name_dict[layer[0]] = f"output_{layer[2].get('name')}"
+                output_list.append(f"output_{layer[2].get('name')}")
             else:
-                name_dict[layer[0]] = f'x_{count}'
-                count += 1
+                name_dict[layer[0]] = f'x_{layer[0]}'
 
         layers_str = ""
-        for i in layers_import:
-            layers_str += f"from {getattr(types, i).LayerConfig.module.value} import {i}\n"
+        for id, layer_name in layers_import.items():
+            # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
+            layers_str += f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
         inputs_str = ''
@@ -439,12 +442,13 @@ class ModelValidator:
         outputs_str = f"[{outputs_str[:-2]}]"
 
         def get_layer_str(layer, identificator="", block_uplinks=None):
+            layer_str = ''
             if block_uplinks:
                 block_uplinks[layer[0]] = f"{identificator}_{layer[1]}_{layer[0]}"
 
             if layer[1] == LayerTypeChoice.Input:
                 layer_str = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = " \
-                            f"{layer[1]}(shape={self.model_plan.input_shape[name_dict[layer[0]]]}, " \
+                            f"{layer[1]}(shape={self.model_plan.input_shape[layer[0]]}, " \
                             f"name='{layer[2].get('name')}')\n"
             else:
                 params = ""
@@ -468,21 +472,27 @@ class ModelValidator:
                             uplink += f"{name_dict[up]}, "
                     uplink = f"{uplink[:-2]}]"
 
-                if getattr(types, layer[1]).LayerConfig.module_type.value != "keras_pretrained_model":
+                if self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.tensorflow:
+                    layer_str = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = " \
+                                f"{layer[1]}({uplink}, {params[:-2]})\n"
+                elif self.layers_config.get(layer[0]).module_type.value != ModuleTypeChoice.keras_pretrained_model:
                     layer_str = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = " \
                                 f"{layer[1]}({params[:-2]})({uplink})\n"
-                elif 'trainable' in layer[2].keys():
-                    block_name = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]}"
-                    if layer[2].get('output_layer', None) == 'last':
-                        out_layer_str = f"{block_name}.output"
-                    else:
-                        out_layer_str = f"{block_name}.get_layer('{layer[2].get('output_layer')}.output'"
-                    layer_str = f"\n{block_name} = {layer[1]}({params[:-2]})\n" \
-                                f"for layer in {block_name}.layers:\n" \
-                                f"    layer.trainable = {layer[3].get('trainable', False)}\n" \
-                                f"{block_name} = Model({block_name}.input, {out_layer_str}).output, " \
-                                f"name='{block_name}')\n" \
-                                f"{name_dict[layer[0]]} = {block_name}({uplink})\n\n"
+                elif self.layers_config.get(layer[0]).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+                    if 'trainable' in layer[2].keys():
+                        block_name = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]}"
+                        if layer[2].get('output_layer') == 'last':
+                            out_layer_str = f"{block_name}.output"
+                        else:
+                            out_layer_str = f"{block_name}.get_layer('{layer[2].get('output_layer')}.output'"
+                        layer_str = f"\n{block_name} = {layer[1]}({params[:-2]})\n" \
+                                    f"for layer in {block_name}.layers:\n" \
+                                    f"    layer.trainable = {layer[3].get('trainable', False)}\n" \
+                                    f"{block_name} = Model({block_name}.input, {out_layer_str}).output, " \
+                                    f"name='{block_name}')\n" \
+                                    f"{name_dict[layer[0]]} = {block_name}({uplink})\n\n"
+                else:
+                    pass
             return layer_str
 
         for layer in self.model_plan.plan:
@@ -495,6 +505,7 @@ class ModelValidator:
                                                block_uplinks=block_uplinks)
                 layer_str = f"\n{layer_str}\n"
             else:
+
                 layer_str = get_layer_str(layer)
             self.keras_code += layer_str
 
@@ -503,38 +514,30 @@ class ModelValidator:
             self.keras_code = f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
 
     def get_validated(self):
-        """Returns all necessary info about validation"""
+        """Returns all necessary info about modeling"""
 
         self._model_validation()
         if self.valid:
             self.compile_keras_code()
         else:
-            self.keras_code = 'Model is not valid. Please correct the model structure'
+            self.keras_code = None
 
-        # MP = TerraModel()
-        # MP.input_shape = self.model_plan.input_shape
-        # MP.plan = self.model_plan
-
-        errors = []
-        for i in range(len(self.val_dictionary)):
-            errors.append(self.val_dictionary.get(i))
-
+        for idx, layer in enumerate(self.filled_model.details.layers):
+            if layer.group == LayerGroupChoice.input:
+                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+            else:
+                self.filled_model.details.layers[idx].shape.input = self.layer_input_shapes.get(layer.id)
+                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+        # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         return {
-            'plan': self.model_plan,
-            'errors': errors,
+            'model': self.filled_model,
+            'error_msg': self.val_dictionary,
             'keras_code': self.keras_code
         }
 
-
-# def get_layer_defaults(layer_type):
-#     """Return default parameters for layer"""
-#     try:
-#         param = json.loads(getattr(layers, f"Layer{layer_type}Data")().main.json())
-#         param.update(json.loads(getattr(layers, f"Layer{layer_type}Data")().extra.json()))
-#         return param
-#     except AttributeError as error:
-#         print(error)
-#         return error
+    def get_keras_model(self):
+        mc = ModelCreator(self.model_plan, self.layers_config)
+        return mc.create_model()
 
 
 class LayerValidation:
@@ -553,7 +556,7 @@ class LayerValidation:
 
     def set_state(self, layer_type, shape, parameters, defaults, config, **kwargs):
         """Set input data and fill attributes"""
-        print("LayerValidation set_state", layer_type, shape, parameters)
+        # print("LayerValidation set_state", layer_type, shape, parameters)
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -579,8 +582,8 @@ class LayerValidation:
                         return self.inp_shape, None
                     if self.module_type == ModuleTypeChoice.keras_pretrained_model:
                         self.layer_parameters.pop("trainable")
-                    if self.layer_parameters.get("name"):
-                        self.layer_parameters.pop("name")
+                        if self.layer_parameters.get("name"):
+                            self.layer_parameters.pop("name")
                     output_shape = [tuple(
                         getattr(self.module, self.layer_type)(**self.layer_parameters).compute_output_shape(
                             self.inp_shape[0] if len(self.inp_shape) == 1 else self.inp_shape))
@@ -590,7 +593,7 @@ class LayerValidation:
                     if len(output_shape) == 1 and type(output_shape[0][0]).__name__ == "TensorShape":
                         new = []
                         for shape in output_shape[0]:
-                            new.append(shape)
+                            new.append(tensor_shape_to_tuple(shape))
                         return new, None
 
                     return output_shape, None
@@ -602,7 +605,8 @@ class LayerValidation:
                         else [self.inp_shape[i][1:] for i in range(len(self.inp_shape))]
                     output = getattr(tensorflow.nn, self.layer_type)(tensorflow.keras.layers.Input(shape=inp_shape),
                                                                      **self.layer_parameters)
-                    return [output.shape], None
+                    # print(type(tensor_shape_to_tuple(output.shape)))
+                    return [tensor_shape_to_tuple(output.shape)], None
                 except:
                     return output_shape, self.parameters_validation()
 
@@ -625,7 +629,7 @@ class LayerValidation:
                             else [self.inp_shape[i][1:] for i in range(len(self.inp_shape))]
                         getattr(tensorflow.nn, self.layer_type)(tensorflow.keras.layers.Input(shape=inp_shape),
                                                                 **val_dict)
-                        print(self.module, self.layer_type)
+                        # print(self.module, self.layer_type)
                     if revert:
                         try:
                             if self.module_type == ModuleTypeChoice.keras or \
@@ -669,7 +673,7 @@ class LayerValidation:
             return comment[:-2]
 
     def primary_layer_validation(self):
-        """Whole validation for specific parameters, uplink number and input dimension"""
+        """Whole modeling for specific parameters, uplink number and input dimension"""
         comment = self.position_validation()
         if comment:
             return comment
@@ -850,7 +854,7 @@ class LayerValidation:
                 return f"Input shape Error: input shape {self.inp_shape[0]} except channels must be whole divided by 4!"
 
         # space_to_depth dimentions
-        if self.layer_type == LayerTypeChoice.space_to_depth:
+        if self.layer_type == LayerTypeChoice.SpaceToDepth:
             if (self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NCHW or
                 self.layer_parameters.get("data_format") == SpaceToDepthDataFormatChoice.NHWC) and \
                     len(self.inp_shape[0]) != 4:
@@ -868,138 +872,187 @@ class LayerValidation:
                        f"block_size = {self.layer_parameters.get('block_size')}!"
 
 
-custom_block_plan = {
-    'Conv2DBNDrop': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (2, 2)}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Dropout", {'rate': 0.2}, [1], [])
-    ],
-    'Conv2DBNLeaky': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (2, 2)}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "LeakyReLU", {'alpha': 0.1}, [1], [])
-    ],
-    'CustomResBlock': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'linear', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (1, 1), 'use_bias': False}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "LeakyReLU", {'alpha': 0.1}, [1], [3]),
-        (3, "Conv2D", {'filters': 64, 'activation': 'linear', 'kernel_size': (1, 1),
-                       'padding': 'same', 'strides': (1, 1), 'use_bias': False}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "LeakyReLU", {'alpha': 0.1}, [4], [6]),
-        (6, 'Add', {}, [-1, 5], []),
-    ],
-    'Resnet50Block': [
-        (0, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'valid',
-                       'activation': 'linear'}, [-1], 1),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "Conv2D", {'filters': 64, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "Activation", {'activation': 'relu'}, [4], [6]),
-        (6, "Conv2D", {'filters': 256, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'valid',
-                       'activation': 'linear'}, [5], [7]),
-        (7, "BatchNormalization", {}, [6], [8]),
-        (8, "Add", {}, [7, -1], [9]),
-        (9, "Activation", {'activation': 'relu'}, [8], []),
-    ],
-    'PSPBlock': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'},
-         [-1], [1, 4, 8, 10]),
-        (1, "MaxPool2D", {'pool_size': (2, 2)}, [0], [2]),
-        (2, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [1], [3]),
-        (3, "Conv2DTranspose", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (2, 2)}, [2], [10]),
-        (4, "MaxPool2D", {'pool_size': (4, 4)}, [0], [5]),
-        (5, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [4], [6]),
-        (6, "Conv2DTranspose", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (4, 4)}, [5], [10]),
-        (7, "MaxPool2D", {'pool_size': (8, 8)}, [0], [8]),
-        (8, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [7], [9]),
-        (9, "Conv2DTranspose", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (8, 8)}, [8], [10]),
-        (10, "Concatenate", {}, [0, 3, 6, 9], [11]),
-        (11, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [10], []),
-    ],
-    'UNETBlock': [
-        (0, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
-                       'padding': 'same'}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [3, 17]),
-        (2, "MaxPool2D", {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, [1], [3]),
-        (3, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5, 12]),
-        (5, "MaxPool2D", {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, [4], [6]),
-        (6, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [5], [7]),
-        (7, "BatchNormalization", {}, [6], [8]),
-        (8, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [7], [9]),
-        (9, "BatchNormalization", {}, [8], [10]),
-        (10, "Conv2DTranspose", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                                 'padding': 'same', 'strides': (2, 2)}, [9], [11]),
-        (11, "BatchNormalization", {}, [10], [12]),
-        (12, "Concatenate", {}, [11, 4], [13]),
-        (13, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                        'strides': (1, 1), 'padding': 'same'}, [12], [14]),
-        (14, "BatchNormalization", {}, [13], [15]),
-        (15, "Conv2DTranspose", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                                 'padding': 'same', 'strides': (2, 2)}, [14], [16]),
-        (16, "BatchNormalization", {}, [15], [17]),
-        (17, "Concatenate", {}, [16, 1], [18]),
-        (18, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                        'strides': (1, 1), 'padding': 'same'}, [17], []),
-    ],
-    'XceptionBlock': [
-        (0, "SeparableConv2D", {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                                'activation': 'linear'}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "SeparableConv2D", {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                                'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [6]),
-        (5, "Conv2D", {'filters': 128, 'kernel_size': (1, 1), 'strides': (2, 2), 'padding': 'same',
-                       'activation': 'linear'}, [-1], [7]),
-        (6, "MaxPool2D", {'pool_size': (3, 3), 'strides': (2, 2), 'padding': 'same'}, [4], [8]),
-        (7, "BatchNormalization", {}, [5], [8]),
-        (8, "Add", {}, [6, 7], []),
-    ],
-    'InceptionV3block': [
-        (0, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [-1], 1),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "Conv2D", {'filters': 96, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "Activation", {'activation': 'relu'}, [4], [6]),
-        (6, "Conv2D", {'filters': 96, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [5], [8]),
-        (7, "BatchNormalization", {}, [6], [21]),
-        (8, "Conv2D", {'filters': 48, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [-1], [9]),
-        (9, "BatchNormalization", {}, [8], [10]),
-        (10, "Activation", {'activation': 'relu'}, [9], [11]),
-        (11, "Conv2D", {'filters': 64, 'kernel_size': (5, 5), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [10], [12]),
-        (12, "BatchNormalization", {}, [11], [13]),
-        (13, "Activation", {'activation': 'relu'}, [12], [21]),
-        (14, "AveragePooling2D", {'pool_size': (3, 3), 'strides': (1, 1), 'padding': 'same'}, [-1], [15]),
-        (15, "Conv2D", {'filters': 32, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [14], [16]),
-        (16, "BatchNormalization", {}, [15], [17]),
-        (17, "Activation", {'activation': 'relu'}, [16], [21]),
-        (18, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [-1], [19]),
-        (19, "BatchNormalization", {}, [18], [20]),
-        (20, "Activation", {'activation': 'relu'}, [19], [21]),
-        (21, "Concatenate", {'axis': -1}, [7, 13, 17, 20], []),
-    ]
-}
+class CustomLayer(tensorflow.keras.layers.Layer):
+    """Pattern for create custom user block from block plan"""
+
+    def __init__(self):
+        super(CustomLayer, self).__init__()
+        self.block_plan = []
+        pass
+
+    def __call__(self, input_layer):
+        block = None
+        for layer in self.block_plan:
+            if layer[3] == [-1]:
+                block = getattr(self, f"x_{layer[0]}")(input_layer)
+                setattr(self, f"out_{layer[0]}", block)
+            else:
+                if len(layer[3]) == 1:
+                    block = getattr(self, f"x_{layer[0]}")(getattr(self, f"out_{layer[3][0]}"))
+                    setattr(self, f"out_{layer[0]}", block)
+                else:
+                    conc_up = []
+                    for up in layer[3]:
+                        if up == -1:
+                            conc_up.append(input_layer)
+                        else:
+                            conc_up.append(getattr(self, f"out_{up}"))
+                    block = getattr(self, f"x_{layer[0]}")(conc_up)
+                    setattr(self, f"out_{layer[0]}", block)
+        return block
+
+
+class ModelCreator:
+    """Create model from plan object"""
+
+    def __init__(self, terra_model, layer_config):
+        super().__init__()
+        self.terra_model = terra_model
+        self.nnmodel = None
+        self.layer_config = layer_config
+        # self.debug = False
+        self._get_idx_line()
+        self._get_model_links()
+        self.id_idx_dict = {}
+        for id in self.idx_line:
+            for idx in range(len(self.terra_model.plan)):
+                if id == self.terra_model.plan[idx][0]:
+                    self.id_idx_dict[id] = idx
+                    break
+        self.tensors = {}
+        pass
+
+    def _get_model_links(self):
+        """Get start_row, uplinks, downlinks from terra_plan"""
+        self.start_row, self.uplinks, self.downlinks, _, self.end_row = get_links(self.terra_model.plan)
+
+    def _get_idx_line(self):
+        """Get start_row, uplinks, downlinks from terra_plan"""
+        self.idx_line = get_idx_line(self.terra_model.plan)
+
+    def _build_keras_model(self):
+        """Build keras model from plan"""
+        for id in self.idx_line:
+            layer_type = self.terra_model.plan[self.id_idx_dict.get(id)][1]
+            # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
+            #     layer_type = 'SpaceToDepth'
+            # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
+            if self.layer_config.get(id).module_type.value == ModuleTypeChoice.tensorflow:
+                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras_pretrained_model:
+                self._pretrained_model_init_(self.terra_model.plan[self.id_idx_dict.get(id)])
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.block_plan:
+                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+            elif self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras or \
+                    self.layer_config.get(id).module_type.value == ModuleTypeChoice.terra_layer:
+                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+            else:
+                msg = f'Error: "Layer `{layer_type}` is not found'
+                sys.exit(msg)
+        inputs = [self.tensors.get(i) for i in self.start_row]
+        outputs = [self.tensors.get(i) for i in self.end_row]
+        self.nnmodel = tensorflow.keras.Model(inputs, outputs)
+
+    def _keras_layer_init(self, terra_layer):
+        """Create keras layer_obj from terra_plan layer"""
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
+        if terra_layer[1] == LayerTypeChoice.Input:
+            input_shape = self.terra_model.input_shape.get(int(terra_layer[2].get('name')))[0]
+            self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(shape=input_shape,
+                                                                           name=terra_layer[2].get("name"))
+        else:
+            if len(terra_layer[3]) == 1:
+                input_tensors = self.tensors[terra_layer[3][0]]
+            else:
+                input_tensors = []
+                for idx in terra_layer[3]:
+                    input_tensors.append(self.tensors[idx])
+            self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(**terra_layer[2])(input_tensors)
+
+    def _tf_layer_init(self, terra_layer):
+        """Create tensorflow layer_obj from terra_plan layer"""
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
+
+        if len(terra_layer[3]) == 1:
+            input_tensors = self.tensors[terra_layer[3][0]]
+        else:
+            input_tensors = []
+            for idx in terra_layer[3]:
+                input_tensors.append(self.tensors[idx])
+        self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(input_tensors, **terra_layer[2])
+
+    def _pretrained_model_init_(self, terra_layer):
+        """Create pretrained model as layer_obj from terra_plan layer"""
+        module = importlib.import_module(self.layer_config.get(terra_layer[0]).module.value)
+        param2del = ["name", 'trainable', 'output_layer']
+        attr = copy.deepcopy(terra_layer[2])
+        for param in param2del:
+            try:
+                attr.pop(param)
+            except KeyError:
+                continue
+        layer_object = getattr(module, terra_layer[1])(**attr)
+
+        if terra_layer[2].get('trainable') or terra_layer[2].get('output_layer'):
+            for layer in layer_object.layers:
+                try:
+                    layer.trainable = terra_layer[2].get('trainable')
+                except KeyError:
+                    continue
+            if terra_layer[2].get('output_layer') == 'last':
+                block_output = layer_object.output
+            else:
+                block_output = layer_object.get_layer(terra_layer[2].get('output_layer')).output
+            layer_object = Model(layer_object.input, block_output, name=terra_layer[2].get('name'))
+        self.tensors[terra_layer[0]] = layer_object(self.tensors[terra_layer[3][0]])
+
+    def _custom_block_init(self, terra_layer):
+        block_object = CustomLayer()
+        block_object.block_plan = self.terra_model.block_plans.get(terra_layer[0])
+        for layer in block_object.block_plan:
+            # TODO: поправить на конфиг self.layer_config.get(terra_layer[0]).module.value
+            #  когда будет рабочая версия ModelData с блоками
+            module = importlib.import_module(getattr(layers.types, layer[1]).LayerConfig.module.value)
+            layer_object = getattr(module, layer[1])(**layer[2])
+            setattr(block_object, f"x_{layer[0]}", layer_object)
+        # пока реализация с одним входом/выходом
+        self.tensors[terra_layer[0]] = block_object(self.tensors[terra_layer[3][0]])
+
+    def create_model(self):
+        """Create model from self.model_plan sequences
+        Example:
+            [(0,"Input",{'name':'input_1},[-1],[1, 2]),
+            (1,"Conv2D",{'filters': 32, 'kernel_size': (3, 3)},[0],[2]),
+            (2,"Add",{'name': 'output_1'},[0, 1],[]))]
+
+        0 - # layer Index - (int)
+        1 - # type of layer - (str)
+        2 - # layer parameters - (dict)
+        3 - # uplinks - (list of  int)
+        4 - # downlinks - (list of int)
+        """
+        self._build_keras_model()
+        return self.nnmodel
+
+    # def compile_model(self, loss=None, optimizer=Adam(), metrics=None):
+    #     """Compile tensorflow.keras.Model"""
+    #     if metrics is None:
+    #         metrics = {'output_1': ["accuracy"]}
+    #     if loss is None:
+    #         loss = {'output_1': ["categorical_crossentropy"]}
+    #     self.nnmodel.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+
+    # def get_model(self) -> Model:
+    #     """Get keras.Model"""
+    #     return self.nnmodel
+
+    def creator_cleaner(self) -> None:
+        """clean and reset to default self.nnmodel"""
+        clear_session()
+        del self.nnmodel
+        gc.collect()
+        self.nnmodel = tensorflow.keras.Model()
+
 
 if __name__ == "__main__":
     input_shape = [
