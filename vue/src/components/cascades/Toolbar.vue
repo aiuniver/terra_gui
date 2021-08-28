@@ -10,19 +10,22 @@
       <li class="toolbar__menu--item" @click.prevent="click('validation')" title="Валидация">
         <i class="t-icon icon-model-validation"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
-        <i class="t-icon icon-clear-model"></i>
-      </li>
       <hr />
       <li
         class="toolbar__menu--item"
         @click.prevent="click('input', isInput)"
         title="Входящий слой"
       >
-        <i class="t-icon icon-layer-input"></i>
+        <i class="t-icon icon-layer-input-casc"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('middle')" title="Промежуточный слой">
-        <i class="t-icon icon-layer-middle"></i>
+      <li class="toolbar__menu--item" @click.prevent="click('model')" title="Model">
+        <i class="t-icon icon-layer-model"></i>
+      </li>
+      <li class="toolbar__menu--item" @click.prevent="click('function')" title="Function">
+        <i class="t-icon icon-layer-function"></i>
+      </li>
+      <li class="toolbar__menu--item" @click.prevent="click('custom')" title="Custom">
+        <i class="t-icon icon-layer-custom"></i>
       </li>
       <li
         class="toolbar__menu--item"
@@ -32,8 +35,8 @@
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('keras')" :disabled="true" title="Код на Keras">
-        <i class="t-icon icon-keras-code"></i>
+      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
+        <i class="t-icon icon-clear-model"></i>
       </li>
     </ul>
   </div>
