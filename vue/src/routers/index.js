@@ -22,6 +22,11 @@ const router = new Router({
       component: () => import('@/views/Modeling'),
     },
     {
+      path: '/cascades',
+      name: 'Cascades',
+      component: () => import('@/views/Cascades'),
+    },
+    {
       path: '/training',
       name: 'Training',
       component: () => import('@/views/Training'),

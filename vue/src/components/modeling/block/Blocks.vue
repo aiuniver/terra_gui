@@ -32,7 +32,7 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, mouseHelper } from './helpers/default';
+import { createBlock, mouseHelper } from '@/store/const/modeling';
 
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
@@ -306,7 +306,7 @@ export default {
 
       if (
         this.$el.contains(target) &&
-        (typeof target.className !== 'string' || target.className.indexOf(this.inputSlotClassName) === -1)
+        (typeof target.className !== 'string' || !target.className.includes(this.inputSlotClassName))
       ) {
         this.linking = false;
         this.tempLink = null;

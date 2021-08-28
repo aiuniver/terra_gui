@@ -22,8 +22,17 @@
               :disabled="!selectBlock"
               @change="saveModel"
             />
+            <!-- <t-input
+              v-model="block.shape.input"
+              :label="'Shape'"
+              :type="'text'"
+              :parse="'shape'"
+              :name="'shape'"
+              :disabled="!selectBlock"
+              @change="saveModel"
+            /> -->
           </div>
-          <at-collapse :value="[0, 1]">
+          <at-collapse :value="collapse">
             <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
               <Forms :data="main" @change="change" />
             </at-collapse-item>
@@ -63,6 +72,7 @@ export default {
     // Select
   },
   data: () => ({
+    collapse: [0],
     oldBlock: null,
   }),
   computed: {

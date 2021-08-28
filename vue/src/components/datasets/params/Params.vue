@@ -70,9 +70,15 @@ export default {
         const { data } = await this.$store.dispatch('datasets/loadProgress', {});
         console.log(data)
         if (data) {
-          const { finished, message, percent } = data;
+          const { finished, message, percent, error } = data;
+          console.log(percent)
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
+          if (error) {
+            this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
+            return;
+          }
           if (finished) {
             const { data: { file_manager, source_path } } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
@@ -82,6 +88,7 @@ export default {
             this.$store.dispatch('messages/setProgressMessage', '');
             this.$store.dispatch('messages/setProgress', 0);
             this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
             this.full = true;
           } else {
             this.createInterval();
@@ -116,6 +123,7 @@ export default {
       const { mode, value, label } = this.dataset;
       if (mode && value) {
         this.loading = true;
+        this.$store.dispatch('settings/setOverlay', true);
         this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });
         const { success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
         // console.log(data)
@@ -123,6 +131,7 @@ export default {
           this.createInterval();
         } else {
           this.loading = false;
+          this.$store.dispatch('settings/setOverlay', false);
         }
       } else {
         this.$store.dispatch('messages/setMessage', { error: 'Выберите файл' });

@@ -1,5 +1,6 @@
 <template>
   <div class="app" ref="terra">
+    <Overlay v-if="$store.state.settings.overlay"/>
     <Header />
     <Nav />
     <router-view></router-view>
@@ -8,9 +9,10 @@
 </template>
 
 <script>
-import Header from "@/components/app/Header.vue";
-import Nav from "@/components/app/Nav.vue";
+import Header from "@/components/app/Header";
+import Nav from "@/components/app/Nav";
 import Footer from "@/components/app/Footer";
+import Overlay from "./components/forms/Overlay";
 
 export default {
   name: "App",
@@ -18,6 +20,7 @@ export default {
     Header,
     Nav,
     Footer,
+    Overlay
   },
   data: () => ({}),
   methods: {
