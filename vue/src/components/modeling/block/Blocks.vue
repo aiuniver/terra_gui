@@ -431,20 +431,18 @@ export default {
         } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
-        const temp = [];
         this.links = this.links.filter(line => {
-          if (
-            (line.targetID === originID && line.originID === targetID) ||
-            (line.originID === originID && line.targetID === targetID)
-          )
-            temp.push(line);
           return (
             !(
               line.targetID === targetID &&
               line.targetSlot === targetSlot &&
               line.originID === originID &&
               line.originSlot === originSlot
-            ) && !(line.originID === originID && line.targetID === targetID)
+            ) &&
+            !(
+              (line.targetID === originID && line.originID === targetID) ||
+              (line.originID === originID && line.targetID === targetID)
+            )
           );
         });
 
@@ -455,9 +453,7 @@ export default {
           })
         );
 
-        console.log(temp);
-
-        if (this.linkStartData.block.id !== targetBlock.id && !temp.length) {
+        if (this.linkStartData.block.id !== targetBlock.id) {
           const originID = this.linkStartData.block.id;
           const originSlot = this.linkStartData.slotNumber;
           const targetID = targetBlock.id;
