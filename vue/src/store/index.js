@@ -1,5 +1,6 @@
 import messages from "./modules/messages";
 import modeling from "./modules/modeling";
+import cascades from "./modules/cascades";
 import datasets from "./modules/datasets";
 import settings from "./modules/settings";
 import projects from "./modules/projects";
@@ -12,6 +13,7 @@ export default {
   modules: {
     messages,
     modeling,
+    cascades,
     datasets,
     settings,
     trainings,
