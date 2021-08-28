@@ -5,13 +5,16 @@
       <div class="parametr" :title="parameters">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
+    <div class="vue-block__error" v-if="error">
+      {{ error }}
+    </div>
     <div v-if="!group.includes('middle')" v-show="hover || selected" class="hover-over">
       <!-- <i class="t-icon icon-modeling-link"></i> -->
       <i class="t-icon icon-modeling-link-remove"></i>
     </div>
     <div v-else v-show="hover || selected" class="hover-sloy">
       <!-- <i class="t-icon icon-modeling-link"></i> -->
-      <i class="t-icon icon-modeling-link-remove" ></i>
+      <i class="t-icon icon-modeling-link-remove"></i>
       <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
@@ -42,6 +45,10 @@ export default {
   props: {
     id: {
       type: Number,
+    },
+    error: {
+      type: String,
+      default: 'aiosdjqi9wdjqdwj',
     },
     name: {
       type: String,
@@ -251,6 +258,20 @@ $circleConnectedColor: #569dcf;
       margin: 0 5px;
       cursor: pointer;
     }
+  }
+
+  &__error {
+    position: absolute;
+    white-space: break-word;
+    left: -102%;
+    width: 200px;
+    top: 0;
+    height: auto;
+    padding: 10px;
+    color: #fff;
+    background-color: #2b5278;
+    border-radius: 5px;
+    font-size: 0.9em;
   }
 
   > .header {
