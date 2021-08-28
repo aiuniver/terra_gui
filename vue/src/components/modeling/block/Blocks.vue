@@ -104,7 +104,7 @@ export default {
       },
     },
     optionsForChild() {
-      console.log(this.centerX, this.centerY)
+      // console.log(this.centerX, this.centerY)
       return {
         width: 200,
         titleHeight: 48,
@@ -297,10 +297,11 @@ export default {
 
       if (this.dragging) {
         this.dragging = false;
-
+        
         if (this.hasDragged) {
           // this.updateScene();
           this.hasDragged = false;
+          // console.log('вввввввввввввввв');
         }
       }
 
@@ -587,6 +588,7 @@ export default {
     },
     moveBlock() {
       this.$store.dispatch('modeling/setButtons', {save: true})
+      this.$emit('save')
     },
 
     updateScene() {
