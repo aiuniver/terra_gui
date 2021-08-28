@@ -5,13 +5,13 @@
       <div class="parametr" :title="parameters">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div v-if="!group.includes('middle')" v-show="hover || selected" class="hover-over">
+    <div v-if="!group.includes('model')" v-show="hover || selected" class="hover-over">
       <!-- <i class="t-icon icon-modeling-link"></i> -->
       <i class="t-icon icon-modeling-link-remove"></i>
     </div>
     <div v-else v-show="hover || selected" class="hover-sloy">
       <!-- <i class="t-icon icon-modeling-link"></i> -->
-      <i class="t-icon icon-modeling-link-remove" ></i>
+      <i class="t-icon icon-modeling-link-remove"></i>
       <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
     <div class="inputs">
@@ -290,39 +290,63 @@ $circleConnectedColor: #569dcf;
     }
 
     &.input {
-      background: #ffb054;
-      border: $blockBorder solid #ffb054;
+      background: #54e346;
+      border: $blockBorder solid #54e346;
       &:hover {
         background: none;
-        border: $blockBorder solid #ffb054;
+        border: $blockBorder solid #54e346;
       }
       &.selected {
         background: none;
-        border: $blockBorder solid #ffb054;
+        border: $blockBorder solid #54e346;
       }
     }
-    &.middle {
-      background: #89d764;
-      border: $blockBorder solid #89d764;
+    &.model {
+      background: #64c9cf;
+      border: $blockBorder solid #64c9cf;
       &:hover {
         background: none;
-        border: $blockBorder solid #89d764;
+        border: $blockBorder solid #64c9cf;
       }
       &.selected {
         background: none;
-        border: $blockBorder solid #89d764;
+        border: $blockBorder solid #64c9cf;
+      }
+    }
+    &.function {
+      background: #ff4c29;
+      border: $blockBorder solid #ff4c29;
+      &:hover {
+        background: none;
+        border: $blockBorder solid #ff4c29;
+      }
+      &.selected {
+        background: none;
+        border: $blockBorder solid #ff4c29;
+      }
+    }
+    &.custom {
+      background: #ffb740;
+      border: $blockBorder solid #ffb740;
+      &:hover {
+        background: none;
+        border: $blockBorder solid #ffb740;
+      }
+      &.selected {
+        background: none;
+        border: $blockBorder solid #ffb740;
       }
     }
     &.output {
-      background: #8e51f2;
-      border: $blockBorder solid #8e51f2;
+      background: #ae00fb;
+      border: $blockBorder solid #ae00fb;
       &:hover {
         background: none;
-        border: $blockBorder solid #8e51f2;
+        border: $blockBorder solid #ae00fb;
       }
       &.selected {
         background: none;
-        border: $blockBorder solid #8e51f2;
+        border: $blockBorder solid #ae00fb;
       }
     }
   }
