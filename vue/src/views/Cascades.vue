@@ -11,11 +11,11 @@
 </template>
 
 <script>
-import Toolbar from '@/components/modeling/Toolbar';
-import Blocks from '@/components/modeling/block/Blocks';
-import Params from '@/components/modeling/Params';
-import LoadModel from '@/components/modeling/modals/LoadModel';
-import SaveModel from '@/components/modeling/modals/SaveModel';
+import Toolbar from '@/components/cascades/Toolbar';
+import Blocks from '@/components/cascades/block/Blocks';
+import Params from '@/components/cascades/Params';
+import LoadModel from '@/components/cascades/modals/LoadModel';
+import SaveModel from '@/components/cascades/modals/SaveModel';
 
 export default {
   name: 'Cascades',

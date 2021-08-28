@@ -17,7 +17,6 @@
       <li
         class="toolbar__menu--item"
         @click.prevent="click('input', isInput)"
-        :disabled="isInput"
         title="Входящий слой"
       >
         <i class="t-icon icon-layer-input"></i>
@@ -28,7 +27,6 @@
       <li
         class="toolbar__menu--item"
         @click.prevent="click('output', isOutput)"
-        :disabled="isOutput"
         title="Исходящий слой"
       >
         <i class="t-icon icon-layer-output"></i>
@@ -51,12 +49,6 @@ export default {
       blocks: 'cascades/getBlocks',
       project: 'projects/getProject',
     }),
-    isInput() {
-      return !!this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
-    },
-    isOutput() {
-      return !!this.blocks.find(item => item.group === 'output') && !!this.project?.dataset;
-    },
   },
   methods: {
     click(event, idDisebled) {
