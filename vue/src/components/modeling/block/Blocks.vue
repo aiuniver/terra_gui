@@ -6,6 +6,7 @@
       :key="block.id"
       v-bind="block"
       :options="optionsForChild"
+      :linkingCheck="tempLink"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"

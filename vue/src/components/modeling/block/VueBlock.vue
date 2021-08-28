@@ -22,7 +22,7 @@
         v-for="(slot, index) in inputs"
         :key="'input' + index"
         class="input inputSlot"
-        :class="{ active: slot.active }"
+        :class="{ active: slot.active, 'input--linking-active': linkingCheck && !linking }"
         @mouseup="slotMouseUp($event, index)"
         @mousedown="slotBreak($event, index)"
       ></div>
@@ -45,6 +45,9 @@ export default {
   props: {
     id: {
       type: Number,
+    },
+    linkingCheck: {
+      type: Object,
     },
     error: {
       type: String,
@@ -371,10 +374,16 @@ $circleConnectedColor: #569dcf;
     }
     .input {
       top: -6px;
-      &:hover {
-        background: $circleNewColor;
-        &.active {
-          background: $circleRemoveColor;
+      &--linking-active {
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: rgba(0, 0, 0, 0.178);
+        border-radius: 0 !important;
+        z-index: 20;
+        &:hover {
+          opacity: 0.6;
         }
       }
     }
