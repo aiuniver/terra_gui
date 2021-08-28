@@ -48,7 +48,7 @@ export default {
     },
     error: {
       type: String,
-      default: null,
+      default: 'aiosdjqi9wdjqdwj',
     },
     name: {
       type: String,
