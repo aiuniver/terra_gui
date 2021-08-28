@@ -106,7 +106,7 @@ export default {
       },
     },
     optionsForChild() {
-      console.log(this.centerX, this.centerY);
+      // console.log(this.centerX, this.centerY);
       return {
         width: 200,
         titleHeight: 48,
@@ -605,12 +605,8 @@ export default {
       // this.updateScene();
     },
     moveBlock() {
-<<<<<<< HEAD
       this.$store.dispatch('modeling/setButtons', {save: true})
       this.$emit('save')
-=======
-      this.$store.dispatch('modeling/setButtons', { save: true });
->>>>>>> features/new
     },
 
     updateScene() {
