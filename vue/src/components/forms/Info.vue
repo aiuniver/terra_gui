@@ -1,10 +1,8 @@
 <template>
   <span class="info">
-      <i @click="showTip=!showTip"></i>
-      <p v-show="showTip">
-          Этот параметр активируйте в случае когда необходимо
-          применить постобработку выходных данных модели для
-          последующих блоков или вывода окончательного результата.
+      <i @click="showHint=!showHint"></i>
+      <p v-show="showHint">
+          {{ text }}
       </p>
   </span>
 </template>
@@ -13,8 +11,9 @@
 export default {
     name: 'info',
     data: () => ({
-        showTip: false
-    })
+        showHint: false,
+    }),
+    props: ['text']
 }
 </script>
 
