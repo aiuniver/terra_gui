@@ -65,7 +65,9 @@ class MemoryUsage:
                 'cpu_utilization': f'{psutil.cpu_percent(): .2f}%',
             }
             if self.debug:
-                print(f'CPU usage: {psutil.cpu_percent(): .2f}%')
+                cpu_usage = psutil.cpu_percent(percpu=True)
+                print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
+                print(f'Max CPU usage: {max(cpu_usage): .2f}%')
         usage_dict["RAM"] = {
             'ram_utilization': f'{psutil.virtual_memory().percent: .2f}%',
             'ram_memory_used': f'{psutil.virtual_memory().used / 1024 ** 3: .2f}GB',
@@ -863,6 +865,7 @@ class FitCallback(keras.callbacks.Callback):
     def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
                  save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
+        self.usage_info = MemoryUsage(debug=True)
         self.Exch = exchange
         self.DTS = dataset
         self.batch_size = batch_size
@@ -976,6 +979,7 @@ class FitCallback(keras.callbacks.Callback):
             self.batch += 1
             print(('Прогресс обучения', msg_progress_start +
                                          msg_progress_end + msg_epoch + msg_batch))
+            print(self.usage_info.get_usage())
 
     def on_epoch_end(self, epoch, logs=None):
         """
