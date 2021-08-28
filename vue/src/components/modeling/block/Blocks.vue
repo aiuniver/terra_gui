@@ -11,10 +11,9 @@
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
       @select="blockSelect(block)"
-      @delete="blockDelete(block)"
       @position="position(block, $event)"
       @moveBlock="moveBlock"
-      @clickIcons="clickIcons"
+      @clickIcons="clickIcons($event, block)"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -34,7 +33,7 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, mouseHelper } from '@/store/const/modeling';
+import { createBlock, cloneBlock, mouseHelper } from '@/store/const/modeling';
 
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
@@ -201,8 +200,21 @@ export default {
     },
   },
   methods: {
-    clickIcons(event) {
+    clickIcons({ event }, block) {
       console.log(event)
+      if (event === 'remove') {
+        this.blockDelete(block)
+      }
+      if (event === 'clone') {
+        this.addCloneBlock(block)
+      }
+      if (event === 'link') {
+        this.links.forEach(l => {
+          if (l.originID === block.id || l.targetID === block.id) {
+            this.removeLink(l.id);
+          }
+        });
+      }
     },
     handleMauseOver(e) {
       this.mouseIsOver = e.type === 'mouseenter';
@@ -536,6 +548,25 @@ export default {
       }
     },
     // Blocks
+    addCloneBlock(oldBlock, x, y) {
+      let maxID = Math.max(0, ...this.blocks.map(o => o.id));
+      const block = cloneBlock(oldBlock, maxID + 1);
+      if (!block) {
+        console.warn('block not create: ' + block);
+        return;
+      }
+      if (x === undefined || y === undefined) {
+        x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+        y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+      } else {
+        x = (x - this.centerX) / this.scale;
+        y = (y - this.centerY) / this.scale;
+      }
+      block.position = [x, y];
+      this.blocks.push(block);
+      this.blocks = [...this.blocks ];
+    },
+
     addNewBlock(nodeName, x, y) {
       let maxID = Math.max(
         0,
@@ -558,7 +589,7 @@ export default {
       }
       block.position = [x, y];
       this.blocks.push(block);
-      this.blocks = this.blocks; // eslint-disable-line
+      this.blocks = [...this.blocks ];
 
       // this.updateScene();
     },

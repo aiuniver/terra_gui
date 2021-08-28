@@ -2,8 +2,7 @@
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-modeling__header', group, { selected: selected }]">
       <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
-      <div class="t-block-modeling__header--parametr" :title="parameters.main">[]</div>
-      <!-- <a class="delete" @click="deleteBlock">x</a> -->
+      <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
     <div class="t-block-modeling__error" v-if="error">
       {{ error }}
@@ -86,11 +85,15 @@ export default {
     typeLink: ['bottom', 'right', 'left'],
     icons: [
       { icon: 'icon-deploy-copy', event: 'clone' },
-      { icon: 'icon-modeling-link-remove', event: 'link-remove' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
       { icon: 'icon-modeling-remove', event: 'remove' },
     ],
   }),
   computed: {
+    parametr() {
+      const parametr = Object.values(this.parameters?.main || {})
+      return parametr.join()
+    },
     filterIcons() {
       return this.icons.filter(item => item)
     },
@@ -194,9 +197,6 @@ export default {
     },
     save() {
       this.$emit('update');
-    },
-    deleteBlock() {
-      this.$emit('delete');
     },
     moveWithDiff(diffX, diffY) {
       let left = this.position[0] + diffX / this.options.scale;
@@ -391,13 +391,8 @@ $circleConnectedColor: #569dcf;
         top: 0px;
         width: 100%;
         height: 100%;
-        border: none;
-        background: rgba(0, 0, 0, 0.178);
-        border-radius: 0 !important;
         z-index: 20;
-        &:hover {
-          opacity: 0.6;
-        }
+        opacity: 0;
       }
     }
 
