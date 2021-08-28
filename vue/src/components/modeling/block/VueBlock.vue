@@ -46,11 +46,7 @@ export default {
     },
     error: {
       type: String,
-<<<<<<< Updated upstream
-      default: 'aiosdjqi9wdjqdwj',
-=======
       default: 'ddfdfdf',
->>>>>>> Stashed changes
     },
     name: {
       type: String,
