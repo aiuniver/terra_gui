@@ -262,7 +262,7 @@ $circleConnectedColor: #569dcf;
     font-size: 0.9em;
     &:hover,
     &.selected {
-      color: #fff;
+      // color: #fff;
       .parametr {
         color: #3098e7;
       }
@@ -293,60 +293,50 @@ $circleConnectedColor: #569dcf;
       background: #54e346;
       border: $blockBorder solid #54e346;
       &:hover {
-        background: none;
-        border: $blockBorder solid #54e346;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #54e346;
+        border: $blockBorder solid #ffffff;
       }
     }
     &.model {
       background: #64c9cf;
       border: $blockBorder solid #64c9cf;
       &:hover {
-        background: none;
-        border: $blockBorder solid #64c9cf;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #64c9cf;
+        border: $blockBorder solid #ffffff;
       }
     }
     &.function {
       background: #ff4c29;
       border: $blockBorder solid #ff4c29;
       &:hover {
-        background: none;
-        border: $blockBorder solid #ff4c29;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #ff4c29;
+        border: $blockBorder solid #ffffff;
       }
     }
     &.custom {
       background: #ffb740;
       border: $blockBorder solid #ffb740;
       &:hover {
-        background: none;
-        border: $blockBorder solid #ffb740;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #ffb740;
+        border: $blockBorder solid #ffffff;
       }
     }
     &.output {
       background: #ae00fb;
       border: $blockBorder solid #ae00fb;
       &:hover {
-        background: none;
-        border: $blockBorder solid #ae00fb;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #ae00fb;
+        border: $blockBorder solid #ffffff;
       }
     }
   }
