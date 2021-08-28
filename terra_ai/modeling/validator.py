@@ -309,7 +309,7 @@ class ModelValidator:
                     self.val_dictionary[idx] = "Output shape Error: Unspecified output layer!"
 
     def _model_validation(self):
-        """Full model validation"""
+        """Full model modeling"""
         # check for cycles
         self._get_cycles_check()
         if not self.valid:
@@ -357,7 +357,7 @@ class ModelValidator:
         return self.validator.get_validated()
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
-        """block validation"""
+        """block modeling"""
         _, _, downlinks, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
@@ -531,7 +531,7 @@ class ModelValidator:
             self.keras_code = f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
 
     def get_validated(self):
-        """Returns all necessary info about validation"""
+        """Returns all necessary info about modeling"""
 
         self._model_validation()
         if self.valid:
@@ -690,7 +690,7 @@ class LayerValidation:
             return comment[:-2]
 
     def primary_layer_validation(self):
-        """Whole validation for specific parameters, uplink number and input dimension"""
+        """Whole modeling for specific parameters, uplink number and input dimension"""
         comment = self.position_validation()
         if comment:
             return comment
