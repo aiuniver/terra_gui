@@ -6,6 +6,7 @@
       :key="block.id"
       v-bind="block"
       :options="optionsForChild"
+      :linkingCheck="tempLink"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -97,7 +98,7 @@ export default {
     },
     links: {
       set(value) {
-        console.log(value)
+        console.log(value);
         this.$store.dispatch('modeling/setLinks', value);
       },
       get() {
@@ -105,7 +106,7 @@ export default {
       },
     },
     optionsForChild() {
-      // console.log(this.centerX, this.centerY)
+      console.log(this.centerX, this.centerY);
       return {
         width: 200,
         titleHeight: 48,
@@ -185,7 +186,9 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {          // eslint-disable-line
+        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+        this.tempLink.style = {
+          // eslint-disable-line
           stroke: '#8f8f8f',
           strokeWidth: 3 * this.scale,
           fill: 'none',
@@ -403,8 +406,10 @@ export default {
       return { x, y };
     },
     // Linking
-    findindexBlock (id) {
-      return this.blocks.findIndex((block) => { return block.id === id })
+    findindexBlock(id) {
+      return this.blocks.findIndex(block => {
+        return block.id === id;
+      });
     },
     linkingStart(block, slotNumber) {
       console.log('linkingStart');
@@ -422,11 +427,16 @@ export default {
     },
     linkingStop(targetBlock, slotNumber) {
       console.log('linkingStop');
+      console.log(targetBlock);
+      console.log(this.linkStartData);
+      this.linkStartData.block.id;
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        const { slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const {
+          slotNumber: originSlot,
+          block: { id: originID },
+        } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
-
         this.links = this.links.filter(line => {
           return (
             !(
@@ -434,7 +444,11 @@ export default {
               line.targetSlot === targetSlot &&
               line.originID === originID &&
               line.originSlot === originSlot
-            ) && !(line.originID === originID && line.targetID === targetID)
+            ) &&
+            !(
+              (line.targetID === originID && line.originID === targetID) ||
+              (line.originID === originID && line.targetID === targetID)
+            )
           );
         });
 
@@ -446,10 +460,10 @@ export default {
         );
 
         if (this.linkStartData.block.id !== targetBlock.id) {
-            const originID = this.linkStartData.block.id
-            const originSlot = this.linkStartData.slotNumber
-            const targetID = targetBlock.id
-            const targetSlot = slotNumber
+          const originID = this.linkStartData.block.id;
+          const originSlot = this.linkStartData.slotNumber;
+          const targetID = targetBlock.id;
+          const targetSlot = slotNumber;
 
           this.links.push({
             id: maxID + 1,
@@ -468,7 +482,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true)
+          this.$emit('save', true);
         }
       }
 
@@ -491,8 +505,8 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-          
-          this.$emit('save', true)
+
+          this.$emit('save', true);
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
 
@@ -591,8 +605,12 @@ export default {
       // this.updateScene();
     },
     moveBlock() {
+<<<<<<< HEAD
       this.$store.dispatch('modeling/setButtons', {save: true})
       this.$emit('save')
+=======
+      this.$store.dispatch('modeling/setButtons', { save: true });
+>>>>>>> features/new
     },
 
     updateScene() {
@@ -651,7 +669,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer; 
+    cursor: pointer;
     i {
       width: 14px;
       height: 14px;
