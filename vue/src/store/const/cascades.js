@@ -1,26 +1,36 @@
 const typeBlock = [
     {
       group: "input",
+      name: 'Вход ',
+      type: 'Input',
       inputs: [],
       outputs: [{}],
     },
     {
       group: "model",
+      name: 'Модель ',
+      type: 'Model',
       inputs: [{}],
       outputs: [{}],
     },
     {
       group: "function",
+      name: 'Функция ',
+      type: 'Function',
       inputs: [{}],
       outputs: [{}],
     },
     {
       group: "custom",
+      name: 'Кастом ',
+      type: 'Custom',
       inputs: [{}],
       outputs: [{}],
     },
     {
       group: "output",
+      name: 'Выход ',
+      type: 'Dense',
       inputs: [{}],
       outputs: [],
     },
@@ -39,9 +49,9 @@ const typeBlock = [
     }
     return {
       id: id,
-      name: "block",
-      type: "",
-      group: type,
+      name: node.name + id,
+      type: node.type,
+      group: node.group,
       bind: {
         up: [],
         down: [],
@@ -87,6 +97,8 @@ const typeBlock = [
       });
     return JSON.parse(JSON.stringify(newBlock));
   };
+
+  const groups = typeBlock.map(item => item.group)
   
   const prepareLinks = function(blocks) {
     let links = [];
@@ -142,5 +154,5 @@ const typeBlock = [
     }
   }
   
-  export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper };
+  export { typeBlock, groups, prepareBlocks, createBlock, prepareLinks, mouseHelper };
   

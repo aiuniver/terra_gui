@@ -16,6 +16,7 @@ import Blocks from '@/components/cascades/block/Blocks';
 import Params from '@/components/cascades/Params';
 import LoadModel from '@/components/cascades/modals/LoadModel';
 import SaveModel from '@/components/cascades/modals/SaveModel';
+import { groups } from '../store/const/cascades';
 
 export default {
   name: 'Cascades',
@@ -51,7 +52,7 @@ export default {
       if (btn === 'load') {
         this.dialogLoadModel = true;
       }
-      if (btn === 'input' || btn === 'middle' || btn === 'output') {
+      if (groups.includes(btn)) {
         this.addBlock(btn);
       }
       if (btn === 'save') {

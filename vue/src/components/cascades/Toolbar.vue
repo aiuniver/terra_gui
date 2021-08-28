@@ -13,7 +13,7 @@
       <hr />
       <li
         class="toolbar__menu--item"
-        @click.prevent="click('input', isInput)"
+        @click.prevent="click('input')"
         title="Входящий слой"
       >
         <i class="t-icon icon-layer-input-casc"></i>
@@ -29,7 +29,7 @@
       </li>
       <li
         class="toolbar__menu--item"
-        @click.prevent="click('output', isOutput)"
+        @click.prevent="click('output')"
         title="Исходящий слой"
       >
         <i class="t-icon icon-layer-output"></i>
