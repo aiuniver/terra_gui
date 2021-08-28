@@ -49,9 +49,8 @@ def get_links(model_plan):
 
 
 def get_idx_line(model_plan):
-    start_row, uplinks, downlinks, all_indexes, _ = get_links(model_plan)
+    start_row, uplinks, downlinks, idx2remove, _ = get_links(model_plan)
     distribution = []  # distribution plan, show rows with layers
-    idx2remove = copy.deepcopy(all_indexes)
 
     for i in start_row:
         if uplinks[i] != [-1]:
@@ -62,21 +61,26 @@ def get_idx_line(model_plan):
     distribution.append(start_row)
 
     # get other rows
+    count=1
     while idx2remove:
+        count += 1
         row_idxs = []
         for idx in distribution[-1]:
-            for downlink in downlinks[idx]:
+            for downlink in downlinks.get(idx):
                 if downlink not in row_idxs:
                     row_idxs.append(downlink)
 
         for link in row_idxs:
-            if len(uplinks[link]) > 1 and len(set(idx2remove) & set(uplinks[link])) != 0:
+            
+            if len(uplinks.get(link)) > 1 and len(set(idx2remove) & set(uplinks.get(link))) != 0:
+                print(set(idx2remove) & set(uplinks.get(link)))
                 row_idxs.pop(row_idxs.index(link))
 
         distribution.append(row_idxs)
         for idx in row_idxs:
             idx2remove.pop(idx2remove.index(idx))
-
+        if count > 100:
+          idx2remove = None
     idx_line = []
     for row in distribution:
         idx_line.extend(row)
@@ -87,7 +91,6 @@ def reorder_plan(model_plan):
     idx_line = get_idx_line(model_plan)
     order_plan = []
     for idx in idx_line:
-        # order_plan.append(model_plan[idx])
         for layer in model_plan:
             if idx == layer[0]:
                 order_plan.append(layer)
@@ -155,7 +158,8 @@ class ModelValidator:
 
     def __init__(self, model, output_shape=None, **kwargs):
         self.validator = LayerValidation()
-        self.model_plan = TerraModel()
+        self.model_plan = None
+        self.filled_model = None
         self.maxwordcount = None
 
         self.all_indexes = []
@@ -169,17 +173,21 @@ class ModelValidator:
         self.layer_input_shapes = {}
         self.layer_output_shapes = {}
         self.model = model
+        self.filled_model = model
+        self.model_plan = TerraModel()
+        self.model_plan.plan = []
+        self.model_plan.plan_name = ''
+        self.model_plan.input_shape = {}
+        self.model_plan.block_plans = {}
 
         self.keras_code = ''
         self.valid = True
 
-        self.model_plan = TerraModel()
         self.output_shape = output_shape
         self.maxwordcount = kwargs.get('maxwordcount')
 
         self.val_dictionary = {}
         for layer in self.model.details.layers:
-            # print(layer.id, layer.parameters.defaults)
             self.val_dictionary[layer.id] = None
             self.layer_input_shapes[layer.id] = []
             self.layer_output_shapes[layer.id] = []
@@ -199,7 +207,7 @@ class ModelValidator:
                 self.layers_def[layer.id] = layer.parameters.defaults.merged
                 self.layers_config[layer.id] = layer.parameters.config
         self._build_model_plan()
-
+        
     def _build_model_plan(self):
         # оставить описание
         self.model_plan.plan_name = self.model.name
@@ -219,8 +227,6 @@ class ModelValidator:
                         break
         self._get_model_links()
         self._get_reorder_model()
-        # for lay in self.model_plan.plan:
-        #     print(lay)
 
     def _get_cycles_check(self):
         """
@@ -270,11 +276,8 @@ class ModelValidator:
         """Check empty input shapes"""
         input_layers = {}
         for layer in self.model_plan.plan:
-            try:
-                if int(layer[2].get('name')) in self.model_plan.input_shape.keys():
-                    input_layers[layer[0]] = layer[2].get('name')
-            except ValueError:
-                pass
+            if layer[0] in self.model_plan.input_shape.keys():
+                input_layers[layer[0]] = layer[2].get('name')
 
         for idx in self.start_row:
             if idx not in input_layers.keys():
@@ -293,13 +296,13 @@ class ModelValidator:
         if self.output_shape:
             outputs = []
             for layer in self.model_plan.plan:
-                if layer[2].get('name', None) in self.output_shape.keys():
+                if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
-                    if self.output_shape[layer[2].get('name', None)] != self.layer_output_shapes[layer[0]][0][1:]:
+                    if self.output_shape[layer[0]][0] != self.layer_output_shapes[layer[0]][0][1:]:
                         self.valid = False
                         self.val_dictionary[layer[0]] = \
                             f"Output shape Error: Expected output shape " \
-                            f"{self.output_shape[layer[2].get('name')]} " \
+                            f"{self.output_shape[layer[0]][0]} " \
                             f"but got output shape {self.layer_output_shapes[layer[0]][0][1:]}!"
 
             # check unspecified output layers
@@ -391,26 +394,6 @@ class ModelValidator:
 
         return block_output, block_comment
 
-    # def return_links(self):
-    #     """Return list of tuples of model links, parameters and shapes to GUI
-    #
-    #     links:     list of tuples ('updated idx',
-    #                                 'uplink_idx',
-    #                                 'downlink_idx',
-    #                                 'parameters',
-    #                                 'input_shape',
-    #                                 'output_shape',
-    #                                 'layer type',
-    #                                 'layer position',
-    #                                 'initial idx')
-    #     """
-    #
-    #     links = []
-    #     for layer in self.model_plan.plan:
-    #         links.append((layer[0], layer[3], layer[4], layer[2],
-    #                       self.layer_input_shapes.get(layer[0]), self.layer_output_shapes.get(layer[0]),
-    #                       layer[1], self.layers_state.get(layer[0]), layer[0]))
-    #     return links
 
     def compile_keras_code(self):
         """Create keras code from model plan"""
@@ -539,15 +522,15 @@ class ModelValidator:
         else:
             self.keras_code = None
 
-        for idx, layer in enumerate(self.model.details.layers):
+        for idx, layer in enumerate(self.filled_model.details.layers):
             if layer.group == LayerGroupChoice.input:
-                self.model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
             else:
-                self.model.details.layers[idx].shape.input = self.layer_input_shapes.get(layer.id)
-                self.model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+                self.filled_model.details.layers[idx].shape.input = self.layer_input_shapes.get(layer.id)
+                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
         # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         return {
-            'model': self.model,
+            'model': self.filled_model,
             'error_msg': self.val_dictionary,
             'keras_code': self.keras_code
         }
