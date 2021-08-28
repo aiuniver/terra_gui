@@ -1,4 +1,4 @@
-import { prepareBlocks, prepareLinks } from '@/components/modeling/block/helpers/default';
+import { prepareBlocks, prepareLinks } from '../const/cascades';
 
 export default {
   namespaced: true,

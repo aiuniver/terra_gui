@@ -32,7 +32,7 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, mouseHelper } from './helpers/default';
+import { createBlock, mouseHelper } from '@/store/const/modeling';
 
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
