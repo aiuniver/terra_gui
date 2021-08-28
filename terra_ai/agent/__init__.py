@@ -17,7 +17,7 @@ from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
 
-from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData, ModelData
 from ..data.modeling.extra import ModelGroupChoice
 
 from ..data.presets.datasets import DatasetsGroups
@@ -34,6 +34,7 @@ from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
 from . import exceptions
+from ..modeling.validator import ModelValidator
 
 
 class Exchange:
@@ -195,6 +196,14 @@ class Exchange:
         if len(kwargs.keys()):
             model.update(kwargs)
         return ModelDetailsData(**model)
+
+    def _call_model_validate(self, model_data: dict) -> dict:
+        """
+        Валидация модели
+        """
+        model = ModelData(**model_data)
+        validation_info = ModelValidator(model).get_validated()
+        return validation_info
 
     def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
         """
