@@ -1,23 +1,21 @@
 <template>
-  <div class="vue-block" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
-    <div :class="['header', group, { selected: selected }]">
-      <div class="title" :title="name">{{ name }}: {{ type }}</div>
-      <div class="parametr" :title="parameters">[]</div>
+  <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
+    <div :class="['t-block-modeling__header', group, { selected: selected }]">
+      <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
+      <div class="t-block-modeling__header--parametr" :title="parameters.main">[]</div>
       <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div class="vue-block__error" v-if="error">
+    <div class="t-block-modeling__error" v-if="error">
       {{ error }}
     </div>
-    <div v-if="!group.includes('middle')" v-show="hover || selected" class="hover-over">
-      <!-- <i class="t-icon icon-modeling-link"></i> -->
-      <i class="t-icon icon-modeling-link-remove"></i>
+
+    <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
+      <template v-for="(item, i) of icons">
+        <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
+      </template>
     </div>
-    <div v-else v-show="hover || selected" class="hover-sloy">
-      <!-- <i class="t-icon icon-modeling-link"></i> -->
-      <i class="t-icon icon-modeling-link-remove"></i>
-      <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
-    </div>
-    <div class="inputs">
+
+    <div class="t-block-modeling__inputs">
       <div
         v-for="(slot, index) in inputs"
         :key="'input' + index"
@@ -27,7 +25,7 @@
         @mousedown="slotBreak($event, index)"
       ></div>
     </div>
-    <div class="outputs">
+    <div class="t-block-modeling__outputs">
       <div
         v-for="(slot, index) in outputs"
         class="output"
@@ -48,7 +46,11 @@ export default {
     },
     error: {
       type: String,
+<<<<<<< Updated upstream
       default: 'aiosdjqi9wdjqdwj',
+=======
+      default: 'ddfdfdf',
+>>>>>>> Stashed changes
     },
     name: {
       type: String,
@@ -83,7 +85,30 @@ export default {
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
+    icons: [
+      { icon: 'icon-deploy-copy', event: 'clone' },
+      { icon: 'icon-modeling-link-remove', event: 'link-remove' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
   }),
+  computed: {
+    filterIcons() {
+      return this.icons.filter(item => item)
+    },
+    styleHover() {
+      const len = this.icons.length;
+      return { right: -(34 * len) + 'px' };
+    },
+    style() {
+      return {
+        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
+        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
+        width: this.options.width + 'px',
+        transform: 'scale(' + (this.options.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
+    },
+  },
   created() {
     this.mouseX = 0;
     this.mouseY = 0;
@@ -180,17 +205,6 @@ export default {
       this.$emit('position', [left, top]);
     },
   },
-  computed: {
-    style() {
-      return {
-        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
-        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
-        width: this.options.width + 'px',
-        transform: 'scale(' + (this.options.scale + '') + ')',
-        transformOrigin: 'top left',
-      };
-    },
-  },
 };
 </script>
 
@@ -209,7 +223,7 @@ $circleNewColor: #00ff00;
 $circleRemoveColor: #ff0000;
 $circleConnectedColor: #569dcf;
 
-.vue-block {
+.t-block-modeling {
   position: absolute;
   box-sizing: border-box;
   // border: $blockBorder solid black;
@@ -221,12 +235,11 @@ $circleConnectedColor: #569dcf;
   cursor: move;
   height: 50px;
 
-  .hover-over {
+  &__hover {
     position: absolute;
     top: 0px;
-    right: -40px;
+    right: 0px;
     height: 48px;
-    width: 40px;
     background-color: #294c6f;
     border-radius: 5px;
     cursor: context-menu;
@@ -240,25 +253,25 @@ $circleConnectedColor: #569dcf;
       cursor: pointer;
     }
   }
-  .hover-sloy {
-    position: absolute;
-    top: 0px;
-    right: -80px;
-    height: 48px;
-    width: 80px;
-    background-color: #294c6f;
-    border-radius: 5px;
-    cursor: context-menu;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    > i {
-      display: inline-flex;
-      font-size: 1.5em;
-      margin: 0 5px;
-      cursor: pointer;
-    }
-  }
+  // .hover-sloy {
+  //   position: absolute;
+  //   top: 0px;
+  //   right: 0px;
+  //   height: 48px;
+  //   width: 80px;
+  //   background-color: #294c6f;
+  //   border-radius: 5px;
+  //   cursor: context-menu;
+  //   display: flex;
+  //   justify-content: space-around;
+  //   align-items: center;
+  //   > i {
+  //     display: inline-flex;
+  //     font-size: 1.5em;
+  //     margin: 0 5px;
+  //     cursor: pointer;
+  //   }
+  // }
 
   &__error {
     position: absolute;
@@ -272,9 +285,10 @@ $circleConnectedColor: #569dcf;
     background-color: #2b5278;
     border-radius: 5px;
     font-size: 0.9em;
+    text-align: center;
   }
 
-  > .header {
+  &__header {
     background: #bfbfbf;
     text-align: center;
     height: 48px;
@@ -289,12 +303,12 @@ $circleConnectedColor: #569dcf;
       }
     }
 
-    .title {
+    &--title {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .parametr {
+    &--parametr {
       color: #2b5275;
       font-size: 0.8em;
     }
@@ -346,10 +360,13 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #8e51f2;
       }
     }
+
+
+    
   }
 
-  .inputs,
-  .outputs {
+  &__inputs,
+  &__outputs {
     width: 100%;
     display: flex;
     justify-content: center;

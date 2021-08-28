@@ -13,6 +13,7 @@
       @delete="blockDelete(block)"
       @position="position(block, $event)"
       @moveBlock="moveBlock"
+      @clickIcons="clickIcons"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -197,6 +198,9 @@ export default {
     },
   },
   methods: {
+    clickIcons(event) {
+      console.log(event)
+    },
     handleMauseOver(e) {
       this.mouseIsOver = e.type === 'mouseenter';
     },
