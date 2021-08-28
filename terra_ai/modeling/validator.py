@@ -16,7 +16,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 
 from terra_ai.data.modeling.layers import types
 
-__version__ = 0.051
+__version__ = 0.052
 
 from terra_ai.data.modeling.layers.extra import ModuleTypeChoice, LayerValidationMethodChoice, \
     SpaceToDepthDataFormatChoice
@@ -1070,139 +1070,6 @@ class ModelCreator:
         gc.collect()
         self.nnmodel = tensorflow.keras.Model()
 
-
-custom_block_plan = {
-    'Conv2DBNDrop': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (2, 2)}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Dropout", {'rate': 0.2}, [1], [])
-    ],
-    'Conv2DBNLeaky': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (2, 2)}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "LeakyReLU", {'alpha': 0.1}, [1], [])
-    ],
-    'CustomResBlock': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'linear', 'kernel_size': (3, 3),
-                       'padding': 'same', 'strides': (1, 1), 'use_bias': False}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "LeakyReLU", {'alpha': 0.1}, [1], [3]),
-        (3, "Conv2D", {'filters': 64, 'activation': 'linear', 'kernel_size': (1, 1),
-                       'padding': 'same', 'strides': (1, 1), 'use_bias': False}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "LeakyReLU", {'alpha': 0.1}, [4], [6]),
-        (6, 'Add', {}, [-1, 5], []),
-    ],
-    'Resnet50Block': [
-        (0, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'valid',
-                       'activation': 'linear'}, [-1], 1),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "Conv2D", {'filters': 64, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "Activation", {'activation': 'relu'}, [4], [6]),
-        (6, "Conv2D", {'filters': 256, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'valid',
-                       'activation': 'linear'}, [5], [7]),
-        (7, "BatchNormalization", {}, [6], [8]),
-        (8, "Add", {}, [7, -1], [9]),
-        (9, "Activation", {'activation': 'relu'}, [8], []),
-    ],
-    'PSPBlock': [
-        (0, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'},
-         [-1], [1, 4, 8, 10]),
-        (1, "MaxPool2D", {'pool_size': (2, 2)}, [0], [2]),
-        (2, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [1], [3]),
-        (3, "Conv2DTranspose", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (2, 2)}, [2], [10]),
-        (4, "MaxPool2D", {'pool_size': (4, 4)}, [0], [5]),
-        (5, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [4], [6]),
-        (6, "Conv2DTranspose", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (4, 4)}, [5], [10]),
-        (7, "MaxPool2D", {'pool_size': (8, 8)}, [0], [8]),
-        (8, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [7], [9]),
-        (9, "Conv2DTranspose", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                                'padding': 'same', 'strides': (8, 8)}, [8], [10]),
-        (10, "Concatenate", {}, [0, 3, 6, 9], [11]),
-        (11, "Conv2D", {'filters': 32, 'activation': 'relu', 'kernel_size': (3, 3), 'padding': 'same'}, [10], []),
-    ],
-    'UNETBlock': [
-        (0, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3), 'strides': (1, 1),
-                       'padding': 'same'}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [3, 17]),
-        (2, "MaxPool2D", {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, [1], [3]),
-        (3, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5, 12]),
-        (5, "MaxPool2D", {'padding': 'same', 'pool_size': (2, 2), 'strides': (2, 2)}, [4], [6]),
-        (6, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [5], [7]),
-        (7, "BatchNormalization", {}, [6], [8]),
-        (8, "Conv2D", {'filters': 256, 'activation': 'relu', 'kernel_size': (3, 3),
-                       'strides': (1, 1), 'padding': 'same'}, [7], [9]),
-        (9, "BatchNormalization", {}, [8], [10]),
-        (10, "Conv2DTranspose", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                                 'padding': 'same', 'strides': (2, 2)}, [9], [11]),
-        (11, "BatchNormalization", {}, [10], [12]),
-        (12, "Concatenate", {}, [11, 4], [13]),
-        (13, "Conv2D", {'filters': 128, 'activation': 'relu', 'kernel_size': (3, 3),
-                        'strides': (1, 1), 'padding': 'same'}, [12], [14]),
-        (14, "BatchNormalization", {}, [13], [15]),
-        (15, "Conv2DTranspose", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                                 'padding': 'same', 'strides': (2, 2)}, [14], [16]),
-        (16, "BatchNormalization", {}, [15], [17]),
-        (17, "Concatenate", {}, [16, 1], [18]),
-        (18, "Conv2D", {'filters': 64, 'activation': 'relu', 'kernel_size': (3, 3),
-                        'strides': (1, 1), 'padding': 'same'}, [17], []),
-    ],
-    'XceptionBlock': [
-        (0, "SeparableConv2D", {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                                'activation': 'linear'}, [-1], [1]),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "SeparableConv2D", {'filters': 128, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                                'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [6]),
-        (5, "Conv2D", {'filters': 128, 'kernel_size': (1, 1), 'strides': (2, 2), 'padding': 'same',
-                       'activation': 'linear'}, [-1], [7]),
-        (6, "MaxPool2D", {'pool_size': (3, 3), 'strides': (2, 2), 'padding': 'same'}, [4], [8]),
-        (7, "BatchNormalization", {}, [5], [8]),
-        (8, "Add", {}, [6, 7], []),
-    ],
-    'InceptionV3block': [
-        (0, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [-1], 1),
-        (1, "BatchNormalization", {}, [0], [2]),
-        (2, "Activation", {'activation': 'relu'}, [1], [3]),
-        (3, "Conv2D", {'filters': 96, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [2], [4]),
-        (4, "BatchNormalization", {}, [3], [5]),
-        (5, "Activation", {'activation': 'relu'}, [4], [6]),
-        (6, "Conv2D", {'filters': 96, 'kernel_size': (3, 3), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [5], [8]),
-        (7, "BatchNormalization", {}, [6], [21]),
-        (8, "Conv2D", {'filters': 48, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                       'activation': 'linear'}, [-1], [9]),
-        (9, "BatchNormalization", {}, [8], [10]),
-        (10, "Activation", {'activation': 'relu'}, [9], [11]),
-        (11, "Conv2D", {'filters': 64, 'kernel_size': (5, 5), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [10], [12]),
-        (12, "BatchNormalization", {}, [11], [13]),
-        (13, "Activation", {'activation': 'relu'}, [12], [21]),
-        (14, "AveragePooling2D", {'pool_size': (3, 3), 'strides': (1, 1), 'padding': 'same'}, [-1], [15]),
-        (15, "Conv2D", {'filters': 32, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [14], [16]),
-        (16, "BatchNormalization", {}, [15], [17]),
-        (17, "Activation", {'activation': 'relu'}, [16], [21]),
-        (18, "Conv2D", {'filters': 64, 'kernel_size': (1, 1), 'strides': (1, 1), 'padding': 'same',
-                        'activation': 'linear'}, [-1], [19]),
-        (19, "BatchNormalization", {}, [18], [20]),
-        (20, "Activation", {'activation': 'relu'}, [19], [21]),
-        (21, "Concatenate", {'axis': -1}, [7, 13, 17, 20], []),
-    ]
-}
 
 if __name__ == "__main__":
     input_shape = [
