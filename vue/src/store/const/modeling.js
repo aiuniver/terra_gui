@@ -1,27 +1,33 @@
 const typeBlock = [
   {
-    group: "input",
+    group: 'input',
+    name: 'Вход ',
+    type: 'Input',
     inputs: [],
     outputs: [{}],
   },
   {
-    group: "middle",
+    group: 'middle',
+    name: 'Layer ',
+    type: 'Conv2D',
     inputs: [{}],
     outputs: [{}],
   },
   {
-    group: "output",
+    group: 'output',
+    name: 'Выход  ',
+    type: 'Dense',
     inputs: [{}],
     outputs: [],
   },
 ];
 
-const createBlock = function(type, id) {
+const createBlock = function (type, id) {
   // console.log(type, id)
   if (!type || !id) {
     return null;
   }
-  const node = typeBlock.find((n) => {
+  const node = typeBlock.find(n => {
     return n.group === type;
   });
   if (!node) {
@@ -29,9 +35,9 @@ const createBlock = function(type, id) {
   }
   return {
     id: id,
-    name: "block",
-    type: "",
-    group: type,
+    name: node.name + id,
+    type: node.type,
+    group: node.group,
     bind: {
       up: [],
       down: [],
@@ -53,12 +59,17 @@ const createBlock = function(type, id) {
   };
 };
 
-const prepareBlocks = function(blocks) {
+const cloneBlock = function (block, id) {
+  return { ...block, ...{ id }, ...{ name: block.name + '(clone)' } };
+};
+
+const prepareBlocks = function (blocks) {
   let last = 0;
-  const newBlock = blocks.map((block) => {
+  const newBlock = blocks
+    .map(block => {
       let newBlock = createBlock(block.group, block.id);
       if (!newBlock) {
-        console.warn("block not create: " + block)
+        console.warn('block not create: ' + block);
         return;
       }
       const x = 0; // (this.$el.clientWidth / 2 - this.centerX) / this.scale;
@@ -72,20 +83,20 @@ const prepareBlocks = function(blocks) {
       }
       return newBlock;
     })
-    .filter((b) => {
+    .filter(b => {
       return !!b;
     });
   return JSON.parse(JSON.stringify(newBlock));
 };
 
-const prepareLinks = function(blocks) {
+const prepareLinks = function (blocks) {
   let links = [];
-  let linksID = 0
+  let linksID = 0;
   blocks.forEach(({ id, bind }) => {
     // console.log(id)
     // console.log(bind)
     if (bind?.down && Array.isArray(bind.down)) {
-      const arr = bind.down
+      const arr = bind.down;
       arr.forEach(item => {
         if (item) {
           links.push({
@@ -96,40 +107,37 @@ const prepareLinks = function(blocks) {
             targetSlot: 0,
           });
         }
-      })
-      
+      });
     }
-
-
   });
   // console.log(links)
-  return links      
+  return links;
 };
 
 const getOffsetRect = function (element) {
-  let box = element.getBoundingClientRect()
+  let box = element.getBoundingClientRect();
 
-  let scrollTop = window.pageYOffset
-  let scrollLeft = window.pageXOffset
+  let scrollTop = window.pageYOffset;
+  let scrollLeft = window.pageXOffset;
 
-  let top = box.top + scrollTop
-  let left = box.left + scrollLeft
+  let top = box.top + scrollTop;
+  let left = box.left + scrollLeft;
 
-  return {top: Math.round(top), left: Math.round(left)}
-}
+  return { top: Math.round(top), left: Math.round(left) };
+};
 
 const mouseHelper = function (element, event) {
-  let mouseX = event.pageX || event.clientX + document.documentElement.scrollLeft
-  let mouseY = event.pageY || event.clientY + document.documentElement.scrollTop
+  let mouseX = event.pageX || event.clientX + document.documentElement.scrollLeft;
+  let mouseY = event.pageY || event.clientY + document.documentElement.scrollTop;
 
-  let offset = getOffsetRect(element)
-  let x = mouseX - offset.left
-  let y = mouseY - offset.top
+  let offset = getOffsetRect(element);
+  let x = mouseX - offset.left;
+  let y = mouseY - offset.top;
 
   return {
     x: x,
-    y: y
-  }
-}
+    y: y,
+  };
+};
 
-export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper };
+export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock };

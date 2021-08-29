@@ -22,15 +22,6 @@
               :disabled="!selectBlock"
               @change="saveModel"
             />
-            <!-- <t-input
-              v-model="block.shape.input"
-              :label="'Shape'"
-              :type="'text'"
-              :parse="'shape'"
-              :name="'shape'"
-              :disabled="!selectBlock"
-              @change="saveModel"
-            /> -->
           </div>
           <at-collapse :value="collapse">
             <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
@@ -51,10 +42,10 @@
 </template>
 
 <script>
-import Navbar from '@/components/modeling/comp/Navbar.vue';
+import Navbar from '@/components/cascades/comp/Navbar.vue';
 // import Input from "@/components/forms/Input.vue";
 import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
-import Forms from '@/components/modeling/comp/Forms.vue';
+import Forms from '@/components/cascades/comp/Forms.vue';
 import { mapGetters } from 'vuex';
 // import serialize from "@/assets/js/serialize";
 
@@ -72,22 +63,22 @@ export default {
     // Select
   },
   data: () => ({
-    collapse: [0],
+    collapse: [0, 1],
     oldBlock: null,
   }),
   computed: {
     ...mapGetters({
-      list: 'modeling/getList',
-      layers: 'modeling/getLayersType',
-      buttons: 'modeling/getButtons',
-      // block: "modeling/getBlock",
+      list: 'cascades/getList',
+      layers: 'cascades/getLayersType',
+      buttons: 'cascades/getButtons',
+      // block: "cascades/getBlock",
     }),
     block: {
       set(value) {
-        this.$store.dispatch('modeling/setBlock', value);
+        this.$store.dispatch('cascades/setBlock', value);
       },
       get() {
-        return this.$store.getters['modeling/getBlock'] || {};
+        return this.$store.getters['cascades/getBlock'] || {};
       },
     },
     buttonSave () {
@@ -116,7 +107,7 @@ export default {
   },
   methods: {
     async saveModel() {
-      await this.$store.dispatch('modeling/saveModel', {});
+      await this.$store.dispatch('cascades/saveModel', {});
     },
     async change({ type, name, value }) {
       console.log({ type, name, value });
@@ -133,7 +124,7 @@ export default {
     selectBlock: {
       handler(newBlock, oldBlock) {
         this.oldBlock = oldBlock;
-        this.$store.dispatch('modeling/setSelect', newBlock?.id);
+        this.$store.dispatch('cascades/setSelect', newBlock?.id);
         console.log(newBlock, oldBlock);
       },
     },

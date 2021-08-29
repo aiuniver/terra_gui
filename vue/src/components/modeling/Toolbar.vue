@@ -1,40 +1,38 @@
 <template>
   <div class="toolbar">
     <ul class="toolbar__menu">
-      <li class="toolbar__menu--item" @click.prevent="click('load')" title="Загрузить модель">
+      <li :class="['toolbar__menu--item', { disabled: false }]" @click="click($event, 'load')" title="Загрузить модель">
         <i class="t-icon icon-model-load"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('save')" title="Сохранить модель">
+      <li :class="['toolbar__menu--item', { disabled: isSave }]" @click="click($event, 'save')" title="Сохранить модель">
         <i class="t-icon icon-model-save"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('validation')" title="Валидация">
+      <li :class="['toolbar__menu--item', { disabled: isValidation }]" @click="click($event, 'validation')" title="Валидация">
         <i class="t-icon icon-model-validation"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
-        <i class="t-icon icon-clear-model"></i>
+      <li :class="['toolbar__menu--item', { disabled: isClear }]" @click="click($event, 'clear')" title="Очистить">
+        <i class="t-icon icon-model-clear"></i>
       </li>
       <hr />
-      <li
-        class="toolbar__menu--item"
-        @click.prevent="click('input', isInput)"
-        :disabled="isInput"
-        title="Входящий слой"
-      >
+      <li :class="['toolbar__menu--item', { disabled: isInput }]" @click="click($event, 'input')" title="Входящий слой">
         <i class="t-icon icon-layer-input"></i>
       </li>
-      <li class="toolbar__menu--item" @click.prevent="click('middle')" title="Промежуточный слой">
+      <li
+        :class="['toolbar__menu--item', { disabled: false }]"
+        @click="click($event, 'middle')"
+        title="Промежуточный слой"
+      >
         <i class="t-icon icon-layer-middle"></i>
       </li>
       <li
-        class="toolbar__menu--item"
-        @click.prevent="click('output', isOutput)"
-        :disabled="isOutput"
+        :class="['toolbar__menu--item', { disabled: isOutput }]"
+        @click="click($event, 'output')"
         title="Исходящий слой"
       >
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('keras')" :disabled="true" title="Код на Keras">
+      <li :class="['toolbar__menu--item', { disabled: isKeras }]" @click="click($event, 'keras')" title="Код на Keras">
         <i class="t-icon icon-keras-code"></i>
       </li>
     </ul>
@@ -45,12 +43,22 @@
 import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
-  data: () => ({}),
+  data: () => ({
+    isSave: false,
+    isKeras: false
+  }),
   computed: {
     ...mapGetters({
       blocks: 'modeling/getBlocks',
       project: 'projects/getProject',
     }),
+    isClear() {
+      return !this.blocks.length
+    },
+    isValidation() {
+      const blocks = this.blocks.map(item => item.group)
+      return !(blocks.includes('input') && blocks.includes('output'))
+    },
     isInput() {
       return !!this.blocks.find(item => item.group === 'input') && !!this.project?.dataset;
     },
@@ -59,9 +67,14 @@ export default {
     },
   },
   methods: {
-    click(event, idDisebled) {
-      if (!idDisebled) {
-        this.$emit('actions', event);
+    click({ currentTarget }, comm) {
+      const classList = [...currentTarget?.classList] || [];
+      console.log(classList);
+      if (!classList.includes('disabled')) {
+        if (comm === 'save') {
+          this.isSave = true
+        }
+        this.$emit('actions', comm);
       }
     },
   },
@@ -87,14 +100,13 @@ export default {
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      &[disabled='disabled'] {
+      &.disabled {
         opacity: 0.1;
         cursor: default;
       }
     }
   }
 }
-
 hr {
   border: none;
   color: #0e1621;

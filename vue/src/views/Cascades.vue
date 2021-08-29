@@ -6,35 +6,32 @@
       <Toolbar @actions="actions" />
       <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
       <Params ref="params" :selectBlock="selectBlock" />
-      <CopyModal :windowShow="kerasModal" :title="'Код на keras'" @closeModal="closeModal">Keras code</CopyModal>
     </div>
   </main>
 </template>
 
 <script>
-import Toolbar from '@/components/modeling/Toolbar';
-import Blocks from '@/components/modeling/block/Blocks';
-import Params from '@/components/modeling/Params';
-import LoadModel from '@/components/modeling/modals/LoadModel';
-import SaveModel from '@/components/modeling/modals/SaveModel';
-import CopyModal from "../components/global/modals/CopyModal";
+import Toolbar from '@/components/cascades/Toolbar';
+import Blocks from '@/components/cascades/block/Blocks';
+import Params from '@/components/cascades/Params';
+import LoadModel from '@/components/cascades/modals/LoadModel';
+import SaveModel from '@/components/cascades/modals/SaveModel';
+import { groups } from '../store/const/cascades';
 
 export default {
-  name: 'Modeling',
+  name: 'Cascades',
   components: {
     Toolbar,
     Blocks,
     Params,
     LoadModel,
     SaveModel,
-    CopyModal,
   },
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
     selectBlock: null,
     imageModel: null,
-    kerasModal: false,
   }),
   methods: {
     addBlock(type) {
@@ -49,16 +46,13 @@ export default {
       this.imageModel = await this.$refs.container.getImages();
     },
     async saveLayers() {
-      await this.$store.dispatch("modeling/saveModel", {});
-    },
-    closeModal(value){
-      this.kerasModal = value;
+      await this.$store.dispatch("cascades/saveModel", {});
     },
     actions(btn) {
       if (btn === 'load') {
         this.dialogLoadModel = true;
       }
-      if (btn === 'input' || btn === 'middle' || btn === 'output') {
+      if (groups.includes(btn)) {
         this.addBlock(btn);
       }
       if (btn === 'save') {
@@ -81,9 +75,6 @@ export default {
             }
           }
         })
-      }
-      if (btn === 'keras') {
-        this.kerasModal = true;
       }
       console.log(btn);
     },

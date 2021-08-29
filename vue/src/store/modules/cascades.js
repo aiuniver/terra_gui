@@ -1,4 +1,4 @@
-import { prepareBlocks, prepareLinks } from '../const/modeling';
+import { prepareBlocks, prepareLinks } from '../const/cascades';
 
 export default {
   namespaced: true,
@@ -45,10 +45,10 @@ export default {
   },
   actions: {
     async info({ dispatch }, value) {
-      return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
+      return await dispatch('axios', { url: '/cascades/info/', data: value }, { root: true });
     },
     async load({ dispatch }, value) {
-      const { data: model } = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
+      const { data: model } = await dispatch('axios', { url: '/cascades/load/', data: value }, { root: true });
       if (model) {
         await dispatch('projects/get', {}, { root: true });
       }
@@ -64,10 +64,10 @@ export default {
         }).filter(link => link)
       })
       commit('SET_BUTTONS', { save: false});
-      return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
+      return await dispatch('axios', { url: '/cascades/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
-      return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
+      return await dispatch('axios', { url: '/cascades/get/', data: value }, { root: true });
     },
     setBlocks({ commit }, value) {
       commit('SET_BLOCKS', value);

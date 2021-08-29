@@ -1,30 +1,30 @@
 <template>
-  <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
-    <div :class="['t-block-modeling__header', group, { selected: selected }]">
-      <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
-      <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
+  <div class="vue-block" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
+    <div :class="['header', group, { selected: selected }]">
+      <div class="title" :title="name">{{ name }}: {{ type }}</div>
+      <div class="parametr" :title="parameters">[]</div>
+      <!-- <a class="delete" @click="deleteBlock">x</a> -->
     </div>
-    <div class="t-block-modeling__error" v-if="error">
-      {{ error }}
+    <div v-if="!group.includes('model')" v-show="hover || selected" class="hover-over">
+      <!-- <i class="t-icon icon-modeling-link"></i> -->
+      <i class="t-icon icon-modeling-link-remove"></i>
     </div>
-
-    <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
-      <template v-for="(item, i) of icons">
-        <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
-      </template>
+    <div v-else v-show="hover || selected" class="hover-sloy">
+      <!-- <i class="t-icon icon-modeling-link"></i> -->
+      <i class="t-icon icon-modeling-link-remove"></i>
+      <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
     </div>
-
-    <div class="t-block-modeling__inputs">
+    <div class="inputs">
       <div
         v-for="(slot, index) in inputs"
         :key="'input' + index"
         class="input inputSlot"
-        :class="{ active: slot.active, 'input--linking-active': linkingCheck && !linking }"
+        :class="{ active: slot.active }"
         @mouseup="slotMouseUp($event, index)"
         @mousedown="slotBreak($event, index)"
       ></div>
     </div>
-    <div class="t-block-modeling__outputs">
+    <div class="outputs">
       <div
         v-for="(slot, index) in outputs"
         class="output"
@@ -42,13 +42,6 @@ export default {
   props: {
     id: {
       type: Number,
-    },
-    linkingCheck: {
-      type: Object,
-    },
-    error: {
-      type: String,
-      default: null,
     },
     name: {
       type: String,
@@ -83,34 +76,7 @@ export default {
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
-    icons: [
-      { icon: 'icon-deploy-copy', event: 'clone' },
-      { icon: 'icon-modeling-link-remove', event: 'link' },
-      { icon: 'icon-modeling-remove', event: 'remove' },
-    ],
   }),
-  computed: {
-    parametr() {
-      const parametr = Object.values(this.parameters?.main || {})
-      return parametr.join()
-    },
-    filterIcons() {
-      return this.icons.filter(item => item)
-    },
-    styleHover() {
-      const len = this.icons.length;
-      return { right: -(34 * len) + 'px' };
-    },
-    style() {
-      return {
-        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
-        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
-        width: this.options.width + 'px',
-        transform: 'scale(' + (this.options.scale + '') + ')',
-        transformOrigin: 'top left',
-      };
-    },
-  },
   created() {
     this.mouseX = 0;
     this.mouseY = 0;
@@ -198,10 +164,24 @@ export default {
     save() {
       this.$emit('update');
     },
+    deleteBlock() {
+      this.$emit('delete');
+    },
     moveWithDiff(diffX, diffY) {
       let left = this.position[0] + diffX / this.options.scale;
       let top = this.position[1] + diffY / this.options.scale;
       this.$emit('position', [left, top]);
+    },
+  },
+  computed: {
+    style() {
+      return {
+        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
+        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
+        width: this.options.width + 'px',
+        transform: 'scale(' + (this.options.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
     },
   },
 };
@@ -222,7 +202,7 @@ $circleNewColor: #00ff00;
 $circleRemoveColor: #ff0000;
 $circleConnectedColor: #569dcf;
 
-.t-block-modeling {
+.vue-block {
   position: absolute;
   box-sizing: border-box;
   // border: $blockBorder solid black;
@@ -234,11 +214,12 @@ $circleConnectedColor: #569dcf;
   cursor: move;
   height: 50px;
 
-  &__hover {
+  .hover-over {
     position: absolute;
     top: 0px;
-    right: 0px;
+    right: -40px;
     height: 48px;
+    width: 40px;
     background-color: #294c6f;
     border-radius: 5px;
     cursor: context-menu;
@@ -252,42 +233,27 @@ $circleConnectedColor: #569dcf;
       cursor: pointer;
     }
   }
-  // .hover-sloy {
-  //   position: absolute;
-  //   top: 0px;
-  //   right: 0px;
-  //   height: 48px;
-  //   width: 80px;
-  //   background-color: #294c6f;
-  //   border-radius: 5px;
-  //   cursor: context-menu;
-  //   display: flex;
-  //   justify-content: space-around;
-  //   align-items: center;
-  //   > i {
-  //     display: inline-flex;
-  //     font-size: 1.5em;
-  //     margin: 0 5px;
-  //     cursor: pointer;
-  //   }
-  // }
-
-  &__error {
+  .hover-sloy {
     position: absolute;
-    white-space: break-word;
-    left: -102%;
-    width: 200px;
-    top: 0;
-    height: auto;
-    padding: 10px;
-    color: #fff;
-    background-color: #2b5278;
+    top: 0px;
+    right: -80px;
+    height: 48px;
+    width: 80px;
+    background-color: #294c6f;
     border-radius: 5px;
-    font-size: 0.9em;
-    text-align: center;
+    cursor: context-menu;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    > i {
+      display: inline-flex;
+      font-size: 1.5em;
+      margin: 0 5px;
+      cursor: pointer;
+    }
   }
 
-  &__header {
+  > .header {
     background: #bfbfbf;
     text-align: center;
     height: 48px;
@@ -296,18 +262,18 @@ $circleConnectedColor: #569dcf;
     font-size: 0.9em;
     &:hover,
     &.selected {
-      color: #fff;
+      // color: #fff;
       .parametr {
         color: #3098e7;
       }
     }
 
-    &--title {
+    .title {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    &--parametr {
+    .parametr {
       color: #2b5275;
       font-size: 0.8em;
     }
@@ -324,48 +290,59 @@ $circleConnectedColor: #569dcf;
     }
 
     &.input {
-      background: #ffb054;
-      border: $blockBorder solid #ffb054;
+      background: #54e346;
+      border: $blockBorder solid #54e346;
       &:hover {
-        background: none;
-        border: $blockBorder solid #ffb054;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #ffb054;
+        border: $blockBorder solid #ffffff;
       }
     }
-    &.middle {
-      background: #89d764;
-      border: $blockBorder solid #89d764;
+    &.model {
+      background: #64c9cf;
+      border: $blockBorder solid #64c9cf;
       &:hover {
-        background: none;
-        border: $blockBorder solid #89d764;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #89d764;
+        border: $blockBorder solid #ffffff;
+      }
+    }
+    &.function {
+      background: #ff4c29;
+      border: $blockBorder solid #ff4c29;
+      &:hover {
+        border: $blockBorder solid #ffffff;
+      }
+      &.selected {
+        border: $blockBorder solid #ffffff;
+      }
+    }
+    &.custom {
+      background: #ffb740;
+      border: $blockBorder solid #ffb740;
+      &:hover {
+        border: $blockBorder solid #ffffff;
+      }
+      &.selected {
+        border: $blockBorder solid #ffffff;
       }
     }
     &.output {
-      background: #8e51f2;
-      border: $blockBorder solid #8e51f2;
+      background: #ae00fb;
+      border: $blockBorder solid #ae00fb;
       &:hover {
-        background: none;
-        border: $blockBorder solid #8e51f2;
+        border: $blockBorder solid #ffffff;
       }
       &.selected {
-        background: none;
-        border: $blockBorder solid #8e51f2;
+        border: $blockBorder solid #ffffff;
       }
     }
-
-
-    
   }
 
-  &__inputs,
-  &__outputs {
+  .inputs,
+  .outputs {
     width: 100%;
     display: flex;
     justify-content: center;
@@ -387,12 +364,11 @@ $circleConnectedColor: #569dcf;
     }
     .input {
       top: -6px;
-      &--linking-active {
-        top: 0px;
-        width: 100%;
-        height: 100%;
-        z-index: 20;
-        opacity: 0;
+      &:hover {
+        background: $circleNewColor;
+        &.active {
+          background: $circleRemoveColor;
+        }
       }
     }
 

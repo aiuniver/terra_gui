@@ -19,7 +19,7 @@
         inline
         @change="change"
       />
-      <Color :value="''" label="Цвет" :key="'classes_colors_' + i" inline />
+      <Color :value="'#FFFFFF'" label="Цвет" :key="'classes_colors_' + i" inline />
     </template>
   </div>
 </template>
@@ -51,7 +51,7 @@ export default {
     error: String,
   },
   data: () => ({
-    qty: 2,
+    qty: 0,
     loading: false,
     model: {
       classes_names: [],
@@ -60,14 +60,14 @@ export default {
   }),
   computed: {},
   methods: {
-    change() {
+    change(e) {
       console.log(this.model)
-      // if (this.isChange) {
-      //   let value = e.target.value;
-      //   value = this.type === 'number' ? +value : value;
-      //   this.$emit('change', { name: this.name, value });
-      //   this.isChange = false;
-      // }
+      if (this.isChange) {
+        let value = e.target.value;
+        value = this.type === 'number' ? +value : value;
+        this.$emit('change', { name: this.name, value });
+        this.isChange = false;
+      }
     },
   },
 };

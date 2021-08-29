@@ -1,3 +1,4 @@
+from time import sleep
 from enum import Enum
 from typing import Optional, Any
 from threading import Thread
@@ -32,8 +33,8 @@ class ProgressData(BaseMixinData):
     def success(self) -> bool:
         return not bool(self.error)
 
-    def dict(self, *args, **kwargs) -> dict:
-        __data = super().dict(*args, **kwargs)
+    def dict(self, **kwargs) -> dict:
+        __data = super().dict(**kwargs)
         __data.update(
             {
                 "success": self.success,
@@ -73,6 +74,22 @@ class ProgressPool:
 
     def reset(self, name: PoolName, **kwargs):
         setattr(self.__pool, name, ProgressData(**kwargs))
+
+    def monitoring(self, name: str, delay: float = 1.0):
+        def __output(__progress):
+            print(
+                "% 4i%%:" % __progress.percent,
+                f"finished={__progress.finished}",
+                f'error="{__progress.error}"',
+            )
+
+        sleep(delay)
+        __progress = self(name)
+        while not __progress.finished or not __progress.success:
+            __output(__progress)
+            sleep(delay)
+            __progress = self(name)
+        __output(__progress)
 
 
 pool = ProgressPool()
