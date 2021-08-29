@@ -32,6 +32,7 @@ from terra_ai.data.presets.training import Task, TasksGroups, Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.guiexchange import Exchange
+from .. import progress
 # from terra_ai.trds import DTS
 import pynvml as N
 
@@ -61,11 +62,11 @@ class MemoryUsage:
                 print(f'GPU usage: {gpu_utilization.gpu: .2f}% ({gpu_memory.used / 1024 ** 3: .2f}GB / '
                       f'{gpu_memory.total / 1024 ** 3: .2f}GB)')
         else:
+            cpu_usage = psutil.cpu_percent(percpu=True)
             usage_dict["CPU"] = {
-                'cpu_utilization': f'{psutil.cpu_percent(): .2f}%',
+                'cpu_utilization': f'{sum(cpu_usage) / len(cpu_usage): .2f}%',
             }
             if self.debug:
-                cpu_usage = psutil.cpu_percent(percpu=True)
                 print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
                 print(f'Max CPU usage: {max(cpu_usage): .2f}%')
         usage_dict["RAM"] = {
@@ -885,6 +886,7 @@ class FitCallback(keras.callbacks.Callback):
         self.retrain_epochs = 0
         self.save_model_path = save_model_path
         self.nn_name = model_name
+        self.progress_name = progress.PoolName.training
 
     def save_lastmodel(self) -> None:
         """
@@ -898,7 +900,13 @@ class FitCallback(keras.callbacks.Callback):
             self.save_model_path, f"{model_name}"
         )
         self.model.save(file_path_model)
-        print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
+        progress.pool(
+            self.progress_name,
+            percent=100,
+            data={'info': f"Последняя модель сохранена как {file_path_model}"},
+            finished=False,
+        )
+        # print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
         pass
 
     def _estimate_step(self, current, start, now):

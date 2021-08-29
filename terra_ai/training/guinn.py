@@ -9,6 +9,7 @@ import sys
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
+from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
 from terra_ai.data.training.train import TrainData
@@ -265,6 +266,7 @@ class GUINN:
 
         return self
 
+    @progress.threading
     def basemodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
