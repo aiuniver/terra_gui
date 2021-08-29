@@ -59,6 +59,10 @@ const createBlock = function (type, id) {
   };
 };
 
+const cloneBlock = function (block, id) {
+  return { ...block, ...{ id }, ...{ name: block.name + '(clone)' } };
+};
+
 const prepareBlocks = function (blocks) {
   let last = 0;
   const newBlock = blocks
@@ -136,4 +140,4 @@ const mouseHelper = function (element, event) {
   };
 };
 
-export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper };
+export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock };
