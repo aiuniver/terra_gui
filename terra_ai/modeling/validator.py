@@ -523,11 +523,27 @@ class ModelValidator:
             self.keras_code = None
 
         for idx, layer in enumerate(self.filled_model.details.layers):
+            # fill inputs
             if layer.group == LayerGroupChoice.input:
-                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+                    pass
+            elif len(self.layer_input_shapes.get(layer.id)) == 1:
+                self.filled_model.details.layers[idx].shape.input = \
+                    [self.layer_input_shapes.get(layer.id)[0][1:] if self.layer_input_shapes.get(layer.id)[0]
+                     else self.layer_input_shapes.get(layer.id)]
             else:
-                self.filled_model.details.layers[idx].shape.input = self.layer_input_shapes.get(layer.id)
-                self.filled_model.details.layers[idx].shape.output = self.layer_output_shapes.get(layer.id)
+                front_shape = []
+                for shape in self.layer_input_shapes.get(layer.id):
+                    if shape:
+                        front_shape.append(shape[1:])
+                    else:
+                        front_shape.append(shape)
+                self.filled_model.details.layers[idx].shape.input = front_shape
+
+            # fill outputs
+            self.filled_model.details.layers[idx].shape.output = \
+                [self.layer_output_shapes.get(layer.id)[0][1:] if self.layer_output_shapes.get(layer.id)[0]
+                 else self.layer_output_shapes.get(layer.id)]
+
         # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         return {
             'model': self.filled_model,
