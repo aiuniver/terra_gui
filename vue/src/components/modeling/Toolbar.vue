@@ -45,7 +45,7 @@ export default {
   name: 'Toolbar',
   data: () => ({
     isSave: false,
-    isKeras: !false
+    isKeras: false
   }),
   computed: {
     ...mapGetters({
