@@ -225,13 +225,19 @@ class CreateDTS(object):
         for elem in paths_list:
             if put_data.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
                                  LayerOutputTypeChoice.Segmentation]:
-                img = cv2.imread(os.path.join(tmp_sources, elem), cv2.IMREAD_UNCHANGED)
+                with open(os.path.join(tmp_sources, elem), "rb") as f:
+                    chunk = f.read()
+                chunk_arr = np.frombuffer(chunk, dtype=np.uint8)
+                img = cv2.imdecode(chunk_arr, cv2.IMREAD_COLOR)
+                # img = cv2.imread(os.path.join(tmp_sources, elem), cv2.IMREAD_UNCHANGED)
                 img = cv2.resize(img, (put_data.parameters.width, put_data.parameters.height),
                                  interpolation=cv2.INTER_AREA)
                 os.makedirs(
                     os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)),
                     exist_ok=True)
-                cv2.imwrite(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', elem), img)
+                # cv2.imwrite(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', elem), img)
+                out_img = Image.fromarray(img)
+                out_img.save(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', elem))
             elif put_data.type == LayerInputTypeChoice.Video:
                 cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
                 cur_step = 0
@@ -517,11 +523,11 @@ class CreateDTS(object):
         data["date"] = datetime.now().astimezone(timezone("Europe/Moscow")).isoformat()
         data["alias"] = creation_data.alias
         data["size"] = {"value": size_bytes}
-
+        data['paths'] = paths
         data["group"] = DatasetGroupChoice.custom
         with open(os.path.join(self.paths.datasets, DATASET_CONFIG), 'w') as fp:
             json.dump(data, fp)
-
+        print(data)
         return data
 
     def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData, OneFileData]):

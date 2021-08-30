@@ -1,27 +1,1050 @@
 import base64
 import copy
+import itertools
+import json
 import os
 import tempfile
 import colorsys
 import random
+
+import psutil
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
 import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
+from keras import Model
+from keras.utils.np_utils import to_categorical
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy
 import numpy as np
 import types
 import time
+
+from tensorflow.python.keras import Input
+from tensorflow.python.keras.layers import BatchNormalization, MaxPooling2D, Flatten, Dense
+from tensorflow.python.layers.convolutional import Conv2D
+
+from terra_ai.customLayers import InstanceNormalization
+from terra_ai.data.datasets.dataset import DatasetData
+from terra_ai.data.presets.training import Task, TasksGroups, Metric, Loss
+from terra_ai.data.training.extra import TaskChoice
+from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.guiexchange import Exchange
+from .. import progress
+# from terra_ai.trds import DTS
+import pynvml as N
 
-from terra_ai.training.data import task_type_defaults_dict
-
-__version__ = 0.13
+__version__ = 0.14
 
 
-class BaseCallback():
+class MemoryUsage:
+    def __init__(self, debug=False):
+        self.debug = debug
+        try:
+            N.nvmlInit()
+            self.gpu = True
+        except:
+            self.gpu = False
+
+    def get_usage(self):
+        usage_dict = {}
+        if self.gpu:
+            gpu_utilization = N.nvmlDeviceGetUtilizationRates(N.nvmlDeviceGetHandleByIndex(0))
+            gpu_memory = N.nvmlDeviceGetMemoryInfo(N.nvmlDeviceGetHandleByIndex(0))
+            usage_dict["GPU"] = {
+                'gpu_utilization': f'{gpu_utilization.gpu: .2f}%',
+                'gpu_memory_used': f'{gpu_memory.used / 1024 ** 3: .2f}GB',
+                'gpu_memory_total': f'{gpu_memory.total / 1024 ** 3: .2f}GB'
+            }
+            if self.debug:
+                print(f'GPU usage: {gpu_utilization.gpu: .2f}% ({gpu_memory.used / 1024 ** 3: .2f}GB / '
+                      f'{gpu_memory.total / 1024 ** 3: .2f}GB)')
+        else:
+            cpu_usage = psutil.cpu_percent(percpu=True)
+            usage_dict["CPU"] = {
+                'cpu_utilization': f'{sum(cpu_usage) / len(cpu_usage): .2f}%',
+            }
+            if self.debug:
+                print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
+                print(f'Max CPU usage: {max(cpu_usage): .2f}%')
+        usage_dict["RAM"] = {
+            'ram_utilization': f'{psutil.virtual_memory().percent: .2f}%',
+            'ram_memory_used': f'{psutil.virtual_memory().used / 1024 ** 3: .2f}GB',
+            'ram_memory_total': f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB'
+        }
+        usage_dict["Disk"] = {
+            'disk_utilization': f'{psutil.disk_usage("/").percent: .2f}%',
+            'disk_memory_used': f'{psutil.disk_usage("/").used / 1024 ** 3: .2f}GB',
+            'disk_memory_total': f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB'
+        }
+        if self.debug:
+            print(f'RAM usage: {psutil.virtual_memory().percent: .2f}% '
+                  f'({psutil.virtual_memory().used / 1024 ** 3: .2f}GB / '
+                  f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB)')
+            print(f'Disk usage: {psutil.disk_usage("/").percent: .2f}% '
+                  f'({psutil.disk_usage("/").used / 1024 ** 3: .2f}GB / '
+                  f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
+        return usage_dict
+
+
+class IntermediateResultCallback(tf.keras.callbacks.Callback):
+
+    def __init__(self, x_train, y_train, x_val, y_val, custom_datapath=None,
+                 data_choice='val', ex_choice='random', epoch_return=10, hist=False,
+                 class_stat_bar=False):
+        super().__init__()
+        self.x_train = x_train
+        self.y_train = y_train
+        self.x_val = x_val
+        self.y_val = y_val
+        self.custom_data = custom_datapath
+        self.data_choice = data_choice  # train, val, custom
+        self.ex_choice = ex_choice  # best, worst, random, seed
+        self.epoch_return = epoch_return
+        self.seed = np.random.randint(0, len(self.y_val), 5)
+        self.hist = hist
+        self.class_stat_bar = class_stat_bar
+        pass
+
+    def _data_choice(self):
+        if self.data_choice == 'train':
+            return self.x_train, self.y_train
+        elif self.data_choice == 'val':
+            return self.x_val, self.y_val
+        elif self.data_choice == 'custom':
+            return self.preprocess_custom_data()
+        else:
+            print('Error')
+
+    def preprocess_custom_data(self):
+        return "Pass"
+
+    def on_epoch_end(self, epoch, logs=None):
+
+        if (epoch + 1) % self.epoch_return == 0:
+            intermediate_result = {}
+            x, y = self._data_choice()
+            y = np.argmax(y, axis=-1)
+            pred = self.model.predict(x)
+            pred_total_stat = [[str(round(j, 1)) for j in i * 100] for i in pred]
+            pred_percent = [str(round(pred[i][y[i]] * 100, 1)) for i in range(len(y))]
+            pred = np.argmax(pred, axis=-1)
+            precision, recall, f1, support = precision_recall_fscore_support(y, pred)
+            print(f"___________Epoch {epoch + 1}____________", logs)
+
+            if self.hist:
+                plt.hist([y, pred], rwidth=0.5, label=['y_test', 'y_pred'])
+                plt.legend(['y_test', 'y_pred'])
+                plt.xticks(ticks=np.arange(10), labels=np.arange(10))
+                plt.show()
+
+            if self.class_stat_bar:
+                # precision, recall, f1, support = precision_recall_fscore_support(y, pred)
+                x_range = np.arange(10)
+                plt.bar(x_range - 0.2, precision, width=0.2, color='b', align='center', )
+                plt.bar(x_range, recall, width=0.2, color='g', align='center')
+                plt.bar(x_range + 0.2, f1, width=0.2, color='r', align='center')
+                plt.xticks(ticks=x_range, labels=x_range)
+                plt.legend(['precision', 'recall', 'f1'])
+                plt.show()
+
+            if self.ex_choice == 'random':
+                seed = np.random.randint(0, y.shape[0], 5)
+                fig = plt.figure(figsize=(10, 4))
+                for i in range(len(seed)):
+                    plt.subplot(1, len(seed), i + 1)
+                    plt.imshow(x[seed[i]].squeeze(), cmap='gray')
+                    plt.axis('off')
+                    pred_stat_str = ''
+                    for k, val in enumerate(pred_total_stat[seed[i]]):
+                        pred_stat_str += f'{k}: {val}% \n'
+                    plt.title(
+                        f'True value: {y[seed[i]]} \nPredicted value: {pred[seed[i]]} \nStatistic: \n{pred_stat_str[:-2]}')
+                plt.show()
+
+            if self.ex_choice == 'seed':
+                fig = plt.figure(figsize=(10, 4))
+                for i in range(len(self.seed)):
+                    plt.subplot(1, len(self.seed), i + 1)
+                    plt.imshow(x[self.seed[i]].squeeze(), cmap='gray')
+                    plt.axis('off')
+                    pred_stat_str = ''
+                    for k, val in enumerate(pred_total_stat[self.seed[i]]):
+                        pred_stat_str += f'{k}: {val}% \n'
+                    plt.title(
+                        f'True value: {y[self.seed[i]]} \nPredicted value: {pred[self.seed[i]]} \nStatistic: \n{pred_stat_str[:-2]}')
+                plt.show()
+
+    def on_train_end(self, logs=None):
+        pass
+
+
+class DataProcessing:
+    def __init__(self, dataset):
+        """
+        dataset
+        self.X: dict = {'train': {}, 'val': {}, 'test': {}}
+        self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
+        self.num_classes: dict = {'2': 3}
+        """
+        self.dts = dataset
+        pass
+
+    def image_preprocessing(self):
+        pass
+
+    def text_preprocessing(self):
+        pass
+
+    def audio_preprocessing(self):
+        pass
+
+    def video_preprocessing(self):
+        pass
+
+    def df_preprocessing(self):
+        pass
+
+    def image_postprocessing(self, img_array, key):
+        img_shape = img_array.shape
+        if self.dts.createarray.scaler.get(key) is not None:
+            if len(img_shape) > 2:
+                img_array = self.dts.createarray.scaler.get(key).inverse_transform(img_array.reshape((-1, 1)))
+                img_array = img_array.reshape(img_shape)
+            else:
+                img_array = self.dts.createarray.scaler.get(key).inverse_transform(img_array)
+        return self.image_to_base64(img_array)
+
+    # def text_postprocessing(self, output_key):
+    #     """
+    #             Plot sample text based on indices in dataset
+    #             Returns:
+    #                 images
+    #             """
+    #     text = {"text": []}
+    #
+    #     indices, probs = self.image_indices(output_key=output_key)
+    #     if self.show_best:
+    #         text_title = "лучшее по метрике: "
+    #     elif self.show_worst:
+    #         text_title = "худшее по метрике: "
+    #     else:
+    #         text_title = "случайное: "
+    #     classes_labels = self.dataset.classes_names.get(output_key)
+    #     if self.dataset.task_type.get(output_key) != "segmentation":
+    #         if (self.y_pred.shape[-1] == self.y_true.shape[-1]) \
+    #                 and (self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_true.shape[-1] > 1):
+    #             y_pred = np.argmax(self.y_pred, axis=-1)
+    #             y_true = np.argmax(self.y_true, axis=-1)
+    #         elif (len(self.y_true.shape) == 1) \
+    #                 and (not self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_pred.shape[-1] > 1):
+    #             y_pred = np.argmax(self.y_pred, axis=-1)
+    #             y_true = copy.deepcopy(self.y_true)
+    #         elif (len(self.y_true.shape) == 1) \
+    #                 and (not self.dataset.one_hot_encoding[output_key]) \
+    #                 and (self.y_pred.shape[-1] == 1):
+    #             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+    #             y_true = copy.deepcopy(self.y_true)
+    #         else:
+    #             y_pred = np.reshape(self.y_pred, (self.y_pred.shape[0]))
+    #             y_true = copy.deepcopy(self.y_true)
+    #
+    #         for idx in indices:
+
+    #             sample = self.x_Val[input_key][idx]
+    #             true_idx = y_true[idx]
+    #             pred_idx = y_pred[idx]
+    #
+    #             # исходный формат примера
+    #             sample = self.inverse_scaler(sample, input_key)
+    #             text_data = {
+    #                 "text": self.dataset.inverse_data(input_key, sample),
+    #                 "title": f"{text_title + str(round(probs[idx], 4))}",
+    #                 "info": [
+    #                     {
+    #                         "label": "Выход",
+    #                         "value": output_key,
+    #                     },
+    #                     {
+    #                         "label": "Распознано",
+    #                         "value": classes_labels[pred_idx],
+    #                     },
+    #                     {
+    #                         "label": "Верный ответ",
+    #                         "value": classes_labels[true_idx],
+    #                     }
+    #                 ]
+    #             }
+    #             text["text"].append(text_data)
+    #
+    #     else:
+    #         y_pred = copy.deepcopy(self.y_pred)
+    #         y_true = copy.deepcopy(self.y_true)
+    #
+    #         #######################
+    #         # Функция, выводящая точность распознавания каждой категории отдельно
+    #         #######################
+    #         def recognizeSet(tagI, pred, tags, length, value, num_classes):
+    #             total = 0
+    #
+    #             for j in range(num_classes):  # общее количество тегов
+    #                 correct = 0
+    #                 for i in range(len(tagI)):  # проходимся по каждому списку списка тегов
+    #                     for k in range(length):  # проходимся по каждому тегу
+    #                         if tagI[i][k][j] == (pred[i][k][j] > value).astype(
+    #                                 int):  # если соответствующие индексы совпадают, значит сеть распознала верно
+    #                             correct += 1
+    #                 print("Сеть распознала категорию '{}' на {}%".format(tags[j], 100 * correct / (len(tagI) * length)))
+    #                 total += 100 * correct / (len(tagI) * length)
+    #             print("средняя точность {}%".format(total / num_classes))
+    #
+    #         recognizeSet(y_true, y_pred, classes_labels, y_true.shape[1], 0.999,
+    #                      self.dataset.num_classes.get(output_key))
+    #     return text
+
+    def audio_postprocessing(self):
+        pass
+
+    def video_postprocessing(self):
+        pass
+
+    def df_postprocessing(self):
+        pass
+
+    def object_detection_postprocessing(self):
+        pass
+
+    def image_to_base64(self, image_as_array):
+        if image_as_array.dtype != 'uint8':
+            image_as_array = image_as_array.astype(np.uint8)
+        temp_image = tempfile.NamedTemporaryFile(prefix='image_', suffix='tmp.png', delete=False)
+        try:
+            plt.imsave(temp_image.name, image_as_array, cmap='Greys')
+        except Exception:
+            plt.imsave(temp_image.name, image_as_array.reshape(image_as_array.shape[:-1]), cmap='gray')
+        with open(temp_image.name, 'rb') as img:
+            output_image = base64.b64encode(img.read()).decode('utf-8')
+        temp_image.close()
+        os.remove(temp_image.name)
+        return output_image
+
+
+class TrainingProcessData:
+    def __init__(self, metrics: dict):
+        self.model = None
+        self.metrics = metrics
+        self.x = None
+        self.y_true = None
+        self.y_pred = None
+        self.metrics_data = {}
+        self.num_examples = 0
+        self.ex_type_choise = ''
+        self.num_classes = None
+        pass
+
+    def set_state(self, model, x, y_true, y_pred, num_examples_plot, ex_type_choice, num_classes, loss, metrics: list):
+        self.model = model
+        self.metrics = metrics
+        self.x = x
+        self.y_true = y_true
+        self.y_pred = y_pred
+        self.num_classes = num_classes
+        self.num_examples = num_examples_plot
+        self.ex_type_choiсe = ex_type_choice
+
+        self.epochs = []
+        self.log_history = {
+            'loss': {
+                'loss_name': {
+                    'train': [],
+                    'val': []
+                },
+            },
+            'metrics': {
+                'metric_name': {
+                    'train': [],
+                    'val': []
+                }
+            },
+            'class_loss': {  # по val выборке
+                'loss_name': {
+                    'c': [],
+                    'val': []
+                },
+            },
+
+        }
+
+    def get_class_metrics_result(self):
+        pass
+
+    def get_class_losses_result(self):
+        pass
+
+    def get_current_predicted_results(self):
+        pass
+
+    def get_classification_statistic_data(self, y_true, y_pred, labels):
+        if not isinstance(y_true, (int, float)):
+            y_true = np.argmax(y_true)
+        predict_idx = np.argmax(y_pred)
+        stat_dict = {}
+        for idx in range(len(labels)):
+            stat_dict[labels[idx]] = {
+                'percent_recognition': y_pred[idx] * 100,
+                'color': None if idx != y_true else 'red' if y_true != predict_idx else 'green'
+            }
+        return stat_dict
+
+    def get_overfit_state_flag(self, log_history, mean_log_history, overfit_history, epoch_gap, mode='min'):
+        # if len(log_history) < epoch_gap:
+        #     mean_log_history.append(np.mean(log_history))
+        # else:
+        #     mean_log_history.append(np.mean(log_history[-epoch_gap:]))
+
+        count = sum(overfit_history[-epoch_gap:])
+        if mode == 'min' and mean_log_history[-1] > min(mean_log_history):
+            count += 1
+        elif mode == 'max' and mean_log_history[-1] < min(mean_log_history):
+            count += 1
+        else:
+            count = 0
+            # overfit_flag = False
+        # print('count', self.count, self.mean_history[-1], min(self.mean_history))
+
+        if count >= epoch_gap:
+            overfit_flag = True
+        else:
+            overfit_flag = False
+        return overfit_flag
+
+    def get_underfit_state_flag(self, train_log_history, val_log_history, underfit_history, epoch_gap, mode='min'):
+        # if len(log_history) < epoch_gap:
+        #     mean_log_history.append(np.mean(log_history))
+        # else:
+        #     mean_log_history.append(np.mean(log_history[-epoch_gap:]))
+
+        count = sum(underfit_history[-epoch_gap:])
+        if mode == 'min' and val_log_history[-1] / train_log_history[-1] > 1.1:
+            count += 1
+        elif mode == 'max' and val_log_history[-1] / train_log_history[-1] < 0.9:
+            count += 1
+        else:
+            count = 0
+            # overfit_flag = False
+        # print('count', self.count, self.mean_history[-1], min(self.mean_history))
+
+        if count >= epoch_gap:
+            underfit_flag = True
+        else:
+            underfit_flag = False
+        return underfit_flag
+
+
+def class_counter(y_array, classes_names: list, ohe=True):
+    class_dict = {}
+    for cl in classes_names:
+        class_dict[cl] = 0
+    if ohe:
+        y_array = np.argmax(y_array, axis=-1)
+    for y in y_array:
+        class_dict[classes_names[y]] += 1
+    return class_dict
+
+
+class InteractiveCallback:
+    """Callback for interactive requests"""
+
+    def __init__(self, null_model, dataset, metrics: dict,
+                 losses: dict, log_gap: dict, progress_mode: dict, progress_threashold: dict, custom_dataset=None):
+        """
+        log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
+        """
+
+        self.model = null_model
+        self.losses = losses
+        self.metrics = metrics
+
+        self.dataset = dataset
+        self.X = {'train': {}, 'val': {}}
+        self.Y = {'train': {}, 'val': {}}
+        self._prepare_dataset()
+        self.Y_pred = {}
+        self.custom_dataset = custom_dataset
+        self._prepare_custom_dataset()
+        self.log_gap = log_gap
+        self.progress_mode = progress_mode
+        self.progress_threashold = progress_threashold
+
+        self.log_history = {}
+        self._prepare_null_log_history_template()
+
+        self.show_examples = 10
+        self.ex_type_choice = 'seed'
+        self.current_weights = None
+        self.current_epoch = None
+        self.seed_idx = {}
+        self.class_idx = self._get_class_idx()
+        pass
+
+    def _prepare_null_log_history_template(self):
+        """
+        self.log_history_example = {
+            'output_2': {
+                'epochs': [],
+                'loss': {
+                    'CategoricalCrossentropy': {
+                        'train': [],
+                        'val': []
+                    }
+                },
+                'metrics': {
+                    'Accuracy': {
+                        'train': [],
+                        'val': []
+                    },
+                    'CategoricalAccuracy': {
+                        'train': [],
+                        'val': []
+                    }
+                },
+                'progress_state': {
+                    'loss': {
+                        'CategoricalCrossentropy': {
+                                'mean_log_history': [],
+                                'normal_state': [],
+                                'underfittng': [],
+                                'overfitting': []
+                        }
+                    },
+                    'metrics': {
+                        'Accuracy': {
+                            'mean_log_history': [],
+                            'normal_state': [],
+                            'underfittng': [],
+                            'overfitting': []
+                        },
+                        'CategoricalAccuracy': {
+                            'mean_log_history': [],
+                            'normal_state': [],
+                            'underfittng': [],
+                            'overfitting': []
+                        }
+                    }
+                },
+                'class_loss': {
+                    'Мерседес': {
+                        'CategoricalCrossentropy': {'val': []}
+                    },
+                    'Рено': {
+                        'CategoricalCrossentropy': {'val': []}
+                    },
+                    'Феррари': {
+                        'CategoricalCrossentropy': {'val': []}
+                    }
+                },
+                'class_metrics': {
+                    'Мерседес': {
+                        'Accuracy': {'val': []},
+                        'CategoricalAccuracy': {'val': []}
+                    },
+                    'Рено': {
+                        'Accuracy': {'val': []},
+                        'CategoricalAccuracy': {'val': []}
+                    },
+                    'Феррари': {
+                        'Accuracy': {'val': []},
+                        'CategoricalAccuracy': {'val': []}
+                    }
+                }
+            }
+        }
+        """
+        for out in self.dataset.Y.get('train').keys():
+            self.log_history[f'output_{out}'] = {
+                'epochs': [],
+                'loss': {},
+                'metrics': {},
+                'progress_state': {
+                    'loss': {},
+                    'metrics': {}
+                }
+            }
+            if self.losses.get(out) and isinstance(self.losses.get(out), str):
+                self.losses[out] = [self.losses.get(out)]
+            if self.metrics.get(out) and isinstance(self.metrics.get(out), str):
+                self.metrics[out] = [self.metrics.get(out)]
+
+            for loss in self.losses.get(out):
+                self.log_history[f'output_{out}']['loss'][f"{loss}"] = {'train': [], 'val': []}
+                self.log_history[f'output_{out}']['progress_state']['loss'][f"{loss}"] = {
+                    'mean_log_history': [], 'normal_state': [], 'underfittng': [], 'overfitting': []
+                }
+            for metric in self.metrics.get(out):
+                self.log_history[f'output_{out}']['metrics'][f"{metric}"] = {'train': [], 'val': []}
+                self.log_history[f'output_{out}']['progress_state']['metrics'][f"{metric}"] = {
+                    'mean_log_history': [], 'normal_state': [], 'underfittng': [], 'overfitting': []
+                }
+            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
+                self.log_history[f'output_{out}']['class_loss'] = {}
+                self.log_history[f'output_{out}']['class_metrics'] = {}
+                for class_name in self.dataset.data.classes_names.get(out):
+                    self.log_history[f'output_{out}']['class_metrics'][f"{class_name}"] = {}
+                    self.log_history[f'output_{out}']['class_loss'][f"{class_name}"] = {}
+
+                    for metric in self.metrics.get(out):
+                        self.log_history[f'output_{out}']['class_metrics'][f"{class_name}"][f"{metric}"] = {'val': []}
+                    for loss in self.losses.get(out):
+                        self.log_history[f'output_{out}']['class_loss'][f"{class_name}"][f"{loss}"] = {'val': []}
+
+    def _prepare_dataset(self):
+        for ins in self.dataset.X.get('train').keys():
+            self.X['train'][f'input_{ins}'] = self.dataset.X.get('train').get(ins)
+            if self.dataset.X.get('val').get(ins) is not None:
+                self.X['val'][f'input_{ins}'] = self.dataset.X.get('val').get(ins)
+            elif self.dataset.X.get('test').get(ins) is not None:
+                self.X['val'][f'input_{ins}'] = self.dataset.X.get('test').get(ins)
+            else:
+                self.X['val'][f'input_{ins}'] = None
+        for out in self.dataset.Y.get('train').keys():
+            self.Y['train'][f'output_{out}'] = self.dataset.Y.get('train').get(out)
+            if self.dataset.Y.get('val').get(out) is not None:
+                self.Y['val'][f'input_{out}'] = self.dataset.Y.get('val').get(out)
+            elif self.dataset.Y.get('test').get(out) is not None:
+                self.Y['val'][f'input_{out}'] = self.dataset.Y.get('test').get(out)
+            else:
+                self.X['val'][f'input_{out}'] = None
+
+    def _prepare_custom_dataset(self):
+        pass
+
+    def _get_class_idx(self):
+        """
+        class_idx_dict -> train -> output_idx -> class_name
+        """
+        class_idx = {}
+        for key in self.dataset.Y.keys():
+            for out in self.dataset.Y.get(key).keys():
+                class_idx[key] = {out: {}}
+                for name in self.dataset.data.classes_names.get(out):
+                    class_idx[key][out][name] = []
+                y_true = np.argmax(self.dataset.Y.get(key).get(out), axis=-1) \
+                    if self.dataset.data.encoding.get(out) == 'ohe' else self.dataset.Y.get(key).get(out)
+                for idx in range(len(y_true)):
+                    class_idx[key][out][self.dataset.data.classes_names.get(out)[y_true[idx]]].append(idx)
+        return class_idx
+
+    def _get_seed(self):
+        pass
+
+    def update_state(self, current_epoch, current_weights):
+        self.current_epoch = current_epoch
+        self.model.set_weights(current_weights)
+        self._get_prediction()
+        self.log_history['epochs'].append(current_epoch)
+        self._fill_log_history()
+
+    def _get_prediction(self):
+        # predict = self.model.predict(self.X.get('train'))
+        for key in self.X.keys():
+            predict = self.model.predict(self.X.get(key))
+            for idx, out in enumerate(self.Y.get(key).keys()):
+                if len(self.Y.get(key).keys()) == 1:
+                    self.Y_pred[key] = {out: predict}
+                else:
+                    self.Y_pred[key] = {out: predict[idx]}
+
+    def _get_loss_data(self, loss_name, y_true, y_pred, ohe=True, num_classes=10):
+        loss_obj = getattr(tf.keras.losses, loss_name)()
+        if loss_name == Loss.SparseCategoricalCrossentropy:
+            return loss_obj(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred).numpy()
+        else:
+            return loss_obj(y_true if ohe else to_categorical(y_true, num_classes), y_pred).numpy()
+
+    def _get_metric_data(self, metric_name, y_true, y_pred, ohe=True, num_classes=10):
+        if metric_name == Metric.MeanIoU:
+            metric_obj = getattr(tf.keras.metrics, metric_name)(num_classes)
+        else:
+            metric_obj = getattr(tf.keras.metrics, metric_name)()
+
+        if metric_name == Metric.Accuracy:
+            metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else y_true, np.argmax(y_pred, axis=-1))
+        elif metric_name == Metric.SparseCategoricalAccuracy or \
+                metric_name == Metric.SparseTopKCategoricalAccuracy or \
+                metric_name == Metric.SparseCategoricalCrossentropy:
+            metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred)
+        else:
+            metric_obj.update_state(y_true if ohe else to_categorical(y_true, num_classes), y_pred)
+        return metric_obj.result().numpy()
+
+    def _get_mean_log(self, logs, output):
+        if len(logs) < self.log_gap.get(output):
+            return np.mean(logs)
+        else:
+            return np.mean(logs[-self.log_gap.get(output):])
+
+    def _fill_log_history(self):
+        for out in self.Y.get('train').keys():
+            out_idx = int(out.split('_')[-1])
+            if self.dataset.data.encoding.get(out_idx) == 'ohe':
+                ohe = True
+            else:
+                ohe = False
+            num_classes = self.dataset.data.num_classes.get(out_idx)
+
+            for loss_name in self.log_history.get(out).get('loss').keys():
+                for data_type in ['train', 'val']:
+                    # fill losses
+                    self.log_history[out]['loss'][loss_name][data_type].append(self._get_loss_data(
+                        loss_name, self.Y.get('train').get(out), self.Y_pred.get(data_type).get(out), ohe, num_classes))
+
+                # fill loss progress state
+                self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                    self._get_mean_log(self.log_history[out]['loss'][loss_name]['val'])
+                )
+                loss_underfittng = self._evaluate_underfitting(
+                    self.log_history[out]['loss'][loss_name]['train'][-1],
+                    self.log_history[out]['loss'][loss_name]['val'][-1],
+                    self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'],
+                    out_idx
+                )
+                loss_overfittng = self._evaluate_underfitting(
+                    self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'],
+                    self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'],
+                    out_idx
+                )
+                if loss_underfittng or loss_overfittng:
+                    normal_state = False
+                else:
+                    normal_state = True
+                self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'].append(loss_underfittng)
+                self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'].append(loss_overfittng)
+                self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(normal_state)
+
+                if self.dataset.data.task_type.get(out_idx) == TaskChoice.Classification:
+                    # fill class losses
+                    for cls in self.log_history.get(out).get('class_loss').keys():
+                        self.log_history[out]['class_loss'][cls][loss_name]['val'].append(
+                            self._get_loss_data(
+                                loss_name,
+                                self.Y.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
+                                self.Y_pred.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
+                                ohe, num_classes)
+                        )
+
+            for metric in self.log_history.get(out).get('metrics').keys():
+                for data_type in ['train', 'val']:
+                    # fill metrics
+                    self.log_history[out]['metrics'][metric][data_type].append(self._get_loss_data(
+                        metric, self.Y.get('train').get(out), self.Y_pred.get(data_type).get(out), ohe, num_classes))
+
+                # fill loss progress state
+                self.log_history[out]['progress_state']['metrics'][metric]['mean_log_history'].append(
+                    self._get_mean_log(self.log_history[out]['metrics'][metric]['val'])
+                )
+                loss_underfittng = self._evaluate_underfitting(
+                    self.log_history[out]['metrics'][metric]['train'][-1],
+                    self.log_history[out]['metrics'][metric]['val'][-1],
+                    self.log_history[out]['progress_state']['metrics'][metric]['underfitting'],
+                    out_idx
+                )
+                loss_overfittng = self._evaluate_underfitting(
+                    self.log_history[out]['progress_state']['metrics'][metric]['mean_log_history'],
+                    self.log_history[out]['progress_state']['metrics'][metric]['overfitting'],
+                    out_idx
+                )
+                if loss_underfittng or loss_overfittng:
+                    normal_state = False
+                else:
+                    normal_state = True
+                self.log_history[out]['progress_state']['metrics'][metric]['underfitting'].append(loss_underfittng)
+                self.log_history[out]['progress_state']['metrics'][metric]['overfitting'].append(loss_overfittng)
+                self.log_history[out]['progress_state']['metrics'][metric]['normal_state'].append(normal_state)
+
+                if self.dataset.data.task_type.get(out_idx) == TaskChoice.Classification:
+                    # fill class losses
+                    for cls in self.log_history.get(out).get('class_metrics').keys():
+                        self.log_history[out]['class_metrics'][cls][metric]['val'].append(
+                            self._get_loss_data(
+                                metric,
+                                self.Y.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
+                                self.Y_pred.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
+                                ohe, num_classes)
+                        )
+
+    def _evaluate_overfitting(self, mean_log, overfit_logs, output):
+        count = sum(overfit_logs[-self.log_gap.get(output):])
+        if self.progress_mode.get(output) == 'min' and mean_log[-1] > min(mean_log):
+            count += 1
+        elif self.progress_mode == 'max' and mean_log[-1] < min(mean_log):
+            count += 1
+        else:
+            count = 0
+
+        if count >= self.progress_threashold.get(output):
+            return True
+        else:
+            return False
+
+    def _evaluate_underfitting(self, train_log, val_log, underfit_logs, output):
+        count = sum(underfit_logs[-self.log_gap.get(output):])
+        if self.progress_mode.get(output) == 'min' and val_log[-1] / train_log[
+            -1] * 100 > 100 + self.progress_threashold.get(output):
+            count += 1
+        elif self.progress_mode.get(output) == 'max' and val_log[-1] / train_log[
+            -1] * 100 < 100 - self.progress_threashold.get(output):
+            count += 1
+        else:
+            count = 0
+        if count >= self.progress_threashold.get(output):
+            return True
+        else:
+            return False
+
+    def return_interactive_results(self, num_examples_plot=10, ex_type_choice='seed', data_type='val'):
+        self.num_examples = num_examples_plot
+        self.ex_type_choice = ex_type_choice
+        for out in self.dataset.Y.get('train').keys():
+            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
+                confusion_matrix = self._get_confusion_matrix(
+                    np.argmax(self.Y.get(data_type).get(f'output_{out}'), axis=-1) \
+                        if self.dataset.data.encoding.get(out) == 'ohe' else self.Y.get(data_type).get(f'output_{out}'),
+                    self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
+                )
+                dataset_balance = self._get_dataset_balance_data()
+
+    def _get_classification_data(self):
+        pass
+
+    def _get_dataset_balance_data(self):
+        """
+        return = {
+            "output_name": {
+                'train': {
+                    'class 0': 1024,
+                    'class 1': 1021,
+                    ...
+                },
+                'test': {...},
+                'val': {...}
+            }
+        }
+        """
+        dataset_balance = {}
+        for output in self.dataset.Y.get('train').keys():
+            dataset_balance[output] = {}
+            for datatype in self.dataset.Y.keys():
+                if datatype:
+                    dataset_balance[output][datatype] = class_counter(
+                        self.dataset.Y.get(datatype).get(output),
+                        self.dataset.data.classes_names.get(output),
+                        self.dataset.data.encoding.get(output) == 'ohe'
+                    )
+                else:
+                    dataset_balance[output][datatype] = {}
+        return dataset_balance
+
+    @staticmethod
+    def _get_confusion_matrix(y_true, y_pred, labels):
+        cm = confusion_matrix(y_true, y_pred, labels=labels)
+        print(cm)
+
+        cm_percent = np.zeros_like(cm).astype('float32')
+        for i in range(len(cm)):
+            total = np.sum(cm[i])
+            for j in range(len(cm[i])):
+                cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
+        return (cm, cm_percent, labels)
+
+
+class FitCallback(keras.callbacks.Callback):
+    """CustomCallback for all task type"""
+
+    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
+                 save_model_path: str = "./", model_name: str = "noname"):
+        super().__init__()
+        self.usage_info = MemoryUsage(debug=False)
+        self.Exch = exchange
+        self.DTS = dataset
+        self.batch_size = batch_size
+        self.epochs = epochs
+        self.batch = 0
+        self.num_batches = 0
+        self.epoch = 0
+        self.last_epoch = 1
+        self.history = {}
+        self._start_time = time.time()
+        self._time_batch_step = time.time()
+        self._time_first_step = time.time()
+        self._sum_time = 0
+        self.stop_training = False
+        self.retrain_flag = False
+        self.stop_flag = False
+        self.retrain_epochs = 0
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
+        self.progress_name = progress.PoolName.training
+
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}"
+        )
+        self.model.save(file_path_model)
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
+            data={'info': f"Последняя модель сохранена как {file_path_model}"},
+            finished=False,
+        )
+        # print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
+        pass
+
+    def _estimate_step(self, current, start, now):
+        if current:
+            _time_per_unit = (now - start) / current
+        else:
+            _time_per_unit = (now - start)
+        return _time_per_unit
+
+    def eta_format(self, eta):
+        if eta > 3600:
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
+                                                     (eta % 3600) // 60, eta % 60)
+        elif eta > 60:
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
+        else:
+            eta_format = '%d сек' % eta
+        return ' %s' % eta_format
+
+    def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
+        """
+        Updates the progress bar.
+        """
+        if finalize:
+            _now_time = time.time()
+            eta = _now_time - start_time
+        else:
+            _now_time = time.time()
+            if stop_flag:
+                time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
+            else:
+                time_per_unit = self._estimate_step(current, start_time, _now_time)
+            eta = time_per_unit * (target - current)
+        return [self.eta_format(eta), int(eta)]
+
+    def on_train_begin(self, logs=None):
+        self.stop_training = False
+        self._start_time = time.time()
+        if not self.stop_flag:
+            self.batch = 0
+        self.num_batches = len(self.DTS.dataframe['train']) // self.batch_size
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch = epoch
+        self._time_first_step = time.time()
+
+    def on_train_batch_end(self, batch, logs=None):
+        stop = False
+        if stop:
+            self.model.stop_training = True
+            self.stop_training = True
+            self.stop_flag = True
+            msg = f'ожидайте остановку...'
+            self.batch += 1
+            print(('Обучение остановлено пользователем', msg))
+        else:
+            msg_batch = f'Батч {batch}/{self.num_batches}'
+            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
+                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
+            time_start = \
+                self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
+            if self.retrain_flag:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения дообучения:' \
+                                     f'{self.eta_format(time_start)}, '
+            elif self.stop_flag:
+                msg_progress_end = f'Расчетное время окончания после остановки:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(self._sum_time + time_start)}, '
+            else:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(time_start)}, '
+            self.batch += 1
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                data={'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
+                      'usage': self.usage_info.get_usage()},
+                finished=False,
+            )
+            # print(('Прогресс обучения', msg_progress_start +
+            #                              msg_progress_end + msg_epoch + msg_batch))
+            # print(self.usage_info.get_usage())
+
+    def on_epoch_end(self, epoch, logs=None):
+        """
+        Returns:
+            {}:
+        """
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+            data={'info': logs,
+                  'usage': self.usage_info.get_usage()},
+            finished=False,
+        )
+        # print(logs)
+        # print(self.last_epoch)
+        # print(self.model.get_weights())
+        self.last_epoch += 1
+        # self.Exch.last_epoch_model(self.model)
+
+    def on_train_end(self, logs=None):
+        self.save_lastmodel()
+        time_end = self.update_progress(self.num_batches * self.epochs + 1,
+                                        self.batch, self._start_time, finalize=True)[1]
+        self._sum_time += time_end
+        if self.model.stop_training:
+            msg = f'Модель сохранена.'
+            print(('Обучение остановлено пользователем!', msg))
+            # self.Exch.out_data['stop_flag'] = True
+        else:
+            if self.retrain_flag:
+                msg = f'Затрачено времени на обучение: ' \
+                      f'{self.eta_format(time_end)} '
+            else:
+                msg = f'Затрачено времени на обучение: ' \
+                      f'{self.eta_format(self._sum_time)} '
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
+                data={'info': f"Обучение закончено. {msg}",
+                      'usage': self.usage_info.get_usage()},
+                finished=True,
+            )
+            # print(msg)
+
+
+class BaseCallback:
     """Callback for callbacks"""
 
     def __init__(
@@ -33,8 +1056,9 @@ class BaseCallback():
             num_classes=2,
             show_worst=False,
             show_best=True,
+            # show_random=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -65,6 +1089,7 @@ class BaseCallback():
         self.show_final = show_final
         self.show_best = show_best
         self.show_worst = show_worst
+        # self.show_random = show_random
         self.num_classes = num_classes
         self.data_tag = data_tag
         self.epoch = 0
@@ -87,7 +1112,6 @@ class BaseCallback():
         """
         plot_data = {}
         try:
-
             msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
             if len(self.clbck_metrics) >= 1:
                 for metric_name in self.clbck_metrics:
@@ -170,8 +1194,11 @@ class BaseCallback():
             indices = sorted_args[-count:]
         elif self.show_worst:
             indices = sorted_args[:count]
+        # elif self.show_random:
+        #     indices = np.random.choice(len(probs), count, replace=False)
         else:
             indices = np.random.choice(len(probs), count, replace=False)
+        print('indices', indices)
         return indices, probs
 
     def plot_images(self, input_key: str = 'input_1', output_key: str = None):
@@ -535,7 +1562,7 @@ class CustomCallback(keras.callbacks.Callback):
             params: dict = None,
             step=1,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
             samples_x: dict = None,
             samples_y: dict = None,
@@ -600,7 +1627,107 @@ class CustomCallback(keras.callbacks.Callback):
         self.retrain_flag = False
         self.stop_flag = False
         self.retrain_epochs = 0
-
+        self.task_type_defaults_dict = {
+            "classification": {
+                "optimizer_name": "Adam",
+                "loss": "categorical_crossentropy",
+                "metrics": ["accuracy"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": ClassificationCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "accuracy"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_best": True,
+                    "show_worst": False,
+                    # "show_random": False,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "segmentation": {
+                "optimizer_name": "Adam",
+                "loss": "categorical_crossentropy",
+                "metrics": ["dice_coef"],
+                "batch_size": 16,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": SegmentationCallback,
+                "callback_kwargs": {
+                    "metrics": ["dice_coef"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_best": True,
+                    "show_worst": False,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "regression": {
+                "optimizer_name": "Adam",
+                "loss": "mse",
+                "metrics": ["mae"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": RegressionCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "mse"],
+                    "step": 1,
+                    "plot_scatter": True,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "timeseries": {
+                "optimizer_name": "Adam",
+                "loss": "mse",
+                "metrics": ["mae"],
+                "batch_size": 32,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": TimeseriesCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss", "mse"],
+                    "step": 1,
+                    "corr_step": 50,
+                    "plot_pred_and_true": True,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+            "object_detection": {
+                "optimizer_name": "Adam",
+                "loss": "yolo_loss",
+                "metrics": [],
+                "batch_size": 8,
+                "epochs": 20,
+                "shuffle": True,
+                "clbck_object": ObjectdetectionCallback,
+                "callback_kwargs": {
+                    "metrics": ["loss"],
+                    "step": 1,
+                    "class_metrics": [],
+                    "num_classes": 2,
+                    "data_tag": "images",
+                    "show_best": False,
+                    "show_worst": False,
+                    "show_final": True,
+                    "dataset": self.DTS,
+                    "exchange": self.Exch,
+                },
+            },
+        }
         self.callback_kwargs = []
         self.clbck_object = []
         self.prepare_params()
@@ -687,11 +1814,21 @@ class CustomCallback(keras.callbacks.Callback):
                         callback_kwargs["show_worst"] = True
                     else:
                         callback_kwargs["show_worst"] = False
+                        # callback_kwargs['show_random'] = False
                 elif option_name == 'show_best_images':
                     if option_value:
                         callback_kwargs['show_best'] = True
                     else:
                         callback_kwargs['show_best'] = False
+                        # callback_kwargs['show_random'] = False
+                # elif option_name == 'show_random_images':
+                #     if option_value:
+                #         callback_kwargs['show_random'] = True
+                #     else:
+                #         callback_kwargs['show_best'] = False
+                #         callback_kwargs['show_worst'] = False
+                else:
+                    continue
 
         if task_type == 'regression':
             for option_name, option_value in clbck_options.items():
@@ -1000,7 +2137,8 @@ class ClassificationCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            # show_random=True,
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1027,6 +2165,7 @@ class ClassificationCallback(BaseCallback):
         self.class_metrics = class_metrics
         self.show_worst = show_worst
         self.show_best = show_best
+        # self.show_random = show_random
         self.show_final = show_final
         self.dataset = dataset
         self.Exch = exchange
@@ -1146,7 +2285,7 @@ class SegmentationCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1519,7 +2658,7 @@ class TimeseriesCallback(BaseCallback):
             corr_step=50,
             show_final=True,
             plot_pred_and_true=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1717,7 +2856,7 @@ class RegressionCallback(BaseCallback):
             step=1,
             show_final=True,
             plot_scatter=False,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1859,7 +2998,7 @@ class ObjectdetectionCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -2407,3 +3546,58 @@ class ObjectdetectionCallback(BaseCallback):
         coors, scores, classes = pred_coor[mask], scores[mask], classes[mask]
 
         return np.concatenate([coors, scores[:, np.newaxis], classes[:, np.newaxis]], axis=-1)
+
+
+if __name__ == "__main__":
+    def model_func(input_shape, num_classes):
+        input_1 = Input(shape=input_shape, name='input_1')
+        x_1 = BatchNormalization()(input_1)
+        x_2 = Conv2D(filters=16, kernel_size=(2, 2), padding='same', strides=(2, 2))(x_1)
+        x_2 = InstanceNormalization()(x_2)
+        x_3 = Conv2D(filters=16, kernel_size=(2, 2), padding='same', strides=(2, 2))(x_2)
+        x_4 = MaxPooling2D(pool_size=(4, 4), strides=None, padding='same')(x_3)
+        x_6 = Flatten()(x_4)
+        x_7 = Dense(units=256, activation='relu')(x_6)
+        output_1 = Dense(units=num_classes, activation='softmax', name='output_2')(x_7)
+        model = Model([input_1], [output_1])
+        return model
+
+
+    # dataset_variants = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing',
+    #                     'reuters', 'трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
+    #                     'заболевания', 'договоры', 'самолеты', 'губы', 'sber']
+    with open('G:/Мой диск/Colab Notebooks/Стажировка/terra_gui/TerraAI/datasets/dataset автомобили 3/config.json',
+              'r') as cfg:
+        ddd = json.load(cfg)
+    print('\nconfig.json\n', ddd)
+
+    dataset_data = DatasetData(**ddd)
+    dtts = PrepareDTS(dataset_data)
+    dtts.prepare_dataset()
+    print(dtts.X.get('train').get(1).shape, dtts.Y.get('train').get(2).shape)
+    # print(dtts.data.encoding.get(2))
+    # print(dtts.Y.get('train').get(2))
+
+    model = model_func(dtts.data.inputs.get(1).shape, dtts.data.num_classes.get(2))
+    model.compile(optimizer='adam', loss="CategoricalCrossentropy")
+    model.fit(dtts.X.get('train').get(1), dtts.Y.get('train').get(2), epochs=2)
+
+    start = time.time()
+    clb = InteractiveCallback(model, dtts, log_gap=5,
+                              metrics={2: ['Accuracy', 'CategoricalAccuracy']},
+                              losses={2: ["CategoricalCrossentropy"]})
+    print(clb.log_history)
+    # clb.update_state(current_epoch=1, current_weights=model.get_weights())
+    # print(clb.Y_pred['train'].keys(), clb.Y['train'].keys())
+    # clb.get_prediction()
+    # print(clb.Y_pred)
+    # print(clb.log_history)
+    print(time.time() - start)
+    # to_json = json.dumps(clb.log_history)
+    # print(to_json)
+
+    # print(TasksGroups[0]['task'].value)
+    # print(TaskChoice.Classification.value)
+    # print(TasksGroups[0]['task'].value == dtts.data.task_type.get(2).value)
+    # print(TasksGroups[0]['metrics'])
+    # print(getattr(tf.keras.metrics, TasksGroups[0]['metrics'][0]))

@@ -19,6 +19,7 @@ class PoolName(str, Enum):
     dataset_source_load = "dataset_source_load"
     dataset_choice = "dataset_choice"
     model_load = "model_load"
+    training = "training"
     deploy_upload = "deploy_upload"
 
 
@@ -48,6 +49,7 @@ class ProgressItems(BaseMixinData):
     dataset_choice: ProgressData = ProgressData()
     model_load: ProgressData = ProgressData()
     deploy_upload: ProgressData = ProgressData()
+    training: ProgressData = ProgressData()
 
 
 class ProgressPool:
@@ -71,11 +73,12 @@ class ProgressPool:
                 data=kwargs.get("data", __progress.data),
             ),
         )
+        print(self.__pool.training)
 
     def reset(self, name: PoolName, **kwargs):
         setattr(self.__pool, name, ProgressData(**kwargs))
 
-    def monitoring(self, name: str, delay: float = 1.0):
+    def monitoring(self, name: PoolName, delay: float = 1.0):
         def __output(__progress):
             print(
                 "% 4i%%:" % __progress.percent,
