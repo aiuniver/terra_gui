@@ -10,6 +10,12 @@ from apps.plugins.frontend.choices import (
     LayerOutputTypeChoice,
     LayerNetChoice,
     LayerScalerChoice,
+    LayerScalerImageChoice,
+    LayerScalerAudioChoice,
+    LayerScalerVideoChoice,
+    LayerScalerRegressionChoice,
+    LayerScalerTimeseriesChoice,
+    LayerTypeProcessingClassificationChoice,
     LayerTextModeChoice,
     LayerPrepareMethodChoice,
     LayerAudioModeChoice,
@@ -18,9 +24,15 @@ from apps.plugins.frontend.choices import (
     LayerVideoFrameModeChoice,
     LayerVideoModeChoice,
     LayerDataframeAlignBaseMethodChoice,
+    LayerYoloVersionChoice,
 )
 
 from ..fields import DirectoryPathField, DirectoryOrFilePathField
+
+
+class MinMaxScalerSerializer(serializers.Serializer):
+    min_scaler: serializers.IntegerField(default=0)
+    max_scaler: serializers.IntegerField(default=1)
 
 
 class ChoiceSerializer(serializers.Serializer):
@@ -42,27 +54,26 @@ class LayerParametersSerializer(serializers.Serializer):
         return value
 
 
-class LayerParametersImageSerializer(LayerParametersSerializer):
+class LayerParametersImageSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
     height = serializers.IntegerField(min_value=1)
     net = serializers.ChoiceField(choices=LayerNetChoice.items_tuple())
-    scaler = serializers.ChoiceField(choices=LayerScalerChoice.items_tuple())
+    scaler = serializers.ChoiceField(choices=LayerScalerImageChoice.items_tuple())
 
 
 class LayerParametersTextSerializer(LayerParametersSerializer):
-    max_words_count = serializers.IntegerField(min_value=1)
-    delete_symbols = serializers.CharField(default="", allow_blank=True)
+    filters = serializers.CharField(
+        default='–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
+    )
     text_mode = serializers.ChoiceField(choices=LayerTextModeChoice.items_tuple())
     max_words = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
     pymorphy = serializers.BooleanField(default=False)
-    embedding = serializers.BooleanField(default=False)
-    bag_of_words = serializers.BooleanField(default=False)
-    word_to_vec = serializers.BooleanField(default=False)
     prepare_method = serializers.ChoiceField(
         choices=LayerPrepareMethodChoice.items_tuple()
     )
+    max_words_count = serializers.IntegerField(required=False, min_value=1)
     word_to_vec_size = serializers.IntegerField(required=False, min_value=1)
 
     def __init__(self, instance=None, data=None, **kwargs):
@@ -74,20 +85,26 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
             self.fields.get("step").required = True
 
         _prepare_method = data.get("prepare_method")
-        if _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
+        if _prepare_method in [
+            LayerPrepareMethodChoice.embedding.name,
+            LayerPrepareMethodChoice.bag_of_words.name,
+        ]:
+            self.fields.get("max_words_count").required = True
+        elif _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
             self.fields.get("word_to_vec_size").required = True
         data.update({_prepare_method: True})
 
         super().__init__(instance=instance, data=data, **kwargs)
 
 
-class LayerParametersAudioSerializer(LayerParametersSerializer):
+class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     sample_rate = serializers.IntegerField(min_value=1)
     audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
     max_seconds = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
     parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
+    scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
 
     def __init__(self, instance=None, data=None, **kwargs):
         _audio_mode = data.get("audio_mode")
@@ -100,7 +117,7 @@ class LayerParametersAudioSerializer(LayerParametersSerializer):
         super().__init__(instance=instance, data=data, **kwargs)
 
 
-class LayerParametersVideoSerializer(LayerParametersSerializer):
+class LayerParametersVideoSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     width = serializers.IntegerField(min_value=1)
     height = serializers.IntegerField(min_value=1)
     fill_mode = serializers.ChoiceField(choices=LayerVideoFillModeChoice.items_tuple())
@@ -111,6 +128,7 @@ class LayerParametersVideoSerializer(LayerParametersSerializer):
     max_frames = serializers.IntegerField(required=False, min_value=1)
     length = serializers.IntegerField(required=False, min_value=1)
     step = serializers.IntegerField(required=False, min_value=1)
+    scaler = serializers.ChoiceField(choices=LayerScalerVideoChoice.items_tuple())
 
     def __init__(self, instance=None, data=None, **kwargs):
         _video_mode = data.get("video_mode")
@@ -123,7 +141,9 @@ class LayerParametersVideoSerializer(LayerParametersSerializer):
         super().__init__(instance=instance, data=data, **kwargs)
 
 
-class LayerParametersDataframeSerializer(LayerParametersSerializer):
+class LayerParametersDataframeSerializer(
+    MinMaxScalerSerializer, LayerParametersSerializer
+):
     separator = serializers.CharField()
     transpose = serializers.BooleanField(default=False)
     align_base = serializers.BooleanField(default=False)
@@ -146,15 +166,62 @@ class LayerParametersDataframeSerializer(LayerParametersSerializer):
 
 
 class LayerParametersClassificationSerializer(LayerParametersSerializer):
-    categorical = serializers.BooleanField(default=True)
-    categorical_ranges = serializers.BooleanField(default=False)
+    one_hot_encoding = serializers.BooleanField(default=True)
+    type_processing = serializers.ChoiceField(
+        choices=LayerTypeProcessingClassificationChoice.items_tuple()
+    )
     ranges = serializers.CharField(required=False)
 
     def __init__(self, instance=None, data=None, **kwargs):
-        if data.get("categorical_ranges"):
+        _type_processing = data.get("type_processing")
+        if _type_processing:
             self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersSegmentationSerializer(LayerParametersSerializer):
+    width: serializers.IntegerField(min_value=1)
+    height: serializers.IntegerField(min_value=1)
+    mask_range = serializers.IntegerField(min_value=1)
+    classes_names: serializers.ListSerializer(child=serializers.CharField())
+    classes_colors: serializers.ListSerializer(child=serializers.CharField())
+
+
+class LayerParametersTextSegmentationSerializer(LayerParametersSerializer):
+    open_tags: serializers.CharField(required=False)
+    close_tags: serializers.CharField(required=False)
+
+
+class LayerParametersRegressionSerializer(
+    MinMaxScalerSerializer, LayerParametersSerializer
+):
+    scaler: LayerScalerRegressionChoice
+
+
+class LayerParametersTimeseriesSerializer(
+    MinMaxScalerSerializer, LayerParametersSerializer
+):
+    length: serializers.IntegerField(min_value=1)
+    step: serializers.IntegerField(min_value=1)
+    trend: serializers.BooleanField()
+    trend_limit: serializers.CharField(required=False)
+    depth: serializers.IntegerField(required=False, min_value=1)
+    scaler: LayerScalerTimeseriesChoice
+
+    def __init__(self, instance=None, data=None, **kwargs):
+        _trend = data.get("trend")
+        if _trend:
+            self.fields.get("trend_limit").required = True
+        else:
+            self.fields.get("depth").required = True
+            self.fields.get("scaler").required = True
+
+        super().__init__(instance=instance, data=data, **kwargs)
+
+
+class LayerParametersObjectDetectionSerializer(LayerParametersSerializer):
+    yolo = serializers.ChoiceField(choices=LayerYoloVersionChoice.items_tuple())
 
 
 class CreateLayerSerializer(serializers.Serializer):
