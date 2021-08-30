@@ -76,6 +76,36 @@ class SourceLoadProgressAPIView(BaseAPIView):
         )
 
 
+class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_autosearch",
+                    path=request.data.get("path"),
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
+class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_annotation",
+                    path=request.data.get("path"),
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = CreateSerializer(data=request.data)
