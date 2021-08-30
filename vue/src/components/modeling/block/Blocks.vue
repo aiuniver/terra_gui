@@ -4,9 +4,11 @@
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
+      :ref="'block_' + block.id"
       v-bind="block"
       :options="optionsForChild"
       :linkingCheck="tempLink"
+      :icons="icons"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -56,6 +58,11 @@ export default {
     },
   },
   data: () => ({
+    icons: [
+      { icon: 'icon-deploy-copy', event: 'clone' },
+      // { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
     dragging: false,
     //
     centerX: 0,
@@ -107,8 +114,8 @@ export default {
     optionsForChild() {
       // console.log(this.centerX, this.centerY);
       return {
-        width: 200,
-        titleHeight: 48,
+        width: 180,
+        titleHeight: 42,
         scale: this.scale,
         inputSlotClassName: this.inputSlotClassName,
         center: {
@@ -201,12 +208,12 @@ export default {
   },
   methods: {
     clickIcons({ event }, block) {
-      console.log(event)
+      console.log(event);
       if (event === 'remove') {
-        this.blockDelete(block)
+        this.blockDelete(block);
       }
       if (event === 'clone') {
-        this.addCloneBlock(block)
+        this.addCloneBlock(block);
       }
       if (event === 'link') {
         this.links.forEach(l => {
@@ -316,7 +323,7 @@ export default {
 
       if (this.dragging) {
         this.dragging = false;
-        
+
         if (this.hasDragged) {
           // this.updateScene();
           this.hasDragged = false;
@@ -390,7 +397,9 @@ export default {
       } else if (!isInput && block.outputs.length > slotNumber) {
         if (slotNumber === 0) {
           x += this.optionsForChild.width / 2;
-          y += 50;
+          // console.log()
+          y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
+          // y += 42;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -564,7 +573,7 @@ export default {
       }
       block.position = [x, y];
       this.blocks.push(block);
-      this.blocks = [...this.blocks ];
+      this.blocks = [...this.blocks];
     },
 
     addNewBlock(nodeName, x, y) {
@@ -589,7 +598,7 @@ export default {
       }
       block.position = [x, y];
       this.blocks.push(block);
-      this.blocks = [...this.blocks ];
+      this.blocks = [...this.blocks];
 
       // this.updateScene();
     },
@@ -636,8 +645,8 @@ export default {
       // this.updateScene();
     },
     moveBlock() {
-      this.$store.dispatch('modeling/setButtons', {save: true})
-      this.$emit('save')
+      this.$store.dispatch('modeling/setButtons', { save: true });
+      this.$emit('save');
     },
 
     updateScene() {
