@@ -636,6 +636,7 @@ class LayerValidation:
                 val_dict[param] = check_dict.get(param)
                 try:
                     if self.module_type == ModuleTypeChoice.keras or self.module_type == ModuleTypeChoice.terra_layer:
+                        del val_dict['name']
                         getattr(self.module, self.layer_type)(**val_dict).compute_output_shape(
                             inp_shape[0] if len(inp_shape) == 1 else inp_shape)
 
