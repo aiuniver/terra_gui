@@ -81,3 +81,13 @@ class LayerSaveAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class ValidateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange("model_validate", model=request.project.model)
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)

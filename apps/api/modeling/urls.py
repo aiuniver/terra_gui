@@ -12,4 +12,5 @@ urlpatterns = [
     path("clear/", views.ClearAPIView.as_view(), name="clear"),
     path("update/", views.UpdateAPIView.as_view(), name="update"),
     path("layer/save/", views.LayerSaveAPIView.as_view(), name="layer_save"),
+    path("validate/", views.ValidateAPIView.as_view(), name="validate"),
 ]
