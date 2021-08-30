@@ -9,6 +9,7 @@
       :options="optionsForChild"
       :linkingCheck="tempLink"
       :icons="icons"
+      :filter="filter"
       :errors="errors"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
@@ -37,7 +38,7 @@
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
 import { createBlock, cloneBlock, mouseHelper } from '@/store/const/modeling';
-
+import { mapGetters } from 'vuex'
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
 
@@ -61,7 +62,7 @@ export default {
   data: () => ({
     icons: [
       { icon: 'icon-deploy-copy', event: 'clone' },
-      // { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
       { icon: 'icon-modeling-remove', event: 'remove' },
     ],
     dragging: false,
@@ -95,8 +96,18 @@ export default {
   }),
 
   computed: {
+    ...mapGetters({
+      project: 'projects/getProject',
+    }),
+    filter() {
+      return {
+        input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        middle: ['clone', 'link', 'remove'],
+        output: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+      };
+    },
     errors() {
-      return this.$store.getters['modeling/getErrorsBlocks']
+      return this.$store.getters['modeling/getErrorsBlocks'];
     },
     blocks: {
       set(value) {
@@ -212,7 +223,7 @@ export default {
   },
   methods: {
     getError(id) {
-      return this.errorsBlocks?.[id] || ''
+      return this.errorsBlocks?.[id] || '';
     },
     clickIcons({ event }, block) {
       console.log(event);

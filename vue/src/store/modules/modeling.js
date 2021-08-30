@@ -74,8 +74,13 @@ export default {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
     async clearModel({ commit, dispatch }) {
-      commit('SET_ERRORS_BLOCKS', {})
-      return await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
+      const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
+      if (res.success) {
+        console.log(res)
+        commit('SET_ERRORS_BLOCKS', {}) 
+        await dispatch('projects/get',{}, { root: true });
+      }
+      return res
     },
     async validateModel({ commit, dispatch }) {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });

@@ -9,7 +9,7 @@
     </div>
 
     <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
-      <template v-for="(item, i) of icons">
+      <template v-for="(item, i) of iconsFilter">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
     </div>
@@ -78,15 +78,23 @@ export default {
     options: {
       type: Object,
     },
-    icons: Array
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {}
+    }
 
   },
   data: () => ({
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
+
   }),
   computed: {
+    iconsFilter() {
+      return this.icons.filter(item => this.filter[this.group].includes(item.event))
+    },
     error() {
       return this.errors?.[this.id] || ''
     },
@@ -95,7 +103,7 @@ export default {
       return parametr.join()
     },
     styleHover() {
-      const len = this.icons.length;
+      const len = this.iconsFilter.length;
       return { right: -(33 * len) + 'px' };
     },
     style() {
