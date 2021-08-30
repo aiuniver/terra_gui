@@ -6,6 +6,7 @@ export default {
     select: null,
     model: {},
     blocks: [],
+    errorsBlocks: {},
     links: [],
     modeling: {
       list: [],
@@ -19,6 +20,9 @@ export default {
   mutations: {
     SET_MODELING(state, value) {
       state.modeling = { ...value };
+    },
+    SET_ERRORS_BLOCKS(state, value) {
+      state.errorsBlocks = { ...value }
     },
     SET_MODEL(state, value) {
       state.model = value;
@@ -40,7 +44,7 @@ export default {
       state.select = value;
     },
     SET_BUTTONS(state, value) {
-      state.buttons = {...state.buttons, ...value };
+      state.buttons = { ...state.buttons, ...value };
     },
   },
   actions: {
@@ -63,7 +67,7 @@ export default {
           return link.originID === block.id ? link.targetID : null
         }).filter(link => link)
       })
-      commit('SET_BUTTONS', { save: false});
+      commit('SET_BUTTONS', { save: false });
       return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
@@ -72,8 +76,12 @@ export default {
     async clearModel({ dispatch }) {
       return await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
     },
-    async validateModel({ dispatch }) {
-      return await dispatch('axios', { url: '/modeling/validate/'}, { root: true });
+    async validateModel({ commit, dispatch }) {
+      const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
+      if (data) {
+        commit('SET_ERRORS_BLOCKS', data)
+      }
+      return data;
     },
     setBlocks({ commit }, value) {
       commit('SET_BLOCKS', value);
@@ -99,6 +107,7 @@ export default {
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
+    getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getButtons: ({ buttons }) => buttons,

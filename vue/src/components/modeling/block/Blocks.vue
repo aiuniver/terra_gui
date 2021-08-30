@@ -9,6 +9,7 @@
       :options="optionsForChild"
       :linkingCheck="tempLink"
       :icons="icons"
+      :errors="errors"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
@@ -94,6 +95,9 @@ export default {
   }),
 
   computed: {
+    errors() {
+      return this.$store.getters['modeling/getErrorsBlocks']
+    },
     blocks: {
       set(value) {
         this.$store.dispatch('modeling/setBlocks', value);
@@ -207,6 +211,9 @@ export default {
     },
   },
   methods: {
+    getError(id) {
+      return this.errorsBlocks?.[id] || ''
+    },
     clickIcons({ event }, block) {
       console.log(event);
       if (event === 'remove') {

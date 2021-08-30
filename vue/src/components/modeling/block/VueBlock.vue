@@ -1,6 +1,6 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
-    <div :class="['t-block-modeling__header', group, { selected: selected }]">
+    <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
       <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
@@ -46,9 +46,9 @@ export default {
     linkingCheck: {
       type: Object,
     },
-    error: {
-      type: String,
-      default: null,
+    errors: {
+      type: Object,
+      default: () => {},
     },
     name: {
       type: String,
@@ -87,6 +87,9 @@ export default {
     typeLink: ['bottom', 'right', 'left'],
   }),
   computed: {
+    error() {
+      return this.errors?.[this.id] || ''
+    },
     parametr() {
       const parametr = Object.values(this.parameters?.main || {})
       return parametr.join()
@@ -273,12 +276,13 @@ $circleConnectedColor: #569dcf;
   &__error {
     position: absolute;
     white-space: break-word;
-    left: -102%;
+    left: -114%;
     width: 200px;
     top: 0;
     height: auto;
     padding: 10px;
     color: #fff;
+    border: 2px solid red;
     background-color: #2b5278;
     border-radius: 5px;
     font-size: 0.9em;
@@ -357,6 +361,9 @@ $circleConnectedColor: #569dcf;
         background: none;
         border: $blockBorder solid #8e51f2;
       }
+    }
+    &.error {
+      border: 2px solid red !important;
     }
 
 
