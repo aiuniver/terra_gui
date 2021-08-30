@@ -56,6 +56,10 @@ export default {
     async saveLayers() {
       await this.$store.dispatch('modeling/saveModel', {});
     },
+    async validateModel() {
+      const validate = await this.$store.dispatch('modeling/validateModel', {});
+      console.log(validate)
+    },
     async clearModel() {
       try {
         const action = await this.$Modal.confirm({
@@ -83,8 +87,9 @@ export default {
       }
       if (btn === 'validation') {
         // this.create = true
-        console.log('hjkhjh');
-        this.$refs.params.saveModel();
+        // console.log('hjkhjh');
+        // this.$refs.params.saveModel();
+        this.validateModel()
       }
       if (btn === 'clear') {
         this.clearModel();
