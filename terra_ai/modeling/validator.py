@@ -594,7 +594,7 @@ class ModelValidator:
                 f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
             )
 
-    def get_validated(self):
+    def get_validated(self) -> (ModelDetailsData, dict):
         """Returns all necessary info about modeling"""
 
         self._model_validation()
@@ -630,11 +630,8 @@ class ModelValidator:
             ]
 
         # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
-        return {
-            "model": self.filled_model,
-            "error_msg": self.val_dictionary,
-            "keras_code": self.keras_code,
-        }
+        self.filled_model.keras = self.keras_code
+        return self.filled_model, self.val_dictionary
 
     def get_keras_model(self):
         mc = ModelCreator(self.model_plan, self.layers_config)
