@@ -38,6 +38,7 @@ from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
 
+
 class Exchange:
     def __call__(self, method: str, *args, **kwargs) -> Any:
         # Получаем метод для вызова
@@ -245,9 +246,19 @@ class Exchange:
         """
         return progress.pool(progress.PoolName.deploy_upload)
 
-    def _call_start_training(self, dataset: DatasetData, model: ModelDetailsData,
-                             training_path: Path, params: TrainData):
-        training_obj.terra_fit(dataset=dataset, gui_model=model, training_path=training_path, training_params=params)
+    def _call_start_training(
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        params: TrainData,
+    ):
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            training_params=params,
+        )
 
 
 agent_exchange = Exchange()
