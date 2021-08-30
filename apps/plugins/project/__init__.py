@@ -95,13 +95,13 @@ class Project(BaseMixinData):
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
 
     def dict(self, **kwargs):
-        data = super().dict(**kwargs)
-        data.update({"name_alias": self.name_alias})
-        return data
+        _data = super().dict(**kwargs)
+        _data.update({"name_alias": self.name_alias})
+        return _data
 
     def save(self):
-        with open(project_path.config, "w") as config_ref:
-            json.dump(json.loads(self.json()), config_ref)
+        with open(project_path.config, "w") as _config_ref:
+            json.dump(json.loads(self.json()), _config_ref)
 
     def set_dataset(self, dataset: DatasetData):
         self.dataset = dataset
