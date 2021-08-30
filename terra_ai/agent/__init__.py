@@ -130,6 +130,18 @@ class Exchange:
             progress.data = []
         return progress_data
 
+    def _call_dataset_source_segmentation_classes_autosearch(self, path: Path) -> dict:
+        """
+        Автопоиск классов для сегментации при создании датасета
+        """
+        return {}
+
+    def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
+        """
+        Получение классов для сегментации при создании датасета с использованием файла аннотации
+        """
+        return {}
+
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
         Создание датасета из исходников
