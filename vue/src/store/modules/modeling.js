@@ -13,8 +13,8 @@ export default {
     },
     buttons: {
       save: false,
-      clone: false
-    }
+      clone: false,
+    },
   }),
   mutations: {
     SET_MODELING(state, value) {
@@ -40,7 +40,7 @@ export default {
       state.select = value;
     },
     SET_BUTTONS(state, value) {
-      state.buttons = {...state.buttons, ...value };
+      state.buttons = { ...state.buttons, ...value };
     },
   },
   actions: {
@@ -54,16 +54,26 @@ export default {
       }
       return model;
     },
+    async createModel({ dispatch }, data) {
+      return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
+    },
+    async removeModel({ dispatch }, name) {
+      return await dispatch('axios', { url: '/modeling/delete/', name }, { root: true });
+    },
     async saveModel({ commit, state: { blocks, links }, dispatch }) {
       blocks.forEach(block => {
-        block.bind.up = links.map(link => {
-          return link.targetID === block.id ? link.originID : null
-        }).filter(link => link)
-        block.bind.down = links.map(link => {
-          return link.originID === block.id ? link.targetID : null
-        }).filter(link => link)
-      })
-      commit('SET_BUTTONS', { save: false});
+        block.bind.up = links
+          .map(link => {
+            return link.targetID === block.id ? link.originID : null;
+          })
+          .filter(link => link);
+        block.bind.down = links
+          .map(link => {
+            return link.originID === block.id ? link.targetID : null;
+          })
+          .filter(link => link);
+      });
+      commit('SET_BUTTONS', { save: false });
       return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
@@ -73,7 +83,7 @@ export default {
       return await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
     },
     async validateModel({ dispatch }) {
-      return await dispatch('axios', { url: '/modeling/validate/'}, { root: true });
+      return await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
     },
     setBlocks({ commit }, value) {
       commit('SET_BLOCKS', value);
