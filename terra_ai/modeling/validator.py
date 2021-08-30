@@ -30,6 +30,12 @@ class TerraModel:
     block_plans = {}
     pass
 
+    # def reset():
+    #     plan_name = ''
+    #     input_shape = {}
+    #     plan = []
+    #     block_plans = {}
+
 
 def get_links(model_plan):
     start_row = []
@@ -61,7 +67,7 @@ def get_idx_line(model_plan):
     distribution.append(start_row)
 
     # get other rows
-    count=1
+    count = 1
     while idx2remove:
         count += 1
         row_idxs = []
@@ -71,7 +77,7 @@ def get_idx_line(model_plan):
                     row_idxs.append(downlink)
 
         for link in row_idxs:
-            
+
             if len(uplinks.get(link)) > 1 and len(set(idx2remove) & set(uplinks.get(link))) != 0:
                 print(set(idx2remove) & set(uplinks.get(link)))
                 row_idxs.pop(row_idxs.index(link))
@@ -80,7 +86,7 @@ def get_idx_line(model_plan):
         for idx in row_idxs:
             idx2remove.pop(idx2remove.index(idx))
         if count > 100:
-          idx2remove = None
+            idx2remove = None
     idx_line = []
     for row in distribution:
         idx_line.extend(row)
@@ -156,7 +162,7 @@ def tensor_shape_to_tuple(tensor_shape):
 class ModelValidator:
     """ Make validation of model plan """
 
-    def __init__(self, model, output_shape=None, **kwargs):
+    def __init__(self, model, output_shape: dict = None, **kwargs):
         self.validator = LayerValidation()
         self.model_plan = None
         self.filled_model = None
@@ -207,7 +213,7 @@ class ModelValidator:
                 self.layers_def[layer.id] = layer.parameters.defaults.merged
                 self.layers_config[layer.id] = layer.parameters.config
         self._build_model_plan()
-        
+
     def _build_model_plan(self):
         # оставить описание
         self.model_plan.plan_name = self.model.name
@@ -394,7 +400,6 @@ class ModelValidator:
 
         return block_output, block_comment
 
-
     def compile_keras_code(self):
         """Create keras code from model plan"""
 
@@ -525,7 +530,7 @@ class ModelValidator:
         for idx, layer in enumerate(self.filled_model.details.layers):
             # fill inputs
             if layer.group == LayerGroupChoice.input:
-                    pass
+                pass
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.details.layers[idx].shape.input = \
                     [self.layer_input_shapes.get(layer.id)[0][1:] if self.layer_input_shapes.get(layer.id)[0]
@@ -560,15 +565,15 @@ class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
     def __init__(self):
-        self.inp_shape = [None]
-        self.layer_type = ""
-        self.def_parameters = {}
-        self.layer_parameters = {}
-        self.num_uplinks = 1
-        self.input_dimension = 2
-        self.module = ""
-        self.module_type = ""
-        self.kwargs = {}
+        self.inp_shape: list = [None]
+        self.layer_type: str = ""
+        self.def_parameters: dict = {}
+        self.layer_parameters: dict = {}
+        self.num_uplinks: tuple = None
+        self.input_dimension: tuple = None
+        self.module: str = ""
+        self.module_type: str = ""
+        self.kwargs: dict = {}
 
     def set_state(self, layer_type, shape, parameters, defaults, config, **kwargs):
         """Set input data and fill attributes"""
