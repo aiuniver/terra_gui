@@ -12,7 +12,7 @@ from tensorflow.keras.models import load_model
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
-from terra_ai.data.modeling.model import ModelData
+from terra_ai.data.modeling.model import ModelData, ModelDetailsData
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.modeling.validator import ModelValidator
@@ -31,14 +31,13 @@ class GUINN:
     GUINN: class, for train model
     """
 
-    def __init__(self, exch_obj) -> None:
+    def __init__(self) -> None:
         """
         GUINN init method
 
         Args:
             exch_obj:   exchange object for terra
         """
-        self.Exch = exch_obj
         self.callbacks = []
         self.chp_monitor = 'loss'
 
@@ -108,7 +107,7 @@ class GUINN:
 
     @staticmethod
     def _set_model(model: dict) -> object:
-        validator = ModelValidator(ModelData(**model))
+        validator = ModelValidator(ModelDetailsData(**model))
         train_model = validator.get_keras_model()
         return train_model
 
@@ -208,6 +207,7 @@ class GUINN:
         Return:
             None
         """
+        self.nn_cleaner(retrain=True if self.model_is_trained else False)
         self._set_training_params(dataset=dataset, params=training_params, training_path=training_path)
         nnmodel = self._set_model(model=gui_model)
 
@@ -251,7 +251,7 @@ class GUINN:
             self.stop_training = False
             self.model_is_trained = False
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=True)
             else:
                 self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 

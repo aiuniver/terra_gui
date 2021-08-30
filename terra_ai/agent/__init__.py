@@ -27,6 +27,7 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
+from ..data.training.train import TrainData
 
 from ..datasets import loading as datasets_loading
 from ..datasets.creating import CreateDTS
@@ -35,7 +36,7 @@ from ..deploy import loading as deploy_loading
 from .. import settings, progress
 from . import exceptions
 from ..modeling.validator import ModelValidator
-
+from ..training import training_obj
 
 class Exchange:
     def __call__(self, method: str, *args, **kwargs) -> Any:
@@ -231,6 +232,10 @@ class Exchange:
         Деплой: прогресс загрузки
         """
         return progress.pool(progress.PoolName.deploy_upload)
+
+    def _call_start_training(self, dataset: DatasetData, model: ModelDetailsData,
+                             training_path: Path, params: TrainData):
+        training_obj.terra_fit(dataset=dataset, gui_model=model, training_path=training_path, training_params=params)
 
 
 agent_exchange = Exchange()
