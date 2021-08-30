@@ -49,6 +49,12 @@ class InfoAPIView(BaseAPIView):
         )
 
 
+class ClearAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        request.project.clear_model()
+        return BaseResponseSuccess()
+
+
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:

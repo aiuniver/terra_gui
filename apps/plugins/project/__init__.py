@@ -121,6 +121,12 @@ class Project(BaseMixinData):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
 
+    def clear_model(self):
+        if self.dataset:
+            self.model = self.dataset.model
+        else:
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
+
 
 data_path = DataPathData(**DATA_PATH)
 
