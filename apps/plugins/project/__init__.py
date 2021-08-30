@@ -104,16 +104,28 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def set_dataset(self, dataset: DatasetData):
-        self.dataset = dataset
         if self.model.inputs and len(self.model.inputs) != len(dataset.model.inputs):
             raise exceptions.DatasetModelInputsCountNotMatchException()
         if self.model.outputs and len(self.model.outputs) != len(dataset.model.outputs):
             raise exceptions.DatasetModelOutputsCountNotMatchException()
+        self.dataset = dataset
         if not self.model.inputs or not self.model.outputs:
             self.model = dataset.model
 
     def set_model(self, model: ModelDetailsData):
-        print(model)
+        if self.dataset:
+            dataset_model = self.dataset.model
+            if model.inputs and len(model.inputs) != len(dataset_model.inputs):
+                raise exceptions.DatasetModelInputsCountNotMatchException()
+            if model.outputs and len(model.outputs) != len(dataset_model.outputs):
+                raise exceptions.DatasetModelOutputsCountNotMatchException()
+        self.model = model
+
+    def clear_model(self):
+        if self.dataset:
+            self.model = self.dataset.model
+        else:
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
 
 
 data_path = DataPathData(**DATA_PATH)

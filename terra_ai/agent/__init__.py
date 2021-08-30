@@ -34,6 +34,7 @@ from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
 from . import exceptions
+from ..modeling.validator import ModelValidator
 
 
 class Exchange:
@@ -195,6 +196,12 @@ class Exchange:
         if len(kwargs.keys()):
             model.update(kwargs)
         return ModelDetailsData(**model)
+
+    def _call_model_validate(self, model: ModelDetailsData) -> dict:
+        """
+        Валидация модели
+        """
+        return ModelValidator(model).get_validated()
 
     def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
         """
