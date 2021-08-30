@@ -44,16 +44,21 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
   data: () => ({
-    isSave: false,
-    isKeras: false
+    isKeras: false,
   }),
   computed: {
     ...mapGetters({
       blocks: 'modeling/getBlocks',
       project: 'projects/getProject',
     }),
+    isSave() {
+      const errors = this.$store.getters['modeling/getErrorsBlocks'] || {}
+      const isError = Object.values(errors).filter(item => item)
+      console.log(isError)
+      return isError.length || this.isValidation
+    },
     isClear() {
-      return !this.blocks.length
+      return !this.blocks.length 
     },
     isValidation() {
       const blocks = this.blocks.map(item => item.group)

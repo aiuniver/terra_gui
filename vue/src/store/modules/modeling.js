@@ -73,7 +73,8 @@ export default {
     async getModel({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
-    async clearModel({ dispatch }) {
+    async clearModel({ commit, dispatch }) {
+      commit('SET_ERRORS_BLOCKS', {})
       return await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
     },
     async validateModel({ commit, dispatch }) {
