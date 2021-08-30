@@ -24,25 +24,17 @@
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
     </div>
-    <at-modal v-model="dialogError" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Ошибка!</span>
-      </div>
-      <div class="t-pre">
-        <scrollbar>
-          <p>{{ message }}</p>
-        </scrollbar>
-      </div>
-      <div slot="footer">
-        <t-button @click.native="dialogError = false">Принято</t-button>
-      </div>
-    </at-modal>
+    <CopyModal :windowShow="dialogError" :title="'Ошибка!'" @closeModal="closeModal">{{ message }}</CopyModal>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import CopyModal from "../global/modals/CopyModal";
 export default {
+  components: {
+    CopyModal
+  },
   data: () => ({
     dialogError: false,
   }),
@@ -67,6 +59,9 @@ export default {
         this.dialogError = true;
       }
     },
+    closeModal(value){
+      this.dialogError = value;
+    }
   },
 };
 </script>
@@ -104,6 +99,13 @@ export default {
   justify-content: flex-start;
   align-content: stretch;
   align-items: stretch;
+  &__copy-buffer{
+    display: flex;
+    align-items: center;
+    p{
+      margin-left: 5px;
+    }
+  }
   &__message {
     border-right: #0e1621 1px solid;
     overflow: hidden;
@@ -195,6 +197,7 @@ export default {
   padding-bottom: 10px;
   p {
     white-space: break-spaces;
+    font-family: monospace;
   }
 }
 </style>
