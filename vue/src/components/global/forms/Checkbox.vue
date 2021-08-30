@@ -1,6 +1,6 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="checVal = !checVal">
+    <label class="t-field__label" @click="clickLabel">
       <slot>{{ label }}</slot>
     </label>
     <div class="t-field__switch">
@@ -47,6 +47,10 @@ export default {
       if (this.error) {
         this.$emit('cleanError', true);
       }
+    },
+    clickLabel() {
+      this.checVal = !this.checVal;
+      this.$emit('change', { name: this.name, value: this.checVal });
     },
   },
   created() {
