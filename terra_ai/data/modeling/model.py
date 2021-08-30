@@ -91,6 +91,8 @@ class ModelDetailsData(AliasMixinData):
     "Список слоев"
     references: BlocksList = BlocksList()
     "Списки блоков, используемых в модели"
+    keras: Optional[str] = ""
+    "Код на keras"
 
     @property
     def inputs(self) -> LayersList:

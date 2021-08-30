@@ -65,7 +65,7 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
+      if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
@@ -118,11 +118,11 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  // align-items: center;
+  align-items: center;
   .t-field__label {
     width: 150px;
     max-width: 130px;
-    padding: 6px 0 0 10px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
