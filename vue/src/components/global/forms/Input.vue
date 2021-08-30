@@ -65,7 +65,7 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
+      if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;

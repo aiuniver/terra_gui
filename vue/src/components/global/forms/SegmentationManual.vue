@@ -7,6 +7,7 @@
       name="classes"
       inline
       @change="change"
+      @input="inputCheck"
     />
     <template v-for="item, i of +qty">
       <t-input
@@ -60,6 +61,10 @@ export default {
   }),
   computed: {},
   methods: {
+    inputCheck(e) {
+      if (+e > 99) this.qty = 99
+      if (+e < 0) this.qty = 0
+    },
     change(e) {
       console.log(this.model)
       if (this.isChange) {
