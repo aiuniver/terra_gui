@@ -61,8 +61,8 @@ export default {
     async createModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
     },
-    async removeModel({ dispatch }, name) {
-      return await dispatch('axios', { url: '/modeling/delete/', name }, { root: true });
+    async removeModel({ dispatch }, data) {
+      return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
     async saveModel({ commit, state: { blocks, links }, dispatch }) {
       blocks.forEach(block => {

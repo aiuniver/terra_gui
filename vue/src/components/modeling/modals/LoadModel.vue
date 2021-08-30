@@ -82,7 +82,7 @@ export default {
   },
   methods: {
     async removeModel(name) {
-      const { data } = await this.$store.dispatch('modeling/removeModel', name);
+      const { data } = await this.$store.dispatch('modeling/removeModel', { name });
       if (data) {
         this.load();
       }
