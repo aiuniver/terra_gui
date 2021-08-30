@@ -93,3 +93,19 @@ class ValidateAPIView(BaseAPIView):
             return BaseResponseSuccess(errors)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class CreateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            data=agent_exchange(
+                "model_create",
+                model=request.project.model.native(),
+                path=str(data_path.modeling),
+            )
+        )
+
+
+class DeleteAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
