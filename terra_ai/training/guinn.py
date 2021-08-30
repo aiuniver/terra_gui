@@ -242,7 +242,7 @@ class GUINN:
 
             self.sum_epoch += self.epochs
         self.model_is_trained = True
-        self.stop_training = self.callbacks[0].stop_training
+        # self.stop_training = self.callbacks[0].stop_training
 
     def nn_cleaner(self, retrain=False) -> None:
         keras.backend.clear_session()

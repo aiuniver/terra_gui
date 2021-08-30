@@ -203,6 +203,7 @@ class Exchange:
         """
         model = ModelData(**model_data)
         validation_info = ModelValidator(model).get_validated()
+        validation_info['model'] = validation_info.get('model').native()
         return validation_info
 
     def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:

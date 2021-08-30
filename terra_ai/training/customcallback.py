@@ -86,6 +86,7 @@ class MemoryUsage:
             print(f'Disk usage: {psutil.disk_usage("/").percent: .2f}% '
                   f'({psutil.disk_usage("/").used / 1024 ** 3: .2f}GB / '
                   f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
+        return usage_dict
 
 
 class IntermediateResultCallback(tf.keras.callbacks.Callback):
@@ -866,7 +867,7 @@ class FitCallback(keras.callbacks.Callback):
     def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
                  save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
-        self.usage_info = MemoryUsage(debug=True)
+        self.usage_info = MemoryUsage(debug=False)
         self.Exch = exchange
         self.DTS = dataset
         self.batch_size = batch_size
@@ -902,7 +903,8 @@ class FitCallback(keras.callbacks.Callback):
         self.model.save(file_path_model)
         progress.pool(
             self.progress_name,
-            percent=100,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
             data={'info': f"Последняя модель сохранена как {file_path_model}"},
             finished=False,
         )
@@ -948,7 +950,6 @@ class FitCallback(keras.callbacks.Callback):
         if not self.stop_flag:
             self.batch = 0
         self.num_batches = len(self.DTS.dataframe['train']) // self.batch_size
-        print(self.last_epoch)
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
@@ -965,7 +966,7 @@ class FitCallback(keras.callbacks.Callback):
             print(('Обучение остановлено пользователем', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
-            msg_epoch = f'Эпоха {self.last_epoch + 1}/{self.epochs}:' \
+            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
                         f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             time_start = \
                 self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
@@ -985,18 +986,34 @@ class FitCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(time_start)}, '
             self.batch += 1
-            print(('Прогресс обучения', msg_progress_start +
-                                         msg_progress_end + msg_epoch + msg_batch))
-            print(self.usage_info.get_usage())
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                data={'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
+                      'usage': self.usage_info.get_usage()},
+                finished=False,
+            )
+            # print(('Прогресс обучения', msg_progress_start +
+            #                              msg_progress_end + msg_epoch + msg_batch))
+            # print(self.usage_info.get_usage())
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
-        print(logs)
-        print(self.last_epoch)
-        print(self.model.get_weights())
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+            data={'info': logs,
+                  'usage': self.usage_info.get_usage()},
+            finished=False,
+        )
+        # print(logs)
+        # print(self.last_epoch)
+        # print(self.model.get_weights())
         self.last_epoch += 1
         # self.Exch.last_epoch_model(self.model)
 
@@ -1016,7 +1033,15 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 msg = f'Затрачено времени на обучение: ' \
                       f'{self.eta_format(self._sum_time)} '
-            print(msg)
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
+                data={'info': f"Обучение закончено. {msg}",
+                      'usage': self.usage_info.get_usage()},
+                finished=True,
+            )
+            # print(msg)
 
 
 class BaseCallback:
@@ -1033,7 +1058,7 @@ class BaseCallback:
             show_best=True,
             # show_random=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -1537,7 +1562,7 @@ class CustomCallback(keras.callbacks.Callback):
             params: dict = None,
             step=1,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
             samples_x: dict = None,
             samples_y: dict = None,
@@ -2113,7 +2138,7 @@ class ClassificationCallback(BaseCallback):
             show_best=True,
             show_final=True,
             # show_random=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -2260,7 +2285,7 @@ class SegmentationCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -2633,7 +2658,7 @@ class TimeseriesCallback(BaseCallback):
             corr_step=50,
             show_final=True,
             plot_pred_and_true=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -2831,7 +2856,7 @@ class RegressionCallback(BaseCallback):
             step=1,
             show_final=True,
             plot_scatter=False,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
@@ -2973,7 +2998,7 @@ class ObjectdetectionCallback(BaseCallback):
             show_worst=False,
             show_best=True,
             show_final=True,
-            dataset=DTS(),
+            dataset=None,
             exchange=Exchange(),
     ):
         """
