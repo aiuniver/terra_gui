@@ -1,6 +1,6 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
-    <div :class="['t-block-modeling__header', group, { selected: selected }]">
+    <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
       <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
@@ -9,7 +9,7 @@
     </div>
 
     <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
-      <template v-for="(item, i) of icons">
+      <template v-for="(item, i) of iconsFilter">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
     </div>
@@ -46,9 +46,9 @@ export default {
     linkingCheck: {
       type: Object,
     },
-    error: {
-      type: String,
-      default: null,
+    errors: {
+      type: Object,
+      default: () => {},
     },
     name: {
       type: String,
@@ -78,21 +78,32 @@ export default {
     options: {
       type: Object,
     },
-    icons: Array
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {}
+    }
 
   },
   data: () => ({
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
+
   }),
   computed: {
+    iconsFilter() {
+      return this.icons.filter(item => this.filter[this.group].includes(item.event))
+    },
+    error() {
+      return this.errors?.[this.id] || ''
+    },
     parametr() {
       const parametr = Object.values(this.parameters?.main || {})
       return parametr.join()
     },
     styleHover() {
-      const len = this.icons.length;
+      const len = this.iconsFilter.length;
       return { right: -(33 * len) + 'px' };
     },
     style() {
@@ -273,12 +284,13 @@ $circleConnectedColor: #569dcf;
   &__error {
     position: absolute;
     white-space: break-word;
-    left: -102%;
+    left: -114%;
     width: 200px;
     top: 0;
     height: auto;
     padding: 10px;
     color: #fff;
+    border: 2px solid red;
     background-color: #2b5278;
     border-radius: 5px;
     font-size: 0.9em;
@@ -357,6 +369,9 @@ $circleConnectedColor: #569dcf;
         background: none;
         border: $blockBorder solid #8e51f2;
       }
+    }
+    &.error {
+      border: 2px solid red !important;
     }
 
 

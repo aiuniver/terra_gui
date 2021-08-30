@@ -6,6 +6,7 @@ export default {
     select: null,
     model: {},
     blocks: [],
+    errorsBlocks: {},
     links: [],
     modeling: {
       list: [],
@@ -19,6 +20,9 @@ export default {
   mutations: {
     SET_MODELING(state, value) {
       state.modeling = { ...value };
+    },
+    SET_ERRORS_BLOCKS(state, value) {
+      state.errorsBlocks = { ...value }
     },
     SET_MODEL(state, value) {
       state.model = value;
@@ -79,11 +83,21 @@ export default {
     async getModel({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
     },
-    async clearModel({ dispatch }) {
-      return await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
+    async clearModel({ commit, dispatch }) {
+      const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
+      if (res.success) {
+        console.log(res)
+        commit('SET_ERRORS_BLOCKS', {}) 
+        await dispatch('projects/get',{}, { root: true });
+      }
+      return res
     },
-    async validateModel({ dispatch }) {
-      return await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
+    async validateModel({ commit, dispatch }) {
+      const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
+      if (data) {
+        commit('SET_ERRORS_BLOCKS', data)
+      }
+      return data;
     },
     setBlocks({ commit }, value) {
       commit('SET_BLOCKS', value);
@@ -109,6 +123,7 @@ export default {
     getLayersType: ({ modeling: { layers_types } }) => layers_types,
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
+    getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getButtons: ({ buttons }) => buttons,
