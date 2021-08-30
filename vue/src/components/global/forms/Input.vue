@@ -32,7 +32,7 @@ export default {
       default: 'text',
     },
     value: {
-      type: [String, Number],
+      type: [String, Number, Array],
     },
     parse: String,
     name: String,
