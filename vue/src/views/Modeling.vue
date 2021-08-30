@@ -2,9 +2,14 @@
   <main class="page-modeling">
     <div class="cont">
       <LoadModel v-model="dialogLoadModel" />
-      <SaveModel v-model="dialogSaveModel" :image="imageModel"/>
+      <SaveModel v-model="dialogSaveModel" :image="imageModel" />
       <Toolbar @actions="actions" />
-      <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
+      <Blocks
+        ref="container"
+        @blockSelect="selectBlock = $event"
+        @blockDeselect="selectBlock = null"
+        @save="saveLayers"
+      />
       <Params ref="params" :selectBlock="selectBlock" />
       <CopyModal v-model="kerasModal" :title="'Код на keras'">Keras code</CopyModal>
     </div>
@@ -17,7 +22,7 @@ import Blocks from '@/components/modeling/block/Blocks';
 import Params from '@/components/modeling/Params';
 import LoadModel from '@/components/modeling/modals/LoadModel';
 import SaveModel from '@/components/modeling/modals/SaveModel';
-import CopyModal from "../components/global/modals/CopyModal";
+import CopyModal from '../components/global/modals/CopyModal';
 
 export default {
   name: 'Modeling',
@@ -44,12 +49,27 @@ export default {
       this.$refs.container.addNewBlock(type);
     },
     async saveModel() {
-      this.imageModel = null
+      this.imageModel = null;
       this.dialogSaveModel = true;
       this.imageModel = await this.$refs.container.getImages();
     },
     async saveLayers() {
-      await this.$store.dispatch("modeling/saveModel", {});
+      await this.$store.dispatch('modeling/saveModel', {});
+    },
+    async clearModel() {
+      try {
+        const action = await this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Очистить модель?',
+          width: 300,
+        });
+        if (action == 'confirm') {
+          console.log('DELETE MODEL');
+          this.$store.dispatch('modeling/clearModel');
+        }
+      } catch (error) {
+        console.log(error)
+      }
     },
     actions(btn) {
       if (btn === 'load') {
@@ -59,25 +79,15 @@ export default {
         this.addBlock(btn);
       }
       if (btn === 'save') {
-        this.saveModel()  
+        this.saveModel();
       }
       if (btn === 'validation') {
         // this.create = true
-        console.log('hjkhjh')
-        this.$refs.params.saveModel()
+        console.log('hjkhjh');
+        this.$refs.params.saveModel();
       }
       if (btn === 'clear') {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить модель?',
-          width: 300,
-          callback: function (action) {
-            // this.$Message(action)
-            if(action == "confirm"){
-              console.log("DELETE MODEL")
-            }
-          }
-        })
+        this.clearModel();
       }
       if (btn === 'keras') {
         this.kerasModal = true;
