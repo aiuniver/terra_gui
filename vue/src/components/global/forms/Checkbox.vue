@@ -126,11 +126,11 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  // align-items: center;
+  align-items: center;
 
   > label {
     width: auto;
-    padding: 6px 0 0 10px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;

@@ -22,15 +22,26 @@
               :disabled="!selectBlock"
               @change="saveModel"
             />
-            <!-- <t-input
+            <t-input
+              v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
-              :label="'Shape'"
+              :label="'Shape (input)'"
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
               :disabled="!selectBlock"
               @change="saveModel"
-            /> -->
+            />
+            <t-input
+              v-if="block.shape && block.shape.output"
+              v-model="block.shape.output"
+              :label="'Shape (output)'"
+              :type="'text'"
+              :parse="'shape'"
+              :name="'shape'"
+              :disabled="!selectBlock"
+              @change="saveModel"
+            />
           </div>
           <at-collapse :value="collapse">
             <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
