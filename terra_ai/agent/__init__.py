@@ -212,6 +212,14 @@ class Exchange:
             model.layers.append(kwargs)
         return model
 
+    def _call_model_create(self, model: dict, path: Path):
+        """
+        Создание модели
+        """
+        model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
+        with open(model_path, "w") as model_ref:
+            json.dump(model, model_ref)
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
