@@ -9,7 +9,7 @@
     </div>
 
     <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
-      <template v-for="(item, i) of icons">
+      <template v-for="(item, i) of filterIcons">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
     </div>
@@ -98,7 +98,7 @@ export default {
       return this.icons.filter(item => item)
     },
     styleHover() {
-      const len = this.icons.length;
+      const len = this.filterIcons.length;
       return { right: -(34 * len) + 'px' };
     },
     style() {

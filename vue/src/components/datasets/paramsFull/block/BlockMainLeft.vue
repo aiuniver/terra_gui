@@ -40,7 +40,7 @@
                 </template>
                 <!-- <t-radio :lists="testListRadio" @change="test" :parse="'test'" /> -->
                 <!-- <t-color @change="test" :parse="'test'" inline /> -->
-                <TFieldInline />
+                <!-- <TFieldInline /> -->
               </template>
             </CardLayer>
           </template>
@@ -56,7 +56,7 @@ import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
 import TMultiSelect from '@/components/forms/MultiSelect.vue';
-import TFieldInline from '@/components/global/forms/TFieldInline.vue';
+// import TFieldInline from '@/components/global/forms/TFieldInline.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 // import Error from '@/utils/core/Errors'
 
@@ -66,7 +66,7 @@ export default {
     Fab,
     CardLayer,
     TMultiSelect,
-    TFieldInline
+    // TFieldInline
   },
   mixins: [blockMain],
   data: () => ({
