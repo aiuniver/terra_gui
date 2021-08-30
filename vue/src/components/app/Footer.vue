@@ -24,7 +24,7 @@
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
     </div>
-    <CopyModal :windowShow="dialogError" :title="'Ошибка!'" @closeModal="closeModal">{{ message }}</CopyModal>
+    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
   </div>
 </template>
 
@@ -59,9 +59,6 @@ export default {
         this.dialogError = true;
       }
     },
-    closeModal(value){
-      this.dialogError = value;
-    }
   },
 };
 </script>

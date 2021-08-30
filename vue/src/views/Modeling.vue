@@ -6,7 +6,7 @@
       <Toolbar @actions="actions" />
       <Blocks ref="container" @blockSelect="selectBlock = $event" @blockDeselect="selectBlock = null" @save="saveLayers" />
       <Params ref="params" :selectBlock="selectBlock" />
-      <CopyModal :windowShow="kerasModal" :title="'Код на keras'" @closeModal="closeModal">Keras code</CopyModal>
+      <CopyModal v-model="kerasModal" :title="'Код на keras'">Keras code</CopyModal>
     </div>
   </main>
 </template>
@@ -50,9 +50,6 @@ export default {
     },
     async saveLayers() {
       await this.$store.dispatch("modeling/saveModel", {});
-    },
-    closeModal(value){
-      this.kerasModal = value;
     },
     actions(btn) {
       if (btn === 'load') {
