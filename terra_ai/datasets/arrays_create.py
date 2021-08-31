@@ -2,16 +2,17 @@ import os
 import cv2
 import numpy as np
 import random
+import joblib
 
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import MinMaxScaler
 from gensim.models.word2vec import Word2Vec
-# from tqdm.notebook import tqdm
 # import imgaug.augmenters as iaa
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 import librosa.feature as librosa_feature
 from pydantic.color import Color
+from pydantic import DirectoryPath
 
 from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice, \
     LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
@@ -27,20 +28,34 @@ from tensorflow.keras import utils
 
 class CreateArray(object):
 
-    def __init__(self):
+    def __init__(self, datasets_path: DirectoryPath):
 
         self.scaler: dict = {}
         self.tokenizer: dict = {}
         self.word2vec: dict = {}
         self.augmentation: dict = {}
         self.temporary: dict = {'bounding_boxes': {}}
+        self.datasets_path = datasets_path
 
         self.file_folder = None
         self.txt_list: dict = {}
 
+    def load_preprocess(self, path_dataset, keys):
+
+        for param in ['augmentation', 'scaler', 'tokenizer', 'word2vec']:
+            for key in keys:
+                if os.path.isfile(os.path.join(self.datasets_path, path_dataset, param, f'{key}.gz')):
+                    self.__dict__[param][key] = joblib.load(os.path.join(self.datasets_path, path_dataset, param, f'{key}.gz'))
+                else:
+                    self.__dict__[param][key] = None
+
+        pass
+
     def create_image(self, file_folder: str, image_path: str, **options):
 
         shape = (options['height'], options['width'])
+        if not os.path.exists(image_path):
+            image_path = os.path.join(self.datasets_path, image_path)
         img = load_img(image_path, target_size=shape)
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
@@ -84,7 +99,7 @@ class CreateArray(object):
 
         return array
 
-    def create_video(self, _, video: str, **options) -> np.ndarray:
+    def create_video(self, _, video_path: str, **options) -> np.ndarray:
 
         """
         Args:
@@ -156,13 +171,15 @@ class CreateArray(object):
 
             return video_array
 
+        if not os.path.exists(video_path):
+            video_path = os.path.join(self.datasets_path, video_path)
         array = []
         shape = (options['height'], options['width'])
-        slicing = [int(x) for x in video[video.index('[') + 1:video.index(']')].split(', ')]
+        slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split(', ')]
         frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
 
-        cap = cv2.VideoCapture(video)
+        cap = cv2.VideoCapture(video_path)
         width = int(cap.get(3))
         height = int(cap.get(4))
         max_frames = int(cap.get(7))
@@ -356,8 +373,7 @@ class CreateArray(object):
         array = np.array(index)
         return array
 
-    @staticmethod
-    def create_segmentation(file_folder: str, image_path: str, **options: dict) -> np.ndarray:
+    def create_segmentation(self, file_folder: str, image_path: str, **options: dict) -> np.ndarray:
 
         """
 
@@ -408,8 +424,9 @@ class CreateArray(object):
                     mask_ohe = np.dstack((mask_ohe, mask))
 
             return mask_ohe
-
-        img = load_img(path=os.path.join(file_folder, image_path), target_size=options['shape'])
+        if not os.path.exists(image_path):
+            image_path = os.path.join(self.datasets_path, image_path)
+        img = load_img(path=image_path, target_size=options['shape'])
         array = img_to_array(img, dtype=np.uint8)
         array = cluster_to_ohe(array)
 
