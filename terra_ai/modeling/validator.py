@@ -259,8 +259,8 @@ class ModelValidator:
 
         edges = get_edges(self.model_plan.plan)
 
-        G = nx.DiGraph(edges)
-        for cycle in nx.simple_cycles(G):
+        di_graph = nx.DiGraph(edges)
+        for cycle in nx.simple_cycles(di_graph):
             if cycle:
                 self.valid = False
                 comment = f"Layers {cycle} make a cycle! Please correct the structure!"
@@ -277,9 +277,10 @@ class ModelValidator:
         """
 
         edges = get_edges(self.model_plan.plan, full_connection=True)
-        G = nx.DiGraph(edges)
+        di_graph = nx.DiGraph(edges)
         subgraphs = sorted(
-            list(nx.weakly_connected_components(G)), key=lambda subgraph: -len(subgraph)
+            list(nx.weakly_connected_components(di_graph)),
+            key=lambda subgraph: -len(subgraph),
         )
 
         if len(subgraphs) > 1:
@@ -484,10 +485,10 @@ class ModelValidator:
                 name_dict[layer[0]] = f"x_{layer[0]}"
 
         layers_str = ""
-        for id, layer_name in layers_import.items():
+        for _id, layer_name in layers_import.items():
             # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
             layers_str += (
-                f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
+                f"from {self.layers_config.get(_id).module.value} import {layer_name}\n"
             )
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
@@ -714,7 +715,7 @@ class LayerValidation:
                         return new, None
 
                     return output_shape, None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -729,14 +730,14 @@ class LayerValidation:
                     )
                     # print(type(tensor_shape_to_tuple(output.shape)))
                     return [tensor_shape_to_tuple(output.shape)], None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
 
     def get_problem_parameter(
         self, base_dict: dict, check_dict: dict, problem_dict, inp_shape, revert=False
     ):
         """check each not default parameter from check_dict by setting it in base_dict
-        revert means set defaul parameter in layer parameters and need additional check if pass
+        revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
@@ -1206,10 +1207,10 @@ class ModelCreator:
         self._get_idx_line()
         self._get_model_links()
         self.id_idx_dict = {}
-        for id in self.idx_line:
+        for _id in self.idx_line:
             for idx in range(len(self.terra_model.plan)):
-                if id == self.terra_model.plan[idx][0]:
-                    self.id_idx_dict[id] = idx
+                if _id == self.terra_model.plan[idx][0]:
+                    self.id_idx_dict[_id] = idx
                     break
         self.tensors = {}
         pass
@@ -1226,34 +1227,36 @@ class ModelCreator:
 
     def _build_keras_model(self):
         """Build keras model from plan"""
-        for id in self.idx_line:
-            layer_type = self.terra_model.plan[self.id_idx_dict.get(id)][1]
+        for _id in self.idx_line:
+            layer_type = self.terra_model.plan[self.id_idx_dict.get(_id)][1]
             # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
             #     layer_type = 'SpaceToDepth'
             # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
             if (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.tensorflow
             ):
-                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             elif (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.keras_pretrained_model
             ):
                 self._pretrained_model_init_(
-                    self.terra_model.plan[self.id_idx_dict.get(id)]
+                    self.terra_model.plan[self.id_idx_dict.get(_id)]
                 )
             elif (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.block_plan
             ):
-                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._custom_block_init(
+                    self.terra_model.plan[self.id_idx_dict.get(_id)]
+                )
             elif (
-                self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras
-                or self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras
+                or self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.terra_layer
             ):
-                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
                 sys.exit(msg)

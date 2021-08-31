@@ -207,8 +207,7 @@ class Exchange:
         """
         Обновление модели
         """
-        if len(kwargs.keys()):
-            model.update(kwargs)
+        model.update(kwargs)
         return ModelDetailsData(**model)
 
     def _call_model_validate(self, model: ModelDetailsData) -> dict:

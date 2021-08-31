@@ -60,7 +60,9 @@ class UpdateAPIView(BaseAPIView):
         try:
             request.project.set_model(
                 agent_exchange(
-                    "model_update", model=request.project.model.native(), **request.data
+                    "model_update",
+                    model=request.project.model.native(),
+                    **request.data,
                 )
             )
             return BaseResponseSuccess()
@@ -75,7 +77,7 @@ class LayerSaveAPIView(BaseAPIView):
                 agent_exchange(
                     "model_layer_save",
                     model=request.project.model.native(),
-                    **request.data
+                    **request.data,
                 )
             )
             return BaseResponseSuccess()
