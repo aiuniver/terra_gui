@@ -1131,6 +1131,26 @@ class InteractiveCallback:
                     'predict_value': {},
                     'class_stat': {}
                 }
+                for inp in self.dataset.X.get('train').keys():
+                    return_data[example]['initial_data'] = {
+                        'layer': f'Input_{inp}',
+                        'data': self._postprocess_initial_data(
+                            input_id=inp,
+                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
+                            show_statistic=self.interactive_config.get('intermediate_result').get('show_statistic')
+                        )
+                    }
+                for out in self.dataset.Y.get('train').keys():
+                    return_data[example]['true_value'] = {
+                        'layer': f'Output_{out}',
+                        'data': self._postprocess_result_data(
+                            input_id=out,
+                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
+                            show_statistic=self.interactive_config.get('intermediate_result').get('show_statistic')
+                        )
+                    }
 
 
         else:
@@ -1210,6 +1230,11 @@ class InteractiveCallback:
             for j in range(len(cm[i])):
                 cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return (cm, cm_percent, labels)
+
+    def _postprocess_initial_data(self, input_id: int, data_type: str, mode: str, show_statistic: bool):
+        pass
+
+    _postprocess_result_data
 
 
 class FitCallback(keras.callbacks.Callback):
