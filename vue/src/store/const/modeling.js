@@ -46,7 +46,6 @@ const createBlock = function (type, id) {
       input: [],
       output: [],
     },
-    location: null,
     position: [0, 0],
     parameters: {
       main: {},

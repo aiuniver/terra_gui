@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="t-segmentation-manual">
     <t-input
       v-model="qty"
       label="Количество классов"
@@ -9,7 +9,8 @@
       @change="change"
       @input="inputCheck"
     />
-    <template v-for="item, i of +qty">
+    <template v-for="(item, i) of +qty">
+      <hr class="t-segmentation-manual__hr" :key="'hr_up' + i" />
       <t-input
         :value="''"
         label="Название класса"
@@ -21,12 +22,13 @@
         @change="change"
       />
       <Color :value="'#FFFFFF'" label="Цвет" :key="'classes_colors_' + i" inline />
+      <hr v-if="+qty === i + 1" class="t-segmentation-manual__hr" :key="'hr_' + i" />
     </template>
   </div>
 </template>
 
 <script>
-import Color from '../../forms/Color.vue'
+import Color from '../../forms/Color.vue';
 export default {
   name: 't-segmentation-manual',
   components: {
@@ -56,17 +58,17 @@ export default {
     loading: false,
     model: {
       classes_names: [],
-      classes_colors: []
-    }
+      classes_colors: [],
+    },
   }),
   computed: {},
   methods: {
     inputCheck(e) {
-      if (+e > 99) this.qty = 99
-      if (+e < 0) this.qty = 0
+      if (+e > 99) this.qty = 99;
+      if (+e < 0) this.qty = 0;
     },
     change(e) {
-      console.log(this.model)
+      console.log(this.model);
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
@@ -79,27 +81,13 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.t-inline {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  -webkit-box-pack: end;
-  margin-bottom: 10px;
-  // align-items: center;
-  .t-field__label {
-    padding: 6px 0 0 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
-    font-size: 0.75rem;
-  }
-  .t-field__button {
-    flex: 0 0 100px;
-    height: 24px;
-    font-size: 12px;
-    line-height: 24px;
+.t-segmentation-manual {
+  &__hr {
+    height: 1px;
+    border-width: 0;
+    color: #17212b;
+    background-color: #17212b;
+    margin: 0 0 10px 0;
   }
 }
 </style>
