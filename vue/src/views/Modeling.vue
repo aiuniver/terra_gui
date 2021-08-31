@@ -8,8 +8,8 @@
         ref="container"
         @save="saveLayers"
       />
-      <Params ref="params" :selectBlock="selectBlock" />
-      <CopyModal v-model="kerasModal" :title="'Код на keras'">Keras code</CopyModal>
+      <Params />
+      <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
     </div>
   </main>
 </template>
@@ -35,16 +35,18 @@ export default {
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
-    selectBlock: null,
     imageModel: null,
     kerasModal: false,
   }),
+  computed: {
+    keras() {
+      return this.$store.getters['modeling/getModel']?.keras || ''
+    }
+  },
   methods: {
     addBlock(type) {
       console.log(type);
       this.create = false;
-      this.selectBlockType = '';
-      // this.$refs.container.addNewBlock(type);
       this.$store.dispatch('modeling/addBlock', type)
     },
     async saveModel() {
@@ -85,9 +87,6 @@ export default {
         this.saveModel();
       }
       if (btn === 'validation') {
-        // this.create = true
-        // console.log('hjkhjh');
-        // this.$refs.params.saveModel();
         this.validateModel()
       }
       if (btn === 'clear') {

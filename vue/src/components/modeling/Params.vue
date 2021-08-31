@@ -25,7 +25,7 @@
             <t-input
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
-              :label="'Shape (input)'"
+              :label="'Input shape'"
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
@@ -35,7 +35,7 @@
             <t-input
               v-if="block.shape && block.shape.output"
               v-model="block.shape.output"
-              :label="'Shape (output)'"
+              :label="'Output shape'"
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
@@ -167,8 +167,5 @@ export default {
 
 .params-actions {
   padding: 20px 10px;
-}
-.dropdown {
-  padding: 10px 0;
 }
 </style>
