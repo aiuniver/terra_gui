@@ -26,6 +26,7 @@
             :height="100"
             :disabled="false"
             startColor="#ff0000"
+            @color-change="$emit('change', $event)"
           ></ColorPicker>
         </div>
       </div>
@@ -64,18 +65,16 @@ export default {
   data: () => ({
     isChange: false,
     pickerShow: false,
-    input: '#FFFFFF',
   }),
   computed: {
-    /*    input: {
+    input: {
       set(value) {
         this.$emit('input', value);
-        this.isChange = true;
       },
       get() {
         return this.value;
       },
-    },*/
+    },
   },
   methods: {
     outside() {
@@ -102,6 +101,11 @@ export default {
       // console.log("asdasdas     ", this.input)
     },
   },
+  created() {
+    if (!this.value) {
+      this.$emit('input', this.input);
+    }
+  }
 };
 </script>
 
