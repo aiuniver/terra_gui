@@ -1106,6 +1106,7 @@ class InteractiveCallback:
             return []
 
     def _get_intermediate_result_request(self):
+
         """
         'intermediate_result': {
             example_num: {
