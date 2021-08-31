@@ -491,6 +491,50 @@ class InteractiveCallback:
         self._get_seed()
 
         self.class_idx = self._get_class_idx()
+
+        self.interactive_config = {
+            'loss_graphs': {
+                'show_data': [
+                    {
+                        'output_idx': 2,
+                        'show_for_model': True,
+                        'show_for_classes': False
+                    },
+                ],
+            },
+            'metric_graphs': [
+                {
+                    'output_idx': 2,
+                    'show_for_model': True,
+                    'show_for_classes': False,
+                    'show_metric': 'Accuracy'
+                }
+            ],
+            'intermediate_result': {
+                'show_results': False,
+                'data_for_calculation': 'val',
+                'example_choice_type': 'seed',
+                'num_examples': 10,
+                'show_statistic': False,
+                'autoupdate': False
+            },
+            'progress_table': [
+                {
+                    'output_idx': 2,
+                    'show_loss': True,
+                    'show_metrics': True,
+                }
+            ],
+            'statistic_data': {
+                'output_idx': [2, 3],
+                'autoupdate': False
+            },
+            'data_balance': {
+                'show_train': True,
+                'show_val': True,
+                'sorted': 'by_name'   # 'descending', 'ascending'
+            }
+        }
         pass
 
     def _prepare_null_log_history_template(self):
@@ -650,7 +694,7 @@ class InteractiveCallback:
         self.model.set_weights(current_weights)
         self._get_prediction()
         self.log_history['epochs'].append(current_epoch)
-        self._fill_log_history()
+        self._fill_loss_log_history()
 
     def _get_prediction(self):
         # predict = self.model.predict(self.X.get('train'))
@@ -814,17 +858,270 @@ class InteractiveCallback:
         else:
             return False
 
-    def return_interactive_results(self, num_examples_plot=10, ex_type_choice='seed', data_type='val'):
-        self.num_examples = num_examples_plot
-        self.ex_type_choice = ex_type_choice
-        for out in self.dataset.Y.get('train').keys():
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                confusion_matrix = self._get_confusion_matrix(
-                    np.argmax(self.Y.get(data_type).get(f'output_{out}'), axis=-1) \
-                        if self.dataset.data.encoding.get(out) == 'ohe' else self.Y.get(data_type).get(f'output_{out}'),
-                    self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
-                )
-                dataset_balance = self._get_dataset_balance_data()
+    def return_interactive_results(self, config: dict):
+        """
+        result_to_front = {
+            'loss_graphs': self._get_loss_graph_data_request()
+            'metric_graphs': self._get_metric_graph_data_request()
+            'intermediate_result': self._get_intermediate_result_request()
+            'progress_table': self._get_progress_table_data_request()
+            'statistic_data': self._get_statistic_data_request()
+            'data_balance': self._get_dataset_balance_data()
+        }
+        """
+
+        # def plot_result(self, output_key: str = None):
+        #     """
+        #     Returns: plot_data
+        #     """
+        #     plot_data = {}
+        #     try:
+        #         msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
+        #         if len(self.clbck_metrics) >= 1:
+        #             for metric_name in self.clbck_metrics:
+        #                 if not isinstance(metric_name, str):
+        #                     metric_name = metric_name.name
+        #                 if len(self.dataset.Y) > 1:
+        #                     # определяем, что демонстрируем во 2м и 3м окне
+        #                     metric_name = f"{output_key}_{metric_name}"
+        #                     val_metric_name = f"val_{metric_name}"
+        #                 else:
+        #                     val_metric_name = f"val_{metric_name}"
+        #                 metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
+        #                 xlabel = "Эпоха"
+        #                 ylabel = "Значение"
+        #                 labels = (metric_title, xlabel, ylabel)
+        #                 plot_data[labels] = [
+        #                     [
+        #                         list(range(len(self.history[metric_name]))),
+        #                         self.history[metric_name],
+        #                         f"{metric_name}",
+        #                     ],
+        #                     [
+        #                         list(range(len(self.history[val_metric_name]))),
+        #                         self.history[val_metric_name],
+        #                         f"{val_metric_name}",
+        #                     ],
+        #                 ]
+        #
+        #             if len(self.class_metrics):
+        #                 for metric_name in self.class_metrics:
+        #                     if not isinstance(metric_name, str):
+        #                         metric_name = metric_name.name
+        #                     if len(self.dataset.Y) > 1:
+        #                         metric_name = f'{output_key}_{metric_name}'
+        #                         val_metric_name = f"val_{metric_name}"
+        #                     else:
+        #                         val_metric_name = f"val_{metric_name}"
+        #                     xlabel = "Эпоха"
+        #                     if metric_name.endswith("loss"):
+        #                         classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
+        #                         ylabel = "Значение"
+        #                     else:
+        #                         classes_title = f"Точность {output_key} для {self.num_classes} классов. {msg_epoch}"
+        #                         ylabel = "Значение"
+        #                     labels = (classes_title, xlabel, ylabel)
+        #                     plot_data[labels] = [
+        #                         [
+        #                             list(range(len(self.predict_cls[val_metric_name][j]))),
+        #                             self.predict_cls[val_metric_name][j],
+        #                             f" класс {l}",
+        #                         ] for j, l in enumerate(self.dataset.classes_names[output_key])
+        #                     ]
+        #     except Exception as e:
+        #         print("Exception", e.__str__())
+        #     return plot_data
+
+        # self.interactive_config = {
+        #     'loss_graphs': {
+        #         'show_data': [
+        #             {
+        #                 'output_idx': 2,
+        #                 'show_for_model': True,
+        #                 'show_for_classes': False
+        #             },
+        #         ],
+        #     },
+        #     'metric_graphs': [
+        #         {
+        #             'output_idx': 2,
+        #             'show_for_model': True,
+        #             'show_for_classes': False,
+        #             'show_metric': 'Accuracy'
+        #         }
+        #     ],
+        #     'intermediate_result': {
+        #         'show_results': False,
+        #         'data_for_calculation': 'val',
+        #         'example_choice_type': 'seed',
+        #         'num_examples': 10,
+        #         'show_statistic': False,
+        #         'autoupdate': False
+        #     },
+        #     'progress_table': [
+        #         {
+        #             'output_idx': 2,
+        #             'show_loss': True,
+        #             'show_metrics': True,
+        #         }
+        #     ],
+        #     'statistic_data': {
+        #         'output_idx': [2, 3],
+        #         'autoupdate': False
+        #     },
+        #     'data_balance': {
+        #         'show_train': True,
+        #         'show_val': True,
+        #         'sorted': 'by_name'  # 'descendingв', 'ascending'
+        #     }
+        # }
+
+        # self.num_examples = num_examples_plot
+        # self.ex_type_choice = ex_type_choice
+        # for out in self.dataset.Y.get('train').keys():
+        #     if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
+        #         confusion_matrix = self._get_confusion_matrix(
+        #             np.argmax(self.Y.get(data_type).get(f'output_{out}'), axis=-1) \
+        #                 if self.dataset.data.encoding.get(out) == 'ohe' else self.Y.get(data_type).get(f'output_{out}'),
+        #             self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
+        #         )
+        #         dataset_balance = self._get_dataset_balance_data()
+
+    def _get_loss_graph_data_request(self):
+        """
+        'loss_graphs': [
+
+            # пример для всей модели
+            {
+                'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'label': 'Тренировочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                    {
+                        'label': 'Проверочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                ],
+            },
+
+            # Пример для классов
+            {
+                'graph_name': f'Output_{output_idx} - График ошибки обучения по классам - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
+                    etc...
+                ],
+            }
+        ]
+        """
+        pass
+
+    def _get_metric_graph_data_request(self):
+        """
+        'metric_graphs': [
+
+            # пример для всей модели
+            {
+                'graph_name': f'Output_{output_idx} - График метрики {metric_name} - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'label': 'Тренировочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                    {
+                        'label': 'Проверочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                ],
+            },
+
+            # Пример для классов
+            {
+                'graph_name': f'Output_{output_idx} - График метрики {metric_name} по классам - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
+                    etc...
+                ],
+            }
+        ]
+        """
+        pass
+
+    def _get_intermediate_result_request(self):
+        """
+        'intermediate_result': {
+            example_num: {
+                'initial_data': [
+                    {
+                        'layer': f'Input_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'true_value': [
+                    {
+                        'layer': f'Output_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'predict_value': [
+                    {
+                        'layer': f'Output_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'class_stat': {
+                    'class name': value,
+                }
+            },
+        }
+        """
+        pass
+
+    def _get_progress_table_data_request(self):
+        """
+        'progress_table': {
+            'epochs': [],
+            'time': [],
+            f'Output_{layer_id}': {
+                'loss': [],
+                'val_loss': [],
+                f'{metric_name}': [],
+                f'val_{metric_name}': []
+            },
+            "summary": "",
+        }
+        """
+        pass
+
+    def _get_statistic_data_request(self):
+        """
+        'statistic_data': {
+            f'Output_{layer_id}': data
+        }
+        """
+        pass
 
     def _get_classification_data(self):
         pass
