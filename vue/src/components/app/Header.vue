@@ -4,7 +4,7 @@
       <a href="#" class="header__left--logo"></a>
       <TProjectName />
     </div>
-    <div class="header__center">Название задачи / Название эксперимента</div>
+    <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
       <div
         v-for="({ title, icon, type }, i) of items"
@@ -23,7 +23,6 @@
          v-model="save"
          width="400"
          :maskClosable="false"
-         :showClose="true"
        >
          <div slot="header" style="text-align: center">
            <span>Сохранить проект</span>
@@ -34,16 +33,16 @@
              ><input v-model="nameProject" type="text" />
            </div>
            <div class="field-form field-inline field-reverse">
-             <label>Перезаписать</label>
+             <label @click="checVal = !checVal">Перезаписать</label>
              <div class="checkout-switch">
-               <input type="checkbox" />
+               <input v-model="checVal" type="checkbox" />
                <span class="switcher"></span>
              </div>
            </div>
          </div>
-         <div slot="footer" class="d-flex">
+         <template slot="footer">
            <button @click="saveProject">Сохранить</button>
-         </div>
+         </template>
        </at-modal>
        <at-modal v-model="load" width="400">
          <div slot="header" style="text-align: center">
@@ -64,6 +63,7 @@ export default {
     TProjectName,
   },
   data: () => ({
+    checVal: false,
     clickProject: false,
     projectNameEdit: false,
     name: 'kjkjkjkj',

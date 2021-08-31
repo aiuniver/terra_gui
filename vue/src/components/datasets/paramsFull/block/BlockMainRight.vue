@@ -15,7 +15,7 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Выходные данные {{ inputData.id }}</template>
-              <template v-slot:default="{ data:{ parameters, errors } }">
+              <template v-slot:default="{ data: { parameters, errors } }">
                 <TMultiSelect
                   :id="inputData.id"
                   name="sources_paths"
@@ -93,8 +93,7 @@ export default {
     },
   },
   methods: {
-    addCard() {
-      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
+    autoScroll() {
       this.$nextTick(() => {
         this.$refs.scrollRight.scrollTo(
           {
@@ -104,13 +103,24 @@ export default {
         );
       });
     },
+    addCard() {
+      this.$store.dispatch('datasets/createInputData', { layer: 'output' });
+      this.autoScroll();
+    },
     optionsCard(comm, id) {
       if (comm === 'remove') {
         this.$store.dispatch('datasets/removeInputData', id);
         this.mixinRemove(id);
       }
+      if (comm === 'copy') {
+        this.$store.dispatch('datasets/cloneInputData', id);
+        this.autoScroll();
+      }
     },
   },
+  mounted() {
+    console.log(this.output)
+  }
 };
 </script>
 
@@ -123,7 +133,7 @@ export default {
   height: 100%;
   &__header {
     position: absolute;
-    height: 24px;
+    height: 32px;
     width: 100%;
     top: 0;
     background: #242f3d;
@@ -136,7 +146,7 @@ export default {
     align-items: center;
     text-align: center;
     color: #ffffff;
-    padding: 4px 16px;
+    padding: 4px 40px;
   }
   &__body {
     width: 100%;
@@ -152,13 +162,13 @@ export default {
     }
     &--empty {
       height: 100%;
-      width: 70px;
+      width: 10px;
     }
   }
   &__fab {
     position: absolute;
-    left: 16px;
-    top: 40px;
+    left: 6px;
+    top: 4px;
     z-index: 100;
   }
 }

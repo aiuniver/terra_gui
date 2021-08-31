@@ -1,5 +1,6 @@
 import messages from "./modules/messages";
 import modeling from "./modules/modeling";
+import cascades from "./modules/cascades";
 import datasets from "./modules/datasets";
 import settings from "./modules/settings";
 import projects from "./modules/projects";
@@ -12,6 +13,7 @@ export default {
   modules: {
     messages,
     modeling,
+    cascades,
     datasets,
     settings,
     trainings,
@@ -20,6 +22,7 @@ export default {
   },
   actions: {
     async axios( { dispatch } , config ) {
+      dispatch('messages/setMessage', { mesage: '' })
       Vue.prototype.$Loading.start()
       try {
         Vue.prototype.$Loading.start()
@@ -39,6 +42,7 @@ export default {
         return response.data
       } catch (error) {
         dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) })
+        dispatch('settings/setOverlay', false);
         Vue.prototype.$Loading.error()
         return null;
       }

@@ -32,7 +32,7 @@ export default {
       default: 'text',
     },
     value: {
-      type: [String, Number],
+      type: [String, Number, Array],
     },
     parse: String,
     name: String,
@@ -65,7 +65,7 @@ export default {
       }
     },
     change(e) {
-      // console.log(e)
+      if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
@@ -85,10 +85,10 @@ export default {
     color: #a7bed3;
     display: block;
     padding-bottom: 10px;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    // text-overflow: ellipsis;
+    // white-space: nowrap;
     overflow: hidden;
   }
   &__input {
@@ -127,7 +127,7 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1;
     font-size: 0.75rem;
   }
   .t-field__input {

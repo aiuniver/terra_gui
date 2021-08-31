@@ -1,3 +1,4 @@
+from time import sleep
 from enum import Enum
 from typing import Optional, Any
 from threading import Thread
@@ -18,6 +19,7 @@ class PoolName(str, Enum):
     dataset_source_load = "dataset_source_load"
     dataset_choice = "dataset_choice"
     model_load = "model_load"
+    training = "training"
     deploy_upload = "deploy_upload"
 
 
@@ -32,8 +34,8 @@ class ProgressData(BaseMixinData):
     def success(self) -> bool:
         return not bool(self.error)
 
-    def dict(self, *args, **kwargs) -> dict:
-        __data = super().dict(*args, **kwargs)
+    def dict(self, **kwargs) -> dict:
+        __data = super().dict(**kwargs)
         __data.update(
             {
                 "success": self.success,
@@ -47,6 +49,7 @@ class ProgressItems(BaseMixinData):
     dataset_choice: ProgressData = ProgressData()
     model_load: ProgressData = ProgressData()
     deploy_upload: ProgressData = ProgressData()
+    training: ProgressData = ProgressData()
 
 
 class ProgressPool:
@@ -70,9 +73,26 @@ class ProgressPool:
                 data=kwargs.get("data", __progress.data),
             ),
         )
+        print(self.__pool.training)
 
     def reset(self, name: PoolName, **kwargs):
         setattr(self.__pool, name, ProgressData(**kwargs))
+
+    def monitoring(self, name: PoolName, delay: float = 1.0):
+        def __output(__progress):
+            print(
+                "% 4i%%:" % __progress.percent,
+                f"finished={__progress.finished}",
+                f'error="{__progress.error}"',
+            )
+
+        sleep(delay)
+        __progress = self(name)
+        while not __progress.finished or not __progress.success:
+            __output(__progress)
+            sleep(delay)
+            __progress = self(name)
+        __output(__progress)
 
 
 pool = ProgressPool()

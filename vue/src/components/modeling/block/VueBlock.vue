@@ -1,39 +1,30 @@
 <template>
-  <div
-    class="vue-block"
-    :style="style"
-    @mouseover="hover = true"
-    @mouseleave="hover = false"
-  >
-    <div :class="['header', group, { selected: selected }]">
-      <div class="title" :title="name">{{ name }}: {{ type }}</div>
-      <div class="parametr" :title="parameters">[]</div>
-      <!-- <a class="delete" @click="deleteBlock">x</a> -->
+  <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
+    <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
+      <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
+      <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
-    <div
-      v-if="group.indexOf('middle') === -1"
-      v-show="hover || selected"
-      class="hover-over"
-    >
-      <i class="t-icon icon-modeling-link"></i>
-      <i class="t-icon icon-modeling-link-remove"></i>
+    <div class="t-block-modeling__error" v-if="error">
+      {{ error }}
     </div>
-    <div v-else v-show="hover || selected" class="hover-sloy">
-      <i class="t-icon icon-modeling-link"></i>
-      <i class="t-icon icon-modeling-link-remove"></i>
-      <i class="t-icon icon-modeling-remove" @click="deleteBlock"></i>
+
+    <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
+      <template v-for="(item, i) of iconsFilter">
+        <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
+      </template>
     </div>
-    <div class="inputs">
+
+    <div class="t-block-modeling__inputs">
       <div
         v-for="(slot, index) in inputs"
         :key="'input' + index"
         class="input inputSlot"
-        :class="{ active: slot.active }"
+        :class="{ active: slot.active, 'input--linking-active': linkingCheck && !linking }"
         @mouseup="slotMouseUp($event, index)"
         @mousedown="slotBreak($event, index)"
       ></div>
     </div>
-    <div class="outputs">
+    <div class="t-block-modeling__outputs">
       <div
         v-for="(slot, index) in outputs"
         class="output"
@@ -47,10 +38,17 @@
 
 <script>
 export default {
-  name: "VueBlock",
+  name: 'VueBlock',
   props: {
     id: {
-      type: Number
+      type: Number,
+    },
+    linkingCheck: {
+      type: Object,
+    },
+    errors: {
+      type: Object,
+      default: () => {},
     },
     name: {
       type: String,
@@ -62,30 +60,62 @@ export default {
       type: Array,
       default: () => [],
       validator: function (arr) {
-        return (typeof arr[0] === "number") && (typeof arr[1] === "number");
+        return typeof arr[0] === 'number' && typeof arr[1] === 'number';
       },
     },
     selected: Boolean,
     type: String,
     title: {
       type: String,
-      default: "Title",
+      default: 'Title',
     },
     inputs: Array,
     outputs: Array,
     parameters: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
     options: {
       type: Object,
     },
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {}
+    }
+
   },
   data: () => ({
     hover: false,
     hasDragged: false,
-    typeLink: ["bottom", "right", "left"],
+    typeLink: ['bottom', 'right', 'left'],
+
   }),
+  computed: {
+    iconsFilter() {
+      return this.icons.filter(item => this.filter[this.group].includes(item.event))
+    },
+    error() {
+      return this.errors?.[this.id] || ''
+    },
+    parametr() {
+      const parametr = Object.values(this.parameters?.main || {})
+      return parametr.join()
+    },
+    styleHover() {
+      const len = this.iconsFilter.length;
+      return { right: -(33 * len) + 'px' };
+    },
+    style() {
+      return {
+        left: this.options.center.x + this.position[0] * this.options.scale + 'px',
+        top: this.options.center.y + this.position[1] * this.options.scale + 'px',
+        width: this.options.width + 'px',
+        transform: 'scale(' + (this.options.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
+    },
+  },
   created() {
     this.mouseX = 0;
     this.mouseY = 0;
@@ -97,36 +127,20 @@ export default {
     this.dragging = false;
   },
   mounted() {
-    document.documentElement.addEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.addEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.addEventListener("mouseup", this.handleUp, true);
+    console.log(this.$el.clientHeight)
+    document.documentElement.addEventListener('mousemove', this.handleMove, true);
+    document.documentElement.addEventListener('mousedown', this.handleDown, true);
+    document.documentElement.addEventListener('mouseup', this.handleUp, true);
   },
   beforeDestroy() {
-    document.documentElement.removeEventListener(
-      "mousemove",
-      this.handleMove,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mousedown",
-      this.handleDown,
-      true
-    );
-    document.documentElement.removeEventListener(
-      "mouseup",
-      this.handleUp,
-      true
-    );
+    document.documentElement.removeEventListener('mousemove', this.handleMove, true);
+    document.documentElement.removeEventListener('mousedown', this.handleDown, true);
+    document.documentElement.removeEventListener('mouseup', this.handleUp, true);
   },
   methods: {
+    getHeight() {
+      return this.$el.clientHeight
+    },
     handleMove(e) {
       this.mouseX = e.pageX || e.clientX + document.documentElement.scrollLeft;
       this.mouseY = e.pageY || e.clientY + document.documentElement.scrollTop;
@@ -152,10 +166,9 @@ export default {
 
       const target = e.target || e.srcElement;
       if (this.$el.contains(target) && e.which === 1) {
-
         this.dragging = true;
 
-        this.$emit("select");
+        this.$emit('select');
         if (e.preventDefault) e.preventDefault();
       }
     },
@@ -164,7 +177,7 @@ export default {
         this.dragging = false;
 
         if (this.hasDragged) {
-          this.$emit('moveBlock')
+          this.$emit('moveBlock');
           this.save();
           this.hasDragged = false;
         }
@@ -178,40 +191,26 @@ export default {
     slotMouseDown(e, index) {
       this.linking = true;
 
-      this.$emit("linkingStart", index);
+      this.$emit('linkingStart', index);
       if (e.preventDefault) e.preventDefault();
     },
     slotMouseUp(e, index) {
-      this.$emit("linkingStop", index);
+      this.$emit('linkingStop', index);
       if (e.preventDefault) e.preventDefault();
     },
     slotBreak(e, index) {
       this.linking = true;
 
-      this.$emit("linkingBreak", index);
+      this.$emit('linkingBreak', index);
       if (e.preventDefault) e.preventDefault();
     },
     save() {
-      this.$emit("update");
-    },
-    deleteBlock() {
-      this.$emit("delete");
+      this.$emit('update');
     },
     moveWithDiff(diffX, diffY) {
       let left = this.position[0] + diffX / this.options.scale;
       let top = this.position[1] + diffY / this.options.scale;
-      this.$emit("position", [left, top]);
-    },
-  },
-  computed: {
-    style() {
-      return {
-        left: this.options.center.x + this.position[0] * this.options.scale + "px",
-        top: this.options.center.y + this.position[1] * this.options.scale + "px",
-        width: this.options.width + "px",
-        transform: "scale(" + (this.options.scale + "") + ")",
-        transformOrigin: "top left",
-      };
+      this.$emit('position', [left, top]);
     },
   },
 };
@@ -232,7 +231,7 @@ $circleNewColor: #00ff00;
 $circleRemoveColor: #ff0000;
 $circleConnectedColor: #569dcf;
 
-.vue-block {
+.t-block-modeling {
   position: absolute;
   box-sizing: border-box;
   // border: $blockBorder solid black;
@@ -242,65 +241,86 @@ $circleConnectedColor: #569dcf;
   z-index: 1;
   opacity: 0.9;
   cursor: move;
-  height: 50px;
+  // height: 46px;
 
-  .hover-over {
+  &__hover {
     position: absolute;
     top: 0px;
-    right: -68px;
-    height: 48px;
+    right: 0px;
+    height: 42px;
     background-color: #294c6f;
     border-radius: 5px;
-    // width: 70px;
-    padding: 10px 0px;
     cursor: context-menu;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 1px;
     > i {
-      display: inline-flex;
-      font-size: 1.5em;
-      margin: 0 5px;
+      width: 18px;
+      margin: 0 7px;
       cursor: pointer;
     }
   }
-  .hover-sloy {
+  // .hover-sloy {
+  //   position: absolute;
+  //   top: 0px;
+  //   right: 0px;
+  //   height: 48px;
+  //   width: 80px;
+  //   background-color: #294c6f;
+  //   border-radius: 5px;
+  //   cursor: context-menu;
+  //   display: flex;
+  //   justify-content: space-around;
+  //   align-items: center;
+  //   > i {
+  //     display: inline-flex;
+  //     font-size: 1.5em;
+  //     margin: 0 5px;
+  //     cursor: pointer;
+  //   }
+  // }
+
+  &__error {
     position: absolute;
-    top: 0px;
-    right: -101px;
-    height: 48px;
-    background-color: #294c6f;
+    white-space: break-word;
+    left: -114%;
+    width: 200px;
+    top: 0;
+    height: auto;
+    padding: 10px;
+    color: #fff;
+    border: 2px solid red;
+    background-color: #2b5278;
     border-radius: 5px;
-    // width: 70px;
-    padding: 10px 0px;
-    cursor: context-menu;
-    > i {
-      display: inline-flex;
-      font-size: 1.5em;
-      margin: 0 5px;
-      cursor: pointer;
-    }
+    font-size: 0.9em;
+    text-align: center;
   }
 
-  > .header {
+  &__header {
     background: #bfbfbf;
     text-align: center;
-    height: 48px;
+    min-height: 42px;
+    // height: 42px;
     border-radius: 5px;
     color: #000;
-    font-size: 0.9em;
-    &:hover, &.selected {
+    &:hover,
+    &.selected {
       color: #fff;
-     .parametr {
-      color: #3098e7;
-    }
+      .parametr {
+        color: #3098e7;
+      }
     }
 
-    .title {
+    &--title {
+      font-size: 14px;
       white-space: nowrap;
-      overflow: hidden; 
+      overflow: hidden;
       text-overflow: ellipsis;
     }
-    .parametr {
+    &--parametr {
       color: #2b5275;
-      font-size: 0.8em;
+      font-size: 11px;
     }
 
     > .delete {
@@ -350,10 +370,16 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #8e51f2;
       }
     }
+    &.error {
+      border: 2px solid red !important;
+    }
+
+
+    
   }
 
-  .inputs,
-  .outputs {
+  &__inputs,
+  &__outputs {
     width: 100%;
     display: flex;
     justify-content: center;
@@ -374,18 +400,19 @@ $circleConnectedColor: #569dcf;
       }
     }
     .input {
-      top: -6px;
-      &:hover {
-        background: $circleNewColor;
-        &.active {
-          background: $circleRemoveColor;
-        }
+      top: -5px;
+      &--linking-active {
+        top: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 20;
+        opacity: 0;
       }
     }
 
     .output {
       &.bottom {
-        bottom: -4px;
+        bottom: -2px;
       }
       &.left {
         left: -6px;

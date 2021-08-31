@@ -22,6 +22,7 @@ export default {
       { title: "Данные", path: "/datasets" },
       { title: "Проектирование", path: "/modeling" },
       { title: "Обучение", path: "/training" },
+      { title: "Каскады", path: "/cascades" },
       { title: "Деплой", path: "/deploy" },
     ],
   }),
@@ -49,7 +50,7 @@ export default {
           title: "Предупреждение!",
           width: 300,
           content: `Для ${text[path]} необходимо загрузить датасет.`,
-          showClose: false,
+          // showClose: false,
           okText: "Загрузить датасет",
           callback: function (action) {
             console.log(action);

@@ -22,6 +22,7 @@ from ..choices import (
     LayerDataframeAlignBaseMethodChoice,
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
+    LayerTypeProcessingClassificationChoice,
 )
 
 
@@ -560,6 +561,15 @@ Defaults = {
                                 "name": "type_processing",
                                 "parse": "type_processing",
                                 "value": "categorical",
+                                "list": list(
+                                    map(
+                                        lambda item: {
+                                            "value": item.name,
+                                            "label": item.value,
+                                        },
+                                        list(LayerTypeProcessingClassificationChoice),
+                                    )
+                                ),
                                 "fields": {
                                     "ranges": [
                                         {
@@ -573,6 +583,18 @@ Defaults = {
                             },
                         ],
                         "Segmentation": [
+                            {
+                                "type": "number",
+                                "label": "Ширина",
+                                "name": "width",
+                                "parse": "width",
+                            },
+                            {
+                                "type": "number",
+                                "label": "Высота",
+                                "name": "height",
+                                "parse": "height",
+                            },
                             {
                                 "type": "number",
                                 "label": "Диапазон каналов",
@@ -597,7 +619,7 @@ Defaults = {
                                 "fields": {
                                     "handmade": [
                                         {
-                                            "type": "text",
+                                            "type": "segmentation_manual",
                                             "label": "Название класса",
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
@@ -611,24 +633,19 @@ Defaults = {
                                     ],
                                     "autosearch": [
                                         {
-                                            "type": "button",
+                                            "type": "segmentation_search",
                                             "label": "Найти",
                                             "name": "search",
                                             "parse": "search",
+                                            "api": "/api/v1/config/",
                                         },
                                     ],
                                     "annotation": [
                                         {
-                                            "type": "select",
+                                            "type": "segmentation_annotation",
                                             "label": "Выберите файл",
                                             "name": "annotation",
                                             "parse": "annotation",
-                                        },
-                                        {
-                                            "type": "button",
-                                            "label": "Найти",
-                                            "name": "search",
-                                            "parse": "search",
                                         },
                                     ],
                                 },

@@ -8,7 +8,7 @@
         <DatasetButton />
       </div>
       <div class="params__items--item pa-0">
-        <DatasetTab v-model="tab" @select="select" />
+        <DatasetTab v-model="tab" @input="saveSet" @select="select" />
       </div>
       <div class="params__items--item">
         <div class="params__items--btn">
@@ -33,6 +33,7 @@ export default {
     tab: 'GoogleDrive',
     loading: false,
     dataset: {},
+    prevSet: '',
     interval: null,
     inputs: 1,
     outputs: 1,
@@ -46,8 +47,10 @@ export default {
       settings: 'datasets/getSettings',
     }),
     disabled() {
-      if (Object.keys(this.dataset).length === 0) {
-        return true
+      if (Object.keys(this.dataset).length === 0 && this.dataset.mode === 'GoogleDrive') {
+        return true;
+      } else if (!this.dataset.value?.value && this.dataset.mode === 'URL') {
+        return true;
       } else {
         return this.tab !== this.dataset.mode;
       }
@@ -64,29 +67,44 @@ export default {
   methods: {
     async createInterval() {
       this.interval = setTimeout(async () => {
-        const { data, success } = await this.$store.dispatch('datasets/loadProgress', {});
-        const { finished, message, percent, data: { file_manager, source_path } } = data;
-        if (success && finished) {
-           // clearTimeout(this.interval);
+        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
+        console.log(data)
+        if (data) {
+          const { finished, message, percent, error } = data;
+          console.log(percent)
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
-          if (file_manager) {
+          if (error) {
+            this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
+            return;
+          }
+          if (finished) {
+            const { data: { file_manager, source_path } } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
+            this.$store.dispatch('datasets/clearInputData');
+            this.$store.dispatch('messages/setProgressMessage', '');
+            this.$store.dispatch('messages/setProgress', 0);
+            this.loading = false;
+            this.$store.dispatch('settings/setOverlay', false);
+            this.full = true;
+          } else {
+            this.createInterval();
           }
-          this.loading = false;
-          this.full = true;
-        } else {
-          this.$store.dispatch('messages/setProgress', percent);
-          this.$store.dispatch('messages/setProgressMessage', message);
-          this.createInterval();
         }
         // console.log(data);
       }, 1000);
     },
+    saveSet() {
+      if (this.dataset.mode === 'GoogleDrive') {
+        this.prevSet = this.dataset
+        this.$el.querySelector('.t-field__input').value = ''
+      }
+      if (this.dataset.mode === 'URL') this.dataset = this.prevSet
+    },
     select(select) {
-      // console.log(select);
       this.dataset = select;
     },
     openFull() {
@@ -101,20 +119,22 @@ export default {
       }
     },
     async download() {
-      const { mode, value } = this.dataset;
+      if (this.loading) return;
+      const { mode, value, label } = this.dataset;
       if (mode && value) {
         this.loading = true;
-        const { data, success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
+        this.$store.dispatch('settings/setOverlay', true);
+        this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет ${label}` });
+        const { success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
         // console.log(data)
-        if (data || success) {
+        if (success) {
           this.createInterval();
         } else {
           this.loading = false;
+          this.$store.dispatch('settings/setOverlay', false);
         }
       } else {
-        this.$store.dispatch('messages/setMessage', {
-          error: 'Выберите файл',
-        });
+        this.$store.dispatch('messages/setMessage', { error: 'Выберите файл' });
       }
     },
   },

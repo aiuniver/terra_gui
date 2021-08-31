@@ -1,6 +1,7 @@
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path
+from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
 
@@ -10,7 +11,12 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import SourceLoadSerializer, ChoiceSerializer, CreateSerializer
+from .serializers import (
+    SourceLoadSerializer,
+    ChoiceSerializer,
+    CreateSerializer,
+    DeleteSerializer,
+)
 
 
 class ChoiceAPIView(BaseAPIView):
@@ -35,8 +41,10 @@ class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
-            request.project.dataset = progress.data
-            request.project.save()
+            try:
+                request.project.set_dataset(progress.data)
+            except project_exceptions.ProjectException as error:
+                return BaseResponseErrorGeneral(str(error))
         return BaseResponseSuccess(data=progress.native())
 
 
@@ -68,6 +76,36 @@ class SourceLoadProgressAPIView(BaseAPIView):
         )
 
 
+class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_autosearch",
+                    path=request.data.get("path"),
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
+class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_annotation",
+                    path=request.data.get("path"),
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = CreateSerializer(data=request.data)
@@ -88,3 +126,21 @@ class SourcesAPIView(BaseAPIView):
         return BaseResponseSuccess(
             agent_exchange("datasets_sources", path=str(data_path.sources)).native()
         )
+
+
+class DeleteAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = DeleteSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        try:
+            agent_exchange(
+                "dataset_delete",
+                path=str(data_path.datasets),
+                **serializer.validated_data
+            )
+            return BaseResponseSuccess()
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))

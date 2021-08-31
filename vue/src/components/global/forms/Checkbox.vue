@@ -1,6 +1,6 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="checVal = !checVal">
+    <label class="t-field__label" @click="clickLabel">
       <slot>{{ label }}</slot>
     </label>
     <div class="t-field__switch">
@@ -48,6 +48,10 @@ export default {
         this.$emit('cleanError', true);
       }
     },
+    clickLabel() {
+      this.checVal = !this.checVal;
+      this.$emit('change', { name: this.name, value: this.checVal });
+    },
   },
   created() {
     this.checVal = this.value;
@@ -66,10 +70,10 @@ export default {
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    // white-space: nowrap;
     overflow: hidden;
   }
   &__input {
@@ -130,12 +134,11 @@ export default {
 
   > label {
     width: auto;
-    padding: 0 20px 0 10px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
     font-size: 0.75rem;
   }
   > input {

@@ -102,15 +102,15 @@ export default {
   &__label {
     width: 150px;
     max-width: 130px;
-    padding: 0 10px 0 10px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    // white-space: nowrap;
     overflow: hidden;
   }
   &__input {

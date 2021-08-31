@@ -67,7 +67,10 @@ export default {
   },
   methods: {
     async createObject(obj) {
-      const data = await this.$store.dispatch('datasets/createDataset', obj)
+      const { data, error, success } = await this.$store.dispatch('datasets/createDataset', obj)
+      if (data && success && !error) {
+        this.full = false
+      }
       console.log(data)
     },
     change(value) {

@@ -4,15 +4,20 @@
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
+      :ref="'block_' + block.id"
       v-bind="block"
       :options="optionsForChild"
+      :linkingCheck="tempLink"
+      :icons="icons"
+      :filter="filter"
+      :errors="errors"
       @linkingStart="linkingStart(block, $event)"
       @linkingStop="linkingStop(block, $event)"
       @linkingBreak="linkingBreak(block, $event)"
       @select="blockSelect(block)"
-      @delete="blockDelete(block)"
       @position="position(block, $event)"
       @moveBlock="moveBlock"
+      @clickIcons="clickIcons($event, block)"
     />
     <div class="btn-zoom">
       <div class="btn-zoom__item">
@@ -32,8 +37,8 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, mouseHelper } from './helpers/default';
-
+import { createBlock, cloneBlock, mouseHelper } from '@/store/const/modeling';
+import { mapGetters } from 'vuex'
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
 
@@ -55,6 +60,11 @@ export default {
     },
   },
   data: () => ({
+    icons: [
+      { icon: 'icon-deploy-copy', event: 'clone' },
+      { icon: 'icon-modeling-link-remove', event: 'link' },
+      { icon: 'icon-modeling-remove', event: 'remove' },
+    ],
     dragging: false,
     //
     centerX: 0,
@@ -86,6 +96,19 @@ export default {
   }),
 
   computed: {
+    ...mapGetters({
+      project: 'projects/getProject',
+    }),
+    filter() {
+      return {
+        input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+        middle: ['clone', 'link', 'remove'],
+        output: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
+      };
+    },
+    errors() {
+      return this.$store.getters['modeling/getErrorsBlocks'];
+    },
     blocks: {
       set(value) {
         this.$store.dispatch('modeling/setBlocks', value);
@@ -96,7 +119,7 @@ export default {
     },
     links: {
       set(value) {
-        console.log(value)
+        console.log(value);
         this.$store.dispatch('modeling/setLinks', value);
       },
       get() {
@@ -104,10 +127,10 @@ export default {
       },
     },
     optionsForChild() {
-      console.log(this.centerX, this.centerY)
+      // console.log(this.centerX, this.centerY);
       return {
-        width: 200,
-        titleHeight: 48,
+        width: 180,
+        titleHeight: 42,
         scale: this.scale,
         inputSlotClassName: this.inputSlotClassName,
         center: {
@@ -184,7 +207,9 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {          // eslint-disable-line
+        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+        this.tempLink.style = {
+          // eslint-disable-line
           stroke: '#8f8f8f',
           strokeWidth: 3 * this.scale,
           fill: 'none',
@@ -197,6 +222,25 @@ export default {
     },
   },
   methods: {
+    getError(id) {
+      return this.errorsBlocks?.[id] || '';
+    },
+    clickIcons({ event }, block) {
+      console.log(event);
+      if (event === 'remove') {
+        this.blockDelete(block);
+      }
+      if (event === 'clone') {
+        this.addCloneBlock(block);
+      }
+      if (event === 'link') {
+        this.links.forEach(l => {
+          if (l.originID === block.id || l.targetID === block.id) {
+            this.removeLink(l.id);
+          }
+        });
+      }
+    },
     handleMauseOver(e) {
       this.mouseIsOver = e.type === 'mouseenter';
     },
@@ -301,12 +345,13 @@ export default {
         if (this.hasDragged) {
           // this.updateScene();
           this.hasDragged = false;
+          // console.log('вввввввввввввввв');
         }
       }
 
       if (
         this.$el.contains(target) &&
-        (typeof target.className !== 'string' || target.className.indexOf(this.inputSlotClassName) === -1)
+        (typeof target.className !== 'string' || !target.className.includes(this.inputSlotClassName))
       ) {
         this.linking = false;
         this.tempLink = null;
@@ -370,7 +415,9 @@ export default {
       } else if (!isInput && block.outputs.length > slotNumber) {
         if (slotNumber === 0) {
           x += this.optionsForChild.width / 2;
-          y += 50;
+          // console.log()
+          y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
+          // y += 42;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -398,8 +445,10 @@ export default {
       return { x, y };
     },
     // Linking
-    findindexBlock (id) {
-      return this.blocks.findIndex((block) => { return block.id === id })
+    findindexBlock(id) {
+      return this.blocks.findIndex(block => {
+        return block.id === id;
+      });
     },
     linkingStart(block, slotNumber) {
       console.log('linkingStart');
@@ -417,11 +466,16 @@ export default {
     },
     linkingStop(targetBlock, slotNumber) {
       console.log('linkingStop');
+      console.log(targetBlock);
+      console.log(this.linkStartData);
+      this.linkStartData.block.id;
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        const { slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const {
+          slotNumber: originSlot,
+          block: { id: originID },
+        } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
-
         this.links = this.links.filter(line => {
           return (
             !(
@@ -429,7 +483,11 @@ export default {
               line.targetSlot === targetSlot &&
               line.originID === originID &&
               line.originSlot === originSlot
-            ) && !(line.originID === originID && line.targetID === targetID)
+            ) &&
+            !(
+              (line.targetID === originID && line.originID === targetID) ||
+              (line.originID === originID && line.targetID === targetID)
+            )
           );
         });
 
@@ -441,10 +499,10 @@ export default {
         );
 
         if (this.linkStartData.block.id !== targetBlock.id) {
-            const originID = this.linkStartData.block.id
-            const originSlot = this.linkStartData.slotNumber
-            const targetID = targetBlock.id
-            const targetSlot = slotNumber
+          const originID = this.linkStartData.block.id;
+          const originSlot = this.linkStartData.slotNumber;
+          const targetID = targetBlock.id;
+          const targetSlot = slotNumber;
 
           this.links.push({
             id: maxID + 1,
@@ -463,7 +521,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true)
+          this.$emit('save', true);
         }
       }
 
@@ -486,8 +544,8 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-          
-          this.$emit('save', true)
+
+          this.$emit('save', true);
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
 
@@ -517,6 +575,25 @@ export default {
       }
     },
     // Blocks
+    addCloneBlock(oldBlock, x, y) {
+      let maxID = Math.max(0, ...this.blocks.map(o => o.id));
+      const block = cloneBlock(oldBlock, maxID + 1);
+      if (!block) {
+        console.warn('block not create: ' + block);
+        return;
+      }
+      if (x === undefined || y === undefined) {
+        x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+        y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+      } else {
+        x = (x - this.centerX) / this.scale;
+        y = (y - this.centerY) / this.scale;
+      }
+      block.position = [x, y];
+      this.blocks.push(block);
+      this.blocks = [...this.blocks];
+    },
+
     addNewBlock(nodeName, x, y) {
       let maxID = Math.max(
         0,
@@ -539,7 +616,7 @@ export default {
       }
       block.position = [x, y];
       this.blocks.push(block);
-      this.blocks = this.blocks; // eslint-disable-line
+      this.blocks = [...this.blocks];
 
       // this.updateScene();
     },
@@ -586,7 +663,8 @@ export default {
       // this.updateScene();
     },
     moveBlock() {
-      this.$store.dispatch('modeling/setButtons', {save: true})
+      this.$store.dispatch('modeling/setButtons', { save: true });
+      this.$emit('save');
     },
 
     updateScene() {
@@ -645,7 +723,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer; 
+    cursor: pointer;
     i {
       width: 14px;
       height: 14px;

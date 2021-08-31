@@ -25,6 +25,7 @@ class Field(BaseMixinData):
     value: Any = ""
     list: Optional[List[Union[ListOptionData, ListOptgroupData]]]
     fields: Optional[Dict[str, List]]
+    api: Optional[str]
 
     @validator("fields", always=True)
     def _validate_fields(

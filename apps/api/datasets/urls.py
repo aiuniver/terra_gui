@@ -20,5 +20,16 @@ urlpatterns = [
         name="source_load_progress",
     ),
     path("source/load/", views.SourceLoadAPIView.as_view(), name="source_load"),
+    path(
+        "source/segmentation/classes/autosearch/",
+        views.SourceSegmentationClassesAutosearchAPIView.as_view(),
+        name="source_segmentation_classes_autosearch",
+    ),
+    path(
+        "source/segmentation/classes/annotation/",
+        views.SourceSegmentationClassesAnnotationAPIView.as_view(),
+        name="source_segmentation_classes_annotation",
+    ),
     path("sources/", views.SourcesAPIView.as_view(), name="sources"),
+    path("delete/", views.DeleteAPIView.as_view(), name="delete"),
 ]

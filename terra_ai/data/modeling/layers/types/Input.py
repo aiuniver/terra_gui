@@ -5,7 +5,12 @@
 from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
-from ..extra import LayerConfigData, LayerValidationMethodChoice, ModuleChoice, ModuleTypeChoice
+from ..extra import (
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 from ....mixins import BaseMixinData
 
 LayerConfig = LayerConfigData(
@@ -25,14 +30,15 @@ LayerConfig = LayerConfigData(
 
 
 class ParametersMainData(BaseMixinData):
-    shape: Optional[Tuple[PositiveInt, ...]]
-    batch_size: Optional[PositiveInt]
-    name: Optional[str]
-    dtype: Optional[str]
-    sparse: Optional[bool]
-    # tensor: Optional[str]   # тут тензор а не str
-    ragged: Optional[bool]
-    type_spec: Optional[str]
+    # shape: Optional[Tuple[PositiveInt, ...]]
+    # batch_size: Optional[PositiveInt]
+    # name: Optional[str]
+    # dtype: Optional[str]
+    # sparse: Optional[bool]
+    # # tensor: Optional[str]   # тут тензор а не str
+    # ragged: Optional[bool]
+    # type_spec: Optional[str]
+    pass
 
 
 class ParametersExtraData(BaseMixinData):

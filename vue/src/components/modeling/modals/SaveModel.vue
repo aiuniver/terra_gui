@@ -3,21 +3,43 @@
     <div slot="header" style="text-align: center">
       <span>Сохранить модель</span>
     </div>
-    <div class="model">
+    <div class="model modal-save-model">
       <div v-if="image" class="model__image">
         <img alt="" width="auto" height="400" :src="image || ''" />
       </div>
-      <Loading v-else />
+      <div class="model__config">
+        <t-input
+          :value="name"
+          :label="'Название проекта'"
+          :type="'text'"
+          :parse="'parse'"
+          :name="'name'"
+          :key="'name-key'"
+          @change="name = $event.value"
+        />
+        <t-checkbox
+          inline
+          :value="overwrite"
+          :label="'Перезаписать'"
+          type="checkbox"
+          :parse="'test'"
+          :name="'overwrite'"
+          :key="'overwrite'"
+          @change="overwrite = $event.value"
+        />
+      </div>
+      <Loading v-if="!image" />
     </div>
     <template slot="footer">
       <button>Отменить</button>
-      <button>Сохранить</button>
+      <button @click="save">Сохранить</button>
     </template>
   </at-modal>
 </template>
 
 <script>
 import Loading from '../../forms/Loading.vue';
+
 export default {
   name: 'ModalSaveModel',
   components: {
@@ -27,7 +49,10 @@ export default {
     value: Boolean,
     image: String,
   },
-  data: () => ({}),
+  data: () => ({
+    name: 'new Model',
+    overwrite: false,
+  }),
   computed: {
     dialog: {
       set(value) {
@@ -39,9 +64,21 @@ export default {
     },
   },
   methods: {
+    change(e) {
+      console.log(e);
+    },
     async save() {
       await this.$store.dispatch('deploy/SendDeploy', this.model);
-      this.$emit('input', false);
+      const res = await this.$store.dispatch('modeling/createModel', {
+        name: this.name,
+        preview: this.image,
+        overwrite: this.overwrite,
+      });
+      this.dialog = false;
+      console.log(this.name);
+      console.log(this.overwrite);
+      console.log(res);
+      // this.$emit('input', false);
     },
   },
   watch: {
@@ -60,12 +97,22 @@ export default {
 .scroll-area {
   height: 350px;
 }
+.modal-save-model {
+  flex-direction: column;
 
+  [type='checkbox'] {
+    margin-top: 10px;
+  }
+}
 .model {
   display: flex;
   justify-content: center;
+
   &__image {
     height: 400px;
+    img {
+      width: 100%;
+    }
   }
 }
 </style>

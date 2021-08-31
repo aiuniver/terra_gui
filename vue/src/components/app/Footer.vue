@@ -24,25 +24,17 @@
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
     </div>
-    <at-modal v-model="dialogError" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Ошибка!</span>
-      </div>
-      <div class="t-pre">
-        <scrollbar>
-          <p>{{ message }}</p>
-        </scrollbar>
-      </div>
-      <div slot="footer">
-        <t-button @click.native="dialogError = false">Принято</t-button>
-      </div>
-    </at-modal>
+    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
   </div>
 </template>
 
 <script>
 import { mapGetters } from 'vuex';
+import CopyModal from "../global/modals/CopyModal";
 export default {
+  components: {
+    CopyModal
+  },
   data: () => ({
     dialogError: false,
   }),
@@ -74,6 +66,7 @@ export default {
 <style lang="scss" scoped>
 .error {
   color: #ffb054 !important;
+  cursor: pointer;
 }
 .success {
   color: #0f0 !important;
@@ -97,52 +90,26 @@ export default {
   font-size: 0.75rem;
   white-space: nowrap;
   user-select: none;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
   display: flex;
-  -webkit-box-direction: normal;
-  -moz-box-direction: normal;
-  -webkit-box-orient: horizontal;
-  -moz-box-orient: horizontal;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
   flex-direction: row;
-  -webkit-flex-wrap: nowrap;
-  -ms-flex-wrap: nowrap;
   flex-wrap: nowrap;
-  -webkit-box-pack: start;
-  -moz-box-pack: start;
-  -webkit-justify-content: flex-start;
-  -ms-flex-pack: start;
   justify-content: flex-start;
-  -webkit-align-content: stretch;
-  -ms-flex-line-pack: stretch;
   align-content: stretch;
-  -webkit-box-align: stretch;
-  -moz-box-align: stretch;
-  -webkit-align-items: stretch;
-  -ms-flex-align: stretch;
   align-items: stretch;
+  &__copy-buffer{
+    display: flex;
+    align-items: center;
+    p{
+      margin-left: 5px;
+    }
+  }
   &__message {
     border-right: #0e1621 1px solid;
     overflow: hidden;
-    -webkit-box-ordinal-group: 1;
-    -moz-box-ordinal-group: 1;
-    -webkit-order: 0;
-    -ms-flex-order: 0;
     order: 0;
-    -webkit-box-flex: 1;
-    -moz-box-flex: 1;
-    -webkit-flex: 1 1 auto;
-    -ms-flex: 1 1 auto;
     flex: 1 1 auto;
-    -webkit-align-self: auto;
-    -ms-flex-item-align: auto;
     align-self: auto;
     &--text {
-      cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
       padding: 0 20px;
@@ -227,6 +194,7 @@ export default {
   padding-bottom: 10px;
   p {
     white-space: break-spaces;
+    font-family: monospace;
   }
 }
 </style>

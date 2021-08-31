@@ -1,5 +1,5 @@
-tensorflow==2.5.0
-Django==3.2.4
+tensorflow==2.6.0
+Django==3.2.6
 django-environ==0.4.5
 djangorestframework==3.12.4
 django_compressor==2.4.1
@@ -12,5 +12,6 @@ PyYAML~=5.4.1
 transliterate==1.10.2
 imgaug==0.4.0
 dict-recursive-update==1.0.1
-psutil
-pynvml
+pydub==0.25.1
+psutil==5.8.0
+pynvml==11.0.0

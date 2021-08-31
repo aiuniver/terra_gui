@@ -32,6 +32,7 @@ from terra_ai.data.presets.training import Task, TasksGroups, Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.guiexchange import Exchange
+from .. import progress
 # from terra_ai.trds import DTS
 import pynvml as N
 
@@ -60,15 +61,14 @@ class MemoryUsage:
             if self.debug:
                 print(f'GPU usage: {gpu_utilization.gpu: .2f}% ({gpu_memory.used / 1024 ** 3: .2f}GB / '
                       f'{gpu_memory.total / 1024 ** 3: .2f}GB)')
-        # else:
-        cpu_usage = psutil.cpu_percent(percpu=True)
-        usage_dict["CPU"] = {
-            'cpu_utilization': f'{max(cpu_usage): .2f}%',
-        }
-        if self.debug:
+        else:
             cpu_usage = psutil.cpu_percent(percpu=True)
-            print(f'CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
-            print(f'CPU usage: {max(cpu_usage): .2f}%')
+            usage_dict["CPU"] = {
+                'cpu_utilization': f'{sum(cpu_usage) / len(cpu_usage): .2f}%',
+            }
+            if self.debug:
+                print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
+                print(f'Max CPU usage: {max(cpu_usage): .2f}%')
         usage_dict["RAM"] = {
             'ram_utilization': f'{psutil.virtual_memory().percent: .2f}%',
             'ram_memory_used': f'{psutil.virtual_memory().used / 1024 ** 3: .2f}GB',
@@ -86,6 +86,7 @@ class MemoryUsage:
             print(f'Disk usage: {psutil.disk_usage("/").percent: .2f}% '
                   f'({psutil.disk_usage("/").used / 1024 ** 3: .2f}GB / '
                   f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
+        return usage_dict
 
 
 class IntermediateResultCallback(tf.keras.callbacks.Callback):
@@ -459,7 +460,7 @@ class InteractiveCallback:
     """Callback for interactive requests"""
 
     def __init__(self, null_model, dataset, metrics: dict,
-                 losses: dict, progress_mode: dict, progress_threashold: dict):
+                 losses: dict, log_gap: dict, progress_mode: dict, progress_threashold: dict, custom_dataset=None):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
@@ -1133,6 +1134,8 @@ class InteractiveCallback:
                 'data_type': {
                     'class_name': int,
                 },
+                'test': {...},
+                'val': {...}
             }
         }
         """
@@ -1169,6 +1172,7 @@ class FitCallback(keras.callbacks.Callback):
     def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
                  save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
+        self.usage_info = MemoryUsage(debug=False)
         self.Exch = exchange
         self.DTS = dataset
         self.batch_size = batch_size
@@ -1176,6 +1180,7 @@ class FitCallback(keras.callbacks.Callback):
         self.batch = 0
         self.num_batches = 0
         self.epoch = 0
+        self.last_epoch = 1
         self.history = {}
         self._start_time = time.time()
         self._time_batch_step = time.time()
@@ -1187,6 +1192,7 @@ class FitCallback(keras.callbacks.Callback):
         self.retrain_epochs = 0
         self.save_model_path = save_model_path
         self.nn_name = model_name
+        self.progress_name = progress.PoolName.training
 
     def save_lastmodel(self) -> None:
         """
@@ -1200,9 +1206,14 @@ class FitCallback(keras.callbacks.Callback):
             self.save_model_path, f"{model_name}"
         )
         self.model.save(file_path_model)
-        self.Exch.print_2status_bar(
-            ("Инфо", f"Последняя модель сохранена как {file_path_model}")
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
+            data={'info': f"Последняя модель сохранена как {file_path_model}"},
+            finished=False,
         )
+        # print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
         pass
 
     def _estimate_step(self, current, start, now):
@@ -1243,25 +1254,24 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if not self.stop_flag:
             self.batch = 0
-        self.num_batches = self.DTS.X.get('train')[1].shape[0] // self.batch_size
-        self.Exch.show_current_epoch(self.last_epoch)
+        self.num_batches = len(self.DTS.dataframe['train']) // self.batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
-        stop = self.Exch.get_stop_training_flag()
+        stop = False
         if stop:
             self.model.stop_training = True
             self.stop_training = True
             self.stop_flag = True
             msg = f'ожидайте остановку...'
             self.batch += 1
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем', msg))
+            print(('Обучение остановлено пользователем', msg))
         else:
             msg_batch = f'Батч {batch}/{self.num_batches}'
-            msg_epoch = f'Эпоха {self.last_epoch + 1}/{self.epochs}:' \
+            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
                         f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
             time_start = \
                 self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
@@ -1281,18 +1291,34 @@ class FitCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(time_start)}, '
             self.batch += 1
-            self.Exch.print_2status_bar(('Прогресс обучения', msg_progress_start +
-                                         msg_progress_end + msg_epoch + msg_batch))
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                data={'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
+                      'usage': self.usage_info.get_usage()},
+                finished=False,
+            )
+            # print(('Прогресс обучения', msg_progress_start +
+            #                              msg_progress_end + msg_epoch + msg_batch))
+            # print(self.usage_info.get_usage())
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
-        self.save_lastmodel()
-        self.Exch.show_current_epoch(logs)
-        self.Exch.show_current_epoch(self.last_epoch)
-        self.Exch.show_current_weigths(self.model.get_weights())
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1)/ self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+            data={'info': logs,
+                  'usage': self.usage_info.get_usage()},
+            finished=False,
+        )
+        # print(logs)
+        # print(self.last_epoch)
+        # print(self.model.get_weights())
         self.last_epoch += 1
         # self.Exch.last_epoch_model(self.model)
 
@@ -1303,8 +1329,8 @@ class FitCallback(keras.callbacks.Callback):
         self._sum_time += time_end
         if self.model.stop_training:
             msg = f'Модель сохранена.'
-            self.Exch.print_2status_bar(('Обучение остановлено пользователем!', msg))
-            self.Exch.out_data['stop_flag'] = True
+            print(('Обучение остановлено пользователем!', msg))
+            # self.Exch.out_data['stop_flag'] = True
         else:
             if self.retrain_flag:
                 msg = f'Затрачено времени на обучение: ' \
@@ -1312,7 +1338,15 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 msg = f'Затрачено времени на обучение: ' \
                       f'{self.eta_format(self._sum_time)} '
-            self.Exch.show_text_data(msg)
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1)/ self.epochs * 100,
+                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
+                data={'info': f"Обучение закончено. {msg}",
+                      'usage': self.usage_info.get_usage()},
+                finished=True,
+            )
+            # print(msg)
 
 
 class BaseCallback:

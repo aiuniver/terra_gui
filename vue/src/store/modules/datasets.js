@@ -1,4 +1,4 @@
-import { createInputData } from '../const/datasets';
+import { createInputData, cloneInputData } from '../const/datasets';
 export default {
   namespaced: true,
   state: () => ({
@@ -60,24 +60,33 @@ export default {
   },
   actions: {
     async createDataset({ commit, dispatch, state: { inputData, sourcePath } }, data) {
+      commit("settings/SET_OVERLAY", true, { root: true });
       const newDataset = data
       const inputs = inputData.filter(item => item.layer === 'input')
       const outputs = inputData.filter(item => item.layer === 'output')
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
       newDataset.outputs = outputs
-      // console.log(newDataset)
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       if (res?.error) {
         const { error: { fields: { inputs, outputs } } } = res
-        // console.log({ ...inputs, ...outputs })
         commit('SET_ERRORS', { ...inputs, ...outputs })
-
+      } else {
+        commit('SET_INPUT_DATA', [] );
+        commit('SET_FILES_DROP', []);
+        commit('SET_ERRORS', {});
+        dispatch('get')
       }
+      commit("settings/SET_OVERLAY", false, { root: true });
       return res
     },
     async choice({ dispatch }, dataset) {
       return await dispatch('axios', { url: '/datasets/choice/', data: dataset }, { root: true });
+    },
+    async deleteDataset({ dispatch }, dataset) {
+      const { success } = await dispatch('axios', { url: '/datasets/delete/', data: dataset }, { root: true });
+      dispatch('get')
+      return success
     },
     async choiceProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/choice/progress/', data: source }, { root: true });
@@ -148,7 +157,17 @@ export default {
     },
     createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
-      commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer)]);
+      const usedColors = inputData.map(item => item.color)
+      commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
+    },
+    cloneInputData({ commit, state: { inputData } }, id) {
+      let maxID = Math.max(0,...inputData.map(o => o.id));
+      const usedColors = inputData.map(item => item.color)
+      const layer = inputData.find(item => item.id === id)
+      commit('SET_INPUT_DATA', [...inputData, cloneInputData(maxID + 1, usedColors, layer )]);
+    },
+    clearInputData({ commit }) {
+      commit('SET_INPUT_DATA', [] );
     },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);

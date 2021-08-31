@@ -15,7 +15,7 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <div class="loaded-list__item--empty"></div>
-              <div class="loaded-list__item--remove">
+              <div class="loaded-list__item--remove" @click="removeModel(list.label)">
                 <i></i>
               </div>
             </li>
@@ -81,6 +81,12 @@ export default {
     },
   },
   methods: {
+    async removeModel(name) {
+      const { data } = await this.$store.dispatch('modeling/removeModel', { name });
+      if (data) {
+        this.load();
+      }
+    },
     async load() {
       const { data } = await this.$store.dispatch('modeling/info', {});
       if (data) {

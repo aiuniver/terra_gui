@@ -1,7 +1,7 @@
 <template>
   <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input v-model="nameProject" parse="[name]" small>
+      <t-input v-model="nameProject" parse="[name]" small :error="nameError" @focus="nameError = ''">
         Название датасета
       </t-input>
     </div>
@@ -36,17 +36,22 @@ export default {
   },
   data: () => ({
     degree: 100,
-    nameProject: 'Новый'
+    nameProject: '',
+    nameError: ''
   }),
   computed: {
     disabled() {
       const arr = this.$store.state.datasets.inputData.map(item => item.layer)
-      return !(this.nameProject && arr.includes('input') && arr.includes('output'))
+      return !(arr.includes('input') && arr.includes('output'))
     }
   },
   methods: {
     getObj() {
-      this.$emit('create', serialize(this.$el))
+      if (this.nameProject) {
+        this.$emit('create', serialize(this.$el))
+      } else {
+        this.nameError = 'Введите имя'
+      }
     }
   }
 };

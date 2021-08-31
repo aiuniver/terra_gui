@@ -57,15 +57,6 @@ class LayerScalerImageChoice(str, Enum):
         return list(map(lambda item: (item.name, item.value), LayerScalerImageChoice))
 
 
-class LayerScalerAudioChoice(str, Enum):
-    no_scaler = "Не применять"
-    min_max_scaler = "MinMaxScaler"
-
-    @staticmethod
-    def items_tuple() -> list:
-        return list(map(lambda item: (item.name, item.value), LayerScalerAudioChoice))
-
-
 class LayerScalerVideoChoice(str, Enum):
     no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
@@ -73,6 +64,15 @@ class LayerScalerVideoChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerScalerVideoChoice))
+
+
+class LayerScalerAudioChoice(str, Enum):
+    no_scaler = "Не применять"
+    min_max_scaler = "MinMaxScaler"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerAudioChoice))
 
 
 class LayerScalerRegressionChoice(str, Enum):
@@ -205,3 +205,17 @@ class LayerYoloVersionChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerYoloVersionChoice))
+
+
+class LayerTypeProcessingClassificationChoice(str, Enum):
+    categorical = "По категориям"
+    ranges = "По диапазонам"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(
+                lambda item: (item.name, item.value),
+                LayerTypeProcessingClassificationChoice,
+            )
+        )

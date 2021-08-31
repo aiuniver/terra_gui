@@ -19,8 +19,8 @@ class CheckpointIndicatorChoice(str, Enum):
 
 
 class CheckpointModeChoice(str, Enum):
-    Min = "Min"
-    Max = "Max"
+    Min = "min"
+    Max = "max"
 
 
 class CheckpointTypeChoice(str, Enum):

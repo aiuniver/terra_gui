@@ -22,8 +22,28 @@
               :disabled="!selectBlock"
               @change="saveModel"
             />
+            <t-input
+              v-if="block.shape && block.shape.input"
+              v-model="block.shape.input"
+              :label="'Shape (input)'"
+              :type="'text'"
+              :parse="'shape'"
+              :name="'shape'"
+              :disabled="!selectBlock"
+              @change="saveModel"
+            />
+            <t-input
+              v-if="block.shape && block.shape.output"
+              v-model="block.shape.output"
+              :label="'Shape (output)'"
+              :type="'text'"
+              :parse="'shape'"
+              :name="'shape'"
+              :disabled="!selectBlock"
+              @change="saveModel"
+            />
           </div>
-          <at-collapse :value="[0, 1]">
+          <at-collapse :value="collapse">
             <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
               <Forms :data="main" @change="change" />
             </at-collapse-item>
@@ -63,6 +83,7 @@ export default {
     // Select
   },
   data: () => ({
+    collapse: [0],
     oldBlock: null,
   }),
   computed: {

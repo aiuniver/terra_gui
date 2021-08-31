@@ -31,12 +31,12 @@
           </div>
           <div class="at-modal__footer" v-if="showFooter">
             <slot name="footer">
-              <at-button v-show="showCancelButton" @click.native="handleAction('cancel')">{{ localeCancelText }}</at-button>
               <at-button type="primary" v-show="showConfirmButton" @click.native="handleAction('confirm')">{{ localeOKText }}</at-button>
+              <at-button v-show="showCancelButton" @click.native="handleAction('cancel')">{{ localeCancelText }}</at-button>
             </slot>
           </div>
           <i v-if="isIconType" class="icon at-modal__icon" :class="iconClass"></i>
-          <span v-if="showClose" class="at-modal__close" @click="handleAction('cancel')"><i class="icon icon-x"></i></span>
+          <span v-if="showClose" class="at-modal__close" @click="handleAction('cancel')"><i class="t-icon icon-tag-plus" style="width: 20px; transform: rotate(45deg);"></i></span>
         </div>
       </transition>
     </div>
@@ -72,7 +72,7 @@
       },
       showClose: {
         type: Boolean,
-        default: false
+        default: true
       },
       showFooter: {
         type: Boolean,

@@ -13,18 +13,18 @@
         />
       </button>
       <template v-for="({ value }, i) in tags">
-      <input
-        :key="'tag_' + i"
-        :value="value"
-        :data-index="i"
-        name="[tags][]"
-        type="text"
-        :class="['tags__item']"
-        :style="{ width: ((value.length + 1) * 8) + 'px' }"
-        @input="change"
-        @blur="blur"
-      />
-      <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
+        <input
+          :key="'tag_' + i"
+          :value="value"
+          :data-index="i"
+          name="[tags][][name]"
+          type="text"
+          :class="['tags__item']"
+          :style="{ width: (value.length + 1) * 8 + 'px' }"
+          @input="change"
+          @blur="blur"
+        />
+        <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
       </template>
     </div>
   </div>
@@ -57,24 +57,24 @@ export default {
     create() {
       const el = this.$el.getElementsByClassName('tags__add--input')?.[0];
       console.log(el.value);
-      if (el.value && el.value.length > 3 && this.tags.length < 3) {
+      if (el.value && el.value.length >= 3 && this.tags.length <= 3) {
         this.tags.push({ value: el.value });
         this.tags = [...this.tags];
         el.value = '';
       }
     },
     change(e) {
-      const index = e.target.dataset.index
-      console.log(index)
-      this.tags[+index].value = e.target.value
+      const index = e.target.dataset.index;
+      console.log(index);
+      this.tags[+index].value = e.target.value;
     },
     blur(e) {
-      const index = e.target.dataset.index
-      if (e.target.value.length < 3 ) {
-        this.tags = this.tags.filter((item, i) => i !== +index)
+      const index = e.target.dataset.index;
+      if (e.target.value.length <= 2) {
+        this.tags = this.tags.filter((item, i) => i !== +index);
       }
-      console.log(index)
-    }
+      console.log(index);
+    },
   },
 };
 </script>
@@ -87,7 +87,7 @@ export default {
     color: #a7bed3;
     display: block;
     padding-bottom: 10px;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;

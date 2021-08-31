@@ -17,6 +17,8 @@ from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
 
+from . import exceptions
+
 
 UNKNOWN_NAME = "NoName"
 DATA_PATH = {
@@ -93,13 +95,37 @@ class Project(BaseMixinData):
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
 
     def dict(self, **kwargs):
-        data = super().dict(**kwargs)
-        data.update({"name_alias": self.name_alias})
-        return data
+        _data = super().dict(**kwargs)
+        _data.update({"name_alias": self.name_alias})
+        return _data
 
     def save(self):
-        with open(project_path.config, "w") as config_ref:
-            json.dump(json.loads(self.json()), config_ref)
+        with open(project_path.config, "w") as _config_ref:
+            json.dump(json.loads(self.json()), _config_ref)
+
+    def set_dataset(self, dataset: DatasetData):
+        if self.model.inputs and len(self.model.inputs) != len(dataset.model.inputs):
+            raise exceptions.DatasetModelInputsCountNotMatchException()
+        if self.model.outputs and len(self.model.outputs) != len(dataset.model.outputs):
+            raise exceptions.DatasetModelOutputsCountNotMatchException()
+        self.dataset = dataset
+        if not self.model.inputs or not self.model.outputs:
+            self.model = dataset.model
+
+    def set_model(self, model: ModelDetailsData):
+        if self.dataset:
+            dataset_model = self.dataset.model
+            if model.inputs and len(model.inputs) != len(dataset_model.inputs):
+                raise exceptions.DatasetModelInputsCountNotMatchException()
+            if model.outputs and len(model.outputs) != len(dataset_model.outputs):
+                raise exceptions.DatasetModelOutputsCountNotMatchException()
+        self.model = model
+
+    def clear_model(self):
+        if self.dataset:
+            self.model = self.dataset.model
+        else:
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
 
 
 data_path = DataPathData(**DATA_PATH)

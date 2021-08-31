@@ -177,18 +177,21 @@ In [7]: print(data.json(indent=2, ensure_ascii=False))
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, List, Tuple, Union
+from typing import Optional, Dict, List, Tuple
 from pydantic import validator, DirectoryPath
 from pydantic.types import PositiveInt
 from pydantic.color import Color
 
-from ... import settings
+from .tags import TagsList
+from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from ..training.extra import TaskChoice
-from .tags import TagsList
-from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
+from ..modeling.model import ModelDetailsData
+from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
+from ..presets.models import EmptyModelDetailsData
+from ... import settings
 
 
 class DatasetLoadData(BaseMixinData):
@@ -224,40 +227,6 @@ class CustomDatasetConfigData(BaseMixinData):
         return value
 
 
-# class DatasetLayerData(BaseMixinData):
-#     datatype: Dict[int, str] = {}
-#     dtype: Dict[int, str] = {}
-#     shape: Dict[int, Tuple[PositiveInt, ...]] = {}
-#     names: Dict[int, str] = {}
-#
-#
-# class DatasetInputsData(DatasetLayerData):
-#     tasks: Dict[int, LayerInputTypeChoice] = {}
-#
-#
-# class DatasetOutputsData(DatasetLayerData):
-#     tasks: Dict[int, LayerOutputTypeChoice] = {}
-#
-#
-# class DatasetData(AliasMixinData):
-#     """
-#     Информация о датасете
-#     """
-#
-#     name: str
-#     date: Optional[datetime]
-#     size: Optional[FileSizeData]
-#     limit: PositiveInt # не нужен
-#     use_generator: bool = False
-#     tags: Optional[TagsList] = TagsList()
-#     classes_names: Dict[PositiveInt, List[str]] = {}
-#     classes_colors: Dict[PositiveInt, List[Color]] = {}
-#     one_hot_encoding: Dict[PositiveInt, bool] = {}
-#     task_type: Dict[int, TaskChoice] = {}
-#     inputs: DatasetInputsData = DatasetInputsData()
-#     outputs: DatasetOutputsData = DatasetOutputsData()
-
-
 class DatasetLayerData(BaseMixinData):
     datatype: str
     dtype: str
@@ -266,10 +235,10 @@ class DatasetLayerData(BaseMixinData):
 
 
 class DatasetPathsData(BaseMixinData):
-    datasets: DirectoryPath
-    arrays: DirectoryPath
-    instructions: DirectoryPath
-    dataset_sources: DirectoryPath
+    datasets: Optional[DirectoryPath]
+    arrays: str  # DirectoryPath
+    instructions: str  # DirectoryPath
+    dataset_sources: str  # DirectoryPath
     tmp_sources: Optional[DirectoryPath]
 
 
@@ -292,7 +261,7 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    num_classes: Optional[Dict[PositiveInt, PositiveInt]] = {}  # Поставить Optional чтобы не крашнулось. В будущем убрать.
+    num_classes: Dict[PositiveInt, PositiveInt] = {}
     classes_names: Dict[PositiveInt, List[str]] = {}
     classes_colors: Dict[PositiveInt, List[Color]] = {}
     encoding: Dict[PositiveInt, str] = {}
@@ -300,6 +269,34 @@ class DatasetData(AliasMixinData):
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
     paths: Optional[DatasetPathsData]
+
+    @property
+    def model(self) -> ModelDetailsData:
+        data = {**EmptyModelDetailsData}
+        data.update({"alias": self.alias, "name": self.name})
+        layers = []
+        for _id, layer in self.inputs.items():
+            layers.append(
+                {
+                    "id": _id,
+                    "name": layer.name,
+                    "type": LayerTypeChoice.Input,
+                    "group": LayerGroupChoice.input,
+                    "shape": {"input": [layer.shape]},
+                }
+            )
+        for _id, layer in self.outputs.items():
+            layers.append(
+                {
+                    "id": _id,
+                    "name": layer.name,
+                    "type": LayerTypeChoice.Dense,
+                    "group": LayerGroupChoice.output,
+                    "shape": {"input": [layer.shape]},
+                }
+            )
+        data.update({"layers": layers})
+        return ModelDetailsData(**data)
 
 
 class DatasetsList(UniqueListMixin):

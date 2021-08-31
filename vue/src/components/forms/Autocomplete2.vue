@@ -1,5 +1,5 @@
 <template>
-  <div class="dropdown">
+  <div :class="['dropdown', { 'dropdown--active': show }]">
     <label :for="name">{{ label }}</label>
     <input
       class="dropdown__input"
@@ -23,7 +23,7 @@
 
 <script>
 export default {
-  name: "Autocomplete",
+  name: 'Autocomplete',
   props: {
     name: String,
     list: {
@@ -40,21 +40,19 @@ export default {
     return {
       selected: {},
       show: false,
-      search: "",
+      search: '',
     };
   },
   created() {
     // this.$emit("selected", { name: this.value });
-    this.search = this.value
+    this.search = this.value;
   },
   computed: {
     filterList() {
       return this.list
-        ? this.list.filter((item) => {
+        ? this.list.filter(item => {
             const search = this.search;
-            return search
-              ? item.label.toLowerCase().includes(search.toLowerCase())
-              : true;
+            return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
           })
         : [];
     },
@@ -66,41 +64,48 @@ export default {
         this.selected = item;
         this.show = false;
         this.search = item.label;
-        this.$emit("input", this.selected.value);
-        this.$emit("change", item);
+        this.$emit('input', this.selected.value);
+        this.$emit('change', item);
       } else {
         this.search = this.selected.label || this.value;
         this.show = false;
       }
     },
     focus() {
-      this.show = true
-      this.$emit('focus', true)
-    }
+      this.show = true;
+      this.$emit('focus', true);
+    },
   },
   watch: {
     value: {
-      handler(value){
+      handler(value) {
         // console.log(value)
-        this.show = false
-        this.search = value
-      }
-    }
-  }
+        this.show = false;
+        this.search = value;
+      },
+    },
+  },
 };
 </script>
-
 
 <style lang="scss" scoped>
 .dropdown {
   position: relative;
   display: block;
   margin: auto;
+  &--active {
+    .dropdown__input {
+      border-radius: 4px 4px 0 0;
+    }
+    .dropdown__content {
+      border-top: 0 !important;
+    }
+  }
   label {
     color: #a7bed3;
     display: block;
     margin: 0 0 10px 0;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
   }
   &__input {
@@ -124,7 +129,7 @@ export default {
     &:disabled {
       border: 1px solid #6c7883;
       cursor: auto;
-      opacity: .35;
+      opacity: 0.35;
     }
   }
   .dropdown__content {
