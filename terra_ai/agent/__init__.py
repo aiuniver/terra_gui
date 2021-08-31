@@ -216,15 +216,6 @@ class Exchange:
         """
         return ModelValidator(model).get_validated()
 
-    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
-        """
-        Обновление слоя модели
-        """
-        model = ModelDetailsData(**model)
-        if len(kwargs.keys()):
-            model.layers.append(kwargs)
-        return model
-
     def _call_model_create(self, model: dict, path: Path):
         """
         Создание модели
