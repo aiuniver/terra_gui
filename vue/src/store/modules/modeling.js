@@ -1,4 +1,4 @@
-import { prepareBlocks, prepareLinks } from '../const/modeling';
+import { prepareBlocks, prepareLinks, createBlock, cloneBlock } from '../const/modeling';
 
 export default {
   namespaced: true,
@@ -27,7 +27,6 @@ export default {
     SET_MODEL(state, value) {
       state.model = value;
       const { layers } = value;
-      // console.log(layers);
       state.blocks = prepareBlocks(layers);
       state.links = prepareLinks(layers);
     },
@@ -48,6 +47,50 @@ export default {
     },
   },
   actions: {
+    addBlock({ commit, state: { blocks } }, type) {
+      let maxID = Math.max(0, ...blocks.map(o => o.id));
+      let block = createBlock(type, maxID + 1);
+      if (!block) return;
+      blocks.push(block);
+      commit('SET_BLOCKS', blocks);
+    },
+    cloneBlock({ commit, state: { blocks } }, oldBlock) {
+      let maxID = Math.max(0, ...blocks.map(o => o.id));
+      const block = cloneBlock(oldBlock, maxID + 1);
+      if (!block) return;
+      blocks.push(block);
+      commit('SET_BLOCKS', blocks);
+    },
+    selectBlock({ commit, state: { blocks } }, block) {
+      blocks.forEach(item => {
+        item.selected = item.id === block.id
+      })
+      commit('SET_BLOCKS', blocks);
+      commit('SET_SELECT', block.id);
+    },
+    deselectBlocks({ commit, state: { blocks } }) {
+      blocks.forEach(item => {
+        item.selected = false
+      })
+      commit('SET_BLOCKS', blocks);
+      commit('SET_SELECT', null);
+    },
+    removeBlock({ dispatch, commit, state: { blocks } }, block) {
+      if (block.selected) {
+        block.selected = false;
+      }
+      dispatch('removeLinkToBlock', block);
+      commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
+    },
+    removeLink ({ commit, state: { links } }, id) {
+      console.log(id)
+      commit('SET_LINKS', links.filter(value => value.id !== id));
+    },
+    removeLinkToBlock ({ commit, state: { links } }, block) {
+      console.log(block)
+      commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
+    },
+
     async info({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
@@ -87,8 +130,8 @@ export default {
       const res = await dispatch('axios', { url: '/modeling/clear/' }, { root: true });
       if (res.success) {
         console.log(res)
-        commit('SET_ERRORS_BLOCKS', {}) 
-        await dispatch('projects/get',{}, { root: true });
+        commit('SET_ERRORS_BLOCKS', {})
+        await dispatch('projects/get', {}, { root: true });
       }
       return res
     },
@@ -111,9 +154,6 @@ export default {
       console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
-    setSelect({ commit }, value) {
-      commit('SET_SELECT', value);
-    },
     setButtons({ commit }, value) {
       commit('SET_BUTTONS', value);
     },
@@ -129,7 +169,7 @@ export default {
     getButtons: ({ buttons }) => buttons,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
-      return blocks[id];
+      return blocks[id] || {};
     },
   },
 };

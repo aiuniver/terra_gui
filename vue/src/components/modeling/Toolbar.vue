@@ -76,9 +76,6 @@ export default {
       const classList = [...currentTarget?.classList] || [];
       console.log(classList);
       if (!classList.includes('disabled')) {
-        if (comm === 'save') {
-          this.isSave = true
-        }
         this.$emit('actions', comm);
       }
     },

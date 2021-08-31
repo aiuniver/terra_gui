@@ -11,7 +11,7 @@
               :type="'text'"
               :parse="'name'"
               :name="'name'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <Autocomplete2
@@ -19,7 +19,7 @@
               :list="list"
               label="Тип слоя"
               name="type"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <t-input
@@ -29,7 +29,7 @@
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <t-input
@@ -39,7 +39,7 @@
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
           </div>
@@ -72,9 +72,6 @@ import { mapGetters } from 'vuex';
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: 'Params',
-  props: {
-    selectBlock: Object,
-  },
   components: {
     // Input,
     Autocomplete2,
@@ -91,15 +88,18 @@ export default {
       list: 'modeling/getList',
       layers: 'modeling/getLayersType',
       buttons: 'modeling/getButtons',
-      // block: "modeling/getBlock",
+      block: "modeling/getBlock",
     }),
-    block: {
-      set(value) {
-        this.$store.dispatch('modeling/setBlock', value);
-      },
-      get() {
-        return this.$store.getters['modeling/getBlock'] || {};
-      },
+    // block: {
+    //   set(value) {
+    //     this.$store.dispatch('modeling/setBlock', value);
+    //   },
+    //   get() {
+    //     return this.$store.getters['modeling/getBlock'] || {};
+    //   },
+    // },
+    isBlock () {
+      return (!this.block.id)
     },
     buttonSave () {
       return this.buttons?.save || false
@@ -141,10 +141,10 @@ export default {
     },
   },
   watch: {
-    selectBlock: {
+    block: {
       handler(newBlock, oldBlock) {
         this.oldBlock = oldBlock;
-        this.$store.dispatch('modeling/setSelect', newBlock?.id);
+        // this.$store.dispatch('modeling/setSelect', newBlock?.id);
         console.log(newBlock, oldBlock);
       },
     },

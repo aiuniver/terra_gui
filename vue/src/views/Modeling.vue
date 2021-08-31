@@ -6,8 +6,6 @@
       <Toolbar @actions="actions" />
       <Blocks
         ref="container"
-        @blockSelect="selectBlock = $event"
-        @blockDeselect="selectBlock = null"
         @save="saveLayers"
       />
       <Params ref="params" :selectBlock="selectBlock" />
@@ -46,7 +44,8 @@ export default {
       console.log(type);
       this.create = false;
       this.selectBlockType = '';
-      this.$refs.container.addNewBlock(type);
+      // this.$refs.container.addNewBlock(type);
+      this.$store.dispatch('modeling/addBlock', type)
     },
     async saveModel() {
       this.imageModel = null;
