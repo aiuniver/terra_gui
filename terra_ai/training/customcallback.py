@@ -36,7 +36,7 @@ from .. import progress
 # from terra_ai.trds import DTS
 import pynvml as N
 
-__version__ = 0.15
+__version__ = 0.16
 
 
 class MemoryUsage:
@@ -460,7 +460,7 @@ class InteractiveCallback:
     """Callback for interactive requests"""
 
     def __init__(self, null_model, dataset, metrics: dict,
-                 losses: dict, log_gap: dict, progress_mode: dict, progress_threashold: dict, custom_dataset=None):
+                 losses: dict, progress_mode: dict, progress_threashold: dict):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
@@ -494,15 +494,13 @@ class InteractiveCallback:
         self.class_idx = self._get_class_idx()
 
         self.interactive_config = {
-            'loss_graphs': {
-                'show_data': [
+            'loss_graphs': [
                     {
                         'output_idx': 2,
                         'show_for_model': True,
                         'show_for_classes': False
                     },
-                ],
-            },
+            ],
             'metric_graphs': [
                 {
                     'output_idx': 2,
@@ -870,7 +868,7 @@ class InteractiveCallback:
             'data_balance': self._get_dataset_balance_data()
         }
         """
-
+        self.interactive_config = config
         # def plot_result(self, output_key: str = None):
         #     """
         #     Returns: plot_data
@@ -987,6 +985,7 @@ class InteractiveCallback:
         #             self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
         #         )
         #         dataset_balance = self._get_dataset_balance_data()
+        pass
 
     def _get_loss_graph_data_request(self):
         """
@@ -1027,6 +1026,42 @@ class InteractiveCallback:
             }
         ]
         """
+        if self.interactive_config.get('loss_graphs'):
+            data_return = []
+            for loss_graph_config in self.interactive_config.get('loss_graphs'):
+
+
+
+            #     [
+            #         {
+            #             'output_idx': 2,
+            #             'show_for_model': True,
+            #             'show_for_classes': False
+            #         },
+            # ],
+
+            # [
+            #
+            #     # пример для всей модели
+            #     {
+            #         'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
+            #         'x_label': 'Эпоха',
+            #         'y_label': 'Значение',
+            #         'plot_data': [
+            #             {
+            #                 'label': 'Тренировочная выборка',
+            #                 'epochs': []:
+            # 'values': []
+            # },
+            # {
+            #     'label': 'Проверочная выборка',
+            #     'epochs': []:
+            # 'values': []
+            # },
+            # ],
+            # },
+        else:
+            return []
         pass
 
     def _get_metric_graph_data_request(self):

@@ -319,7 +319,7 @@ class ModelValidator:
 
         # check if plan input shapes is not None
         for name, shape in self.model_plan.input_shape.items():
-            if None in shape:
+            if not shape or None in shape:
                 self.valid = False
                 self.val_dictionary[
                     input_layers.get(name)
@@ -604,9 +604,13 @@ class ModelValidator:
             self.keras_code = None
 
         for idx, layer in enumerate(self.filled_model.layers):
+            print(self.val_dictionary)
+            print(self.layer_input_shapes, self.layer_output_shapes)
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
+            elif not self.layer_input_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
                     self.layer_input_shapes.get(layer.id)[0][1:]
@@ -623,11 +627,14 @@ class ModelValidator:
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            self.filled_model.layers[idx].shape.output = [
-                self.layer_output_shapes.get(layer.id)[0][1:]
-                if self.layer_output_shapes.get(layer.id)[0]
-                else self.layer_output_shapes.get(layer.id)
-            ]
+            if not self.layer_output_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.output = []
+            else:
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
+                ]
 
         # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         self.filled_model.keras = self.keras_code
