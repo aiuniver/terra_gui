@@ -83,6 +83,7 @@ class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
                 agent_exchange(
                     "dataset_source_segmentation_classes_autosearch",
                     path=request.data.get("path"),
+                    num_classes=request.data.get("num_classes"),
                 )
             )
         except ValidationError as error:

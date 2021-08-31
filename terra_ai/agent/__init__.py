@@ -132,7 +132,9 @@ class Exchange:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_segmentation_classes_autosearch(self, path: Path) -> dict:
+    def _call_dataset_source_segmentation_classes_autosearch(
+        self, path: Path, num_classes: int
+    ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
         """
