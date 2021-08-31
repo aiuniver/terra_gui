@@ -47,19 +47,21 @@ export default {
     },
   },
   actions: {
-    addBlock({ commit, state: { blocks } }, type) {
+    addBlock({ dispatch, commit, state: { blocks } }, type) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
       let block = createBlock(type, maxID + 1);
       if (!block) return;
       blocks.push(block);
+      dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
     },
-    cloneBlock({ commit, state: { blocks } }, oldBlock) {
+    cloneBlock({ dispatch, commit, state: { blocks } }, oldBlock) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
       const block = cloneBlock(oldBlock, maxID + 1);
       if (!block) return;
       blocks.push(block);
       commit('SET_BLOCKS', blocks);
+      dispatch('updateModel');
     },
     selectBlock({ commit, state: { blocks } }, block) {
       blocks.forEach(item => {
@@ -81,14 +83,16 @@ export default {
       }
       dispatch('removeLinkToBlock', block);
       commit('SET_BLOCKS', blocks.filter(b => b.id !== block.id));
+      dispatch('updateModel');
     },
-    removeLink ({ commit, state: { links } }, id) {
+    removeLink({ commit, state: { links } }, id) {
       console.log(id)
       commit('SET_LINKS', links.filter(value => value.id !== id));
     },
-    removeLinkToBlock ({ commit, state: { links } }, block) {
+    removeLinkToBlock({ dispatch, commit, state: { links } }, block) {
       console.log(block)
       commit('SET_LINKS', links.filter(link => (link.originID !== block.id && link.targetID !== block.id)));
+      dispatch('updateModel');
     },
 
     async info({ dispatch }, value) {
@@ -107,7 +111,7 @@ export default {
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async saveModel({ commit, state: { blocks, links }, dispatch }) {
+    async updateModel({ commit, state: { blocks, links }, dispatch }) {
       blocks.forEach(block => {
         block.bind.up = links
           .map(link => {

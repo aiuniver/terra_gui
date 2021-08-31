@@ -127,7 +127,7 @@ export default {
   },
   methods: {
     async saveModel() {
-      await this.$store.dispatch('modeling/saveModel', {});
+      await this.$store.dispatch('modeling/updateModel', {});
     },
     async change({ type, name, value }) {
       console.log({ type, name, value });

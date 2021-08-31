@@ -487,13 +487,7 @@ export default {
           );
         });
 
-        let maxID = Math.max(
-          0,
-          ...this.links.map(function (o) {
-            return o.id;
-          })
-        );
-
+        let maxID = Math.max( 0, ...this.links.map(o => o.id));
         if (this.linkStartData.block.id !== targetBlock.id) {
           const originID = this.linkStartData.block.id;
           const originSlot = this.linkStartData.slotNumber;
@@ -517,7 +511,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true);
+          this.updateModel();
         }
       }
 
@@ -540,13 +534,11 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-
-          this.$emit('save', true);
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
-
           this.linkingStart(findBlock, findLink.originSlot);
 
+          this.updateModel();
           // this.updateScene();
         }
       }
@@ -661,12 +653,11 @@ export default {
     // },
     moveBlock() {
       this.$store.dispatch('modeling/setButtons', { save: true });
-      this.$emit('save');
+      this.updateModel();
     },
 
-    updateScene() {
-      //   // this.scene = this.exportScene()
-      //   // this.$emit("update:scene", this.exportScene());
+    updateModel() {
+      this.$store.dispatch('modeling/updateModel');
     },
   },
 
