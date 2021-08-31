@@ -318,12 +318,10 @@ class ModelValidator:
                 ] = "Input shape Error: layer does not have input shape!"
 
         # check if plan input shapes is not None
-        for name, shape in self.model_plan.input_shape.items():
+        for _id, shape in self.model_plan.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[
-                    input_layers.get(name)
-                ] = "Input shape Error: layer does not have input shape!"
+                self.val_dictionary[_id] = "Input shape Error: layer does not have input shape!"
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -604,8 +602,6 @@ class ModelValidator:
             self.keras_code = None
 
         for idx, layer in enumerate(self.filled_model.layers):
-            print(self.val_dictionary)
-            print(self.layer_input_shapes, self.layer_output_shapes)
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
@@ -636,7 +632,6 @@ class ModelValidator:
                     else self.layer_output_shapes.get(layer.id)
                 ]
 
-        # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
 
