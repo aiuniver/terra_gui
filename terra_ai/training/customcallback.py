@@ -495,11 +495,11 @@ class InteractiveCallback:
 
         self.interactive_config = {
             'loss_graphs': [
-                    {
-                        'output_idx': 2,
-                        'show_for_model': True,
-                        'show_for_classes': False
-                    },
+                {
+                    'output_idx': 2,
+                    'show_for_model': True,
+                    'show_for_classes': False
+                },
             ],
             'metric_graphs': [
                 {
@@ -540,7 +540,6 @@ class InteractiveCallback:
         """
         self.log_history_example = {
             'output_id': {
-                'epochs': [],
                 'loss': {
                     'CategoricalCrossentropy': {
                         'train': [],
@@ -609,9 +608,9 @@ class InteractiveCallback:
             }
         }
         """
+        self.log_history['epochs'] = []
         for out in self.dataset.Y.get('train').keys():
             self.log_history[f'{out}'] = {
-                'epochs': [],
                 'loss': {},
                 'metrics': {},
                 'progress_state': {
@@ -858,134 +857,16 @@ class InteractiveCallback:
             return False
 
     def return_interactive_results(self, config: dict):
-        """
-        result_to_front = {
-            'loss_graphs': self._get_loss_graph_data_request()
-            'metric_graphs': self._get_metric_graph_data_request()
-            'intermediate_result': self._get_intermediate_result_request()
-            'progress_table': self._get_progress_table_data_request()
-            'statistic_data': self._get_statistic_data_request()
-            'data_balance': self._get_dataset_balance_data()
-        }
-        """
+        """Return dict with data for current interactive request"""
         self.interactive_config = config
-        # def plot_result(self, output_key: str = None):
-        #     """
-        #     Returns: plot_data
-        #     """
-        #     plot_data = {}
-        #     try:
-        #         msg_epoch = f"Эпоха №{self.epoch + 1:03d}"
-        #         if len(self.clbck_metrics) >= 1:
-        #             for metric_name in self.clbck_metrics:
-        #                 if not isinstance(metric_name, str):
-        #                     metric_name = metric_name.name
-        #                 if len(self.dataset.Y) > 1:
-        #                     # определяем, что демонстрируем во 2м и 3м окне
-        #                     metric_name = f"{output_key}_{metric_name}"
-        #                     val_metric_name = f"val_{metric_name}"
-        #                 else:
-        #                     val_metric_name = f"val_{metric_name}"
-        #                 metric_title = f"{metric_name} и {val_metric_name} {msg_epoch}"
-        #                 xlabel = "Эпоха"
-        #                 ylabel = "Значение"
-        #                 labels = (metric_title, xlabel, ylabel)
-        #                 plot_data[labels] = [
-        #                     [
-        #                         list(range(len(self.history[metric_name]))),
-        #                         self.history[metric_name],
-        #                         f"{metric_name}",
-        #                     ],
-        #                     [
-        #                         list(range(len(self.history[val_metric_name]))),
-        #                         self.history[val_metric_name],
-        #                         f"{val_metric_name}",
-        #                     ],
-        #                 ]
-        #
-        #             if len(self.class_metrics):
-        #                 for metric_name in self.class_metrics:
-        #                     if not isinstance(metric_name, str):
-        #                         metric_name = metric_name.name
-        #                     if len(self.dataset.Y) > 1:
-        #                         metric_name = f'{output_key}_{metric_name}'
-        #                         val_metric_name = f"val_{metric_name}"
-        #                     else:
-        #                         val_metric_name = f"val_{metric_name}"
-        #                     xlabel = "Эпоха"
-        #                     if metric_name.endswith("loss"):
-        #                         classes_title = f"Ошибка {output_key} для {self.num_classes} классов. {msg_epoch}"
-        #                         ylabel = "Значение"
-        #                     else:
-        #                         classes_title = f"Точность {output_key} для {self.num_classes} классов. {msg_epoch}"
-        #                         ylabel = "Значение"
-        #                     labels = (classes_title, xlabel, ylabel)
-        #                     plot_data[labels] = [
-        #                         [
-        #                             list(range(len(self.predict_cls[val_metric_name][j]))),
-        #                             self.predict_cls[val_metric_name][j],
-        #                             f" класс {l}",
-        #                         ] for j, l in enumerate(self.dataset.classes_names[output_key])
-        #                     ]
-        #     except Exception as e:
-        #         print("Exception", e.__str__())
-        #     return plot_data
-
-        # self.interactive_config = {
-        #     'loss_graphs': {
-        #         'show_data': [
-        #             {
-        #                 'output_idx': 2,
-        #                 'show_for_model': True,
-        #                 'show_for_classes': False
-        #             },
-        #         ],
-        #     },
-        #     'metric_graphs': [
-        #         {
-        #             'output_idx': 2,
-        #             'show_for_model': True,
-        #             'show_for_classes': False,
-        #             'show_metric': 'Accuracy'
-        #         }
-        #     ],
-        #     'intermediate_result': {
-        #         'show_results': False,
-        #         'data_for_calculation': 'val',
-        #         'example_choice_type': 'seed',
-        #         'num_examples': 10,
-        #         'show_statistic': False,
-        #         'autoupdate': False
-        #     },
-        #     'progress_table': [
-        #         {
-        #             'output_idx': 2,
-        #             'show_loss': True,
-        #             'show_metrics': True,
-        #         }
-        #     ],
-        #     'statistic_data': {
-        #         'output_idx': [2, 3],
-        #         'autoupdate': False
-        #     },
-        #     'data_balance': {
-        #         'show_train': True,
-        #         'show_val': True,
-        #         'sorted': 'by_name'  # 'descendingв', 'ascending'
-        #     }
-        # }
-
-        # self.num_examples = num_examples_plot
-        # self.ex_type_choice = ex_type_choice
-        # for out in self.dataset.Y.get('train').keys():
-        #     if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-        #         confusion_matrix = self._get_confusion_matrix(
-        #             np.argmax(self.Y.get(data_type).get(f'output_{out}'), axis=-1) \
-        #                 if self.dataset.data.encoding.get(out) == 'ohe' else self.Y.get(data_type).get(f'output_{out}'),
-        #             self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
-        #         )
-        #         dataset_balance = self._get_dataset_balance_data()
-        pass
+        return {
+            'loss_graphs': self._get_loss_graph_data_request(),
+            'metric_graphs': self._get_metric_graph_data_request(),
+            'intermediate_result': self._get_intermediate_result_request(),
+            'progress_table': self._get_progress_table_data_request(),
+            'statistic_data': self._get_statistic_data_request(),
+            'data_balance': self._get_dataset_balance_data(),
+        }
 
     def _get_loss_graph_data_request(self):
         """
@@ -1008,6 +889,11 @@ class InteractiveCallback:
                         'values': []
                     },
                 ],
+                "progress_state": {
+                    "normal": True,
+                    "underfitting": False,
+                    "overfitting": False
+                }
             },
 
             # Пример для классов
@@ -1029,40 +915,73 @@ class InteractiveCallback:
         if self.interactive_config.get('loss_graphs'):
             data_return = []
             for loss_graph_config in self.interactive_config.get('loss_graphs'):
-
-
-
-            #     [
-            #         {
-            #             'output_idx': 2,
-            #             'show_for_model': True,
-            #             'show_for_classes': False
-            #         },
-            # ],
-
-            # [
-            #
-            #     # пример для всей модели
-            #     {
-            #         'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
-            #         'x_label': 'Эпоха',
-            #         'y_label': 'Значение',
-            #         'plot_data': [
-            #             {
-            #                 'label': 'Тренировочная выборка',
-            #                 'epochs': []:
-            # 'values': []
-            # },
-            # {
-            #     'label': 'Проверочная выборка',
-            #     'epochs': []:
-            # 'values': []
-            # },
-            # ],
-            # },
+                if loss_graph_config.get('show_for_model'):
+                    data_return.append(
+                        {
+                            "graph_name": f"'Output_{loss_graph_config.get('output_idx')} - "
+                                          f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}'",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    "label": "Тренировочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("train")
+                                },
+                                {
+                                    "label": "Проверочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("val")
+                                }
+                            ],
+                            "progress_state": {
+                                "normal": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('normal_state')[-1],
+                                "underfitting": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('underfittng')[-1],
+                                "overfitting": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('overfitting')[-1]
+                            }
+                        }
+                    )
+                elif loss_graph_config.get('show_for_classes'):
+                    data_return.append(
+                        {
+                            "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                                          f"График ошибки обучения по классам - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    'class_label': f'Класс {class_name}',
+                                    'epochs': self.log_history.get("epochs"),
+                                    'values': self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('class_loss').get(class_name).get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("val")
+                                } for class_name in self.dataset.data.classes_names.get(
+                                    f"{loss_graph_config.get('output_idx')}")
+                            ]
+                        }
+                    )
+                else:
+                    data_return.append(
+                        {
+                            "graph_name": "",
+                            "x_label": "",
+                            "y_label": "",
+                            "plot_data": []
+                        }
+                    )
         else:
             return []
-        pass
 
     def _get_metric_graph_data_request(self):
         """
@@ -1103,7 +1022,77 @@ class InteractiveCallback:
             }
         ]
         """
-        pass
+        if self.interactive_config.get('metric_graphs'):
+            data_return = []
+            for metric_graph_config in self.interactive_config.get('metric_graphs'):
+                if metric_graph_config.get('show_for_model'):
+                    data_return.append(
+                        {
+                            "graph_name": f"'Output_{metric_graph_config.get('output_idx')} - "
+                                          f"График метрики {metric_graph_config.get('show_metric')} - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}'",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    "label": "Тренировочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                        metric_graph_config.get('show_metric')).get("train")
+                                },
+                                {
+                                    "label": "Проверочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                        metric_graph_config.get('show_metric')).get("val")
+                                }
+                            ],
+                            "progress_state": {
+                                "normal": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('normal_state')[-1],
+                                "underfitting": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('underfittng')[-1],
+                                "overfitting": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('overfitting')[-1]
+                            }
+                        }
+                    )
+                elif metric_graph_config.get('show_for_classes'):
+                    data_return.append(
+                        {
+                            "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
+                                          f"График метрики {metric_graph_config.get('show_metric')} по классам - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    'class_label': f'Класс {class_name}',
+                                    'epochs': self.log_history.get("epochs"),
+                                    'values': self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('class_metrics').get(
+                                        class_name).get(metric_graph_config.get('show_metric')).get("val")
+                                } for class_name in self.dataset.data.classes_names.get(
+                                    f"{metric_graph_config.get('output_idx')}")
+                            ]
+                        }
+                    )
+                else:
+                    data_return.append(
+                        {
+                            "graph_name": "",
+                            "x_label": "",
+                            "y_label": "",
+                            "plot_data": []
+                        }
+                    )
+        else:
+            return []
 
     def _get_intermediate_result_request(self):
         """
@@ -1133,6 +1122,28 @@ class InteractiveCallback:
             },
         }
         """
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            return_data = {}
+            for example in self.interactive_config.get('intermediate_result').get('num_examples'):
+                return_data[example] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'class_stat': {}
+                }
+
+
+        else:
+            return {}
+
+        # 'intermediate_result': {
+        #     'show_results': False,
+        #     'data_for_calculation': 'val',
+        #     'example_choice_type': 'seed',
+        #     'num_examples': 10,
+        #     'show_statistic': False,
+        #     'autoupdate': False
+        # },
         pass
 
     def _get_progress_table_data_request(self):
