@@ -106,6 +106,7 @@ class IntermediateResultCallback(tf.keras.callbacks.Callback):
         self.seed = np.random.randint(0, len(self.y_val), 5)
         self.hist = hist
         self.class_stat_bar = class_stat_bar
+
         pass
 
     def _data_choice(self):
