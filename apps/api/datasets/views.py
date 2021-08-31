@@ -84,6 +84,7 @@ class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
                     "dataset_source_segmentation_classes_autosearch",
                     path=request.data.get("path"),
                     num_classes=request.data.get("num_classes"),
+                    mask_range=request.data.get("mask_range"),
                 )
             )
         except ValidationError as error:
