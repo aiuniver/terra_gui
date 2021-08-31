@@ -14,6 +14,7 @@ TMP_DIR = Path(gettempdir(), "terraai")
 
 DATASET_EXT = "trds"
 DATASET_CONFIG = "config.json"
+DATASET_ANNOTATION = 'labelmap.txt'
 
 MODEL_EXT = "model"
 
