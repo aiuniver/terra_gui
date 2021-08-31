@@ -16,6 +16,7 @@ from .serializers import (
     ChoiceSerializer,
     CreateSerializer,
     DeleteSerializer,
+    SourceSegmentationClassesAutosearchSerializer,
 )
 
 
@@ -28,7 +29,7 @@ class ChoiceAPIView(BaseAPIView):
             agent_exchange(
                 "dataset_choice",
                 path=str(data_path.datasets),
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             return BaseResponseSuccess()
         except ValidationError as error:
@@ -78,13 +79,15 @@ class SourceLoadProgressAPIView(BaseAPIView):
 
 class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = SourceSegmentationClassesAutosearchSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
         try:
             return BaseResponseSuccess(
                 agent_exchange(
                     "dataset_source_segmentation_classes_autosearch",
                     path=request.data.get("path"),
-                    num_classes=request.data.get("num_classes"),
-                    mask_range=request.data.get("mask_range"),
+                    **serializer.validated_data,
                 )
             )
         except ValidationError as error:
@@ -139,7 +142,7 @@ class DeleteAPIView(BaseAPIView):
             agent_exchange(
                 "dataset_delete",
                 path=str(data_path.datasets),
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             return BaseResponseSuccess()
         except ValidationError as error:
