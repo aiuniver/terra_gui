@@ -14,7 +14,9 @@
         :key="'classes_names_' + i"
         :parse="'classes_names[]'"
         inline
+        disabled
         @change="change"
+        
       />
       <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline />
       <hr v-if="items.length === i + 1" class="t-segmentation-annotation__hr" :key="'hr_' + i" />
@@ -59,10 +61,7 @@ export default {
       this.loading = true
       const { data } = await this.$store.dispatch('datasets/classesAnnotation')
       console.log(data)
-      this.items = [
-        { name: 'test 1', color: '#ffffff' },
-        { name: 'test 2', color: '#ff00ff' },
-      ];
+      this.items = data
       this.loading = false
     },
     change(e) {

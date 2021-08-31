@@ -13,7 +13,7 @@
           inline
           @change="change"
         />
-        <Color v-model="classes_colors[i]" label="Цвет" :key="'classes_colors_' + i" :parse="'classes_colors[]'" inline @change="change" />
+        <Color :value="'#ffffff'" label="Цвет" :key="'classes_colors_' + i" :parse="'classes_colors[]'" inline @change="change" />
         <hr v-if="+qty === i + 1" class="t-segmentation-manual__hr" :key="'hr_' + i" />
       </template>
     </form>

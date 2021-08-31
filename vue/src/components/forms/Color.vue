@@ -11,10 +11,9 @@
           :class="['t-field__input', { small: small }, { 't-field__error': error }]"
           :type="type"
           :name="name || parse"
-          :value="value"
-          :disabled="disabled"
           :data-degree="degree"
           :autocomplete="'off'"
+          :disabled="disabled"
           @blur="change"
           @focus="focus"
         />
@@ -65,16 +64,18 @@ export default {
   data: () => ({
     isChange: false,
     pickerShow: false,
+    input: '',
   }),
   computed: {
-    input: {
-      set(value) {
-        this.$emit('input', value);
-      },
-      get() {
-        return this.value;
-      },
-    },
+    // input: {
+    //   set(value) {
+    //     this.$emit('input', value);
+    //     this.isChange = true;
+    //   },
+    //   get() {
+    //     return this.value;
+    //   },
+    // },
   },
   methods: {
     outside() {
@@ -102,9 +103,7 @@ export default {
     },
   },
   created() {
-    if (!this.value) {
-      this.$emit('input', this.input);
-    }
+    this.input = this.value
   }
 };
 </script>
@@ -136,7 +135,7 @@ export default {
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
-    padding: 10px;
+    // padding: 10px;
   }
   // margin-bottom: 20px;
   &__label {
