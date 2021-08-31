@@ -53,7 +53,7 @@
       @cleanError="cleanError"
     />
     <t-input
-      v-if="(type === 'number' || type === 'text') && !!!valueIn && label!=='Цвет'"
+      v-if="type === 'number' || type === 'text'"
       :value="getValue"
       :label="label"
       :type="type"
