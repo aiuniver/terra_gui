@@ -79,7 +79,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  // margin-bottom: 20px;
+  margin-bottom: 10px;
   &__label {
     text-align: left;
     color: #a7bed3;

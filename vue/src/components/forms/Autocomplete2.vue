@@ -92,7 +92,8 @@ export default {
 .dropdown {
   position: relative;
   display: block;
-  margin: auto;
+  margin-bottom: 10px;
+  padding: 0;
   &--active {
     .dropdown__input {
       border-radius: 4px 4px 0 0;

@@ -25,7 +25,7 @@ export default {
   },
   actions: {
     setMessage({ commit }, { error, message }) {
-      console.log(message)
+      // console.log(message)
       commit('SET_COLOR', error ? 'error' : 'success');
       commit('SET_MESSAGE', error || message);
     },
@@ -33,7 +33,7 @@ export default {
       commit('SET_PROGRESS_MESSAGE', message);
     },
     setProgress({ commit }, progress) {
-      console.log(progress)
+      // console.log(progress)
       commit('SET_PROGRESS', ~~progress);
     },
   },
