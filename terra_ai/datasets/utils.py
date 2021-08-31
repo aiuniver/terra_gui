@@ -1,69 +1,93 @@
-from PIL import Image
-from sklearn.cluster import KMeans
 import os
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
 import numpy as np
 import pandas as pd
+
 from pathlib import Path
+from sklearn.cluster import KMeans
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
+
 from terra_ai.settings import DATASET_ANNOTATION
+from terra_ai.datasets.data import AnnotationClassesList
+
 
 ANNOTATION_SEPARATOR = ":"
 ANNOTATION_LABEL_NAME = "# label"
 ANNOTATION_COLOR_RGB = "color_rgb"
 
 
-def get_classes_autosearch(folder_path: str, num_classes: int, mask_range: int) -> dict:
-    color_dict = {}
-    idx = 1
-    for img in sorted(os.listdir(folder_path)):
-        path = os.path.join(folder_path, img)
-        width, height = Image.open(path).size
-        img = load_img(path, target_size=(height, width))
-        array = img_to_array(img).astype("uint8")
+def _get_annotation_class(name: str, color: str):
+    return {
+        "name": name,
+        "color": color,
+    }
 
-        image = array.reshape(-1, 3)
-        km = KMeans(n_clusters=num_classes)
-        km.fit(image)
-        labels = km.labels_
-        cl_cent = (
-            np.round(km.cluster_centers_).astype("uint8")[: max(labels) + 1].tolist()
-        )
-        add_condition = False
 
-        for color in cl_cent:
-            if color_dict:
-                if color not in color_dict.values():
-                    for in_color in color_dict.values():
-                        if (
-                            color[0]
-                            in range(in_color[0] - mask_range, in_color[0] + mask_range)
-                            and color[1]
-                            in range(in_color[1] - mask_range, in_color[1] + mask_range)
-                            and color[2]
-                            in range(in_color[2] - mask_range, in_color[2] + mask_range)
-                        ):
-                            add_condition = False
-                            break
-                        else:
-                            add_condition = True
-                    if add_condition:
-                        color_dict[str(idx)] = color
-                        idx += 1
-            else:
-                color_dict[str(idx)] = color
-                idx += 1
-        if len(color_dict) >= num_classes:
+def get_classes_autosearch(
+    path: Path, num_classes: int, mask_range: int
+) -> AnnotationClassesList:
+    def _rgb_in_range(rgb: tuple, target: tuple) -> bool:
+        _range0 = range(target[0] - mask_range, target[0] + mask_range)
+        _range1 = range(target[1] - mask_range, target[1] + mask_range)
+        _range2 = range(target[2] - mask_range, target[2] + mask_range)
+        return rgb[0] in _range0 and rgb[1] in _range1 and rgb[2] in _range2
+
+    annotations = AnnotationClassesList()
+
+    for filename in sorted(os.listdir(path)):
+        if len(annotations) >= num_classes:
             break
 
-    return color_dict
+        filepath = Path(path, filename)
+
+        try:
+            image = load_img(filepath)
+        except Exception:
+            continue
+
+        array = img_to_array(image).astype("uint8")
+        np_data = array.reshape(-1, 3)
+        km = KMeans(n_clusters=num_classes)
+        km.fit(np_data)
+
+        cluster_centers = (
+            np.round(km.cluster_centers_)
+            .astype("uint8")[: max(km.labels_) + 1]
+            .tolist()
+        )
+
+        for index, rgb in enumerate(cluster_centers, 1):
+            if tuple(rgb) in annotations.colors_as_rgb_list:
+                continue
+
+            add_condition = True
+            for rgb_target in annotations.colors_as_rgb_list:
+                if _rgb_in_range(tuple(rgb), rgb_target):
+                    add_condition = False
+                    break
+
+            if add_condition:
+                annotations.append(_get_annotation_class(index, rgb))
+
+    return annotations
 
 
-def get_classes_annotation(dataset_path):
-    txt = pd.read_csv(Path(dataset_path, DATASET_ANNOTATION), sep=ANNOTATION_SEPARATOR)
-    color_dict = {}
-    for i in range(len(txt)):
-        color_dict[txt.loc[i, ANNOTATION_LABEL_NAME]] = [
-            int(num) for num in txt.loc[i, ANNOTATION_COLOR_RGB].split(",")
-        ]
+def get_classes_annotation(path: Path) -> AnnotationClassesList:
+    annotations = AnnotationClassesList()
 
-    return color_dict
+    try:
+        data = pd.read_csv(Path(path, DATASET_ANNOTATION), sep=ANNOTATION_SEPARATOR)
+    except FileNotFoundError:
+        return annotations
+
+    try:
+        for index in range(len(data)):
+            annotations.append(
+                _get_annotation_class(
+                    data.loc[index, ANNOTATION_LABEL_NAME],
+                    data.loc[index, ANNOTATION_COLOR_RGB].split(","),
+                )
+            )
+    except KeyError:
+        return annotations
+
+    return annotations

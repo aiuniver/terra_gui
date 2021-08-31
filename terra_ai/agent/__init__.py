@@ -139,13 +139,15 @@ class Exchange:
         """
         Автопоиск классов для сегментации при создании датасета
         """
-        return datasets_utils.get_classes_autosearch(path, num_classes, mask_range)
+        return datasets_utils.get_classes_autosearch(
+            path, num_classes, mask_range
+        ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
         """
         Получение классов для сегментации при создании датасета с использованием файла аннотации
         """
-        return datasets_utils.get_classes_annotation(path)
+        return datasets_utils.get_classes_annotation(path).native()
 
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
