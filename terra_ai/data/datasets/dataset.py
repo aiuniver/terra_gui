@@ -235,10 +235,10 @@ class DatasetLayerData(BaseMixinData):
 
 
 class DatasetPathsData(BaseMixinData):
-    datasets: DirectoryPath
-    arrays: DirectoryPath
-    instructions: DirectoryPath
-    dataset_sources: DirectoryPath
+    datasets: Optional[DirectoryPath]
+    arrays: str  # DirectoryPath
+    instructions: str  # DirectoryPath
+    dataset_sources: str  # DirectoryPath
     tmp_sources: Optional[DirectoryPath]
 
 

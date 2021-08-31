@@ -13,7 +13,6 @@ from pydantic import DirectoryPath
 from pydantic.types import FilePath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
-from librosa import load as librosa_load
 import imgaug.augmenters as iaa
 from pydub import AudioSegment
 from pydantic.color import Color
@@ -28,9 +27,8 @@ from ..data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, Laye
 from ..utils import decamelize
 from .data import DataType, Preprocesses, InstructionsData, DatasetInstructionsData
 from . import array_creator
-from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
-    CreationOutputData, OneFileData
+    CreationOutputData
 from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData, \
     DatasetPathsData
 from ..settings import DATASET_EXT, DATASET_CONFIG
@@ -83,14 +81,6 @@ class CreateDTS(object):
         self.paths = None
         self.dataset_user_data = None
         self.build_dataframe: dict = {}
-
-    def create_one_file_array(self, file_data: OneFileData, source_path):
-        instructions_data = getattr(self, f"instructions_{decamelize(file_data.type)}")(file_data)
-        array = getattr(array_creator, f"create_{decamelize(file_data.type)}")(
-            source_path,
-            instructions_data.get("instructions")[0],
-            **instructions_data.get("parameters"))
-        return array
 
     def create_dataset(self, creation_data: CreationData):
 
@@ -152,21 +142,18 @@ class CreateDTS(object):
 
     def set_paths(self, data: CreationData) -> DatasetPathsData:
 
-        dataset_path = os.path.join(data.datasets_path,
-                                    f"{data.alias}.{DATASET_EXT}")  # /TerraAI/datasets/DATASET_NAME.trds
-        arrays_path = os.path.join(dataset_path, "arrays")  # /TerraAI/datasets/DATASET_NAME.trds/arrays
-        instructions_path = os.path.join(dataset_path,
-                                         "instructions")  # /TerraAI/datasets/DATASET_NAME.trds/instructions
-        dataset_sources_path = os.path.join(dataset_path, "sources")  # /TerraAI/datasets/DATASET_NAME.trds/sources
+        datasets_path = data.datasets_path  # /content/drive/MyDrive/TerraAI/datasets
+        arrays_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "arrays")  # DATASET_NAME.trds/arrays
+        instructions_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "instructions")  # DATASET_NAME.trds/instructions
+        dataset_sources_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "sources")  # DATASET_NAME.trds/sources
         tmp_sources_path = os.path.join(data.source_path)  # /tmp/terraai/datasets_sources/googledrive/DATASET_NAME
 
-        os.makedirs(dataset_path, exist_ok=True)
-        os.makedirs(arrays_path, exist_ok=True)
-        os.makedirs(instructions_path, exist_ok=True)
-        os.makedirs(dataset_sources_path, exist_ok=True)
-        os.makedirs(tmp_sources_path, exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, arrays_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, instructions_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, dataset_sources_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, tmp_sources_path), exist_ok=True)
 
-        return DatasetPathsData(datasets=dataset_path, arrays=arrays_path, instructions=instructions_path,
+        return DatasetPathsData(datasets=datasets_path, arrays=arrays_path, instructions=instructions_path,
                                 dataset_sources=dataset_sources_path, tmp_sources=tmp_sources_path)
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
@@ -209,11 +196,14 @@ class CreateDTS(object):
                 # -----------------------
                 cur_time = time()
                 self.write_sources_to_files(tmp_sources=self.paths.tmp_sources,
-                                            dataset_sources=self.paths.dataset_sources,
+                                            dataset_sources=os.path.join(self.paths.datasets,
+                                                                         self.paths.dataset_sources),
                                             paths_list=paths_list, put_data=elem)
                 print(time() - cur_time)
-            paths_list = [os.path.join(self.paths.dataset_sources, f'{elem.id}_{decamelize(elem.type)}', path) for path
-                          in paths_list]
+
+            paths_list = [os.path.join(self.paths.dataset_sources, f'{elem.id}_{decamelize(elem.type)}', path)
+                          for path in paths_list]
+
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(paths_list,
                                                                                                           elem))
             instructions.update([(elem.id, instructions_data)])
@@ -329,15 +319,15 @@ class CreateDTS(object):
 
     def write_instructions_to_files(self):
 
-        os.makedirs(os.path.join(self.paths.instructions, 'parameters'), exist_ok=True)
+        os.makedirs(os.path.join(self.paths.datasets, self.paths.instructions, 'parameters'), exist_ok=True)
         for put in self.instructions.__dict__.keys():
             for idx in self.instructions.__dict__[put].keys():
-                with open(os.path.join(self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
+                with open(os.path.join(self.paths.datasets, self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
                     json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
 
-        os.makedirs(os.path.join(self.paths.instructions, 'tables'), exist_ok=True)
+        os.makedirs(os.path.join(self.paths.datasets, self.paths.instructions, 'tables'), exist_ok=True)
         for key in self.dataframe.keys():
-            self.dataframe[key].to_csv(os.path.join(self.paths.instructions, 'tables', f'{key}.csv'))
+            self.dataframe[key].to_csv(os.path.join(self.paths.datasets, self.paths.instructions, 'tables', f'{key}.csv'))
 
         pass
 
@@ -483,8 +473,8 @@ class CreateDTS(object):
         for array in [array_x, array_y]:
             for sample in array.keys():
                 for inp in array[sample].keys():
-                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
-                    joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
+                    os.makedirs(os.path.join(self.paths.datasets, self.paths.arrays, sample), exist_ok=True)
+                    joblib.dump(array[sample][inp], os.path.join(self.paths.datasets, self.paths.arrays, sample, f'{inp}.gz'))
 
     def create_dataset_configure(self, creation_data: CreationData) -> dict:
 
@@ -511,6 +501,7 @@ class CreateDTS(object):
                 size_bytes += os.path.getsize(os.path.join(path, file))
 
         paths = self.paths.native()
+        del paths['datasets']
         del paths['tmp_sources']
 
         tags_list = []
@@ -525,12 +516,12 @@ class CreateDTS(object):
         data["size"] = {"value": size_bytes}
         data['paths'] = paths
         data["group"] = DatasetGroupChoice.custom
-        with open(os.path.join(self.paths.datasets, DATASET_CONFIG), 'w') as fp:
+        with open(os.path.join(self.paths.datasets, f'{creation_data.alias}.{DATASET_EXT}', DATASET_CONFIG), 'w') as fp:
             json.dump(data, fp)
         print(data)
         return data
 
-    def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData, OneFileData]):
+    def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         instructions: dict = {}
         self.peg.append(0)
@@ -580,6 +571,7 @@ class CreateDTS(object):
         del options['augmentation']
         instructions['parameters'] = options
         if options.get('deploy', bool):
+            paths_list = [os.path.join(file_folder, path) for path in paths_list]
             instructions['instructions'] = {f'{put_data.id}_{decamelize(put_data.type)}': paths_list}
         else:
             self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}'] = paths_list
@@ -1357,7 +1349,7 @@ class CreateDTS(object):
         options = put_data.parameters.native()
         instructions: dict = {}
         self.task_type[put_data.id] = put_data.type
-        self.encoding[put_data.id] = "ohe" if options["one_hot_encoding"] else None
+        self.encoding[put_data.id] = "ohe" if put_data.parameters.one_hot_encoding else None
 
         if "dataframe" in self.tags.values():
             transpose = self.user_parameters.get(
@@ -1452,14 +1444,11 @@ class CreateDTS(object):
         }
         # instructions['instructions'] = {f'{put_data.id}_classification': [
         #                                     self.classes_names[put_data.id][i] for i in self.y_cls]}
-        self.build_dataframe[f"{put_data.id}_classification"] = [
-            self.classes_names[put_data.id][i] for i in self.y_cls
-        ]
+        self.build_dataframe[f"{put_data.id}_classification"] = self.y_cls  # [self.classes_names[put_data.id][i] for i in self.y_cls]
+
         return instructions
 
-    def instructions_regression(
-            self, number_list: list, put_data: Union[CreationInputData, CreationOutputData]
-    ):
+    def instructions_regression(self, number_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
         instructions: dict = {}
