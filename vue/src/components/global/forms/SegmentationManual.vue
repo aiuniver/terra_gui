@@ -10,7 +10,7 @@
       @input="inputCheck"
     />
     <template v-for="(item, i) of +qty">
-      <hr class="t-segmentation-manual__hr" :key="'hr_' + i" />
+      <hr class="t-segmentation-manual__hr" :key="'hr_up' + i" />
       <t-input
         :value="''"
         label="Название класса"
