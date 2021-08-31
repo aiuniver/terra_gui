@@ -11,6 +11,7 @@
           :draggable="node.dragndrop"
           @dragstart="dragstart($event, node)"
           @dragover.stop
+          :style="(!node.dragndrop) ? `opacity: 0.5;`: null"
         >
           <div v-for="(gapInd, i) in gaps" class="files-menu-gap" :key="'gap_' + i"></div>
 
