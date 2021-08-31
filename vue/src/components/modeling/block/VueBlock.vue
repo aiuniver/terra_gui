@@ -412,7 +412,7 @@ $circleConnectedColor: #569dcf;
 
     .output {
       &.bottom {
-        bottom: -2px;
+        bottom: -5px;
       }
       &.left {
         left: -6px;
