@@ -624,12 +624,6 @@ Defaults = {
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
                                         },
-                                        {
-                                            "type": "text",
-                                            "label": "Цвет",
-                                            "name": "classes_colors",
-                                            "parse": "classes_colors[]",
-                                        },
                                     ],
                                     "autosearch": [
                                         {

@@ -13,17 +13,20 @@
         />
       </button>
       <template v-for="({ value }, i) in tags">
-        <input
-          :key="'tag_' + i"
-          :value="value"
-          :data-index="i"
-          name="[tags][][name]"
-          type="text"
-          :class="['tags__item']"
-          :style="{ width: (value.length + 1) * 8 + 'px' }"
-          @input="change"
-          @blur="blur"
-        />
+        <div :key="'tag_' + i">
+          <input
+            :value="value"
+            :data-index="i"
+            name="[tags][][name]"
+            type="text"
+            :class="['tags__item']"
+            :style="{ width: (value.length + 1) * 8 + 'px' }"
+            @input="change"
+            @blur="blur"
+          />
+          <div class="tags__item"></div>
+        </div>
+
         <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
       </template>
     </div>

@@ -4,10 +4,7 @@
       <LoadModel v-model="dialogLoadModel" />
       <SaveModel v-model="dialogSaveModel" :image="imageModel" />
       <Toolbar @actions="actions" />
-      <Blocks
-        ref="container"
-        @save="saveLayers"
-      />
+      <Blocks ref="container" />
       <Params />
       <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
     </div>
@@ -40,26 +37,23 @@ export default {
   }),
   computed: {
     keras() {
-      return this.$store.getters['modeling/getModel']?.keras || ''
-    }
+      return this.$store.getters['modeling/getModel']?.keras || '';
+    },
   },
   methods: {
     addBlock(type) {
       console.log(type);
       this.create = false;
-      this.$store.dispatch('modeling/addBlock', type)
+      this.$store.dispatch('modeling/addBlock', type);
     },
     async saveModel() {
       this.imageModel = null;
       this.dialogSaveModel = true;
       this.imageModel = await this.$refs.container.getImages();
     },
-    async saveLayers() {
-      await this.$store.dispatch('modeling/saveModel', {});
-    },
     async validateModel() {
       const validate = await this.$store.dispatch('modeling/validateModel', {});
-      console.log(validate)
+      console.log(validate);
     },
     async clearModel() {
       try {
@@ -73,7 +67,7 @@ export default {
           this.$store.dispatch('modeling/clearModel');
         }
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     },
     actions(btn) {
@@ -87,7 +81,7 @@ export default {
         this.saveModel();
       }
       if (btn === 'validation') {
-        this.validateModel()
+        this.validateModel();
       }
       if (btn === 'clear') {
         this.clearModel();
