@@ -36,7 +36,7 @@ from .. import progress
 # from terra_ai.trds import DTS
 import pynvml as N
 
-__version__ = 0.14
+__version__ = 0.16
 
 
 class MemoryUsage:
@@ -460,7 +460,7 @@ class InteractiveCallback:
     """Callback for interactive requests"""
 
     def __init__(self, null_model, dataset, metrics: dict,
-                 losses: dict, log_gap: dict, progress_mode: dict, progress_threashold: dict, custom_dataset=None):
+                 losses: dict, progress_mode: dict, progress_threashold: dict):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
@@ -474,9 +474,7 @@ class InteractiveCallback:
         self.Y = {'train': {}, 'val': {}}
         self._prepare_dataset()
         self.Y_pred = {}
-        self.custom_dataset = custom_dataset
-        self._prepare_custom_dataset()
-        self.log_gap = log_gap
+        self.log_gap = 10
         self.progress_mode = progress_mode
         self.progress_threashold = progress_threashold
 
@@ -484,18 +482,64 @@ class InteractiveCallback:
         self._prepare_null_log_history_template()
 
         self.show_examples = 10
+
         self.ex_type_choice = 'seed'
+
         self.current_weights = None
         self.current_epoch = None
+
         self.seed_idx = {}
+        self._get_seed()
+
         self.class_idx = self._get_class_idx()
+
+        self.interactive_config = {
+            'loss_graphs': [
+                {
+                    'output_idx': 2,
+                    'show_for_model': True,
+                    'show_for_classes': False
+                },
+            ],
+            'metric_graphs': [
+                {
+                    'output_idx': 2,
+                    'show_for_model': True,
+                    'show_for_classes': False,
+                    'show_metric': 'Accuracy'
+                }
+            ],
+            'intermediate_result': {
+                'show_results': False,
+                'data_for_calculation': 'val',
+                'example_choice_type': 'seed',
+                'num_examples': 10,
+                'show_statistic': False,
+                'autoupdate': False
+            },
+            'progress_table': [
+                {
+                    'output_idx': 2,
+                    'show_loss': True,
+                    'show_metrics': True,
+                }
+            ],
+            'statistic_data': {
+                'output_idx': [2, 3],
+                'autoupdate': False
+            },
+            'data_balance': {
+                'show_train': True,
+                'show_val': True,
+                'sorted': 'by_name'   # 'descending', 'ascending'
+            }
+        }
         pass
 
     def _prepare_null_log_history_template(self):
         """
         self.log_history_example = {
-            'output_2': {
-                'epochs': [],
+            'output_id': {
                 'loss': {
                     'CategoricalCrossentropy': {
                         'train': [],
@@ -564,9 +608,9 @@ class InteractiveCallback:
             }
         }
         """
+        self.log_history['epochs'] = []
         for out in self.dataset.Y.get('train').keys():
-            self.log_history[f'output_{out}'] = {
-                'epochs': [],
+            self.log_history[f'{out}'] = {
                 'loss': {},
                 'metrics': {},
                 'progress_state': {
@@ -580,47 +624,44 @@ class InteractiveCallback:
                 self.metrics[out] = [self.metrics.get(out)]
 
             for loss in self.losses.get(out):
-                self.log_history[f'output_{out}']['loss'][f"{loss}"] = {'train': [], 'val': []}
-                self.log_history[f'output_{out}']['progress_state']['loss'][f"{loss}"] = {
+                self.log_history[f'{out}']['loss'][f"{loss}"] = {'train': [], 'val': []}
+                self.log_history[f'{out}']['progress_state']['loss'][f"{loss}"] = {
                     'mean_log_history': [], 'normal_state': [], 'underfittng': [], 'overfitting': []
                 }
             for metric in self.metrics.get(out):
-                self.log_history[f'output_{out}']['metrics'][f"{metric}"] = {'train': [], 'val': []}
-                self.log_history[f'output_{out}']['progress_state']['metrics'][f"{metric}"] = {
+                self.log_history[f'{out}']['metrics'][f"{metric}"] = {'train': [], 'val': []}
+                self.log_history[f'{out}']['progress_state']['metrics'][f"{metric}"] = {
                     'mean_log_history': [], 'normal_state': [], 'underfittng': [], 'overfitting': []
                 }
             if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                self.log_history[f'output_{out}']['class_loss'] = {}
-                self.log_history[f'output_{out}']['class_metrics'] = {}
+                self.log_history[f'{out}']['class_loss'] = {}
+                self.log_history[f'{out}']['class_metrics'] = {}
                 for class_name in self.dataset.data.classes_names.get(out):
-                    self.log_history[f'output_{out}']['class_metrics'][f"{class_name}"] = {}
-                    self.log_history[f'output_{out}']['class_loss'][f"{class_name}"] = {}
+                    self.log_history[f'{out}']['class_metrics'][f"{class_name}"] = {}
+                    self.log_history[f'{out}']['class_loss'][f"{class_name}"] = {}
 
                     for metric in self.metrics.get(out):
-                        self.log_history[f'output_{out}']['class_metrics'][f"{class_name}"][f"{metric}"] = {'val': []}
+                        self.log_history[f'{out}']['class_metrics'][f"{class_name}"][f"{metric}"] = {'val': []}
                     for loss in self.losses.get(out):
-                        self.log_history[f'output_{out}']['class_loss'][f"{class_name}"][f"{loss}"] = {'val': []}
+                        self.log_history[f'{out}']['class_loss'][f"{class_name}"][f"{loss}"] = {'val': []}
 
     def _prepare_dataset(self):
         for ins in self.dataset.X.get('train').keys():
-            self.X['train'][f'input_{ins}'] = self.dataset.X.get('train').get(ins)
+            self.X['train'][f'{ins}'] = self.dataset.X.get('train').get(ins)
             if self.dataset.X.get('val').get(ins) is not None:
-                self.X['val'][f'input_{ins}'] = self.dataset.X.get('val').get(ins)
+                self.X['val'][f'{ins}'] = self.dataset.X.get('val').get(ins)
             elif self.dataset.X.get('test').get(ins) is not None:
-                self.X['val'][f'input_{ins}'] = self.dataset.X.get('test').get(ins)
+                self.X['val'][f'{ins}'] = self.dataset.X.get('test').get(ins)
             else:
-                self.X['val'][f'input_{ins}'] = None
+                self.X['val'][f'{ins}'] = None
         for out in self.dataset.Y.get('train').keys():
-            self.Y['train'][f'output_{out}'] = self.dataset.Y.get('train').get(out)
+            self.Y['train'][f'{out}'] = self.dataset.Y.get('train').get(out)
             if self.dataset.Y.get('val').get(out) is not None:
-                self.Y['val'][f'input_{out}'] = self.dataset.Y.get('val').get(out)
+                self.Y['val'][f'{out}'] = self.dataset.Y.get('val').get(out)
             elif self.dataset.Y.get('test').get(out) is not None:
-                self.Y['val'][f'input_{out}'] = self.dataset.Y.get('test').get(out)
+                self.Y['val'][f'{out}'] = self.dataset.Y.get('test').get(out)
             else:
-                self.X['val'][f'input_{out}'] = None
-
-    def _prepare_custom_dataset(self):
-        pass
+                self.X['val'][f'{out}'] = None
 
     def _get_class_idx(self):
         """
@@ -639,33 +680,39 @@ class InteractiveCallback:
         return class_idx
 
     def _get_seed(self):
-        pass
+        for ins in self.dataset.X.get('train').keys():
+            self.seed_idx[ins] = {}
+            for data_type in self.dataset.X.keys():
+                data_lenth = np.arange(len(self.dataset.X.get(data_type).get(ins)))
+                np.random.shuffle(data_lenth)
+                self.seed_idx[ins][data_type] = data_lenth
 
     def update_state(self, current_epoch, current_weights):
         self.current_epoch = current_epoch
         self.model.set_weights(current_weights)
         self._get_prediction()
         self.log_history['epochs'].append(current_epoch)
-        self._fill_log_history()
+        self._fill_loss_log_history()
 
     def _get_prediction(self):
         # predict = self.model.predict(self.X.get('train'))
-        for key in self.X.keys():
-            predict = self.model.predict(self.X.get(key))
-            for idx, out in enumerate(self.Y.get(key).keys()):
-                if len(self.Y.get(key).keys()) == 1:
-                    self.Y_pred[key] = {out: predict}
+        for data_type in self.X.keys():
+            self.Y_pred[data_type] = {}
+            predict = self.model.predict(self.X.get(data_type))
+            for idx, out in enumerate(self.Y.get(data_type).keys()):
+                if len(self.Y.get(data_type).keys()) == 1:
+                    self.Y_pred[data_type][out] = predict
                 else:
-                    self.Y_pred[key] = {out: predict[idx]}
+                    self.Y_pred[data_type][out] = predict[idx]
 
-    def _get_loss_data(self, loss_name, y_true, y_pred, ohe=True, num_classes=10):
+    def _get_loss_calculation(self, loss_name, y_true, y_pred, ohe=True, num_classes=10):
         loss_obj = getattr(tf.keras.losses, loss_name)()
         if loss_name == Loss.SparseCategoricalCrossentropy:
             return loss_obj(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred).numpy()
         else:
             return loss_obj(y_true if ohe else to_categorical(y_true, num_classes), y_pred).numpy()
 
-    def _get_metric_data(self, metric_name, y_true, y_pred, ohe=True, num_classes=10):
+    def _get_metric_calculation(self, metric_name, y_true, y_pred, ohe=True, num_classes=10):
         if metric_name == Metric.MeanIoU:
             metric_obj = getattr(tf.keras.metrics, metric_name)(num_classes)
         else:
@@ -681,13 +728,13 @@ class InteractiveCallback:
             metric_obj.update_state(y_true if ohe else to_categorical(y_true, num_classes), y_pred)
         return metric_obj.result().numpy()
 
-    def _get_mean_log(self, logs, output):
-        if len(logs) < self.log_gap.get(output):
+    def _get_mean_log(self, logs):
+        if len(logs) < self.log_gap:
             return np.mean(logs)
         else:
-            return np.mean(logs[-self.log_gap.get(output):])
+            return np.mean(logs[-self.log_gap:])
 
-    def _fill_log_history(self):
+    def _fill_loss_log_history(self):
         for out in self.Y.get('train').keys():
             out_idx = int(out.split('_')[-1])
             if self.dataset.data.encoding.get(out_idx) == 'ohe':
@@ -699,13 +746,15 @@ class InteractiveCallback:
             for loss_name in self.log_history.get(out).get('loss').keys():
                 for data_type in ['train', 'val']:
                     # fill losses
-                    self.log_history[out]['loss'][loss_name][data_type].append(self._get_loss_data(
+                    self.log_history[out]['loss'][loss_name][data_type].append(self._get_loss_calculation(
                         loss_name, self.Y.get('train').get(out), self.Y_pred.get(data_type).get(out), ohe, num_classes))
 
                 # fill loss progress state
                 self.log_history[out]['progress_state']['loss'][loss_name]['mean_log_history'].append(
                     self._get_mean_log(self.log_history[out]['loss'][loss_name]['val'])
                 )
+
+                # get progress state data
                 loss_underfittng = self._evaluate_underfitting(
                     self.log_history[out]['loss'][loss_name]['train'][-1],
                     self.log_history[out]['loss'][loss_name]['val'][-1],
@@ -721,15 +770,17 @@ class InteractiveCallback:
                     normal_state = False
                 else:
                     normal_state = True
+
                 self.log_history[out]['progress_state']['loss'][loss_name]['underfitting'].append(loss_underfittng)
                 self.log_history[out]['progress_state']['loss'][loss_name]['overfitting'].append(loss_overfittng)
                 self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(normal_state)
 
+                # get Classification loss logs
                 if self.dataset.data.task_type.get(out_idx) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(out).get('class_loss').keys():
                         self.log_history[out]['class_loss'][cls][loss_name]['val'].append(
-                            self._get_loss_data(
+                            self._get_loss_calculation(
                                 loss_name,
                                 self.Y.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
                                 self.Y_pred.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
@@ -739,7 +790,7 @@ class InteractiveCallback:
             for metric in self.log_history.get(out).get('metrics').keys():
                 for data_type in ['train', 'val']:
                     # fill metrics
-                    self.log_history[out]['metrics'][metric][data_type].append(self._get_loss_data(
+                    self.log_history[out]['metrics'][metric][data_type].append(self._get_metric_calculation(
                         metric, self.Y.get('train').get(out), self.Y_pred.get(data_type).get(out), ohe, num_classes))
 
                 # fill loss progress state
@@ -769,7 +820,7 @@ class InteractiveCallback:
                     # fill class losses
                     for cls in self.log_history.get(out).get('class_metrics').keys():
                         self.log_history[out]['class_metrics'][cls][metric]['val'].append(
-                            self._get_loss_data(
+                            self._get_metric_calculation(
                                 metric,
                                 self.Y.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
                                 self.Y_pred.get('val').get(out)[self.class_idx.get('val').get(out_idx).get(cls)],
@@ -805,17 +856,339 @@ class InteractiveCallback:
         else:
             return False
 
-    def return_interactive_results(self, num_examples_plot=10, ex_type_choice='seed', data_type='val'):
-        self.num_examples = num_examples_plot
-        self.ex_type_choice = ex_type_choice
-        for out in self.dataset.Y.get('train').keys():
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                confusion_matrix = self._get_confusion_matrix(
-                    np.argmax(self.Y.get(data_type).get(f'output_{out}'), axis=-1) \
-                        if self.dataset.data.encoding.get(out) == 'ohe' else self.Y.get(data_type).get(f'output_{out}'),
-                    self.Y_pred.get(data_type).get(f'output_{out}'), self.dataset.data.classes_names.get(out)
-                )
-                dataset_balance = self._get_dataset_balance_data()
+    def return_interactive_results(self, config: dict):
+        """Return dict with data for current interactive request"""
+        self.interactive_config = config
+        return {
+            'loss_graphs': self._get_loss_graph_data_request(),
+            'metric_graphs': self._get_metric_graph_data_request(),
+            'intermediate_result': self._get_intermediate_result_request(),
+            'progress_table': self._get_progress_table_data_request(),
+            'statistic_data': self._get_statistic_data_request(),
+            'data_balance': self._get_dataset_balance_data(),
+        }
+
+    def _get_loss_graph_data_request(self):
+        """
+        'loss_graphs': [
+
+            # пример для всей модели
+            {
+                'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'label': 'Тренировочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                    {
+                        'label': 'Проверочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                ],
+                "progress_state": {
+                    "normal": True,
+                    "underfitting": False,
+                    "overfitting": False
+                }
+            },
+
+            # Пример для классов
+            {
+                'graph_name': f'Output_{output_idx} - График ошибки обучения по классам - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
+                    etc...
+                ],
+            }
+        ]
+        """
+        if self.interactive_config.get('loss_graphs'):
+            data_return = []
+            for loss_graph_config in self.interactive_config.get('loss_graphs'):
+                if loss_graph_config.get('show_for_model'):
+                    data_return.append(
+                        {
+                            "graph_name": f"'Output_{loss_graph_config.get('output_idx')} - "
+                                          f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}'",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    "label": "Тренировочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("train")
+                                },
+                                {
+                                    "label": "Проверочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("val")
+                                }
+                            ],
+                            "progress_state": {
+                                "normal": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('normal_state')[-1],
+                                "underfitting": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('underfittng')[-1],
+                                "overfitting": self.log_history.get(f"{loss_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("loss").get(
+                                    self.losses.get(loss_graph_config.get("output_idx"))).get('overfitting')[-1]
+                            }
+                        }
+                    )
+                elif loss_graph_config.get('show_for_classes'):
+                    data_return.append(
+                        {
+                            "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                                          f"График ошибки обучения по классам - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    'class_label': f'Класс {class_name}',
+                                    'epochs': self.log_history.get("epochs"),
+                                    'values': self.log_history.get(
+                                        f"{loss_graph_config.get('output_idx')}").get('class_loss').get(class_name).get(
+                                        self.losses.get(loss_graph_config.get("output_idx"))).get("val")
+                                } for class_name in self.dataset.data.classes_names.get(
+                                    f"{loss_graph_config.get('output_idx')}")
+                            ]
+                        }
+                    )
+                else:
+                    data_return.append(
+                        {
+                            "graph_name": "",
+                            "x_label": "",
+                            "y_label": "",
+                            "plot_data": []
+                        }
+                    )
+        else:
+            return []
+
+    def _get_metric_graph_data_request(self):
+        """
+        'metric_graphs': [
+
+            # пример для всей модели
+            {
+                'graph_name': f'Output_{output_idx} - График метрики {metric_name} - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'label': 'Тренировочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                    {
+                        'label': 'Проверочная выборка',
+                        'epochs': []:
+                        'values': []
+                    },
+                ],
+            },
+
+            # Пример для классов
+            {
+                'graph_name': f'Output_{output_idx} - График метрики {metric_name} по классам - Эпоха №{epoch_num}',
+                'x_label': 'Эпоха',
+                'y_label': 'Значение',
+                'plot_data': [
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
+                    etc...
+                ],
+            }
+        ]
+        """
+        if self.interactive_config.get('metric_graphs'):
+            data_return = []
+            for metric_graph_config in self.interactive_config.get('metric_graphs'):
+                if metric_graph_config.get('show_for_model'):
+                    data_return.append(
+                        {
+                            "graph_name": f"'Output_{metric_graph_config.get('output_idx')} - "
+                                          f"График метрики {metric_graph_config.get('show_metric')} - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}'",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    "label": "Тренировочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                        metric_graph_config.get('show_metric')).get("train")
+                                },
+                                {
+                                    "label": "Проверочная выборка",
+                                    "epochs": self.log_history.get("epochs"),
+                                    "values": self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                        metric_graph_config.get('show_metric')).get("val")
+                                }
+                            ],
+                            "progress_state": {
+                                "normal": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('normal_state')[-1],
+                                "underfitting": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('underfittng')[-1],
+                                "overfitting": self.log_history.get(f"{metric_graph_config.get('output_idx')}").get(
+                                    "progress_state").get("metrics").get(
+                                    metric_graph_config.get('show_metric')).get('overfitting')[-1]
+                            }
+                        }
+                    )
+                elif metric_graph_config.get('show_for_classes'):
+                    data_return.append(
+                        {
+                            "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
+                                          f"График метрики {metric_graph_config.get('show_metric')} по классам - "
+                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                            "x_label": "Эпоха",
+                            "y_label": "Значение",
+                            "plot_data": [
+                                {
+                                    'class_label': f'Класс {class_name}',
+                                    'epochs': self.log_history.get("epochs"),
+                                    'values': self.log_history.get(
+                                        f"{metric_graph_config.get('output_idx')}").get('class_metrics').get(
+                                        class_name).get(metric_graph_config.get('show_metric')).get("val")
+                                } for class_name in self.dataset.data.classes_names.get(
+                                    f"{metric_graph_config.get('output_idx')}")
+                            ]
+                        }
+                    )
+                else:
+                    data_return.append(
+                        {
+                            "graph_name": "",
+                            "x_label": "",
+                            "y_label": "",
+                            "plot_data": []
+                        }
+                    )
+        else:
+            return []
+
+    def _get_intermediate_result_request(self):
+        """
+        'intermediate_result': {
+            example_num: {
+                'initial_data': [
+                    {
+                        'layer': f'Input_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'true_value': [
+                    {
+                        'layer': f'Output_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'predict_value': [
+                    {
+                        'layer': f'Output_{layer_id}',
+                        'data': smth in base64
+                    }
+                ],
+                'class_stat': {
+                    'class name': value,
+                }
+            },
+        }
+        """
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            return_data = {}
+            for example in self.interactive_config.get('intermediate_result').get('num_examples'):
+                return_data[example] = {
+                    'initial_data': {},
+                    'true_value': {},
+                    'predict_value': {},
+                    'class_stat': {}
+                }
+                for inp in self.dataset.X.get('train').keys():
+                    return_data[example]['initial_data'] = {
+                        'layer': f'Input_{inp}',
+                        'data': self._postprocess_initial_data(
+                            input_id=inp,
+                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
+                            show_statistic=self.interactive_config.get('intermediate_result').get('show_statistic')
+                        )
+                    }
+                for out in self.dataset.Y.get('train').keys():
+                    return_data[example]['true_value'] = {
+                        'layer': f'Output_{out}',
+                        'data': self._postprocess_result_data(
+                            input_id=out,
+                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
+                            show_statistic=self.interactive_config.get('intermediate_result').get('show_statistic')
+                        )
+                    }
+
+
+        else:
+            return {}
+
+        # 'intermediate_result': {
+        #     'show_results': False,
+        #     'data_for_calculation': 'val',
+        #     'example_choice_type': 'seed',
+        #     'num_examples': 10,
+        #     'show_statistic': False,
+        #     'autoupdate': False
+        # },
+        pass
+
+    def _get_progress_table_data_request(self):
+        """
+        'progress_table': {
+            'epochs': [],
+            'time': [],
+            f'Output_{layer_id}': {
+                'loss': [],
+                'val_loss': [],
+                f'{metric_name}': [],
+                f'val_{metric_name}': []
+            },
+            "summary": "",
+        }
+        """
+        pass
+
+    def _get_statistic_data_request(self):
+        """
+        'statistic_data': {
+            f'Output_{layer_id}': data
+        }
+        """
+        pass
 
     def _get_classification_data(self):
         pass
@@ -824,10 +1197,8 @@ class InteractiveCallback:
         """
         return = {
             "output_name": {
-                'train': {
-                    'class 0': 1024,
-                    'class 1': 1021,
-                    ...
+                'data_type': {
+                    'class_name': int,
                 },
                 'test': {...},
                 'val': {...}
@@ -859,6 +1230,11 @@ class InteractiveCallback:
             for j in range(len(cm[i])):
                 cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return (cm, cm_percent, labels)
+
+    def _postprocess_initial_data(self, input_id: int, data_type: str, mode: str, show_statistic: bool):
+        pass
+
+    _postprocess_result_data
 
 
 class FitCallback(keras.callbacks.Callback):
@@ -3566,33 +3942,33 @@ if __name__ == "__main__":
     # dataset_variants = ['mnist', 'fashion_mnist', 'cifar10', 'cifar100', 'imdb', 'boston_housing',
     #                     'reuters', 'трейдинг', 'умный_дом', 'квартиры', 'автомобили', 'автомобили_3',
     #                     'заболевания', 'договоры', 'самолеты', 'губы', 'sber']
-    with open('G:/Мой диск/Colab Notebooks/Стажировка/terra_gui/TerraAI/datasets/dataset автомобили 3/config.json',
-              'r') as cfg:
-        ddd = json.load(cfg)
-    print('\nconfig.json\n', ddd)
+    # with open('G:/Мой диск/Colab Notebooks/Стажировка/terra_gui/TerraAI/datasets/dataset автомобили 3/config.json',
+    #           'r') as cfg:
+    #     ddd = json.load(cfg)
+    # print('\nconfig.json\n', ddd)
+    #
+    # dataset_data = DatasetData(**ddd)
+    # dtts = PrepareDTS(dataset_data)
+    # dtts.prepare_dataset()
+    # print(dtts.X.get('train').get(1).shape, dtts.Y.get('train').get(2).shape)
+    # # print(dtts.data.encoding.get(2))
+    # # print(dtts.Y.get('train').get(2))
+    #
+    # model = model_func(dtts.data.inputs.get(1).shape, dtts.data.num_classes.get(2))
+    # model.compile(optimizer='adam', loss="CategoricalCrossentropy")
+    # model.fit(dtts.X.get('train').get(1), dtts.Y.get('train').get(2), epochs=2)
 
-    dataset_data = DatasetData(**ddd)
-    dtts = PrepareDTS(dataset_data)
-    dtts.prepare_dataset()
-    print(dtts.X.get('train').get(1).shape, dtts.Y.get('train').get(2).shape)
-    # print(dtts.data.encoding.get(2))
-    # print(dtts.Y.get('train').get(2))
-
-    model = model_func(dtts.data.inputs.get(1).shape, dtts.data.num_classes.get(2))
-    model.compile(optimizer='adam', loss="CategoricalCrossentropy")
-    model.fit(dtts.X.get('train').get(1), dtts.Y.get('train').get(2), epochs=2)
-
-    start = time.time()
-    clb = InteractiveCallback(model, dtts, log_gap=5,
-                              metrics={2: ['Accuracy', 'CategoricalAccuracy']},
-                              losses={2: ["CategoricalCrossentropy"]})
-    print(clb.log_history)
+    # start = time.time()
+    # clb = InteractiveCallback(model, dtts, log_gap=5,
+    #                           metrics={2: ['Accuracy', 'CategoricalAccuracy']},
+    #                           losses={2: ["CategoricalCrossentropy"]})
+    # print(clb.log_history)
     # clb.update_state(current_epoch=1, current_weights=model.get_weights())
     # print(clb.Y_pred['train'].keys(), clb.Y['train'].keys())
     # clb.get_prediction()
     # print(clb.Y_pred)
     # print(clb.log_history)
-    print(time.time() - start)
+    # print(time.time() - start)
     # to_json = json.dumps(clb.log_history)
     # print(to_json)
 
@@ -3600,4 +3976,7 @@ if __name__ == "__main__":
     # print(TaskChoice.Classification.value)
     # print(TasksGroups[0]['task'].value == dtts.data.task_type.get(2).value)
     # print(TasksGroups[0]['metrics'])
-    # print(getattr(tf.keras.metrics, TasksGroups[0]['metrics'][0]))
+    # print(getattr(tf.keras.metrics, TasksGroups[0]['metrics'][0])
+    # )
+
+    MemoryUsage(debug=True).get_usage()

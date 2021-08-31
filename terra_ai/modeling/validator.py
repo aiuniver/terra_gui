@@ -74,7 +74,6 @@ def get_idx_line(model_plan):
                     row_idxs.append(downlink)
 
         for link in row_idxs:
-
             if (
                 len(uplinks.get(link)) > 1
                 and len(set(idx2remove) & set(uplinks.get(link))) != 0
@@ -170,7 +169,7 @@ def tensor_shape_to_tuple(tensor_shape):
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, output_shape=None, **kwargs):
+    def __init__(self, model, output_shape=None, **kwargs):
         self.validator = LayerValidation()
         self.model_plan = None
         self.filled_model = None
@@ -319,12 +318,10 @@ class ModelValidator:
                 ] = "Input shape Error: layer does not have input shape!"
 
         # check if plan input shapes is not None
-        for name, shape in self.model_plan.input_shape.items():
-            if None in shape:
+        for _id, shape in self.model_plan.input_shape.items():
+            if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[
-                    input_layers.get(name)
-                ] = "Input shape Error: layer does not have input shape!"
+                self.val_dictionary[_id] = "Input shape Error: layer does not have input shape!"
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -608,6 +605,8 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
+            elif not self.layer_input_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
                     self.layer_input_shapes.get(layer.id)[0][1:]
@@ -624,13 +623,15 @@ class ModelValidator:
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            self.filled_model.layers[idx].shape.output = [
-                self.layer_output_shapes.get(layer.id)[0][1:]
-                if self.layer_output_shapes.get(layer.id)[0]
-                else self.layer_output_shapes.get(layer.id)
-            ]
+            if not self.layer_output_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.output = []
+            else:
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
+                ]
 
-        # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
 
@@ -643,15 +644,15 @@ class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
     def __init__(self):
-        self.inp_shape = [None]
-        self.layer_type = ""
-        self.def_parameters = {}
-        self.layer_parameters = {}
-        self.num_uplinks = 1
-        self.input_dimension = 2
-        self.module = ""
-        self.module_type = ""
-        self.kwargs = {}
+        self.inp_shape: list = [None]
+        self.layer_type: str = ""
+        self.def_parameters: dict = {}
+        self.layer_parameters: dict = {}
+        self.num_uplinks: tuple = None
+        self.input_dimension: tuple = None
+        self.module: str = ""
+        self.module_type: str = ""
+        self.kwargs: dict = {}
 
     def set_state(self, layer_type, shape, parameters, defaults, config, **kwargs):
         """Set input data and fill attributes"""
