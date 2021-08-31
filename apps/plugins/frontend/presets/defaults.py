@@ -820,14 +820,14 @@ Defaults = {
             {
                 "type": "text",
                 "label": "Размерность входных данных",
-                "name": "inputs",
-                "parse": "shape[inputs][]",
+                "name": "input",
+                "parse": "shape[input][]",
             },
             {
                 "type": "text",
                 "label": "Размерность выходных данных",
-                "name": "outputs",
-                "parse": "shape[outputs][]",
+                "name": "output",
+                "parse": "shape[output][]",
             },
         ],
         "layers_types": {},
