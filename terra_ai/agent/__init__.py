@@ -27,7 +27,9 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
+from ..data.training.train import TrainData
 
+from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
 from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
@@ -35,6 +37,7 @@ from ..deploy import loading as deploy_loading
 from .. import settings, progress
 from . import exceptions
 from ..modeling.validator import ModelValidator
+from ..training import training_obj
 
 
 class Exchange:
@@ -130,6 +133,22 @@ class Exchange:
             progress.data = []
         return progress_data
 
+    def _call_dataset_source_segmentation_classes_autosearch(
+        self, path: Path, num_classes: int, mask_range: int
+    ) -> dict:
+        """
+        Автопоиск классов для сегментации при создании датасета
+        """
+        return datasets_utils.get_classes_autosearch(
+            path, num_classes, mask_range
+        ).native()
+
+    def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
+        """
+        Получение классов для сегментации при создании датасета с использованием файла аннотации
+        """
+        return datasets_utils.get_classes_annotation(path).native()
+
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
         Создание датасета из исходников
@@ -193,8 +212,7 @@ class Exchange:
         """
         Обновление модели
         """
-        if len(kwargs.keys()):
-            model.update(kwargs)
+        model.update(kwargs)
         return ModelDetailsData(**model)
 
     def _call_model_validate(self, model: ModelDetailsData) -> dict:
@@ -202,15 +220,6 @@ class Exchange:
         Валидация модели
         """
         return ModelValidator(model).get_validated()
-
-    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
-        """
-        Обновление слоя модели
-        """
-        model = ModelDetailsData(**model)
-        if len(kwargs.keys()):
-            model.layers.append(kwargs)
-        return model
 
     def _call_model_create(self, model: dict, path: Path):
         """
@@ -231,6 +240,20 @@ class Exchange:
         Деплой: прогресс загрузки
         """
         return progress.pool(progress.PoolName.deploy_upload)
+
+    def _call_start_training(
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        params: TrainData,
+    ):
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            training_params=params,
+        )
 
 
 agent_exchange = Exchange()

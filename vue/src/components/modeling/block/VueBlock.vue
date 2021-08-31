@@ -1,6 +1,6 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
-    <div :class="['t-block-modeling__header', group, { selected: selected }]">
+    <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
       <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
@@ -9,7 +9,7 @@
     </div>
 
     <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
-      <template v-for="(item, i) of filterIcons">
+      <template v-for="(item, i) of iconsFilter">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
       </template>
     </div>
@@ -46,9 +46,9 @@ export default {
     linkingCheck: {
       type: Object,
     },
-    error: {
-      type: String,
-      default: null,
+    errors: {
+      type: Object,
+      default: () => {},
     },
     name: {
       type: String,
@@ -78,28 +78,33 @@ export default {
     options: {
       type: Object,
     },
+    icons: Array,
+    filter: {
+      type: Object,
+      default: () => {}
+    }
+
   },
   data: () => ({
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
-    icons: [
-      { icon: 'icon-deploy-copy', event: 'clone' },
-      { icon: 'icon-modeling-link-remove', event: 'link' },
-      { icon: 'icon-modeling-remove', event: 'remove' },
-    ],
+
   }),
   computed: {
+    iconsFilter() {
+      return this.icons.filter(item => this.filter[this.group].includes(item.event))
+    },
+    error() {
+      return this.errors?.[this.id] || ''
+    },
     parametr() {
       const parametr = Object.values(this.parameters?.main || {})
       return parametr.join()
     },
-    filterIcons() {
-      return this.icons.filter(item => item)
-    },
     styleHover() {
-      const len = this.filterIcons.length;
-      return { right: -(34 * len) + 'px' };
+      const len = this.iconsFilter.length;
+      return { right: -(33 * len) + 'px' };
     },
     style() {
       return {
@@ -122,6 +127,7 @@ export default {
     this.dragging = false;
   },
   mounted() {
+    console.log(this.$el.clientHeight)
     document.documentElement.addEventListener('mousemove', this.handleMove, true);
     document.documentElement.addEventListener('mousedown', this.handleDown, true);
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
@@ -132,6 +138,9 @@ export default {
     document.documentElement.removeEventListener('mouseup', this.handleUp, true);
   },
   methods: {
+    getHeight() {
+      return this.$el.clientHeight
+    },
     handleMove(e) {
       this.mouseX = e.pageX || e.clientX + document.documentElement.scrollLeft;
       this.mouseY = e.pageY || e.clientY + document.documentElement.scrollTop;
@@ -232,23 +241,23 @@ $circleConnectedColor: #569dcf;
   z-index: 1;
   opacity: 0.9;
   cursor: move;
-  height: 50px;
+  // height: 46px;
 
   &__hover {
     position: absolute;
     top: 0px;
     right: 0px;
-    height: 48px;
+    height: 42px;
     background-color: #294c6f;
     border-radius: 5px;
     cursor: context-menu;
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 0px 1px;
     > i {
-      display: inline-flex;
-      font-size: 1.5em;
-      margin: 0 5px;
+      width: 18px;
+      margin: 0 7px;
       cursor: pointer;
     }
   }
@@ -275,12 +284,13 @@ $circleConnectedColor: #569dcf;
   &__error {
     position: absolute;
     white-space: break-word;
-    left: -102%;
+    left: -114%;
     width: 200px;
     top: 0;
     height: auto;
     padding: 10px;
     color: #fff;
+    border: 2px solid red;
     background-color: #2b5278;
     border-radius: 5px;
     font-size: 0.9em;
@@ -290,10 +300,10 @@ $circleConnectedColor: #569dcf;
   &__header {
     background: #bfbfbf;
     text-align: center;
-    height: 48px;
+    min-height: 42px;
+    // height: 42px;
     border-radius: 5px;
     color: #000;
-    font-size: 0.9em;
     &:hover,
     &.selected {
       color: #fff;
@@ -303,13 +313,14 @@ $circleConnectedColor: #569dcf;
     }
 
     &--title {
+      font-size: 14px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     &--parametr {
       color: #2b5275;
-      font-size: 0.8em;
+      font-size: 11px;
     }
 
     > .delete {
@@ -359,6 +370,9 @@ $circleConnectedColor: #569dcf;
         border: $blockBorder solid #8e51f2;
       }
     }
+    &.error {
+      border: 2px solid red !important;
+    }
 
 
     
@@ -386,7 +400,7 @@ $circleConnectedColor: #569dcf;
       }
     }
     .input {
-      top: -6px;
+      top: -5px;
       &--linking-active {
         top: 0px;
         width: 100%;
@@ -398,7 +412,7 @@ $circleConnectedColor: #569dcf;
 
     .output {
       &.bottom {
-        bottom: -4px;
+        bottom: -5px;
       }
       &.left {
         left: -6px;

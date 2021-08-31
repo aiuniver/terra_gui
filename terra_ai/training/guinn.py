@@ -12,12 +12,14 @@ from tensorflow.keras.models import load_model
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
+from terra_ai.data.modeling.model import ModelData, ModelDetailsData
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDTS
+from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
 
 from terra_ai.training.data import custom_losses_dict
 
@@ -29,14 +31,13 @@ class GUINN:
     GUINN: class, for train model
     """
 
-    def __init__(self, exch_obj) -> None:
+    def __init__(self) -> None:
         """
         GUINN init method
 
         Args:
             exch_obj:   exchange object for terra
         """
-        self.Exch = exch_obj
         self.callbacks = []
         self.chp_monitor = 'loss'
 
@@ -63,6 +64,18 @@ class GUINN:
         """
         self.history: dict = {}
 
+    @staticmethod
+    def _check_metrics(metrics: list, num_classes: int = 2) -> list:
+        output = []
+        for metric in metrics:
+            if metric == MetricChoice.MeanIoU.value:
+                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)(num_classes))
+            elif metric == MetricChoice.DiceCoef:
+                output.append(DiceCoefficient())
+            else:
+                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)())
+        return output
+
     def _set_training_params(self, dataset: DatasetData, params: TrainData, training_path: str) -> None:
         self.dataset = self._prepare_dataset(dataset)
         self.training_path = training_path
@@ -71,9 +84,11 @@ class GUINN:
         self.set_optimizer(params)
         self.set_chp_monitor(params)
         for output_layer in params.architecture.outputs_dict:
-            self.metrics.update({str(output_layer["id"]): list(map(lambda item:
-                                                              getattr(sys.modules.get("tensorflow.keras.metrics"),
-                                                                      item)(), output_layer["metrics"]))})
+            self.metrics.update({
+                str(output_layer["id"]):
+                    self._check_metrics(metrics=output_layer.get("metrics", []),
+                                        num_classes=output_layer.get("classes_quantity"))
+            })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
 
     def _set_callbacks(self, dataset: object, batch_size: int, epochs: int, checkpoint: dict) -> None:
@@ -89,6 +104,12 @@ class GUINN:
         prepared_dataset = PrepareDTS(dataset)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
+
+    @staticmethod
+    def _set_model(model: dict) -> object:
+        validator = ModelValidator(ModelDetailsData(**model))
+        train_model = validator.get_keras_model()
+        return train_model
 
     def set_optimizer(self, params) -> None:
         """
@@ -173,7 +194,7 @@ class GUINN:
         print(msg)
         pass
 
-    def terra_fit(self, dataset: DatasetData, nnmodel: object = keras.Model, training_params: TrainData = None,
+    def terra_fit(self, dataset: DatasetData, gui_model: dict, training_params: TrainData = None,
                   training_path: str = "", verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
@@ -186,7 +207,9 @@ class GUINN:
         Return:
             None
         """
+        self.nn_cleaner(retrain=True if self.model_is_trained else False)
         self._set_training_params(dataset=dataset, params=training_params, training_path=training_path)
+        nnmodel = self._set_model(model=gui_model)
 
         if self.model_is_trained:
             try:
@@ -228,7 +251,7 @@ class GUINN:
             self.stop_training = False
             self.model_is_trained = False
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=True)
             else:
                 self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 
@@ -273,7 +296,7 @@ class GUINN:
         print(self.loss)
         print(self.metrics)
         self.model.compile(loss=self.loss,
-                           optimizer='adam', #self.optimizer,
+                           optimizer='adam',  # self.optimizer,
                            metrics=self.metrics
                            )
         print(('Компиляция модели', 'выполнена'))

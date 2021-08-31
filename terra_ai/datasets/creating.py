@@ -13,7 +13,6 @@ from pydantic import DirectoryPath
 from pydantic.types import FilePath
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
-from librosa import load as librosa_load
 import imgaug.augmenters as iaa
 from pydub import AudioSegment
 from pydantic.color import Color
@@ -27,16 +26,16 @@ from ..data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, Laye
     LayerAudioModeChoice, LayerVideoModeChoice, LayerPrepareMethodChoice, LayerScalerImageChoice, LayerScalerVideoChoice
 from ..utils import decamelize
 from .data import DataType, Preprocesses, InstructionsData, DatasetInstructionsData
-from . import array_creator
-from . import loading as dataset_loading
 from ..data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList, CreationInputData, \
-    CreationOutputData, OneFileData
+    CreationOutputData
 from ..data.datasets.dataset import DatasetData, DatasetLayerData, DatasetInputsData, DatasetOutputsData, \
     DatasetPathsData
 from ..settings import DATASET_EXT, DATASET_CONFIG
+from .arrays_create import CreateArray
 
 
 class CreateDTS(object):
+
     def __init__(self):
 
         self.dataset_user_data: CreationData
@@ -68,11 +67,12 @@ class CreateDTS(object):
         self.mode: str = ""
         self.iter: int = 0
 
-        self.scaler: dict = {}
-        self.tokenizer: dict = {}
-        self.word2vec: dict = {}
+        self.array_creator: CreateArray
+        # self.scaler: dict = {}
+        # self.tokenizer: dict = {}
+        # self.word2vec: dict = {}
         self.dataframe: dict = {}
-        self.tsgenerator: dict = {}
+        # self.tsgenerator: dict = {}
         self.temporary: dict = {}
         self.minvalue_y: int = 0
         self.maxvalue_y: int = 0
@@ -84,16 +84,9 @@ class CreateDTS(object):
         self.dataset_user_data = None
         self.build_dataframe: dict = {}
 
-    def create_one_file_array(self, file_data: OneFileData, source_path):
-        instructions_data = getattr(self, f"instructions_{decamelize(file_data.type)}")(file_data)
-        array = getattr(array_creator, f"create_{decamelize(file_data.type)}")(
-            source_path,
-            instructions_data.get("instructions")[0],
-            **instructions_data.get("parameters"))
-        return array
-
     def create_dataset(self, creation_data: CreationData):
 
+        self.array_creator = CreateArray(datasets_path=creation_data.datasets_path)
         self.dataset_user_data = creation_data
 
         self.name = creation_data.name
@@ -152,21 +145,18 @@ class CreateDTS(object):
 
     def set_paths(self, data: CreationData) -> DatasetPathsData:
 
-        dataset_path = os.path.join(data.datasets_path,
-                                    f"{data.alias}.{DATASET_EXT}")  # /TerraAI/datasets/DATASET_NAME.trds
-        arrays_path = os.path.join(dataset_path, "arrays")  # /TerraAI/datasets/DATASET_NAME.trds/arrays
-        instructions_path = os.path.join(dataset_path,
-                                         "instructions")  # /TerraAI/datasets/DATASET_NAME.trds/instructions
-        dataset_sources_path = os.path.join(dataset_path, "sources")  # /TerraAI/datasets/DATASET_NAME.trds/sources
+        datasets_path = data.datasets_path  # /content/drive/MyDrive/TerraAI/datasets
+        arrays_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "arrays")  # DATASET_NAME.trds/arrays
+        instructions_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "instructions")  # DATASET_NAME.trds/instructions
+        dataset_sources_path = os.path.join(f"{data.alias}.{DATASET_EXT}", "sources")  # DATASET_NAME.trds/sources
         tmp_sources_path = os.path.join(data.source_path)  # /tmp/terraai/datasets_sources/googledrive/DATASET_NAME
 
-        os.makedirs(dataset_path, exist_ok=True)
-        os.makedirs(arrays_path, exist_ok=True)
-        os.makedirs(instructions_path, exist_ok=True)
-        os.makedirs(dataset_sources_path, exist_ok=True)
-        os.makedirs(tmp_sources_path, exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, arrays_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, instructions_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, dataset_sources_path), exist_ok=True)
+        os.makedirs(os.path.join(datasets_path, tmp_sources_path), exist_ok=True)
 
-        return DatasetPathsData(datasets=dataset_path, arrays=arrays_path, instructions=instructions_path,
+        return DatasetPathsData(datasets=datasets_path, arrays=arrays_path, instructions=instructions_path,
                                 dataset_sources=dataset_sources_path, tmp_sources=tmp_sources_path)
 
     def create_instructions(self, creation_data: CreationData) -> DatasetInstructionsData:
@@ -209,11 +199,14 @@ class CreateDTS(object):
                 # -----------------------
                 cur_time = time()
                 self.write_sources_to_files(tmp_sources=self.paths.tmp_sources,
-                                            dataset_sources=self.paths.dataset_sources,
+                                            dataset_sources=os.path.join(self.paths.datasets,
+                                                                         self.paths.dataset_sources),
                                             paths_list=paths_list, put_data=elem)
                 print(time() - cur_time)
-            paths_list = [os.path.join(self.paths.dataset_sources, f'{elem.id}_{decamelize(elem.type)}', path) for path
-                          in paths_list]
+
+            paths_list = [os.path.join(self.paths.dataset_sources, f'{elem.id}_{decamelize(elem.type)}', path)
+                          for path in paths_list]
+
             instructions_data = InstructionsData(**getattr(self, f"instructions_{decamelize(elem.type)}")(paths_list,
                                                                                                           elem))
             instructions.update([(elem.id, instructions_data)])
@@ -329,21 +322,21 @@ class CreateDTS(object):
 
     def write_instructions_to_files(self):
 
-        os.makedirs(os.path.join(self.paths.instructions, 'parameters'), exist_ok=True)
+        os.makedirs(os.path.join(self.paths.datasets, self.paths.instructions, 'parameters'), exist_ok=True)
         for put in self.instructions.__dict__.keys():
             for idx in self.instructions.__dict__[put].keys():
-                with open(os.path.join(self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
+                with open(os.path.join(self.paths.datasets, self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
                     json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
 
-        os.makedirs(os.path.join(self.paths.instructions, 'tables'), exist_ok=True)
+        os.makedirs(os.path.join(self.paths.datasets, self.paths.instructions, 'tables'), exist_ok=True)
         for key in self.dataframe.keys():
-            self.dataframe[key].to_csv(os.path.join(self.paths.instructions, 'tables', f'{key}.csv'))
+            self.dataframe[key].to_csv(os.path.join(self.paths.datasets, self.paths.instructions, 'tables', f'{key}.csv'))
 
         pass
 
     def write_preprocesses_to_files(self):
         for preprocess_name in Preprocesses:
-            preprocess = getattr(array_creator, preprocess_name)
+            preprocess = getattr(self.array_creator, preprocess_name)
             preprocess_file_path = os.path.join(self.paths.datasets, preprocess_name)
             for key in preprocess.keys():
                 if preprocess[key]:
@@ -354,13 +347,13 @@ class CreateDTS(object):
         creating_inputs_data = {}
         for key in self.instructions.inputs.keys():
             if self.tags[key] == "dataframe":
-                array = getattr(array_creator, f"create_{self.tags[key]}")(
+                array = getattr(self.array_creator, f"create_{self.tags[key]}")(
                     creation_data.source_path,
                     self.instructions.inputs.get(key).instructions[0],
                     **self.instructions.inputs.get(key).parameters,
                 )
             else:
-                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                array = getattr(self.array_creator, f'create_{self.tags[key]}')(
                     self.paths.datasets,
                     self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.inputs.get(key).parameters
@@ -388,13 +381,13 @@ class CreateDTS(object):
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
             if self.tags[key] == "timeseries":
-                array = getattr(array_creator, f"create_{self.tags[key]}")(
+                array = getattr(self.array_creator, f"create_{self.tags[key]}")(
                     creation_data.source_path,
                     self.instructions.outputs.get(key).instructions[0],
                     **self.instructions.outputs.get(key).parameters,
                 )
             else:
-                array = getattr(array_creator, f'create_{self.tags[key]}')(
+                array = getattr(self.array_creator, f'create_{self.tags[key]}')(
                     self.paths.datasets,
                     self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.outputs.get(key).parameters
@@ -434,9 +427,9 @@ class CreateDTS(object):
             random.shuffle(split_sequence["val"])
             random.shuffle(split_sequence["test"])
 
-        array_creator.df_ts = pd.DataFrame(self.build_dataframe)
+        self.array_creator.df_ts = pd.DataFrame(self.build_dataframe)
         for key, value in split_sequence.items():
-            self.dataframe[key] = array_creator.df_ts.loc[value, :].reset_index(drop=True)
+            self.dataframe[key] = self.array_creator.df_ts.loc[value, :].reset_index(drop=True)
 
     def create_dataset_arrays(self, put_data: dict) -> dict:
 
@@ -454,13 +447,13 @@ class CreateDTS(object):
 
                 for i in range(len(self.dataframe[split])):
                     if self.tags[key] in ['dataframe', 'timeseries']:
-                        array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        array = getattr(self.array_creator, f'create_{self.tags[key]}')(
                             self.paths.datasets,
                             put_data.get(key).instructions[i],
                             **put_data.get(key).parameters
                         )
                     else:
-                        array = getattr(array_creator, f'create_{self.tags[key]}')(
+                        array = getattr(self.array_creator, f'create_{self.tags[key]}')(
                             self.paths.datasets,
                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
                             **put_data.get(key).parameters
@@ -483,8 +476,8 @@ class CreateDTS(object):
         for array in [array_x, array_y]:
             for sample in array.keys():
                 for inp in array[sample].keys():
-                    os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
-                    joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
+                    os.makedirs(os.path.join(self.paths.datasets, self.paths.arrays, sample), exist_ok=True)
+                    joblib.dump(array[sample][inp], os.path.join(self.paths.datasets, self.paths.arrays, sample, f'{inp}.gz'))
 
     def create_dataset_configure(self, creation_data: CreationData) -> dict:
 
@@ -511,6 +504,7 @@ class CreateDTS(object):
                 size_bytes += os.path.getsize(os.path.join(path, file))
 
         paths = self.paths.native()
+        del paths['datasets']
         del paths['tmp_sources']
 
         tags_list = []
@@ -525,12 +519,12 @@ class CreateDTS(object):
         data["size"] = {"value": size_bytes}
         data['paths'] = paths
         data["group"] = DatasetGroupChoice.custom
-        with open(os.path.join(self.paths.datasets, DATASET_CONFIG), 'w') as fp:
+        with open(os.path.join(self.paths.datasets, f'{creation_data.alias}.{DATASET_EXT}', DATASET_CONFIG), 'w') as fp:
             json.dump(data, fp)
         print(data)
         return data
 
-    def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData, OneFileData]):
+    def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         instructions: dict = {}
         self.peg.append(0)
@@ -568,18 +562,19 @@ class CreateDTS(object):
                     aug_parameters.append(getattr(iaa, key)(**value.__dict__))
                 except AttributeError:
                     pass
-            array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
+            self.array_creator.augmentation[put_data.id] = iaa.Sequential(aug_parameters, random_order=True)
         else:
-            array_creator.augmentation[put_data.id] = None
+            self.array_creator.augmentation[put_data.id] = None
 
         if put_data.parameters.scaler == LayerScalerImageChoice.min_max_scaler:
-            array_creator.create_scaler(put_data.id, scaler=LayerScalerImageChoice.min_max_scaler)
+            self.array_creator.create_scaler(put_data.id, scaler=LayerScalerImageChoice.min_max_scaler)
 
         options = put_data.parameters.native()
         options['put'] = put_data.id
         del options['augmentation']
         instructions['parameters'] = options
         if options.get('deploy', bool):
+            # paths_list = [os.path.join(file_folder, path) for path in paths_list]
             instructions['instructions'] = {f'{put_data.id}_{decamelize(put_data.type)}': paths_list}
         else:
             self.build_dataframe[f'{put_data.id}_{decamelize(put_data.type)}'] = paths_list
@@ -657,7 +652,7 @@ class CreateDTS(object):
         self.peg.append(len(video))
 
         if put_data.parameters.scaler == LayerScalerVideoChoice.min_max_scaler:
-            array_creator.create_scaler(put_data.id, scaler=LayerScalerVideoChoice.min_max_scaler)
+            self.array_creator.create_scaler(put_data.id, scaler=LayerScalerVideoChoice.min_max_scaler)
 
         options = put_data.parameters.native()
         del options['video_mode']
@@ -745,19 +740,19 @@ class CreateDTS(object):
             txt_list_w2v = []
             for elem in list(txt_list.values()):
                 txt_list_w2v.append(elem.split(' '))
-            array_creator.create_word2vec(put_data.id, txt_list_w2v, **{'size': put_data.parameters.word_to_vec_size,
+            self.array_creator.create_word2vec(put_data.id, txt_list_w2v, **{'size': put_data.parameters.word_to_vec_size,
                                                                         'window': 10,
                                                                         'min_count': 1,
                                                                         'workers': 10,
                                                                         'iter': 10})
         else:
-            array_creator.create_tokenizer(put_data.id, **{'num_words': put_data.parameters.max_words_count,
+            self.array_creator.create_tokenizer(put_data.id, **{'num_words': put_data.parameters.max_words_count,
                                                            'filters': filters,
                                                            'lower': lower,
                                                            'split': split,
                                                            'char_level': False,
                                                            'oov_token': '<UNK>'})
-            array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
+            self.array_creator.tokenizer[put_data.id].fit_on_texts(list(txt_list.values()))
 
         self.temporary[put_data.id] = txt_list
 
@@ -1006,12 +1001,12 @@ class CreateDTS(object):
                     self.peg.append(len(self.y_cls))
 
                 if "min_max_scaler" in options.values():
-                    array_creator.scaler[put_data.id] = MinMaxScaler()
-                    array_creator.scaler[put_data.id].fit(df.values.reshape(-1, 1))
+                    self.array_creator.scaler[put_data.id] = MinMaxScaler()
+                    self.array_creator.scaler[put_data.id].fit(df.values.reshape(-1, 1))
 
                 elif "standard_scaler" in options.values():
-                    array_creator.scaler[put_data.id] = StandardScaler()
-                    array_creator.scaler[put_data.id].fit(df.values.reshape(-1, 1))
+                    self.array_creator.scaler[put_data.id] = StandardScaler()
+                    self.array_creator.scaler[put_data.id].fit(df.values.reshape(-1, 1))
 
                 if options["xlen_step"]:
                     df = pd.DataFrame({"slices": xlen_array})
@@ -1133,7 +1128,7 @@ class CreateDTS(object):
             stop = len(df)
 
         if options["MinMaxScaler"] or options["StandardScaler"]:
-            array_creator.scaler[put_data.id] = {
+            self.array_creator.scaler[put_data.id] = {
                 "MinMaxScaler": {},
                 "StandardScaler": {},
             }
@@ -1142,10 +1137,10 @@ class CreateDTS(object):
                     options["MinMaxScaler"], df.columns
                 )
                 for i in instructions["parameters"]["MinMaxScaler"]:
-                    array_creator.scaler[put_data.id]["MinMaxScaler"][
+                    self.array_creator.scaler[put_data.id]["MinMaxScaler"][
                         f"col_{i + 1}"
                     ] = MinMaxScaler()
-                    array_creator.scaler[put_data.id]["MinMaxScaler"][
+                    self.array_creator.scaler[put_data.id]["MinMaxScaler"][
                         f"col_{i + 1}"
                     ].fit(df.iloc[:, [i]].to_numpy().reshape(-1, 1))
 
@@ -1154,10 +1149,10 @@ class CreateDTS(object):
                     options["StandardScaler"], df.columns
                 )
                 for i in instructions["parameters"]["StandardScaler"]:
-                    array_creator.scaler[put_data.id]["StandardScaler"][
+                    self.array_creator.scaler[put_data.id]["StandardScaler"][
                         f"col_{i + 1}"
                     ] = StandardScaler()
-                    array_creator.scaler[put_data.id]["StandardScaler"][
+                    self.array_creator.scaler[put_data.id]["StandardScaler"][
                         f"col_{i + 1}"
                     ].fit(df.iloc[:, [i]].to_numpy().reshape(-1, 1))
 
@@ -1230,7 +1225,7 @@ class CreateDTS(object):
         else:
             instructions["parameters"]["xlen_step"] = False
 
-        array_creator.columns = df.columns
+        self.array_creator.columns = df.columns
         instructions["instructions"] = np.arange(0, stop, step).tolist()
         for i in df.columns:
             self.build_dataframe.update({i: df.loc[:, i]})
@@ -1328,11 +1323,11 @@ class CreateDTS(object):
             instructions["parameters"]["depth"] = int(options["depth"])
 
             if "min_max_scaler" in instructions["parameters"].values():
-                array_creator.scaler[put_data.id] = MinMaxScaler()
-                array_creator.scaler[put_data.id].fit(y_subdf.values.reshape(-1, 1))
+                self.array_creator.scaler[put_data.id] = MinMaxScaler()
+                self.array_creator.scaler[put_data.id].fit(y_subdf.values.reshape(-1, 1))
             elif "standard_scaler" in instructions["parameters"].values():
-                array_creator.scaler[put_data.id] = StandardScaler()
-                array_creator.scaler[put_data.id].fit(y_subdf.values.reshape(-1, 1))
+                self.array_creator.scaler[put_data.id] = StandardScaler()
+                self.array_creator.scaler[put_data.id].fit(y_subdf.values.reshape(-1, 1))
 
             instructions["instructions"] = np.arange(
                 0,
@@ -1345,7 +1340,7 @@ class CreateDTS(object):
             ).tolist()
             for i in y_subdf.columns:
                 self.build_dataframe.update({i: y_subdf.loc[:, i]})
-        array_creator.y_cols = y_subdf.columns
+        self.array_creator.y_cols = y_subdf.columns
         instructions["parameters"]["bool_trend"] = bool_trend
         instructions["parameters"]["put"] = put_data.id
         return instructions
@@ -1357,7 +1352,7 @@ class CreateDTS(object):
         options = put_data.parameters.native()
         instructions: dict = {}
         self.task_type[put_data.id] = put_data.type
-        self.encoding[put_data.id] = "ohe" if options["one_hot_encoding"] else None
+        self.encoding[put_data.id] = "ohe" if put_data.parameters.one_hot_encoding else None
 
         if "dataframe" in self.tags.values():
             transpose = self.user_parameters.get(
@@ -1452,14 +1447,11 @@ class CreateDTS(object):
         }
         # instructions['instructions'] = {f'{put_data.id}_classification': [
         #                                     self.classes_names[put_data.id][i] for i in self.y_cls]}
-        self.build_dataframe[f"{put_data.id}_classification"] = [
-            self.classes_names[put_data.id][i] for i in self.y_cls
-        ]
+        self.build_dataframe[f"{put_data.id}_classification"] = self.y_cls  # [self.classes_names[put_data.id][i] for i in self.y_cls]
+
         return instructions
 
-    def instructions_regression(
-            self, number_list: list, put_data: Union[CreationInputData, CreationOutputData]
-    ):
+    def instructions_regression(self, number_list: list, put_data: Union[CreationInputData, CreationOutputData]):
 
         options = put_data.parameters.native()
         instructions: dict = {}
@@ -1473,10 +1465,10 @@ class CreateDTS(object):
                 or options["scaler"] == "standard_scaler"
         ):
             if options["scaler"] == "min_max_scaler":
-                array_creator.scaler[put_data.id] = MinMaxScaler()
+                self.array_creator.scaler[put_data.id] = MinMaxScaler()
             if options["scaler"] == "standard_scaler":
-                array_creator.scaler[put_data.id] = StandardScaler()
-            array_creator.scaler[put_data.id].fit(np.array(number_list).reshape(-1, 1))
+                self.array_creator.scaler[put_data.id] = StandardScaler()
+            self.array_creator.scaler[put_data.id].fit(np.array(number_list).reshape(-1, 1))
 
         instructions["parameters"] = options
         if options.get("deploy", bool):
@@ -1552,16 +1544,13 @@ class CreateDTS(object):
     def instructions_text_segmentation(self, _, put_data: Union[CreationInputData, CreationOutputData]):
 
         """
-
         Args:
             **put_data:
                 open_tags: str
                     Открывающие теги.
                 close_tags: str
                     Закрывающие теги.
-
         Returns:
-
         """
 
         def get_samples(doc_text: str, op_tags, cl_tags):

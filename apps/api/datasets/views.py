@@ -16,6 +16,7 @@ from .serializers import (
     ChoiceSerializer,
     CreateSerializer,
     DeleteSerializer,
+    SourceSegmentationClassesAutosearchSerializer,
 )
 
 
@@ -28,7 +29,7 @@ class ChoiceAPIView(BaseAPIView):
             agent_exchange(
                 "dataset_choice",
                 path=str(data_path.datasets),
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             return BaseResponseSuccess()
         except ValidationError as error:
@@ -76,6 +77,40 @@ class SourceLoadProgressAPIView(BaseAPIView):
         )
 
 
+class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = SourceSegmentationClassesAutosearchSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_autosearch",
+                    path=request.data.get("path"),
+                    **serializer.validated_data,
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
+class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        try:
+            return BaseResponseSuccess(
+                agent_exchange(
+                    "dataset_source_segmentation_classes_annotation",
+                    path=request.data.get("path"),
+                )
+            )
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
+        except TerraBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+
+
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         serializer = CreateSerializer(data=request.data)
@@ -107,7 +142,7 @@ class DeleteAPIView(BaseAPIView):
             agent_exchange(
                 "dataset_delete",
                 path=str(data_path.datasets),
-                **serializer.validated_data
+                **serializer.validated_data,
             )
             return BaseResponseSuccess()
         except ValidationError as error:

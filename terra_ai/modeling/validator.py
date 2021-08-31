@@ -246,8 +246,8 @@ class ModelValidator:
 
         edges = get_edges(self.model_plan.plan)
 
-        graph = nx.DiGraph(edges)
-        for cycle in nx.simple_cycles(graph):
+        di_graph = nx.DiGraph(edges)
+        for cycle in nx.simple_cycles(di_graph):
             if cycle:
                 self.valid = False
                 comment = f"Layers {cycle} make a cycle! Please correct the structure!"
@@ -264,9 +264,10 @@ class ModelValidator:
         """
 
         edges = get_edges(self.model_plan.plan, full_connection=True)
-        graph = nx.DiGraph(edges)
+        di_graph = nx.DiGraph(edges)
         sub_graphs = sorted(
-            list(nx.weakly_connected_components(graph)), key=lambda subgraph: -len(subgraph)
+            list(nx.weakly_connected_components(di_graph)),
+            key=lambda subgraph: -len(subgraph),
         )
 
         if len(sub_graphs) > 1:
@@ -305,12 +306,10 @@ class ModelValidator:
                 ] = "Input shape Error: layer does not have input shape!"
 
         # check if plan input shapes is not None
-        for name, shape in self.model_plan.input_shape.items():
-            if None in shape:
+        for _id, shape in self.model_plan.input_shape.items():
+            if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[
-                    input_layers.get(name)
-                ] = "Input shape Error: layer does not have input shape!"
+                self.val_dictionary[_id] = "Input shape Error: layer does not have input shape!"
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -594,6 +593,8 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
+            elif not self.layer_input_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
                     self.layer_input_shapes.get(layer.id)[0][1:]
@@ -610,11 +611,14 @@ class ModelValidator:
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            self.filled_model.layers[idx].shape.output = [
-                self.layer_output_shapes.get(layer.id)[0][1:]
-                if self.layer_output_shapes.get(layer.id)[0]
-                else self.layer_output_shapes.get(layer.id)
-            ]
+            if not self.layer_output_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.output = []
+            else:
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
+                ]
 
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
