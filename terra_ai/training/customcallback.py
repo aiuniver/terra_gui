@@ -497,6 +497,7 @@ class InteractiveCallback:
         self.interactive_config = {
             'loss_graphs': [
                 {
+                    'id': 1,
                     'output_idx': 2,
                     'show_for_model': True,
                     'show_for_classes': False
@@ -504,6 +505,7 @@ class InteractiveCallback:
             ],
             'metric_graphs': [
                 {
+                    'id': 1,
                     'output_idx': 2,
                     'show_for_model': True,
                     'show_for_classes': False,
@@ -875,6 +877,7 @@ class InteractiveCallback:
 
             # пример для всей модели
             {
+                'id': 1,
                 'graph_name': f'Output_{output_idx} - График ошибки обучения - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
@@ -890,11 +893,7 @@ class InteractiveCallback:
                         'values': []
                     },
                 ],
-                "progress_state": {
-                    "normal": True,
-                    "underfitting": False,
-                    "overfitting": False
-                }
+                "progress_state": "normal",
             },
 
             # Пример для классов
@@ -903,6 +902,16 @@ class InteractiveCallback:
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
                 'plot_data': [
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
+                    {
+                        'class_label': f'Класс {class_name}',
+                        'epochs': [],
+                        'values': []
+                    },
                     {
                         'class_label': f'Класс {class_name}',
                         'epochs': [],
@@ -1005,6 +1014,7 @@ class InteractiveCallback:
                         'values': []
                     },
                 ],
+                "progress_state": "normal",
             },
 
             # Пример для классов
@@ -1101,12 +1111,32 @@ class InteractiveCallback:
             example_num: {
                 'initial_data': [
                     {
+                        'type': 'image',
+                        'layer': f'Input_{layer_id}',
+                        'data': '/content/file.webm'
+                    },
+                    {
+                        'type': 'video',
+                        'file_path': '/content/file.webm'
+                        'layer': f'Input_{layer_id}',
+                        # 'data': smth in base64
+                    },
+                    {
+                        'type': 'text',
+                        # 'file_path': '/content/file.webm'
+                        'layer': f'Input_{layer_id}',
+                        'data': smth in base64
+                    },
+                    {
+                        'type': 'text',
+                        # 'file_path': '/content/file.webm'
                         'layer': f'Input_{layer_id}',
                         'data': smth in base64
                     }
                 ],
                 'true_value': [
                     {
+                        'type': 'text',
                         'layer': f'Output_{layer_id}',
                         'data': smth in base64
                     }
@@ -1235,7 +1265,8 @@ class InteractiveCallback:
     def _postprocess_initial_data(self, input_id: int, data_type: str, mode: str, show_statistic: bool):
         pass
 
-    _postprocess_result_data
+    def _postprocess_result_data(self):
+        pass
 
 
 class FitCallback(keras.callbacks.Callback):
