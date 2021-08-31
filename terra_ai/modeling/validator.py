@@ -74,7 +74,6 @@ def get_idx_line(model_plan):
                     row_idxs.append(downlink)
 
         for link in row_idxs:
-
             if (
                 len(uplinks.get(link)) > 1
                 and len(set(idx2remove) & set(uplinks.get(link))) != 0
@@ -170,7 +169,7 @@ def tensor_shape_to_tuple(tensor_shape):
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, output_shape=None, **kwargs):
+    def __init__(self, model, output_shape=None, **kwargs):
         self.validator = LayerValidation()
         self.model_plan = None
         self.filled_model = None
@@ -259,8 +258,8 @@ class ModelValidator:
 
         edges = get_edges(self.model_plan.plan)
 
-        G = nx.DiGraph(edges)
-        for cycle in nx.simple_cycles(G):
+        di_graph = nx.DiGraph(edges)
+        for cycle in nx.simple_cycles(di_graph):
             if cycle:
                 self.valid = False
                 comment = f"Layers {cycle} make a cycle! Please correct the structure!"
@@ -277,9 +276,10 @@ class ModelValidator:
         """
 
         edges = get_edges(self.model_plan.plan, full_connection=True)
-        G = nx.DiGraph(edges)
+        di_graph = nx.DiGraph(edges)
         subgraphs = sorted(
-            list(nx.weakly_connected_components(G)), key=lambda subgraph: -len(subgraph)
+            list(nx.weakly_connected_components(di_graph)),
+            key=lambda subgraph: -len(subgraph),
         )
 
         if len(subgraphs) > 1:
@@ -318,12 +318,10 @@ class ModelValidator:
                 ] = "Input shape Error: layer does not have input shape!"
 
         # check if plan input shapes is not None
-        for name, shape in self.model_plan.input_shape.items():
-            if None in shape:
+        for _id, shape in self.model_plan.input_shape.items():
+            if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[
-                    input_layers.get(name)
-                ] = "Input shape Error: layer does not have input shape!"
+                self.val_dictionary[_id] = "Input shape Error: layer does not have input shape!"
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -484,10 +482,10 @@ class ModelValidator:
                 name_dict[layer[0]] = f"x_{layer[0]}"
 
         layers_str = ""
-        for id, layer_name in layers_import.items():
+        for _id, layer_name in layers_import.items():
             # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
             layers_str += (
-                f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
+                f"from {self.layers_config.get(_id).module.value} import {layer_name}\n"
             )
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
@@ -607,6 +605,8 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
+            elif not self.layer_input_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
                     self.layer_input_shapes.get(layer.id)[0][1:]
@@ -623,13 +623,15 @@ class ModelValidator:
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            self.filled_model.layers[idx].shape.output = [
-                self.layer_output_shapes.get(layer.id)[0][1:]
-                if self.layer_output_shapes.get(layer.id)[0]
-                else self.layer_output_shapes.get(layer.id)
-            ]
+            if not self.layer_output_shapes.get(layer.id):
+                self.filled_model.layers[idx].shape.output = []
+            else:
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
+                ]
 
-        # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
 
@@ -642,15 +644,15 @@ class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
     def __init__(self):
-        self.inp_shape = [None]
-        self.layer_type = ""
-        self.def_parameters = {}
-        self.layer_parameters = {}
-        self.num_uplinks = 1
-        self.input_dimension = 2
-        self.module = ""
-        self.module_type = ""
-        self.kwargs = {}
+        self.inp_shape: list = [None]
+        self.layer_type: str = ""
+        self.def_parameters: dict = {}
+        self.layer_parameters: dict = {}
+        self.num_uplinks: tuple = None
+        self.input_dimension: tuple = None
+        self.module: str = ""
+        self.module_type: str = ""
+        self.kwargs: dict = {}
 
     def set_state(self, layer_type, shape, parameters, defaults, config, **kwargs):
         """Set input data and fill attributes"""
@@ -714,7 +716,7 @@ class LayerValidation:
                         return new, None
 
                     return output_shape, None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -729,14 +731,14 @@ class LayerValidation:
                     )
                     # print(type(tensor_shape_to_tuple(output.shape)))
                     return [tensor_shape_to_tuple(output.shape)], None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
 
     def get_problem_parameter(
         self, base_dict: dict, check_dict: dict, problem_dict, inp_shape, revert=False
     ):
         """check each not default parameter from check_dict by setting it in base_dict
-        revert means set defaul parameter in layer parameters and need additional check if pass
+        revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
@@ -1206,10 +1208,10 @@ class ModelCreator:
         self._get_idx_line()
         self._get_model_links()
         self.id_idx_dict = {}
-        for id in self.idx_line:
+        for _id in self.idx_line:
             for idx in range(len(self.terra_model.plan)):
-                if id == self.terra_model.plan[idx][0]:
-                    self.id_idx_dict[id] = idx
+                if _id == self.terra_model.plan[idx][0]:
+                    self.id_idx_dict[_id] = idx
                     break
         self.tensors = {}
         pass
@@ -1226,34 +1228,36 @@ class ModelCreator:
 
     def _build_keras_model(self):
         """Build keras model from plan"""
-        for id in self.idx_line:
-            layer_type = self.terra_model.plan[self.id_idx_dict.get(id)][1]
+        for _id in self.idx_line:
+            layer_type = self.terra_model.plan[self.id_idx_dict.get(_id)][1]
             # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
             #     layer_type = 'SpaceToDepth'
             # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
             if (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.tensorflow
             ):
-                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             elif (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.keras_pretrained_model
             ):
                 self._pretrained_model_init_(
-                    self.terra_model.plan[self.id_idx_dict.get(id)]
+                    self.terra_model.plan[self.id_idx_dict.get(_id)]
                 )
             elif (
-                self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.block_plan
             ):
-                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._custom_block_init(
+                    self.terra_model.plan[self.id_idx_dict.get(_id)]
+                )
             elif (
-                self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras
-                or self.layer_config.get(id).module_type.value
+                self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras
+                or self.layer_config.get(_id).module_type.value
                 == ModuleTypeChoice.terra_layer
             ):
-                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
                 sys.exit(msg)
