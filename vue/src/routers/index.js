@@ -36,11 +36,16 @@ const router = new Router({
       name: 'Deploy',
       component: () => import('@/views/Deploy'),
     },
+    {
+      path: '/marking',
+      name: 'Marking',
+      component: () => import('@/views/Marking'),
+    },
   ]
 })
 
-router.beforeEach((to, from, next) => {
-    next()
-})
+// router.beforeEach((to, from, next) => {
+//   next()
+// })
 
 export default router
