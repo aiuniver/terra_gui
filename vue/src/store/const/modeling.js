@@ -31,15 +31,15 @@ const createBlock = function (type, id, typeLayers) {
     return n.group === type;
   });
 
-  const mainArr = typeLayers?.[`Layer${node.type}Data`]?.main || []
-  const extraArr = typeLayers?.[`Layer${node.type}Data`]?.extra || []
+  const mainArr = typeLayers?.[node.type]?.main || []
+  const extraArr = typeLayers?.[node.type]?.extra || []
   const main = {}
   const extra = {}
   mainArr.forEach(({ name, value }) => {
-    main[name] = value
+    main[name] = value === '__null__' ? null : value
   })
   extraArr.forEach(({ name, value }) => {
-    extra[name] = value
+    extra[name] = value === '__null__' ? null : value
   })
 
   if (!node) {

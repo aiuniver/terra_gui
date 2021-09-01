@@ -292,7 +292,7 @@ class DatasetData(AliasMixinData):
                     "name": layer.name,
                     "type": LayerTypeChoice.Dense,
                     "group": LayerGroupChoice.output,
-                    "shape": {"input": [layer.shape]},
+                    "shape": {"output": [layer.shape]},
                 }
             )
         data.update({"layers": layers})

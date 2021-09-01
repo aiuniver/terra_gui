@@ -5,6 +5,7 @@ from enum import Enum
 class ExceptionMessages(str, Enum):
     CallMethodNotFound = "Instance of `%s` must have method `%s`"
     MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
+    ModelAlreadyExists = "Model `%s` already exists"
 
 
 class ExchangeBaseException(Exception):
@@ -23,3 +24,8 @@ class MethodNotCallableException(ExchangeBaseException):
         super().__init__(
             ExceptionMessages.MethodNotCallable % (str(__method), str(__class))
         )
+
+
+class ModelAlreadyExistsException(ExchangeBaseException):
+    def __init__(self, __name: str):
+        super().__init__(ExceptionMessages.ModelAlreadyExists % str(__name))

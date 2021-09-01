@@ -21,6 +21,7 @@ export default {
     items: [
       { title: "Данные", path: "/datasets" },
       { title: "Проектирование", path: "/modeling" },
+      { title: "Разметка", path: "/marking" },
       { title: "Обучение", path: "/training" },
       { title: "Каскады", path: "/cascades" },
       { title: "Деплой", path: "/deploy" },
@@ -34,7 +35,7 @@ export default {
   methods: {
     nav(path) {
       if (!this.project.dataset) {
-        if (path === "/modeling" || path === "/datasets" || path === "/deploy") {
+        if (path === "/modeling" || path === "/datasets" || path === "/deploy" || path === "/marking") {
           if (this.$route.path !== path) {
             this.$router.push(path);
           }

@@ -113,6 +113,7 @@ export default {
         width: this.options.width + 'px',
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
+        zIndex: this.selected ? 10 : 1
       };
     },
   },
