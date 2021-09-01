@@ -1,26 +1,22 @@
-# from threading import Thread
-from typing import Tuple
-import numpy as np
-import os
 import gc
-# import copy
-import tensorflow as tf
+import os
 import sys
+
+import numpy as np
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
-from terra_ai.data.modeling.model import ModelData, ModelDetailsData
+from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
-
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
-
 from terra_ai.training.data import custom_losses_dict
 
 __version__ = 0.01
@@ -34,9 +30,6 @@ class GUINN:
     def __init__(self) -> None:
         """
         GUINN init method
-
-        Args:
-            exch_obj:   exchange object for terra
         """
         self.callbacks = []
         self.chp_monitor = 'loss'
@@ -45,6 +38,7 @@ class GUINN:
         For model settings
         """
         self.nn_name: str = ''
+        self.DTS = None
         self.model = None
         self.training_path: str = ""
         self.optimizer = None
@@ -94,8 +88,8 @@ class GUINN:
 
     def _set_callbacks(self, dataset: object, batch_size: int, epochs: int, checkpoint: dict) -> None:
         print(('Добавление колбэков', '...'))
-        clsclbk = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
-        self.callbacks = [clsclbk]
+        callback = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
+        self.callbacks = [callback]
         checkpoint.update([('filepath', 'F:\\tmp\\models\\test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         print(('Добавление колбэков', 'выполнено'))
@@ -107,7 +101,7 @@ class GUINN:
         return prepared_dataset
 
     @staticmethod
-    def _set_model(model: dict) -> object:
+    def _set_model(model: dict):
         validator = ModelValidator(ModelDetailsData(**model))
         train_model = validator.get_keras_model()
         return train_model
@@ -126,21 +120,22 @@ class GUINN:
         for i_key in self.metrics.keys():
             for idx, metric in enumerate(self.metrics[i_key]):
                 if metric in custom_losses_dict.keys():
-                    if metric == "mean_io_u":
+                    if metric == "mean_io_u":  # TODO определить или заменить self.output_params (возможно на params)
                         self.metrics[i_key][idx] = custom_losses_dict[metric](
                             num_classes=self.output_params[i_key]['num_classes'], name=metric)
                     else:
                         self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
     def set_chp_monitor(self, params) -> None:
-        layer_id = params.architecture.parameters.checkpoint.layer
-        output = params.architecture.parameters.outputs.get(layer_id)
+        # layer_id = params.architecture.parameters.checkpoint.layer # TODO удалить, если не используются
+        # output = params.architecture.parameters.outputs.get(layer_id)
         if len(self.dataset.data.inputs) > 1:
             if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
                         if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
+                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
+                            self.chp_monitor = f'{checkpoint_layer}_{output.metrics[0].value} '
                 else:
                     for output in params.architecture.parameters.outputs:
                         if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
@@ -149,11 +144,13 @@ class GUINN:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
                     for output in params.architecture.parameters.outputs:
                         if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.metrics[0].value}'
+                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
+                            self.chp_monitor = f'val_{checkpoint_layer}_{output.metrics[0].value}'
                 else:
                     for output in params.architecture.parameters.outputs:
                         if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'val_{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
+                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
+                            self.chp_monitor = f'val_{checkpoint_layer}_{output.loss.value}'
         else:
             if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
                 if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
@@ -188,7 +185,7 @@ class GUINN:
             t_shape.append([i_key, self.DTS.X[i_key]['data'][2].shape])
 
         msg = f'num_classes = {self.DTS.num_classes}, x_Train_shape = {x_shape}, x_Val_shape = {v_shape}, \n' \
-              f'x_Test_shape = {t_shape}, epochs = {self.epochs}, learning_rate={self.learning_rate}, \n' \
+              f'x_Test_shape = {t_shape}, epochs = {self.epochs}, \n' \
               f'callbacks = {self.callbacks}, batch_size = {self.batch_size},shuffle = {self.shuffle}, \n' \
               f'loss = {self.loss}, metrics = {self.metrics} \n'
 
@@ -201,8 +198,11 @@ class GUINN:
         This method created for using wth externally compiled models
 
         Args:
-            nnmodel (obj): keras model for fit
+            dataset: DatasetData
+            gui_model (obj): keras model for fit
             training_params:
+            training_path: TrainData
+            dataset_path: str
             verbose:    verbose arg from tensorflow.keras.model.fit
 
         Return:
@@ -231,6 +231,7 @@ class GUINN:
 
                 self.nn_name = f"{self.model.name}"
                 self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
+                # TODO определить или заменить self.Exch (возможно, self.callbacks)
             except Exception:
                 self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))
                 print("Ошибка загрузки модели!!!")
@@ -253,17 +254,17 @@ class GUINN:
             self.stop_training = False
             self.model_is_trained = False
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=True)
+                self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=True)
             else:
-                self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
+                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 
         else:
             self.model = nnmodel
             self.nn_name = f"{self.model.name}"
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-                self.yolomodel_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+                self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
-                self.basemodel_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
+                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
 
             self.sum_epoch += self.epochs
         self.model_is_trained = True
@@ -292,7 +293,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def basemodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
+    def base_model_fit(self, params, dataset, verbose=0, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
         print(self.loss)
@@ -319,8 +320,8 @@ class GUINN:
             callbacks=self.callbacks
         )
 
-    def yolomodel_fit(self, params, dataset, verbose=0, retrain=False) -> None:
-        # Массив используемых анкоров (в пикселях). Используетя по 3 анкора на каждый из 3 уровней сеток
+    def yolo_model_fit(self, params, dataset, verbose=0, retrain=False) -> None:
+        # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
         # данные значения коррелируются с размерностью входного изображения input_shape
         anchors = np.array(
             [[10, 13], [16, 30], [33, 23], [30, 61], [62, 45], [59, 119], [116, 90], [156, 198], [373, 326]])
@@ -339,7 +340,7 @@ class GUINN:
                       input_shape - размерность входного изображения для модели YOLO
                       num_anchors - общее количество анкоров
                       model - спроектированная модель
-                      num_classes - количесво классов
+                      num_classes - количество классов
             """
             w, h, ch = input_shape  # Получаем ширину и высоту и глубину входного изображения
             # inputs = keras.layers.Input(shape=(w, h, ch))  # Создаем входной слой модели, добавляя размерность для
@@ -357,28 +358,28 @@ class GUINN:
                 keras.layers.Input(shape=(w // 8, h // 8, num_anchor // 3, num_classes + 5), name="input_4")
             ]
 
-            model_yolo = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
+            yolo_model = model  # create_YOLOv3(inputs, num_anchors // 3)  # Создаем модель YOLOv3
             print('Создана модель YOLO. Количество классов: {}.'.format(
                 num_classes))  # Выводим сообщение о создании модели
-            print('model_yolo.summary()', model_yolo.summary())
+            print('model_yolo.summary()', yolo_model.summary())
             # Создаем выходной слой Lambda (выходом которого будет значение ошибки модели)
             # На вход слоя подается:
             #   - model_yolo.output (выход модели model_yolo (то есть то, что посчитала сеть))
             #   - y_true (оригинальные данные из обучающей выборки)
             outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
-                                          arguments={'num_anchors': num_anchor})([*model_yolo.output, *y_true])
+                                          arguments={'num_anchors': num_anchor})([*yolo_model.output, *y_true])
 
-            return keras.models.Model([model_yolo.input, *y_true], outputs)  # Возвращаем модель
+            return keras.models.Model([yolo_model.input, *y_true], outputs)  # Возвращаем модель
 
         # Создаем модель
-        model_YOLO = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
+        model_yolo = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
                                   num_classes=list(self.dataset.data.num_classes.values())[0])
-        print(model_YOLO.summary())
+        print(model_yolo.summary())
 
         # Компилируем модель
         print(('Компиляция модели', '...'))
         # self.set_custom_metrics()
-        model_YOLO.compile(optimizer=self.optimizer,
+        model_yolo.compile(optimizer=self.optimizer,
                            loss={'yolo_loss': lambda y_true, y_pred: y_pred})
         print(('Компиляция модели', 'выполнена'))
         print(('Начало обучения', '...'))
@@ -388,7 +389,7 @@ class GUINN:
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
 
         print(('Начало обучения', '...'))
-        self.history = model_YOLO.fit(
+        self.history = model_yolo.fit(
             self.dataset.dataset.get('train'),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
