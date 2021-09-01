@@ -1,11 +1,11 @@
 <template>
-  <at-modal v-model="dialog" width="750">
+  <at-modal v-model="dialog" width="600">
     <div slot="header" style="text-align: center">
       <span>{{ title }}</span>
     </div>
     <div class="t-pre">
       <scrollbar>
-        <p class="message"><slot></slot></p>
+        <pre class="message"><slot></slot></pre>
       </scrollbar>
     </div>
     <div slot="footer">
@@ -70,14 +70,14 @@ export default {
 
 <style scoped lang="scss">
 .t-pre {
-  height: 400px;
+  height: 300px;
   background: #0e1621;
-  padding: 10px;
   border-radius: 4px;
   box-shadow: inset 0 0 3px black;
-  p {
-    white-space: break-spaces;
+  pre {
+    // white-space: break-spaces;
     font-family: monospace;
+    padding: 10px;
   }
 }
 
