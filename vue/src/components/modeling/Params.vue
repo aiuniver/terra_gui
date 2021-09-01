@@ -107,7 +107,7 @@ export default {
     main() {
       const blockType = this.block?.type;
       if (Object.keys(this.layers).length && blockType) {
-        const items = this.layers[`Layer${blockType}Data`]?.main || [];
+        const items = this.layers[blockType]?.main || [];
         const value = this.block?.parameters?.main || {};
         return { type: 'main', items, value, blockType };
       } else {
@@ -117,7 +117,7 @@ export default {
     extra() {
       const blockType = this.block?.type;
       if (Object.keys(this.layers).length && blockType) {
-        const items = this.layers[`Layer${blockType}Data`]?.extra || [];
+        const items = this.layers[blockType]?.extra || [];
         const value = this.block?.parameters?.extra || {};
         return { type: 'extra', items, value, blockType };
       } else {
