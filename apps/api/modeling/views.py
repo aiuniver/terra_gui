@@ -11,7 +11,7 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import ModelGetSerializer
+from .serializers import ModelGetSerializer, UpdateSerializer
 
 
 class GetAPIView(BaseAPIView):
@@ -57,12 +57,15 @@ class ClearAPIView(BaseAPIView):
 
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = UpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
         try:
             request.project.set_model(
                 agent_exchange(
                     "model_update",
                     model=request.project.model.native(),
-                    **request.data,
+                    **serializer.validated_data,
                 )
             )
             return BaseResponseSuccess()
