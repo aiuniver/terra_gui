@@ -29,13 +29,13 @@
           <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
             <Forms :data="extra" @change="change" />
           </at-collapse-item>
-          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя">
+          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange >
             <Shape
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
               :label="'Input shape'"
               :name="'shape_input'"
-              :disabled="block.type !== 'Input' || !project.dataset"
+              :disabled="block.type !== 'Input' || (!!project.dataset)"
               @change="saveModel"
             />
             <Shape
