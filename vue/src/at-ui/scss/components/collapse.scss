@@ -33,6 +33,11 @@
         color: $collapse-header-text-color-disabled;
       }
     }
+    &--not-change {
+      .at-collapse__header {
+        cursor: default;
+      }
+    }
   }
   &__header {
     position: relative;
