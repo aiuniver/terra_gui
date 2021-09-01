@@ -4,14 +4,9 @@
       <LoadModel v-model="dialogLoadModel" />
       <SaveModel v-model="dialogSaveModel" :image="imageModel" />
       <Toolbar @actions="actions" />
-      <Blocks
-        ref="container"
-        @blockSelect="selectBlock = $event"
-        @blockDeselect="selectBlock = null"
-        @save="saveLayers"
-      />
-      <Params ref="params" :selectBlock="selectBlock" />
-      <CopyModal v-model="kerasModal" :title="'Код на keras'">Keras code</CopyModal>
+      <Blocks ref="container" />
+      <Params />
+      <CopyModal v-model="kerasModal" :title="'Код на keras'">{{ keras }}</CopyModal>
     </div>
   </main>
 </template>
@@ -37,28 +32,28 @@ export default {
   data: () => ({
     dialogLoadModel: false,
     dialogSaveModel: false,
-    selectBlock: null,
     imageModel: null,
     kerasModal: false,
   }),
+  computed: {
+    keras() {
+      return this.$store.getters['modeling/getModel']?.keras || '';
+    },
+  },
   methods: {
     addBlock(type) {
       console.log(type);
       this.create = false;
-      this.selectBlockType = '';
-      this.$refs.container.addNewBlock(type);
+      this.$store.dispatch('modeling/addBlock', type);
     },
     async saveModel() {
       this.imageModel = null;
       this.dialogSaveModel = true;
       this.imageModel = await this.$refs.container.getImages();
     },
-    async saveLayers() {
-      await this.$store.dispatch('modeling/saveModel', {});
-    },
     async validateModel() {
       const validate = await this.$store.dispatch('modeling/validateModel', {});
-      console.log(validate)
+      console.log(validate);
     },
     async clearModel() {
       try {
@@ -72,7 +67,7 @@ export default {
           this.$store.dispatch('modeling/clearModel');
         }
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
     },
     actions(btn) {
@@ -86,10 +81,7 @@ export default {
         this.saveModel();
       }
       if (btn === 'validation') {
-        // this.create = true
-        // console.log('hjkhjh');
-        // this.$refs.params.saveModel();
-        this.validateModel()
+        this.validateModel();
       }
       if (btn === 'clear') {
         this.clearModel();

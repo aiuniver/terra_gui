@@ -94,6 +94,18 @@ export default {
     async sourceLoad({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
+
+    async classesAnnotation ({ dispatch, state: { sourcePath } }) {
+      const data = { path: sourcePath}
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
+    },
+    async classesAutosearch ({ dispatch, state: { sourcePath } }, obj) {
+      const data = { path: sourcePath, ...obj}
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
+    },
+
+
+
     async loadProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },

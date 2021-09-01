@@ -11,7 +11,7 @@
               :type="'text'"
               :parse="'name'"
               :name="'name'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <Autocomplete2
@@ -19,27 +19,27 @@
               :list="list"
               label="Тип слоя"
               name="type"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <t-input
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
-              :label="'Shape (input)'"
+              :label="'Input shape'"
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
             <t-input
               v-if="block.shape && block.shape.output"
               v-model="block.shape.output"
-              :label="'Shape (output)'"
+              :label="'Output shape'"
               :type="'text'"
               :parse="'shape'"
               :name="'shape'"
-              :disabled="!selectBlock"
+              :disabled="isBlock"
               @change="saveModel"
             />
           </div>
@@ -72,9 +72,6 @@ import { mapGetters } from 'vuex';
 // import Select from "@/components/forms/Select.vue";
 export default {
   name: 'Params',
-  props: {
-    selectBlock: Object,
-  },
   components: {
     // Input,
     Autocomplete2,
@@ -91,15 +88,18 @@ export default {
       list: 'modeling/getList',
       layers: 'modeling/getLayersType',
       buttons: 'modeling/getButtons',
-      // block: "modeling/getBlock",
+      block: "modeling/getBlock",
     }),
-    block: {
-      set(value) {
-        this.$store.dispatch('modeling/setBlock', value);
-      },
-      get() {
-        return this.$store.getters['modeling/getBlock'] || {};
-      },
+    // block: {
+    //   set(value) {
+    //     this.$store.dispatch('modeling/setBlock', value);
+    //   },
+    //   get() {
+    //     return this.$store.getters['modeling/getBlock'] || {};
+    //   },
+    // },
+    isBlock () {
+      return (!this.block.id)
     },
     buttonSave () {
       return this.buttons?.save || false
@@ -127,7 +127,7 @@ export default {
   },
   methods: {
     async saveModel() {
-      await this.$store.dispatch('modeling/saveModel', {});
+      await this.$store.dispatch('modeling/updateModel', {});
     },
     async change({ type, name, value }) {
       console.log({ type, name, value });
@@ -141,10 +141,10 @@ export default {
     },
   },
   watch: {
-    selectBlock: {
+    block: {
       handler(newBlock, oldBlock) {
         this.oldBlock = oldBlock;
-        this.$store.dispatch('modeling/setSelect', newBlock?.id);
+        // this.$store.dispatch('modeling/setSelect', newBlock?.id);
         console.log(newBlock, oldBlock);
       },
     },
@@ -167,8 +167,5 @@ export default {
 
 .params-actions {
   padding: 20px 10px;
-}
-.dropdown {
-  padding: 10px 0;
 }
 </style>

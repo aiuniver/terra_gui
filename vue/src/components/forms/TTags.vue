@@ -13,17 +13,21 @@
         />
       </button>
       <template v-for="({ value }, i) in tags">
-        <input
-          :key="'tag_' + i"
-          :value="value"
-          :data-index="i"
-          name="[tags][][name]"
-          type="text"
-          :class="['tags__item']"
-          :style="{ width: (value.length + 1) * 8 + 'px' }"
-          @input="change"
-          @blur="blur"
-        />
+        <div style="position: relative" :key="'tag_' + i">
+          <input
+            :value="value"
+            :data-index="i"
+            name="[tags][][name]"
+            type="text"
+            :class="['tags__item']"
+            :style="{ width: (value.length + 1) * 8 + 16 + 'px' }"
+            @input="change"
+            @blur="blur"
+          />
+          <i class="tags__remove--icon t-icon icon-tag-plus" @click="removeTag(i)"></i>
+          <!-- <div class="tags__item"></div> -->
+        </div>
+
         <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
       </template>
     </div>
@@ -54,6 +58,9 @@ export default {
     tags: [],
   }),
   methods: {
+    removeTag(index) {
+      this.tags = this.tags.filter((item, i) => i !== +index);
+    },
     create() {
       const el = this.$el.getElementsByClassName('tags__add--input')?.[0];
       console.log(el.value);
@@ -65,15 +72,14 @@ export default {
     },
     change(e) {
       const index = e.target.dataset.index;
-      console.log(index);
-      this.tags[+index].value = e.target.value;
+      if (e.target.value.length >= 3) {
+        this.tags[+index].value = e.target.value;
+      }
     },
     blur(e) {
-      const index = e.target.dataset.index;
-      if (e.target.value.length <= 2) {
-        this.tags = this.tags.filter((item, i) => i !== +index);
+      if (e.target.value.length < 3) {
+        this.$forceUpdate();
       }
-      console.log(index);
     },
   },
 };
@@ -137,9 +143,20 @@ export default {
 .tags {
   display: flex;
   max-width: 400px;
+  &__remove {
+    &--icon {
+      height: 12px;
+      width: 12px;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%) rotate(45deg);
+      position: absolute;
+      cursor: pointer;
+    }
+  }
   &__item {
     margin-left: 10px;
-    padding: 2px 2px;
+    padding: 2px 15px 2px 2px;
     width: 60px;
     height: 24px;
     color: #a7bed3;

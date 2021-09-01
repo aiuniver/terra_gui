@@ -624,12 +624,6 @@ Defaults = {
                                             "name": "classes_names",
                                             "parse": "classes_names[]",
                                         },
-                                        {
-                                            "type": "text",
-                                            "label": "Цвет",
-                                            "name": "classes_colors",
-                                            "parse": "classes_colors[]",
-                                        },
                                     ],
                                     "autosearch": [
                                         {
@@ -801,14 +795,14 @@ Defaults = {
         "layer_form": [
             {
                 "type": "text",
-                "name": "name",
                 "label": "Название слоя",
+                "name": "name",
                 "parse": "name",
             },
             {
                 "type": "select",
-                "name": "type",
                 "label": "Тип слоя",
+                "name": "type",
                 "parse": "type",
                 "list": list(
                     map(
@@ -816,6 +810,18 @@ Defaults = {
                         list(LayerTypeChoice),
                     )
                 ),
+            },
+            {
+                "type": "text",
+                "label": "Размерность входных данных",
+                "name": "input",
+                "parse": "shape[input][]",
+            },
+            {
+                "type": "text",
+                "label": "Размерность выходных данных",
+                "name": "output",
+                "parse": "shape[output][]",
             },
         ],
         "layers_types": {},

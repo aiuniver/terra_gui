@@ -11,7 +11,6 @@ urlpatterns = [
     path("info/", views.InfoAPIView.as_view(), name="info"),
     path("clear/", views.ClearAPIView.as_view(), name="clear"),
     path("update/", views.UpdateAPIView.as_view(), name="update"),
-    path("layer/save/", views.LayerSaveAPIView.as_view(), name="layer_save"),
     path("validate/", views.ValidateAPIView.as_view(), name="validate"),
     path("create/", views.CreateAPIView.as_view(), name="create"),
     path("delete/", views.DeleteAPIView.as_view(), name="delete"),

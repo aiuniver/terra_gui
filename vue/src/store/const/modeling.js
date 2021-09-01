@@ -22,7 +22,7 @@ const typeBlock = [
   },
 ];
 
-const createBlock = function (type, id) {
+const createBlock = function (type, id, typeLayers) {
   // console.log(type, id)
   if (!type || !id) {
     return null;
@@ -30,6 +30,18 @@ const createBlock = function (type, id) {
   const node = typeBlock.find(n => {
     return n.group === type;
   });
+
+  const mainArr = typeLayers?.[`Layer${node.type}Data`]?.main || []
+  const extraArr = typeLayers?.[`Layer${node.type}Data`]?.extra || []
+  const main = {}
+  const extra = {}
+  mainArr.forEach(({ name, value }) => {
+    main[name] = value
+  })
+  extraArr.forEach(({ name, value }) => {
+    extra[name] = value
+  })
+
   if (!node) {
     return null;
   }
@@ -46,11 +58,10 @@ const createBlock = function (type, id) {
       input: [],
       output: [],
     },
-    location: null,
     position: [0, 0],
     parameters: {
-      main: {},
-      extra: {},
+      main,
+      extra,
     },
     reference: null,
     selected: false,

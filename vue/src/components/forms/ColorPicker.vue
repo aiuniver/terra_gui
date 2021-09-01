@@ -375,8 +375,8 @@ export default {
         /**
          * @deprecated since: 0.4.0, remove in: 1.0.0, https://github.com/stijlbreuk/vue-color-picker-wheel/issues/6
          */
-        this.$emit('colorChange', this.color);
-        this.$emit('color-change', this.color);
+        // this.$emit('colorChange', this.color);
+        // this.$emit('color-change', this.color);
       }
     },
     widgetCoords(event) {
@@ -428,6 +428,7 @@ export default {
       document.removeEventListener('mousemove', this.mousemove);
       document.removeEventListener('mouseup', this.mouseup);
       this.dragging = false;
+      this.$emit('color-change', this.color);
     },
     /* Constious color utility functions */
     dec2hex(x) {

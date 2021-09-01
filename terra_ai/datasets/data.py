@@ -1,39 +1,17 @@
 """
 Datasets constants data
 """
+
 from enum import Enum
-from typing import List, Any, Optional, Union, Dict
+from typing import Any, Dict
 
-from pydantic import validator, DirectoryPath, FilePath, PositiveInt
+from pydantic.color import Color
+from pydantic.types import PositiveInt
 
-from terra_ai.data.datasets.extra import LayerInputTypeChoice
-from terra_ai.data.mixins import BaseMixinData
-from terra_ai.data.types import StrictIntValueGe0, StrictFloatValueGe0
-from terra_ai.datasets.arrays_create import CreateArray
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin
 
-DatasetArchives = {
-    'трейдинг': 'trading.zip',
-    'автомобили': 'cars.zip',
-    'умный_дом': 'smart_home.zip',
-    'квартиры': 'flats.zip',
-    # 'диалоги': ['dialog.txt'],
-    'автомобили_3': 'cars_3.zip',
-    'заболевания': 'diseases.zip',
-    'договоры': 'docs.zip',
-    'самолеты': 'planes.zip',
-    # 'болезни': ['origin.zip', 'segmentation.zip'],
-    'губы': 'lips.zip',
-    # 'жанры_музыки': ['genres.zip'],
-    'sber': 'sber.zip'
-}
 
-DataType = {0: 'DIM',
-            1: 'DIM',
-            2: '1D',
-            3: '2D',
-            4: '3D',
-            5: '4D'
-            }
+DataType = {0: "DIM", 1: "DIM", 2: "1D", 3: "2D", 4: "3D", 5: "4D"}
 
 
 class Preprocesses(str, Enum):
@@ -58,3 +36,23 @@ class InstructionsData(BaseMixinData):
 class DatasetInstructionsData(BaseMixinData):
     inputs: Dict[PositiveInt, InstructionsData]
     outputs: Dict[PositiveInt, InstructionsData]
+
+
+class ColorHex(Color):
+    def __str__(self) -> str:
+        return self.as_hex()
+
+
+class AnnotationClassData(BaseMixinData):
+    name: str
+    color: ColorHex
+
+
+class AnnotationClassesList(UniqueListMixin):
+    class Meta:
+        source = AnnotationClassData
+        identifier = "name"
+
+    @property
+    def colors_as_rgb_list(self) -> list:
+        return list(map(lambda item: item.color.as_rgb_tuple(), self))

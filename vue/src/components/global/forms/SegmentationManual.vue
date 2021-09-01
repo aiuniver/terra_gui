@@ -1,32 +1,28 @@
 <template>
-  <div>
-    <t-input
-      v-model="qty"
-      label="Количество классов"
-      type="number"
-      name="classes"
-      inline
-      @change="change"
-      @input="inputCheck"
-    />
-    <template v-for="item, i of +qty">
-      <t-input
-        :value="''"
-        label="Название класса"
-        type="text"
-        name="classes_names"
-        :key="'classes_names_' + i"
-        :parse="'classes_names[]'"
-        inline
-        @change="change"
-      />
-      <Color :value="'#FFFFFF'" label="Цвет" :key="'classes_colors_' + i" inline />
-    </template>
+  <div class="t-segmentation-manual">
+    <t-input v-model="qty" label="Количество классов" type="number" name="classes" inline @change="change" />
+    <form ref="segmentation">
+      <template v-for="(item, i) of +qty">
+        <hr class="t-segmentation-manual__hr" :key="'hr_up' + i" />
+        <t-input
+          
+          label="Название класса"
+          type="text"
+          :key="'classes_names_' + i"
+          :parse="'classes_names[]'"
+          inline
+          @change="change"
+        />
+        <Color :value="'#ffffff'" label="Цвет" :key="'classes_colors_' + i" :parse="'classes_colors[]'" inline @change="change" />
+        <hr v-if="+qty === i + 1" class="t-segmentation-manual__hr" :key="'hr_' + i" />
+      </template>
+    </form>
   </div>
 </template>
 
 <script>
-import Color from '../../forms/Color.vue'
+import serialize from "@/assets/js/serialize";
+import Color from '../../forms/Color.vue';
 export default {
   name: 't-segmentation-manual',
   components: {
@@ -52,54 +48,48 @@ export default {
     error: String,
   },
   data: () => ({
-    qty: 0,
+    qtyTemp: 0,
     loading: false,
-    model: {
-      classes_names: [],
-      classes_colors: []
-    }
+    classes_names: [],
+    classes_colors: [],
   }),
-  computed: {},
-  methods: {
-    inputCheck(e) {
-      if (+e > 99) this.qty = 99
-      if (+e < 0) this.qty = 0
+  computed: {
+    qty: {
+      set(value) {
+        if (+value <= 99 && +value >= 0) {
+          this.qtyTemp = +value;
+        }
+      },
+      get() {
+        return this.qtyTemp;
+      },
     },
-    change(e) {
-      console.log(this.model)
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
-      }
+  },
+  methods: {
+    change() {
+      console.log(serialize(this.$refs.segmentation));
+      const { classes_names, classes_colors } = serialize(this.$refs.segmentation)
+      this.$emit('change', { name: 'classes_names', value: classes_names } );
+      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
+      // if (this.isChange) {
+      //   let value = e.target.value;
+      //   value = this.type === 'number' ? +value : value;
+      //   this.$emit('change', { name: this.name, value });
+      //   this.isChange = false;
+      // }
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.t-inline {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  -webkit-box-pack: end;
-  margin-bottom: 10px;
-  // align-items: center;
-  .t-field__label {
-    padding: 6px 0 0 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
-    font-size: 0.75rem;
-  }
-  .t-field__button {
-    flex: 0 0 100px;
-    height: 24px;
-    font-size: 12px;
-    line-height: 24px;
+.t-segmentation-manual {
+  &__hr {
+    height: 1px;
+    border-width: 0;
+    color: #17212b;
+    background-color: #17212b;
+    margin: 0 0 10px 0;
   }
 }
 </style>

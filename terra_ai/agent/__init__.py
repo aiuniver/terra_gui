@@ -29,6 +29,7 @@ from ..data.extra import (
 )
 from ..data.training.train import TrainData
 
+from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
 from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
@@ -132,17 +133,21 @@ class Exchange:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_segmentation_classes_autosearch(self, path: Path) -> dict:
+    def _call_dataset_source_segmentation_classes_autosearch(
+        self, path: Path, num_classes: int, mask_range: int
+    ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
         """
-        return {}
+        return datasets_utils.get_classes_autosearch(
+            path, num_classes, mask_range
+        ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
         """
         Получение классов для сегментации при создании датасета с использованием файла аннотации
         """
-        return {}
+        return datasets_utils.get_classes_annotation(path).native()
 
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
@@ -215,15 +220,6 @@ class Exchange:
         Валидация модели
         """
         return ModelValidator(model).get_validated()
-
-    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
-        """
-        Обновление слоя модели
-        """
-        model = ModelDetailsData(**model)
-        if len(kwargs.keys()):
-            model.layers.append(kwargs)
-        return model
 
     def _call_model_create(self, model: dict, path: Path):
         """

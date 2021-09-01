@@ -1,15 +1,35 @@
 <template>
-  <div>
+  <div class="t-segmentation-search">
+    <t-input v-model="qty" label="Количество классов" type="number" name="classes" inline @change="change" />
     <div :class="['t-inline']">
-      <label class="t-field__label"><slot>{{ label }}</slot></label>
+      <label class="t-field__label"><slot></slot></label>
       <t-button class="t-field__button" :disabled="disabled" @click.native="getApi" :loading="loading">Найти</t-button>
     </div>
+    <template v-for="({ name, color }, i) of items">
+      <hr class="t-segmentation-search__hr" :key="'hr_up' + i" />
+      <t-input
+        :value="name"
+        label="Название класса"
+        type="text"
+        name="classes_names"
+        :key="'classes_names_' + i"
+        :parse="'classes_names[]'"
+        inline
+        @change="change"
+      />
+      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline />
+      <hr v-if="items.length === i + 1" class="t-segmentation-search__hr" :key="'hr_' + i" />
+    </template>
   </div>
 </template>
 
 <script>
+import Color from '../../forms/Color.vue';
 export default {
   name: 't-segmentation-search',
+  components: {
+    Color,
+  },
   props: {
     label: {
       type: String,
@@ -31,22 +51,38 @@ export default {
   },
   data: () => ({
     loading: false,
+    isShow: false,
+    items: [],
+    qty: 2,
   }),
   computed: {},
   methods: {
     async getApi() {
-      if (this.loading) return; 
-      this.loading = true
-      await this.$store.dispatch('axios', { url: '/api/v1'} )
-      this.loading = false
-    },
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
+      if (this.loading) return;
+      this.loading = true;
+      const mask_range = document.getElementsByName('mask_range')[0]
+      if (!mask_range.value) {
+        mask_range.style.borderColor = '#f00'
+        this.loading = false;
+        return;
       }
+      mask_range.style.borderColor = '#6c7883'
+      const { data } = await this.$store.dispatch('datasets/classesAutosearch', { mask_range: mask_range.value, num_classes: this.qty });
+      console.log(data)
+      const classes_names = data.map(item => item.name)
+      const classes_colors = data.map(item => item.color)
+      this.$emit('change', { name: 'classes_names', value: classes_names } );
+      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
+      this.items = data
+      this.loading = false;
+    },
+    change() {
+      // if (this.isChange) {
+      //   let value = e.target.value;
+      //   value = this.type === 'number' ? +value : value;
+      //   this.$emit('change', { name: this.name, value });
+      //   this.isChange = false;
+      // }
     },
   },
 };
@@ -74,6 +110,15 @@ export default {
     height: 24px;
     font-size: 12px;
     line-height: 24px;
+  }
+}
+.t-segmentation-search {
+  &__hr {
+    height: 1px;
+    border-width: 0;
+    color: #17212b;
+    background-color: #17212b;
+    margin: 0 0 10px 0;
   }
 }
 </style>

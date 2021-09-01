@@ -334,3 +334,8 @@ class CreateSerializer(serializers.Serializer):
 class DeleteSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+
+
+class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
+    num_classes = serializers.IntegerField(min_value=1, max_value=10)
+    mask_range = serializers.IntegerField(min_value=1)

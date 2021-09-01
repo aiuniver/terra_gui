@@ -86,7 +86,7 @@
           let angle = -Math.atan2(pos2.x - pos.x, pos2.y - pos.y)
           let degrees = (angle >= 0 ? angle : (2 * Math.PI + angle)) * 180 / Math.PI
 
-          // console.log(degrees)
+          // console.log(l)
 
           arrows.push({
             transform: `translate(${pos.x}, ${pos.y}) rotate(${degrees - 15})`,
