@@ -221,11 +221,13 @@ class Exchange:
         """
         return ModelValidator(model).get_validated()
 
-    def _call_model_create(self, model: dict, path: Path):
+    def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
         Создание модели
         """
         model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
+        if not overwrite and model_path.is_file():
+            raise exceptions.ModelAlreadyExistsException(model.get("name"))
         with open(model_path, "w") as model_ref:
             json.dump(model, model_ref)
 
