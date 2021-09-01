@@ -15,12 +15,14 @@ import cv2
 import matplotlib.pyplot as plt
 from keras import Model
 from keras.utils.np_utils import to_categorical
+from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 from tensorflow import keras
 from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy
 import numpy as np
 import types
 import time
+import moviepy.editor as moviepy_editor
 
 from tensorflow.python.keras import Input
 from tensorflow.python.keras.layers import BatchNormalization, MaxPooling2D, Flatten, Dense
@@ -28,7 +30,7 @@ from tensorflow.python.layers.convolutional import Conv2D
 
 from terra_ai.customLayers import InstanceNormalization
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.datasets.extra import LayerInputTypeChoice
+from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.presets.training import Task, TasksGroups, Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDTS
@@ -195,8 +197,8 @@ class InteractiveCallback:
 
         self.show_examples = 10
         self.ex_type_choice = 'seed'
-        self.seed_idx = {}
-        self._get_seed()
+        self.seed_idx = self._get_seed()
+        self.example_idx = []
 
         self.interactive_config = {
             'loss_graphs': [
@@ -220,6 +222,7 @@ class InteractiveCallback:
                 'show_results': False,
                 'data_for_calculation': 'val',
                 'example_choice_type': 'seed',
+                'main_output': 2,
                 'num_examples': 10,
                 'show_statistic': False,
                 'autoupdate': False
@@ -415,13 +418,15 @@ class InteractiveCallback:
 
     def _get_seed(self):
         for ins in self.dataset.X.get('train').keys():
-            self.seed_idx[ins] = {}
+            seed_idx = {}
             for data_type in self.dataset.X.keys():
                 data_lenth = np.arange(len(self.dataset.X.get(data_type).get(ins)))
                 np.random.shuffle(data_lenth)
-                self.seed_idx[ins][data_type] = data_lenth
+                seed_idx[data_type] = data_lenth
+            break
+        return seed_idx
 
-    def update_state(self, current_epoch, y_pred, current_epoch_time):
+    def update_state(self, current_epoch, y_pred, current_epoch_time, on_epoch_end=True):
         self.current_epoch = current_epoch
         self._reformat_y_pred(y_pred)
         self.log_history['epochs'].append(current_epoch)
@@ -584,12 +589,12 @@ class InteractiveCallback:
         else:
             count = 0
 
-        if count >= self.progress_threashold.get(output):
+        if count >= self.progress_threashold:
             return True
         else:
             return False
 
-    def _evaluate_underfitting(self, metric_name, train_log, val_log, underfit_logs, output):
+    def _evaluate_underfitting(self, metric_name, train_log, val_log, underfit_logs):
         count = sum(underfit_logs[-self.log_gap:])
         if progress_mode.get(metric_name) == 'min' and \
                 (val_log[-1] - train_log[-1]) / train_log[-1] * 100 > 10:
@@ -607,6 +612,7 @@ class InteractiveCallback:
     def return_interactive_results(self, config: dict):
         """Return dict with data for current interactive request"""
         self.interactive_config = config
+        self.example_idx = self._prepare_example_idx_to_show()
         return {
             'loss_graphs': self._get_loss_graph_data_request(),
             'metric_graphs': self._get_metric_graph_data_request(),
@@ -855,6 +861,7 @@ class InteractiveCallback:
         """
         'intermediate_result': {
             example_num: {
+                'line_number': int
                 'initial_data': [
                     {
                         'type': 'image',
@@ -879,65 +886,70 @@ class InteractiveCallback:
                 ],
                 'true_value': [
                     {
-                        'type': 'text',
+                        'type': str,
                         'layer': f'Output_{layer_id}',
                         'data': smth in base64
                     }
                 ],
                 'predict_value': [
                     {
+                        'type': str,
                         'layer': f'Output_{layer_id}',
                         'data': smth in base64
+                        'color_mark': str
                     }
                 ],
                 'class_stat': {
-                    'class name': value,
+                    'type': str,
+                    'class name': {
+                        "value": str,
+                        'color_mark': str
+                    },
                 }
             },
         }
         """
         if self.interactive_config.get('intermediate_result').get('show_results'):
             return_data = {}
-            for example in self.interactive_config.get('intermediate_result').get('num_examples'):
-                return_data[example] = {
+            for idx in range(self.interactive_config.get('intermediate_result').get('num_examples')):
+                return_data[idx] = {
+                    'line_number': idx + 1,
                     'initial_data': {},
                     'true_value': {},
                     'predict_value': {},
                     'class_stat': {}
                 }
                 for inp in self.dataset.X.get('train').keys():
-                    return_data[example]['initial_data'] = {
+                    return_data[idx]['initial_data'] = {
                         'layer': f'Input_{inp}',
                         'data': self._postprocess_initial_data(
                             input_id=inp,
-                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
-                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
+                            example_idx=self.example_idx[idx],
                         )
                     }
                 for out in self.dataset.Y.get('train').keys():
-                    return_data[example]['true_value'] = {
-                        'layer': f'Output_{out}',
-                        'data': self._postprocess_result_data(
-                            output_id=out,
-                            data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
-                            mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
-                            show_stat=False
-                        )
-                    }
-                    predict, stat = self._postprocess_result_data(
+                    true_lbl, predict_lbl, color_mark, stat = self._postprocess_result_data(
                         output_id=out,
                         data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
-                        mode=self.interactive_config.get('intermediate_result').get('example_choice_type'),
-                        show_stat=self.interactive_config.get('intermediate_result').get('show_statistic')
+                        example_idx=self.example_idx[idx],
+                        show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
-                    return_data[example]['predict_value'] = {
-                        'layer': f'Output_{out}',
-                        'data': predict
+                    return_data[idx]['true_value'] = {
+                        "type": "class_name",
+                        "layer": f"Output_{out}",
+                        "data": true_lbl
                     }
-                    return_data[example]['class_stat'] = {
-                        'layer': f'Output_{out}',
-                        'data': stat
+                    return_data[idx]['predict_value'] = {
+                        "type": "class_name",
+                        "layer": f"Output_{out}",
+                        "data": predict_lbl,
+                        "color_mark": color_mark
                     }
+                    if stat:
+                        return_data[idx]['class_stat'] = {
+                            'layer': f'Output_{out}',
+                            'data': stat
+                        }
         else:
             return {}
 
@@ -1081,8 +1093,8 @@ class InteractiveCallback:
                 _id += 2
         return return_data
 
-    def _get_classification_data(self):
-        pass
+    # def _get_classification_data(self):
+    #     pass
 
     @staticmethod
     def _get_confusion_matrix(y_true, y_pred):
@@ -1096,17 +1108,146 @@ class InteractiveCallback:
                 cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return (cm, cm_percent)
 
-    def _postprocess_initial_data(self, input_id: int, data_type: str, mode: str):
+    def _prepare_example_idx_to_show(self):
+        """
+        example_idx = {
+            output_id: []
+        }
+        """
+        example_idx = {}
+        count = self.interactive_config.get('intermediate_result').get('num_examples')
+        choice_type = self.interactive_config.get('intermediate_result').get('example_choice_type')
+        if choice_type == 'best' or choice_type == 'worst':
+            y_true = self.dataset.Y.get(
+                self.interactive_config.get('intermediate_result').get('data_for_calculation')).get(
+                self.interactive_config.get('intermediate_result').get('main_output'))
+            y_pred = self.y_pred.get(
+                self.interactive_config.get('intermediate_result').get('data_for_calculation')).get(
+                self.interactive_config.get('intermediate_result').get('main_output'))
+            if (y_pred.shape[-1] == y_true.shape[-1]) \
+                    and (self.dataset.data.encoding.get(
+                self.interactive_config.get('intermediate_result').get('main_output')) == 'ohe') \
+                    and (y_true.shape[-1] > 1):
+                classes = np.argmax(y_true, axis=-1)
+            elif (len(y_true.shape) == 1) \
+                    and (self.dataset.data.encoding.get(
+                self.interactive_config.get('intermediate_result').get('main_output')) != 'ohe') \
+                    and (y_pred.shape[-1] > 1):
+                classes = copy.copy(y_true)
+            elif (len(y_true.shape) == 1) \
+                    and (self.dataset.data.encoding.get(
+                self.interactive_config.get('intermediate_result').get('main_output')) != 'ohe') \
+                    and (y_pred.shape[-1] == 1):
+                classes = copy.deepcopy(y_true)
+            else:
+                classes = copy.deepcopy(y_true)
+
+            probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
+            sorted_args = np.argsort(probs)
+            if choice_type == 'best':
+                example_idx = sorted_args[-count:]
+            elif choice_type == 'worst':
+                example_idx = sorted_args[:count]
+            else:
+                example_idx = np.random.choice(len(probs), count, replace=False)
+
+        elif choice_type == 'seed':
+            example_idx = self.seed_idx.get(
+                self.interactive_config.get('intermediate_result').get('data_for_calculation'))[
+                          :self.interactive_config.get('intermediate_result').get('num_examples')]
+        elif choice_type == 'random':
+            example_idx = np.random.randint(
+                0,
+                len(self.dataset.X.get(self.interactive_config.get('intermediate_result').get('data_for_calculation'))),
+                self.interactive_config.get('intermediate_result').get('num_examples')
+            )
+        else:
+            pass
+        return example_idx
+
+    def _postprocess_initial_data(self, input_id: int, example_idx: int):
         """
         Видео в .webm
         import moviepy.editor as mp
         clip = mp.VideoFileClip("mygif.gif")
         clip.write_videofile("myvideo.webm")
-        """
-        pass
 
-    def _postprocess_result_data(self, output_id: int, data_type: str, mode: str, show_stat=True):
-        pass
+        Image to .webm
+        img = Image.open('image_path')
+        img = img.convert('RGB')
+        img.save('image.webp', 'webp')
+
+        Audio to .webm
+        from pydub import AudioSegment
+        AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
+        """
+        # temp_file = tempfile.NamedTemporaryFile(delete=False)
+        initial_file_path = os.path.join(self.dataset.datasets_path, self.dataset.dataframe.get(
+            self.interactive_config.get('intermediate_result').get('data_for_calculation')).iat[example_idx, 0])
+        # TODO: посмотреть как реализовать '.iat[example_idx, 0]' для нескольких входов
+        if self.dataset.data.inputs.get(input_id).task == LayerInputTypeChoice.Image:
+            img = Image.open(initial_file_path)
+            img = img.convert('RGB')
+            save_path = f"/tmp/initial_data_image{example_idx}_input{input_id}.webp"
+            img.save(save_path, 'webp')
+            return save_path
+        elif self.dataset.data.inputs.get(input_id).task == LayerInputTypeChoice.Text:
+            text_str = open(initial_file_path, 'r')
+            return text_str
+        elif self.dataset.data.inputs.get(input_id).task == LayerInputTypeChoice.Video:
+            clip = moviepy_editor.VideoFileClip(initial_file_path)
+            save_path = f"/tmp/initial_data_video{example_idx}_input{input_id}.webp"
+            clip.write_videofile(save_path)
+            return save_path
+        elif self.dataset.data.inputs.get(input_id).task == LayerInputTypeChoice.Audio:
+            save_path = f"/tmp/initial_data_audio{example_idx}_input{input_id}.webp"
+            AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
+            return save_path
+        elif self.dataset.data.inputs.get(input_id).task == LayerInputTypeChoice.Dataframe:
+            # TODO: обсудить как пересылать датафреймы на фронт
+            return initial_file_path
+        else:
+            return initial_file_path
+
+    def _postprocess_result_data(self, output_id: int, data_type: str, example_idx: int, show_stat=True):
+        if self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.Classification:
+            labels = self.dataset.data.classes_names.get(output_id)
+            ohe = True if self.dataset.data.encoding.get(output_id) == 'ohe' else False
+
+            y_true = np.argmax(self.dataset.Y.get(data_type).get(output_id)[example_idx]) if ohe \
+                else self.dataset.Y.get(data_type).get(output_id)[example_idx]
+
+            predict = self.y_pred.get(data_type).get(output_id)[example_idx]
+            if y_true == np.argmax(predict):
+                color_mark = 'green'
+            else:
+                color_mark = 'red'
+
+            class_stat = {}
+            if show_stat:
+                for i, val in enumerate(predict):
+                    if val == max(predict) and i == y_true:
+                        class_color_mark = "green"
+                    elif val == max(predict) and i != y_true:
+                        class_color_mark = "red"
+                    else:
+                        class_color_mark = "white"
+                    class_stat[labels[i]] = {
+                        "value": f"{round(val * 100, 1)}%",
+                        "color_mark": class_color_mark
+                    }
+            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat
+
+        elif self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.Segmentation:
+            pass
+        elif self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.TextSegmentation:
+            pass
+        elif self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.Regression:
+            pass
+        elif self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.Timeseries:
+            pass
+        elif self.dataset.data.task_type.get(output_id).task == LayerOutputTypeChoice.ObjectDetection:
+            pass
 
 
 class FitCallback(keras.callbacks.Callback):

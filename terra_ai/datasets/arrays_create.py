@@ -359,7 +359,7 @@ class CreateArray(object):
 
     @staticmethod
     def create_classification(_, class_name, **options):
-
+        print(options)
         index = options['classes_names'].index(class_name)
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
