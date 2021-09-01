@@ -5,7 +5,6 @@
     <at-select
       class="t-field__select"
       v-model="select"
-      clearable
       size="small"
       style="width: 100px"
       @on-change="change"
