@@ -36,10 +36,10 @@ const createBlock = function (type, id, typeLayers) {
   const main = {}
   const extra = {}
   mainArr.forEach(({ name, value }) => {
-    main[name] = value
+    main[name] = value === '__null__' ? null : value
   })
   extraArr.forEach(({ name, value }) => {
-    extra[name] = value
+    extra[name] = value === '__null__' ? null : value
   })
 
   if (!node) {

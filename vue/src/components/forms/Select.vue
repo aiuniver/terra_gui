@@ -66,7 +66,10 @@ export default {
   methods: {
     change(value) {
       this.$emit("input", value);
-      this.$emit("change", { name: this.name, value });
+      // this.$emit("change", { name: this.name, value });
+      console.log(value)
+      console.log((value === '__null__'))
+      this.$emit('change', { name: this.name, value: (value === '__null__') ? null : value });
 
       // bus.$emit("change", e);
     },
