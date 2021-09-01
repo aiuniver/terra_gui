@@ -4,7 +4,8 @@
       <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
-    <div class="t-block-modeling__error" v-if="error">
+
+    <div v-if="error" v-show="hover || selected" class="t-block-modeling__error">
       {{ error }}
     </div>
 
@@ -104,7 +105,7 @@ export default {
     },
     styleHover() {
       const len = this.iconsFilter.length;
-      return { right: -(33 * len) + 'px' };
+      return { right: (-(32 * len) - 3) + 'px' };
     },
     style() {
       return {
@@ -262,30 +263,11 @@ $circleConnectedColor: #569dcf;
       cursor: pointer;
     }
   }
-  // .hover-sloy {
-  //   position: absolute;
-  //   top: 0px;
-  //   right: 0px;
-  //   height: 48px;
-  //   width: 80px;
-  //   background-color: #294c6f;
-  //   border-radius: 5px;
-  //   cursor: context-menu;
-  //   display: flex;
-  //   justify-content: space-around;
-  //   align-items: center;
-  //   > i {
-  //     display: inline-flex;
-  //     font-size: 1.5em;
-  //     margin: 0 5px;
-  //     cursor: pointer;
-  //   }
-  // }
 
   &__error {
     position: absolute;
     white-space: break-word;
-    left: -114%;
+    left: -201px;
     width: 200px;
     top: 0;
     height: auto;
