@@ -304,7 +304,7 @@ Defaults = {
                 },
                 {
                     "type": "select",
-                    "label": "Тип данных",
+                    "label": "Тип задачи",
                     "name": "type",
                     "parse": "type",
                     "value": "Image",
@@ -534,7 +534,7 @@ Defaults = {
                 {
                     "type": "select",
                     "name": "type",
-                    "label": "Тип данных",
+                    "label": "Тип задачи",
                     "parse": "type",
                     "value": "Image",
                     "list": list(

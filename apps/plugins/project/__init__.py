@@ -113,9 +113,11 @@ class Project(BaseMixinData):
             self.model = dataset.model
         else:
             layers = []
-            ids = []
+            ids = [0]
+            positions = {"input": [], "output": []}
             for layer in self.model.layers:
                 if layer.group in [LayerGroupChoice.input, LayerGroupChoice.output]:
+                    positions[layer.group.value].append(layer.position)
                     continue
                 layers.append(layer.native())
                 ids.append(layer.id)
@@ -123,6 +125,7 @@ class Project(BaseMixinData):
             for layer in dataset.model.inputs + dataset.model.outputs:
                 _id += 1
                 layer.id = _id
+                layer.position = positions[layer.group.value].pop(0)
                 layers.append(layer.native())
             self.model.layers = LayersList(layers)
 

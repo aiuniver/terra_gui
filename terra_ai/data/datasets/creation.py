@@ -211,9 +211,9 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок"
     """
 
-    train: ConstrainedFloatValueGe0Le1 = 0.6
+    train: ConstrainedFloatValueGe0Le1 = 0.7
     "Обучающая выборка"
-    validation: ConstrainedFloatValueGe0Le1 = 0.3
+    validation: ConstrainedFloatValueGe0Le1 = 0.2
     "Валидационная выборка"
     test: ConstrainedFloatValueGe0Le1 = 0.1
     "Тестовая выборка"
@@ -305,36 +305,6 @@ class CreationOutputData(IDMixinData):
     @validator("parameters", always=True)
     def _validate_parameters(cls, value: Any, values, field) -> Any:
         return field.type_(**value or {})
-
-
-# class OneFileData(BaseMixinData):
-#     """
-#     Информация для формирования одиночного массива
-#     """
-#
-    # type: # LayerInputTypeChoice
-    # "Тип данных"
-#     parameters: Any
-#     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
-#
-#     @validator("type", pre=True)
-#     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-#         if value not in list(LayerInputTypeChoice):
-#             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-#         name = (
-#             value
-#             if isinstance(value, LayerInputTypeChoice)
-#             else LayerInputTypeChoice(value)
-#         ).name
-#         type_ = getattr(
-#             creations.layers.input, getattr(creations.layers.input.Layer, name)
-#         )
-#         cls.__fields__["parameters"].type_ = type_
-#         return value
-#
-#     @validator("parameters", always=True)
-#     def _validate_parameters(cls, value: Any, values, field) -> Any:
-#         return field.type_(**value or {})
 
 
 class CreationInputsList(UniqueListMixin):
