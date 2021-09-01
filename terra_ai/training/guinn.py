@@ -76,8 +76,9 @@ class GUINN:
                 output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)())
         return output
 
-    def _set_training_params(self, dataset: DatasetData, params: TrainData, training_path: str) -> None:
-        self.dataset = self._prepare_dataset(dataset)
+    def _set_training_params(self, dataset: DatasetData, params: TrainData,
+                             training_path: str, dataset_path: str) -> None:
+        self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.epochs = params.epochs
         self.batch_size = params.batch
@@ -100,8 +101,8 @@ class GUINN:
         print(('Добавление колбэков', 'выполнено'))
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData):
-        prepared_dataset = PrepareDTS(dataset)
+    def _prepare_dataset(dataset: DatasetData, datasets_path: str):
+        prepared_dataset = PrepareDTS(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
@@ -195,7 +196,7 @@ class GUINN:
         pass
 
     def terra_fit(self, dataset: DatasetData, gui_model: dict, training_params: TrainData = None,
-                  training_path: str = "", verbose: int = 0) -> None:
+                  training_path: str = "", dataset_path: str = "", verbose: int = 0) -> None:
         """
         This method created for using wth externally compiled models
 
@@ -208,7 +209,8 @@ class GUINN:
             None
         """
         self.nn_cleaner(retrain=True if self.model_is_trained else False)
-        self._set_training_params(dataset=dataset, params=training_params, training_path=training_path)
+        self._set_training_params(dataset=dataset, dataset_path=dataset_path,
+                                  params=training_params, training_path=training_path)
         nnmodel = self._set_model(model=gui_model)
 
         if self.model_is_trained:

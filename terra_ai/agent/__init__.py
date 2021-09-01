@@ -246,12 +246,14 @@ class Exchange:
         dataset: DatasetData,
         model: ModelDetailsData,
         training_path: Path,
+        dataset_path: Path,
         params: TrainData,
     ):
         training_obj.terra_fit(
             dataset=dataset,
             gui_model=model,
             training_path=training_path,
+            dataset_path=dataset_path,
             training_params=params,
         )
 
