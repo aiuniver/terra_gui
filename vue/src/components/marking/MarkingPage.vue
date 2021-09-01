@@ -1,30 +1,37 @@
 <template>
-
   <div class="board">
     <div class="board__inner">
       <div :class="['board__files', { toggle: !toggle }]">
         <BlockFiles @toggle="change" />
       </div>
       <div class="board__main">
-        
+        <t-card-marking />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-
 import { mapGetters } from 'vuex';
-
+import BlockFiles from '@/components/marking/params/block/BlockFiles.vue';
+import tCardMarking from '@/components/marking/params/components/card/CardMarking.vue';
 export default {
-  components: {},
+  components: {
+    tCardMarking,
+    BlockFiles,
+  },
   data: () => ({
     hight: 0,
+    toggle: false,
   }),
   computed: {
     ...mapGetters({}),
   },
-  methods: {},
+  methods: {
+    change(e) {
+      console.log(e);
+    },
+  },
 };
 </script>
 
@@ -58,10 +65,9 @@ export default {
     flex: 1 1;
     display: -webkit-flex;
     display: flex;
-    flex-direction: column;
+
     width: 100%;
     overflow: hidden;
-    
   }
 }
 </style>
