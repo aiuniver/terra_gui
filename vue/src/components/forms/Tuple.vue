@@ -53,7 +53,8 @@ export default {
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value: value.split(',') });
+
+        this.$emit('change', { name: this.name, value: value ? value.split(',') : [] });
         this.isChange = false;
       }
     },
