@@ -14,9 +14,10 @@
         :key="'classes_names_' + i"
         :parse="'classes_names[]'"
         inline
+        disabled
         @change="change"
       />
-      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline />
+      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline disabled />
       <hr v-if="items.length === i + 1" class="t-segmentation-annotation__hr" :key="'hr_' + i" />
     </template>
   </div>
@@ -59,19 +60,20 @@ export default {
       this.loading = true
       const { data } = await this.$store.dispatch('datasets/classesAnnotation')
       console.log(data)
-      this.items = [
-        { name: 'test 1', color: '#ffffff' },
-        { name: 'test 2', color: '#ff00ff' },
-      ];
+      this.items = data
       this.loading = false
+      const classes_names = data.map(item => item.name)
+      const classes_colors = data.map(item => item.color)
+      this.$emit('change', { name: 'classes_names', value: classes_names } );
+      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
     },
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
-      }
+    change() {
+      // if (this.isChange) {
+      //   let value = e.target.value;
+      //   value = this.type === 'number' ? +value : value;
+      //   this.$emit('change', { name: this.name, value });
+      //   this.isChange = false;
+      // }
     },
   },
 };

@@ -60,18 +60,29 @@ export default {
     async getApi() {
       if (this.loading) return;
       this.loading = true;
-      const { data } = await this.$store.dispatch('datasets/classesAutosearch', this.qty);
+      const mask_range = document.getElementsByName('mask_range')[0]
+      if (!mask_range.value) {
+        mask_range.style.borderColor = '#f00'
+        this.loading = false;
+        return;
+      }
+      mask_range.style.borderColor = '#6c7883'
+      const { data } = await this.$store.dispatch('datasets/classesAutosearch', { mask_range: mask_range.value, num_classes: this.qty });
       console.log(data)
-      this.items = [{ name: 'test 1', color: '#ffffff' }];
+      const classes_names = data.map(item => item.name)
+      const classes_colors = data.map(item => item.color)
+      this.$emit('change', { name: 'classes_names', value: classes_names } );
+      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
+      this.items = data
       this.loading = false;
     },
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
-      }
+    change() {
+      // if (this.isChange) {
+      //   let value = e.target.value;
+      //   value = this.type === 'number' ? +value : value;
+      //   this.$emit('change', { name: this.name, value });
+      //   this.isChange = false;
+      // }
     },
   },
 };

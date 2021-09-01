@@ -304,7 +304,7 @@ Defaults = {
                 },
                 {
                     "type": "select",
-                    "label": "Тип данных",
+                    "label": "Тип задачи",
                     "name": "type",
                     "parse": "type",
                     "value": "Image",
@@ -534,7 +534,7 @@ Defaults = {
                 {
                     "type": "select",
                     "name": "type",
-                    "label": "Тип данных",
+                    "label": "Тип задачи",
                     "parse": "type",
                     "value": "Image",
                     "list": list(
@@ -812,16 +812,18 @@ Defaults = {
                 ),
             },
             {
-                "type": "text",
+                "type": "text_array",
                 "label": "Размерность входных данных",
                 "name": "input",
                 "parse": "shape[input][]",
+                "disabled": True,
             },
             {
-                "type": "text",
+                "type": "text_array",
                 "label": "Размерность выходных данных",
                 "name": "output",
                 "parse": "shape[output][]",
+                "disabled": True,
             },
         ],
         "layers_types": {},
@@ -844,7 +846,7 @@ for layer in Layer:
     params = getattr(types, layer.name)
     Defaults["modeling"]["layers_types"].update(
         {
-            layer.value: {
+            layer.name: {
                 "main": __get_layer_type_params(params.ParametersMainData, "main"),
                 "extra": __get_layer_type_params(params.ParametersExtraData, "extra"),
             }

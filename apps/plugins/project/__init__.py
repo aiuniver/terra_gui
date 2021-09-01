@@ -14,7 +14,7 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.model import ModelDetailsData, LayersList, LayerGroupChoice
 from terra_ai.data.presets.models import EmptyModelDetailsData
 
 from . import exceptions
@@ -111,6 +111,23 @@ class Project(BaseMixinData):
         self.dataset = dataset
         if not self.model.inputs or not self.model.outputs:
             self.model = dataset.model
+        else:
+            layers = []
+            ids = [0]
+            positions = {"input": [], "output": []}
+            for layer in self.model.layers:
+                if layer.group in [LayerGroupChoice.input, LayerGroupChoice.output]:
+                    positions[layer.group.value].append(layer.position)
+                    continue
+                layers.append(layer.native())
+                ids.append(layer.id)
+            _id = max(ids)
+            for layer in dataset.model.inputs + dataset.model.outputs:
+                _id += 1
+                layer.id = _id
+                layer.position = positions[layer.group.value].pop(0)
+                layers.append(layer.native())
+            self.model.layers = LayersList(layers)
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:

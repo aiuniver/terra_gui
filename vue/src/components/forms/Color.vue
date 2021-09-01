@@ -11,10 +11,9 @@
           :class="['t-field__input', { small: small }, { 't-field__error': error }]"
           :type="type"
           :name="name || parse"
-          :value="value"
-          :disabled="disabled"
           :data-degree="degree"
           :autocomplete="'off'"
+          :disabled="disabled"
           @blur="change"
           @focus="focus"
         />
@@ -26,6 +25,7 @@
             :height="100"
             :disabled="false"
             startColor="#ff0000"
+            @color-change="$emit('change', $event)"
           ></ColorPicker>
         </div>
       </div>
@@ -64,18 +64,18 @@ export default {
   data: () => ({
     isChange: false,
     pickerShow: false,
-    input: '#FFFFFF',
+    input: '',
   }),
   computed: {
-    /*    input: {
-      set(value) {
-        this.$emit('input', value);
-        this.isChange = true;
-      },
-      get() {
-        return this.value;
-      },
-    },*/
+    // input: {
+    //   set(value) {
+    //     this.$emit('input', value);
+    //     this.isChange = true;
+    //   },
+    //   get() {
+    //     return this.value;
+    //   },
+    // },
   },
   methods: {
     outside() {
@@ -102,6 +102,9 @@ export default {
       // console.log("asdasdas     ", this.input)
     },
   },
+  created() {
+    this.input = this.value
+  }
 };
 </script>
 
@@ -132,7 +135,7 @@ export default {
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
-    padding: 10px;
+    // padding: 10px;
   }
   // margin-bottom: 20px;
   &__label {

@@ -20,6 +20,7 @@ export default {
   data: () => ({
     items: [
       { title: "Данные", path: "/datasets" },
+      { title: "Разметка", path: "/marking" },
       { title: "Проектирование", path: "/modeling" },
       { title: "Обучение", path: "/training" },
       { title: "Каскады", path: "/cascades" },
@@ -34,7 +35,7 @@ export default {
   methods: {
     nav(path) {
       if (!this.project.dataset) {
-        if (path === "/modeling" || path === "/datasets" || path === "/deploy") {
+        if (path === "/modeling" || path === "/datasets" || path === "/deploy" || path === "/marking") {
           if (this.$route.path !== path) {
             this.$router.push(path);
           }

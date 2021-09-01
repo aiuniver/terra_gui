@@ -99,8 +99,8 @@ export default {
       const data = { path: sourcePath}
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
     },
-    async classesAutosearch ({ dispatch, state: { sourcePath } }, num_classes) {
-      const data = { path: sourcePath, num_classes}
+    async classesAutosearch ({ dispatch, state: { sourcePath } }, obj) {
+      const data = { path: sourcePath, ...obj}
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
     },
 

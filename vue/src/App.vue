@@ -22,7 +22,14 @@ export default {
     Footer,
     Overlay
   },
-  data: () => ({}),
+  data: () => ({
+    isOk: [
+      '/datasets',
+      '/modeling',
+      '/marking',
+      // '/cascades',
+    ]
+  }),
   methods: {
     myEventHandler() {
       const height = this.$refs.terra.clientHeight;
@@ -34,7 +41,7 @@ export default {
     await this.$store.dispatch("projects/get");
     await this.$store.dispatch("datasets/get");
     if (!this.$store?.state?.projects?.project?.dataset) {
-      if (this.$route.path === "/datasets" || this.$route.path === "/modeling") {
+      if (this.isOk.includes(this.$route.path)) {
         return;
       }
       const text = {

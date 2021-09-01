@@ -1,9 +1,14 @@
+import re
+
 from pydantic import ValidationError
+from transliterate import slugify
 
 from apps.plugins.project import data_path
 from apps.plugins.project import exceptions as project_exceptions
 
 from terra_ai.agent import agent_exchange
+from terra_ai.agent import exceptions as agent_exceptions
+from terra_ai.data.modeling.model import ModelDetailsData
 
 from ..base import (
     BaseAPIView,
@@ -11,7 +16,7 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import ModelGetSerializer
+from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
 
 
 class GetAPIView(BaseAPIView):
@@ -57,12 +62,15 @@ class ClearAPIView(BaseAPIView):
 
 class UpdateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        serializer = UpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
         try:
             request.project.set_model(
                 agent_exchange(
                     "model_update",
                     model=request.project.model.native(),
-                    **request.data,
+                    **serializer.validated_data,
                 )
             )
             return BaseResponseSuccess()
@@ -84,13 +92,37 @@ class ValidateAPIView(BaseAPIView):
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            data=agent_exchange(
-                "model_create",
-                model=request.project.model.native(),
-                path=str(data_path.modeling),
+        serializer = CreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        try:
+            model_data = request.project.model.native()
+            model_data.update(
+                {
+                    "name": serializer.validated_data.get("name"),
+                    "alias": re.sub(
+                        r"([\-]+)",
+                        "_",
+                        slugify(
+                            serializer.validated_data.get("name"), language_code="ru"
+                        ),
+                    ),
+                    "image": serializer.validated_data.get("preview"),
+                }
             )
-        )
+            model = ModelDetailsData(**model_data)
+            return BaseResponseSuccess(
+                data=agent_exchange(
+                    "model_create",
+                    model=model.native(),
+                    path=str(data_path.modeling),
+                    overwrite=serializer.validated_data.get("overwrite"),
+                )
+            )
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
 
 
 class DeleteAPIView(BaseAPIView):

@@ -3,6 +3,7 @@ from enum import Enum
 
 class FieldTypeChoice(str, Enum):
     text = "text"
+    text_array = "text_array"
     number = "number"
     checkbox = "checkbox"
     select = "select"
