@@ -1,5 +1,5 @@
 <template>
-  <at-modal v-model="dialog" width="400">
+  <at-modal v-model="dialog" width="750">
     <div slot="header" style="text-align: center">
       <span>{{ title }}</span>
     </div>
@@ -87,10 +87,12 @@ export default {
   p {
     margin-left: 15px;
     font-size: 0.85rem;
-    color: white;
     &.success {
       color: #3eba31;
     }
+  }
+  .icon-clipboard {
+    cursor: pointer;
   }
 }
 </style>
