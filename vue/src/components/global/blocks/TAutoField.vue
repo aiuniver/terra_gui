@@ -1,5 +1,13 @@
 <template>
   <div class="forms">
+    <t-multi-select
+      v-if="type === 'multiselect'"
+      :id="id"
+      name="sources_paths"
+      label="Выберите путь"
+      :errors="error"
+      inline
+    />
     <t-segmentation-manual
       v-if="type === 'segmentation_manual'"
       :value="getValue"
@@ -110,7 +118,7 @@ export default {
   props: {
     idKey: String,
     type: String,
-    value: [String, Boolean, Number],
+    value: [String, Boolean, Number, Array],
     list: Array,
     event: String,
     label: String,
@@ -156,7 +164,7 @@ export default {
     },
   },
   created() {
-    // console.log(this.parameters)
+    console.log(this.type)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
