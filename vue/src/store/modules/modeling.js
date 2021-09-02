@@ -150,6 +150,8 @@ export default {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
       if (data) {
         commit('SET_ERRORS_BLOCKS', data)
+        const isValid = !Object.values(data).filter(item => item).length
+        dispatch('messages/setMessage', isValid ? { message:  `Валидация прошла успешно` } : { error: `Валидация не прошла`}, { root: true });
       }
       return data;
     },
