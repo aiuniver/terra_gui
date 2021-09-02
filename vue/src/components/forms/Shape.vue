@@ -39,7 +39,7 @@ export default {
   computed: {
     input: {
       set(value) {
-        this.$emit('input', value);
+        this.$emit('input', value ? [value.split(',')] : []);
         this.isChange = true;
       },
       get() {
@@ -53,7 +53,7 @@ export default {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
 
-        this.$emit('change', { name: this.name, value: value ? value.split(',') : [] });
+        this.$emit('change', { name: this.name, value: value ? [value.split(',')] : [] });
         this.isChange = false;
       }
     },
@@ -63,7 +63,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  // margin-bottom: 20px;
+  margin-bottom: 10px;
   &__label {
     width: 150px;
     max-width: 130px;
@@ -97,7 +97,6 @@ export default {
   flex-direction: row-reverse;
   justify-content: flex-end;
   -webkit-box-pack: end;
-  margin-bottom: 10px;
   align-items: center;
   > label {
     width: auto;

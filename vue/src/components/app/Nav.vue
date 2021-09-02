@@ -20,8 +20,8 @@ export default {
   data: () => ({
     items: [
       { title: "Данные", path: "/datasets" },
-      { title: "Проектирование", path: "/modeling" },
       { title: "Разметка", path: "/marking" },
+      { title: "Проектирование", path: "/modeling" },
       { title: "Обучение", path: "/training" },
       { title: "Каскады", path: "/cascades" },
       { title: "Деплой", path: "/deploy" },

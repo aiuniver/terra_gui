@@ -31,8 +31,10 @@
       <Loading v-if="!image" />
     </div>
     <template slot="footer">
-      <button>Отменить</button>
-      <button @click="save">Сохранить</button>
+      <button  @click="save">Сохранить</button>
+      <button class="at-btn at-btn--default" @click="close">
+        <span class="at-btn__text">Отменить</span>
+      </button>
     </template>
   </at-modal>
 </template>
@@ -80,6 +82,11 @@ export default {
       console.log(res);
       // this.$emit('input', false);
     },
+
+    close(){
+      this.dialog = false;
+
+    }
   },
   watch: {
     dialog: {

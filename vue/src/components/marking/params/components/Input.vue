@@ -1,21 +1,27 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">{{ label }}</label>
+    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">
+      <slot>{{ label }}</slot>
+    </label>
+
     <input
       v-model="input"
-      class="t-field__input"
+      :class="['t-field__input', { small: small }, { 't-field__error': error }]"
       :type="type"
-      :name="parse"
+      :name="name || parse"
       :value="value"
-      @blur="change"
       :disabled="disabled"
+      :data-degree="degree"
+      :autocomplete="'off'"
+      @blur="change"
+      @focus="focus"
     />
   </div>
 </template>
 
 <script>
 export default {
-  name: 't-tuple',
+  name: 't-input',
   props: {
     label: {
       type: String,
@@ -26,12 +32,15 @@ export default {
       default: 'text',
     },
     value: {
-      type: [Array],
+      type: [String, Number, Array],
     },
     parse: String,
     name: String,
     inline: Boolean,
     disabled: Boolean,
+    small: Boolean,
+    error: String,
+    degree: Number, // for serialize
   },
   data: () => ({
     isChange: false,
@@ -39,42 +48,50 @@ export default {
   computed: {
     input: {
       set(value) {
+        // console.log(value)
         this.$emit('input', value);
         this.isChange = true;
       },
       get() {
-        return this.value.join();
+        return this.value;
       },
     },
   },
   methods: {
+    focus(e) {
+      this.$emit('focus', e);
+      if (this.error) {
+        this.$emit('cleanError', true);
+      }
+    },
     change(e) {
+      // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
-
-        this.$emit('change', { name: this.name, value: value ? value.split(',') : [] });
+        this.$emit('change', { name: this.name, value });
         this.isChange = false;
       }
     },
   },
+  created() {
+    this.input = this.value
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .t-field {
-  // margin-bottom: 20px;
+  margin-bottom: 10px;
   &__label {
-    width: 150px;
-    max-width: 130px;
     text-align: left;
     color: #a7bed3;
     display: block;
-    margin: 0 0 10px 0;
-    line-height: 1.25;
+    padding-bottom: 10px;
+    line-height: 1;
     font-size: 0.75rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    // text-overflow: ellipsis;
+    // white-space: nowrap;
     overflow: hidden;
   }
   &__input {
@@ -91,6 +108,12 @@ export default {
       border-color: #fff;
     }
   }
+  &__error {
+    border-color: #b53b3b;
+  }
+  &__input.small {
+    height: 24px;
+  }
 }
 .t-inline {
   display: flex;
@@ -99,21 +122,22 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
-  > label {
-    width: auto;
-    padding: 0 20px 0 10px;
+  .t-field__label {
+    width: 150px;
+    max-width: 130px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
     margin: 0;
-    line-height: 1.25;
+    line-height: 1;
     font-size: 0.75rem;
   }
-  > input {
-    height: 22px;
+  .t-field__input {
+    height: 24px;
     font-size: 12px;
     line-height: 24px;
-    width: 100px;
+    width: 180px;
   }
 }
 </style>
