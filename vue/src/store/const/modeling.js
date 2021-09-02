@@ -31,9 +31,9 @@ const createBlock = function (type, id, typeLayers, list) {
     return n.group === type;
   });
 
-  console.log(list)
+  // console.log(list)
   const labelType = list.filter(item => item.value === node.type)
-  console.log(list)
+  // console.log(list)
   const mainArr = typeLayers?.[node.type]?.main || []
   const extraArr = typeLayers?.[node.type]?.extra || []
   const main = {}
@@ -79,7 +79,7 @@ const changeTypeBlock = function (type, block, typeLayers, list) {
   if (!type || !block) {
     return null;
   }
-  console.log(type)
+  // console.log(type)
   const labelType = list.filter(item => item.value === type)
   const mainArr = typeLayers?.[type]?.main || []
   const extraArr = typeLayers?.[type]?.extra || []
@@ -105,7 +105,7 @@ const cloneBlock = function (block, id) {
 };
 
 const prepareBlocks = function (blocks,typeLayers, list) {
-  console.log(list)
+  // console.log(list)
   let last = 0;
   const newBlock = blocks
     .map(block => {

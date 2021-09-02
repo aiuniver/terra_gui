@@ -5,7 +5,7 @@
       'at-collapse__item--disabled': disabled,
       'at-collapse__item--not-change': notChange
     }">
-    <div class="at-collapse__header" @click="toggle">
+    <div v-show="title" class="at-collapse__header" @click="toggle"> 
       <i v-if="!notChange" class="icon at-collapse__icon old__icon"></i>
       <slot name="title" v-if="$slots.title"></slot>
       <div v-else>{{ title }}</div>
