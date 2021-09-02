@@ -23,6 +23,8 @@ from ..choices import (
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
     LayerTypeProcessingClassificationChoice,
+    TrainingArchitectureChoice,
+    TrainingOptimizerChoice,
 )
 
 
@@ -854,15 +856,73 @@ Defaults = {
                 "fields": [
                     {
                         "type": "select",
-                        "label": "Тип слоя",
-                        "name": "type",
-                        "parse": "type",
+                        "label": "Архитектура",
+                        "name": "architecture",
+                        "parse": "architecture[type]",
+                        "value": "Basic",
                         "list": list(
                             map(
-                                lambda item: {"value": item.value, "label": item.name},
-                                list(LayerTypeChoice),
+                                lambda item: {"value": item.name, "label": item.value},
+                                list(TrainingArchitectureChoice),
                             )
                         ),
+                    },
+                    {
+                        "type": "select",
+                        "label": "Оптимизатор",
+                        "name": "optimizer",
+                        "parse": "optimizer[type]",
+                        "value": "Adam",
+                        "list": list(
+                            map(
+                                lambda item: {"value": item.name, "label": item.value},
+                                list(TrainingOptimizerChoice),
+                            )
+                        ),
+                        "fields": {
+                            "SGD": [
+                                {
+                                    "type": "number",
+                                    "label": "Momentum",
+                                    "name": "optimizer_extra_momentum",
+                                    "parse": "optimizer[extra][momentum]",
+                                    "value": 0,
+                                },
+                                {
+                                    "type": "checkbox",
+                                    "label": "Nesterov",
+                                    "name": "optimizer_extra_nesterov",
+                                    "parse": "optimizer[extra][nesterov]",
+                                    "value": False,
+                                },
+                            ],
+                        },
+                    },
+                ],
+            },
+            {
+                "alias": "fit",
+                "fields": [
+                    {
+                        "type": "number",
+                        "label": "Размер батча",
+                        "name": "batch",
+                        "parse": "batch",
+                        "value": 32,
+                    },
+                    {
+                        "type": "number",
+                        "label": "Количество эпох",
+                        "name": "epochs",
+                        "parse": "epochs",
+                        "value": 20,
+                    },
+                    {
+                        "type": "number",
+                        "label": "Learning rate",
+                        "name": "optimizer_learning_rate",
+                        "parse": "optimizer[main][learning_rate]",
+                        "value": 0.001,
                     },
                 ],
             },

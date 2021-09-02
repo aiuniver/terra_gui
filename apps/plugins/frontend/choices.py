@@ -219,3 +219,19 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
                 LayerTypeProcessingClassificationChoice,
             )
         )
+
+
+class TrainingArchitectureChoice(str, Enum):
+    Basic = "Базовая"
+    Yolo = "Yolo"
+
+
+class TrainingOptimizerChoice(str, Enum):
+    SGD = "SGD"
+    RMSprop = "RMSprop"
+    Adam = "Adam"
+    Adadelta = "Adadelta"
+    Adagrad = "Adagrad"
+    Adamax = "Adamax"
+    Nadam = "Nadam"
+    Ftrl = "Ftrl"
