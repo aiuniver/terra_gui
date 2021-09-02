@@ -53,6 +53,9 @@ export default {
     },
     async validateModel() {
       const validate = await this.$store.dispatch('modeling/validateModel', {});
+      let flag = true;
+      for (let key in validate) if (validate[key]) flag = false;
+      if (flag) this.$store.dispatch('messages/setMessage', { message: `Валидация прошла успешно` });
       console.log(validate);
     },
     async clearModel() {
