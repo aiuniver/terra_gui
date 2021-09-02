@@ -68,14 +68,17 @@ export default {
       newDataset.inputs = inputs
       newDataset.outputs = outputs
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
-      if (res?.error) {
-        const { error: { fields: { inputs, outputs } } } = res
-        commit('SET_ERRORS', { ...inputs, ...outputs })
-      } else {
-        commit('SET_INPUT_DATA', [] );
-        commit('SET_FILES_DROP', []);
-        commit('SET_ERRORS', {});
-        dispatch('get')
+      console.log(res)
+      if (res) {
+        if (res?.error) {
+          const { error: { fields: { inputs, outputs } } } = res
+          commit('SET_ERRORS', { ...inputs, ...outputs })
+        } else {
+          commit('SET_INPUT_DATA', [] );
+          commit('SET_FILES_DROP', []);
+          commit('SET_ERRORS', {});
+          dispatch('get')
+        }
       }
       commit("settings/SET_OVERLAY", false, { root: true });
       return res
