@@ -70,6 +70,29 @@ const createBlock = function (type, id, typeLayers) {
   };
 };
 
+const changeTypeBlock = function (type, block, typeLayers) {
+  // console.log(type, id)
+  if (!type || !block) {
+    return null;
+  }
+  const mainArr = typeLayers?.[type]?.main || []
+  const extraArr = typeLayers?.[type]?.extra || []
+  const main = {}
+  const extra = {}
+  mainArr.forEach(({ name, value }) => {
+    main[name] = value === '__null__' ? null : value
+  })
+  extraArr.forEach(({ name, value }) => {
+    extra[name] = value === '__null__' ? null : value
+  })
+  block.type = type,
+  block.parameters = {
+    main,
+    extra,
+  }
+  return block
+};
+
 const cloneBlock = function (block, id) {
   return { ...block, ...{ id }, ...{ name: block.name + '(clone)' } };
 };
@@ -151,4 +174,4 @@ const mouseHelper = function (element, event) {
   };
 };
 
-export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock };
+export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock, changeTypeBlock };
