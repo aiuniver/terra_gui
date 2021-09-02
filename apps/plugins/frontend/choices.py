@@ -235,3 +235,18 @@ class TrainingOptimizerChoice(str, Enum):
     Adamax = "Adamax"
     Nadam = "Nadam"
     Ftrl = "Ftrl"
+
+
+class TrainingCheckpointIndicatorChoice(str, Enum):
+    Val = "Val"
+    Train = "Train"
+
+
+class TrainingCheckpointTypeChoice(str, Enum):
+    Metrics = "Metrics"
+    Loss = "Loss"
+
+
+class TrainingCheckpointModeChoice(str, Enum):
+    Min = "min"
+    Max = "max"
