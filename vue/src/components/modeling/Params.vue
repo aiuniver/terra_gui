@@ -15,10 +15,10 @@
           />
           <Autocomplete2
             :value="block.typeLabel"
-            :list="list"
+            :list="listWithoutOutputInput"
             label="Тип слоя"
             name="type"
-            :disabled="isBlock || isInpOut"
+            :disabled="isBlock || isInputOutput"
             @change="changeType"
           />
         </div>
@@ -86,10 +86,13 @@ export default {
     isBlock() {
       return !this.block.id;
     },
-
-    isInpOut() {
+    isInputOutput() {
       return this.block.group === 'input' || this.block.group === 'output';
     },
+    listWithoutOutputInput() {
+      return this.list.filter(item => !(item.value.toLowerCase() === 'input' || item.value.toLowerCase() === 'dense'));
+    },
+
     buttonSave() {
       return this.buttons?.save || false;
     },
@@ -119,13 +122,13 @@ export default {
       await this.$store.dispatch('modeling/updateModel', {});
     },
     async changeType({ value }) {
-      // block.type = e.value
-      console.log(value);
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
     },
     async change({ type, name, value }) {
+      console.group();
       console.log({ type, name, value });
       console.log(this.collapse);
+      console.groupEnd();
       if (this.block.parameters) {
         this.block.parameters[type][name] = value;
       } else {
