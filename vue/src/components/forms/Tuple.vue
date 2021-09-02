@@ -26,7 +26,8 @@ export default {
       default: 'text',
     },
     value: {
-      type: [Array],
+      type: Array,
+      default: () => []
     },
     parse: String,
     name: String,
@@ -43,6 +44,7 @@ export default {
         this.isChange = true;
       },
       get() {
+        console.log(typeof this.value)
         return this.value.join();
       },
     },

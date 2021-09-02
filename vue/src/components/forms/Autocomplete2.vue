@@ -71,7 +71,8 @@ export default {
         this.show = false;
       }
     },
-    focus() {
+    focus({ target }) {
+      target.select()
       this.show = true;
       this.$emit('focus', true);
     },

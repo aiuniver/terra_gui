@@ -5,7 +5,6 @@
     <at-select
       v-model="select"
       :class="['t-field__select', { 't-field__error': error }]"
-      clearable
       size="small"
       style="width: 100px"
       @on-change="change"
