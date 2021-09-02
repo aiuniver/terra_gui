@@ -200,7 +200,7 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
-        print(array.shape)
+        # print(array.shape)
         if max_frames < frames_count:
             array = add_frames(video_array=array,
                                fill_mode=options['fill_mode'],
@@ -359,7 +359,7 @@ class CreateArray(object):
 
     @staticmethod
     def create_classification(_, class_name, **options):
-        print(options)
+        # print(options)
         index = options['classes_names'].index(class_name)
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')

@@ -52,8 +52,7 @@ export default {
       this.imageModel = await this.$refs.container.getImages();
     },
     async validateModel() {
-      const validate = await this.$store.dispatch('modeling/validateModel', {});
-      console.log(validate);
+      await this.$store.dispatch('modeling/validateModel', {});
     },
     async clearModel() {
       try {

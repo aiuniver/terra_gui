@@ -65,8 +65,8 @@ export default {
 .t-field {
   margin-bottom: 10px;
   &__label {
-    width: 150px;
-    max-width: 130px;
+    // width: 150px;
+    // max-width: 130px;
     text-align: left;
     color: #a7bed3;
     display: block;

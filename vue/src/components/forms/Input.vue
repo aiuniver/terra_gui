@@ -50,8 +50,14 @@ export default {
   methods: {
     change(e) {
       if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
+        let value = e.target.value.trim();
+        console.log(typeof value)
+        if (value !== '') {
+          value = this.type === 'number' ? +value : value;
+        } else {
+          value = null
+        }
+        
         this.$emit('change', { name: this.name, value });
         this.isChange = false;
       }

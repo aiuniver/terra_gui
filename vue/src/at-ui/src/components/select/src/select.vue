@@ -43,7 +43,8 @@
         @keydown.delete="handleInputDelete"
         ref="input"
       />
-      <i class="icon icon-chevron-down at-select__arrow"></i>
+      <!-- <i class="icon icon-chevron-down at-select__arrow"></i> -->
+      <i class="t-icon icon-file-arrow at-select__arrow"></i>
       <i
         class="icon icon-x at-select__clear"
         v-show="showCloseIcon"

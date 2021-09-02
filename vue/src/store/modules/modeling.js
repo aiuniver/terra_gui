@@ -1,4 +1,4 @@
-import { prepareBlocks, prepareLinks, createBlock, cloneBlock } from '../const/modeling';
+import { prepareBlocks, prepareLinks, createBlock, changeTypeBlock, cloneBlock } from '../const/modeling';
 
 export default {
   namespaced: true,
@@ -27,7 +27,7 @@ export default {
     SET_MODEL(state, value) {
       state.model = value;
       const { layers } = value;
-      state.blocks = prepareBlocks(layers);
+      state.blocks = prepareBlocks(layers, state.modeling.layers_types, state.modeling.list);
       state.links = prepareLinks(layers);
     },
     SET_BLOCKS(state, value) {
@@ -47,13 +47,20 @@ export default {
     },
   },
   actions: {
-    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types } } }, type) {
+    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, type) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
-      let block = createBlock(type, maxID + 1, layers_types);
+      let block = createBlock(type, maxID + 1, layers_types, list);
       if (!block) return;
       blocks.push(block);
       dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
+    },
+    typeBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, block }) {
+      let newBlock = changeTypeBlock(type, block, layers_types, list);
+      if (!newBlock) return;
+      // blocks.push(block);
+      commit('SET_BLOCKS', blocks);
+      dispatch('updateModel');
     },
     cloneBlock({ dispatch, commit, state: { blocks } }, oldBlock) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
@@ -143,6 +150,8 @@ export default {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
       if (data) {
         commit('SET_ERRORS_BLOCKS', data)
+        const isValid = !Object.values(data).filter(item => item).length
+        dispatch('messages/setMessage', isValid ? { message:  `Валидация прошла успешно` } : { error: `Валидация не прошла`}, { root: true });
       }
       return data;
     },

@@ -167,13 +167,12 @@ progress_mode = {
 
 
 class InteractiveCallback:
-    """Callback for interactive requests"""
 
+    """Callback for interactive requests"""
     def __init__(self, dataset, metrics: dict, losses: dict):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
-
         # self.model = null_model
         self.losses = losses
         self.metrics = metrics

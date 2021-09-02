@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Optional, Union
 
 from terra_ai.data.mixins import BaseMixinData
 
@@ -19,6 +19,26 @@ class DefaultsModelingData(BaseMixinData):
     layers_types: dict
 
 
+class DefaultsTrainingBaseGroupData(BaseMixinData):
+    name: Optional[str]
+    collapsable: bool = False
+    collapsed: bool = False
+    fields: Union[List[Field], Dict[str, List[Field]]]
+
+
+class DefaultsTrainingBaseData(BaseMixinData):
+    main: DefaultsTrainingBaseGroupData
+    fit: DefaultsTrainingBaseGroupData
+    optimizer: DefaultsTrainingBaseGroupData
+    outputs: DefaultsTrainingBaseGroupData
+    checkpoints: DefaultsTrainingBaseGroupData
+
+
+class DefaultsTrainingData(BaseMixinData):
+    base: DefaultsTrainingBaseData
+
+
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
+    training: DefaultsTrainingData
