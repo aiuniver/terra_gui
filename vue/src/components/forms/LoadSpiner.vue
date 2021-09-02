@@ -1,7 +1,10 @@
 <template>
-  <svg v-bind:style="styles" class="spinner spinner--circle" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
-    <circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
-  </svg>
+  <div style="text-align: center">
+    <svg v-bind:style="styles" class="spinner spinner--circle" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+      <circle class="path" fill="none" stroke-width="6" stroke-linecap="round" cx="33" cy="33" r="30"></circle>
+    </svg>
+    <p class="spinner-text">Идет процесс. Может занять несколько минут</p>
+  </div>
 </template>
 <script>
 export default {
@@ -27,10 +30,15 @@ $offset: 187;
 $duration: 1.4s;
 
 .spinner {
+  margin: 0 auto;
   animation: circle-rotator $duration linear infinite;
   * {
     line-height: 0;
     box-sizing: border-box;
+  }
+
+  &-text {
+    margin-top: 10px;
   }
 }
 
