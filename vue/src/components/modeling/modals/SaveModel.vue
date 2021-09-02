@@ -31,7 +31,7 @@
       <Loading v-if="!image" />
     </div>
     <template slot="footer">
-      <button  @click="save">Сохранить</button>
+      <button @click="save">Сохранить</button>
       <button class="at-btn at-btn--default" @click="close">
         <span class="at-btn__text">Отменить</span>
       </button>
@@ -52,7 +52,7 @@ export default {
     image: String,
   },
   data: () => ({
-    name: 'new Model',
+    name: '',
     overwrite: false,
   }),
   computed: {
@@ -83,10 +83,9 @@ export default {
       // this.$emit('input', false);
     },
 
-    close(){
+    close() {
       this.dialog = false;
-
-    }
+    },
   },
   watch: {
     dialog: {
