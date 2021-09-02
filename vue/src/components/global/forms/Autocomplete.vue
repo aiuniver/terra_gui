@@ -65,7 +65,7 @@ export default {
         this.show = false;
         this.search = item.label;
         this.$emit('input', this.selected.value);
-        this.$emit('change', item);
+        this.$emit('change', { name: this.name, value: item.value});
       } else {
         this.search = this.selected.label || this.value;
         this.show = false;
