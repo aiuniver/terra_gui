@@ -1,7 +1,7 @@
 <template>
   <div class="forms">
     <t-multi-select
-      v-if="type === 'multiselect'"
+      v-if="type === 'multiselect_sources_paths'"
       :id="id"
       name="sources_paths"
       label="Выберите путь"

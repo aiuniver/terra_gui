@@ -17,16 +17,6 @@
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
               <template v-slot:multi>Входные данные {{ inputData.id }}</template>
               <template v-slot:default="{ data: { parameters, errors } }">
-                <!-- <TMultiSelect
-                  :id="inputData.id"
-                  name="sources_paths"
-                  :value="parameters.sources_paths"
-                  :lists="mixinFiles"
-                  label="Выберите путь"
-                  :errors="errors"
-                  inline
-                  @change="mixinCheck($event, inputData.id)"
-                /> -->
                 <template v-for="(data, index) of input">
                   <t-auto-field
                     v-bind="data"
@@ -56,8 +46,6 @@
 import { mapGetters } from 'vuex';
 import Fab from '../components/forms/Fab.vue';
 import CardLayer from '../components/card/CardLayer.vue';
-// import TMultiSelect from '@/components/forms/MultiSelect.vue';
-// import TFieldInline from '@/components/global/forms/TFieldInline.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 // import Error from '@/utils/core/Errors'
 
@@ -66,8 +54,6 @@ export default {
   components: {
     Fab,
     CardLayer,
-    // TMultiSelect,
-    // TFieldInline
   },
   mixins: [blockMain],
   data: () => ({
