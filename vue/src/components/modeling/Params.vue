@@ -14,12 +14,12 @@
             @change="saveModel"
           />
           <Autocomplete2
-            v-model="block.type"
+            :value="block.type"
             :list="list"
             label="Тип слоя"
             name="type"
             :disabled="isBlock"
-            @change="saveModel"
+            @change="changeType"
           />
         </div>
         <at-collapse :value="collapse">
@@ -113,6 +113,11 @@ export default {
   methods: {
     async saveModel() {
       await this.$store.dispatch('modeling/updateModel', {});
+    },
+    async changeType({ value }) {
+      // block.type = e.value
+      console.log(value)
+      await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
     },
     async change({ type, name, value }) {
       console.log({ type, name, value });

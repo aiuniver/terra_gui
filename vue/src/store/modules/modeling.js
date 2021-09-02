@@ -1,4 +1,4 @@
-import { prepareBlocks, prepareLinks, createBlock, cloneBlock } from '../const/modeling';
+import { prepareBlocks, prepareLinks, createBlock, changeTypeBlock, cloneBlock } from '../const/modeling';
 
 export default {
   namespaced: true,
@@ -54,6 +54,13 @@ export default {
       blocks.push(block);
       dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
+    },
+    typeBlock({ dispatch, commit, state: { blocks, modeling: { layers_types } } }, { type, block }) {
+      let newBlock = changeTypeBlock(type, block, layers_types);
+      if (!newBlock) return;
+      // blocks.push(block);
+      commit('SET_BLOCKS', blocks);
+      dispatch('updateModel');
     },
     cloneBlock({ dispatch, commit, state: { blocks } }, oldBlock) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
