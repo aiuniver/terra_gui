@@ -188,7 +188,7 @@ class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     classes_colors: serializers.ListSerializer(child=serializers.CharField())
 
 
-class LayerParametersTextSegmentationSerializer(LayerParametersSerializer):
+class LayerParametersTextSegmentationSerializer(serializers.Serializer):
     open_tags: serializers.CharField(required=False)
     close_tags: serializers.CharField(required=False)
 

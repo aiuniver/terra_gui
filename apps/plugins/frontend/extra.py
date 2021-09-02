@@ -9,6 +9,7 @@ class FieldTypeChoice(str, Enum):
     select = "select"
     select_group = "select_group"
     multiselect = "multiselect"
+    multiselect_sources_paths = "multiselect_sources_paths"
     radio = "radio"
     button = "button"
     segmentation_manual = "segmentation_manual"
