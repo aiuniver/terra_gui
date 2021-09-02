@@ -850,12 +850,11 @@ Defaults = {
         "layers_types": {},
     },
     "training": {
-        "base": [
-            {
-                "alias": "main",
+        "base": {
+            "main": {
                 "fields": [
                     {
-                        "type": "select",
+                        "type": "auto_complete",
                         "label": "Архитектура",
                         "name": "architecture",
                         "parse": "architecture[type]",
@@ -868,7 +867,7 @@ Defaults = {
                         ),
                     },
                     {
-                        "type": "select",
+                        "type": "auto_complete",
                         "label": "Оптимизатор",
                         "name": "optimizer",
                         "parse": "optimizer[type]",
@@ -879,211 +878,10 @@ Defaults = {
                                 list(TrainingOptimizerChoice),
                             )
                         ),
-                        "fields": {
-                            "SGD": [
-                                {
-                                    "type": "number",
-                                    "label": "Momentum",
-                                    "name": "optimizer_extra_momentum",
-                                    "parse": "optimizer[extra][momentum]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "checkbox",
-                                    "label": "Nesterov",
-                                    "name": "optimizer_extra_nesterov",
-                                    "parse": "optimizer[extra][nesterov]",
-                                    "value": False,
-                                },
-                            ],
-                            "RMSprop": [
-                                {
-                                    "type": "number",
-                                    "label": "RHO",
-                                    "name": "optimizer_extra_rho",
-                                    "parse": "optimizer[extra][rho]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "RHO",
-                                    "name": "optimizer_extra_momentum",
-                                    "parse": "optimizer[extra][momentum]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                                {
-                                    "type": "checkbox",
-                                    "label": "Centered",
-                                    "name": "optimizer_extra_centered",
-                                    "parse": "optimizer[extra][centered]",
-                                    "value": False,
-                                },
-                            ],
-                            "Adam": [
-                                {
-                                    "type": "number",
-                                    "label": "Beta 1",
-                                    "name": "optimizer_extra_beta_1",
-                                    "parse": "optimizer[extra][beta_1]",
-                                    "value": 0.9,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Beta 2",
-                                    "name": "optimizer_extra_beta_2",
-                                    "parse": "optimizer[extra][beta_2]",
-                                    "value": 0.999,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                                {
-                                    "type": "checkbox",
-                                    "label": "Amsgrad",
-                                    "name": "optimizer_extra_amsgrad",
-                                    "parse": "optimizer[extra][amsgrad]",
-                                    "value": False,
-                                },
-                            ],
-                            "Adadelta": [
-                                {
-                                    "type": "number",
-                                    "label": "RHO",
-                                    "name": "optimizer_extra_rho",
-                                    "parse": "optimizer[extra][rho]",
-                                    "value": 0.95,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                            ],
-                            "Adagrad": [
-                                {
-                                    "type": "number",
-                                    "label": "Initial accumulator value",
-                                    "name": "optimizer_extra_initial_accumulator_value",
-                                    "parse": "optimizer[extra][initial_accumulator_value]",
-                                    "value": 0.1,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                            ],
-                            "Adamax": [
-                                {
-                                    "type": "number",
-                                    "label": "Beta 1",
-                                    "name": "optimizer_extra_beta_1",
-                                    "parse": "optimizer[extra][beta_1]",
-                                    "value": 0.9,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Beta 2",
-                                    "name": "optimizer_extra_beta_2",
-                                    "parse": "optimizer[extra][beta_2]",
-                                    "value": 0.999,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                            ],
-                            "Nadam": [
-                                {
-                                    "type": "number",
-                                    "label": "Beta 1",
-                                    "name": "optimizer_extra_beta_1",
-                                    "parse": "optimizer[extra][beta_1]",
-                                    "value": 0.9,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Beta 2",
-                                    "name": "optimizer_extra_beta_2",
-                                    "parse": "optimizer[extra][beta_2]",
-                                    "value": 0.999,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Epsilon",
-                                    "name": "optimizer_extra_epsilon",
-                                    "parse": "optimizer[extra][epsilon]",
-                                    "value": 1e-07,
-                                },
-                            ],
-                            "Ftrl": [
-                                {
-                                    "type": "number",
-                                    "label": "Learning rate power",
-                                    "name": "optimizer_extra_learning_rate_power",
-                                    "parse": "optimizer[extra][learning_rate_power]",
-                                    "value": -0.5,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Initial accumulator value",
-                                    "name": "optimizer_extra_initial_accumulator_value",
-                                    "parse": "optimizer[extra][initial_accumulator_value]",
-                                    "value": 0.1,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "L1 regularization strength",
-                                    "name": "optimizer_extra_l1_regularization_strength",
-                                    "parse": "optimizer[extra][l1_regularization_strength]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "L2 regularization strength",
-                                    "name": "optimizer_extra_l2_regularization_strength",
-                                    "parse": "optimizer[extra][l2_regularization_strength]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "L2 shrinkage regularization strength",
-                                    "name": "optimizer_extra_l2_shrinkage_regularization_strength",
-                                    "parse": "optimizer[extra][l2_shrinkage_regularization_strength]",
-                                    "value": 0,
-                                },
-                                {
-                                    "type": "number",
-                                    "label": "Beta",
-                                    "name": "optimizer_extra_beta",
-                                    "parse": "optimizer[extra][beta]",
-                                    "value": 0,
-                                },
-                            ],
-                        },
                     },
                 ],
             },
-            {
-                "alias": "fit",
+            "fit": {
                 "fields": [
                     {
                         "type": "number",
@@ -1108,28 +906,238 @@ Defaults = {
                     },
                 ],
             },
-            {
-                "alias": "optimizer",
+            "optimizer": {
                 "name": "Параметры оптимизатора",
                 "collapsable": True,
                 "collapsed": True,
-                "fields": [],
+                "fields": {
+                    "SGD": [
+                        {
+                            "type": "number",
+                            "label": "Momentum",
+                            "name": "optimizer_extra_momentum",
+                            "parse": "optimizer[extra][momentum]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Nesterov",
+                            "name": "optimizer_extra_nesterov",
+                            "parse": "optimizer[extra][nesterov]",
+                            "value": False,
+                        },
+                    ],
+                    "RMSprop": [
+                        {
+                            "type": "number",
+                            "label": "RHO",
+                            "name": "optimizer_extra_rho",
+                            "parse": "optimizer[extra][rho]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "number",
+                            "label": "RHO",
+                            "name": "optimizer_extra_momentum",
+                            "parse": "optimizer[extra][momentum]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Centered",
+                            "name": "optimizer_extra_centered",
+                            "parse": "optimizer[extra][centered]",
+                            "value": False,
+                        },
+                    ],
+                    "Adam": [
+                        {
+                            "type": "number",
+                            "label": "Beta 1",
+                            "name": "optimizer_extra_beta_1",
+                            "parse": "optimizer[extra][beta_1]",
+                            "value": 0.9,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Beta 2",
+                            "name": "optimizer_extra_beta_2",
+                            "parse": "optimizer[extra][beta_2]",
+                            "value": 0.999,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                        {
+                            "type": "checkbox",
+                            "label": "Amsgrad",
+                            "name": "optimizer_extra_amsgrad",
+                            "parse": "optimizer[extra][amsgrad]",
+                            "value": False,
+                        },
+                    ],
+                    "Adadelta": [
+                        {
+                            "type": "number",
+                            "label": "RHO",
+                            "name": "optimizer_extra_rho",
+                            "parse": "optimizer[extra][rho]",
+                            "value": 0.95,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                    ],
+                    "Adagrad": [
+                        {
+                            "type": "number",
+                            "label": "Initial accumulator value",
+                            "name": "optimizer_extra_initial_accumulator_value",
+                            "parse": "optimizer[extra][initial_accumulator_value]",
+                            "value": 0.1,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                    ],
+                    "Adamax": [
+                        {
+                            "type": "number",
+                            "label": "Beta 1",
+                            "name": "optimizer_extra_beta_1",
+                            "parse": "optimizer[extra][beta_1]",
+                            "value": 0.9,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Beta 2",
+                            "name": "optimizer_extra_beta_2",
+                            "parse": "optimizer[extra][beta_2]",
+                            "value": 0.999,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                    ],
+                    "Nadam": [
+                        {
+                            "type": "number",
+                            "label": "Beta 1",
+                            "name": "optimizer_extra_beta_1",
+                            "parse": "optimizer[extra][beta_1]",
+                            "value": 0.9,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Beta 2",
+                            "name": "optimizer_extra_beta_2",
+                            "parse": "optimizer[extra][beta_2]",
+                            "value": 0.999,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Epsilon",
+                            "name": "optimizer_extra_epsilon",
+                            "parse": "optimizer[extra][epsilon]",
+                            "value": 1e-07,
+                        },
+                    ],
+                    "Ftrl": [
+                        {
+                            "type": "number",
+                            "label": "Learning rate power",
+                            "name": "optimizer_extra_learning_rate_power",
+                            "parse": "optimizer[extra][learning_rate_power]",
+                            "value": -0.5,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Initial accumulator value",
+                            "name": "optimizer_extra_initial_accumulator_value",
+                            "parse": "optimizer[extra][initial_accumulator_value]",
+                            "value": 0.1,
+                        },
+                        {
+                            "type": "number",
+                            "label": "L1 regularization strength",
+                            "name": "optimizer_extra_l1_regularization_strength",
+                            "parse": "optimizer[extra][l1_regularization_strength]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "number",
+                            "label": "L2 regularization strength",
+                            "name": "optimizer_extra_l2_regularization_strength",
+                            "parse": "optimizer[extra][l2_regularization_strength]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "number",
+                            "label": "L2 shrinkage regularization strength",
+                            "name": "optimizer_extra_l2_shrinkage_regularization_strength",
+                            "parse": "optimizer[extra][l2_shrinkage_regularization_strength]",
+                            "value": 0,
+                        },
+                        {
+                            "type": "number",
+                            "label": "Beta",
+                            "name": "optimizer_extra_beta",
+                            "parse": "optimizer[extra][beta]",
+                            "value": 0,
+                        },
+                    ],
+                },
             },
-            {
-                "alias": "outputs",
+            "outputs": {
                 "name": "Параметры выходных слоев",
                 "collapsable": True,
                 "collapsed": False,
                 "fields": [],
             },
-            {
-                "alias": "checkpoints",
+            "checkpoints": {
                 "name": "Чекпоинты",
                 "collapsable": True,
                 "collapsed": False,
-                "fields": [],
+                "fields": [
+                    {
+                        "type": "select",
+                        "label": "Монитор",
+                        "name": "monitor",
+                        "parse": "monitor",
+                        "value": "Basic",
+                        "list": list(
+                            map(
+                                lambda item: {"value": item.name, "label": item.value},
+                                list(TrainingArchitectureChoice),
+                            )
+                        ),
+                    },
+                ],
             },
-        ],
+        },
     },
 }
 

@@ -8,6 +8,7 @@ class FieldTypeChoice(str, Enum):
     checkbox = "checkbox"
     select = "select"
     select_group = "select_group"
+    auto_complete = "auto_complete"
     multiselect = "multiselect"
     multiselect_sources_paths = "multiselect_sources_paths"
     radio = "radio"
