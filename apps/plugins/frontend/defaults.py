@@ -19,6 +19,15 @@ class DefaultsModelingData(BaseMixinData):
     layers_types: dict
 
 
+class DefaultsTrainingParametersData(BaseMixinData):
+    pass
+
+
+class DefaultsTrainingData(BaseMixinData):
+    parameters: DefaultsTrainingParametersData
+
+
 class DefaultsData(BaseMixinData):
     datasets: DefaultsDatasetsData
     modeling: DefaultsModelingData
+    training: DefaultsTrainingData

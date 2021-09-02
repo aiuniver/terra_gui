@@ -26,7 +26,17 @@ from ..choices import (
 )
 
 
+SourcesPaths = {
+    "type": "multiselect",
+    "label": "Выберите путь",
+    "name": "sources_paths",
+    "parse": "sources_paths",
+    "value": [],
+}
+
+
 LayerImageDefaults = [
+    SourcesPaths,
     {
         "type": "number",
         "label": "Ширина",
@@ -93,6 +103,7 @@ LayerImageDefaults = [
 
 
 LayerTextDefaults = [
+    SourcesPaths,
     {
         "type": "text",
         "label": "Фильтры",
@@ -193,6 +204,7 @@ LayerTextDefaults = [
 
 
 LayerAudioDefaults = [
+    SourcesPaths,
     {
         "type": "number",
         "label": "Частота дискретизации",
@@ -319,6 +331,7 @@ Defaults = {
                         "Text": LayerTextDefaults,
                         "Audio": LayerAudioDefaults,
                         "Video": [
+                            SourcesPaths,
                             {
                                 "type": "number",
                                 "label": "Ширина кадра",
@@ -439,6 +452,7 @@ Defaults = {
                             },
                         ],
                         "Dataframe": [
+                            SourcesPaths,
                             {
                                 "type": "text",
                                 "label": "Сепаратор",
@@ -548,6 +562,7 @@ Defaults = {
                         "Text": LayerTextDefaults,
                         "Audio": LayerAudioDefaults,
                         "Classification": [
+                            SourcesPaths,
                             {
                                 "type": "checkbox",
                                 "label": "One-Hot encoding",
@@ -583,6 +598,7 @@ Defaults = {
                             },
                         ],
                         "Segmentation": [
+                            SourcesPaths,
                             {
                                 "type": "number",
                                 "label": "Ширина",
@@ -660,6 +676,7 @@ Defaults = {
                             },
                         ],
                         "Regression": [
+                            SourcesPaths,
                             {
                                 "type": "select",
                                 "label": "Скейлер",
@@ -696,6 +713,7 @@ Defaults = {
                             },
                         ],
                         "Timeseries": [
+                            SourcesPaths,
                             {
                                 "type": "number",
                                 "label": "Длина",
@@ -769,6 +787,7 @@ Defaults = {
                             },
                         ],
                         "ObjectDetection": [
+                            SourcesPaths,
                             {
                                 "type": "select",
                                 "label": "Версия Yolo",
@@ -827,6 +846,9 @@ Defaults = {
             },
         ],
         "layers_types": {},
+    },
+    "training": {
+        "parameters": {},
     },
 }
 
