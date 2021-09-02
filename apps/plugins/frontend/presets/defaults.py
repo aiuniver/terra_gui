@@ -848,7 +848,9 @@ Defaults = {
         "layers_types": {},
     },
     "training": {
-        "parameters": {},
+        "base": {
+            "main": {},
+        },
     },
 }
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from terra_ai.data.mixins import BaseMixinData
 
@@ -19,12 +19,22 @@ class DefaultsModelingData(BaseMixinData):
     layers_types: dict
 
 
-class DefaultsTrainingParametersData(BaseMixinData):
+class DefaultsTrainingBaseGroupData(BaseMixinData):
+    name: Optional[str]
+    collapsable: bool = False
+    collapsed: bool = False
+
+
+class DefaultsTrainingBaseMainData(DefaultsTrainingBaseGroupData):
     pass
 
 
+class DefaultsTrainingBaseData(BaseMixinData):
+    main: DefaultsTrainingBaseMainData
+
+
 class DefaultsTrainingData(BaseMixinData):
-    parameters: DefaultsTrainingParametersData
+    base: DefaultsTrainingBaseData
 
 
 class DefaultsData(BaseMixinData):
