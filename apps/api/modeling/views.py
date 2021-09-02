@@ -127,4 +127,5 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        agent_exchange("model_delete", path=request.get("path"))
         return BaseResponseSuccess()

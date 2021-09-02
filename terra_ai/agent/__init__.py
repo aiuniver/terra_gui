@@ -231,6 +231,12 @@ class Exchange:
         with open(model_path, "w") as model_ref:
             json.dump(model, model_ref)
 
+    def _call_model_delete(self, path: Path):
+        """
+        Удаление модели
+        """
+        os.remove(path)
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
