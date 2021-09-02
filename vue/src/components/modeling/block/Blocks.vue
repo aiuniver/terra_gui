@@ -38,7 +38,7 @@
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
 import { mouseHelper } from '@/store/const/modeling';
-import { mapGetters } from 'vuex'
+import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
 
@@ -161,13 +161,13 @@ export default {
 
         if (!originBlock || !targetBlock) {
           console.log('Remove invalid link', link);
-          this.$store.dispatch('modeling/removeLink', link.id)
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
         if (originBlock.id === targetBlock.id) {
           console.log('Loop detected, remove link', link);
-          this.$store.dispatch('modeling/removeLink', link.id)
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
@@ -176,7 +176,7 @@ export default {
 
         if (!originLinkPos || !targetLinkPos) {
           console.log('Remove invalid link (slot not exist)', link);
-          this.$store.dispatch('modeling/removeLink', link.id)
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
@@ -228,13 +228,13 @@ export default {
     clickIcons({ event }, block) {
       console.log(event);
       if (event === 'remove') {
-        this.$store.dispatch('modeling/removeBlock', block)
+        this.$store.dispatch('modeling/removeBlock', block);
       }
       if (event === 'clone') {
-        this.$store.dispatch('modeling/cloneBlock', block)
+        this.$store.dispatch('modeling/cloneBlock', block);
       }
       if (event === 'link') {
-        this.$store.dispatch('modeling/removeLinkToBlock', block)
+        this.$store.dispatch('modeling/removeLinkToBlock', block);
       }
     },
     handleMauseOver(e) {
@@ -487,7 +487,7 @@ export default {
           );
         });
 
-        let maxID = Math.max( 0, ...this.links.map(o => o.id));
+        let maxID = Math.max(0, ...this.links.map(o => o.id));
         if (this.linkStartData.block.id !== targetBlock.id) {
           const originID = this.linkStartData.block.id;
           const originSlot = this.linkStartData.slotNumber;
@@ -621,7 +621,7 @@ export default {
     // },
     // Events
     blockSelect(block) {
-      this.$store.dispatch('modeling/selectBlock', block)
+      this.$store.dispatch('modeling/selectBlock', block);
       // block.selected = true;
       // this.selectedBlock = block;
       // this.deselectAll(block.id);
@@ -662,6 +662,8 @@ export default {
   },
 
   mounted() {
+    // Context menu off
+    this.$el.addEventListener('contextmenu', event => event.preventDefault());
     this.$el.addEventListener('mouseenter', this.handleMauseOver);
     this.$el.addEventListener('mouseleave', this.handleMauseOver);
     document.documentElement.addEventListener('keyup', this.keyup);
@@ -676,6 +678,7 @@ export default {
     // this.importScene();
   },
   beforeDestroy() {
+    this.$el.removeEventListener('contextmenu', null);
     document.documentElement.removeEventListener('keyup', this.keyup);
     this.$el.removeEventListener('mouseenter', this.handleMauseOver);
     this.$el.removeEventListener('mouseleave', this.handleMauseOver);
