@@ -9,6 +9,7 @@
       @blur="exit()"
       @keyup="keyMonitor"
       v-model="searchFilter"
+      autocomplete="off"
       :disabled="disabled"
       :placeholder="placeholder"
     />

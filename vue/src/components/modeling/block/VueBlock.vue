@@ -84,7 +84,8 @@ export default {
     filter: {
       type: Object,
       default: () => {}
-    }
+    },
+    shape: Object
 
   },
   data: () => ({
@@ -103,7 +104,7 @@ export default {
     parametr() {
       const parametr = Object.values(this.parameters?.main || {}).filter(item => item)
       console.log(parametr)
-      return parametr.join()
+      return this.group === 'input' ? this.shape?.input?.join() || '' : parametr.join()
     },
     styleHover() {
       const len = this.iconsFilter.length;

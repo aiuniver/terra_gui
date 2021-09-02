@@ -8,6 +8,7 @@
       :type="type"
       :name="parse"
       :value="value"
+      autocomplete="off"
       @blur="change"
       :disabled="disabled"
     />

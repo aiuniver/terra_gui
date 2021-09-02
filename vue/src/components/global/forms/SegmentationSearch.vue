@@ -15,6 +15,7 @@
         :key="'classes_names_' + i"
         :parse="'classes_names[]'"
         inline
+        autocomplete="off"
         @change="change"
       />
       <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline />

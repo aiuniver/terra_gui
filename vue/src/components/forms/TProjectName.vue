@@ -10,6 +10,7 @@
       @input="toSave = true"
       @keypress.enter="$event.target.blur()"
       v-autowidth
+      autocomplete="off"
       @focus="latest = $store.getters['projects/getProject'].name"
     />
     <i class="t-icon icon-project-edit"></i>
