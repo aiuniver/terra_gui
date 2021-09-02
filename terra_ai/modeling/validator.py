@@ -78,7 +78,7 @@ def get_idx_line(model_plan):
                 len(uplinks.get(link)) > 1
                 and len(set(idx2remove) & set(uplinks.get(link))) != 0
             ):
-                print(set(idx2remove) & set(uplinks.get(link)))
+                # print(set(idx2remove) & set(uplinks.get(link)))
                 row_idxs.pop(row_idxs.index(link))
 
         distribution.append(row_idxs)

@@ -3,6 +3,7 @@ from typing import Tuple
 import numpy as np
 import os
 import gc
+import importlib
 # import copy
 import tensorflow as tf
 import sys
@@ -69,11 +70,11 @@ class GUINN:
         output = []
         for metric in metrics:
             if metric == MetricChoice.MeanIoU.value:
-                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)(num_classes))
+                output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
                 output.append(DiceCoefficient())
             else:
-                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)())
+                output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData,
@@ -96,7 +97,7 @@ class GUINN:
         print(('Добавление колбэков', '...'))
         clsclbk = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
         self.callbacks = [clsclbk]
-        checkpoint.update([('filepath', 'F:\\tmp\\models\\test_model.h5')])
+        checkpoint.update([('filepath', 'test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         print(('Добавление колбэков', 'выполнено'))
 

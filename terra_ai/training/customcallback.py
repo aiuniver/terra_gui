@@ -1261,7 +1261,7 @@ class FitCallback(keras.callbacks.Callback):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
         self.Exch = exchange
-        self.DTS = dataset
+        self.dataset = dataset
         self.batch_size = batch_size
         self.epochs = epochs
         self.batch = 0
@@ -1341,7 +1341,7 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if not self.stop_flag:
             self.batch = 0
-        self.num_batches = len(self.DTS.dataframe['train']) // self.batch_size
+        self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch = epoch
