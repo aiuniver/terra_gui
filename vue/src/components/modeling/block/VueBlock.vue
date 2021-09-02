@@ -1,7 +1,7 @@
 <template>
   <div class="t-block-modeling" :style="style" @mouseover="hover = true" @mouseleave="hover = false">
     <div :class="['t-block-modeling__header', group, { selected: selected }, { error: !!error }]">
-      <div class="t-block-modeling__header--title" :title="name">{{ name }}: {{ type }}</div>
+      <div class="t-block-modeling__header--title" :title="name">{{ typeLabel }}: {{ name }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
 
@@ -66,6 +66,7 @@ export default {
     },
     selected: Boolean,
     type: String,
+    typeLabel: String,
     title: {
       type: String,
       default: 'Title',
@@ -285,6 +286,7 @@ $circleConnectedColor: #569dcf;
     background: #bfbfbf;
     text-align: center;
     min-height: 42px;
+    padding: 0 10px;
     // height: 42px;
     border-radius: 5px;
     color: #000;

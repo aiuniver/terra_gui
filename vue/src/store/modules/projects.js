@@ -22,6 +22,7 @@ export default {
       const { project, user, defaults: { modeling: { layers_types, layer_form }, datasets: { creation } } } = data;
       const { model } = project;
       const list = layer_form[1]['list'] || []
+      console.log(list)
       commit("SET_PROJECT", project);
       commit("SET_USER", user);
       commit("modeling/SET_MODELING", { layers_types, list }, { root: true });

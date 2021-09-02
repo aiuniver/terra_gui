@@ -14,7 +14,7 @@
             @change="saveModel"
           />
           <Autocomplete2
-            :value="block.type"
+            :value="block.typeLabel"
             :list="list"
             label="Тип слоя"
             name="type"
@@ -33,7 +33,7 @@
             <Shape
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
-              :label="'Input shape'"
+              :label="'Размерность входных данных'"
               :name="'shape_input'"
               :disabled="block.type !== 'Input' || (!!project.dataset)"
               @change="saveModel"
@@ -41,7 +41,7 @@
             <Shape
               v-if="block.shape && block.shape.output"
               v-model="block.shape.output"
-              :label="'Output shape'"
+              :label="'Размерность выходных данных'"
               :name="'shape_output'"
               :disabled="true"
               @change="saveModel"
