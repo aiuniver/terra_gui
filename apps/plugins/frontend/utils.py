@@ -62,7 +62,7 @@ def __prepare_label(value: str) -> str:
 
 
 def prepare_pydantic_field(field, parse: str) -> Field:
-    __value = "" if field.default is None else field.default
+    __value = field.default
     __list = None
 
     if field.type_.__class__ in NUMBER_TYPES or field.type_ in NUMBER_TYPES:
