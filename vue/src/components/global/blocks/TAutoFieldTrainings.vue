@@ -105,7 +105,7 @@ export default {
     },
   },
   created() {
-    console.log(this.type)
+    console.log(this)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });

@@ -3,21 +3,31 @@
     <scrollbar>
       <div class="params__items">
         <at-collapse :value="collapse">
-          <template v-for="(item, index) of params">
-            <at-collapse-item class="mt-3" :title="item.name" :key="'item_' + index">
-              <template v-for="data, i of item.fields">
-                  <t-auto-field-trainings
-                    v-bind="data"
-                    :key="'field_' + item.alias + i"
-                    :inline="index !== 0"
-                    @change="change"
-                  />
-              </template>
-            </at-collapse-item>
-          </template>
-
-          <!-- <at-collapse-item class="mt-3" title="Параметры выходных слоев"></at-collapse-item> -->
-          <!-- <at-collapse-item class="mt-3" title="Выводить"></at-collapse-item> -->
+          <at-collapse-item class="mt-3" :title="main.name">
+            <template v-for="(data, i) of main.fields">
+              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :inline="false" @change="change" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="fit.name">
+            <template v-for="(data, i) of fit.fields">
+              <t-auto-field-trainings v-bind="data" :key="'fit_' + i" :inline="true" @change="change" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="optimizer.name">
+            <template v-for="(data, i) of optimizerFields">
+              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" inline @change="change" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="outputs.name">
+            <template v-for="(data, i) of outputs.fields">
+              <t-auto-field-trainings v-bind="data" :key="'outputs_' + i" :inline="true" @change="change" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="checkpoints.name">
+            <template v-for="(data, i) of checkpoints.fields">
+              <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @change="change" />
+            </template>
+          </at-collapse-item>
         </at-collapse>
       </div>
       <div class="params__items--item">
@@ -35,6 +45,7 @@
 </template>
 
 <script>
+import temp from './temp';
 import { mapGetters } from 'vuex';
 // import Select from '@/components/forms/Select.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
@@ -46,16 +57,39 @@ export default {
     // Checkbox,
   },
   data: () => ({
-    collapse: [0,1],
+    collapse: [0, 1, 2, 3, 4],
+    temp,
+    optimizerValue: '',
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
     }),
+    main() {
+      return this.params.main;
+    },
+    fit() {
+      return this.params.fit;
+    },
+    outputs() {
+      return this.params.outputs
+    },
+    optimizerFields() {
+      return this.params.optimizer.fields[this.optimizerValue];
+    },
+    optimizer() {
+      return this.params.optimizer;
+    },
+    checkpoints() {
+      return this.params.checkpoints
+    },
   },
   methods: {
     change(e) {
-      console.log(e)
+      console.log(e);
+      if (e.name === 'optimizer') {
+        this.optimizerValue = e.value;
+      }
     },
   },
 };
