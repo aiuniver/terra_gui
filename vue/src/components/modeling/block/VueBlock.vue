@@ -100,7 +100,8 @@ export default {
       return this.errors?.[this.id] || ''
     },
     parametr() {
-      const parametr = Object.values(this.parameters?.main || {})
+      const parametr = Object.values(this.parameters?.main || {}).filter(item => item)
+      console.log(parametr)
       return parametr.join()
     },
     styleHover() {
