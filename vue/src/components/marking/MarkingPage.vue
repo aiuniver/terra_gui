@@ -6,6 +6,7 @@
       </div>
       <div class="board__main">
         <t-card-marking />
+        <t-card-images />
       </div>
     </div>
   </div>
@@ -15,9 +16,11 @@
 import { mapGetters } from 'vuex';
 import BlockFiles from '@/components/marking/params/block/BlockFiles.vue';
 import tCardMarking from '@/components/marking/params/components/card/CardMarking.vue';
+import tCardImages from '@/components/marking/params/components/card/CardImages.vue';
 export default {
   components: {
     tCardMarking,
+    tCardImages,
     BlockFiles,
   },
   data: () => ({
