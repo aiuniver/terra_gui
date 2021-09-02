@@ -851,7 +851,20 @@ Defaults = {
         "base": [
             {
                 "alias": "main",
-                "fields": [],
+                "fields": [
+                    {
+                        "type": "select",
+                        "label": "Тип слоя",
+                        "name": "type",
+                        "parse": "type",
+                        "list": list(
+                            map(
+                                lambda item: {"value": item.value, "label": item.name},
+                                list(LayerTypeChoice),
+                            )
+                        ),
+                    },
+                ],
             },
             {
                 "alias": "optimizer",
@@ -894,7 +907,7 @@ for layer in Layer:
     params = getattr(types, layer.name)
     Defaults["modeling"]["layers_types"].update(
         {
-            LayerTypeChoice[layer.name].value: {
+            layer.name: {
                 "main": __get_layer_type_params(params.ParametersMainData, "main"),
                 "extra": __get_layer_type_params(params.ParametersExtraData, "extra"),
             }
