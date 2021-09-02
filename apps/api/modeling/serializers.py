@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from terra_ai.data.modeling.layers import Layer
+from terra_ai.data.modeling.extra import LayerTypeChoice
 from terra_ai.data.modeling.extra import LayerGroupChoice
 
 
@@ -22,7 +22,9 @@ class LayerShapeSerializer(serializers.Serializer):
 class LayerSerializer(serializers.Serializer):
     id = serializers.IntegerField(min_value=1)
     name = serializers.CharField()
-    type = serializers.ChoiceField(choices=tuple(map(lambda item: item.name, Layer)))
+    type = serializers.ChoiceField(
+        choices=tuple(map(lambda item: (item.value, item.name), LayerTypeChoice))
+    )
     group = serializers.ChoiceField(choices=tuple(LayerGroupChoice.values()))
     bind = LayerBindSerializer()
     shape = LayerShapeSerializer()

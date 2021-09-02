@@ -77,10 +77,10 @@ def prepare_pydantic_field(field, parse: str) -> Field:
                 field.type_.values(),
             )
         )
-        if not field.required:
+        if field.allow_none:
             __list = [{"value": "__null__", "label": ""}] + __list
         if not __value:
-            __value = __list[0].get("value")
+            __value = field.default.name if field.default else None
     else:
         if field.type_.__origin__ is tuple:
             __type = FieldTypeChoice.text_array
