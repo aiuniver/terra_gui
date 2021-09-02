@@ -84,7 +84,7 @@ def prepare_pydantic_field(field, parse: str) -> Field:
     else:
         if field.type_.__origin__ is tuple:
             __type = FieldTypeChoice.text_array
-            __value = __value or ()
+            __value = __value or None
         else:
             __type = FieldTypeChoice.text
             __value = str(__value)
