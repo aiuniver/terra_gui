@@ -18,7 +18,7 @@
             :list="list"
             label="Тип слоя"
             name="type"
-            :disabled="isBlock"
+            :disabled="isBlock || isInpOut"
             @change="changeType"
           />
         </div>
@@ -29,13 +29,13 @@
           <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
             <Forms :data="extra" @change="change" />
           </at-collapse-item>
-          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange >
+          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange>
             <Shape
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
               :label="'Размерность входных данных'"
               :name="'shape_input'"
-              :disabled="block.type !== 'Input' || (!!project.dataset)"
+              :disabled="block.type !== 'Input' || !!project.dataset"
               @change="saveModel"
             />
             <Shape
@@ -72,7 +72,7 @@ export default {
     // Select
   },
   data: () => ({
-    collapse: ["0", "2"],
+    collapse: ['0', '2'],
     oldBlock: null,
   }),
   computed: {
@@ -85,6 +85,10 @@ export default {
     }),
     isBlock() {
       return !this.block.id;
+    },
+
+    isInpOut() {
+      return this.block.group === 'input' || this.block.group === 'output';
     },
     buttonSave() {
       return this.buttons?.save || false;
@@ -116,7 +120,7 @@ export default {
     },
     async changeType({ value }) {
       // block.type = e.value
-      console.log(value)
+      console.log(value);
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
     },
     async change({ type, name, value }) {
