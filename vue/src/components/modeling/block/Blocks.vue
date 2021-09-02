@@ -663,7 +663,7 @@ export default {
 
   mounted() {
     // Context menu off
-    this.$el.addEventListener('contextmenu', event => event.preventDefault());
+    // this.$el.addEventListener('contextmenu', event => event.preventDefault());
     this.$el.addEventListener('mouseenter', this.handleMauseOver);
     this.$el.addEventListener('mouseleave', this.handleMauseOver);
     document.documentElement.addEventListener('keyup', this.keyup);
@@ -678,7 +678,7 @@ export default {
     // this.importScene();
   },
   beforeDestroy() {
-    this.$el.removeEventListener('contextmenu', null);
+    // this.$el.removeEventListener('contextmenu', null);
     document.documentElement.removeEventListener('keyup', this.keyup);
     this.$el.removeEventListener('mouseenter', this.handleMauseOver);
     this.$el.removeEventListener('mouseleave', this.handleMauseOver);
