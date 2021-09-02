@@ -417,21 +417,24 @@ class InteractiveCallback:
         return class_idx
 
     def _get_seed(self):
-        for ins in self.dataset.X.get('train').keys():
-            seed_idx = {}
-            for data_type in self.dataset.X.keys():
-                data_lenth = np.arange(len(self.dataset.X.get(data_type).get(ins)))
-                np.random.shuffle(data_lenth)
-                seed_idx[data_type] = data_lenth
-            break
+        seed_idx = {}
+        for data_type in self.dataset.X.keys():
+            data_lenth = np.arange(len(self.dataset.X.get(data_type).get(self.dataset.X.get('train').keys()[0])))
+            np.random.shuffle(data_lenth)
+            seed_idx[data_type] = data_lenth
         return seed_idx
 
-    def update_state(self, current_epoch, y_pred, current_epoch_time, on_epoch_end=True):
-        self.current_epoch = current_epoch
-        self._reformat_y_pred(y_pred)
-        self.log_history['epochs'].append(current_epoch)
-        self._fill_loss_log_history()
-        self._update_progress_table(current_epoch, current_epoch_time)
+    def update_state(self, current_epoch, y_pred, current_epoch_time, on_epoch_end_flag=True):
+        if on_epoch_end_flag:
+            self._reformat_y_pred(y_pred)
+            self._get_intermediate_result_request()
+            self._get_statistic_data_request()
+        else:
+            self.current_epoch = current_epoch
+            self._reformat_y_pred(y_pred)
+            self.log_history['epochs'].append(current_epoch)
+            self._fill_loss_log_history()
+            self._update_progress_table(current_epoch, current_epoch_time)
 
     def _reformat_y_pred(self, y_pred):
         # predict = self.model.predict(self.X.get('train'))
@@ -576,7 +579,7 @@ class InteractiveCallback:
                                 ohe, num_classes)
                         )
 
-    def _evaluate_overfitting(self, metric_name, mean_log, overfit_logs, output):
+    def _evaluate_overfitting(self, metric_name, mean_log, overfit_logs):
         count = sum(overfit_logs[-self.log_gap:])
         if progress_mode.get(metric_name) == 'min' and \
                 mean_log[-1] > min(mean_log) and \
@@ -1375,6 +1378,15 @@ class FitCallback(keras.callbacks.Callback):
                 msg_progress_start = f'Время выполнения:' \
                                      f'{self.eta_format(time_start)}, '
             self.batch += 1
+
+            # TODO: срочный запрос с фронта, настроить возврат в интерактивку upred и флага on_epoch_end_flag=False
+            urgent_predict = False
+            if urgent_predict:
+                on_epoch_end_flag = False
+                upred = {}
+                for data_type in ['train', 'val']:
+                    upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
+
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / self.epochs * 100,
@@ -1392,6 +1404,12 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
+        # TODO: регулярный предикт, настроить возврат в интерактивку scheduled_predict и флага on_epoch_end=True
+        scheduled_predict = {}
+        on_epoch_end_flag = True
+        for data_type in ['train', 'val']:
+            scheduled_predict[data_type] = self.model.predict(self.dataset.X.get(data_type))
+
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / self.epochs * 100,
