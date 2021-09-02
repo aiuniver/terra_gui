@@ -27,7 +27,7 @@ from ..choices import (
 
 
 SourcesPaths = {
-    "type": "multiselect",
+    "type": "multiselect_sources_paths",
     "label": "Выберите путь",
     "name": "sources_paths",
     "parse": "sources_paths",
