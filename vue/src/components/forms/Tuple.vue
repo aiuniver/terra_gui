@@ -40,22 +40,20 @@ export default {
   computed: {
     input: {
       set(value) {
-        this.$emit('input', value);
+        this.$emit('input', value.trim());
         this.isChange = true;
       },
       get() {
-        console.log(typeof this.value)
-        return this.value.join();
+        // console.log(typeof this.value)
+        return this.value ? this.value.join() : '';
       },
     },
   },
   methods: {
     change(e) {
       if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-
-        this.$emit('change', { name: this.name, value: value ? value.split(',') : [] });
+        let value = e.target.value.trim();
+        this.$emit('change', { name: this.name, value: value.length ? value.split(',') : null });
         this.isChange = false;
       }
     },
