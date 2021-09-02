@@ -848,9 +848,33 @@ Defaults = {
         "layers_types": {},
     },
     "training": {
-        "base": {
-            "main": {},
-        },
+        "base": [
+            {
+                "alias": "main",
+                "fields": [],
+            },
+            {
+                "alias": "optimizer",
+                "name": "Параметры оптимизатора",
+                "collapsable": True,
+                "collapsed": True,
+                "fields": [],
+            },
+            {
+                "alias": "outputs",
+                "name": "Параметры выходных слоев",
+                "collapsable": True,
+                "collapsed": False,
+                "fields": [],
+            },
+            {
+                "alias": "checkpoints",
+                "name": "Чекпоинты",
+                "collapsable": True,
+                "collapsed": False,
+                "fields": [],
+            },
+        ],
     },
 }
 

@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from terra_ai.data.mixins import BaseMixinData
+from terra_ai.data.mixins import BaseMixinData, UniqueListMixin, AliasMixinData
 
 from .base import Field
 
@@ -19,22 +19,21 @@ class DefaultsModelingData(BaseMixinData):
     layers_types: dict
 
 
-class DefaultsTrainingBaseGroupData(BaseMixinData):
+class DefaultsTrainingBaseGroupData(AliasMixinData):
     name: Optional[str]
     collapsable: bool = False
     collapsed: bool = False
+    fields: List[Field]
 
 
-class DefaultsTrainingBaseMainData(DefaultsTrainingBaseGroupData):
-    pass
-
-
-class DefaultsTrainingBaseData(BaseMixinData):
-    main: DefaultsTrainingBaseMainData
+class DefaultsTrainingBaseList(UniqueListMixin):
+    class Meta:
+        source = DefaultsTrainingBaseGroupData
+        identifier = "alias"
 
 
 class DefaultsTrainingData(BaseMixinData):
-    base: DefaultsTrainingBaseData
+    base: DefaultsTrainingBaseList
 
 
 class DefaultsData(BaseMixinData):
