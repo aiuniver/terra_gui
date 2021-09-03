@@ -105,7 +105,7 @@ export default {
     },
   },
   created() {
-    console.log(this)
+    // console.log(this)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
@@ -113,7 +113,7 @@ export default {
     this.$nextTick(() => {
       this.valueIn = this.getValue;
     });
-    this.$emit('height', this.$el.clientHeight);
+    // this.$emit('height', this.$el.clientHeight);
   },
 };
 </script>

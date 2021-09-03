@@ -96,7 +96,7 @@ export default {
   },
   methods: {
     change(e) {
-      console.log(e);
+      // console.log(e);
       if (e.name === 'optimizer') {
         this.optimizerValue = e.value;
       }
