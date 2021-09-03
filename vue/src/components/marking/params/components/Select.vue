@@ -10,6 +10,7 @@
       @on-change="change"
       @click="cleanError"
       :disabled="disabled"
+      width="180px"
     >
       <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value" :title="label">
         {{ label }}
