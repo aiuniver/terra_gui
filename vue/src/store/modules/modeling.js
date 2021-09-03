@@ -53,6 +53,7 @@ export default {
       blocks.push(block);
       dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
+      dispatch('selectBlock', block)
     },
     typeBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, block }) {
       let newBlock = changeTypeBlock(type, block, layers_types, list);
