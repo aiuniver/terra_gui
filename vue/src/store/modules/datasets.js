@@ -12,7 +12,6 @@ export default {
     filesDrop: [],
     selected: null,
     selectedIndex: null,
-    loaded: null,
     tags: [],
     tagsFilter: [],
     full: false,
@@ -53,9 +52,6 @@ export default {
     },
     SET_SELECTED_INDEX(state, value) {
       state.selectedIndex = value;
-    },
-    SET_LOADED(state, value) {
-      state.loaded = value;
     },
   },
   actions: {
@@ -167,9 +163,6 @@ export default {
     setSelectedIndex({ commit }, value) {
       commit('SET_SELECTED_INDEX', value);
     },
-    setLoaded({ commit }, value) {
-      commit('SET_LOADED', value);
-    },
     createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
@@ -253,9 +246,6 @@ export default {
     },
     getSelectedIndex({ selectedIndex }) {
       return selectedIndex;
-    },
-    getLoaded({ loaded }) {
-      return loaded;
     },
     getTagsFilter({ tagsFilter }) {
       return tagsFilter;

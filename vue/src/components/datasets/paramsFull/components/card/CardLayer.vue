@@ -1,6 +1,6 @@
 <template>
   <div class="card-layer" :style="height">
-    <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)" >
+    <div class="card-layer__header" :style="bg" @click="$emit('click-header', $event)">
       <div class="card-layer__header--icon" v-click-outside="outside" @click="toggle = !toggle">
         <i class="t-icon icon-file-dot"></i>
       </div>
@@ -32,8 +32,8 @@ export default {
     color: String,
     parameters: {
       type: Object,
-      default: () => {}
-    }
+      default: () => {},
+    },
   },
   data: () => ({
     height: { height: '100%' },
@@ -52,7 +52,7 @@ export default {
       return this.$store.getters['datasets/getErrors'](this.id);
     },
     data() {
-      return { errors: this.errors, parameters:{ ...this.parameters, name: this.name, type: this.type }}
+      return { errors: this.errors, parameters: { ...this.parameters, name: this.name, type: this.type } };
     },
     bg() {
       return { backgroundColor: this.color };
@@ -88,7 +88,7 @@ export default {
   border-radius: 4px;
   border: 1px solid #6c7883;
   background-color: #242f3d;
-  margin: 0 5px;
+  margin: 0 3px;
   min-height: 100%;
   &__body {
     width: 100%;

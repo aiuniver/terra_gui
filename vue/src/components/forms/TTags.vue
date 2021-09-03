@@ -21,6 +21,7 @@
             type="text"
             :class="['tags__item']"
             :style="{ width: (value.length + 1) * 8 + 16 + 'px' }"
+            autocomplete="off"
             @input="change"
             @blur="blur"
           />
