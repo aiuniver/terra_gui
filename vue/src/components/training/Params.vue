@@ -9,9 +9,11 @@
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="fit.name">
-            <template v-for="(data, i) of fit.fields">
-              <t-auto-field-trainings v-bind="data" :key="'fit_' + i" :inline="true" @change="change" />
-            </template>
+            <div class="fit">
+              <template v-for="(data, i) of fit.fields">
+                <t-auto-field-trainings v-bind="data" :key="'fit_' + i" class="fit__item" :inline="true" @change="change" />
+              </template>
+            </div>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="optimizer.name">
             <template v-for="(data, i) of optimizerFields">
@@ -24,14 +26,22 @@
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="checkpoints.name">
-            <template v-for="(data, i) of checkpoints.fields">
-              <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @change="change" />
-            </template>
+            <div class="checkpoints">
+              <template v-for="(data, i) of checkpoints.fields">
+                <t-auto-field-trainings
+                  v-bind="data"
+                  :key="'checkpoints_' + i"
+                  class="checkpoints__item"
+                  :inline="true"
+                  @change="change"
+                />
+              </template>
+            </div>
           </at-collapse-item>
         </at-collapse>
       </div>
       <div class="params__items--item">
-        <div class="item d-flex mb-5" style="gap: 10px">
+        <div class="item d-flex mb-3" style="gap: 10px">
           <button>Обучить</button>
           <button>Остановить</button>
         </div>
@@ -72,7 +82,7 @@ export default {
       return this.params.fit;
     },
     outputs() {
-      return this.params.outputs
+      return this.params.outputs;
     },
     optimizerFields() {
       return this.params.optimizer.fields[this.optimizerValue];
@@ -81,7 +91,7 @@ export default {
       return this.params.optimizer;
     },
     checkpoints() {
-      return this.params.checkpoints
+      return this.params.checkpoints;
     },
   },
   methods: {
@@ -101,7 +111,7 @@ export default {
   flex-shrink: 0;
   border-left: #0e1621 solid 1px;
   overflow: hidden;
-  height: 100%;
+  height: 85%;
   // border-left: #0e1621  1px solid;
   &__items {
     height: 100%;
@@ -109,6 +119,20 @@ export default {
     &--item {
       padding: 20px;
     }
+  }
+}
+.checkpoints {
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    width: 50%;
+  }
+}
+.fit {
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    width: 50%;
   }
 }
 </style>

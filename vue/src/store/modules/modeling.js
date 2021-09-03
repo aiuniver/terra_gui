@@ -12,9 +12,8 @@ export default {
       list: [],
       layers_types: {},
     },
-    buttons: {
-      save: false,
-      clone: false,
+    status: {
+      isUpdate: true,
     },
   }),
   mutations: {
@@ -42,8 +41,8 @@ export default {
     SET_SELECT(state, value) {
       state.select = value;
     },
-    SET_BUTTONS(state, value) {
-      state.buttons = { ...state.buttons, ...value };
+    SET_STATUS(state, value) {
+      state.status = { ...state.status, ...value };
     },
   },
   actions: {
@@ -112,7 +111,8 @@ export default {
       }
       return model;
     },
-    async createModel({ dispatch }, data) {
+    async createModel({ dispatch, commit }, data) {
+      commit('SET_STATUS', { isUpdate: false });
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
     },
     async removeModel({ dispatch }, data) {
@@ -131,7 +131,8 @@ export default {
           })
           .filter(link => link);
       });
-      commit('SET_BUTTONS', { save: false });
+      commit('SET_STATUS', { isUpdate: true });
+      // commit('SET_ERRORS_BLOCKS', {});
       return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
@@ -149,8 +150,8 @@ export default {
     async validateModel({ commit, dispatch }) {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
       if (data) {
-        commit('SET_ERRORS_BLOCKS', data)
         const isValid = !Object.values(data).filter(item => item).length
+        commit('SET_ERRORS_BLOCKS', data)
         dispatch('messages/setMessage', isValid ? { message:  `Валидация прошла успешно` } : { error: `Валидация не прошла`}, { root: true });
       }
       return data;
@@ -167,9 +168,6 @@ export default {
       console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
-    setButtons({ commit }, value) {
-      commit('SET_BUTTONS', value);
-    },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
@@ -179,7 +177,7 @@ export default {
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
-    getButtons: ({ buttons }) => buttons,
+    getStatus: ({ status }) => status,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id] || {};

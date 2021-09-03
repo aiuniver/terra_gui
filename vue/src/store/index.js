@@ -8,7 +8,7 @@ import trainings from './modules/trainings';
 import deploy from './modules/deploy';
 
 import axios from 'axios';
-import Vue from 'vue';
+// import Vue from 'vue';
 export default {
   modules: {
     messages,
@@ -21,29 +21,19 @@ export default {
     projects,
   },
   actions: {
-    async axios({ dispatch }, config) {
-      // dispatch('messages/setMessage', { mesage: '' })
-      Vue.prototype.$Loading.start();
+    async axios({ dispatch }, { method = 'post', url, data = {} }) {
       try {
-        Vue.prototype.$Loading.start();
-        config.method = config.method || 'post';
-        (config.url = '/api/v1' + config.url), (config.data = config.data || {});
-        // console.log('config: ', config)
-        const response = await axios(config);
-        // console.log('response', response)
+        const response = await axios({ method, url: '/api/v1' + url, data});
         const { error, success } = response.data;
         if (success) {
-          Vue.prototype.$Loading.finish();
           dispatch('messages/setMessage', '');
         } else {
           dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
-          Vue.prototype.$Loading.error();
         }
         return response.data;
       } catch (error) {
         dispatch('messages/setMessage', { error: JSON.stringify(error, null, 2) });
         dispatch('settings/setOverlay', false);
-        Vue.prototype.$Loading.error();
         return null;
       }
     },
