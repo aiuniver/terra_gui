@@ -19,12 +19,12 @@ import { mapGetters } from "vuex";
 export default {
   data: () => ({
     items: [
-      { title: "Данные", path: "/datasets" },
-      { title: "Разметка", path: "/marking" },
-      { title: "Проектирование", path: "/modeling" },
-      { title: "Обучение", path: "/training" },
-      { title: "Каскады", path: "/cascades" },
-      { title: "Деплой", path: "/deploy" },
+      { title: "Данные", path: "/datasets", access: true },
+      { title: "Разметка", path: "/marking", access: true },
+      { title: "Проектирование", path: "/modeling", access: true },
+      { title: "Обучение", path: "/training", access: false },
+      { title: "Каскады", path: "/cascades", access: false },
+      { title: "Деплой", path: "/deploy", access: true },
     ],
   }),
   computed: {
@@ -35,7 +35,7 @@ export default {
   methods: {
     nav(path) {
       if (!this.project.dataset) {
-        if (path === "/modeling" || path === "/datasets" || path === "/deploy" || path === "/marking") {
+        if (this.items.find(item => item.path === path)?.access) {
           if (this.$route.path !== path) {
             this.$router.push(path);
           }
@@ -46,7 +46,7 @@ export default {
           "/training": "обучения",
           "/deploy": "деплоя",
         };
-        const self = this
+        // const self = this
         this.$Modal.alert({
           title: "Предупреждение!",
           width: 300,
@@ -55,9 +55,9 @@ export default {
           okText: "Загрузить датасет",
           callback: function (action) {
             console.log(action);
-            if (self.$route.path !== '/datasets') {
-              self.$router.push('/datasets');
-            }
+            // if (self.$route.path !== '/datasets') {
+            //   self.$router.push('/datasets');
+            // }
           },
         });
       } else {
