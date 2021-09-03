@@ -1,6 +1,6 @@
 <template>
   <div class="t-field t-inline">
-    <label class="t-field__label" :for="parse" >{{ label }}</label>
+    <label class="t-field__label" :for="parse">{{ label }}</label>
     <div class="t-field__switch">
       <input
         :id="parse"
@@ -17,16 +17,16 @@
 </template>
 
 <script>
-import { bus } from "@/main";
+import { bus } from '@/main';
 export default {
   props: {
     label: {
       type: String,
-      default: "Label",
+      default: 'Label',
     },
     type: {
       type: String,
-      default: "text",
+      default: 'text',
     },
     value: {
       type: [Boolean],
@@ -40,7 +40,7 @@ export default {
     event: {
       type: Array,
       default: () => [],
-    }
+    },
   },
   data: () => ({
     checked: null,
@@ -49,8 +49,8 @@ export default {
     change(e) {
       // console.log(e);
       const value = e.target.checked;
-      this.$emit("change", { name: this.name, value });
-      bus.$emit("change", { event: this.name, value });
+      this.$emit('change', { name: this.name, value });
+      bus.$emit('change', { event: this.name, value });
     },
   },
   created() {
@@ -58,7 +58,7 @@ export default {
     // console.log('created ' + this.name, this.checked)
     if (this.event.length) {
       // console.log("created", this.name);
-      bus.$on("change", ({ event }) => {
+      bus.$on('change', ({ event }) => {
         if (this.event.includes(event)) {
           this.checked = false;
         }
@@ -68,7 +68,7 @@ export default {
   destroyed() {
     if (this.event.length) {
       bus.$off();
-      console.log("destroyed", this.name);
+      console.log('destroyed', this.name);
     }
   },
 };
@@ -89,7 +89,6 @@ export default {
     font-size: 0.75rem;
     text-overflow: ellipsis;
     white-space: nowrap;
-    overflow: hidden;
   }
   &__input {
     width: 100%;
@@ -105,7 +104,7 @@ export default {
     }
     &:checked + span:before {
       transform: translateX(12px);
-      background-color: #65B9F4;
+      background-color: #65b9f4;
     }
   }
   &__switch {
@@ -115,7 +114,7 @@ export default {
 
     span {
       background-color: #242f3d;
-      border-color: #6C7883 !important;
+      border-color: #6c7883 !important;
       display: block;
       position: relative;
       height: 100%;
@@ -126,7 +125,7 @@ export default {
       &:before {
         background-color: #6c7883;
         display: block;
-        content: "";
+        content: '';
         height: 10px;
         width: 10px;
         position: absolute;
