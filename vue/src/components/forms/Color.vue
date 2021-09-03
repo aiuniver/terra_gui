@@ -27,7 +27,7 @@
           @blur="change"
           @focus="focus"
         />
-        <div class="t-field__box" :style="{ background: input }" @click="pickerShow = true"></div>
+        <div class="t-field__box" :style="{ background: input }" @click="click"></div>
       </div>
     </div>
   </div>
@@ -78,6 +78,11 @@ export default {
     // },
   },
   methods: {
+    click () {
+      if (!this.disabled) [
+        this.pickerShow = true
+      ]
+    },
     outside() {
       if (this.pickerShow) {
         this.pickerShow = false;
