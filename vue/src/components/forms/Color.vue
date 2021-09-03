@@ -6,6 +6,16 @@
       </label>
 
       <div class="t-field__content" v-click-outside="outside">
+        <div v-if="pickerShow" class="t-field__color-picker">
+          <ColorPicker
+            v-model="input"
+            :width="100"
+            :height="100"
+            :disabled="false"
+            startColor="#ff0000"
+            @color-change="$emit('change', $event)"
+          ></ColorPicker>
+        </div>
         <input
           v-model="input"
           :class="['t-field__input', { small: small }, { 't-field__error': error }]"
@@ -18,16 +28,6 @@
           @focus="focus"
         />
         <div class="t-field__box" :style="{ background: input }" @click="pickerShow = true"></div>
-        <div v-if="pickerShow" class="t-field__color-picker">
-          <ColorPicker
-            v-model="input"
-            :width="100"
-            :height="100"
-            :disabled="false"
-            startColor="#ff0000"
-            @color-change="$emit('change', $event)"
-          ></ColorPicker>
-        </div>
       </div>
     </div>
   </div>
@@ -114,6 +114,10 @@ export default {
   &__content {
     position: relative;
   }
+  &__color-picker ~ .t-field__input {
+      border-radius: 0 0 4px 4px;
+      border-color: #fff;
+    }
   &__box {
     background: #59b9ff;
     width: 20px;
@@ -126,15 +130,15 @@ export default {
   }
   &__color-picker {
     position: absolute;
-    top: -124px;
-
+    bottom: 13px;
     background-color: #1b2a3f;
-    border-radius: 4px;
-    border: 1px solid #6c7883;
+    border-radius: 4px 4px 0 0;
+    border: 1px solid #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
+    width: 100px;
     // padding: 10px;
   }
   // margin-bottom: 20px;
