@@ -50,7 +50,7 @@ class ConfigAPIView(BaseAPIView):
                 {
                     "name": metrics_data.get("name") % layer.id,
                     "parse": metrics_data.get("parse") % layer.id,
-                    "value": metrics_list[0].get("label") if metrics_list else "",
+                    "value": [metrics_list[0].get("label")] if metrics_list else [],
                     "list": metrics_list,
                 }
             )
