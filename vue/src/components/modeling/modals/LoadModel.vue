@@ -15,7 +15,7 @@
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <div class="loaded-list__item--empty"></div>
-              <div class="loaded-list__item--remove" @click="removeModel(list.label)">
+              <div class="loaded-list__item--remove" @click="removeModel(list.value)">
                 <i></i>
               </div>
             </li>
@@ -82,7 +82,7 @@ export default {
   },
   methods: {
     async removeModel(name) {
-      const { data } = await this.$store.dispatch('modeling/removeModel', { name });
+      const { data } = await this.$store.dispatch('modeling/removeModel', { path: name });
       if (data) {
         this.load();
       }
