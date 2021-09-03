@@ -176,9 +176,9 @@ export default {
     align-items: center;
     -webkit-box-pack: end;
     margin-bottom: 10px;
+    width: 100%;
     .t-field__label {
-      width: 150px;
-      max-width: 130px;
+      width: 100%;
       padding: 0 10px;
       text-align: left;
       color: #a7bed3;

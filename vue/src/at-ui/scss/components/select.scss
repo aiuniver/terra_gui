@@ -99,7 +99,7 @@
     position: absolute;
     // width: 100%;
     left: 0 !important;
-    min-width: 100%;
+    width: 100%;
     max-height: $select-dropdown-height;
     font-size: $select-dropdown-font-size-base;
     border-radius: 0 0 4px 4px;
@@ -131,7 +131,7 @@
       height: 20px;
 
       &--selected {
-        font-weight: bold;
+        font-weight: normal;
         background-color: $dropdown-option-bg-c-selected;
         color: $text-color;
       }
