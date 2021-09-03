@@ -183,6 +183,7 @@ export default {
     border-color: #b53b3b;
   }
   &__content {
+    padding: 2px 0;
     position: absolute;
     background-color: #242f3d;
     width: 100%;
@@ -196,11 +197,11 @@ export default {
 }
 .t-multi__item {
   display: flex;
-  padding: 3px 6px;
+  padding: 1px 5px;
   align-items: center;
   cursor: pointer;
   &--empty {
-    cursor: auto;
+    cursor: default;
   }
   &:hover {
     color: #e7ecf5;
@@ -227,7 +228,7 @@ export default {
     font-size: 0.7em;
     line-height: 1.5;
     text-align: left;
-    cursor: context-menu;
+    cursor: pointer;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
