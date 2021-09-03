@@ -34,8 +34,6 @@ export default {
               { message: `Датасет «${dataset.alias}» выбран` },
               { root: true }
             );
-            this.$store.dispatch('projects/setProject', { dataset }, { root: true });
-            this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
             this.$store.dispatch('messages/setProgress', 0);
             this.$store.dispatch('messages/setProgressMessage', '');
             this.$store.dispatch('projects/get');
