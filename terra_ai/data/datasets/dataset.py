@@ -283,6 +283,8 @@ class DatasetData(AliasMixinData):
                     "type": LayerTypeChoice.Input,
                     "group": LayerGroupChoice.input,
                     "shape": {"input": [layer.shape]},
+                    "task": layer.task,
+                    "num_classes": self.num_classes.get(_id),
                 }
             )
         for _id, layer in self.outputs.items():
@@ -293,6 +295,8 @@ class DatasetData(AliasMixinData):
                     "type": LayerTypeChoice.Dense,
                     "group": LayerGroupChoice.output,
                     "shape": {"output": [layer.shape]},
+                    "task": layer.task,
+                    "num_classes": self.num_classes.get(_id),
                 }
             )
         data.update({"layers": layers})

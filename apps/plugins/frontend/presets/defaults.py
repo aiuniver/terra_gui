@@ -1,6 +1,8 @@
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
+from terra_ai.data.training.extra import LossChoice, MetricChoice
 
+from ..extra import FieldTypeChoice
 from ..utils import prepare_pydantic_field
 from ..choices import (
     LayerInputTypeChoice,
@@ -29,6 +31,123 @@ from ..choices import (
     TrainingCheckpointTypeChoice,
     TrainingCheckpointModeChoice,
 )
+
+TrainingLosses = {
+    LayerOutputTypeChoice.Classification.name: [
+        LossChoice.CategoricalCrossentropy,
+        LossChoice.BinaryCrossentropy,
+        LossChoice.MeanSquaredError,
+        LossChoice.SquaredHinge,
+        LossChoice.Hinge,
+        LossChoice.CategoricalHinge,
+        LossChoice.SparseCategoricalCrossentropy,
+        LossChoice.KLDivergence,
+        LossChoice.Poisson,
+    ],
+    LayerOutputTypeChoice.Segmentation.name: [
+        LossChoice.CategoricalCrossentropy,
+        LossChoice.BinaryCrossentropy,
+        LossChoice.SquaredHinge,
+        LossChoice.Hinge,
+        LossChoice.CategoricalHinge,
+        LossChoice.SparseCategoricalCrossentropy,
+        LossChoice.KLDivergence,
+        LossChoice.Poisson,
+    ],
+    LayerOutputTypeChoice.Regression.name: [
+        LossChoice.MeanSquaredError,
+        LossChoice.MeanAbsoluteError,
+        LossChoice.MeanAbsolutePercentageError,
+        LossChoice.MeanSquaredLogarithmicError,
+        LossChoice.LogCosh,
+        LossChoice.CosineSimilarity,
+    ],
+    LayerOutputTypeChoice.Timeseries.name: [
+        LossChoice.MeanSquaredError,
+        LossChoice.MeanAbsoluteError,
+        LossChoice.MeanAbsolutePercentageError,
+        LossChoice.MeanSquaredLogarithmicError,
+        LossChoice.LogCosh,
+        LossChoice.CosineSimilarity,
+    ],
+}
+
+
+TrainingMetrics = {
+    LayerOutputTypeChoice.Classification.name: [
+        MetricChoice.Accuracy,
+        MetricChoice.BinaryAccuracy,
+        MetricChoice.BinaryCrossentropy,
+        MetricChoice.CategoricalAccuracy,
+        MetricChoice.CategoricalCrossentropy,
+        MetricChoice.SparseCategoricalAccuracy,
+        MetricChoice.SparseCategoricalCrossentropy,
+        MetricChoice.TopKCategoricalAccuracy,
+        MetricChoice.SparseTopKCategoricalAccuracy,
+        MetricChoice.Hinge,
+        MetricChoice.KLDivergence,
+        MetricChoice.Poisson,
+    ],
+    LayerOutputTypeChoice.Segmentation.name: [
+        MetricChoice.DiceCoef,
+        MetricChoice.MeanIoU,
+        MetricChoice.Accuracy,
+        MetricChoice.BinaryAccuracy,
+        MetricChoice.BinaryCrossentropy,
+        MetricChoice.CategoricalAccuracy,
+        MetricChoice.CategoricalCrossentropy,
+        MetricChoice.SparseCategoricalAccuracy,
+        MetricChoice.SparseCategoricalCrossentropy,
+        MetricChoice.TopKCategoricalAccuracy,
+        MetricChoice.SparseTopKCategoricalAccuracy,
+        MetricChoice.Hinge,
+        MetricChoice.KLDivergence,
+        MetricChoice.Poisson,
+    ],
+    LayerOutputTypeChoice.Regression.name: [
+        MetricChoice.Accuracy,
+        MetricChoice.MeanAbsoluteError,
+        MetricChoice.MeanSquaredError,
+        MetricChoice.MeanAbsolutePercentageError,
+        MetricChoice.MeanSquaredLogarithmicError,
+        MetricChoice.LogCoshError,
+        MetricChoice.CosineSimilarity,
+    ],
+    LayerOutputTypeChoice.Timeseries.name: [
+        MetricChoice.Accuracy,
+        MetricChoice.MeanAbsoluteError,
+        MetricChoice.MeanSquaredError,
+        MetricChoice.MeanAbsolutePercentageError,
+        MetricChoice.MeanSquaredLogarithmicError,
+        MetricChoice.LogCoshError,
+        MetricChoice.CosineSimilarity,
+    ],
+}
+
+
+TrainingLossSelect = {
+    "type": FieldTypeChoice.select.value,
+    "label": "Loss",
+    "name": "architecture_parameters_outputs_%i_loss",
+    "parse": "architecture[parameters][outputs][%i][loss]",
+}
+
+
+TrainingMetricSelect = {
+    "type": FieldTypeChoice.multiselect.value,
+    "label": "Выберите метрики",
+    "name": "architecture_parameters_outputs_%i_metrics",
+    "parse": "architecture[parameters][outputs][%i][metrics]",
+}
+
+
+TrainingClassesQuantitySelect = {
+    "type": FieldTypeChoice.number.value,
+    "label": "Количество классов",
+    "name": "architecture_parameters_outputs_%i_classes_quantity",
+    "parse": "architecture[parameters][outputs][%i][classes_quantity]",
+    "disabled": True,
+}
 
 
 SourcesPaths = {
