@@ -123,8 +123,8 @@ export default {
   margin-bottom: 10px;
   align-items: center;
   .t-field__label {
-    width: 150px;
-    max-width: 130px;
+    // width: 150px;
+    // max-width: 130px;
     padding: 0 10px;
     text-align: left;
     color: #a7bed3;
