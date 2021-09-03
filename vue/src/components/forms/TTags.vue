@@ -73,13 +73,15 @@ export default {
     },
     change(e) {
       const index = e.target.dataset.index;
+      console.log(index)
       if (e.target.value.length >= 3) {
         this.tags[+index].value = e.target.value;
       }
     },
     blur(e) {
-      if (e.target.value.length < 3) {
-        this.$forceUpdate();
+      const index = e.target.dataset.index;
+      if (e.target.value.length <= 2) {
+        this.tags = this.tags.filter((item, i) => i !== +index);
       }
     },
   },
