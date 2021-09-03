@@ -52,12 +52,27 @@
       @cleanError="cleanError"
       @change="change"
     />
+    <MegaMultiSelect
+      v-if="type === 'multiselect'"
+      :value="getValue"
+      :label="label"
+      :list="list"
+      :parse="parse"
+      :name="name"
+      :inline="inline"
+      @cleanError="cleanError"
+      @change="change"
+    />
   </div>
 </template>
 
 <script>
+import MegaMultiSelect from '@/components/global/forms/MegaMultiSelect';
 export default {
   name: 't-auto-field-trainings',
+  components: {
+    MegaMultiSelect,
+  },
   props: {
     type: String,
     value: [String, Boolean, Number, Array],
@@ -68,7 +83,7 @@ export default {
     name: String,
     id: Number,
     parameters: Object,
-    inline: Boolean
+    inline: Boolean,
   },
   data: () => ({
     valueIn: null,
@@ -120,6 +135,5 @@ export default {
 
 <style lang="scss" scoped>
 .forms {
-
 }
 </style>

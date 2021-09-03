@@ -3,15 +3,21 @@
     <scrollbar>
       <div class="params__items">
         <at-collapse :value="collapse">
-          <at-collapse-item class="mt-3" :title="main.name">
+          <at-collapse-item class="mt-3" :title="''">
             <template v-for="(data, i) of main.fields">
               <t-auto-field-trainings v-bind="data" :key="'main_' + i" :inline="false" @change="change" />
             </template>
           </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="fit.name">
+          <at-collapse-item class="mt-3" :title="''">
             <div class="fit">
               <template v-for="(data, i) of fit.fields">
-                <t-auto-field-trainings v-bind="data" :key="'fit_' + i" class="fit__item" :inline="true" @change="change" />
+                <t-auto-field-trainings
+                  v-bind="data"
+                  :key="'fit_' + i"
+                  class="fit__item"
+                  :inline="true"
+                  @change="change"
+                />
               </template>
             </div>
           </at-collapse-item>
@@ -21,16 +27,27 @@
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="outputs.name">
-            <template v-for="(data, i) of outputs.fields">
-              <t-auto-field-trainings v-bind="data" :key="'outputs_' + i" :inline="true" @change="change" />
-            </template>
+            <div class="blocks-layers">
+              <template v-for="(field, i) of outputs.fields">
+                <div class="block-layers" :key="'block_layers_' + i">
+                  <div class="block-layers__header">
+                    {{ field.name }}
+                  </div>
+                  <div class="block-layers__body">
+                    <template v-for="(data, i) of field.fields">
+                      <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @change="change" />
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="checkpoints.name">
             <div class="checkpoints">
               <template v-for="(data, i) of checkpoints.fields">
                 <t-auto-field-trainings
                   v-bind="data"
-                  :key="'checkpoints_' + i"
+                  :key="'outputs_' + i"
                   class="checkpoints__item"
                   :inline="true"
                   @change="change"
@@ -106,6 +123,22 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.blocks-layers {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.block-layers {
+  width: 50%;
+  &__header {
+    color: #a7bed3;
+    display: block;
+    margin: 0 0 10px 0;
+    line-height: 1;
+    font-size: 0.75rem;
+  }
+}
+
 .params {
   width: 400px;
   flex-shrink: 0;
