@@ -61,7 +61,7 @@ export default {
   },
   data: () => ({
     icons: [
-      { icon: 'icon-deploy-copy', event: 'clone' },
+      { icon: 'icon-modeling-copy-white', event: 'clone' },
       { icon: 'icon-modeling-link-remove', event: 'link' },
       { icon: 'icon-modeling-remove', event: 'remove' },
     ],
@@ -652,7 +652,6 @@ export default {
     //   // this.updateScene();
     // },
     moveBlock() {
-      this.$store.dispatch('modeling/setButtons', { save: true });
       this.updateModel();
     },
 

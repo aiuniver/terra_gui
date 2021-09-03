@@ -50,12 +50,11 @@ export default {
       blocks: 'modeling/getBlocks',
       errors: 'modeling/getErrorsBlocks',
       project: 'projects/getProject',
+      status: 'modeling/getStatus',
     }),
     isSave() {
-      const errors = this.$store.getters['modeling/getErrorsBlocks'] || {}
-      const isError = Object.values(errors).filter(item => item)
-      console.log(isError)
-      return isError.length || this.isValidation
+      return this.isKeras
+      // || this.status.isUpdate
     },
     isClear() {
       return !this.blocks.length 
