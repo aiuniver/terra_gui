@@ -1421,7 +1421,8 @@ class CreateDTS(object):
                 tmp = []
                 for i in data:
                     tmp.append(i[0])
-                self.classes_names[put_data.id] = sorted(list(set(tmp)))
+                classes_names = sorted([name.split(os.path.sep)[-1] for name in options['sources_path']])
+                self.classes_names[put_data.id] = classes_names
                 self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
         elif options["sources_paths"][0].endswith(".csv"):

@@ -132,60 +132,149 @@ def class_counter(y_array, classes_names: list, ohe=True):
 
 
 progress_mode = {
-    "BinaryCrossentropy": "min",
-    "CategoricalCrossentropy": "min",
-    "CategoricalHinge": "min",
-    "CosineSimilarity": "min",
-    "Hinge": "min",
-    "Huber": "min",
-    "KLDivergence": "min",
-    "LogCosh": "min",
-    "MeanAbsoluteError": "min",
-    "MeanAbsolutePercentageError": "min",
-    "MeanSquaredError": "min",
-    "MeanSquaredLogarithmicError": "min",
-    "Poisson": "min",
-    "SparseCategoricalCrossentropy": "min",
-    "SquaredHinge": "min",
-    "AUC": "max",
-    "Accuracy": "max",
-    "BinaryAccuracy": "max",
-    "CategoricalAccuracy": "max",
-    "FalseNegatives": "min",
-    "FalsePositives": "min",
-    "LogCoshError": "min",
-    "MeanIoU": "max",
-    "Precision": "max",
-    "Recall": "max",
-    "RootMeanSquaredError": "min",
-    "SparseCategoricalAccuracy": 'max',
-    "SparseTopKCategoricalAccuracy": "max",
-    "TopKCategoricalAccuracy": "max",
-    "TrueNegatives": "max",
-    "TruePositives": "max"
+    "BinaryCrossentropy": {
+        "log_name": "binary_crossentropy",
+        "mode": "min"
+    },
+    "CategoricalCrossentropy": {
+        "log_name": "categorical_crossentropy",
+        "mode": "min"
+    },
+    "CategoricalHinge": {
+        "log_name": "categorical_hinge",
+        "mode": "min"
+    },
+    "CosineSimilarity": {
+        "log_name": "cosine_similarity",
+        "mode": "min"
+    },
+    "Hinge": {
+        "log_name": "hinge",
+        "mode": "min"
+    },
+    "Huber": {
+        "log_name": "Huber",
+        "mode": "min"
+    },
+    "KLDivergence": {
+        "log_name": "kullback_leibler_divergence",
+        "mode": "min"
+    },
+    "LogCosh": {
+        "log_name": "logcosh",
+        "mode": "min"
+    },
+    "MeanAbsoluteError": {
+        "log_name": "mean_absolute_error",
+        "mode": "min"
+    },
+    "MeanAbsolutePercentageError": {
+        "log_name": "mean_absolute_percentage_error",
+        "mode": "min"
+    },
+    "MeanSquaredError": {
+        "log_name": "mean_squared_error",
+        "mode": "min"
+    },
+    "MeanSquaredLogarithmicError": {
+        "log_name": "mean_squared_logarithmic_error",
+        "mode": "min"
+    },
+    "Poisson": {
+        "log_name": "poisson",
+        "mode": "min"
+    },
+    "SparseCategoricalCrossentropy": {
+        "log_name": "sparse_categorical_crossentropy",
+        "mode": "min"
+    },
+    "SquaredHinge": {
+        "log_name": "squared_hinge",
+        "mode": "min"
+    },
+    "AUC": {
+        "log_name": "auc",
+        "mode": "max"
+    },
+    "Accuracy": {
+        "log_name": "Accuracy",
+        "mode": "max"
+    },
+    "BinaryAccuracy": {
+        "log_name": "binary_accuracy",
+        "mode": "max"
+    },
+    "CategoricalAccuracy": {
+        "log_name": "categorical_accuracy",
+        "mode": "max"
+    },
+    "FalseNegatives": {
+        "log_name": "false_negatives",
+        "mode": "min"
+    },
+    "FalsePositives": {
+        "log_name": "false_positives",
+        "mode": "min"
+    },
+    "LogCoshError": {
+        "log_name": "logcosh",
+        "mode": "min"
+    },
+    "MeanIoU": {
+        "log_name": "mean_io_u",
+        "mode": "max"
+    },
+    "Precision": {
+        "log_name": "precision",
+        "mode": "max"
+    },
+    "Recall": {
+        "log_name": "recall",
+        "mode": "max"
+    },
+    "RootMeanSquaredError": {
+        "log_name": "root_mean_squared_error",
+        "mode": "min"
+    },
+    "SparseCategoricalAccuracy": {
+        "log_name": "sparse_categorical_accuracy",
+        "mode": "max"
+    },
+    "SparseTopKCategoricalAccuracy": {
+        "log_name": "sparse_top_k_categorical_accuracy",
+        "mode": "max"
+    },
+    "TopKCategoricalAccuracy": {
+        "log_name": "top_k_categorical_accuracy",
+        "mode": "max"
+    },
+    "TrueNegatives": {
+        "log_name": "true_negatives",
+        "mode": "max"
+    },
+    "TruePositives": {
+        "log_name": "true_positives",
+        "mode": "max"
+    },
 }
 
 
 class InteractiveCallback:
 
     """Callback for interactive requests"""
-    def __init__(self, dataset, metrics: dict, losses: dict):
+    def __init__(self, dataset: PrepareDTS, metrics: dict, losses: dict):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
-        # self.model = null_model
+
         self.losses = losses
         self.metrics = metrics
         self.dataset = dataset
-        # self.X = {'train': {}, 'val': {}}
-        # self.Y = {'train': {}, 'val': {}}
-        # self._prepare_dataset()
         self.y_pred = {}
         self.current_epoch = None
 
         # overfitting params
         self.log_gap = 10
-        # self.progress_mode = None
         self.progress_threashold = 5
 
         self.log_history = {}
@@ -248,6 +337,7 @@ class InteractiveCallback:
     def _prepare_null_log_history_template(self):
         """
         self.log_history_example = {
+            'epochs': [],
             'output_id': {
                 'loss': {
                     'CategoricalCrossentropy': {
@@ -290,35 +380,21 @@ class InteractiveCallback:
                     }
                 },
                 'class_loss': {
-                    'Мерседес': {
-                        'CategoricalCrossentropy': {'val': []}
+                    'class_name': {
+                        'loss_name': []
                     },
-                    'Рено': {
-                        'CategoricalCrossentropy': {'val': []}
-                    },
-                    'Феррари': {
-                        'CategoricalCrossentropy': {'val': []}
-                    }
                 },
                 'class_metrics': {
-                    'Мерседес': {
-                        'Accuracy': {'val': []},
-                        'CategoricalAccuracy': {'val': []}
+                    'class_name': {
+                        'metric_name': [],
                     },
-                    'Рено': {
-                        'Accuracy': {'val': []},
-                        'CategoricalAccuracy': {'val': []}
-                    },
-                    'Феррари': {
-                        'Accuracy': {'val': []},
-                        'CategoricalAccuracy': {'val': []}
-                    }
                 }
             }
         }
         """
         self.log_history['epochs'] = []
-        for out in self.dataset.Y.get('train').keys():
+        for out in self.dataset.data.outputs.keys():
+            # out: int
             self.log_history[out] = {
                 'loss': {},
                 'metrics': {},
@@ -444,6 +520,9 @@ class InteractiveCallback:
                     self.y_pred[data_type][out] = y_pred
                 else:
                     self.y_pred[data_type][out] = y_pred[idx]
+
+    def _get_array_from_generator(self):
+        pass
 
     def _get_loss_calculation(self, loss_name, y_true, y_pred, ohe=True, num_classes=10):
         loss_obj = getattr(tf.keras.losses, loss_name)()
@@ -1255,7 +1334,7 @@ class InteractiveCallback:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset, exchange=Exchange(), batch_size: int = None, epochs: int = None,
+    def __init__(self, dataset: PrepareDTS , exchange=Exchange(), batch_size: int = None, epochs: int = None,
                  save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
@@ -1382,9 +1461,12 @@ class FitCallback(keras.callbacks.Callback):
             urgent_predict = False
             if urgent_predict:
                 on_epoch_end_flag = False
-                upred = {}
-                for data_type in ['train', 'val']:
-                    upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
+                if self.dataset.data.use_generator:
+                    upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
+                else:
+                    upred = self.model.predict(self.dataset.X.get('val'))
+                # for data_type in ['train', 'val']:
+                #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
 
             progress.pool(
                 self.progress_name,
@@ -1404,10 +1486,12 @@ class FitCallback(keras.callbacks.Callback):
             {}:
         """
         # TODO: регулярный предикт, настроить возврат в интерактивку scheduled_predict и флага on_epoch_end=True
-        scheduled_predict = {}
+        # scheduled_predict = {}
         on_epoch_end_flag = True
-        for data_type in ['train', 'val']:
-            scheduled_predict[data_type] = self.model.predict(self.dataset.X.get(data_type))
+        if self.dataset.data.use_generator:
+            scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+        else:
+            scheduled_predict = self.model.predict(self.dataset.X.get('val'))
 
         progress.pool(
             self.progress_name,
