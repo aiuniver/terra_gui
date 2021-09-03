@@ -52,7 +52,14 @@ export default {
       this.imageModel = await this.$refs.container.getImages();
     },
     async validateModel() {
-      await this.$store.dispatch('modeling/validateModel', {});
+      const validate = await this.$store.dispatch('modeling/validateModel', {});
+      if(Object.values(validate).some((el) => el == null)){
+        this.$store.dispatch(
+              'messages/setMessage',
+              { message: `Модель прошла валидацию успешно!` },
+              { root: true }
+            );
+      }
     },
     async clearModel() {
       try {

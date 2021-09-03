@@ -131,7 +131,7 @@ export default {
     },
     addCard() {
       this.$store.dispatch('datasets/createInputData', { layer: 'input' });
-      this.autoScroll()
+      this.autoScroll();
     },
     optionsCard(comm, id) {
       if (comm === 'remove') {
@@ -140,7 +140,7 @@ export default {
       }
       if (comm === 'copy') {
         this.$store.dispatch('datasets/cloneInputData', id);
-        this.autoScroll()
+        this.autoScroll();
       }
     },
     heightForm(value) {
@@ -200,7 +200,7 @@ export default {
     }
     &--empty {
       height: 100%;
-      width: 10px;
+      width: 3px;
     }
   }
   &__fab {

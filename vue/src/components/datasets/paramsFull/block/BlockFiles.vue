@@ -7,6 +7,7 @@
       {{ text }}
     </div>
     <div v-show="toggle" class="block-file__body">
+      <button @click="moveAll" class="block-file__body--btn">Перенести всё</button>
       <scrollbar>
       <files-menu v-model="filesSource" />
       </scrollbar>
@@ -60,6 +61,26 @@ export default {
 
     },
   },
+  methods: {
+    moveAll() {
+      const files = this.$store.getters['datasets/getFilesSource'].flatMap(this.getFiles)
+      const drop = files.filter(item => item.dragndrop).map(item => ({
+        value: item.path,
+        label: item.title,
+        type: item.type,
+        id: 0,
+        cover: item.cover,
+        table: item.type === 'table' ? item.data : null
+      }))
+      this.$store.dispatch('datasets/setFilesDrop', drop)
+    },
+    getFiles(item) {
+      if (item.children) {
+        return [...item.children.flatMap(this.getFiles), item]
+      }
+      return item
+    }
+  }
 };
 </script>
 
@@ -107,6 +128,15 @@ export default {
   &__body {
     padding-top: 30px;
     height: 100%;
+    &--btn {
+      font-size: 12px;
+      line-height: 16px;
+      width: max-content;
+      height: 24px;
+      margin: 10px auto;
+      padding: 0 10px;
+      display: block;
+    }
   }
 }
 </style>

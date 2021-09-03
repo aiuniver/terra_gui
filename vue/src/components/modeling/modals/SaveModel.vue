@@ -70,10 +70,9 @@ export default {
       console.log(e);
     },
     async save() {
-      await this.$store.dispatch('deploy/SendDeploy', this.model);
       const res = await this.$store.dispatch('modeling/createModel', {
         name: this.name,
-        preview: this.image,
+        preview: this.image.slice(22),
         overwrite: this.overwrite,
       });
       this.dialog = false;

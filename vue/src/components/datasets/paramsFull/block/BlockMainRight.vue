@@ -107,8 +107,8 @@ export default {
     },
   },
   mounted() {
-    console.log(this.output)
-  }
+    console.log(this.output);
+  },
 };
 </script>
 
@@ -150,7 +150,7 @@ export default {
     }
     &--empty {
       height: 100%;
-      width: 10px;
+      width: 3px;
     }
   }
   &__fab {
