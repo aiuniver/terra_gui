@@ -26,7 +26,7 @@ export default {
     SET_MODEL(state, value) {
       state.model = value;
       const { layers } = value;
-      state.blocks = prepareBlocks(layers, state.modeling.layers_types, state.modeling.list);
+      state.blocks = prepareBlocks(layers, state.modeling.list);
       state.links = prepareLinks(layers);
     },
     SET_BLOCKS(state, value) {
