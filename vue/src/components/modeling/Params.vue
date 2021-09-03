@@ -40,11 +40,10 @@
             />
             <Shape
               v-if="block.shape && block.shape.output"
-              v-model="block.shape.output"
+              :value="block.shape.output"
               :label="'Размерность выходных данных'"
               :name="'shape_output'"
               :disabled="true"
-              @change="saveModel"
             />
           </at-collapse-item>
         </at-collapse>
