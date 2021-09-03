@@ -28,14 +28,14 @@ class ConfigAPIView(BaseAPIView):
             losses_list = list(
                 map(
                     lambda item: {"label": item.name, "value": item.value},
-                    TrainingLosses.get(layer.task),
+                    TrainingLosses.get(layer.task, []),
                 )
             )
             losses_data.update(
                 {
                     "name": losses_data.get("name") % layer.id,
                     "parse": losses_data.get("parse") % layer.id,
-                    "value": losses_list[0].get("label"),
+                    "value": losses_list[0].get("label") if losses_list else "",
                     "list": losses_list,
                 }
             )
@@ -43,14 +43,14 @@ class ConfigAPIView(BaseAPIView):
             metrics_list = list(
                 map(
                     lambda item: {"label": item.name, "value": item.value},
-                    TrainingMetrics.get(layer.task),
+                    TrainingMetrics.get(layer.task, []),
                 )
             )
             metrics_data.update(
                 {
                     "name": metrics_data.get("name") % layer.id,
                     "parse": metrics_data.get("parse") % layer.id,
-                    "value": metrics_list[0].get("label"),
+                    "value": metrics_list[0].get("label") if metrics_list else "",
                     "list": metrics_list,
                 }
             )
