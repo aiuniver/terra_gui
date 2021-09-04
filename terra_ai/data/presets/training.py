@@ -71,7 +71,7 @@ TasksGroups = [
             Loss.BinaryCrossentropy,
             Loss.CategoricalCrossentropy,
             Loss.CategoricalHinge,
-            Loss.CosineSimilarity,
+            # Loss.CosineSimilarity,
             Loss.Hinge,
             Loss.Huber,
             Loss.KLDivergence,

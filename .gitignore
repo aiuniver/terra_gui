@@ -403,3 +403,5 @@ node_modules/
 /vue/src/assets/css/datepicker/desktop.ini
 /terra_ai/test_modules/model_noname_on_epoch_end.last.h5
 /terra_ai/test_modules/test_model.h5
+/terra_ai/test_modules/test callback.py
+/terra_ai/test_modules/callback backup.py
