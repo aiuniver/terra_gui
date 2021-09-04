@@ -19,8 +19,8 @@ function hash_assign(result, keys, value) {
     result = value;
     return result;
   }
-  var key = keys.shift();
-  var between = key.match(/^\[(.+?)\]$/);
+  const key = keys.shift();
+  const between = key.match(/^\[(.+?)\]$/);
 
   if (key === "[]") {
     result = result || [];
@@ -35,8 +35,8 @@ function hash_assign(result, keys, value) {
   if (!between) {
     result[key] = hash_assign(result[key], keys, value);
   } else {
-    var string = between[1];
-    var index = +string;
+    const string = between[1];
+    const index = +string;
     if (isNaN(index)) {
       result = result || {};
       result[string] = hash_assign(result[string], keys, value);
@@ -48,12 +48,12 @@ function hash_assign(result, keys, value) {
   return result;
 }
 function hash_serializer(result, key, value) {
-  var matches = key.match(brackets);
+  const matches = key.match(brackets);
   if (matches) {
-    var keys = parse_keys(key);
+    const keys = parse_keys(key);
     hash_assign(result, keys, value);
   } else {
-    var existing = result[key];
+    const existing = result[key];
     if (existing) {
       if (!Array.isArray(existing)) {
         result[key] = [existing];

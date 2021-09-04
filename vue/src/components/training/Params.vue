@@ -115,7 +115,7 @@ export default {
   },
   methods: {
     start() {
-      console.log(this.obj)
+      console.log(JSON.stringify(this.obj, null, 2))
     },
     parse({ parse, value, name}) {
       ser(this.obj, parse, value);
