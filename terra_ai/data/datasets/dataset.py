@@ -183,7 +183,7 @@ from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 from .tags import TagsList
-from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice
+from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, LayerEncodingChoice
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
@@ -228,18 +228,30 @@ class CustomDatasetConfigData(BaseMixinData):
 
 
 class DatasetLayerData(BaseMixinData):
+    name: str
     datatype: str
     dtype: str
     shape: Tuple[PositiveInt, ...]
-    name: str
+    num_classes: PositiveInt
+    classes_names: List
+    classes_colors: Optional[List]
+    encoding: LayerEncodingChoice
 
 
 class DatasetPathsData(BaseMixinData):
-    datasets: Optional[DirectoryPath]
-    arrays: str  # DirectoryPath
-    instructions: str  # DirectoryPath
-    dataset_sources: str  # DirectoryPath
-    tmp_sources: Optional[DirectoryPath]
+    basepath: DirectoryPath
+
+    arrays: Optional[DirectoryPath]
+    sources: Optional[DirectoryPath]
+    instructions: Optional[DirectoryPath]
+    scaler: Optional[DirectoryPath]
+    tokenizer: Optional[DirectoryPath]
+    word2vec: Optional[DirectoryPath]
+    augmentation: Optional[DirectoryPath]
+
+    @validator('arrays', 'sources', 'instructions', 'scaler', 'tokenizer', 'word2vec', 'augmentation', always=True)
+    def _validate_internal_path(cls, value, values, field) -> Path:
+        return Path(values.get("basepath"), field.name)
 
 
 class DatasetInputsData(DatasetLayerData):
@@ -261,14 +273,13 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    num_classes: Dict[PositiveInt, PositiveInt] = {}
-    classes_names: Dict[PositiveInt, List[str]] = {}
-    classes_colors: Dict[PositiveInt, List[Color]] = {}
-    encoding: Dict[PositiveInt, str] = {}
-    task_type: Dict[int, TaskChoice] = {}
+    # num_classes: Dict[PositiveInt, PositiveInt] = {}
+    # classes_names: Dict[PositiveInt, List[str]] = {}
+    # classes_colors: Dict[PositiveInt, List[Color]] = {}
+    # encoding: Dict[PositiveInt, str] = {}
+    # task_type: Dict[int, TaskChoice] = {}
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
-    paths: Optional[DatasetPathsData]
 
     @property
     def model(self) -> ModelDetailsData:
