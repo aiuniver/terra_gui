@@ -432,7 +432,7 @@ $loading-bar-bg-color-error: $color-error;
 /* Modal */
 $modal-initial-top: 250px;
 $modal-bg-color: $color-bg;
-$modal-mask-bg-color: #0e1621e6;
+$modal-mask-bg-color: rgb(14 22 33 / 90%);
 $modal-section-border-color: $color-bg-base;
 
 $modal-header-padding: 10px 20px;
@@ -512,7 +512,7 @@ $select-dropdown-text-color: $color-text-button;
 $select-dropdown-bg-color: $select-bg-color;
 $select-dropdown-height: 150px;
 
-$dropdown-option-padding-base: 2px 12px;
+$dropdown-option-padding-base: 1px 5px;
 $dropdown-option-bg-c-hover: $color-bg-hover;
 $dropdown-option-bg-c-selected: $color-bg-hover;
 

@@ -12,9 +12,8 @@ export default {
       list: [],
       layers_types: {},
     },
-    buttons: {
-      save: false,
-      clone: false,
+    status: {
+      isUpdate: true,
     },
   }),
   mutations: {
@@ -27,7 +26,7 @@ export default {
     SET_MODEL(state, value) {
       state.model = value;
       const { layers } = value;
-      state.blocks = prepareBlocks(layers, state.modeling.layers_types, state.modeling.list);
+      state.blocks = prepareBlocks(layers, state.modeling.list);
       state.links = prepareLinks(layers);
     },
     SET_BLOCKS(state, value) {
@@ -42,8 +41,8 @@ export default {
     SET_SELECT(state, value) {
       state.select = value;
     },
-    SET_BUTTONS(state, value) {
-      state.buttons = { ...state.buttons, ...value };
+    SET_STATUS(state, value) {
+      state.status = { ...state.status, ...value };
     },
   },
   actions: {
@@ -54,6 +53,7 @@ export default {
       blocks.push(block);
       dispatch('updateModel');
       commit('SET_BLOCKS', blocks);
+      dispatch('selectBlock', block)
     },
     typeBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, block }) {
       let newBlock = changeTypeBlock(type, block, layers_types, list);
@@ -112,14 +112,18 @@ export default {
       }
       return model;
     },
-    async createModel({ dispatch }, data) {
+    async createModel({ dispatch, commit }, data) {
+      commit('SET_STATUS', { isUpdate: false });
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
     },
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
     async updateModel({ commit, state: { blocks, links }, dispatch }) {
-      blocks.forEach(block => {
+      const semdBlocks = JSON.parse(JSON.stringify(blocks))
+      semdBlocks.forEach(block => {
+        // if (block.group !== 'input') block.shape.input = null;
+        if (block?.shape?.output && !block.shape.output.length) block.shape.output = null
         block.bind.up = links
           .map(link => {
             return link.targetID === block.id ? link.originID : null;
@@ -131,8 +135,9 @@ export default {
           })
           .filter(link => link);
       });
-      commit('SET_BUTTONS', { save: false });
-      return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
+      commit('SET_STATUS', { isUpdate: true });
+      // commit('SET_ERRORS_BLOCKS', {});
+      return await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
@@ -149,9 +154,9 @@ export default {
     async validateModel({ commit, dispatch }) {
       const { data } = await dispatch('axios', { url: '/modeling/validate/' }, { root: true });
       if (data) {
-        commit('SET_ERRORS_BLOCKS', data)
         const isValid = !Object.values(data).filter(item => item).length
-        dispatch('messages/setMessage', isValid ? { message:  `Валидация прошла успешно` } : { error: `Валидация не прошла`}, { root: true });
+        commit('SET_ERRORS_BLOCKS', data)
+        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
       }
       return data;
     },
@@ -167,9 +172,6 @@ export default {
       console.log(blocks);
       commit('SET_BLOCKS', blocks);
     },
-    setButtons({ commit }, value) {
-      commit('SET_BUTTONS', value);
-    },
   },
   getters: {
     getList: ({ modeling: { list } }) => list,
@@ -179,7 +181,7 @@ export default {
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
-    getButtons: ({ buttons }) => buttons,
+    getStatus: ({ status }) => status,
     getBlock: ({ select, blocks }) => {
       const id = blocks.findIndex(item => item.id == select);
       return blocks[id] || {};

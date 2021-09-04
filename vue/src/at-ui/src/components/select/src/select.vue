@@ -14,7 +14,7 @@
     v-clickoutside="handleClose"
   >
     <!-- S Selection -->
-    <div :class="['at-select__selection', {'at-select__selection--active': this.visible}]" ref="trigger" @click="toggleMenu">
+    <div :class="['at-select__selection', {'at-select__selection--active': this.visible}]" ref="trigger" @click="toggleMenu" :style="`width: ${width}`">
       <span
         class="at-tag"
         v-for="(item, index) in selectedMultiple"
@@ -132,6 +132,10 @@ export default {
       type: String,
       default: "bottom",
     },
+    width: {
+      type: String,
+      required: false
+    }
   },
   data() {
     return {

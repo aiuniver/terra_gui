@@ -14,7 +14,7 @@ from terra_ai.data.mixins import BaseMixinData
 from terra_ai.data.types import confilepath
 from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoice
 from terra_ai.data.datasets.dataset import DatasetData
-from terra_ai.data.modeling.model import ModelDetailsData, LayersList, LayerGroupChoice
+from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
 
 from . import exceptions
@@ -104,30 +104,29 @@ class Project(BaseMixinData):
             json.dump(json.loads(self.json()), _config_ref)
 
     def set_dataset(self, dataset: DatasetData):
-        if self.model.inputs and len(self.model.inputs) != len(dataset.model.inputs):
+        model_init = dataset.model
+        if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
             raise exceptions.DatasetModelInputsCountNotMatchException()
-        if self.model.outputs and len(self.model.outputs) != len(dataset.model.outputs):
+        if self.model.outputs and len(self.model.outputs) != len(model_init.outputs):
             raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.dataset = dataset
         if not self.model.inputs or not self.model.outputs:
-            self.model = dataset.model
+            self.model = model_init
         else:
-            layers = []
-            ids = [0]
-            positions = {"input": [], "output": []}
-            for layer in self.model.layers:
-                if layer.group in [LayerGroupChoice.input, LayerGroupChoice.output]:
-                    positions[layer.group.value].append(layer.position)
-                    continue
-                layers.append(layer.native())
-                ids.append(layer.id)
-            _id = max(ids)
-            for layer in dataset.model.inputs + dataset.model.outputs:
-                _id += 1
-                layer.id = _id
-                layer.position = positions[layer.group.value].pop(0)
-                layers.append(layer.native())
-            self.model.layers = LayersList(layers)
+            layers_init = {"input": [], "output": []}
+            for layer in model_init.inputs + model_init.outputs:
+                layers_init[layer.group.value].append(layer.native())
+            for layer in self.model.inputs + self.model.outputs:
+                layer_init = layers_init[layer.group.value].pop(0)
+                layer_data = layer.native()
+                layer_data.update(
+                    {
+                        "shape": layer_init.get("shape"),
+                        "task": layer_init.get("task"),
+                        "num_classes": layer_init.get("num_classes"),
+                    }
+                )
+                self.model.layers.append(layer_data)
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:

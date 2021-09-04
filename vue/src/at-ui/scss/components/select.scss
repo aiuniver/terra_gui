@@ -27,6 +27,22 @@
     margin: 0 24px 0 8px;
     background-color: transparent;
 
+    &::-webkit-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-moz-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &:-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
     &::placeholder {
       color: $input-placeholder-color;
     }
@@ -69,7 +85,7 @@
   &__selected {
     @include ellipsis();
     display: block;
-
+    line-height: 22px;
   }
   &__arrow {
     display: inline-block;
@@ -99,7 +115,7 @@
     position: absolute;
     // width: 100%;
     left: 0 !important;
-    min-width: 100%;
+    width: 100%;
     max-height: $select-dropdown-height;
     font-size: $select-dropdown-font-size-base;
     border-radius: 0 0 4px 4px;
@@ -131,7 +147,7 @@
       height: 20px;
 
       &--selected {
-        font-weight: bold;
+        font-weight: normal;
         background-color: $dropdown-option-bg-c-selected;
         color: $text-color;
       }
@@ -234,7 +250,7 @@
     line-height: 1;
     white-space: nowrap;
     overflow: hidden;
-    transition: all .3s;
+    transition: all 0.3s;
     cursor: initial;
   }
   &__list {

@@ -4,11 +4,10 @@
       <div class="t-block-modeling__header--title" :title="name">{{ typeLabel }}: {{ name }}</div>
       <div class="t-block-modeling__header--parametr" :title="parametr">{{ parametr }}</div>
     </div>
-
+    <div class="t-block-modeling__base"></div>
     <div v-if="error" v-show="hover || selected" class="t-block-modeling__error">
       {{ error }}
     </div>
-
     <div v-show="hover || selected" class="t-block-modeling__hover" :style="styleHover">
       <template v-for="(item, i) of iconsFilter">
         <i :class="['t-icon', item.icon]" :key="'icon_' + i" @click="$emit('clickIcons', item)"></i>
@@ -83,32 +82,30 @@ export default {
     icons: Array,
     filter: {
       type: Object,
-      default: () => {}
+      default: () => {},
     },
-    shape: Object
-
+    shape: Object,
   },
   data: () => ({
     hover: false,
     hasDragged: false,
     typeLink: ['bottom', 'right', 'left'],
-
   }),
   computed: {
     iconsFilter() {
-      return this.icons.filter(item => this.filter[this.group].includes(item.event))
+      return this.icons.filter(item => this.filter[this.group].includes(item.event));
     },
     error() {
-      return this.errors?.[this.id] || ''
+      return this.errors?.[this.id] || '';
     },
     parametr() {
-      const parametr = Object.values(this.parameters?.main || {}).filter(item => item)
-      console.log(parametr)
-      return this.group === 'input' ? this.shape?.input?.join() || '' : parametr.join()
+      const parametr = Object.values(this.parameters?.main || {}).filter(item => item);
+      console.log(parametr);
+      return this.group === 'input' ? this.shape?.input?.join(' ') || '' : parametr.join(' ');
     },
     styleHover() {
       const len = this.iconsFilter.length;
-      return { right: (-(32 * len) - 3) + 'px' };
+      return { right: -(32 * len) - 3 + 'px' };
     },
     style() {
       return {
@@ -117,7 +114,7 @@ export default {
         width: this.options.width + 'px',
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
-        zIndex: this.selected ? 10 : 1
+        zIndex: this.selected ? 10 : 1,
       };
     },
   },
@@ -132,7 +129,7 @@ export default {
     this.dragging = false;
   },
   mounted() {
-    console.log(this.$el.clientHeight)
+    console.log(this.$el.clientHeight);
     document.documentElement.addEventListener('mousemove', this.handleMove, true);
     document.documentElement.addEventListener('mousedown', this.handleDown, true);
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
@@ -144,7 +141,7 @@ export default {
   },
   methods: {
     getHeight() {
-      return this.$el.clientHeight
+      return this.$el.clientHeight;
     },
     handleMove(e) {
       this.mouseX = e.pageX || e.clientX + document.documentElement.scrollLeft;
@@ -248,6 +245,14 @@ $circleConnectedColor: #569dcf;
   cursor: move;
   // height: 46px;
 
+  &__base {
+    z-index: 1;
+    width: 104%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: -2%;
+  }
   &__hover {
     position: absolute;
     top: 0px;
@@ -260,6 +265,7 @@ $circleConnectedColor: #569dcf;
     justify-content: center;
     align-items: center;
     padding: 0px 1px;
+    cursor: default;
     > i {
       width: 18px;
       margin: 0 7px;
@@ -268,6 +274,7 @@ $circleConnectedColor: #569dcf;
   }
 
   &__error {
+    cursor: default;
     position: absolute;
     white-space: break-word;
     left: -201px;
@@ -308,6 +315,7 @@ $circleConnectedColor: #569dcf;
     &--parametr {
       color: #2b5275;
       font-size: 11px;
+      word-spacing: 3px;
     }
 
     > .delete {
@@ -360,9 +368,6 @@ $circleConnectedColor: #569dcf;
     &.error {
       border: 2px solid red !important;
     }
-
-
-    
   }
 
   &__inputs,

@@ -34,6 +34,7 @@ export default {
     placeholder: String,
     disabled: Boolean,
     label: String,
+    parse: String,
     value: String,
   },
   data() {
@@ -45,6 +46,7 @@ export default {
   },
   created() {
     // this.$emit("selected", { name: this.value });
+    // this.$emit('parse', { parse: this.parse, value: this.value });
     this.search = this.value;
   },
   computed: {
@@ -66,6 +68,7 @@ export default {
         this.search = item.label;
         this.$emit('input', this.selected.value);
         this.$emit('change', { name: this.name, value: item.value});
+        this.$emit('parse', { name: this.name, parse: this.parse, value: item.value });
       } else {
         this.search = this.selected.label || this.value;
         this.show = false;

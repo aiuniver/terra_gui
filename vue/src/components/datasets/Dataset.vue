@@ -65,7 +65,7 @@ export default {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
-          content: `Вы действительно желаете удалить датасет ${name}?`, 
+          content: `Вы действительно желаете удалить датасет "${name}" ?`, 
           width: 300,
         })
         await this.$store.dispatch('datasets/deleteDataset', { alias, group })

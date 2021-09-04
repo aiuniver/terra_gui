@@ -14,7 +14,6 @@
         :key="'classes_names_' + i"
         :parse="'classes_names[]'"
         inline
-        disabled
         autocomplete="off"
         @change="change"
       />

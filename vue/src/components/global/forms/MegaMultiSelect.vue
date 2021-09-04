@@ -1,0 +1,130 @@
+<template>
+  <div class="t-mega-select">
+    <div class="t-mega-select__header">{{ label }}</div>
+    <div class="t-mega-select__body">
+      <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
+        <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
+          <span></span>
+        </div>
+        <div class="t-mega-select__list--label">{{ label }}</div>
+      </div>
+      <div v-show="!list.length" class="t-mega-select__body--empty">Нет данных</div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 't-multu-select',
+  props: {
+    label: String,
+    value: Array,
+    name: String,
+    parse: String,
+    list: {
+      type: Array,
+      default: () => [],
+    },
+  },
+  data: () => ({
+    valueTemp: [],
+  }),
+  methods: {
+    isActive(value) {
+      return this.valueTemp.includes(value);
+    },
+    click(value) {
+      this.valueTemp = this.valueTemp.includes(value)
+        ? this.valueTemp.filter(item => item !== value)
+        : [...this.valueTemp, value];
+      this.$emit('input', this.valueTemp);
+      this.$emit('change', { name: this.name, value });
+      this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
+    },
+  },
+  created() {
+    this.valueTemp = this.value;
+    // console.log(this.valueTemp);
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.t-mega-select {
+  margin: 0 0 10px 0;
+  &__header {
+    color: #a7bed3;
+    display: block;
+    margin: 0 0 10px 0;
+    line-height: 1;
+    font-size: 0.75rem;
+  }
+  &__body {
+    border: 1px solid #6c7883;
+    border-radius: 4px;
+    padding: 5px;
+    overflow: hidden;
+    &--empty {
+      color: #a7bed3;
+      font-size: 0.7em;
+      line-height: 1em;
+      padding: 0 8px;
+      text-decoration: none;
+      display: block;
+      cursor: default;
+    }
+  }
+  &__list {
+    display: flex;
+    margin-bottom: 2px;
+    align-items: center;
+    overflow: hidden;
+    &--label {
+      width: auto;
+      padding: 0 0 0 10px;
+      text-align: left;
+      color: #a7bed3;
+      display: block;
+      margin: 0;
+      font-size: 0.75rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      cursor: default;
+    }
+    &--switch {
+      flex: 0 0 26px;
+      height: 14px;
+      position: relative;
+      span {
+        background-color: #242f3d;
+        border-color: #6c7883 !important;
+        display: block;
+        position: relative;
+        height: 100%;
+        border: 1px solid;
+        border-radius: 4px;
+        transition: 0.2s;
+        cursor: pointer;
+        &:before {
+          background-color: #6c7883;
+          display: block;
+          content: '';
+          height: 10px;
+          width: 10px;
+          position: absolute;
+          left: 1px;
+          top: 1px;
+          border-radius: 2px;
+          transition: 0.2s;
+        }
+      }
+    }
+    &--active {
+      span:before {
+        transform: translateX(12px);
+        background-color: #65b9f4;
+      }
+    }
+  }
+}
+</style>

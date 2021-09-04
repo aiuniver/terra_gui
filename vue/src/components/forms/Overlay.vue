@@ -21,8 +21,8 @@ export default {
   top: 0;
   bottom: 0;
   height: 100%;
-  background-color: #0e1621e6;
-  z-index: 800;
+  background-color: rgb(14 22 33 / 90%);
+  z-index: 801;
   display: flex;
   justify-content: center;
   align-items: center;

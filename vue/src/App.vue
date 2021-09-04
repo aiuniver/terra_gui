@@ -27,7 +27,7 @@ export default {
       '/datasets',
       '/modeling',
       '/marking',
-      // '/cascades',
+      '/deploy',
     ]
   }),
   methods: {
@@ -54,8 +54,9 @@ export default {
         title: "Предупреждение!",
         width: 300,
         content: `Для ${text[this.$route.path]} необходимо загрузить датасет.`,
-        // showClose: false,
+        showClose: false,
         okText: "Загрузить датасет",
+        // maskClosable: true,
         callback: function () {
           if (self.$route.path !== '/datasets') {
           self.$router.push("/datasets");
