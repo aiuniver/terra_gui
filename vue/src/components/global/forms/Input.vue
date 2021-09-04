@@ -70,6 +70,7 @@ export default {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
         this.$emit('change', { name: this.name, value });
+        this.$emit('parse', { name: this.name, parse: this.parse, value });
         this.isChange = false;
       }
     },

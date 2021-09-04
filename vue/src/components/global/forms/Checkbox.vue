@@ -44,6 +44,7 @@ export default {
     change(e) {
       const value = e.target.checked;
       this.$emit('change', { name: this.name, value });
+      this.$emit('parse', { parse: this.parse, value });
       if (this.error) {
         this.$emit('cleanError', true);
       }
@@ -51,6 +52,7 @@ export default {
     clickLabel() {
       this.checVal = !this.checVal;
       this.$emit('change', { name: this.name, value: this.checVal });
+      this.$emit('parse', { name: this.name, parse: this.parse, value: this.checVal });
     },
   },
   created() {

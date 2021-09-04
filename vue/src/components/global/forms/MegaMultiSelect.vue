@@ -33,24 +33,18 @@ export default {
     isActive(value) {
       return this.valueTemp.includes(value);
     },
-    change(e) {
-      const value = e.target.checked;
-      this.$emit('change', { name: this.name, value });
-      if (this.error) {
-        this.$emit('cleanError', true);
-      }
-    },
     click(value) {
       this.valueTemp = this.valueTemp.includes(value)
         ? this.valueTemp.filter(item => item !== value)
         : [...this.valueTemp, value];
       this.$emit('input', this.valueTemp);
       this.$emit('change', { name: this.name, value });
+      this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
     },
   },
   created() {
     this.valueTemp = this.value;
-    console.log(this.valueTemp);
+    // console.log(this.valueTemp);
   },
 };
 </script>

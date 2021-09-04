@@ -8,7 +8,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @change="change"
+      @parse="change"
     />
     <t-input
       v-if="type === 'number' || type === 'text'"
@@ -18,7 +18,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @change="change"
+      @parse="change"
     />
     <t-checkbox
       v-if="type === 'checkbox'"
@@ -28,7 +28,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @change="change"
+      @parse="change"
     />
     <t-select
       v-if="type === 'select'"
@@ -38,8 +38,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @cleanError="cleanError"
-      @change="change"
+      @parse="change"
     />
     <t-auto-complete
       v-if="type === 'auto_complete'"
@@ -49,8 +48,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @cleanError="cleanError"
-      @change="change"
+      @parse="change"
     />
     <MegaMultiSelect
       v-if="type === 'multiselect'"
@@ -60,8 +58,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
-      @cleanError="cleanError"
-      @change="change"
+      @parse="change"
     />
   </div>
 </template>
@@ -101,22 +98,20 @@ export default {
     },
   },
   methods: {
-    change({ value, name }) {
-      this.valueIn = null;
-      this.$emit('change', { id: this.id, value, name, root: this.root });
-      this.$nextTick(() => {
-        this.valueIn = value;
-      });
-    },
-    cleanError() {
-      this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
+    change({ parse, name, value }) {
+      // console.log(parse, value)
+      // this.valueIn = null;
+      this.$emit('parse', { parse, name, value});
+      // this.$nextTick(() => {
+      //   this.valueIn = value;
+      // });
     },
   },
   created() {
     // console.log(this)
   },
   mounted() {
-    this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });
+    this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse });
     // console.log(this.name, this.parameters, this.getValue)
     this.$nextTick(() => {
       this.valueIn = this.getValue;

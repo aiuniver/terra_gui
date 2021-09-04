@@ -5,7 +5,7 @@
         <at-collapse :value="collapse">
           <at-collapse-item class="mt-3" :title="''">
             <template v-for="(data, i) of main.fields">
-              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :inline="false" @change="change" />
+              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :inline="false" @parse="parse" />
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="''">
@@ -16,14 +16,14 @@
                   :key="'fit_' + i"
                   class="fit__item"
                   :inline="true"
-                  @change="change"
+                  @parse="parse"
                 />
               </template>
             </div>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="optimizer.name">
             <template v-for="(data, i) of optimizerFields">
-              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" inline @change="change" />
+              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" inline @parse="parse" />
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="outputs.name">
@@ -35,7 +35,7 @@
                   </div>
                   <div class="block-layers__body">
                     <template v-for="(data, i) of field.fields">
-                      <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @change="change" />
+                      <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @parse="parse" />
                     </template>
                   </div>
                 </div>
@@ -50,7 +50,7 @@
                   :key="'outputs_' + i"
                   class="checkpoints__item"
                   :inline="true"
-                  @change="change"
+                  @parse="parse"
                 />
               </template>
             </div>
@@ -59,7 +59,7 @@
       </div>
       <div class="params__items--item">
         <div class="item d-flex mb-3" style="gap: 10px">
-          <button>Обучить</button>
+          <button @click="start">Обучить</button>
           <button>Остановить</button>
         </div>
         <div class="item d-flex" style="gap: 10px">
@@ -72,6 +72,7 @@
 </template>
 
 <script>
+import ser from '../../assets/js/myserialize'
 import temp from './temp';
 import { mapGetters } from 'vuex';
 // import Select from '@/components/forms/Select.vue';
@@ -84,6 +85,7 @@ export default {
     // Checkbox,
   },
   data: () => ({
+    obj: {},
     collapse: [0, 1, 2, 3, 4],
     temp,
     optimizerValue: '',
@@ -112,10 +114,13 @@ export default {
     },
   },
   methods: {
-    change(e) {
-      // console.log(e);
-      if (e.name === 'optimizer') {
-        this.optimizerValue = e.value;
+    start() {
+      console.log(this.obj)
+    },
+    parse({ parse, value, name}) {
+      ser(this.obj, parse, value);
+      if (name === 'optimizer') {
+        this.optimizerValue = value;
       }
     },
   },
