@@ -2,13 +2,12 @@ import copy
 import gc
 import importlib
 import sys
+from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Dict, Any, Union
 
 import networkx as nx
 import numpy as np
 import tensorflow
-from dataclasses import dataclass, field
-
 from tensorflow import TensorShape
 from tensorflow.python.keras.backend import clear_session
 from tensorflow.python.keras.models import Model
@@ -16,7 +15,6 @@ from tensorflow.python.keras.models import Model
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
-
 from terra_ai.data.modeling.model import ModelDetailsData
 
 __version__ = 0.052

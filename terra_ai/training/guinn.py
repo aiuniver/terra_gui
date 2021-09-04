@@ -1,16 +1,19 @@
 import gc
 import os
 import sys
+from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
+from keras import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
 from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
-from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDTS
@@ -71,7 +74,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData,
-                             training_path: str, dataset_path: str) -> None:
+                             training_path: Path, dataset_path: Path) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.epochs = params.epochs
@@ -95,18 +98,18 @@ class GUINN:
         print(('Добавление колбэков', 'выполнено'))
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, datasets_path: str):
+    def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDTS:
         prepared_dataset = PrepareDTS(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
     @staticmethod
-    def _set_model(model: dict):
-        validator = ModelValidator(ModelDetailsData(**model))
+    def _set_model(model: ModelDetailsData) -> ModelData:
+        validator = ModelValidator(model)
         train_model = validator.get_keras_model()
         return train_model
 
-    def set_optimizer(self, params) -> None:
+    def set_optimizer(self, params: TrainData) -> None:
         """
         Set optimizer method for using terra w/o gui
         """
@@ -126,7 +129,7 @@ class GUINN:
                     else:
                         self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
-    def set_chp_monitor(self, params) -> None:
+    def set_chp_monitor(self, params: TrainData) -> None:
         # layer_id = params.architecture.parameters.checkpoint.layer # TODO удалить, если не используются
         # output = params.architecture.parameters.outputs.get(layer_id)
         if len(self.dataset.data.inputs) > 1:
@@ -192,26 +195,30 @@ class GUINN:
         print(msg)
         pass
 
-    def terra_fit(self, dataset: DatasetData, gui_model: dict, training_params: TrainData = None,
-                  training_path: str = "", dataset_path: str = "", verbose: int = 0) -> None:
+    def terra_fit(self,
+                  dataset: DatasetData,
+                  gui_model: ModelDetailsData,
+                  training_path: Path = "",
+                  dataset_path: Path = "",
+                  training_params: TrainData = None,
+                  ) -> None:
         """
         This method created for using wth externally compiled models
 
         Args:
             dataset: DatasetData
-            gui_model (obj): keras model for fit
+            gui_model: Keras model for fit
             training_params:
             training_path: TrainData
             dataset_path: str
-            verbose:    verbose arg from tensorflow.keras.model.fit
 
         Return:
             None
         """
-        self.nn_cleaner(retrain=True if self.model_is_trained else False)
+        self.nn_cleaner(retrain=self.model_is_trained)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path,
                                   params=training_params, training_path=training_path)
-        nnmodel = self._set_model(model=gui_model)
+        nn_model = self._set_model(model=gui_model)
 
         if self.model_is_trained:
             try:
@@ -259,7 +266,7 @@ class GUINN:
                 self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 
         else:
-            self.model = nnmodel
+            self.model = nn_model
             self.nn_name = f"{self.model.name}"
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
@@ -270,7 +277,7 @@ class GUINN:
         self.model_is_trained = True
         # self.stop_training = self.callbacks[0].stop_training
 
-    def nn_cleaner(self, retrain=False) -> None:
+    def nn_cleaner(self, retrain: bool = False) -> None:
         keras.backend.clear_session()
         self.DTS = None
         self.model = None
@@ -293,7 +300,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params, dataset, verbose=0, retrain=False) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
         print(self.loss)
@@ -320,7 +327,7 @@ class GUINN:
             callbacks=self.callbacks
         )
 
-    def yolo_model_fit(self, params, dataset, verbose=0, retrain=False) -> None:
+    def yolo_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
         # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
         # данные значения коррелируются с размерностью входного изображения input_shape
         anchors = np.array(
@@ -329,11 +336,11 @@ class GUINN:
 
         @tf.autograph.experimental.do_not_convert
         def create_model(
-                input_shape,
-                num_anchor,
-                model,
-                num_classes,
-        ):
+                input_shape: Tuple[int, int, int],
+                num_anchor: int,
+                model: Model,
+                num_classes: int,
+        ) -> Model:
             """
                 Функция создания полной модели
                     Входные параметры:
@@ -369,7 +376,7 @@ class GUINN:
             outputs = keras.layers.Lambda(yolo_loss, output_shape=(1,), name='yolo_loss',
                                           arguments={'num_anchors': num_anchor})([*yolo_model.output, *y_true])
 
-            return keras.models.Model([yolo_model.input, *y_true], outputs)  # Возвращаем модель
+            return Model([yolo_model.input, *y_true], outputs)  # Возвращаем модель
 
         # Создаем модель
         model_yolo = create_model(input_shape=(416, 416, 3), num_anchor=num_anchors, model=self.model,
