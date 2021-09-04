@@ -121,8 +121,8 @@ const prepareBlocks = function (blocks, list) {
       }
       newBlock = { ...newBlock, ...block };
       if (!newBlock.position) {
-        newBlock.position = [0 + last, 0 + last];
-        last = last + 20;
+        newBlock.position = [-100, -300 + last];
+        last = last + 60;
       }
       return newBlock;
     }).filter(block => !!block);
