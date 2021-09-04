@@ -27,6 +27,22 @@
     margin: 0 24px 0 8px;
     background-color: transparent;
 
+    &::-webkit-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-moz-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &:-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
     &::placeholder {
       color: $input-placeholder-color;
     }
@@ -69,7 +85,7 @@
   &__selected {
     @include ellipsis();
     display: block;
-
+    line-height: 22px;
   }
   &__arrow {
     display: inline-block;
@@ -234,7 +250,7 @@
     line-height: 1;
     white-space: nowrap;
     overflow: hidden;
-    transition: all .3s;
+    transition: all 0.3s;
     cursor: initial;
   }
   &__list {

@@ -74,7 +74,6 @@ export default {
     font-size: 0.75rem;
     text-overflow: ellipsis;
     // white-space: nowrap;
-    overflow: hidden;
   }
   &__input {
     width: 100%;
