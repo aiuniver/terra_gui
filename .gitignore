@@ -373,22 +373,7 @@ node_modules/
 /vue/desktop.ini
 /desktop.ini
 /.idea/inspectionProfiles/Project_Default.xml
-/terra_ai/test_modules/__init__.py
-/terra_ai/test_modules/models_plans.py
-/terra_ai/test_modules/pydantic test.py
-/terra_ai/test_modules/test.py
-/terra_ai/test_modules/test (keras-tf).py
-/terra_ai/test_modules/test blocks.py
-/terra_ai/test_modules/test GAN.py
-/terra_ai/test_modules/test Keras-model.py
-/terra_ai/test_modules/test Terra-model.py
-/terra_ai/test_modules/test validator.py
-/terra_ai/test_modules/YOLOv3.py
-/terra_ai/test_modules/YOLOv3_git.py
-/terra_ai/test_modules/YOLOv4.py
-/terra_ai/test_modules/YOLOv4_git.py
-/terra_ai/test_modules/YOLOv5.py
-/terra_ai/test_modules/desktop.ini
+terra_ai/test_modules/
 /terra_ai/modeling/desktop.ini
 /vue/src/components/cascades/block/desktop.ini
 /vue/src/components/cascades/comp/desktop.ini
