@@ -1,7 +1,14 @@
 <template>
   <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input v-model="nameProject" parse="[name]" small :error="nameError" @focus="nameError = ''">
+      <t-input
+        class="block-footer__input-custom"
+        v-model="nameProject"
+        parse="[name]"
+        small
+        :error="nameError"
+        @focus="nameError = ''"
+      >
         Название датасета
       </t-input>
     </div>
@@ -9,7 +16,7 @@
       <TTags />
     </div>
     <div class="block-footer__item">
-      <Slider :degree="degree"/>
+      <Slider :degree="degree" />
     </div>
     <div class="block-footer__item">
       <t-checkbox parse="[info][shuffle]" reverse>Сохранить последовательность</t-checkbox>
@@ -25,9 +32,9 @@
 
 <script>
 // import DoubleSlider from '@/components/forms/DoubleSlider';
-import Slider from "@/components/forms/Slider";
+import Slider from '@/components/forms/Slider';
 import TTags from '@/components/forms/TTags';
-import serialize from "@/assets/js/serialize";
+import serialize from '@/assets/js/serialize';
 export default {
   name: 'BlockFooter',
   components: {
@@ -37,23 +44,23 @@ export default {
   data: () => ({
     degree: 100,
     nameProject: '',
-    nameError: ''
+    nameError: '',
   }),
   computed: {
     disabled() {
-      const arr = this.$store.state.datasets.inputData.map(item => item.layer)
-      return !(arr.includes('input') && arr.includes('output'))
-    }
+      const arr = this.$store.state.datasets.inputData.map(item => item.layer);
+      return !(arr.includes('input') && arr.includes('output'));
+    },
   },
   methods: {
     getObj() {
       if (this.nameProject) {
-        this.$emit('create', serialize(this.$el))
+        this.$emit('create', serialize(this.$el));
       } else {
-        this.nameError = 'Введите имя'
+        this.nameError = 'Введите имя';
       }
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -66,8 +73,13 @@ export default {
     flex: 0 0 150px;
     margin-right: 36px;
   }
+  &__input-custom {
+    input {
+      padding: 0 5px;
+      font-size: 12px;
+    }
+  }
 }
-
 
 .action {
   font-size: 0.8rem;
@@ -75,5 +87,4 @@ export default {
     padding: 8px 16px;
   }
 }
-
 </style>
