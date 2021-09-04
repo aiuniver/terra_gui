@@ -1,26 +1,14 @@
 <template>
   <div class="t-mega-select">
-    <div class="t-mega-select__header">
-      {{ label }}
-    </div>
+    <div class="t-mega-select__header">{{ label }}</div>
     <div class="t-mega-select__body">
-      <div v-for="{ label }, i of list" :key="'mega_' + i" class="t-field t-inline" >
-        <label class="t-field__label" @click="arrCheck[i] = !arrCheck[i]">
-          {{ label }}
-        </label>
-        <div class="t-field__switch">
-          <input
-            v-model="arrCheck[i]"
-            class="t-field__input"
-            :checked="'checked'"
-            type="checkbox"
-            :name="parse"
-            :data-reverse="reverse"
-            @change="change"
-          />
+      <div v-for="({ label, value }, i) of list" :key="'mega_' + i" class="t-mega-select__list" @click="click(value)">
+        <div :class="['t-mega-select__list--switch', { 't-mega-select__list--active': isActive(value) }]">
           <span></span>
         </div>
+        <div class="t-mega-select__list--label">{{ label }}</div>
       </div>
+      <div v-show="!list.length" class="t-mega-select__body--empty">Нет данных</div>
     </div>
   </div>
 </template>
@@ -29,29 +17,22 @@
 export default {
   name: 't-multu-select',
   props: {
-    label: {
-      type: String,
-      default: 'Label',
-    },
-    inline: Boolean,
-    value: Boolean,
+    label: String,
+    value: Array,
     name: String,
     parse: String,
-    reverse: Boolean,
     list: {
-      type: Array,
-      default: () => {}
-    },
-    event: {
       type: Array,
       default: () => [],
     },
   },
   data: () => ({
-    checVal: false,
-    arrCheck: []
+    valueTemp: [],
   }),
   methods: {
+    isActive(value) {
+      return this.valueTemp.includes(value);
+    },
     change(e) {
       const value = e.target.checked;
       this.$emit('change', { name: this.name, value });
@@ -59,22 +40,24 @@ export default {
         this.$emit('cleanError', true);
       }
     },
-    clickLabel() {
-      this.checVal = !this.checVal;
-      this.$emit('change', { name: this.name, value: this.checVal });
+    click(value) {
+      this.valueTemp = this.valueTemp.includes(value)
+        ? this.valueTemp.filter(item => item !== value)
+        : [...this.valueTemp, value];
+      this.$emit('input', this.valueTemp);
+      this.$emit('change', { name: this.name, value });
     },
   },
   created() {
-    this.checVal = this.value;
+    this.valueTemp = this.value;
+    console.log(this.valueTemp);
   },
 };
 </script>
 
 <style lang="scss" scoped>
-
 .t-mega-select {
-
-    margin: 0 0 10px 0;
+  margin: 0 0 10px 0;
   &__header {
     color: #a7bed3;
     display: block;
@@ -85,100 +68,69 @@ export default {
   &__body {
     border: 1px solid #6c7883;
     border-radius: 4px;
-    padding: 3px;
-  }
-
-}
-.t-field {
-  margin-bottom: 20px;
-  &__label {
-    width: 150px;
-    max-width: 330px;
-    padding-bottom: 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
-    font-size: 0.75rem;
-    text-overflow: ellipsis;
-    // white-space: nowrap;
+    padding: 5px;
     overflow: hidden;
-  }
-  &__input {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 1;
-    opacity: 0;
-    cursor: pointer;
-    &:focus {
-      border-color: #fff;
-    }
-    &:checked + span:before {
-      transform: translateX(12px);
-      background-color: #65b9f4;
-    }
-  }
-  &__switch {
-    width: 26px;
-    height: 14px;
-    position: relative;
-
-    span {
-      background-color: #242f3d;
-      border-color: #6c7883 !important;
+    &--empty {
+      color: #a7bed3;
+      font-size: 0.7em;
+      line-height: 1em;
+      padding: 0 8px;
+      text-decoration: none;
       display: block;
+      cursor: default;
+    }
+  }
+  &__list {
+    display: flex;
+    margin-bottom: 2px;
+    align-items: center;
+    overflow: hidden;
+    &--label {
+      width: auto;
+      padding: 0 0 0 10px;
+      text-align: left;
+      color: #a7bed3;
+      display: block;
+      margin: 0;
+      font-size: 0.75rem;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      cursor: default;
+    }
+    &--switch {
+      flex: 0 0 26px;
+      height: 14px;
       position: relative;
-      height: 100%;
-      border: 1px solid;
-      border-radius: 4px;
-      transition: 0.2s;
-      cursor: pointer;
-      &:before {
-        background-color: #6c7883;
+      span {
+        background-color: #242f3d;
+        border-color: #6c7883 !important;
         display: block;
-        content: '';
-        height: 10px;
-        width: 10px;
-        position: absolute;
-        left: 1px;
-        top: 1px;
-        border-radius: 2px;
+        position: relative;
+        height: 100%;
+        border: 1px solid;
+        border-radius: 4px;
         transition: 0.2s;
+        cursor: pointer;
+        &:before {
+          background-color: #6c7883;
+          display: block;
+          content: '';
+          height: 10px;
+          width: 10px;
+          position: absolute;
+          left: 1px;
+          top: 1px;
+          border-radius: 2px;
+          transition: 0.2s;
+        }
       }
     }
-  }
-}
-
-.t-inline {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  -webkit-box-pack: end;
-  margin-bottom: 10px;
-  align-items: center;
-
-  > label {
-    width: auto;
-    padding: 0 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    font-size: 0.75rem;
-  }
-  > input {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 1;
-    opacity: 0;
-    cursor: pointer;
+    &--active {
+      span:before {
+        transform: translateX(12px);
+        background-color: #65b9f4;
+      }
+    }
   }
 }
 </style>

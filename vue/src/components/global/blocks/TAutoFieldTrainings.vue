@@ -99,13 +99,6 @@ export default {
       const key = this.name;
       return this.errors?.[key]?.[0] || this.errors?.parameters?.[key]?.[0] || '';
     },
-    dataFields() {
-      if (!!this.fields && !!this.fields[this.valueIn]) {
-        return this.fields[this.valueIn];
-      } else {
-        return [];
-      }
-    },
   },
   methods: {
     change({ value, name }) {
