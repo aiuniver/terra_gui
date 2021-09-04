@@ -2,12 +2,13 @@
 ## Структура данных слоев
 """
 
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Union
 from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, IDMixinData, UniqueListMixin
+from ..datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from . import layers
 from .extra import LayerTypeChoice, LayerGroupChoice
 from .types import ReferenceLayerType
@@ -55,6 +56,10 @@ class LayerData(IDMixinData):
     "Связи со слоями"
     shape: LayerShapeData = LayerShapeData()
     "Размерности слоя"
+    task: Optional[Union[LayerInputTypeChoice, LayerOutputTypeChoice]]
+    "Тип задачи"
+    num_classes: Optional[PositiveInt]
+    "Количество классов"
     position: Optional[Tuple[int, int]]
     "Расположение слоя в сетке модели"
     parameters: Any

@@ -1,13 +1,13 @@
 <template>
   <div :class="['t-field', { 't-inline': inline }]">
-    <label class="t-field__label" :for="parse">{{ label }}</label>
+    <label class="t-field__label" @click="$el.getElementsByTagName('input')[0].focus()">{{ label }}</label>
     <input
       v-model="input"
       class="t-field__input"
-      :id="parse"
       :type="type"
       :name="parse"
       :value="value"
+      autocomplete="off"
       @blur="change"
       :disabled="disabled"
     />
@@ -27,7 +27,8 @@ export default {
       default: 'text',
     },
     value: {
-      type: [Array],
+      type: Array,
+      default: () => []
     },
     parse: String,
     name: String,
@@ -40,21 +41,20 @@ export default {
   computed: {
     input: {
       set(value) {
-        this.$emit('input', value);
+        this.$emit('input', value.trim());
         this.isChange = true;
       },
       get() {
-        return this.value.join();
+        // console.log(typeof this.value)
+        return this.value ? this.value.join() : '';
       },
     },
   },
   methods: {
     change(e) {
       if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-
-        this.$emit('change', { name: this.name, value: value ? value.split(',') : [] });
+        let value = e.target.value.trim();
+        this.$emit('change', { name: this.name, value: value.length ? value.split(',') : null });
         this.isChange = false;
       }
     },

@@ -144,6 +144,10 @@ class DeleteAPIView(BaseAPIView):
                 path=str(data_path.datasets),
                 **serializer.validated_data,
             )
+            if request.project.dataset and (
+                request.project.dataset.alias == serializer.validated_data.get("alias")
+            ):
+                request.project.dataset = None
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)

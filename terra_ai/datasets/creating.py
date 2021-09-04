@@ -387,6 +387,7 @@ class CreateDTS(object):
                     **self.instructions.outputs.get(key).parameters,
                 )
             else:
+                # print(self.instructions)
                 array = getattr(self.array_creator, f'create_{self.tags[key]}')(
                     self.paths.datasets,
                     self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
@@ -521,7 +522,7 @@ class CreateDTS(object):
         data["group"] = DatasetGroupChoice.custom
         with open(os.path.join(self.paths.datasets, f'{creation_data.alias}.{DATASET_EXT}', DATASET_CONFIG), 'w') as fp:
             json.dump(data, fp)
-        print(data)
+        # print(data)
         return data
 
     def instructions_image(self, paths_list: list, put_data: Union[CreationInputData, CreationOutputData]):
@@ -1437,7 +1438,8 @@ class CreateDTS(object):
             self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
         else:
-            self.classes_names[put_data.id] = sorted(options["sources_paths"])
+            classes_names = sorted([name.split(os.path.sep)[-1] for name in options['sources_paths']])
+            self.classes_names[put_data.id] = classes_names
             self.num_classes[put_data.id] = len(self.classes_names[put_data.id])
 
         instructions["parameters"] = {

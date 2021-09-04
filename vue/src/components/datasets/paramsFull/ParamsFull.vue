@@ -20,7 +20,7 @@
           </div>
         </div>
         <div class="main__footer">
-          <BlockFooter @create="createObject"/>
+          <BlockFooter @create="createObject" />
         </div>
       </div>
     </div>
@@ -28,14 +28,14 @@
 </template>
 
 <script>
-import BlockFiles from "./block/BlockFiles.vue";
-import BlockFooter from "./block/BlockFooter.vue";
-import BlockHeader from "./block/BlockHeader.vue";
-import BlockMainLeft from "./block/BlockMainLeft.vue";
-import BlockMainRight from "./block/BlockMainRight.vue";
+import BlockFiles from './block/BlockFiles.vue';
+import BlockFooter from './block/BlockFooter.vue';
+import BlockHeader from './block/BlockHeader.vue';
+import BlockMainLeft from './block/BlockMainLeft.vue';
+import BlockMainRight from './block/BlockMainRight.vue';
 
 export default {
-  name: "ParamsFull",
+  name: 'ParamsFull',
   components: {
     BlockFiles,
     BlockFooter,
@@ -52,37 +52,38 @@ export default {
     // }),
     full: {
       set(val) {
-        this.$store.dispatch("datasets/setFull", val);
+        this.$store.dispatch('datasets/setFull', val);
       },
       get() {
-        return this.$store.getters["datasets/getFull"];
+        return this.$store.getters['datasets/getFull'];
       },
     },
     height() {
-      let height = this.$store.getters["settings/height"]({ style: false, clean: true});
-      height = height - 172 - 96
-      console.log(height)
-      return { flex: '0 0 ' + height + 'px', height: height + 'px' }
+      let height = this.$store.getters['settings/height']({ style: false, clean: true });
+      height = height - 172 - 96;
+      console.log(height);
+      return { flex: '0 0 ' + height + 'px', height: height + 'px' };
     },
   },
   methods: {
     async createObject(obj) {
-      const { data, error, success } = await this.$store.dispatch('datasets/createDataset', obj)
+      this.$store.dispatch('messages/setMessage', { info: `Создается датасет "${obj.name}"` });
+      const { data, error, success } = await this.$store.dispatch('datasets/createDataset', obj);
       if (data && success && !error) {
-        this.full = false
+        this.full = false;
+        this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
+      } else {
+        this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
       }
-      console.log(data)
+      console.log(data);
     },
     change(value) {
       this.toggle = value;
     },
   },
-  mounted() {
-    
-  }
+  mounted() {},
 };
 </script>
-
 
 <style lang="scss">
 .params-full {

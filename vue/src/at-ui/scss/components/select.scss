@@ -74,9 +74,11 @@
   &__arrow {
     display: inline-block;
     position: absolute;
-    top: 50%;
-    right: 8px;
-    margin-top: -5px;
+    width: 6px;
+    height: 5px;
+    top: 40%;
+    right: 5px;
+    // margin-top: -5px;
     font-size: 10px;
     cursor: pointer;
     // transition: transform .2s;
@@ -95,6 +97,8 @@
   }
   &__dropdown {
     position: absolute;
+    // width: 100%;
+    left: 0 !important;
     width: 100%;
     max-height: $select-dropdown-height;
     font-size: $select-dropdown-font-size-base;
@@ -127,7 +131,7 @@
       height: 20px;
 
       &--selected {
-        font-weight: bold;
+        font-weight: normal;
         background-color: $dropdown-option-bg-c-selected;
         color: $text-color;
       }

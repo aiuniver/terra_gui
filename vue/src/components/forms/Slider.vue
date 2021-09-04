@@ -44,8 +44,8 @@
 export default {
   name: 'Slider',
   data: () => ({
-    btnFirstVal: 50,
-    btnSecondVal: 77,
+    btnFirstVal: 70,
+    btnSecondVal: 90,
     firstBtnDrag: false,
     secondBtnDrag: false,
   }),

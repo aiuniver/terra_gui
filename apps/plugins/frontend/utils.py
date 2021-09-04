@@ -62,7 +62,7 @@ def __prepare_label(value: str) -> str:
 
 
 def prepare_pydantic_field(field, parse: str) -> Field:
-    __value = "" if field.default is None else field.default
+    __value = field.default
     __list = None
 
     if field.type_.__class__ in NUMBER_TYPES or field.type_ in NUMBER_TYPES:
@@ -77,13 +77,14 @@ def prepare_pydantic_field(field, parse: str) -> Field:
                 field.type_.values(),
             )
         )
-        if not field.required:
+        if field.allow_none:
             __list = [{"value": "__null__", "label": ""}] + __list
         if not __value:
-            __value = __list[0].get("value")
+            __value = field.default.name if field.default else None
     else:
         if field.type_.__origin__ is tuple:
             __type = FieldTypeChoice.text_array
+            __value = __value or None
         else:
             __type = FieldTypeChoice.text
             __value = str(__value)

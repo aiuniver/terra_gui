@@ -22,7 +22,6 @@
        <at-modal
          v-model="save"
          width="400"
-         :maskClosable="false"
        >
          <div slot="header" style="text-align: center">
            <span>Сохранить проект</span>

@@ -2,10 +2,11 @@
   <div class="at-collapse__item"
     :class="{
       'at-collapse__item--active': isActive,
-      'at-collapse__item--disabled': disabled
+      'at-collapse__item--disabled': disabled,
+      'at-collapse__item--not-change': notChange
     }">
-    <div class="at-collapse__header" @click="toggle">
-      <i class="icon at-collapse__icon old__icon"></i>
+    <div v-show="title" class="at-collapse__header" @click="toggle"> 
+      <i v-if="!notChange" class="icon at-collapse__icon old__icon"></i>
       <slot name="title" v-if="$slots.title"></slot>
       <div v-else>{{ title }}</div>
     </div>
@@ -36,7 +37,8 @@ export default {
     disabled: {
       type: Boolean,
       default: false
-    }
+    },
+    notChange: Boolean,
   },
   data () {
     return {
@@ -47,7 +49,8 @@ export default {
   methods: {
     toggle () {
       if (this.disabled) return false
-
+      if (this.notChange) return;
+      
       this.$parent.toggle({
         name: this.name || this.index,
         isActive: this.isActive

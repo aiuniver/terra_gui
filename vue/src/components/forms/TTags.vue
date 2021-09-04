@@ -13,14 +13,25 @@
         />
       </button>
       <template v-for="({ value }, i) in tags">
-        <div style="position: relative" :key="'tag_' + i">
+        <div
+          style="
+            display: flex;
+            border-radius: 4px;
+            align-items: center;
+            border: 1px solid #6c7883;
+            margin-left: 10px;
+            padding-right: 5px;
+          "
+          :key="'tag_' + i"
+        >
           <input
             :value="value"
             :data-index="i"
             name="[tags][][name]"
             type="text"
             :class="['tags__item']"
-            :style="{ width: (value.length + 1) * 8 + 16 + 'px' }"
+            :style="{ width: (value.length + 1) * 8 + 'px' }"
+            autocomplete="off"
             @input="change"
             @blur="blur"
           />
@@ -72,13 +83,15 @@ export default {
     },
     change(e) {
       const index = e.target.dataset.index;
+      console.log(index);
       if (e.target.value.length >= 3) {
         this.tags[+index].value = e.target.value;
       }
     },
     blur(e) {
-      if (e.target.value.length < 3) {
-        this.$forceUpdate();
+      const index = e.target.dataset.index;
+      if (e.target.value.length <= 2) {
+        this.tags = this.tags.filter((item, i) => i !== +index);
       }
     },
   },
@@ -148,22 +161,22 @@ export default {
       height: 12px;
       width: 12px;
       right: 2px;
-      top: 50%;
-      transform: translateY(-50%) rotate(45deg);
-      position: absolute;
       cursor: pointer;
+      transform: rotate(45deg);
     }
   }
   &__item {
-    margin-left: 10px;
-    padding: 2px 15px 2px 2px;
+    margin-right: 5px;
+    // margin-left: 10px;
+    border: none;
+    padding: 2px;
     width: 60px;
     height: 24px;
     color: #a7bed3;
     font-size: 12px;
     font-weight: normal;
     line-height: 24px;
-    margin-left: 8px;
+    // margin-left: 8px;
     text-align: center;
   }
   &__error {

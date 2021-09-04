@@ -13,7 +13,7 @@
                     :dataset="dataset"
                     :key="key"
                     :cardIndex="key"
-                    :loaded="loaded == key ? true : false"
+                    :loaded="isLoaded(dataset)"
                     @click="click"
                     @remove="remove"
                   />
@@ -43,15 +43,17 @@ export default {
   computed: {
     ...mapGetters({
       datasets: "datasets/getDatasets",
+      project: "projects/getProject",
     }),
     height() {
       return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true })
     },
-    loaded() {
-      return this.$store.getters['datasets/getLoaded']
-    }
   },
   methods: {
+    isLoaded(dataset) {
+      // console.log(this.project?.dataset?.alias)
+      return this.project?.dataset?.alias === dataset.alias
+    },
     click(dataset, key){
       console.log(dataset, key)
       this.$store.dispatch('datasets/setSelect', dataset);
@@ -63,7 +65,7 @@ export default {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
-          content: `Вы действительно желаете удалить датасет ${name}?`, 
+          content: `Вы действительно желаете удалить датасет "${name}" ?`, 
           width: 300,
         })
         await this.$store.dispatch('datasets/deleteDataset', { alias, group })

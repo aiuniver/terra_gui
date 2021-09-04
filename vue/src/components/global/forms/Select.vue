@@ -5,7 +5,6 @@
     <at-select
       v-model="select"
       :class="['t-field__select', { 't-field__error': error }]"
-      clearable
       size="small"
       style="width: 100px"
       @on-change="change"
@@ -52,19 +51,13 @@ export default {
   }),
   computed: {
     items() {
-      if (Array.isArray(this.lists)) {
-        return this.lists.map(i => {
-          return i || '';
-        });
-      } else {
-        return Object.keys(this.lists);
-      }
+       return this.lists ? (Array.isArray(this.lists) ? this.lists.map(item => item || '') : Object.keys(this.lists)) : []
     },
   },
   methods: {
     cleanError() {
       if (this.error) {
-        this.$emit('cleanError')
+        this.$emit('cleanError');
       }
     },
     change(value) {

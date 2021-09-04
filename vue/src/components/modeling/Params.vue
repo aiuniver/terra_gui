@@ -14,12 +14,12 @@
             @change="saveModel"
           />
           <Autocomplete2
-            v-model="block.type"
-            :list="list"
+            :value="block.typeLabel"
+            :list="listWithoutOutputInput"
             label="Тип слоя"
             name="type"
-            :disabled="isBlock"
-            @change="saveModel"
+            :disabled="isBlock || isInputOutput"
+            @change="changeType"
           />
         </div>
         <at-collapse :value="collapse">
@@ -29,22 +29,21 @@
           <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
             <Forms :data="extra" @change="change" />
           </at-collapse-item>
-          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя">
+          <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange>
             <Shape
               v-if="block.shape && block.shape.input"
               v-model="block.shape.input"
-              :label="'Input shape'"
+              :label="'Размерность входных данных'"
               :name="'shape_input'"
-              :disabled="block.type !== 'Input' || !project.dataset"
+              :disabled="block.type !== 'Input' || !!project.dataset"
               @change="saveModel"
             />
             <Shape
               v-if="block.shape && block.shape.output"
-              v-model="block.shape.output"
-              :label="'Output shape'"
+              :value="block.shape.output"
+              :label="'Размерность выходных данных'"
               :name="'shape_output'"
               :disabled="true"
-              @change="saveModel"
             />
           </at-collapse-item>
         </at-collapse>
@@ -72,7 +71,7 @@ export default {
     // Select
   },
   data: () => ({
-    collapse: ["0", "2"],
+    collapse: ['0', '2'],
     oldBlock: null,
   }),
   computed: {
@@ -86,6 +85,13 @@ export default {
     isBlock() {
       return !this.block.id;
     },
+    isInputOutput() {
+      return this.block.group === 'input' || this.block.group === 'output';
+    },
+    listWithoutOutputInput() {
+      return this.list.filter(item => !(item.value.toLowerCase() === 'input' || item.value.toLowerCase() === 'dense'));
+    },
+
     buttonSave() {
       return this.buttons?.save || false;
     },
@@ -114,9 +120,14 @@ export default {
     async saveModel() {
       await this.$store.dispatch('modeling/updateModel', {});
     },
+    async changeType({ value }) {
+      await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });
+    },
     async change({ type, name, value }) {
+      console.group();
       console.log({ type, name, value });
       console.log(this.collapse);
+      console.groupEnd();
       if (this.block.parameters) {
         this.block.parameters[type][name] = value;
       } else {
