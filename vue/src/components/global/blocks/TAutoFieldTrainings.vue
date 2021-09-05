@@ -79,7 +79,7 @@ export default {
     parse: String,
     name: String,
     id: Number,
-    parameters: Object,
+    state: Object,
     inline: Boolean,
   },
   data: () => ({
@@ -87,7 +87,7 @@ export default {
   }),
   computed: {
     getValue() {
-      return this.parameters?.[this.name] ?? this.value;
+      return this.state?.[this.parse] ?? this.value;
     },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);

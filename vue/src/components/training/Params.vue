@@ -5,7 +5,7 @@
         <at-collapse :value="collapse">
           <at-collapse-item class="mt-3" :title="''">
             <template v-for="(data, i) of main.fields">
-              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :inline="false" @parse="parse" />
+              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :state="state" :inline="false" @parse="parse" />
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="''">
@@ -15,6 +15,7 @@
                   v-bind="data"
                   :key="'fit_' + i"
                   class="fit__item"
+                  :state="state"
                   :inline="true"
                   @parse="parse"
                 />
@@ -23,7 +24,7 @@
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="optimizer.name">
             <template v-for="(data, i) of optimizerFields">
-              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" inline @parse="parse" />
+              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" :state="state" inline @parse="parse" />
             </template>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="outputs.name">
@@ -35,7 +36,13 @@
                   </div>
                   <div class="block-layers__body">
                     <template v-for="(data, i) of field.fields">
-                      <t-auto-field-trainings v-bind="data" :key="'checkpoints_' + i" :inline="true" @parse="parse" />
+                      <t-auto-field-trainings
+                        v-bind="data"
+                        :key="'checkpoints_' + i"
+                        :state="state"
+                        :inline="true"
+                        @parse="parse"
+                      />
                     </template>
                   </div>
                 </div>
@@ -49,6 +56,7 @@
                   v-bind="data"
                   :key="'outputs_' + i"
                   class="checkpoints__item"
+                  :state="state"
                   :inline="true"
                   @parse="parse"
                 />
@@ -72,8 +80,7 @@
 </template>
 
 <script>
-import ser from '../../assets/js/myserialize'
-import temp from './temp';
+import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
 // import Select from '@/components/forms/Select.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
@@ -87,37 +94,47 @@ export default {
   data: () => ({
     obj: {},
     collapse: [0, 1, 2, 3, 4],
-    temp,
     optimizerValue: '',
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
     }),
+    state: {
+      set(value) {
+        this.$store.dispatch('trainings/setStateParams', value);
+      },
+      get() {
+        console.log(this.$store.getters['trainings/getStateParams']);
+        return this.$store.getters['trainings/getStateParams'];
+      },
+    },
     main() {
-      return this.params.main;
+      return this.params?.main || {};
     },
     fit() {
-      return this.params.fit;
+      return this.params?.fit || {};
     },
     outputs() {
-      return this.params.outputs;
+      return this.params?.outputs || {};
     },
     optimizerFields() {
-      return this.params.optimizer.fields[this.optimizerValue];
+      return this.params?.optimizer?.fields?.[this.optimizerValue] || [];
     },
     optimizer() {
-      return this.params.optimizer;
+      return this.params?.optimizer || {};
     },
     checkpoints() {
-      return this.params.checkpoints;
+      return this.params?.checkpoints || {};
     },
   },
   methods: {
     start() {
-      console.log(JSON.stringify(this.obj, null, 2))
+      console.log(JSON.stringify(this.obj, null, 2));
     },
-    parse({ parse, value, name}) {
+    parse({ parse, value, name }) {
+      // console.log(this.state);
+      this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       if (name === 'optimizer') {
         this.optimizerValue = value;
