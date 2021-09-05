@@ -30,11 +30,11 @@
       :inline="inline"
       @parse="change"
     />
-    <t-select
+    <t-select-new
       v-if="type === 'select'"
       :value="getValue"
       :label="label"
-      :lists="list"
+      :list="list"
       :parse="parse"
       :name="name"
       :inline="inline"
