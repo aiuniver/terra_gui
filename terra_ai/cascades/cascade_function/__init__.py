@@ -1,0 +1,1 @@
+from terra_ai.cascades.cascade_function import object_detection
