@@ -8,8 +8,60 @@ export default {
       origTextStyle: originaltextStyle,
       Cards: [
         {
-          type: "table"
-        }
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: 'img.png'
+          },
+          result: {
+            type: "text",
+            data: "Дерево"
+          }
+        },
+        {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: 'img_1.png'
+          },
+          result: {
+            type: "text",
+            data: "Кошка"
+          }
+        },
+        {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: 'img_2.png'
+          },
+          result: {
+            type: "text",
+            data: "Здание, Дом, Река"
+          }
+        },
+                {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: 'img_3.png'
+          },
+          result: {
+            type: "text",
+            data: "Птица"
+          }
+        },
+                {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: 'img_4.png'
+          },
+          result: {
+            type: "text",
+            data: "Дерево, Кошка, Здание, Дом, Река, Птица, Самолет"
+          }
+        },
       ],
       moduleList: {
         api_text: "",
