@@ -46,18 +46,19 @@ export default {
           "/training": "обучения",
           "/deploy": "деплоя",
         };
-        // const self = this
+        const self = this
         this.$Modal.alert({
           title: "Предупреждение!",
           width: 300,
           content: `Для ${text[path]} необходимо загрузить датасет.`,
           // showClose: false,
+          maskClosable: true,
           okText: "Загрузить датасет",
           callback: function (action) {
             console.log(action);
-            // if (self.$route.path !== '/datasets') {
-            //   self.$router.push('/datasets');
-            // }
+            if (self.$route.path !== '/datasets') {
+              self.$router.push('/datasets');
+            }
           },
         });
       } else {
