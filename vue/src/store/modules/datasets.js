@@ -98,12 +98,9 @@ export default {
       const data = { path: sourcePath}
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
     },
-    async classesAutosearch ({ dispatch, state: { sourcePath } }, obj) {
-      const data = { path: sourcePath, ...obj}
+    async classesAutosearch ({ dispatch }, data ) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
     },
-
-
 
     async loadProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
@@ -208,6 +205,9 @@ export default {
         errors[id]['parameters'][name] = ''
       }
     },
+    setErrors ({ commit, state: { errors } }, error) {
+      commit('SET_ERRORS', { ...errors, ...error })
+    }
   },
   getters: {
     getInputData({ inputData }) {
