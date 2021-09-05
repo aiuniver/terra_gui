@@ -8,7 +8,6 @@ from PIL import Image, ImageDraw, ImageFont  # Модули работы с из
 import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import Model
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
