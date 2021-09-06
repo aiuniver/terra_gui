@@ -10,7 +10,6 @@ from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import moviepy.editor as moviepy_editor
-
 from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.presets.training import Metric, Loss
