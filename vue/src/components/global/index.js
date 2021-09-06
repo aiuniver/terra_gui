@@ -11,6 +11,7 @@ import MultiSelect from './forms/MultiSelect';
 import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
+import SelectNew from './forms/SelectNew';
 
 export default [
   FilesMenu,
@@ -24,5 +25,6 @@ export default [
   SegmentationSearch,
   SegmentationAnnotation,
   Autocomplete,
-  MultiSelect
+  MultiSelect,
+  SelectNew
 ];

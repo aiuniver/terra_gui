@@ -6,21 +6,30 @@ export default {
   state: () => ({
     data: temp.data,
     params: [],
-    toolbar
+    toolbar,
+    stateParams: {} 
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
+    },
+    SET_STATE_PARAMS(state, value) {
+      state.stateParams = {...value};
     },
   },
   actions: {
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },
+    setStateParams({ commit, state: { stateParams } }, data) {
+      commit("SET_STATE_PARAMS", { ...stateParams, ...data });
+    },
   },
   getters: {
+    getStateParams ({ stateParams }) {
+      return stateParams || {}
+    },
     getParams ({ params }) {
-      console.log(params)
       return params || []
     },
     getToolbar({ toolbar }) {

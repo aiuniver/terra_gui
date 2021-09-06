@@ -819,9 +819,9 @@ class InteractiveCallback:
         return {
             'loss_graphs': self._get_loss_graph_data_request(),
             'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self._get_intermediate_result_request(),
+            'intermediate_result': self.intermediate_result,
             'progress_table': self.progress_table,
-            'statistic_data': self._get_statistic_data_request(),
+            'statistic_data': self.statistic_result,
             'data_balance': self._get_balance_data_request(),
         }
 
@@ -1579,7 +1579,8 @@ class FitCallback(keras.callbacks.Callback):
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
-        logs['epoch'] = epoch + 1
+        interacive_logs = copy.deepcopy(logs)
+        interacive_logs['epoch'] = epoch + 1
 
         progress.pool(
             self.progress_name,
