@@ -1,68 +1,61 @@
 <template>
-  <div :class="'t-field-inline'">
-    <label class="t-field-inline__label" @click="click">
-      {{ label }}
-    </label>
-    <div class="t-field-inline__input" slot="input">
-      <t-checkbox class="input" />
+  <div :class="['t-field', { 't-field--inline': inline }]">
+    <div class="t-field__label" @click="click">
+      <slot name="label">{{ label }}</slot>
+    </div>
+    <div class="t-field__input">
+      <slot></slot>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 't-field-inline',
+  name: 't-field',
   props: {
     label: {
       type: String,
       default: 'Label',
     },
+    inline: Boolean
   },
-  data: () => ({}),
-  computed: {},
   methods: {
     click() {
-      console.log(this.$el.getElementsByTagName('input')[0].focus())
-    }
+      console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
+    },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.input {
-  color: #fff;
-  background: #242f3d;
-  height: 100%;
-  width: 100%;
-  padding: 0 10px;
-  font-size: 0.875rem;
-  font-weight: 400;
-  border-radius: 4px;
-  border: 1px solid #6c7883;
-  transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
-}
-.t-field-inline {
+.t-field {
+  position: relative;
   display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  -webkit-box-pack: end;
+  flex-direction: column;
   margin-bottom: 10px;
-  // align-items: center;
   &__label {
-    width: 150px;
-    max-width: 130px;
-    text-align: left;
+    flex: 0 0 auto;
     color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
+    line-height: 1.5;
     font-size: 0.75rem;
+    padding: 0 0 10px 0;
+    cursor: default;
   }
   &__input {
-    height: 24px;
-    font-size: 12px;
-    line-height: 24px;
-    width: 100px;
+
+  }
+}
+.t-field {
+  &--inline {
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    align-items: center;
+    .t-field__label {
+      padding: 0 0 0 10px;
+    }
+    .t-field__input {
+      // flex: 0 0 109px;
+    }
   }
 }
 </style>

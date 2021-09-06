@@ -1,0 +1,14 @@
+:root {
+  --color__bg: #ffffff;
+  --color__text: #121212;
+
+  @media screen {
+    &[data-theme="dark"] {
+      --color__bg: #121212;
+      --color__text: #ffffff;
+    }
+  }
+}
+
+$color__bg: var(--color__bg);
+$color__text: var(--color__text);
