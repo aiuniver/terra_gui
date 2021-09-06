@@ -1,12 +1,15 @@
 <template>
   <div class="board">
     <div class="board__inner">
-      <div :class="['board__files', { toggle: !toggle }]">
-        <BlockFiles @toggle="change" />
+      <div v-if="files.length > 0" :class="['board__files', { toggle }]">
+        <BlockFiles @toggle="toggle = !toggle" />
+      </div>
+      <div v-else class="board__toolbar">
+        <Toolbar />
       </div>
       <div class="board__main">
-        <t-card-marking />
-        <t-card-images />
+        <ImageCards v-if="files.length > 0" />
+        <MarkingCards v-else />
       </div>
     </div>
   </div>
@@ -15,20 +18,25 @@
 <script>
 import { mapGetters } from 'vuex';
 import BlockFiles from '@/components/marking/params/block/BlockFiles.vue';
-import tCardMarking from '@/components/marking/params/components/card/CardMarking.vue';
-import tCardImages from '@/components/marking/params/components/card/CardImages.vue';
+import MarkingCards from '@/components/marking/params/block/MarkingCards.vue';
+import ImageCards from '@/components/marking/params/block/ImageCards.vue';
+import Toolbar from './params/Toolbar.vue'
+
 export default {
   components: {
-    tCardMarking,
-    tCardImages,
     BlockFiles,
+    Toolbar,
+    MarkingCards,
+    ImageCards
   },
   data: () => ({
     hight: 0,
     toggle: false,
   }),
   computed: {
-    ...mapGetters({}),
+    ...mapGetters({
+      files: 'datasets/getFilesSource'
+    }),
   },
   methods: {
     change(e) {
@@ -68,9 +76,12 @@ export default {
     flex: 1 1;
     display: -webkit-flex;
     display: flex;
-
     width: 100%;
     overflow: hidden;
+    flex-direction: column;
+  }
+  &__toolbar {
+    height: 100%;
   }
 }
 </style>
