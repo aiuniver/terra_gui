@@ -5,7 +5,6 @@ import re
 import psutil
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
-
 import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
@@ -1580,7 +1579,8 @@ class FitCallback(keras.callbacks.Callback):
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
-        logs['epoch'] = epoch + 1
+        interacive_logs = copy.deepcopy(logs)
+        interacive_logs['epoch'] = epoch + 1
 
         progress.pool(
             self.progress_name,
