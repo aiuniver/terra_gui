@@ -74,7 +74,11 @@ export default {
     margin-right: 36px;
   }
   &__input-custom {
+    label {
+      padding-bottom: 8px;
+    }
     input {
+      vertical-align: middle;
       padding: 0 5px;
       font-size: 12px;
     }
