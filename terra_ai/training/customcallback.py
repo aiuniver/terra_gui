@@ -2,81 +2,20 @@ import copy
 import os
 import re
 
-import psutil
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
 import tensorflow as tf
-import cv2
-import matplotlib.pyplot as plt
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
-from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
-from tensorflow import keras
-from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy
+from sklearn.metrics import confusion_matrix
 import numpy as np
-import types
-import time
 import moviepy.editor as moviepy_editor
-
 from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDTS
-from terra_ai.guiexchange import Exchange
-import pynvml as N
-
-__version__ = 0.18
-
-
-class MemoryUsage:
-    def __init__(self, debug=False):
-        self.debug = debug
-        try:
-            N.nvmlInit()
-            self.gpu = True
-        except:
-            self.gpu = False
-
-    def get_usage(self):
-        usage_dict = {}
-        if self.gpu:
-            gpu_utilization = N.nvmlDeviceGetUtilizationRates(N.nvmlDeviceGetHandleByIndex(0))
-            gpu_memory = N.nvmlDeviceGetMemoryInfo(N.nvmlDeviceGetHandleByIndex(0))
-            usage_dict["GPU"] = {
-                'gpu_utilization': f'{gpu_utilization.gpu: .2f}%',
-                'gpu_memory_used': f'{gpu_memory.used / 1024 ** 3: .2f}GB',
-                'gpu_memory_total': f'{gpu_memory.total / 1024 ** 3: .2f}GB'
-            }
-            if self.debug:
-                print(f'GPU usage: {gpu_utilization.gpu: .2f}% ({gpu_memory.used / 1024 ** 3: .2f}GB / '
-                      f'{gpu_memory.total / 1024 ** 3: .2f}GB)')
-        else:
-            cpu_usage = psutil.cpu_percent(percpu=True)
-            usage_dict["CPU"] = {
-                'cpu_utilization': f'{sum(cpu_usage) / len(cpu_usage): .2f}%',
-            }
-            if self.debug:
-                print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
-                print(f'Max CPU usage: {max(cpu_usage): .2f}%')
-        usage_dict["RAM"] = {
-            'ram_utilization': f'{psutil.virtual_memory().percent: .2f}%',
-            'ram_memory_used': f'{psutil.virtual_memory().used / 1024 ** 3: .2f}GB',
-            'ram_memory_total': f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB'
-        }
-        usage_dict["Disk"] = {
-            'disk_utilization': f'{psutil.disk_usage("/").percent: .2f}%',
-            'disk_memory_used': f'{psutil.disk_usage("/").used / 1024 ** 3: .2f}GB',
-            'disk_memory_total': f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB'
-        }
-        if self.debug:
-            print(f'RAM usage: {psutil.virtual_memory().percent: .2f}% '
-                  f'({psutil.virtual_memory().used / 1024 ** 3: .2f}GB / '
-                  f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB)')
-            print(f'Disk usage: {psutil.disk_usage("/").percent: .2f}% '
-                  f'({psutil.disk_usage("/").used / 1024 ** 3: .2f}GB / '
-                  f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
-        return usage_dict
+from terra_ai.utils import camelize, decamelize
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -141,7 +80,7 @@ loss_metric_config = {
             "mode": "min"
         },
         "Huber": {
-            "log_name": "Huber",
+            "log_name": "huber",
             "mode": "min"
         },
         "KLDivergence": {
@@ -187,7 +126,7 @@ loss_metric_config = {
             "mode": "max"
         },
         "Accuracy": {
-            "log_name": "Accuracy",
+            "log_name": "accuracy",
             "mode": "max"
         },
         "BinaryAccuracy": {
@@ -305,15 +244,14 @@ loss_metric_config = {
 class InteractiveCallback:
     """Callback for interactive requests"""
 
-    def __init__(self, dataset: PrepareDTS, metrics: dict, losses: dict):
+    def __init__(self):
         """
         log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
         """
-        self.losses = losses
-        self.metrics = metrics
-        self.dataset = dataset
+        self.losses = None
+        self.metrics = None
+        self.dataset = None
         self.y_true = {}
-        self._prepare_y_true()
         self.y_pred = {}
         self.current_epoch = None
 
@@ -323,35 +261,34 @@ class InteractiveCallback:
 
         self.current_logs = {}
         self.log_history = {}
-        self._prepare_null_log_history_template()
         self.progress_table = {}
-        self.dataset_balance = self._prepare_dataset_balance()
-        self.class_idx = self._prepare_class_idx()
+        self.dataset_balance = None
+        self.class_idx = None
 
         self.show_examples = 10
         self.ex_type_choice = 'seed'
-        self.seed_idx = self._prepare_seed()
+        self.seed_idx = None
         self.example_idx = []
         self.intermediate_result = {}
         self.statistic_result = {}
 
         self.interactive_config = {
             'loss_graphs': [
-                {
-                    'id': 1,
-                    'output_idx': 2,
-                    'show_for_model': True,
-                    'show_for_classes': False
-                },
+                # {
+                #     'id': 1,
+                #     'output_idx': 2,
+                #     'show_for_model': True,
+                #     'show_for_classes': False
+                # },
             ],
             'metric_graphs': [
-                {
-                    'id': 1,
-                    'output_idx': 2,
-                    'show_for_model': True,
-                    'show_for_classes': False,
-                    'show_metric': 'Accuracy'
-                }
+                # {
+                #     'id': 1,
+                #     'output_idx': 2,
+                #     'show_for_model': True,
+                #     'show_for_classes': False,
+                #     'show_metric': 'CategoricalAccuracy'
+                # }
             ],
             'intermediate_result': {
                 'show_results': False,
@@ -363,11 +300,11 @@ class InteractiveCallback:
                 'autoupdate': False
             },
             'progress_table': [
-                {
-                    'output_idx': 2,
-                    'show_loss': True,
-                    'show_metrics': True,
-                }
+                # {
+                #     'output_idx': 2,
+                #     'show_loss': True,
+                #     'show_metrics': True,
+                # }
             ],
             'statistic_data': {
                 'output_id': [2, 3],
@@ -380,6 +317,69 @@ class InteractiveCallback:
             }
         }
         pass
+
+    def set_attributes(self, dataset: PrepareDTS, metrics: dict, losses: dict):
+        self.losses = losses
+        self.metrics = self._reformat_metrics(metrics)
+        self._prepare_interactive_config()
+        self.dataset = dataset
+        self._prepare_y_true()
+        self._prepare_null_log_history_template()
+        self.dataset_balance = self._prepare_dataset_balance()
+        self.class_idx = self._prepare_class_idx()
+        self.seed_idx = self._prepare_seed()
+        self.example_idx = self._prepare_example_idx_to_show()
+
+    def _prepare_interactive_config(self):
+        # fill loss_graphs config
+        _id = 1
+        for out in self.losses.keys():
+            self.interactive_config.get('loss_graphs').append(
+                {
+                    'id': _id,
+                    'output_idx': out,
+                    'show_for_model': True,
+                    'show_for_classes': False
+                }
+            )
+            _id += 1
+
+        # fill metric_graphs config
+        _id = 1
+        for out in self.metrics.keys():
+            for metric_name in self.metrics.get(out):
+                self.interactive_config.get('metric_graphs').append(
+                    {
+                        'id': _id,
+                        'output_idx': out,
+                        'show_for_model': True,
+                        'show_for_classes': False,
+                        'show_metric': metric_name
+                    }
+                )
+                _id += 1
+
+        # fill progress_table_config
+        for out in self.metrics.keys():
+            self.interactive_config.get('progress_table').append(
+                {
+                    'output_idx': out,
+                    'show_loss': True,
+                    'show_metrics': True,
+                }
+            )
+
+    @staticmethod
+    def _reformat_metrics(metrics: dict) -> dict:
+        output = {}
+        for out, out_metrics in metrics.items():
+            output[out] = []
+            for metric in out_metrics:
+                if camelize(metric.name) == 'KullbackLeiblerDivergence':
+                    output[out].append('KLDivergence')
+                else:
+                    output[out].append(camelize(metric.name))
+        return output
 
     def _prepare_null_log_history_template(self):
         """
@@ -500,7 +500,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-    def _prepare_dataset_balance(self):
+    def _prepare_dataset_balance(self) -> dict:
         """
         return = {
             "output_name": {
@@ -522,7 +522,7 @@ class InteractiveCallback:
                     )
         return dataset_balance
 
-    def _prepare_class_idx(self):
+    def _prepare_class_idx(self) -> dict:
         """
         class_idx_dict -> train -> output_idx -> class_name
         """
@@ -544,7 +544,7 @@ class InteractiveCallback:
         np.random.shuffle(data_lenth)
         return data_lenth
 
-    def update_epoch_state(self, fit_logs, y_pred, current_epoch_time, on_epoch_end_flag=True):
+    def update_epoch_state(self, fit_logs, y_pred, current_epoch_time, on_epoch_end_flag=True) -> dict:
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
@@ -563,16 +563,23 @@ class InteractiveCallback:
                 self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('show_results'):
                 self.statistic_result = self._get_statistic_data_request()
+        return {
+            'loss_graphs': self._get_loss_graph_data_request(),
+            'metric_graphs': self._get_metric_graph_data_request(),
+            'intermediate_result': self.intermediate_result,
+            'progress_table': self.progress_table,
+            'statistic_data': self.statistic_result,
+            'data_balance': self._get_balance_data_request(),
+        }
 
-    def _reformat_fit_logs(self, logs):
+    def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
-
         update_logs = {}
         for log, val in logs.items():
             if re.search(r'_\d+$', log):
                 end = len(f"_{log.split('_')[-1]}")
                 log = log[:-end]
-            update_logs[log] = val
+            update_logs[re.sub("__", "_", decamelize(log))] = val
 
         for out in self.metrics.keys():
             interactive_log[out] = {}
@@ -609,7 +616,6 @@ class InteractiveCallback:
                         'val': update_logs.get(
                             f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                     }
-
         return interactive_log
 
     def _reformat_y_pred(self, y_pred):
@@ -668,6 +674,7 @@ class InteractiveCallback:
                     # fill losses
                     self.log_history[f'{out}']['loss'][loss_name][data_type].append(
                         self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type)
+                        if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
                     )
 
                 # fill loss progress state
@@ -676,18 +683,18 @@ class InteractiveCallback:
                 )
 
                 # get progress state data
-                loss_underfittng = self._evaluate_underfitting(
+                loss_underfitting = self._evaluate_underfitting(
                     loss_name,
                     self.log_history[f'{out}']['loss'][loss_name]['train'][-1],
                     self.log_history[f'{out}']['loss'][loss_name]['val'][-1],
-                    type='loss'
+                    metric_type='loss'
                 )
                 loss_overfittng = self._evaluate_overfitting(
                     loss_name,
                     self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'],
-                    type='loss'
+                    metric_type='loss'
                 )
-                if loss_underfittng or loss_overfittng:
+                if loss_underfitting or loss_overfittng:
                     normal_state = False
                 else:
                     normal_state = True
@@ -700,14 +707,15 @@ class InteractiveCallback:
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_loss').keys():
+                        class_loss = self._get_loss_calculation(
+                            loss_name,
+                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            ohe,
+                            num_classes
+                        )
                         self.log_history[f'{out}']['class_loss'][cls][loss_name].append(
-                            self._get_loss_calculation(
-                                loss_name,
-                                self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                ohe,
-                                num_classes
-                            )
+                            class_loss if class_loss else 0.
                         )
 
             for metric_name in self.log_history.get(f'{out}').get('metrics').keys():
@@ -715,6 +723,7 @@ class InteractiveCallback:
                     # fill metrics
                     self.log_history[f'{out}']['metrics'][metric_name][data_type].append(
                         self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type)
+                        if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
                     )
 
                 # fill metric progress state
@@ -725,12 +734,12 @@ class InteractiveCallback:
                     metric_name,
                     self.log_history[f'{out}']['metrics'][metric_name]['train'][-1],
                     self.log_history[f'{out}']['metrics'][metric_name]['val'][-1],
-                    type='metric'
+                    metric_type='metric'
                 )
                 loss_overfittng = self._evaluate_overfitting(
                     metric_name,
                     self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['mean_log_history'],
-                    type='metric'
+                    metric_type='metric'
                 )
                 if loss_underfittng or loss_overfittng:
                     normal_state = False
@@ -746,17 +755,18 @@ class InteractiveCallback:
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_metrics').keys():
+                        class_metric = self._get_metric_calculation(
+                            metric_name,
+                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            ohe,
+                            num_classes
+                        )
                         self.log_history[f'{out}']['class_metrics'][cls][metric_name].append(
-                            self._get_metric_calculation(
-                                metric_name,
-                                self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                ohe,
-                                num_classes
-                            )
+                            class_metric if class_metric else 0.
                         )
 
-    def _update_progress_table(self, epoch_time):
+    def _update_progress_table(self, epoch_time: float):
         """
         'progress_table': {
             'epoch': {
@@ -789,32 +799,38 @@ class InteractiveCallback:
                     self.log_history.get(f'{out}').get('metrics').get(metric).get('val')[-1]
 
     @staticmethod
-    def _evaluate_overfitting(metric_name, mean_log, type):
-        if loss_metric_config.get(type).get(metric_name).get("mode") == 'min' and \
-                mean_log[-1] > min(mean_log) and \
-                (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 10:
-            return True
-        elif loss_metric_config.get(type).get(metric_name).get("mode") == 'max' and \
-                mean_log[-1] < max(mean_log) and \
-                (max(mean_log) - mean_log[-1]) * 100 / mean_log[-1] > 10:
-            return True
+    def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
+        if min(mean_log) or max(mean_log):
+            if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
+                    mean_log[-1] > min(mean_log) and \
+                    (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 10:
+                return True
+            elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
+                    mean_log[-1] < max(mean_log) and \
+                    (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 10:
+                return True
+            else:
+                return False
         else:
             return False
 
     @staticmethod
-    def _evaluate_underfitting(metric_name, train_log, val_log, type):
-        if loss_metric_config.get(type).get(metric_name).get("mode") == 'min' and \
-                (val_log - train_log) / train_log * 100 > 10:
-            return True
-        elif loss_metric_config.get(type).get(metric_name).get("mode") == 'max' and \
-                (train_log - val_log) / train_log * 100 > 10:
-            return True
+    def _evaluate_underfitting(metric_name: str, train_log: list, val_log: list, metric_type: str):
+        if train_log:
+            if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
+                    (val_log - train_log) / train_log * 100 > 10:
+                return True
+            elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
+                    (train_log - val_log) / train_log * 100 > 10:
+                return True
+            else:
+                return False
         else:
             return False
 
-    def return_interactive_results(self, config: dict):
+    def return_interactive_results(self, config: dict) -> dict:
         """Return dict with data for current interactive request"""
-        self.interactive_config = config
+        self.interactive_config = config if config else self.interactive_config
         self.example_idx = self._prepare_example_idx_to_show()
         return {
             'loss_graphs': self._get_loss_graph_data_request(),
@@ -825,7 +841,7 @@ class InteractiveCallback:
             'data_balance': self._get_balance_data_request(),
         }
 
-    def _get_loss_graph_data_request(self):
+    def _get_loss_graph_data_request(self) -> list:
         """
         'loss_graphs': [
 
@@ -882,11 +898,11 @@ class InteractiveCallback:
                 if loss_graph_config.get('show_for_model'):
                     if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
                             "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                         progress_state = "overfitting"
                     elif sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
                             "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
-                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                         progress_state = "underfitting"
                     else:
                         progress_state = "normal"
@@ -949,7 +965,7 @@ class InteractiveCallback:
             pass
         return data_return
 
-    def _get_metric_graph_data_request(self):
+    def _get_metric_graph_data_request(self) -> list:
         """
         'metric_graphs': [
 
@@ -995,11 +1011,11 @@ class InteractiveCallback:
                 if metric_graph_config.get('show_for_model'):
                     if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                             "metrics").get(metric_graph_config.get('show_metric')).get(
-                            'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
                         progress_state = 'overfitting'
                     elif sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                             "metrics").get(metric_graph_config.get('show_metric')).get(
-                            'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
                         progress_state = 'underfitting'
                     else:
                         progress_state = 'normal'
@@ -1062,7 +1078,7 @@ class InteractiveCallback:
             pass
         return data_return
 
-    def _get_intermediate_result_request(self):
+    def _get_intermediate_result_request(self) -> dict:
 
         """
         'intermediate_result': {
@@ -1137,7 +1153,7 @@ class InteractiveCallback:
                 for out in self.y_true.get('train').keys():
                     true_lbl, predict_lbl, color_mark, stat = self._postprocess_result_data(
                         output_id=out,
-                        data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                        data_type='val',
                         example_idx=self.example_idx[idx],
                         show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
@@ -1159,7 +1175,7 @@ class InteractiveCallback:
                         }
         return return_data
 
-    def _get_statistic_data_request(self):
+    def _get_statistic_data_request(self) -> dict:
         """
         'statistic_data': {
             f'Output_{layer_id}': {
@@ -1197,7 +1213,7 @@ class InteractiveCallback:
                 return_data[f'{out}'] = {}
         return return_data
 
-    def _get_balance_data_request(self):
+    def _get_balance_data_request(self) -> dict:
         """
         'data_balance': {
             'output_id': [
@@ -1271,7 +1287,7 @@ class InteractiveCallback:
         return return_data
 
     @staticmethod
-    def _get_confusion_matrix(y_true, y_pred):
+    def _get_confusion_matrix(y_true, y_pred) -> tuple:
         cm = confusion_matrix(y_true, y_pred)
 
         cm_percent = np.zeros_like(cm).astype('float32')
@@ -1281,7 +1297,7 @@ class InteractiveCallback:
                 cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return (cm, cm_percent)
 
-    def _prepare_example_idx_to_show(self):
+    def _prepare_example_idx_to_show(self) -> dict:
         """
         example_idx = {
             output_id: []
@@ -1326,7 +1342,7 @@ class InteractiveCallback:
         elif choice_type == 'random':
             example_idx = np.random.randint(
                 0,
-                len(self.dataset.X.get(self.interactive_config.get('intermediate_result').get('data_for_calculation'))),
+                len(self.dataset.X.get('val')),
                 self.interactive_config.get('intermediate_result').get('num_examples')
             )
         else:
@@ -1351,7 +1367,7 @@ class InteractiveCallback:
         """
         # temp_file = tempfile.NamedTemporaryFile(delete=False)
         initial_file_path = os.path.join(self.dataset.datasets_path, self.dataset.dataframe.get(
-            self.interactive_config.get('intermediate_result').get('data_for_calculation')).iat[example_idx, 0])
+            'val').iat[example_idx, 0])
         # TODO: посмотреть как реализовать '.iat[example_idx, 0]' для нескольких входов
         if self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Image:
             img = Image.open(initial_file_path)
@@ -1418,211 +1434,5 @@ class InteractiveCallback:
             pass
 
 
-class FitCallback(keras.callbacks.Callback):
-    """CustomCallback for all task type"""
-
-    def __init__(self, dataset: PrepareDTS, exchange=Exchange(), batch_size: int = None, epochs: int = None,
-                 save_model_path: str = "./", model_name: str = "noname"):
-        super().__init__()
-        self.usage_info = MemoryUsage(debug=False)
-        self.Exch = exchange
-        self.dataset = dataset
-        self.batch_size = batch_size
-        self.epochs = epochs
-        self.batch = 0
-        self.num_batches = 0
-        self.epoch = 0
-        self.last_epoch = 1
-        self.history = {}
-        self._start_time = time.time()
-        self._time_batch_step = time.time()
-        self._time_first_step = time.time()
-        self._sum_time = 0
-        self.stop_training = False
-        self.retrain_flag = False
-        self.stop_flag = False
-        self.retrain_epochs = 0
-        self.save_model_path = save_model_path
-        self.nn_name = model_name
-        self.progress_name = progress.PoolName.training
-
-    def save_lastmodel(self) -> None:
-        """
-        Saving last model on each epoch end
-
-        Returns:
-            None
-        """
-        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
-        file_path_model: str = os.path.join(
-            self.save_model_path, f"{model_name}"
-        )
-        self.model.save(file_path_model)
-        progress.pool(
-            self.progress_name,
-            percent=(self.last_epoch - 1) / self.epochs * 100,
-            message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
-            data={'info': f"Последняя модель сохранена как {file_path_model}"},
-            finished=False,
-        )
-        # print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
-        pass
-
-    def _estimate_step(self, current, start, now):
-        if current:
-            _time_per_unit = (now - start) / current
-        else:
-            _time_per_unit = (now - start)
-        return _time_per_unit
-
-    def eta_format(self, eta):
-        if eta > 3600:
-            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
-                                                     (eta % 3600) // 60, eta % 60)
-        elif eta > 60:
-            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
-        else:
-            eta_format = '%d сек' % eta
-        return ' %s' % eta_format
-
-    def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
-        """
-        Updates the progress bar.
-        """
-        if finalize:
-            _now_time = time.time()
-            eta = _now_time - start_time
-        else:
-            _now_time = time.time()
-            if stop_flag:
-                time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
-            else:
-                time_per_unit = self._estimate_step(current, start_time, _now_time)
-            eta = time_per_unit * (target - current)
-        return [self.eta_format(eta), int(eta)]
-
-    def on_train_begin(self, logs=None):
-        self.stop_training = False
-        self._start_time = time.time()
-        if not self.stop_flag:
-            self.batch = 0
-        self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
-
-    def on_epoch_begin(self, epoch, logs=None):
-        self.epoch = epoch
-        self._time_first_step = time.time()
-
-    def on_train_batch_end(self, batch, logs=None):
-        stop = False
-        if stop:
-            self.model.stop_training = True
-            self.stop_training = True
-            self.stop_flag = True
-            msg = f'ожидайте остановку...'
-            self.batch += 1
-            print(('Обучение остановлено пользователем', msg))
-        else:
-            msg_batch = f'Батч {batch}/{self.num_batches}'
-            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
-                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
-            time_start = \
-                self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
-            if self.retrain_flag:
-                msg_progress_end = f'Расчетное время окончания:' \
-                                   f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
-                msg_progress_start = f'Время выполнения дообучения:' \
-                                     f'{self.eta_format(time_start)}, '
-            elif self.stop_flag:
-                msg_progress_end = f'Расчетное время окончания после остановки:' \
-                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
-                msg_progress_start = f'Время выполнения:' \
-                                     f'{self.eta_format(self._sum_time + time_start)}, '
-            else:
-                msg_progress_end = f'Расчетное время окончания:' \
-                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
-                msg_progress_start = f'Время выполнения:' \
-                                     f'{self.eta_format(time_start)}, '
-            self.batch += 1
-
-            # TODO: срочный запрос с фронта, настроить возврат в интерактивку upred и флага on_epoch_end_flag=False
-            urgent_predict = False
-            if urgent_predict:
-                on_epoch_end_flag = False
-                if self.dataset.data.use_generator:
-                    upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
-                else:
-                    upred = self.model.predict(self.dataset.X.get('val'))
-                # for data_type in ['train', 'val']:
-                #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
-
-            progress.pool(
-                self.progress_name,
-                percent=(self.last_epoch - 1) / self.epochs * 100,
-                message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
-                data={'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
-                      'usage': self.usage_info.get_usage()},
-                finished=False,
-            )
-            # print(('Прогресс обучения', msg_progress_start +
-            #                              msg_progress_end + msg_epoch + msg_batch))
-            # print(self.usage_info.get_usage())
-
-    def on_epoch_end(self, epoch, logs=None):
-        """
-        Returns:
-            {}:
-        """
-        # TODO: регулярный предикт, настроить возврат в интерактивку scheduled_predict и флага on_epoch_end=True
-        # scheduled_predict = {}
-        on_epoch_end_flag = True
-        if self.dataset.data.use_generator:
-            scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
-        else:
-            scheduled_predict = self.model.predict(self.dataset.X.get('val'))
-        interacive_logs = copy.deepcopy(logs)
-        interacive_logs['epoch'] = epoch + 1
-        current_epoch_time = time.time() - self._time_first_step
-
-        progress.pool(
-            self.progress_name,
-            percent=(self.last_epoch - 1) / self.epochs * 100,
-            message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
-            data={'info': logs,
-                  'usage': self.usage_info.get_usage()},
-            finished=False,
-        )
-        # print(logs)
-        # print(self.last_epoch)
-        # print(self.model.get_weights())
-        self.last_epoch += 1
-        # self.Exch.last_epoch_model(self.model)
-
-    def on_train_end(self, logs=None):
-        self.save_lastmodel()
-        time_end = self.update_progress(self.num_batches * self.epochs + 1,
-                                        self.batch, self._start_time, finalize=True)[1]
-        self._sum_time += time_end
-        if self.model.stop_training:
-            msg = f'Модель сохранена.'
-            print(('Обучение остановлено пользователем!', msg))
-            # self.Exch.out_data['stop_flag'] = True
-        else:
-            if self.retrain_flag:
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(time_end)} '
-            else:
-                msg = f'Затрачено времени на обучение: ' \
-                      f'{self.eta_format(self._sum_time)} '
-            progress.pool(
-                self.progress_name,
-                percent=(self.last_epoch - 1) / self.epochs * 100,
-                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
-                data={'info': f"Обучение закончено. {msg}",
-                      'usage': self.usage_info.get_usage()},
-                finished=True,
-            )
-            # print(msg)
-
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     pass
