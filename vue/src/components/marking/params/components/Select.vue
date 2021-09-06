@@ -1,5 +1,5 @@
 <template>
-  <div class="t-field">
+  <div :class="['t-field', `${selectPos}`]">
     <label class="t-field__label">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
@@ -10,7 +10,7 @@
       @on-change="change"
       @click="cleanError"
       :disabled="disabled"
-      width="180px"
+      :width="width"
     >
       <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value" :title="label">
         {{ label }}
@@ -45,6 +45,12 @@ export default {
     },
     disabled: Boolean,
     error: String,
+    width: String,
+    selectPos: {
+      type: String,
+      default: 'left',
+      required: false
+    }
   },
   data: () => ({
     select: '',
@@ -98,6 +104,12 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
+  &.right {
+    flex-direction: row;
+    .t-field__label {
+      text-align: right;
+    }
+  }
   &__label {
     width: 150px;
     padding: 0 10px;
@@ -110,6 +122,7 @@ export default {
     text-overflow: ellipsis;
     // white-space: nowrap;
     overflow: hidden;
+    line-height: 24px;
   }
   &__input {
     height: 24px;
