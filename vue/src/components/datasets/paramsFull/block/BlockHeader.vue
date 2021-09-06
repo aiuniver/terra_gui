@@ -3,10 +3,9 @@
     <div v-if="mixinFiles.length" class="block-header__main">
       <Cards>
         <template v-for="(file, i) of mixinFiles">
-          <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" />
-          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i"  />
+          <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" @event="event" />
+          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" @event="event" />
         </template>
-
       </Cards>
       <div class="empty"></div>
     </div>
@@ -21,7 +20,7 @@
 
 <script>
 import CardFile from '../components/card/CardFile.vue';
-import CardTable from "../components/card/CardTable";
+import CardTable from '../components/card/CardTable';
 import Cards from '../components/card/Cards.vue';
 import blockMain from '@/mixins/datasets/blockMain';
 export default {
@@ -33,6 +32,9 @@ export default {
   },
   mixins: [blockMain],
   methods: {
+    event({ label }) {
+      this.mixinFiles = this.mixinFiles.filter(item => item.label !== label);
+    },
     onDrop({ dataTransfer }) {
       const data = JSON.parse(dataTransfer.getData('CardDataType'));
       if (!this.mixinFiles.find(item => item.value === data.value)) {
@@ -50,9 +52,6 @@ export default {
   padding: 10px;
 }
 .inner {
-  // position: absolute;
-  // top: 10px;
-  // height: 150px;
   padding: 10px;
   height: 100%;
 }

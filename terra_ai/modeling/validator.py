@@ -79,7 +79,6 @@ def get_idx_line(model_plan: List[tuple]):
                     len(up_links.get(link)) > 1
                     and len(set(idx2remove) & set(up_links.get(link))) != 0
             ):
-                print(set(idx2remove) & set(up_links.get(link)))
                 row_idx_s.pop(row_idx_s.index(link))
 
         distribution.append(row_idx_s)
@@ -1157,6 +1156,7 @@ class CustomLayer(tensorflow.keras.layers.Layer):
     def __init__(self):
         super().__init__()
         self.block_plan = []
+        pass
 
     def __call__(self, input_layer):
         block = None

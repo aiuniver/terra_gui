@@ -93,7 +93,7 @@ class GUINN:
         print(('Добавление колбэков', '...'))
         callback = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
         self.callbacks = [callback]
-        checkpoint.update([('filepath', 'F:\\tmp\\models\\test_model.h5')])
+        checkpoint.update([('filepath', 'test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         print(('Добавление колбэков', 'выполнено'))
 

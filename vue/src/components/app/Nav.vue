@@ -2,11 +2,7 @@
   <nav class="nav">
     <ul class="nav__menu">
       <template v-for="({ title, path }, i) in items">
-        <li
-          :class="['nav__menu--item', { active: $route.path === path }]"
-          :key="i"
-          @click="nav(path)"
-        >
+        <li :class="['nav__menu--item', { active: $route.path === path }]" :key="i" @click="nav(path)">
           {{ title }}
         </li>
       </template>
@@ -15,21 +11,21 @@
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { mapGetters } from 'vuex';
 export default {
   data: () => ({
     items: [
-      { title: "Данные", path: "/datasets", access: true },
-      { title: "Разметка", path: "/marking", access: true },
-      { title: "Проектирование", path: "/modeling", access: true },
-      { title: "Обучение", path: "/training", access: false },
-      { title: "Каскады", path: "/cascades", access: false },
-      { title: "Деплой", path: "/deploy", access: true },
+      { title: 'Данные', path: '/datasets', access: true },
+      { title: 'Разметка', path: '/marking', access: true },
+      { title: 'Проектирование', path: '/modeling', access: true },
+      { title: 'Обучение', path: '/training', access: false },
+      { title: 'Каскады', path: '/cascades', access: false },
+      { title: 'Деплой', path: '/deploy', access: true },
     ],
   }),
   computed: {
     ...mapGetters({
-      project: "projects/getProject",
+      project: 'projects/getProject',
     }),
   },
   methods: {
@@ -42,22 +38,23 @@ export default {
           return;
         }
         const text = {
-          "/modeling": "редактирования модели",
-          "/training": "обучения",
-          "/deploy": "деплоя",
+          '/modeling': 'редактирования модели',
+          '/training': 'обучения',
+          '/deploy': 'деплоя',
         };
-        // const self = this
+        const self = this;
         this.$Modal.alert({
-          title: "Предупреждение!",
+          title: 'Предупреждение!',
           width: 300,
           content: `Для ${text[path]} необходимо загрузить датасет.`,
-          // showClose: false,
-          okText: "Загрузить датасет",
+          maskClosable: true,
+          okText: 'Загрузить датасет',
           callback: function (action) {
-            console.log(action);
-            // if (self.$route.path !== '/datasets') {
-            //   self.$router.push('/datasets');
-            // }
+            if (action !== 'cancel') {
+              if (self.$route.path !== '/datasets') {
+                self.$router.push('/datasets');
+              }
+            }
           },
         });
       } else {

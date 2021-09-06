@@ -10,6 +10,7 @@
     />
     <t-segmentation-manual
       v-if="type === 'segmentation_manual'"
+      :id="id"
       :value="getValue"
       :label="label"
       type="text"
@@ -25,6 +26,7 @@
       v-if="type === 'segmentation_annotation'"
       :value="getValue"
       :label="label"
+      :id="id"
       type="text"
       :parse="parse"
       :name="name"
@@ -37,6 +39,7 @@
     <t-segmentation-search
       v-if="type === 'segmentation_search'"
       :value="getValue"
+      :id="id"
       :label="label"
       type="text"
       :parse="parse"
