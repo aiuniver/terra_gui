@@ -57,14 +57,23 @@
           </at-collapse-item>
         </at-collapse>
       </div>
-      <div class="params__items--item">
-        <div class="item d-flex mb-3" style="gap: 10px">
-          <button>Обучить</button>
-          <button>Остановить</button>
+      <div class="params__items">
+        <div class="params__items--item">
+          <t-field label="Мониторинг" inline>
+              <TInput small @focus="click" />
+          </t-field>
         </div>
-        <div class="item d-flex" style="gap: 10px">
-          <button>Сбросить</button>
-          <button>Сбросить</button>
+      </div>
+      <div class="params__items">
+        <div class="params__items--item">
+          <div class="item d-flex mb-3" style="gap: 10px">
+            <button @click="start">Обучить</button>
+            <button>Остановить</button>
+          </div>
+          <div class="item d-flex" style="gap: 10px">
+            <button>Сбросить</button>
+            <button>Сбросить</button>
+          </div>
         </div>
       </div>
     </scrollbar>
@@ -74,13 +83,13 @@
 <script>
 import temp from './temp';
 import { mapGetters } from 'vuex';
-// import Select from '@/components/forms/Select.vue';
+import TInput from '../global/new/forms/TInput.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
 
 export default {
   name: 'params-traning',
   components: {
-    // Select,
+    TInput,
     // Checkbox,
   },
   data: () => ({
@@ -112,10 +121,18 @@ export default {
     },
   },
   methods: {
-    change(e) {
-      // console.log(e);
-      if (e.name === 'optimizer') {
-        this.optimizerValue = e.value;
+    click(e) {
+      console.log(e)
+    },
+    start() {
+      console.log(JSON.stringify(this.obj, null, 2));
+    },
+    parse({ parse, value, name }) {
+      // console.log(this.state);
+      this.state = { [`${parse}`]: value };
+      ser(this.obj, parse, value);
+      if (name === 'optimizer') {
+        this.optimizerValue = value;
       }
     },
   },
