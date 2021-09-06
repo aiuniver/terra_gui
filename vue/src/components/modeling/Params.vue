@@ -4,7 +4,7 @@
     <scrollbar>
       <div class="params__items">
         <div class="params__items--item">
-          <t-input
+          <Input
             v-model="block.name"
             :label="'Название слоя'"
             :type="'text'"
@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import Input from "@/components/forms/Input.vue";
 import Navbar from '@/components/modeling/comp/Navbar.vue';
 import Shape from '@/components/forms/Shape.vue';
 import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
@@ -68,7 +69,7 @@ export default {
     Autocomplete2,
     Forms,
     Navbar,
-    // Select
+    Input
   },
   data: () => ({
     collapse: ['0', '2'],
