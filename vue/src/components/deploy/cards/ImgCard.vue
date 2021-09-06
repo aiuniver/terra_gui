@@ -1,6 +1,6 @@
 <template>
   <div class="img-card">
-    <img class="img-card__image" :src="require('@/../public/imgs/img.png')" :alt="ImgAlt">
+    <img class="img-card__image" :src="require('@/../public/imgs/'+imgUrl)" :alt="ImgAlt">
   </div>
 </template>
 
@@ -8,11 +8,11 @@
 export default {
   name: "ImgCard",
   props: {
-    ImgUrl: {
+    imgUrl: {
       type: String,
-      default: '@/../public/imgs/img.png'
+      default: 'img.png'
     },
-    ImgAlt: {
+    imgAlt: {
       type: String,
       default: 'image'
     }

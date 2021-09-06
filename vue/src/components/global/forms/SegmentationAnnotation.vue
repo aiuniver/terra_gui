@@ -15,7 +15,7 @@
         :parse="'classes_names[]'"
         inline
         autocomplete="off"
-        @change="change"
+        @change="change($event, i)"
       />
       <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline disabled />
       <hr v-if="items.length === i + 1" class="t-segmentation-annotation__hr" :key="'hr_' + i" />
@@ -28,7 +28,7 @@ import Color from '../../forms/Color.vue';
 export default {
   name: 't-segmentation-annotation',
   components: {
-    Color
+    Color,
   },
   props: {
     label: {
@@ -51,29 +51,30 @@ export default {
   },
   data: () => ({
     loading: false,
-    items: []
+    items: [],
+    classes_names: [],
+    classes_colors: []
   }),
   computed: {},
   methods: {
     async getApi() {
-      if (this.loading) return; 
-      this.loading = true
-      const { data } = await this.$store.dispatch('datasets/classesAnnotation')
-      console.log(data)
-      this.items = data
-      this.loading = false
-      const classes_names = data.map(item => item.name)
-      const classes_colors = data.map(item => item.color)
-      this.$emit('change', { name: 'classes_names', value: classes_names } );
-      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
+      if (this.loading) return;
+      this.loading = true;
+      const { data } = await this.$store.dispatch('datasets/classesAnnotation');
+      console.log(data);
+      if (data) {
+        this.items = data;
+        this.loading = false;
+        this.classes_names = data.map(item => item.name);
+        this.classes_colors = data.map(item => item.color);
+        this.$emit('change', { name: 'classes_names', value: this.classes_names });
+        this.$emit('change', { name: 'classes_colors', value: this.classes_colors });
+      }
     },
-    change() {
-      // if (this.isChange) {
-      //   let value = e.target.value;
-      //   value = this.type === 'number' ? +value : value;
-      //   this.$emit('change', { name: this.name, value });
-      //   this.isChange = false;
-      // }
+    change({ value }, index) {
+      console.log(value,index)
+      this.classes_names[index] = value
+      this.$emit('change', { name: 'classes_names', value: this.classes_names });
     },
   },
 };

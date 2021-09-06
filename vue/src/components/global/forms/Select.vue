@@ -63,7 +63,7 @@ export default {
     change(value) {
       this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
-
+      this.$emit('parse', { name: this.name, parse: this.parse, value });
       // bus.$emit("change", e);
     },
   },

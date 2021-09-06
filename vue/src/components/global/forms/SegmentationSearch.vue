@@ -16,9 +16,9 @@
         :parse="'classes_names[]'"
         inline
         autocomplete="off"
-        @change="change"
+        @change="change($event, i)"
       />
-      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline />
+      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline :disabled="true" />
       <hr v-if="items.length === i + 1" class="t-segmentation-search__hr" :key="'hr_' + i" />
     </template>
   </div>
@@ -26,11 +26,13 @@
 
 <script>
 import Color from '../../forms/Color.vue';
+import blockMain from '@/mixins/datasets/blockMain';
 export default {
   name: 't-segmentation-search',
   components: {
     Color,
   },
+  mixins: [blockMain],
   props: {
     label: {
       type: String,
@@ -49,41 +51,56 @@ export default {
     disabled: Boolean,
     small: Boolean,
     error: String,
+    id: Number,
   },
   data: () => ({
     loading: false,
     isShow: false,
     items: [],
     qty: 2,
+    classes_names: [],
+    classes_colors: []
   }),
   computed: {},
   methods: {
     async getApi() {
       if (this.loading) return;
-      this.loading = true;
-      const mask_range = document.getElementsByName('mask_range')[0]
-      if (!mask_range.value) {
-        mask_range.style.borderColor = '#f00'
-        this.loading = false;
+      const path = this.mixinFiles.find(item => item.id === this.id)?.value;
+      const mask_range = document.getElementsByName('mask_range')[0].value;
+      if (!path || !mask_range) {
+        const error = {
+          [this.id]: {
+            parameters: {
+              sources_paths: [path ? null : 'Этот список не может быть пустым.'],
+              mask_range: [mask_range ? null : 'Это поле не может быть пустым.'],
+            },
+          },
+        };
+        this.$store.dispatch('datasets/setErrors', error);
         return;
       }
-      mask_range.style.borderColor = '#6c7883'
-      const { data } = await this.$store.dispatch('datasets/classesAutosearch', { mask_range: mask_range.value, num_classes: this.qty });
-      console.log(data)
-      const classes_names = data.map(item => item.name)
-      const classes_colors = data.map(item => item.color)
-      this.$emit('change', { name: 'classes_names', value: classes_names } );
-      this.$emit('change', { name: 'classes_colors', value: classes_colors } );
-      this.items = data
+      this.loading = true;
+      const { data, error } = await this.$store.dispatch('datasets/classesAutosearch', {
+        num_classes: this.qty,
+        mask_range,
+        path,
+      });
+      if (data) {
+        this.classes_names = data.map(item => item.name);
+        this.classes_colors = data.map(item => item.color);
+        this.$emit('change', { name: 'classes_names', value: this.classes_names });
+        this.$emit('change', { name: 'classes_colors', value: this.classes_colors });
+        this.items = data;
+      }
+      if (error) {
+        console.log(error);
+      }
       this.loading = false;
     },
-    change() {
-      // if (this.isChange) {
-      //   let value = e.target.value;
-      //   value = this.type === 'number' ? +value : value;
-      //   this.$emit('change', { name: this.name, value });
-      //   this.isChange = false;
-      // }
+    change({ value }, index) {
+      console.log(value,index)
+      this.classes_names[index] = value
+      this.$emit('change', { name: 'classes_names', value: this.classes_names });
     },
   },
 };

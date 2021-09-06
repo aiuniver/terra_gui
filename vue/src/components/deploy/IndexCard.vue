@@ -3,12 +3,12 @@
   <div class="card__content">
     <div v-if="type == 'card'">
       <div class="card__original" >
-        <ImgCard v-if="original.type == 'image'"/>
+        <ImgCard v-if="original.type == 'image'" :imgUrl="original.imgUrl"/>
         <TextCard v-if="original.type == 'text'" :style="origTextStyle">{{ original.data }}</TextCard>
       </div>
       <div class="card__result">
-        <ImgCard v-if="result.type == 'image'"/>
-        <TextCard v-if="result.type == 'text'">{{ result.data }}</TextCard>
+        <ImgCard v-if="result.type == 'image'" :imgUrl="result.imgUrl"/>
+        <TextCard v-if="result.type == 'text'" :style="original.type == 'image' ? { width: '224px' } : {}">{{ result.data }}</TextCard>
       </div>
     </div>
     <div class="card__graphic" v-if="type == 'graphic'">

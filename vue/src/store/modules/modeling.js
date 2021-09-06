@@ -120,7 +120,10 @@ export default {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
     async updateModel({ commit, state: { blocks, links }, dispatch }) {
-      blocks.forEach(block => {
+      const semdBlocks = JSON.parse(JSON.stringify(blocks))
+      semdBlocks.forEach(block => {
+        // if (block.group !== 'input') block.shape.input = null;
+        if (block?.shape?.output && !block.shape.output.length) block.shape.output = null
         block.bind.up = links
           .map(link => {
             return link.targetID === block.id ? link.originID : null;
@@ -134,7 +137,7 @@ export default {
       });
       commit('SET_STATUS', { isUpdate: true });
       // commit('SET_ERRORS_BLOCKS', {});
-      return await dispatch('axios', { url: '/modeling/update/', data: { layers: blocks } }, { root: true });
+      return await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
     },
     async getModel({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
@@ -153,7 +156,7 @@ export default {
       if (data) {
         const isValid = !Object.values(data).filter(item => item).length
         commit('SET_ERRORS_BLOCKS', data)
-        dispatch('messages/setMessage', isValid ? { message:  `Валидация прошла успешно` } : { error: `Валидация не прошла`}, { root: true });
+        dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
       }
       return data;
     },
