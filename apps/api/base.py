@@ -82,7 +82,7 @@ class BaseResponseErrorFields(BaseResponseError):
                     __locs = __locs[:-1]
                 __errors = recursive_update(__errors, __loc_dict)
             error = __errors
-        buff = flatten_dict({"fields": error})
-        error = dict((key[:len(key)-1], value) for (key, value) in buff.items())
+        buff_error = flatten_dict({"fields": error})
+        error = dict((key[:len(key)-1], value) for (key, value) in buff_error.items())
 
         super().__init__(error=error, *args, **kwargs)
