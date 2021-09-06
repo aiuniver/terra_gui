@@ -20,7 +20,22 @@
         <div class="table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
       </div>
     </div>
-    <div class="table__footer"><span>Список файлов</span></div>
+    <div class="table__footer">
+      <span>Список файлов</span>
+      <div class="table__footer--btn" @click="show = true">
+        <i class="t-icon icon-file-dot"></i>
+      </div>
+      <div v-show="show" class="table__dropdown">
+        <div
+          v-for="({ icon, event }, i) of items"
+          :key="'icon' + i"
+          class="table__dropdown--item"
+          @click="$emit('event', { label, event }), (show = false)"
+        >
+          <i :class="['t-icon', icon]"></i>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -37,6 +52,8 @@ export default {
   data: () => ({
     table_test: [],
     selected_cols: [],
+    show: false,
+    items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
   }),
   computed: {
     arr() {
@@ -145,6 +162,50 @@ export default {
     height: 24px;
     width: 100%;
     padding: 3px 8px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &--label {
+      bottom: 0;
+      border-radius: 0 0 3px 3px;
+      padding: 4px 2px 2px 6px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    &--btn {
+      padding: 0 6px 0 0;
+      cursor: pointer;
+      i {
+        width: 16px;
+      }
+      &:hover {
+      }
+    }
+  }
+  .table__dropdown {
+    position: absolute;
+    background-color: #2b5278;
+    border-radius: 4px;
+    right: 3px;
+    bottom: 3px;
+    z-index: 100;
+    &--item {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.7;
+      }
+      i {
+        width: 14px;
+      }
+    }
   }
 }
 
