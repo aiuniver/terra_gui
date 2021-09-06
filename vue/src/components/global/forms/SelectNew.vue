@@ -116,9 +116,9 @@ export default {
     .t-select__input {
       border-radius: 4px 4px 0 0;
     }
-    .t-select__content {
+    // .t-select__content {
       // border-top: 0 !important;
-    }
+    // }
   }
   &__label {
     // width: 150px;
