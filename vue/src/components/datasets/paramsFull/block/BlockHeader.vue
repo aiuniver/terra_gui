@@ -4,7 +4,7 @@
       <Cards>
         <template v-for="(file, i) of mixinFiles">
           <CardFile v-if="file.type === 'folder'" v-bind="file" :key="'files_' + i" @event="event" />
-          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" />
+          <CardTable v-if="file.type === 'table'" v-bind="file" :key="'files_' + i" @event="event" />
         </template>
       </Cards>
       <div class="empty"></div>
