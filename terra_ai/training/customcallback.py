@@ -16,7 +16,7 @@ from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeCh
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDTS
-from terra_ai.utils import camelize
+from terra_ai.utils import camelize, decamelize
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -81,7 +81,7 @@ loss_metric_config = {
             "mode": "min"
         },
         "Huber": {
-            "log_name": "Huber",
+            "log_name": "huber",
             "mode": "min"
         },
         "KLDivergence": {
@@ -275,21 +275,21 @@ class InteractiveCallback:
 
         self.interactive_config = {
             'loss_graphs': [
-                {
-                    'id': 1,
-                    'output_idx': 2,
-                    'show_for_model': True,
-                    'show_for_classes': False
-                },
+                # {
+                #     'id': 1,
+                #     'output_idx': 2,
+                #     'show_for_model': True,
+                #     'show_for_classes': False
+                # },
             ],
             'metric_graphs': [
-                {
-                    'id': 1,
-                    'output_idx': 2,
-                    'show_for_model': True,
-                    'show_for_classes': False,
-                    'show_metric': 'CategoricalAccuracy'
-                }
+                # {
+                #     'id': 1,
+                #     'output_idx': 2,
+                #     'show_for_model': True,
+                #     'show_for_classes': False,
+                #     'show_metric': 'CategoricalAccuracy'
+                # }
             ],
             'intermediate_result': {
                 'show_results': False,
@@ -301,11 +301,11 @@ class InteractiveCallback:
                 'autoupdate': False
             },
             'progress_table': [
-                {
-                    'output_idx': 2,
-                    'show_loss': True,
-                    'show_metrics': True,
-                }
+                # {
+                #     'output_idx': 2,
+                #     'show_loss': True,
+                #     'show_metrics': True,
+                # }
             ],
             'statistic_data': {
                 'output_id': [2, 3],
@@ -322,6 +322,7 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDTS, metrics: dict, losses: dict):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
+        self._prepare_interactive_config()
         self.dataset = dataset
         self._prepare_y_true()
         self._prepare_null_log_history_template()
@@ -330,11 +331,55 @@ class InteractiveCallback:
         self.seed_idx = self._prepare_seed()
         self.example_idx = self._prepare_example_idx_to_show()
 
+    def _prepare_interactive_config(self):
+        # fill loss_graphs config
+        _id = 1
+        for out in self.losses.keys():
+            self.interactive_config.get('loss_graphs').append(
+                {
+                    'id': _id,
+                    'output_idx': out,
+                    'show_for_model': True,
+                    'show_for_classes': False
+                }
+            )
+            _id += 1
+
+        # fill metric_graphs config
+        _id = 1
+        for out in self.metrics.keys():
+            for metric_name in self.metrics.get(out):
+                self.interactive_config.get('metric_graphs').append(
+                    {
+                        'id': _id,
+                        'output_idx': out,
+                        'show_for_model': True,
+                        'show_for_classes': False,
+                        'show_metric': metric_name
+                    }
+                )
+                _id += 1
+
+        # fill progress_table_config
+        for out in self.metrics.keys():
+            self.interactive_config.get('progress_table').append(
+                {
+                    'output_idx': out,
+                    'show_loss': True,
+                    'show_metrics': True,
+                }
+            )
+
     @staticmethod
     def _reformat_metrics(metrics: dict) -> dict:
         output = {}
         for out, out_metrics in metrics.items():
-            output[out] = [camelize(metric.name) for metric in out_metrics]
+            output[out] = []
+            for metric in out_metrics:
+                if camelize(metric.name) == 'KullbackLeiblerDivergence':
+                    output[out].append('KLDivergence')
+                else:
+                    output[out].append(camelize(metric.name))
         return output
 
     def _prepare_null_log_history_template(self):
@@ -456,7 +501,7 @@ class InteractiveCallback:
                 else:
                     pass
 
-    def _prepare_dataset_balance(self):
+    def _prepare_dataset_balance(self) -> dict:
         """
         return = {
             "output_name": {
@@ -478,7 +523,7 @@ class InteractiveCallback:
                     )
         return dataset_balance
 
-    def _prepare_class_idx(self):
+    def _prepare_class_idx(self) -> dict:
         """
         class_idx_dict -> train -> output_idx -> class_name
         """
@@ -500,7 +545,7 @@ class InteractiveCallback:
         np.random.shuffle(data_lenth)
         return data_lenth
 
-    def update_epoch_state(self, fit_logs, y_pred, current_epoch_time, on_epoch_end_flag=True):
+    def update_epoch_state(self, fit_logs, y_pred, current_epoch_time, on_epoch_end_flag=True) -> dict:
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
@@ -528,14 +573,15 @@ class InteractiveCallback:
             'data_balance': self._get_balance_data_request(),
         }
 
-    def _reformat_fit_logs(self, logs):
+    def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
         update_logs = {}
         for log, val in logs.items():
             if re.search(r'_\d+$', log):
                 end = len(f"_{log.split('_')[-1]}")
                 log = log[:-end]
-            update_logs[log] = val
+            update_logs[re.sub("__", "_", decamelize(log))] = val
+
         for out in self.metrics.keys():
             interactive_log[out] = {}
 
@@ -571,7 +617,6 @@ class InteractiveCallback:
                         'val': update_logs.get(
                             f"val_{out}_{loss_metric_config.get('metric').get(metric_name).get('log_name')}")
                     }
-
         return interactive_log
 
     def _reformat_y_pred(self, y_pred):
@@ -630,6 +675,7 @@ class InteractiveCallback:
                     # fill losses
                     self.log_history[f'{out}']['loss'][loss_name][data_type].append(
                         self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type)
+                        if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
                     )
 
                 # fill loss progress state
@@ -638,18 +684,18 @@ class InteractiveCallback:
                 )
 
                 # get progress state data
-                loss_underfittng = self._evaluate_underfitting(
+                loss_underfitting = self._evaluate_underfitting(
                     loss_name,
                     self.log_history[f'{out}']['loss'][loss_name]['train'][-1],
                     self.log_history[f'{out}']['loss'][loss_name]['val'][-1],
-                    type='loss'
+                    metric_type='loss'
                 )
                 loss_overfittng = self._evaluate_overfitting(
                     loss_name,
                     self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'],
-                    type='loss'
+                    metric_type='loss'
                 )
-                if loss_underfittng or loss_overfittng:
+                if loss_underfitting or loss_overfittng:
                     normal_state = False
                 else:
                     normal_state = True
@@ -662,14 +708,15 @@ class InteractiveCallback:
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_loss').keys():
+                        class_loss = self._get_loss_calculation(
+                            loss_name,
+                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            ohe,
+                            num_classes
+                        )
                         self.log_history[f'{out}']['class_loss'][cls][loss_name].append(
-                            self._get_loss_calculation(
-                                loss_name,
-                                self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                ohe,
-                                num_classes
-                            )
+                            class_loss if class_loss else 0.
                         )
 
             for metric_name in self.log_history.get(f'{out}').get('metrics').keys():
@@ -677,6 +724,7 @@ class InteractiveCallback:
                     # fill metrics
                     self.log_history[f'{out}']['metrics'][metric_name][data_type].append(
                         self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type)
+                        if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
                     )
 
                 # fill metric progress state
@@ -687,12 +735,12 @@ class InteractiveCallback:
                     metric_name,
                     self.log_history[f'{out}']['metrics'][metric_name]['train'][-1],
                     self.log_history[f'{out}']['metrics'][metric_name]['val'][-1],
-                    type='metric'
+                    metric_type='metric'
                 )
                 loss_overfittng = self._evaluate_overfitting(
                     metric_name,
                     self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['mean_log_history'],
-                    type='metric'
+                    metric_type='metric'
                 )
                 if loss_underfittng or loss_overfittng:
                     normal_state = False
@@ -708,17 +756,18 @@ class InteractiveCallback:
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_metrics').keys():
+                        class_metric = self._get_metric_calculation(
+                            metric_name,
+                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                            ohe,
+                            num_classes
+                        )
                         self.log_history[f'{out}']['class_metrics'][cls][metric_name].append(
-                            self._get_metric_calculation(
-                                metric_name,
-                                self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                                ohe,
-                                num_classes
-                            )
+                            class_metric if class_metric else 0.
                         )
 
-    def _update_progress_table(self, epoch_time):
+    def _update_progress_table(self, epoch_time: float):
         """
         'progress_table': {
             'epoch': {
@@ -751,30 +800,36 @@ class InteractiveCallback:
                     self.log_history.get(f'{out}').get('metrics').get(metric).get('val')[-1]
 
     @staticmethod
-    def _evaluate_overfitting(metric_name, mean_log, type):
-        if loss_metric_config.get(type).get(metric_name).get("mode") == 'min' and \
-                mean_log[-1] > min(mean_log) and \
-                (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 10:
-            return True
-        elif loss_metric_config.get(type).get(metric_name).get("mode") == 'max' and \
-                mean_log[-1] < max(mean_log) and \
-                (max(mean_log) - mean_log[-1]) * 100 / mean_log[-1] > 10:
-            return True
+    def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
+        if min(mean_log) or max(mean_log):
+            if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
+                    mean_log[-1] > min(mean_log) and \
+                    (mean_log[-1] - min(mean_log)) * 100 / min(mean_log) > 10:
+                return True
+            elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
+                    mean_log[-1] < max(mean_log) and \
+                    (max(mean_log) - mean_log[-1]) * 100 / max(mean_log) > 10:
+                return True
+            else:
+                return False
         else:
             return False
 
     @staticmethod
-    def _evaluate_underfitting(metric_name, train_log, val_log, type):
-        if loss_metric_config.get(type).get(metric_name).get("mode") == 'min' and \
-                (val_log - train_log) / train_log * 100 > 10:
-            return True
-        elif loss_metric_config.get(type).get(metric_name).get("mode") == 'max' and \
-                (train_log - val_log) / train_log * 100 > 10:
-            return True
+    def _evaluate_underfitting(metric_name: str, train_log: list, val_log: list, metric_type: str):
+        if train_log:
+            if loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'min' and \
+                    (val_log - train_log) / train_log * 100 > 10:
+                return True
+            elif loss_metric_config.get(metric_type).get(metric_name).get("mode") == 'max' and \
+                    (train_log - val_log) / train_log * 100 > 10:
+                return True
+            else:
+                return False
         else:
             return False
 
-    def return_interactive_results(self, config: dict):
+    def return_interactive_results(self, config: dict) -> dict:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         self.example_idx = self._prepare_example_idx_to_show()
@@ -787,7 +842,7 @@ class InteractiveCallback:
             'data_balance': self._get_balance_data_request(),
         }
 
-    def _get_loss_graph_data_request(self):
+    def _get_loss_graph_data_request(self) -> list:
         """
         'loss_graphs': [
 
@@ -911,7 +966,7 @@ class InteractiveCallback:
             pass
         return data_return
 
-    def _get_metric_graph_data_request(self):
+    def _get_metric_graph_data_request(self) -> list:
         """
         'metric_graphs': [
 
@@ -1024,7 +1079,7 @@ class InteractiveCallback:
             pass
         return data_return
 
-    def _get_intermediate_result_request(self):
+    def _get_intermediate_result_request(self) -> dict:
 
         """
         'intermediate_result': {
@@ -1099,7 +1154,7 @@ class InteractiveCallback:
                 for out in self.y_true.get('train').keys():
                     true_lbl, predict_lbl, color_mark, stat = self._postprocess_result_data(
                         output_id=out,
-                        data_type=self.interactive_config.get('intermediate_result').get('data_for_calculation'),
+                        data_type='val',
                         example_idx=self.example_idx[idx],
                         show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
@@ -1121,7 +1176,7 @@ class InteractiveCallback:
                         }
         return return_data
 
-    def _get_statistic_data_request(self):
+    def _get_statistic_data_request(self) -> dict:
         """
         'statistic_data': {
             f'Output_{layer_id}': {
@@ -1159,7 +1214,7 @@ class InteractiveCallback:
                 return_data[f'{out}'] = {}
         return return_data
 
-    def _get_balance_data_request(self):
+    def _get_balance_data_request(self) -> dict:
         """
         'data_balance': {
             'output_id': [
@@ -1233,7 +1288,7 @@ class InteractiveCallback:
         return return_data
 
     @staticmethod
-    def _get_confusion_matrix(y_true, y_pred):
+    def _get_confusion_matrix(y_true, y_pred) -> tuple:
         cm = confusion_matrix(y_true, y_pred)
 
         cm_percent = np.zeros_like(cm).astype('float32')
@@ -1243,7 +1298,7 @@ class InteractiveCallback:
                 cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return (cm, cm_percent)
 
-    def _prepare_example_idx_to_show(self):
+    def _prepare_example_idx_to_show(self) -> dict:
         """
         example_idx = {
             output_id: []
@@ -1288,7 +1343,7 @@ class InteractiveCallback:
         elif choice_type == 'random':
             example_idx = np.random.randint(
                 0,
-                len(self.dataset.X.get(self.interactive_config.get('intermediate_result').get('data_for_calculation'))),
+                len(self.dataset.X.get('val')),
                 self.interactive_config.get('intermediate_result').get('num_examples')
             )
         else:
@@ -1313,7 +1368,7 @@ class InteractiveCallback:
         """
         # temp_file = tempfile.NamedTemporaryFile(delete=False)
         initial_file_path = os.path.join(self.dataset.datasets_path, self.dataset.dataframe.get(
-            self.interactive_config.get('intermediate_result').get('data_for_calculation')).iat[example_idx, 0])
+            'val').iat[example_idx, 0])
         # TODO: посмотреть как реализовать '.iat[example_idx, 0]' для нескольких входов
         if self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Image:
             img = Image.open(initial_file_path)
