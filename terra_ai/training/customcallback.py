@@ -1432,3 +1432,7 @@ class InteractiveCallback:
             pass
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.ObjectDetection:
             pass
+
+
+if __name__ == '__main__':
+    pass
