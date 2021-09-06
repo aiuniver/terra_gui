@@ -231,9 +231,10 @@ def _postprocess_model(**params):
     for key in dataset_data.outputs.keys():
         print(dataset_data.outputs.get(key).task)
         if dataset_data.outputs.get(key).task == 'Segmentation':
-            print([x.as_rgb_tuple() for x in dataset_data.classes_colors.get(key)])
             out = _plot_mask_segmentation(pred, dataset_data.num_classes.get(key),
                                           [x.as_rgb_tuple() for x in dataset_data.classes_colors.get(key)])
+        elif dataset_data.outputs.get(key).task == 'Classification':
+            print(dataset_data.outputs.get(key).task)
 
     return out
 
@@ -282,6 +283,16 @@ def _plot_mask_segmentation(predict, num_classes, classes_colors):
     return image
 
 
+def _load_model(**params):
+    MODEL_PATH = 'C:\PycharmProjects/terra_gui/TerraAI/training'
+    path_model = os.path.join(MODEL_PATH, params['model_name'])
+
+    model = load_model(path_model, compile=False,
+                            custom_objects=None)
+    model.load_weights(os.path.join(path_model, params['model_name'] + '_best.h5'))
+
+    return model
+
 if __name__ == "__main__":
 
     # Проверка препроцеса (для изображений база 'самолеты')
@@ -291,16 +302,13 @@ if __name__ == "__main__":
     print(x_input.shape)
     plt.imshow(x_input[0])
     plt.show()
-    #
+
     # Загрузка модели
-    model = load_model(os.path.join('C:\\PycharmProjects\\terra_gui\\TerraAI\\training', 'airplanes'), compile=False,
-                            custom_objects=None)
-    model.load_weights('C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes\\airplanes_best.h5')
+    model = _load_model(**params)
 
     # Проверка постпроцесса
     pred = model.predict(x_input)
     mask = _postprocess_model(**params)
-
     plt.imshow(mask)
     plt.show()
 

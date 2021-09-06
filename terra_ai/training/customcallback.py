@@ -237,6 +237,10 @@ loss_metric_config = {
             "log_name": "true_positives",
             "mode": "max"
         },
+        "DiceCoef": {
+            "log_name": "dice_coef",
+            "mode": "max"
+        },
     }
 }
 

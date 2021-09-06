@@ -107,8 +107,8 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDTS, batch_size: int, epochs: int, checkpoint: dict) -> None:
         print(('Добавление колбэков', '...'))
-        callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
-        self.callbacks = [callback]
+        # callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
+        # self.callbacks = [callback]
         checkpoint.update([('filepath', 'C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes\\airplanes_best.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         print(('Добавление колбэков', 'выполнено'))
@@ -281,37 +281,18 @@ class GUINN:
                 self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 
         else:
+            nn_model.save("C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes", include_optimizer=False)
             self.model = nn_model
             self.nn_name = f"{self.model.name}"
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
-                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
+                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
 
             self.sum_epoch += self.epochs
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
         # self.stop_training = self.callbacks[0].stop_training
-            x = list(self.dataset.dataset.get('train').batch(1, drop_remainder=True).take(1).as_numpy_iterator())
-            try:
-                print(x[0][1]['2'].shape)
-            except:
-                pass
-            mask = np.argmax(x[0][1]['2'][0], axis=-1)
-            print(mask.shape)
-            plt.imshow(mask, cmap='gray')
-            plt.show()
-            print(np.unique(np.argmax(x[0][1]['2'][1], axis=-1)))
-        #     nn_model.save("C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes", include_optimizer=False)
-        #     self.model = nn_model
-        #     self.nn_name = f"{self.model.name}"
-        #     if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-        #         self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
-        #     else:
-        #         self.base_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
-        #
-        #     self.sum_epoch += self.epochs
-        # self.model_is_trained = True
-        # # self.stop_training = self.callbacks[0].stop_training
+
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         keras.backend.clear_session()
