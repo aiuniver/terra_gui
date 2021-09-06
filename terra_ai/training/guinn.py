@@ -6,7 +6,7 @@ from typing import Tuple
 
 import numpy as np
 import tensorflow as tf
-from keras import Model
+from tensorflow.keras.models import Model
 from tensorflow import keras
 from tensorflow.keras.models import load_model
 
@@ -21,6 +21,8 @@ from terra_ai.modeling.validator import ModelValidator
 from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 from terra_ai.training.data import custom_losses_dict
+
+from matplotlib import pyplot as plt
 
 __version__ = 0.01
 
@@ -93,7 +95,7 @@ class GUINN:
         print(('Добавление колбэков', '...'))
         callback = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
         self.callbacks = [callback]
-        checkpoint.update([('filepath', 'test_model.h5')])
+        checkpoint.update([('filepath', 'C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes\\airplanes_best.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         print(('Добавление колбэков', 'выполнено'))
 
@@ -266,16 +268,27 @@ class GUINN:
                 self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
 
         else:
-            self.model = nn_model
-            self.nn_name = f"{self.model.name}"
-            if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
-                self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
-            else:
-                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
-
-            self.sum_epoch += self.epochs
-        self.model_is_trained = True
-        # self.stop_training = self.callbacks[0].stop_training
+            x = list(self.dataset.dataset.get('train').batch(1, drop_remainder=True).take(1).as_numpy_iterator())
+            try:
+                print(x[0][1]['2'].shape)
+            except:
+                pass
+            mask = np.argmax(x[0][1]['2'][0], axis=-1)
+            print(mask.shape)
+            plt.imshow(mask, cmap='gray')
+            plt.show()
+            print(np.unique(np.argmax(x[0][1]['2'][1], axis=-1)))
+        #     nn_model.save("C:\\PycharmProjects\\terra_gui\\TerraAI\\training\\airplanes", include_optimizer=False)
+        #     self.model = nn_model
+        #     self.nn_name = f"{self.model.name}"
+        #     if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
+        #         self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+        #     else:
+        #         self.base_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
+        #
+        #     self.sum_epoch += self.epochs
+        # self.model_is_trained = True
+        # # self.stop_training = self.callbacks[0].stop_training
 
     def nn_cleaner(self, retrain: bool = False) -> None:
         keras.backend.clear_session()
@@ -300,7 +313,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=1, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
         print(self.loss)
@@ -318,10 +331,10 @@ class GUINN:
         print(('Начало обучения', '...'))
 
         self.history = self.model.fit(
-            self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
+            self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).shuffle(1000).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
             batch_size=self.batch_size,
             shuffle=self.shuffle,
-            validation_data=self.dataset.dataset.get('val').batch(self.batch_size, drop_remainder=True).take(-1),
+            validation_data=self.dataset.dataset.get('val').batch(self.batch_size, drop_remainder=True).prefetch(buffer_size=tf.data.AUTOTUNE).take(-1),
             epochs=self.epochs,
             verbose=verbose,
             callbacks=self.callbacks
