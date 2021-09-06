@@ -7,4 +7,6 @@ def decamelize(camel_case_string: str):
 
 
 def camelize(snake_case_string: str):
+    if snake_case_string == 'auc':
+        return 'AUC'
     return re.sub('_.', lambda x: x.group()[1].upper(), snake_case_string.title())
