@@ -21,7 +21,17 @@ export default {
   },
   methods: {
     click() {
-      console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
+      const input = this.$el.getElementsByTagName('input')?.[0]
+      const type = input.type
+      if (input) {
+        console.log(input)
+        if (type === 'checkbox') {
+          input.checked = !input.checked
+        }
+      }
+      // console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
+      // console.log(this.$el.getElementsByTagName('input')?.[0].checked = !this.$el.getElementsByTagName('input')?.[0].checked);
+
     },
   },
 };
@@ -42,7 +52,6 @@ export default {
     cursor: default;
   }
   &__input {
-
   }
 }
 .t-field {

@@ -68,7 +68,7 @@
       <div class="params__items">
         <div class="params__items--item">
           <t-field label="Мониторинг" inline>
-              <TInput small @focus="click" />
+              <TCheckbox small @focus="click" />
           </t-field>
         </div>
       </div>
@@ -91,13 +91,13 @@
 <script>
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
-import TInput from '../global/new/forms/TInput.vue';
+import TCheckbox from '../global/new/forms/TCheckbox.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
 
 export default {
   name: 'params-traning',
   components: {
-    TInput,
+    TCheckbox,
     // Checkbox,
   },
   data: () => ({
