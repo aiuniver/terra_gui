@@ -1581,6 +1581,7 @@ class FitCallback(keras.callbacks.Callback):
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
         interacive_logs = copy.deepcopy(logs)
         interacive_logs['epoch'] = epoch + 1
+        current_epoch_time = time.time() - self._time_first_step
 
         progress.pool(
             self.progress_name,
