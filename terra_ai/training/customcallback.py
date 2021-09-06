@@ -5,7 +5,6 @@ import re
 import psutil
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
-
 import tensorflow as tf
 import cv2
 import matplotlib.pyplot as plt
