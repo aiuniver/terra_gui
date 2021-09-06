@@ -819,9 +819,9 @@ class InteractiveCallback:
         return {
             'loss_graphs': self._get_loss_graph_data_request(),
             'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self._get_intermediate_result_request(),
+            'intermediate_result': self.intermediate_result,
             'progress_table': self.progress_table,
-            'statistic_data': self._get_statistic_data_request(),
+            'statistic_data': self.statistic_result,
             'data_balance': self._get_balance_data_request(),
         }
 
