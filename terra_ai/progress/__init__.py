@@ -73,6 +73,7 @@ class ProgressPool:
                 data=kwargs.get("data", __progress.data),
             ),
         )
+        # print(self.__pool.training)
 
     def reset(self, name: PoolName, **kwargs):
         setattr(self.__pool, name, ProgressData(**kwargs))

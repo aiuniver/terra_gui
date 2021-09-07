@@ -72,6 +72,7 @@ class GUINN:
         Logs
         """
         self.history: dict = {}
+        self.progress_name = progress.PoolName.training
 
     @staticmethod
     def _check_metrics(metrics: list, num_classes: int = 2) -> list:
@@ -86,7 +87,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData,
-                             training_path: Path, dataset_path: Path) -> dict:
+                             training_path: Path, dataset_path: Path) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.epochs = params.epochs
@@ -101,15 +102,14 @@ class GUINN:
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss)
-        # return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
     def _set_callbacks(self, dataset: PrepareDTS, batch_size: int, epochs: int, checkpoint: dict) -> None:
-        print(('Добавление колбэков', '...'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
         self.callbacks = [callback]
         checkpoint.update([('filepath', 'test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
-        print(('Добавление колбэков', 'выполнено'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
     @staticmethod
     def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDTS:
@@ -130,8 +130,8 @@ class GUINN:
 
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
-        print(params.optimizer.parameters_dict)
-        print(self.optimizer)
+        # print(params.optimizer.parameters_dict)
+        # print(self.optimizer)
 
     def set_custom_metrics(self, params=None) -> None:
         for i_key in self.metrics.keys():
@@ -251,10 +251,9 @@ class GUINN:
                                         custom_objects=custom_objects)
 
                 self.nn_name = f"{self.model.name}"
-                print(('Загружена модель', model_name[0]))
+                progress.pool(self.progress_name, finished=False, data={'status': f'Загружена модель {model_name[0]}'})
             except Exception:
-                print(('Ошибка загрузки модели', "!!!"))
-                print("Ошибка загрузки модели!!!")
+                progress.pool(self.progress_name, finished=False, data={'status': 'Ошибка загрузки модели!!!'})
 
             if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
                 if self.retrain_flag:
@@ -314,22 +313,17 @@ class GUINN:
 
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
-        print(('Компиляция модели', '...'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         self.set_custom_metrics()
-        print(self.loss)
-        print(self.metrics)
         self.model.compile(loss=self.loss,
-                           optimizer='adam',  # self.optimizer,
+                           optimizer=self.optimizer,
                            metrics=self.metrics
                            )
-        print(('Компиляция модели', 'выполнена'))
-        print(('Начало обучения', '...'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         if not retrain:
             self._set_callbacks(dataset=dataset, batch_size=params.batch,
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
-
-        print(('Начало обучения', '...'))
-
+        progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         self.history = self.model.fit(
             self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
@@ -497,6 +491,19 @@ class FitCallback(keras.callbacks.Callback):
         self.save_model_path = save_model_path
         self.nn_name = model_name
         self.progress_name = progress.PoolName.training
+        self.result = {
+            'info': None,
+            'usage': self.usage_info.get_usage(),
+            'train_data': None
+        }
+
+    def _set_result_data(self, param: dict) -> None:
+        for key in param.keys():
+            if key in self.result.keys():
+                self.result[key] = param[key]
+
+    def _get_result_data(self):
+        return self.result
 
     def save_lastmodel(self) -> None:
         """
@@ -510,14 +517,14 @@ class FitCallback(keras.callbacks.Callback):
             self.save_model_path, f"{model_name}"
         )
         self.model.save(file_path_model)
+        self._set_result_data({'info': f"Последняя модель сохранена как {file_path_model}"})
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / self.epochs * 100,
             message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
-            data={'info': f"Последняя модель сохранена как {file_path_model}"},
+            data=self._get_result_data(),
             finished=False,
         )
-        # print(("Инфо", f"Последняя модель сохранена как {file_path_model}"))
         pass
 
     def _estimate_step(self, current, start, now):
@@ -574,6 +581,7 @@ class FitCallback(keras.callbacks.Callback):
             self.batch += 1
             print(('Обучение остановлено пользователем', msg))
         else:
+            train_batch_data = None
             msg_batch = f'Батч {batch}/{self.num_batches}'
             msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
                         f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
@@ -596,10 +604,7 @@ class FitCallback(keras.callbacks.Callback):
                                      f'{self.eta_format(time_start)}, '
             self.batch += 1
 
-            # TODO: срочный запрос с фронта, настроить возврат в интерактивку upred и флага on_epoch_end_flag=False
-            urgent_predict = False
-            if urgent_predict:
-                on_epoch_end_flag = False
+            if interactive.urgent_predict:
                 if self.dataset.data.use_generator:
                     upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
                 else:
@@ -607,26 +612,33 @@ class FitCallback(keras.callbacks.Callback):
                 # for data_type in ['train', 'val']:
                 #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
 
+                train_batch_data = interactive.update_state(y_pred=upred)
+            if train_batch_data:
+                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
+                                       'train_data': train_batch_data
+                                       })
+                # progress.pool(
+                #     self.progress_name,
+                #     percent=(self.last_epoch - 1) / self.epochs * 100,
+                #     message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                #     data=self._get_result_data(),
+                #     finished=False,
+                # )
+            else:
+                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}"})
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / self.epochs * 100,
                 message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
-                data={'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
-                      'usage': self.usage_info.get_usage()},
+                data=self._get_result_data(),
                 finished=False,
             )
-            # print(('Прогресс обучения', msg_progress_start +
-            #                              msg_progress_end + msg_epoch + msg_batch))
-            # print(self.usage_info.get_usage())
 
     def on_epoch_end(self, epoch, logs=None):
         """
         Returns:
             {}:
         """
-        # TODO: регулярный предикт, настроить возврат в интерактивку scheduled_predict и флага on_epoch_end=True
-        # scheduled_predict = {}
-        on_epoch_end_flag = True
         if self.dataset.data.use_generator:
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
@@ -634,24 +646,21 @@ class FitCallback(keras.callbacks.Callback):
         interacive_logs = copy.deepcopy(logs)
         interacive_logs['epoch'] = epoch + 1
         current_epoch_time = time.time() - self._time_first_step
-        train_epoch_data = interactive.update_epoch_state(
-            fit_logs=interacive_logs, y_pred=scheduled_predict, current_epoch_time=current_epoch_time
+        train_epoch_data = interactive.update_state(
+            fit_logs=interacive_logs,
+            y_pred=scheduled_predict,
+            current_epoch_time=current_epoch_time,
+            on_epoch_end_flag=True
         )
-
+        self._set_result_data({'train_data': train_epoch_data})
         progress.pool(
             self.progress_name,
             percent=(self.last_epoch - 1) / self.epochs * 100,
             message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
-            data={'info': logs,
-                  'usage': self.usage_info.get_usage(),
-                  'train_data': train_epoch_data},
+            data=self._get_result_data(),
             finished=False,
         )
-        # print(logs)
-        # print(self.last_epoch)
-        # print(self.model.get_weights())
         self.last_epoch += 1
-        # self.Exch.last_epoch_model(self.model)
 
     def on_train_end(self, logs=None):
         self.save_lastmodel()
@@ -661,7 +670,6 @@ class FitCallback(keras.callbacks.Callback):
         if self.model.stop_training:
             msg = f'Модель сохранена.'
             print(('Обучение остановлено пользователем!', msg))
-            # self.Exch.out_data['stop_flag'] = True
         else:
             if self.retrain_flag:
                 msg = f'Затрачено времени на обучение: ' \
@@ -669,12 +677,12 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 msg = f'Затрачено времени на обучение: ' \
                       f'{self.eta_format(self._sum_time)} '
+            self._set_result_data({'info': f"Обучение закончено. {msg}"})
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / self.epochs * 100,
                 message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
-                data={'info': f"Обучение закончено. {msg}",
-                      'usage': self.usage_info.get_usage()},
+                data=self._get_result_data(),
                 finished=True,
             )
             # print(msg)

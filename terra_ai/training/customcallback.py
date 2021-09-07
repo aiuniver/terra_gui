@@ -1,6 +1,8 @@
 import copy
 import os
 import re
+from time import sleep
+from typing import Union
 
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
@@ -271,6 +273,10 @@ class InteractiveCallback:
         self.example_idx = []
         self.intermediate_result = {}
         self.statistic_result = {}
+        self.train_progress = {}
+        self.progress_name = progress.PoolName.training
+
+        self.urgent_predict = False
 
         self.interactive_config = {
             'loss_graphs': [
@@ -329,6 +335,59 @@ class InteractiveCallback:
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         self.example_idx = self._prepare_example_idx_to_show()
+
+    def update_train_progress(self, data: dict):
+        self.train_progress = data
+
+    def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        if on_epoch_end_flag:
+            self.current_epoch = fit_logs.get('epoch')
+            self.current_logs = self._reformat_fit_logs(fit_logs)
+            self._reformat_y_pred(y_pred)
+            self._update_log_history()
+            self._update_progress_table(current_epoch_time)
+            if self.interactive_config.get('intermediate_result').get('show_results') and \
+                    self.interactive_config.get('intermediate_result').get('autoupdate'):
+                self.intermediate_result = self._get_intermediate_result_request()
+            if self.interactive_config.get('statistic_data').get('output_id') \
+                    and self.interactive_config.get('statistic_data').get('autoupdate'):
+                self.statistic_result = self._get_statistic_data_request()
+        else:
+            self._reformat_y_pred(y_pred)
+            if self.interactive_config.get('intermediate_result').get('show_results'):
+                self.intermediate_result = self._get_intermediate_result_request()
+            if self.interactive_config.get('statistic_data').get('output_id'):
+                self.statistic_result = self._get_statistic_data_request()
+        self.urgent_predict = False
+        return {
+            'loss_graphs': self._get_loss_graph_data_request(),
+            'metric_graphs': self._get_metric_graph_data_request(),
+            'intermediate_result': self.intermediate_result,
+            'progress_table': self.progress_table,
+            'statistic_data': self.statistic_result,
+            'data_balance': self._get_balance_data_request(),
+        }
+
+    def get_train_results(self, config: dict = None) -> Union[dict, None]:
+        """Return dict with data for current interactive request"""
+        self.interactive_config = config if config else self.interactive_config
+        self.example_idx = self._prepare_example_idx_to_show()
+        if config.get('intermediate_result').get('show_results') or config.get('statistic_data').get('output_id'):
+            self.urgent_predict = True
+            return
+        self.train_progress['train_data'] = {
+            'loss_graphs': self._get_loss_graph_data_request(),
+            'metric_graphs': self._get_metric_graph_data_request(),
+            'intermediate_result': self.intermediate_result,
+            'progress_table': self.progress_table,
+            'statistic_data': self.statistic_result,
+            'data_balance': self._get_balance_data_request(),
+        }
+        progress.pool(
+            self.progress_name,
+            data=self.train_progress,
+            finished=False,
+        )
 
     def _prepare_interactive_config(self):
         # fill loss_graphs config
@@ -544,34 +603,6 @@ class InteractiveCallback:
         np.random.shuffle(data_lenth)
         return data_lenth
 
-    def update_epoch_state(self, fit_logs, y_pred, current_epoch_time, on_epoch_end_flag=True) -> dict:
-        if on_epoch_end_flag:
-            self.current_epoch = fit_logs.get('epoch')
-            self.current_logs = self._reformat_fit_logs(fit_logs)
-            self._reformat_y_pred(y_pred)
-            self._update_log_history()
-            self._update_progress_table(current_epoch_time)
-            if self.interactive_config.get('intermediate_result').get('show_results') and \
-                    self.interactive_config.get('intermediate_result').get('autoupdate'):
-                self.intermediate_result = self._get_intermediate_result_request()
-            if self.interactive_config.get('statistic_data').get('show_results') \
-                    and self.interactive_config.get('statistic_data').get('autoupdate'):
-                self.statistic_result = self._get_statistic_data_request()
-        else:
-            self._reformat_y_pred(y_pred)
-            if self.interactive_config.get('intermediate_result').get('show_results'):
-                self.intermediate_result = self._get_intermediate_result_request()
-            if self.interactive_config.get('statistic_data').get('show_results'):
-                self.statistic_result = self._get_statistic_data_request()
-        return {
-            'loss_graphs': self._get_loss_graph_data_request(),
-            'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self.intermediate_result,
-            'progress_table': self.progress_table,
-            'statistic_data': self.statistic_result,
-            'data_balance': self._get_balance_data_request(),
-        }
-
     def _reformat_fit_logs(self, logs) -> dict:
         interactive_log = {}
         update_logs = {}
@@ -689,18 +720,18 @@ class InteractiveCallback:
                     self.log_history[f'{out}']['loss'][loss_name]['val'][-1],
                     metric_type='loss'
                 )
-                loss_overfittng = self._evaluate_overfitting(
+                loss_overfitting = self._evaluate_overfitting(
                     loss_name,
                     self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'],
                     metric_type='loss'
                 )
-                if loss_underfitting or loss_overfittng:
+                if loss_underfitting or loss_overfitting:
                     normal_state = False
                 else:
                     normal_state = True
 
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['underfitting'].append(loss_underfittng)
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['overfitting'].append(loss_overfittng)
+                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['underfitting'].append(loss_underfitting)
+                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['overfitting'].append(loss_overfitting)
                 self.log_history[f'{out}']['progress_state']['loss'][loss_name]['normal_state'].append(normal_state)
 
                 # get Classification loss logs
@@ -827,19 +858,6 @@ class InteractiveCallback:
                 return False
         else:
             return False
-
-    def return_interactive_results(self, config: dict) -> dict:
-        """Return dict with data for current interactive request"""
-        self.interactive_config = config if config else self.interactive_config
-        self.example_idx = self._prepare_example_idx_to_show()
-        return {
-            'loss_graphs': self._get_loss_graph_data_request(),
-            'metric_graphs': self._get_metric_graph_data_request(),
-            'intermediate_result': self.intermediate_result,
-            'progress_table': self.progress_table,
-            'statistic_data': self.statistic_result,
-            'data_balance': self._get_balance_data_request(),
-        }
 
     def _get_loss_graph_data_request(self) -> list:
         """
