@@ -114,6 +114,9 @@ export default {
   }
   &__input.small {
     height: 24px;
+    height: 24px;
+    font-size: 12px;
+    line-height: 24px;
   }
 }
 .t-inline {
