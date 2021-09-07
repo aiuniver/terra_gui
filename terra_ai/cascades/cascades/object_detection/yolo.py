@@ -1,4 +1,4 @@
-from cascade import CascadeElement, CascadeBlock
+from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
 import cv2
 import numpy as np
 import tensorflow as tf

@@ -1,0 +1,8 @@
+{
+  "resize_img": [192, 160],
+  "gaussian_blur": {
+    "ksize": [7, 29],
+    "sigmaX": 0,
+    "sigmaY": 10
+  }
+}
