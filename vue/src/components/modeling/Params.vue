@@ -90,7 +90,7 @@ export default {
       return this.block.group === 'input' || this.block.group === 'output';
     },
     listWithoutOutputInput() {
-      return this.list.filter(item => !(item.value.toLowerCase() === 'input' || item.value.toLowerCase() === 'dense'));
+      return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
     },
 
     buttonSave() {

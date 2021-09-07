@@ -68,14 +68,17 @@ export default {
   methods: {
     async createObject(obj) {
       this.$store.dispatch('messages/setMessage', { info: `Создается датасет "${obj.name}"` });
-      const { data, error, success } = await this.$store.dispatch('datasets/createDataset', obj);
-      if (data && success && !error) {
-        this.full = false;
-        this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
-      } else {
-        this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
+      const res = await this.$store.dispatch('datasets/createDataset', obj);
+      if (res) {
+        const { data, error, success } = res;
+        if (data && success && !error) {
+          this.full = false;
+          this.$store.dispatch('messages/setMessage', { message: `Датасет "${obj.name}" создан` });
+        } else {
+          this.$store.dispatch('messages/setMessage', { error: `Ошибка создания датасета` });
+        }
+        console.log(data);
       }
-      console.log(data);
     },
     change(value) {
       this.toggle = value;
