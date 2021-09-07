@@ -41,6 +41,11 @@ const router = new Router({
       name: 'Marking',
       component: () => import('@/views/Marking'),
     },
+    { 
+      path: "*",
+      name: '404',
+      component: () => import('@/views/404')
+    }
   ]
 })
 
