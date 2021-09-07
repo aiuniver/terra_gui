@@ -76,10 +76,12 @@ export default {
   }
   &__list {
     display: flex;
-    margin-bottom: 2px;
+    // margin-bottom: 2px;
+    padding: 1px 0;
     align-items: center;
     overflow: hidden;
     &--label {
+      user-select: none;
       width: auto;
       padding: 0 0 0 10px;
       text-align: left;

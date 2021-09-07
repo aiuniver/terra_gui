@@ -1,11 +1,16 @@
 <template>
   <div class="board">
     <scrollbar>
-      <div class="tab-container">
-        <!-- <Chars v-if="chars" /> -->
-        <!-- <Scatters v-if="scatters" /> -->
-        <!-- <Images v-if="images" /> -->
-        <!-- <Texts v-if="texts" /> -->
+      <div class="wrapper">
+        <at-collapse :value="collapse">
+          <at-collapse-item class="mt-3" title="Лоссы" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Промежуточные результаты" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Прогресс обучения" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Таблица прогресса обучения" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Статистические данные" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Баланс данных" center></at-collapse-item>
+        </at-collapse>
       </div>
     </scrollbar>
   </div>
@@ -39,7 +44,7 @@ export default {
 </script>
 
 <style scoped>
-.tab-container {
+.wrapper {
   padding: 20px;
   display: flex;
   flex-direction: column;

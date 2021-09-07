@@ -50,6 +50,7 @@ export default {
     font-size: 0.75rem;
     padding: 0 0 10px 0;
     cursor: default;
+    user-select: none;
   }
   &__input {
   }
