@@ -1,6 +1,13 @@
 from terra_ai.data.modeling.layers import Layer, types
 from terra_ai.data.modeling.extra import LayerTypeChoice
-from terra_ai.data.training.extra import LossChoice, MetricChoice
+from terra_ai.data.training.extra import (
+    LossChoice,
+    MetricChoice,
+    OptimizerChoice,
+    CheckpointIndicatorChoice,
+    CheckpointTypeChoice,
+    CheckpointModeChoice,
+)
 
 from ..extra import FieldTypeChoice
 from ..utils import prepare_pydantic_field
@@ -25,11 +32,6 @@ from ..choices import (
     LayerDefineClassesChoice,
     LayerYoloVersionChoice,
     LayerTypeProcessingClassificationChoice,
-    TrainingArchitectureChoice,
-    TrainingOptimizerChoice,
-    TrainingCheckpointIndicatorChoice,
-    TrainingCheckpointTypeChoice,
-    TrainingCheckpointModeChoice,
 )
 
 TrainingLosses = {
@@ -977,27 +979,14 @@ Defaults = {
                 "fields": [
                     {
                         "type": "auto_complete",
-                        "label": "Архитектура",
-                        "name": "architecture",
-                        "parse": "architecture[type]",
-                        "value": TrainingArchitectureChoice.Basic.name,
-                        "list": list(
-                            map(
-                                lambda item: {"value": item.name, "label": item.value},
-                                list(TrainingArchitectureChoice),
-                            )
-                        ),
-                    },
-                    {
-                        "type": "auto_complete",
                         "label": "Оптимизатор",
                         "name": "optimizer",
                         "parse": "optimizer[type]",
-                        "value": TrainingOptimizerChoice.Adam.name,
+                        "value": OptimizerChoice.Adam.name,
                         "list": list(
                             map(
                                 lambda item: {"value": item.name, "label": item.value},
-                                list(TrainingOptimizerChoice),
+                                list(OptimizerChoice),
                             )
                         ),
                     },
@@ -1033,7 +1022,7 @@ Defaults = {
                 "collapsable": True,
                 "collapsed": True,
                 "fields": {
-                    "SGD": [
+                    OptimizerChoice.SGD.name: [
                         {
                             "type": "number",
                             "label": "Momentum",
@@ -1049,7 +1038,7 @@ Defaults = {
                             "value": False,
                         },
                     ],
-                    "RMSprop": [
+                    OptimizerChoice.RMSprop.name: [
                         {
                             "type": "number",
                             "label": "RHO",
@@ -1079,7 +1068,7 @@ Defaults = {
                             "value": False,
                         },
                     ],
-                    "Adam": [
+                    OptimizerChoice.Adam.name: [
                         {
                             "type": "number",
                             "label": "Beta 1",
@@ -1109,7 +1098,7 @@ Defaults = {
                             "value": False,
                         },
                     ],
-                    "Adadelta": [
+                    OptimizerChoice.Adadelta.name: [
                         {
                             "type": "number",
                             "label": "RHO",
@@ -1125,7 +1114,7 @@ Defaults = {
                             "value": 1e-07,
                         },
                     ],
-                    "Adagrad": [
+                    OptimizerChoice.Adagrad.name: [
                         {
                             "type": "number",
                             "label": "Initial accumulator value",
@@ -1141,7 +1130,7 @@ Defaults = {
                             "value": 1e-07,
                         },
                     ],
-                    "Adamax": [
+                    OptimizerChoice.Adamax.name: [
                         {
                             "type": "number",
                             "label": "Beta 1",
@@ -1164,7 +1153,7 @@ Defaults = {
                             "value": 1e-07,
                         },
                     ],
-                    "Nadam": [
+                    OptimizerChoice.Nadam.name: [
                         {
                             "type": "number",
                             "label": "Beta 1",
@@ -1187,7 +1176,7 @@ Defaults = {
                             "value": 1e-07,
                         },
                     ],
-                    "Ftrl": [
+                    OptimizerChoice.Ftrl.name: [
                         {
                             "type": "number",
                             "label": "Learning rate power",
@@ -1255,11 +1244,11 @@ Defaults = {
                         "label": "Indicator",
                         "name": "architecture_parameters_checkpoint_indicator",
                         "parse": "architecture[parameters][checkpoint][indicator]",
-                        "value": TrainingCheckpointIndicatorChoice.Val.name,
+                        "value": CheckpointIndicatorChoice.Val.name,
                         "list": list(
                             map(
                                 lambda item: {"value": item.name, "label": item.value},
-                                list(TrainingCheckpointIndicatorChoice),
+                                list(CheckpointIndicatorChoice),
                             )
                         ),
                     },
@@ -1268,11 +1257,11 @@ Defaults = {
                         "label": "Тип",
                         "name": "architecture_parameters_checkpoint_type",
                         "parse": "architecture[parameters][checkpoint][type]",
-                        "value": TrainingCheckpointTypeChoice.Metrics.name,
+                        "value": CheckpointTypeChoice.Metrics.name,
                         "list": list(
                             map(
                                 lambda item: {"value": item.name, "label": item.value},
-                                list(TrainingCheckpointTypeChoice),
+                                list(CheckpointTypeChoice),
                             )
                         ),
                     },
@@ -1281,11 +1270,11 @@ Defaults = {
                         "label": "Режим",
                         "name": "architecture_parameters_checkpoint_mode",
                         "parse": "architecture[parameters][checkpoint][mode]",
-                        "value": TrainingCheckpointModeChoice.Max.name,
+                        "value": CheckpointModeChoice.Max.name,
                         "list": list(
                             map(
                                 lambda item: {"value": item.name, "label": item.value},
-                                list(TrainingCheckpointModeChoice),
+                                list(CheckpointModeChoice),
                             )
                         ),
                     },

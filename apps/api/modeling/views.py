@@ -9,6 +9,7 @@ from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.agent import agent_exchange
 from terra_ai.agent import exceptions as agent_exceptions
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.extra import LayerGroupChoice
 
 from ..base import (
     BaseAPIView,
@@ -66,13 +67,9 @@ class UpdateAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            request.project.set_model(
-                agent_exchange(
-                    "model_update",
-                    model=request.project.model.native(),
-                    **serializer.validated_data,
-                )
-            )
+            data = request.project.model.native()
+            data.update(serializer.validated_data)
+            request.project.set_model(agent_exchange("model_update", model=data))
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
