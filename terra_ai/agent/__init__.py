@@ -38,6 +38,7 @@ from .. import settings, progress
 from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
+from ..training.guinn import interactive
 
 
 class Exchange:
@@ -264,6 +265,9 @@ class Exchange:
             dataset_path=dataset_path,
             training_params=params,
         )
+
+    def _call_set_interactive_config(self, config: dict) -> None:
+        interactive.get_train_results(config=config)
 
 
 agent_exchange = Exchange()

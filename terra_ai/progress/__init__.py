@@ -56,6 +56,7 @@ class ProgressPool:
                 )
             }
         )
+        # print(self.__pool.training)
 
     def reset(self, name: str, **kwargs):
         self.__pool.update({name: ProgressData(**kwargs)})
