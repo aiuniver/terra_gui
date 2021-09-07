@@ -9,6 +9,7 @@ from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.agent import agent_exchange
 from terra_ai.agent import exceptions as agent_exceptions
 from terra_ai.data.modeling.model import ModelDetailsData
+from terra_ai.data.modeling.extra import LayerGroupChoice
 
 from ..base import (
     BaseAPIView,
@@ -66,13 +67,31 @@ class UpdateAPIView(BaseAPIView):
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
         try:
-            request.project.set_model(
-                agent_exchange(
-                    "model_update",
-                    model=request.project.model.native(),
-                    **serializer.validated_data,
-                )
-            )
+            model = request.project.model
+            data = serializer.validated_data
+            for item in data.get("layers"):
+                layer = model.layers.get(item.get("id"))
+                if layer:
+                    shape = layer.shape.native()
+                    if (
+                        item.get("group") == LayerGroupChoice.input
+                        and request.project.dataset is None
+                    ):
+                        shape["input"] = item.get("shape", {}).get("input", [])
+                    item["shape"] = shape
+                else:
+                    if (
+                        item.get("group") == LayerGroupChoice.input
+                        and request.project.dataset is None
+                    ):
+                        item["shape"] = {
+                            "input": item.get("shape", {}).get("input", [])
+                        }
+                    else:
+                        del item["shape"]
+            model_data = model.native()
+            model_data.update(data)
+            request.project.set_model(agent_exchange("model_update", model=model_data))
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)

@@ -1,9 +1,9 @@
 <template>
   <nav class="nav">
     <ul class="nav__menu">
-      <template v-for="({ title, path }, i) in items">
-        <li :class="['nav__menu--item', { active: $route.path === path }]" :key="i" @click="nav(path)">
-          {{ title }}
+      <template v-for="(route, i) in items">
+        <li :class="['nav__menu--item', { active: $route.path === route.path }]" :key="i" @click="nav(route)">
+          {{ route.title }}
         </li>
       </template>
     </ul>
@@ -13,50 +13,47 @@
 <script>
 import { mapGetters } from 'vuex';
 export default {
-  data: () => ({
-    items: [
-      { title: 'Данные', path: '/datasets', access: true },
-      { title: 'Разметка', path: '/marking', access: true },
-      { title: 'Проектирование', path: '/modeling', access: true },
-      { title: 'Обучение', path: '/training', access: false },
-      { title: 'Каскады', path: '/cascades', access: false },
-      { title: 'Деплой', path: '/deploy', access: true },
-    ],
-  }),
   computed: {
     ...mapGetters({
       project: 'projects/getProject',
     }),
+    items() {
+      return this.$router.options.routes
+        .filter(item => item?.meta?.title)
+        .map(item => {
+          return {
+            title: item.meta.title,
+            path: item.path,
+            access: item.meta.access,
+            text: item.meta.text,
+          };
+        });
+    },
   },
   methods: {
-    nav(path) {
-      if (!this.project.dataset) {
-        if (this.items.find(item => item.path === path)?.access) {
-          if (this.$route.path !== path) {
-            this.$router.push(path);
-          }
-          return;
-        }
-        const text = {
-          '/modeling': 'редактирования модели',
-          '/training': 'обучения',
-          '/deploy': 'деплоя',
-        };
-        const self = this;
-        this.$Modal.alert({
+    async message({ text }, showClose) {
+      try {
+        const data = await this.$Modal.alert({
           title: 'Предупреждение!',
           width: 300,
-          content: `Для ${text[path]} необходимо загрузить датасет.`,
-          maskClosable: true,
+          content: text,
+          showClose,
           okText: 'Загрузить датасет',
-          callback: function (action) {
-            if (action !== 'cancel') {
-              if (self.$route.path !== '/datasets') {
-                self.$router.push('/datasets');
-              }
-            }
-          },
         });
+        console.log(data);
+        if (data === 'confirm') {
+          if (this.$route.path !== '/datasets') {
+            this.$router.push('/datasets');
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async nav({ path, access, text }) {
+      // console.log(path, access, text);
+      if (!this.project.dataset && access === false) {
+        this.message({ text }, true);
       } else {
         if (this.$route.path !== path) {
           this.$router.push(path);

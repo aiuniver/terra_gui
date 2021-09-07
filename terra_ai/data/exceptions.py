@@ -31,6 +31,9 @@ class ExceptionMessages(str, Enum):
         "Validation method `%s` and value `%s` with type `%s` are mismatch"
     )
     IncorrectReferenceName = "Reference name `%s` is not value, must be `%s`"
+    ObjectDetectionQuantityLayers = (
+        "%s: При типе задачи `Обнаружение объектов` должен быть один выходной слой"
+    )
 
 
 class TerraDataException(ValueError):
@@ -167,3 +170,8 @@ class IncorrectReferenceNameException(TerraDataException):
                 % (str(__value), str(__regex))
             )
         )
+
+
+class ObjectDetectionQuantityLayersException(TerraDataValueException):
+    class Meta:
+        message: str = ExceptionMessages.ObjectDetectionQuantityLayers

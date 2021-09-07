@@ -12,7 +12,7 @@ import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
 import SelectNew from './forms/SelectNew';
-import TFieldInline from './forms/TFieldInline';
+import TField from './forms/TField';
 
 export default [
   FilesMenu,
@@ -28,5 +28,5 @@ export default [
   Autocomplete,
   MultiSelect,
   SelectNew,
-  TFieldInline
+  TField
 ];

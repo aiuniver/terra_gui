@@ -21,7 +21,17 @@ export default {
   },
   methods: {
     click() {
-      console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
+      const input = this.$el.getElementsByTagName('input')?.[0]
+      const type = input.type
+      if (input) {
+        console.log(input)
+        if (type === 'checkbox') {
+          input.checked = !input.checked
+        }
+      }
+      // console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
+      // console.log(this.$el.getElementsByTagName('input')?.[0].checked = !this.$el.getElementsByTagName('input')?.[0].checked);
+
     },
   },
 };
@@ -43,7 +53,6 @@ export default {
     user-select: none;
   }
   &__input {
-
   }
 }
 .t-field {
@@ -54,9 +63,9 @@ export default {
     .t-field__label {
       padding: 0 0 0 10px;
     }
-    .t-field__input {
+    // .t-field__input {
       // flex: 0 0 109px;
-    }
+    // }
   }
 }
 </style>
