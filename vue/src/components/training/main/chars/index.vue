@@ -13,12 +13,16 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'TChars',
   components: {
-    TChar
+    TChar,
   },
   computed: {
     ...mapGetters({
       chars : 'trainings/getChars'    
     })
+  },
+  mounted() {
+    this.$emit('isLoad', true)
+    console.log('mounted')
   }
 }
 </script>
