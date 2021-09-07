@@ -2,6 +2,7 @@ import re
 
 from pydantic import ValidationError
 from transliterate import slugify
+from collections.abc import MutableMapping
 
 from apps.plugins.project import data_path
 from apps.plugins.project import exceptions as project_exceptions
@@ -18,6 +19,21 @@ from ..base import (
     BaseResponseErrorGeneral,
 )
 from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
+
+
+
+
+def flatten_dict(
+    d: MutableMapping, parent_key: str = "[", sep: str = "]["
+) -> MutableMapping:
+    items = []
+    for k, v in d.items():
+        new_key = f"{parent_key}{k}{sep}" if parent_key else k
+        if isinstance(v, MutableMapping):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
 
 
 class GetAPIView(BaseAPIView):
@@ -128,7 +144,14 @@ class UpdateAPIView(BaseAPIView):
             request.project.set_model(agent_exchange("model_update", model=model_data))
             return BaseResponseSuccess()
         except ValidationError as error:
-            return BaseResponseErrorFields(error)
+            answer = BaseResponseErrorFields(error)
+
+            buff_error = flatten_dict(answer.data['error'])
+            error = dict(
+                (key[: len(key) - 1], value) for (key, value) in buff_error.items()
+            )
+            answer.data['error'] = error
+            return answer
 
 
 class ValidateAPIView(BaseAPIView):
