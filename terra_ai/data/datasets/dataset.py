@@ -190,7 +190,9 @@ from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
 from ..training.extra import TaskChoice
 from ..modeling.model import ModelDetailsData
 from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
+from ..modeling.layers.extra import ActivationChoice
 from ..presets.models import EmptyModelDetailsData
+from ..presets.datasets import OutputLayersDefaults
 from ... import settings
 
 
@@ -288,15 +290,32 @@ class DatasetData(AliasMixinData):
                 }
             )
         for _id, layer in self.outputs.items():
+            output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
+                layer.datatype, {}
+            )
+            activation = output_layer_defaults.get("activation", ActivationChoice.relu)
+            units = self.num_classes.get(_id, layer.shape[-1] if layer.shape else 1)
             layers.append(
                 {
                     "id": _id,
                     "name": layer.name,
-                    "type": LayerTypeChoice.Dense,
+                    "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
                     "group": LayerGroupChoice.output,
                     "shape": {"output": [layer.shape]},
                     "task": layer.task,
-                    "num_classes": self.num_classes.get(_id),
+                    "num_classes": self.num_classes.get(_id, None),
+                    "parameters": {
+                        "main": {
+                            "activation": activation,
+                            "units": units,
+                            "filters": units,
+                        },
+                        "extra": {
+                            "activation": activation,
+                            "units": units,
+                            "filters": units,
+                        },
+                    },
                 }
             )
         data.update({"layers": layers})
