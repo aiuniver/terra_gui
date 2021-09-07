@@ -98,7 +98,7 @@ export default {
     color: #fff;
     background: #242f3d;
     height: 42px;
-    padding: 0 10px;
+    padding: 0 5px;
     font-size: 0.875rem;
     font-weight: 400;
     border-radius: 4px;

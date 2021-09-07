@@ -127,7 +127,7 @@ export default {
     background: #242f3d;
     cursor: pointer;
     display: block;
-    z-index: 103;
+    z-index: 101;
     &:focus {
       border: 1px solid #e7ecf5;
     }
@@ -138,6 +138,7 @@ export default {
     }
   }
   .auto-complete__content {
+    bottom: -28px;
     position: absolute;
     background-color: #242f3d;
     width: 100%;
@@ -146,7 +147,7 @@ export default {
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
     overflow: auto;
     border-radius: 0 0 4px 4px;
-    z-index: 102;
+    z-index: 103;
     // bottom: -29px;
     > div {
       color: #a7bed3;
