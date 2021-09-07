@@ -4,7 +4,6 @@
 
 import os
 import pandas
-import random
 import base64
 
 from enum import Enum
@@ -144,7 +143,7 @@ class FileManagerItem(BaseMixinData):
                     _images.append(item)
             except KeyError:
                 pass
-        _image = Path(self.path, random.choices(_images)[0])
+        _image = Path(self.path, _images[0])
         _image_ext = _image.name.split(".")[-1].lower()
         with open(_image, "rb") as _image_ref:
             _image_base64 = base64.b64encode(_image_ref.read())

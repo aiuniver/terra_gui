@@ -338,6 +338,15 @@ class LayerRepeatVectorData(LayerMixinData):
     )
 
 
+class LayerNormalizationData(LayerMixinData):
+    main: types.Normalization.ParametersMainData = (
+        types.Normalization.ParametersMainData()
+    )
+    extra: types.Normalization.ParametersExtraData = (
+        types.Normalization.ParametersExtraData()
+    )
+
+
 class LayerBatchNormalizationData(LayerMixinData):
     main: types.BatchNormalization.ParametersMainData = (
         types.BatchNormalization.ParametersMainData()

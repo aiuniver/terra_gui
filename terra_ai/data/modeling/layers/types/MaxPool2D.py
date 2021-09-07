@@ -6,8 +6,14 @@ from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import PaddingChoice, DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, \
-    ModuleTypeChoice
+from ..extra import (
+    PaddingChoice,
+    DataFormatChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{
