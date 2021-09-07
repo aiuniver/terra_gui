@@ -63,9 +63,9 @@ export default {
     .t-field__label {
       padding: 0 0 0 10px;
     }
-    .t-field__input {
+    // .t-field__input {
       // flex: 0 0 109px;
-    }
+    // }
   }
 }
 </style>
