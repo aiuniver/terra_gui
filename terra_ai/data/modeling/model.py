@@ -6,10 +6,10 @@ from typing import Optional, List
 from pydantic import validator
 from pydantic.types import PositiveInt
 
+from terra_ai.data.modeling.layer import LayersList
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
 from ..types import confilepath, AliasType, Base64Type
-from .layer import LayersList
 from .extra import LayerBindPositionChoice, LayerGroupChoice
 
 

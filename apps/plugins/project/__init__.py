@@ -103,7 +103,11 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
-    def set_dataset(self, dataset: DatasetData):
+    def set_dataset(self, dataset: DatasetData = None):
+        if dataset is None:
+            self.dataset = None
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
+            return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
             raise exceptions.DatasetModelInputsCountNotMatchException()

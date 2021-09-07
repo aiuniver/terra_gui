@@ -29,16 +29,7 @@
           </div>
         </div>
         <div class="t-card-marking__footer">
-          <div class="t-card-marking__range">
-            <div class="t-card-marking__range--content">
-              <div class="t-card-marking__range--left"><p>0</p></div>
-              <div class="t-card-marking__range--right"><p>900</p></div>
-            </div>
-            <div class="t-card-marking__range--line">
-              <div class="t-card-marking__range--line-to" style="background: #ff9d2a; width: 20%"></div>
-              <div class="t-card-marking__range--line-to" style="background: #5dbb31; width: 50%"></div>
-            </div>
-          </div>
+          <t-range :value="[20, 50]" />
         </div>
       </div>
     </div>
@@ -64,8 +55,13 @@
 </template>
 
 <script>
+import tRange from '../Range.vue'
+
 export default {
   name: 't-card-marking',
+  components: {
+    tRange
+  },
   props: {
     label: String,
     type: String,

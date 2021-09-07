@@ -1381,12 +1381,13 @@ if __name__ == "__main__":
         # "size": 2,
         # 'filters': 32,
         # 'kernel_size': (2, 2),
-        # 'strides': (3, 3),
+        'pool_size': 2,
+        'strides': 2,
         # 'dilation_rate': (1, 1),
         # 'groups': 2,
         # 'depth_multiplier': 5,
         # 'data_format': 'channels_first',
-        # "padding": 'valid',
+        "padding": 'same',
         # "output_padding": None,
         # "kernel_initializer": "glorot_uniform",
         # "beta_initializer": "glorot_uniform",
@@ -1418,8 +1419,8 @@ if __name__ == "__main__":
         # 'capacity': 128.,
         # 'randomSample': True,
         # 'roll_up': True,
-        "block_size": 2,
-        "data_format": SpaceToDepthDataFormatChoice.NCHW,
+        # "block_size": 2,
+        # "data_format": SpaceToDepthDataFormatChoice.NCHW,
     }
 
     # layers.types.Conv2D.LayerConfig.num_uplinks.value = 3
@@ -1427,7 +1428,7 @@ if __name__ == "__main__":
         # "maxwordcount": 2000
     }
 
-    layer_name = "space_to_depth"
+    layer_name = "MaxPool1D"
     # print(get_layer_defaults(layer_name))
     LV = LayerValidation()
     LV.set_state(layer_name, input_shape, params, **kwarg)
@@ -1440,7 +1441,7 @@ if __name__ == "__main__":
     x, y = LV.get_validated()
     print("\n", x, y)
 
-    x = tensorflow.keras.layers.Input(input_shape[0][1:])
+    # x = tensorflow.keras.layers.Input(input_shape[0][1:])
     # x2 = tensorflow.keras.layers.Input(input_shape[1][1:])
     # x3 = tensorflow.keras.layers.Input(input_shape[2][1:])
     # x4 = tensorflow.keras.layers.Input(input_shape[3][1:])
@@ -1451,8 +1452,8 @@ if __name__ == "__main__":
     # x = getattr(tensorflow.keras.layers, layer_name)(**params)([x, x2, x3, x4])
     # x = getattr(customLayers, layer_name)(**params)(x)
     # x = tensorflow_addons.activations.mish(x)
-    x = tensorflow.nn.space_to_depth(x, **params)
-    print(x.shape)
+    # x = tensorflow.nn.space_to_depth(x, **params)
+    # print(x.shape)
 
     # import importlib
     #

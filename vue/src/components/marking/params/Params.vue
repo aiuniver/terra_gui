@@ -17,6 +17,7 @@
         :inline="true"
         label="Тип задачи"
         :lists="options"
+        width="180px"
         ></MarkSelect>
       </div>
       <div class="params__items--item">

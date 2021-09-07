@@ -1,10 +1,25 @@
 from typing import Any
 from pydantic import BaseModel, ValidationError
 from dict_recursive_update import recursive_update
+from collections.abc import MutableMapping
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
+
+
+
+
+def flatten_dict(d: MutableMapping, parent_key: str = '[', sep: str = '][') -> MutableMapping:
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + k + sep if parent_key else k
+        if isinstance(v, MutableMapping):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+
+    return dict(items)
 
 
 class BaseAPIView(APIView):
@@ -67,4 +82,7 @@ class BaseResponseErrorFields(BaseResponseError):
                     __locs = __locs[:-1]
                 __errors = recursive_update(__errors, __loc_dict)
             error = __errors
-        super().__init__(error={"fields": error}, *args, **kwargs)
+        buff_error = flatten_dict({"fields": error})
+        error = dict((key[:len(key)-1], value) for (key, value) in buff_error.items())
+
+        super().__init__(error=error, *args, **kwargs)

@@ -84,8 +84,11 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
     &.toggle {
       padding: 0px;
+      flex: 0 0 24px;
     }
     &--icon {
       cursor: pointer;
