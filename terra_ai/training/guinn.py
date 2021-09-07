@@ -496,7 +496,7 @@ class FitCallback(keras.callbacks.Callback):
         self.retrain_epochs = 0
         self.save_model_path = save_model_path
         self.nn_name = model_name
-        self.progress_name = progress.PoolName.training
+        self.progress_name = "training"
 
     def save_lastmodel(self) -> None:
         """
@@ -678,3 +678,4 @@ class FitCallback(keras.callbacks.Callback):
                 finished=True,
             )
             # print(msg)
+
