@@ -125,8 +125,9 @@ class Exchange:
         progress_data = progress.pool(progress.PoolName.dataset_source_load)
         if progress_data.finished and progress_data.data:
             __path = progress_data.data.absolute()
+            file_manager = FileManagerItem(path=__path).native().get("children")
             progress_data.data = {
-                "file_manager": (FileManagerItem(path=__path).native().get("children")),
+                "file_manager": file_manager,
                 "source_path": __path,
             }
         else:
@@ -208,11 +209,10 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_model_update(self, model: dict, **kwargs) -> ModelDetailsData:
+    def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        model.update(kwargs)
         return ModelDetailsData(**model)
 
     def _call_model_validate(self, model: ModelDetailsData) -> tuple:
