@@ -18,7 +18,7 @@
             :list="listWithoutOutputInput"
             label="Тип слоя"
             name="type"
-            :disabled="isBlock || isInputOutput"
+            :disabled="isBlock || isInput"
             @change="changeType"
           />
         </div>
@@ -86,8 +86,8 @@ export default {
     isBlock() {
       return !this.block.id;
     },
-    isInputOutput() {
-      return this.block.group === 'input' || this.block.group === 'output';
+    isInput() {
+      return this.block.group === 'input';
     },
     listWithoutOutputInput() {
       return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
