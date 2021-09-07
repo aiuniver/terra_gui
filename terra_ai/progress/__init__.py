@@ -1,5 +1,4 @@
 from time import sleep
-from enum import Enum
 from typing import Optional, Any, Dict
 from threading import Thread
 
@@ -34,22 +33,6 @@ class ProgressData(BaseMixinData):
             }
         )
         return __data
-
-
-# class PoolName(str, Enum):
-#     dataset_source_load = "dataset_source_load"
-#     dataset_choice = "dataset_choice"
-#     model_load = "model_load"
-#     training = "training"
-#     deploy_upload = "deploy_upload"
-#
-#
-# class ProgressItems(BaseMixinData):
-#     dataset_source_load: ProgressData = ProgressData()
-#     dataset_choice: ProgressData = ProgressData()
-#     model_load: ProgressData = ProgressData()
-#     deploy_upload: ProgressData = ProgressData()
-#     training: ProgressData = ProgressData()
 
 
 class ProgressPool:
