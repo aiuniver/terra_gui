@@ -128,6 +128,7 @@ class Project(BaseMixinData):
                         "shape": layer_init.get("shape"),
                         "task": layer_init.get("task"),
                         "num_classes": layer_init.get("num_classes"),
+                        "parameters": layer_init.get("parameters"),
                     }
                 )
                 self.model.layers.append(layer_data)
