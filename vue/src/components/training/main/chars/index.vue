@@ -30,8 +30,8 @@ export default {
 <style lang="scss" scoped>
 .charts {
   margin-bottom: 20px;
-  &__title {
-  }
+  // &__title {
+  // }
   &__content {
     margin-top: 10px;
     display: -webkit-box;
