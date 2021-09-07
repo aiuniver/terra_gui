@@ -8,6 +8,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
     <t-input
@@ -18,6 +19,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
     <t-checkbox
@@ -28,6 +30,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
     <t-select-new
@@ -38,6 +41,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
     <t-auto-complete
@@ -48,6 +52,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
     <MegaMultiSelect
@@ -58,6 +63,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :disabled="disabled"
       @parse="change"
     />
   </div>
@@ -81,6 +87,7 @@ export default {
     id: Number,
     state: Object,
     inline: Boolean,
+    disabled: Boolean
   },
   data: () => ({
     valueIn: null,
@@ -108,7 +115,7 @@ export default {
     },
   },
   created() {
-    // console.log(this)
+    console.log(this.disabled)
   },
   mounted() {
     this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse });
