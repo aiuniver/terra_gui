@@ -274,7 +274,7 @@ class InteractiveCallback:
         self.intermediate_result = {}
         self.statistic_result = {}
         self.train_progress = {}
-        self.progress_name = progress.PoolName.training
+        self.progress_name = "training"
 
         self.urgent_predict = False
 
