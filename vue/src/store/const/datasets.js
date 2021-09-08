@@ -19,7 +19,7 @@ const color = [
 const getColor = usedColors => {
   let index;
   do {
-    index = Math.floor(Math.random() * 24);
+    index = Math.floor(Math.random() * 45);
   } while (usedColors.length < color.length && usedColors.includes(color[index]))
   return color[index];
 };
