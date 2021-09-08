@@ -4,6 +4,7 @@ import re
 from time import sleep
 from typing import Union
 
+import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
 import tensorflow as tf
@@ -252,6 +253,8 @@ class InteractiveCallback:
         """
         self.losses = None
         self.metrics = None
+        self.loss_obj = None
+        self.metrics_obj = None
         self.dataset = None
         self.y_true = {}
         self.y_pred = {}
@@ -288,17 +291,16 @@ class InteractiveCallback:
                 # },
             ],
             'metric_graphs': [
-                # {
-                #     'id': 1,
-                #     'output_idx': 2,
-                #     'show_for_model': True,
-                #     'show_for_classes': False,
-                #     'show_metric': 'CategoricalAccuracy'
-                # }
+                {
+                    'id': 1,
+                    'output_idx': 2,
+                    'show_for_model': True,
+                    'show_for_classes': False,
+                    'show_metric': 'CategoricalAccuracy'
+                }
             ],
             'intermediate_result': {
                 'show_results': False,
-                # 'data_for_calculation': 'val',
                 'example_choice_type': 'seed',
                 'main_output': 2,
                 'num_examples': 10,
@@ -306,14 +308,14 @@ class InteractiveCallback:
                 'autoupdate': False
             },
             'progress_table': [
-                # {
-                #     'output_idx': 2,
-                #     'show_loss': True,
-                #     'show_metrics': True,
-                # }
+                {
+                    'output_idx': 2,
+                    'show_loss': True,
+                    'show_metrics': True,
+                }
             ],
             'statistic_data': {
-                'output_id': [2, 3],
+                'output_id': [2],
                 'autoupdate': False
             },
             'data_balance': {
@@ -327,6 +329,8 @@ class InteractiveCallback:
     def set_attributes(self, dataset: PrepareDTS, metrics: dict, losses: dict):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
+        self.loss_obj = self._prepare_loss_obj(losses)
+        self.metrics_obj = self._prepare_metric_obj(metrics)
         self._prepare_interactive_config()
         self.dataset = dataset
         self._prepare_y_true()
@@ -334,7 +338,7 @@ class InteractiveCallback:
         self.dataset_balance = self._prepare_dataset_balance()
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
-        self.example_idx = self._prepare_example_idx_to_show()
+        # self.example_idx = self._prepare_example_idx_to_show()
 
     def update_train_progress(self, data: dict):
         self.train_progress = data
@@ -344,6 +348,7 @@ class InteractiveCallback:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
             self._reformat_y_pred(y_pred)
+            self.example_idx = self._prepare_example_idx_to_show()
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
             if self.interactive_config.get('intermediate_result').get('show_results') and \
@@ -354,6 +359,7 @@ class InteractiveCallback:
                 self.statistic_result = self._get_statistic_data_request()
         else:
             self._reformat_y_pred(y_pred)
+            self.example_idx = self._prepare_example_idx_to_show()
             if self.interactive_config.get('intermediate_result').get('show_results'):
                 self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):
@@ -434,11 +440,25 @@ class InteractiveCallback:
         for out, out_metrics in metrics.items():
             output[out] = []
             for metric in out_metrics:
-                if camelize(metric.name) == 'KullbackLeiblerDivergence':
-                    output[out].append('KLDivergence')
-                else:
-                    output[out].append(camelize(metric.name))
+                output[out].append(camelize(metric.name))
         return output
+
+    @staticmethod
+    def _prepare_loss_obj(losses: dict) -> dict:
+        loss_obj = {}
+        for out in losses.keys():
+            # TODO: предусмотреть импорт из других модулей
+            loss_obj[out] = getattr(tensorflow.keras.losses, losses.get(out))()
+        return loss_obj
+
+    @staticmethod
+    def _prepare_metric_obj(metrics: dict) -> dict:
+        metrics_obj = {}
+        for out in metrics.keys():
+            metrics_obj[out] = {}
+            for metric in metrics.get(out):
+                metrics_obj[out][camelize(metric.name)] = metric
+        return metrics_obj
 
     def _prepare_null_log_history_template(self):
         """
@@ -662,19 +682,15 @@ class InteractiveCallback:
             else:
                 self.y_pred[out] = y_pred[idx]
 
-    def _get_loss_calculation(self, loss_name, y_true, y_pred, ohe=True, num_classes=10):
-        loss_obj = getattr(tf.keras.losses, loss_name)()
+    @staticmethod
+    def _get_loss_calculation(loss_name, loss_obj, y_true, y_pred, ohe=True, num_classes=10):
         if loss_name == Loss.SparseCategoricalCrossentropy:
             return loss_obj(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred).numpy()
         else:
             return loss_obj(y_true if ohe else to_categorical(y_true, num_classes), y_pred).numpy()
 
-    def _get_metric_calculation(self, metric_name, y_true, y_pred, ohe=True, num_classes=10):
-        if metric_name == Metric.MeanIoU:
-            metric_obj = getattr(tf.keras.metrics, metric_name)(num_classes)
-        else:
-            metric_obj = getattr(tf.keras.metrics, metric_name)()
-
+    @staticmethod
+    def _get_metric_calculation(metric_name, metric_obj, y_true, y_pred, ohe=True, num_classes=10):
         if metric_name == Metric.Accuracy:
             metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else y_true, np.argmax(y_pred, axis=-1))
         elif metric_name == Metric.SparseCategoricalAccuracy or \
@@ -692,7 +708,11 @@ class InteractiveCallback:
             return np.mean(logs[-self.log_gap:])
 
     def _update_log_history(self):
-        self.log_history['epochs'].append(self.current_epoch)
+        data_idx = None
+        if self.current_epoch in self.log_history['epochs']:
+            data_idx = self.log_history['epochs'].index(self.current_epoch)
+        else:
+            self.log_history['epochs'].append(self.current_epoch)
         for out in self.dataset.data.outputs.keys():
             if self.dataset.data.encoding.get(out) == 'ohe':
                 ohe = True
@@ -703,15 +723,24 @@ class InteractiveCallback:
             for loss_name in self.log_history.get(f'{out}').get('loss').keys():
                 for data_type in ['train', 'val']:
                     # fill losses
-                    self.log_history[f'{out}']['loss'][loss_name][data_type].append(
-                        self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type)
-                        if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
-                    )
+                    if data_idx or data_idx == 0:
+                        self.log_history[f'{out}']['loss'][loss_name][data_type][data_idx] = \
+                            self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) \
+                                if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
+                    else:
+                        self.log_history[f'{out}']['loss'][loss_name][data_type].append(
+                            self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type)
+                            if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
+                        )
 
                 # fill loss progress state
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'].append(
-                    self._get_mean_log(self.log_history.get(f'{out}').get('loss').get(loss_name).get('val'))
-                )
+                if data_idx or data_idx == 0:
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
+                        self._get_mean_log(self.log_history.get(f'{out}').get('loss').get(loss_name).get('val'))
+                else:
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'].append(
+                        self._get_mean_log(self.log_history.get(f'{out}').get('loss').get(loss_name).get('val'))
+                    )
 
                 # get progress state data
                 loss_underfitting = self._evaluate_underfitting(
@@ -730,37 +759,63 @@ class InteractiveCallback:
                 else:
                     normal_state = True
 
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['underfitting'].append(loss_underfitting)
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['overfitting'].append(loss_overfitting)
-                self.log_history[f'{out}']['progress_state']['loss'][loss_name]['normal_state'].append(normal_state)
+                if data_idx or data_idx == 0:
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['underfitting'][data_idx] = \
+                        loss_underfitting
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['overfitting'][data_idx] = \
+                        loss_overfitting
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['normal_state'][data_idx] = \
+                        normal_state
+                else:
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['underfitting'].append(
+                        loss_underfitting)
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['overfitting'].append(
+                        loss_overfitting)
+                    self.log_history[f'{out}']['progress_state']['loss'][loss_name]['normal_state'].append(
+                        normal_state)
 
                 # get Classification loss logs
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_loss').keys():
                         class_loss = self._get_loss_calculation(
-                            loss_name,
+                            self.losses.get(f'{out}'),
+                            self.loss_obj.get(f'{out}'),
                             self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
                             self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
                             ohe,
                             num_classes
                         )
-                        self.log_history[f'{out}']['class_loss'][cls][loss_name].append(
-                            class_loss if class_loss else 0.
-                        )
+                        if data_idx or data_idx == 0:
+                            self.log_history[f'{out}']['class_loss'][cls][loss_name][data_idx] = \
+                                class_loss if class_loss else 0.
+                        else:
+                            self.log_history[f'{out}']['class_loss'][cls][loss_name].append(
+                                class_loss if class_loss else 0.
+                            )
 
             for metric_name in self.log_history.get(f'{out}').get('metrics').keys():
                 for data_type in ['train', 'val']:
                     # fill metrics
-                    self.log_history[f'{out}']['metrics'][metric_name][data_type].append(
-                        self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type)
-                        if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
-                    )
+                    if data_idx or data_idx == 0:
+                        # print(data_idx,  self.log_history[f'{out}']['metrics'][metric_name])
+                        self.log_history[f'{out}']['metrics'][metric_name][data_type][data_idx] = \
+                            self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) \
+                                if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
+                    else:
+                        self.log_history[f'{out}']['metrics'][metric_name][data_type].append(
+                            self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type)
+                            if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
+                        )
 
                 # fill metric progress state
-                self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['mean_log_history'].append(
-                    self._get_mean_log(self.log_history[f'{out}']['metrics'][metric_name]['val'])
-                )
+                if data_idx or data_idx == 0:
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['mean_log_history'][data_idx] = \
+                        self._get_mean_log(self.log_history[f'{out}']['metrics'][metric_name]['val'])
+                else:
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['mean_log_history'].append(
+                        self._get_mean_log(self.log_history[f'{out}']['metrics'][metric_name]['val'])
+                    )
                 loss_underfittng = self._evaluate_underfitting(
                     metric_name,
                     self.log_history[f'{out}']['metrics'][metric_name]['train'][-1],
@@ -776,26 +831,40 @@ class InteractiveCallback:
                     normal_state = False
                 else:
                     normal_state = True
-                self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['underfitting'].append(
-                    loss_underfittng)
-                self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['overfitting'].append(
-                    loss_overfittng)
-                self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['normal_state'].append(
-                    normal_state)
+
+                if data_idx or data_idx == 0:
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['underfitting'][data_idx] = \
+                        loss_underfittng
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['overfitting'][data_idx] = \
+                        loss_overfittng
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['normal_state'][data_idx] = \
+                        normal_state
+                else:
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['underfitting'].append(
+                        loss_underfittng)
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['overfitting'].append(
+                        loss_overfittng)
+                    self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['normal_state'].append(
+                        normal_state)
 
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
                     # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_metrics').keys():
                         class_metric = self._get_metric_calculation(
                             metric_name,
+                            self.metrics_obj.get(f'{out}').get(metric_name),
                             self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
                             self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
                             ohe,
                             num_classes
                         )
-                        self.log_history[f'{out}']['class_metrics'][cls][metric_name].append(
-                            class_metric if class_metric else 0.
-                        )
+                        if data_idx or data_idx == 0:
+                            self.log_history[f'{out}']['class_metrics'][cls][metric_name][data_idx] = \
+                                class_metric if class_metric else 0.
+                        else:
+                            self.log_history[f'{out}']['class_metrics'][cls][metric_name].append(
+                                class_metric if class_metric else 0.
+                            )
 
     def _update_progress_table(self, epoch_time: float):
         """
@@ -1290,7 +1359,7 @@ class InteractiveCallback:
                     },
                     {
                         'id': _id + 1,
-                        'graph_name': 'Тренировочная выборка',
+                        'graph_name': 'Проверчная выборка',
                         'x_label': 'Название класса',
                         'y_label': 'Значение',
                         'plot_data': [
@@ -1354,13 +1423,12 @@ class InteractiveCallback:
                 example_idx = sorted_args[:count]
             else:
                 example_idx = np.random.choice(len(probs), count, replace=False)
-
         elif choice_type == 'seed':
             example_idx = self.seed_idx[:self.interactive_config.get('intermediate_result').get('num_examples')]
         elif choice_type == 'random':
             example_idx = np.random.randint(
                 0,
-                len(self.dataset.X.get('val')),
+                len(self.dataset.dataset.get('val')),
                 self.interactive_config.get('intermediate_result').get('num_examples')
             )
         else:
@@ -1453,4 +1521,5 @@ class InteractiveCallback:
 
 
 if __name__ == '__main__':
+    print(camelize('logcosh'))
     pass

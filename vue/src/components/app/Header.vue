@@ -19,37 +19,34 @@
         <i class="profile"></i>
       </div>
     </div>
-       <at-modal
-         v-model="save"
-         width="400"
-       >
-         <div slot="header" style="text-align: center">
-           <span>Сохранить проект</span>
-         </div>
-         <div class="inner form-inline-label">
-           <div class="field-form">
-             <label>Название проекта</label
-             ><input v-model="nameProject" type="text" />
-           </div>
-           <div class="field-form field-inline field-reverse">
-             <label @click="checVal = !checVal">Перезаписать</label>
-             <div class="checkout-switch">
-               <input v-model="checVal" type="checkbox" />
-               <span class="switcher"></span>
-             </div>
-           </div>
-         </div>
-         <template slot="footer">
-           <button @click="saveProject">Сохранить</button>
-         </template>
-       </at-modal>
-       <at-modal v-model="load" width="400">
-         <div slot="header" style="text-align: center">
-           <span>Загрузить проект</span>
-         </div>
+    <at-modal v-model="save" width="400">
+      <div slot="header" style="text-align: center">
+        <span>Сохранить проект</span>
+      </div>
+      <div class="inner form-inline-label">
+        <div class="field-form">
+          <label>Название проекта</label>
+          <input v-model="nameProject" type="text" />
+        </div>
+        <div class="field-form field-inline field-reverse">
+          <label @click="checVal = !checVal">Перезаписать</label>
+          <div class="checkout-switch">
+            <input v-model="checVal" type="checkbox" />
+            <span class="switcher"></span>
+          </div>
+        </div>
+      </div>
+      <template slot="footer">
+        <button @click="saveProject">Сохранить</button>
+      </template>
+    </at-modal>
+    <at-modal v-model="load" width="400">
+      <div slot="header" style="text-align: center">
+        <span>Загрузить проект</span>
+      </div>
 
-         <div slot="footer"></div>
-       </at-modal>
+      <div slot="footer"></div>
+    </at-modal>
   </div>
 </template>
 
@@ -97,12 +94,12 @@ export default {
     },
   },
   methods: {
-    async saveProject() {
+    async saveNameProject() {
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
           message: `Изменение названия проекта на «${this.nameProject}»`,
         });
-        await this.$store.dispatch('projects/saveProject', {
+        await this.$store.dispatch('projects/saveNameProject', {
           name: this.nameProject,
         });
         this.$store.dispatch('messages/setMessage', {
@@ -119,25 +116,60 @@ export default {
       if (this.projectNameEdit) {
         this.projectNameEdit = false;
         this.nameProject = this.$refs.nameProjectSpan.innerText;
-        this.saveProject();
+        this.saveNameProject();
+      }
+    },
+    async createProject() {
+      try {
+        await this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Создать новый проект?',
+          width: 300,
+        });
+        const res = this.$store.dispatch('projects/createProject', {});
+        if (res) {
+          this.$store.dispatch('messages/setMessage', {
+            message: `Новый проект «${this.nameProject}» создан`,
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async loadProject() {
+      try {
+        const res = this.$store.dispatch('projects/loadProject', {});
+        if (res) {
+          this.$store.dispatch('messages/setMessage', {
+            message: `Проект «${this.nameProject}» загружен`,
+          });
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async saveProject() {
+      try {
+        const res = this.$store.dispatch('projects/saveProject', {});
+        if (res) {
+          this.$store.dispatch('messages/setMessage', {
+            message: `Проект «${this.nameProject}» сохранен`,
+          });
+          this.save = false;
+        }
+      } catch (error) {
+        console.log(error);
       }
     },
     click(type) {
       console.log(type);
       if (type === 'project-new') {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить проект?',
-          width: 300
-        }).then(() => {
-          console.log('ok')
-        }).catch(() => {
-          console.log('cancel')
-        })
+        this.createProject();
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
         this.load = true;
+        this.loadProject()
       }
     },
     change(value) {
