@@ -3,9 +3,23 @@
     <div class="dataset-card" @click.stop="$emit('click', dataset, cardIndex)">
       <div class="card-title">{{ dataset.name }}</div>
       <div class="card-body" @click="click">
-        <div v-for="({ name }, key) of getFour" :key="`tag_${key}`" class="card-tag">
-          {{ name }}
+        <div v-if="dataset.tags.length <= 4">
+          <div v-for="({ name }, key) of dataset.tags" :key="`tag_${key}`" class="card-tag">
+            {{ name }}
+          </div>
         </div>
+        <scrollbar
+          v-else
+          :ops="{
+            bar: {
+              background: '#17212b',
+            },
+          }"
+        >
+          <div v-for="({ name }, key) of dataset.tags" :key="`tag_${key}`" class="card-tag">
+            {{ name }}
+          </div>
+        </scrollbar>
       </div>
 
       <div :class="'card-extra ' + (dataset.size ? 'is-custom' : '')">
@@ -14,6 +28,7 @@
             {{ dataset.size ? dataset.size.short.toFixed(2) + ' ' + dataset.size.unit : 'Предустановленный' }}
           </span>
         </div>
+
         <div class="remove" @click.stop="$emit('remove', dataset)"></div>
       </div>
     </div>
@@ -39,10 +54,10 @@ export default {
     index: 0,
   }),
   computed: {
-    getFour() {
-      const tags = this.dataset?.tags || [];
-      return tags.filter((item, i) => i >= this.index && i < this.index + 4);
-    },
+    // getFour() {
+    //   const tags = this.dataset?.tags || [];
+    //   return tags.filter((item, i) => i >= this.index && i < this.index + 4);
+    // },
   },
   methods: {
     click() {

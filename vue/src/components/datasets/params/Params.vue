@@ -49,7 +49,7 @@ export default {
     disabled() {
       if (Object.keys(this.dataset).length === 0 && this.dataset.mode === 'GoogleDrive') {
         return true;
-      } else if (!this.dataset.value?.value && this.dataset.mode === 'URL') {
+      } else if (!this.dataset.value && this.dataset.mode === 'URL') {
         return true;
       } else {
         return this.tab !== this.dataset.mode;

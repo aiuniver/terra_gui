@@ -41,7 +41,9 @@ class ProgressPool:
     def __call__(self, name: str, **kwargs) -> Optional[ProgressData]:
         __progress = self.__pool.get(name, ProgressData())
         if not len(kwargs.keys()):
-            if __progress.finished and __progress.percent == 100:
+            if (
+                __progress.finished and __progress.percent == 100
+            ) or not __progress.success:
                 self.reset(name)
             return __progress
 

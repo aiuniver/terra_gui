@@ -99,6 +99,11 @@ class Project(BaseMixinData):
         _data.update({"name_alias": self.name_alias})
         return _data
 
+    def reset(self):
+        self.name = UNKNOWN_NAME
+        self.dataset = None
+        self.model = ModelDetailsData(**EmptyModelDetailsData)
+
     def save(self):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)

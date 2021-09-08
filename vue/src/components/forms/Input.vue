@@ -99,7 +99,7 @@ export default {
     color: #fff;
     background: #242f3d;
     height: 42px;
-    padding: 0 5px;
+    padding: 0 10px;
     font-size: 0.875rem;
     font-weight: 400;
     border-radius: 4px;
@@ -132,6 +132,7 @@ export default {
   > input {
     height: 22px;
     font-size: 12px;
+    padding: 0 5px;
     line-height: 24px;
     width: 100px;
   }

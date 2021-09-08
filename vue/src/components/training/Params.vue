@@ -65,13 +65,13 @@
           </at-collapse-item>
         </at-collapse>
       </div>
-      <div class="params__items">
+      <!-- <div class="params__items">
         <div class="params__items--item">
           <t-field label="Мониторинг" inline>
               <TCheckbox small @focus="click" />
           </t-field>
         </div>
-      </div>
+      </div> -->
       <div class="params__items">
         <div class="params__items--item">
           <div class="item d-flex mb-3" style="gap: 10px">
@@ -79,7 +79,7 @@
             <button>Остановить</button>
           </div>
           <div class="item d-flex" style="gap: 10px">
-            <button>Сбросить</button>
+            <button>Сохранить</button>
             <button>Сбросить</button>
           </div>
         </div>
@@ -91,13 +91,13 @@
 <script>
 import ser from '../../assets/js/myserialize';
 import { mapGetters } from 'vuex';
-import TCheckbox from '../global/new/forms/TCheckbox.vue';
+// import TCheckbox from '../global/new/forms/TCheckbox.vue';
 // import Checkbox from '@/components/forms/Checkbox.vue';
 
 export default {
   name: 'params-traning',
   components: {
-    TCheckbox,
+    // TCheckbox,
     // Checkbox,
   },
   data: () => ({

@@ -11,14 +11,14 @@
           :draggable="node.dragndrop"
           @dragstart="dragstart($event, node)"
           @dragover.stop
-          :style="(!node.dragndrop) ? `opacity: 0.5;`: null"
+          :style="!node.dragndrop ? `opacity: 0.5;` : null"
         >
           <div v-for="(gapInd, i) in gaps" class="files-menu-gap" :key="'gap_' + i"></div>
 
           <div class="files-menu__title" @click="onToggleHandler($event, node)">
             <span
               v-if="node.children.length"
-              :class="['icons files-menu__title--toggle', { rotate: node.isExpanded }]"
+              :class="['icons files-menu__title--toggle', { rotate: !node.isExpanded }]"
             />
             <span v-else class="files-menu__title--empty" />
             <span v-if="node.children.length" class="icons files-menu__title--folder" />
@@ -81,7 +81,6 @@ export default {
     path: String,
     dragndrop: Boolean,
     cover: String,
-
   },
   data() {
     return {
@@ -118,8 +117,8 @@ export default {
   methods: {
     getFileTypeClass(node) {
       return {
-        [`icon-file-${node.type}`]: true
-      }
+        [`icon-file-${node.type}`]: true,
+      };
     },
     dragstart({ dataTransfer }, { path, title, type, cover, table }) {
       // var img = document.createElement('img');
@@ -271,7 +270,6 @@ export default {
   },
 };
 </script>
-
 
 <style lang="scss" scoped>
 .files-menu {

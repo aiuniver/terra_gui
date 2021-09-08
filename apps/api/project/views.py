@@ -9,3 +9,19 @@ class NameAPIView(BaseAPIView):
             return BaseResponseErrorFields(serializer.errors)
         request.project.name = serializer.validated_data.get("name")
         return BaseResponseSuccess()
+
+
+class CreateAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        request.project.reset()
+        return BaseResponseSuccess()
+
+
+class SaveAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
+
+
+class LoadAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()

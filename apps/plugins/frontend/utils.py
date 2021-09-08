@@ -65,16 +65,16 @@ def prepare_pydantic_field(field, parse: str) -> Field:
     __value = field.default
     __list = None
 
-    if field.type_.__class__ in NUMBER_TYPES or field.type_ in NUMBER_TYPES:
+    if field.outer_type_.__class__ in NUMBER_TYPES or field.outer_type_ in NUMBER_TYPES:
         __type = FieldTypeChoice.number
-    elif field.type_ in CHECKBOX_TYPES:
+    elif field.outer_type_ in CHECKBOX_TYPES:
         __type = FieldTypeChoice.checkbox
-    elif field.type_ in SELECT_TYPES:
+    elif field.outer_type_ in SELECT_TYPES:
         __type = FieldTypeChoice.select
         __list = list(
             map(
                 lambda item: {"value": item, "label": __prepare_label(item)},
-                field.type_.values(),
+                field.outer_type_.values(),
             )
         )
         if field.allow_none:
@@ -82,7 +82,7 @@ def prepare_pydantic_field(field, parse: str) -> Field:
         if not __value:
             __value = field.default.name if field.default else None
     else:
-        if field.type_.__origin__ is tuple:
+        if field.outer_type_.__origin__ is tuple:
             __type = FieldTypeChoice.text_array
             __value = __value or None
         else:

@@ -1,5 +1,6 @@
 <template>
   <div :class="['t-select', { 't-select--active': show }]">
+    <i :class="['t-icon icon-file-arrow', { spin: show }]" @click="click"></i>
     <input
       class="t-select__input"
       v-model="search"
@@ -11,7 +12,6 @@
       @click="click"
       @blur="select(false)"
     />
-    <i :class="['t-icon icon-file-arrow', { spin: show }]" @click="click"></i>
     <div class="t-select__content" v-show="show">
       <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
@@ -53,10 +53,16 @@ export default {
   computed: {
     filterList() {
       return this.list || [];
+      // ? this.list.filter(item => {
+      //     const search = this.search;
+      //     return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+      //   })
+      // : [];
     },
   },
   methods: {
     select(item) {
+      // console.log(item);
       if (item) {
         this.selected = item;
         this.show = false;

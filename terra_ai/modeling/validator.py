@@ -17,7 +17,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.052
+__version__ = 0.053
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
@@ -169,12 +169,12 @@ def tensor_shape_to_tuple(tensor_shape: TensorShape):
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, output_shape=None):
+    def __init__(self, model: ModelDetailsData):
         self.validator: LayerValidation = LayerValidation()
         self.model_plan: TerraModel = TerraModel()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
-        self.output_shape = output_shape
+        self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
         self.end_row: List[int] = []
@@ -194,6 +194,8 @@ class ModelValidator:
             self.layer_input_shapes[layer.id] = []
             self.layer_output_shapes[layer.id] = []
             self.layers_state[layer.id] = ""
+            if layer.group == LayerGroupChoice.output:
+                self.output_shape[layer.id] = layer.shape.output
             if layer.reference:
                 for block in self.model.references:
                     if layer.reference == block.name:
@@ -316,6 +318,7 @@ class ModelValidator:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     if (
+                            self.output_shape[layer[0]] and
                             self.output_shape[layer[0]][0]
                             != self.layer_output_shapes[layer[0]][0][1:]
                     ):
@@ -590,7 +593,7 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
-            elif not self.layer_input_shapes.get(layer.id):
+            elif not self.layer_input_shapes.get(layer.id) or self.layer_input_shapes.get(layer.id) == [None]:
                 self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
@@ -601,14 +604,14 @@ class ModelValidator:
             else:
                 front_shape = []
                 for shape in self.layer_input_shapes.get(layer.id):
-                    if shape:
+                    if shape or shape != [None]:
                         front_shape.append(shape[1:])
                     else:
-                        front_shape.append(shape)
+                        front_shape.append([])
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            if not self.layer_output_shapes.get(layer.id):
+            if not self.layer_output_shapes.get(layer.id) or self.layer_output_shapes.get(layer.id) == [None]:
                 self.filled_model.layers[idx].shape.output = []
             else:
                 self.filled_model.layers[idx].shape.output = [
