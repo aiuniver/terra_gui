@@ -48,7 +48,7 @@ export default {
   computed: {
     input: {
       set(value) {
-        // console.log(value)
+        console.log(value);
         this.$emit('input', value);
         this.isChange = true;
       },
@@ -59,6 +59,7 @@ export default {
   },
   methods: {
     focus(e) {
+      console.log(e);
       this.$emit('focus', e);
       if (this.error) {
         this.$emit('cleanError', true);
@@ -66,18 +67,19 @@ export default {
     },
     change(e) {
       // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
-      if (this.isChange) {
-        let value = e.target.value;
+      let value = e.target.value;
+      if (this.isChange && value !== '') {
+        console.log(e);
         value = this.type === 'number' ? +value : value;
         this.$emit('change', { name: this.name, value });
         this.$emit('parse', { name: this.name, parse: this.parse, value });
-        this.isChange = false;
       }
+      this.isChange = false;
     },
   },
   created() {
-    this.input = this.value
-  }
+    this.input = this.value;
+  },
 };
 </script>
 
