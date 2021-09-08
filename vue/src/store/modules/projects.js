@@ -44,7 +44,9 @@ export default {
       commit("SET_PROJECT", data);
     },
     async createProject({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/create/", data }, { root: true });
+      const res = await dispatch("axios", { url: "/project/create/", data }, { root: true });
+      await dispatch("get");
+      return res
     },
     async loadProject({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/load/", data }, { root: true });

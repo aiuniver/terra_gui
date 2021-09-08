@@ -2,7 +2,7 @@
   <div class="header">
     <div class="header__left">
       <a href="#" class="header__left--logo"></a>
-      <TProjectName />
+      <TProjectName @save="saveNameProject"/>
     </div>
     <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
@@ -94,29 +94,22 @@ export default {
     },
   },
   methods: {
-    async saveNameProject() {
+    async saveNameProject(name) {
       if (this.nameProject.length > 2) {
         this.$store.dispatch('messages/setMessage', {
-          message: `Изменение названия проекта на «${this.nameProject}»`,
+          message: `Изменение названия проекта на «${name}»`,
         });
         await this.$store.dispatch('projects/saveNameProject', {
-          name: this.nameProject,
+          name,
         });
         this.$store.dispatch('messages/setMessage', {
-          message: `Название проекта изменено на «${this.nameProject}»`,
+          message: `Название проекта изменено на «${name}»`,
         });
         this.save = false;
       } else {
         this.$store.dispatch('messages/setMessage', {
           error: 'Длина не может быть < 3 сим.',
         });
-      }
-    },
-    outside() {
-      if (this.projectNameEdit) {
-        this.projectNameEdit = false;
-        this.nameProject = this.$refs.nameProjectSpan.innerText;
-        this.saveNameProject();
       }
     },
     async createProject() {
