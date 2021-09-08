@@ -79,7 +79,7 @@
             <button>Остановить</button>
           </div>
           <div class="item d-flex" style="gap: 10px">
-            <button>Сбросить</button>
+            <button>Сохранить</button>
             <button>Сбросить</button>
           </div>
         </div>
