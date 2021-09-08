@@ -27,29 +27,29 @@
 </template>
 
 <script>
-import Autocomplete2 from "@/components/forms/Autocomplete2.vue";
+import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
 export default {
-  name: "DatasetTab",
+  name: 'DatasetTab',
   components: {
     Autocomplete2,
   },
   props: {
     value: {
       type: String,
-      default: "GoogleDrive"
+      default: 'GoogleDrive',
     },
   },
   data: () => ({
     list: [],
     items: [
-      { title: "Google drive", active: true, mode: "GoogleDrive" },
-      { title: "URL", active: false, mode: "URL" },
+      { title: 'Google drive', active: true, mode: 'GoogleDrive' },
+      { title: 'URL', active: false, mode: 'URL' },
     ],
   }),
   methods: {
     async focus() {
-      const { data } = await this.$store.dispatch("axios", {
-        url: "/datasets/sources/",
+      const { data } = await this.$store.dispatch('axios', {
+        url: '/datasets/sources/',
       });
       if (!data) {
         return;
@@ -58,16 +58,16 @@ export default {
       this.list = data;
     },
     selected({ value, label }) {
-      this.$emit("select", { mode: "GoogleDrive", value, label });
+      this.$emit('select', { mode: 'GoogleDrive', value, label });
     },
-    change(value) {
-      this.$emit("select", { mode: "URL", value });
+    change({ value }) {
+      this.$emit('select', { mode: 'URL', value });
     },
     click(mode) {
       this.select = mode;
-      this.$emit('input', mode)
+      this.$emit('input', mode);
       // this.$emit("select", {});
-      this.items = this.items.map((item) => {
+      this.items = this.items.map(item => {
         return { ...item, active: item.mode === mode };
       });
     },
@@ -95,17 +95,17 @@ export default {
     align-content: flex-start;
     align-items: flex-start;
     &--item {
-    flex: 1;
-    padding: 10px 20px;
-    cursor: pointer;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    border-radius: 5px 5px 0px 0px;
-    font-size: 14px;
-    line-height: 19px;
-    text-align: center;
+      flex: 1;
+      padding: 10px 20px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      border-radius: 5px 5px 0px 0px;
+      font-size: 14px;
+      line-height: 19px;
+      text-align: center;
     }
   }
   &__item {
