@@ -1,7 +1,7 @@
 import cv2
 
 
-def resize_img(shape: list):
+def resize_img(shape: tuple):
     fun = lambda frame: cv2.resize(frame, shape)
 
     return fun

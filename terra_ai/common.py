@@ -7,3 +7,11 @@ def get_functions(preprocess):
     functions = {name: getattr(preprocess, name) for name in dir(preprocess) if filter_func(name)}
 
     return functions
+
+
+def list2tuple(inp: dict):
+    for key, value in inp.items():
+        if isinstance(value, list):
+            inp[key] = tuple(value)
+
+    return inp
