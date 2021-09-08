@@ -21,8 +21,6 @@ from ..base import (
 from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
 
 
-
-
 def flatten_dict(
     d: MutableMapping, parent_key: str = "[", sep: str = "]["
 ) -> MutableMapping:
@@ -141,16 +139,16 @@ class UpdateAPIView(BaseAPIView):
                         del item["shape"]
             model_data = model.native()
             model_data.update(data)
-            request.project.set_model(agent_exchange("model_update", model=model_data))
+            model = agent_exchange("model_update", model=model_data)
+            request.project.set_model(model)
             return BaseResponseSuccess()
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
-
-            buff_error = flatten_dict(answer.data['error'])
+            buff_error = flatten_dict(answer.data["error"])
             error = dict(
                 (key[: len(key) - 1], value) for (key, value) in buff_error.items()
             )
-            answer.data['error'] = error
+            answer.data["error"] = error
             return answer
 
 
