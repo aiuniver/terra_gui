@@ -49,7 +49,7 @@ const router = new Router({
       name: 'Training',
       meta: { 
         title: 'Обучение',
-        access: true,
+        access: false,
         text: `Для перехода на страницу обучения необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Training'),
@@ -60,7 +60,7 @@ const router = new Router({
       meta: { 
         title: 'Каскады',
         access: false,
-        text: `Для перехода на страницу кастадов необходимо загрузить датасет.`, 
+        text: `Для перехода на страницу каскадов необходимо загрузить датасет.`, 
       },
       component: () => import('@/views/Cascades'),
     },
