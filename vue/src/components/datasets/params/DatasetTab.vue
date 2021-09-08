@@ -61,7 +61,7 @@ export default {
       this.$emit('select', { mode: 'GoogleDrive', value, label });
     },
     change({ value }) {
-      this.$emit('select', { mode: 'URL', value });
+      this.$emit('select', { mode: 'URL', value: value.trim() });
     },
     click(mode) {
       this.select = mode;
