@@ -114,6 +114,7 @@ export default {
     height: 22px;
     font-size: 12px;
     line-height: 24px;
+    padding: 0 5px;
     width: 100px;
   }
 }
