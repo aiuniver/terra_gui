@@ -22,21 +22,33 @@ const typeBlock = [
   },
 ];
 
-const createBlock = function (type, id) {
-  // console.log(type, id)
-  if (!type || !id) {
+const createBlock = function (group, id, typeLayers, list) {
+  if (!group || !id) {
     return null;
   }
-  const node = typeBlock.find(n => {
-    return n.group === type;
-  });
+  const node = typeBlock.find(n => n.group === group);
+  const labelType = list.filter(item => item.value === node.type)
+
+  // console.log(list)
+  const mainArr = typeLayers?.[node.type]?.main || []
+  const extraArr = typeLayers?.[node.type]?.extra || []
+  const main = {}
+  const extra = {}
+  mainArr.forEach(({ name, value }) => {
+    main[name] = value === '__null__' ? null : value
+  })
+  extraArr.forEach(({ name, value }) => {
+    extra[name] = value === '__null__' ? null : value
+  })
+
   if (!node) {
     return null;
   }
   return {
     id: id,
     name: node.name + id,
-    type: node.type,
+    type: labelType[0].value,
+    typeLabel: labelType[0].label,
     group: node.group,
     bind: {
       up: [],
@@ -46,11 +58,10 @@ const createBlock = function (type, id) {
       input: [],
       output: [],
     },
-    location: null,
     position: [0, 0],
     parameters: {
-      main: {},
-      extra: {},
+      main,
+      extra,
     },
     reference: null,
     selected: false,
@@ -59,33 +70,62 @@ const createBlock = function (type, id) {
   };
 };
 
+const addParamsBlock = function (block, list) {
+  const node = typeBlock.find(n => n.group === block.group);
+  const labelType = list.filter(item => item.value === block.type)
+  return {
+    typeLabel: labelType[0].label,
+    selected: false,
+    inputs: node.inputs,
+    outputs: node.outputs,
+  };
+};
+
+const changeTypeBlock = function (type, block, typeLayers, list) {
+  // console.log(type, id)
+  if (!type || !block) {
+    return null;
+  }
+  // console.log(type)
+  const labelType = list.filter(item => item.value === type)
+  const mainArr = typeLayers?.[type]?.main || []
+  const extraArr = typeLayers?.[type]?.extra || []
+  const main = {}
+  const extra = {}
+  mainArr.forEach(({ name, value }) => {
+    main[name] = value === '__null__' ? null : value
+  })
+  extraArr.forEach(({ name, value }) => {
+    extra[name] = value === '__null__' ? null : value
+  })
+  block.type = type,
+  block.typeLabel = labelType[0].label,
+  block.parameters = {
+    main,
+    extra,
+  }
+  return block
+};
+
 const cloneBlock = function (block, id) {
   return { ...block, ...{ id }, ...{ name: block.name + '(clone)' } };
 };
 
-const prepareBlocks = function (blocks) {
+const prepareBlocks = function (blocks, list) {
   let last = 0;
-  const newBlock = blocks
-    .map(block => {
-      let newBlock = createBlock(block.group, block.id);
+  const newBlock = blocks.map(block => {
+      let newBlock = addParamsBlock(block, list);
       if (!newBlock) {
         console.warn('block not create: ' + block);
         return;
       }
-      const x = 0; // (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-      const y = 0; //(this.$el.clientHeight / 2 - this.centerY) / this.scale;
-
       newBlock = { ...newBlock, ...block };
-      // console.log(newBlock.position);
       if (!newBlock.position) {
-        newBlock.position = [x + last, y + last];
-        last = last + 20;
+        newBlock.position = [-100, -300 + last];
+        last = last + 60;
       }
       return newBlock;
-    })
-    .filter(b => {
-      return !!b;
-    });
+    }).filter(block => !!block);
   return JSON.parse(JSON.stringify(newBlock));
 };
 
@@ -140,4 +180,4 @@ const mouseHelper = function (element, event) {
   };
 };
 
-export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock };
+export { typeBlock, prepareBlocks, createBlock, prepareLinks, mouseHelper, cloneBlock, changeTypeBlock };

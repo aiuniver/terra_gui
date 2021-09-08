@@ -74,8 +74,8 @@ class MetricChoice(str, Enum):
     CategoricalCrossentropy = "CategoricalCrossentropy"
     CategoricalHinge = "CategoricalHinge"
     CosineSimilarity = "CosineSimilarity"
-    # FalseNegatives = "FalseNegatives"
-    # FalsePositives = "FalsePositives"
+    FalseNegatives = "FalseNegatives"
+    FalsePositives = "FalsePositives"
     Hinge = "Hinge"
     KLDivergence = "KLDivergence"
     LogCoshError = "LogCoshError"
@@ -90,14 +90,13 @@ class MetricChoice(str, Enum):
     RootMeanSquaredError = "RootMeanSquaredError"
     SquaredHinge = "SquaredHinge"
     TopKCategoricalAccuracy = "TopKCategoricalAccuracy"
-    # TrueNegatives = "TrueNegatives"
-    # TruePositives = "TruePositives"
+    TrueNegatives = "TrueNegatives"
+    TruePositives = "TruePositives"
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
 
     DiceCoef = "DiceCoef"
-
 
 
 class TaskGroupData(BaseMixinData):

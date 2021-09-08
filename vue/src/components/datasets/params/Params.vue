@@ -49,7 +49,7 @@ export default {
     disabled() {
       if (Object.keys(this.dataset).length === 0 && this.dataset.mode === 'GoogleDrive') {
         return true;
-      } else if (!this.dataset.value?.value && this.dataset.mode === 'URL') {
+      } else if (!this.dataset.value && this.dataset.mode === 'URL') {
         return true;
       } else {
         return this.tab !== this.dataset.mode;
@@ -65,13 +65,13 @@ export default {
     },
   },
   methods: {
-    async createInterval() {
+    async createInterval(label = null) {
       this.interval = setTimeout(async () => {
         const { data } = await this.$store.dispatch('datasets/loadProgress', {});
-        console.log(data)
+        console.log(data);
         if (data) {
           const { finished, message, percent, error } = data;
-          console.log(percent)
+          console.log(percent);
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
           if (error) {
@@ -80,7 +80,9 @@ export default {
             return;
           }
           if (finished) {
-            const { data: { file_manager, source_path } } = data;
+            const {
+              data: { file_manager, source_path },
+            } = data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
@@ -89,9 +91,11 @@ export default {
             this.$store.dispatch('messages/setProgress', 0);
             this.loading = false;
             this.$store.dispatch('settings/setOverlay', false);
+            this.$store.dispatch('messages/setMessage', { message: `Исходники dataset ${label}  загружены ` });
+
             this.full = true;
           } else {
-            this.createInterval();
+            this.createInterval(label);
           }
         }
         // console.log(data);
@@ -99,10 +103,10 @@ export default {
     },
     saveSet() {
       if (this.dataset.mode === 'GoogleDrive') {
-        this.prevSet = this.dataset
-        this.$el.querySelector('.t-field__input').value = ''
+        this.prevSet = this.dataset;
+        this.$el.querySelector('.t-field__input').value = '';
       }
-      if (this.dataset.mode === 'URL') this.dataset = this.prevSet
+      if (this.dataset.mode === 'URL') this.dataset = this.prevSet;
     },
     select(select) {
       this.dataset = select;
@@ -128,7 +132,7 @@ export default {
         const { success } = await this.$store.dispatch('datasets/sourceLoad', { mode, value });
         // console.log(data)
         if (success) {
-          this.createInterval();
+          this.createInterval(label);
         } else {
           this.loading = false;
           this.$store.dispatch('settings/setOverlay', false);

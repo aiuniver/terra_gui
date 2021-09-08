@@ -4,7 +4,7 @@
       <Filters />
       <div class="project-datasets-block datasets" :style="height">
         <div class="title" @click="click('name')">Выберите датасет</div>
-        <scrollbar  >
+        <scrollbar>
           <div class="inner">
             <div class="dataset-card-container">
               <div class="dataset-card-wrapper">
@@ -13,7 +13,7 @@
                     :dataset="dataset"
                     :key="key"
                     :cardIndex="key"
-                    :loaded="loaded == key ? true : false"
+                    :loaded="isLoaded(dataset)"
                     @click="click"
                     @remove="remove"
                   />
@@ -28,9 +28,9 @@
 </template>
 
 <script>
-import Filters from "@/components/datasets/Filters.vue";
-import { mapGetters } from "vuex";
-import CardDataset from "@/components/datasets/cards/CardDataset";
+import Filters from '@/components/datasets/Filters.vue';
+import { mapGetters } from 'vuex';
+import CardDataset from '@/components/datasets/cards/CardDataset';
 
 export default {
   components: {
@@ -38,22 +38,24 @@ export default {
     Filters,
   },
   data: () => ({
-    hight: 0
+    hight: 0,
   }),
   computed: {
     ...mapGetters({
-      datasets: "datasets/getDatasets",
+      datasets: 'datasets/getDatasets',
+      project: 'projects/getProject',
     }),
     height() {
-      return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true })
+      return this.$store.getters['settings/height']({ deduct: 'filter', padding: 52, clean: true });
     },
-    loaded() {
-      return this.$store.getters['datasets/getLoaded']
-    }
   },
   methods: {
-    click(dataset, key){
-      console.log(dataset, key)
+    isLoaded(dataset) {
+      // console.log(this.project?.dataset?.alias)
+      return this.project?.dataset?.alias === dataset.alias;
+    },
+    click(dataset, key) {
+      console.log(dataset, key);
       this.$store.dispatch('datasets/setSelect', dataset);
       this.$store.dispatch('datasets/setSelectedIndex', key);
       // let card = e.path.filter(element => element.className == "dataset-card")[0]
@@ -63,14 +65,17 @@ export default {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
-          content: `Вы действительно желаете удалить датасет ${name}?`, 
+          content: `Вы действительно желаете удалить датасет "${name}" ?`,
           width: 300,
-        })
-        await this.$store.dispatch('datasets/deleteDataset', { alias, group })
+        });
+        this.$store.dispatch('settings/setOverlay', true);
+        await this.$store.dispatch('datasets/deleteDataset', { alias, group });
+        this.$store.dispatch('settings/setOverlay', false);
       } catch (error) {
-        console.log(error)        
+        this.$store.dispatch('settings/setOverlay', false);
+        console.log(error);
       }
-    }
+    },
   },
 };
 </script>

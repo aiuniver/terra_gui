@@ -36,7 +36,7 @@
             </slot>
           </div>
           <i v-if="isIconType" class="icon at-modal__icon" :class="iconClass"></i>
-          <span v-if="showClose" class="at-modal__close" @click="handleAction('cancel')"><i class="t-icon icon-tag-plus" style="width: 20px; transform: rotate(45deg);"></i></span>
+          <span v-if="showClose" class="at-modal__close" @click="handleAction('cancel')"><i class="t-icon icon-tag-plus" style="width: 20px; transform: rotate(45deg);" title="ESC"></i></span>
         </div>
       </transition>
     </div>

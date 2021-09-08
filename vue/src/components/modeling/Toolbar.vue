@@ -44,21 +44,24 @@ import { mapGetters } from 'vuex';
 export default {
   name: 'Toolbar',
   data: () => ({
-    isKeras: false,
   }),
   computed: {
     ...mapGetters({
       blocks: 'modeling/getBlocks',
+      errors: 'modeling/getErrorsBlocks',
       project: 'projects/getProject',
+      status: 'modeling/getStatus',
     }),
     isSave() {
-      const errors = this.$store.getters['modeling/getErrorsBlocks'] || {}
-      const isError = Object.values(errors).filter(item => item)
-      console.log(isError)
-      return isError.length || this.isValidation
+      return this.isKeras
+      // || this.status.isUpdate
     },
     isClear() {
       return !this.blocks.length 
+    },
+    isKeras() {
+      const errors = Object.values(this.errors)
+      return !errors.length || errors.filter(item => item !== null).length
     },
     isValidation() {
       const blocks = this.blocks.map(item => item.group)
@@ -76,9 +79,6 @@ export default {
       const classList = [...currentTarget?.classList] || [];
       console.log(classList);
       if (!classList.includes('disabled')) {
-        if (comm === 'save') {
-          this.isSave = true
-        }
         this.$emit('actions', comm);
       }
     },

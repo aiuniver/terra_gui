@@ -158,7 +158,12 @@ from ..types import (
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
 )
-from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
+from ..exceptions import (
+    ValueTypeException,
+    PartTotalException,
+    ListEmptyException,
+    ObjectDetectionQuantityLayersException,
+)
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
 from . import creations
@@ -211,9 +216,9 @@ class CreationInfoPartData(BaseMixinData):
     Доли использования данных для обучающей, тестовой и валидационной выборок"
     """
 
-    train: ConstrainedFloatValueGe0Le1 = 0.6
+    train: ConstrainedFloatValueGe0Le1 = 0.7
     "Обучающая выборка"
-    validation: ConstrainedFloatValueGe0Le1 = 0.3
+    validation: ConstrainedFloatValueGe0Le1 = 0.2
     "Валидационная выборка"
     test: ConstrainedFloatValueGe0Le1 = 0.1
     "Тестовая выборка"
@@ -307,36 +312,6 @@ class CreationOutputData(IDMixinData):
         return field.type_(**value or {})
 
 
-# class OneFileData(BaseMixinData):
-#     """
-#     Информация для формирования одиночного массива
-#     """
-#
-    # type: # LayerInputTypeChoice
-    # "Тип данных"
-#     parameters: Any
-#     "Параметры. Тип данных будет зависеть от выбранного типа `type`"
-#
-#     @validator("type", pre=True)
-#     def _validate_type(cls, value: LayerInputTypeChoice) -> LayerInputTypeChoice:
-#         if value not in list(LayerInputTypeChoice):
-#             raise EnumMemberError(enum_values=list(LayerInputTypeChoice))
-#         name = (
-#             value
-#             if isinstance(value, LayerInputTypeChoice)
-#             else LayerInputTypeChoice(value)
-#         ).name
-#         type_ = getattr(
-#             creations.layers.input, getattr(creations.layers.input.Layer, name)
-#         )
-#         cls.__fields__["parameters"].type_ = type_
-#         return value
-#
-#     @validator("parameters", always=True)
-#     def _validate_parameters(cls, value: Any, values, field) -> Any:
-#         return field.type_(**value or {})
-
-
 class CreationInputsList(UniqueListMixin):
     """
     Список `input`-слоев, основанных на `CreationInputData`
@@ -389,8 +364,21 @@ class CreationData(AliasMixinData):
     outputs: CreationOutputsList = CreationOutputsList()
     "`output`-слои"
 
-    @validator("inputs", "outputs", allow_reuse=True)
+    @validator("inputs", "outputs")
     def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
         if not len(value):
             raise ListEmptyException(type(value))
+        return value
+
+    @validator("outputs")
+    def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
+        if not value:
+            return value
+        is_object_detection = False
+        for layer in value:
+            if layer.type == LayerOutputTypeChoice.ObjectDetection:
+                is_object_detection = True
+                break
+        if is_object_detection and len(value) > 1:
+            raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
         return value

@@ -174,7 +174,7 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
 
     def __init__(self, instance=None, data=None, **kwargs):
         _type_processing = data.get("type_processing")
-        if _type_processing:
+        if _type_processing == LayerTypeProcessingClassificationChoice.ranges:
             self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
@@ -188,7 +188,7 @@ class LayerParametersSegmentationSerializer(LayerParametersSerializer):
     classes_colors: serializers.ListSerializer(child=serializers.CharField())
 
 
-class LayerParametersTextSegmentationSerializer(LayerParametersSerializer):
+class LayerParametersTextSegmentationSerializer(serializers.Serializer):
     open_tags: serializers.CharField(required=False)
     close_tags: serializers.CharField(required=False)
 
@@ -334,3 +334,8 @@ class CreateSerializer(serializers.Serializer):
 class DeleteSerializer(serializers.Serializer):
     group = serializers.CharField()
     alias = serializers.CharField()
+
+
+class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
+    num_classes = serializers.IntegerField(min_value=1, max_value=10)
+    mask_range = serializers.IntegerField(min_value=1)

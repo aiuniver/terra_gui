@@ -12,7 +12,6 @@ export default {
     filesDrop: [],
     selected: null,
     selectedIndex: null,
-    loaded: null,
     tags: [],
     tagsFilter: [],
     full: false,
@@ -54,9 +53,6 @@ export default {
     SET_SELECTED_INDEX(state, value) {
       state.selectedIndex = value;
     },
-    SET_LOADED(state, value) {
-      state.loaded = value;
-    },
   },
   actions: {
     async createDataset({ commit, dispatch, state: { inputData, sourcePath } }, data) {
@@ -68,14 +64,17 @@ export default {
       newDataset.inputs = inputs
       newDataset.outputs = outputs
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
-      if (res?.error) {
-        const { error: { fields: { inputs, outputs } } } = res
-        commit('SET_ERRORS', { ...inputs, ...outputs })
-      } else {
-        commit('SET_INPUT_DATA', [] );
-        commit('SET_FILES_DROP', []);
-        commit('SET_ERRORS', {});
-        dispatch('get')
+      console.log(res)
+      if (res) {
+        if (res?.error) {
+          const { error: { fields: { inputs, outputs } } } = res
+          commit('SET_ERRORS', { ...inputs, ...outputs })
+        } else {
+          commit('SET_INPUT_DATA', [] );
+          commit('SET_FILES_DROP', []);
+          commit('SET_ERRORS', {});
+          dispatch('get')
+        }
       }
       commit("settings/SET_OVERLAY", false, { root: true });
       return res
@@ -94,6 +93,15 @@ export default {
     async sourceLoad({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
+
+    async classesAnnotation ({ dispatch, state: { sourcePath } }) {
+      const data = { path: sourcePath}
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
+    },
+    async classesAutosearch ({ dispatch }, data ) {
+      return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
+    },
+
     async loadProgress({ dispatch }, source) {
       return await dispatch('axios', { url: '/datasets/source/load/progress/', data: source }, { root: true });
     },
@@ -152,9 +160,6 @@ export default {
     setSelectedIndex({ commit }, value) {
       commit('SET_SELECTED_INDEX', value);
     },
-    setLoaded({ commit }, value) {
-      commit('SET_LOADED', value);
-    },
     createInputData({ commit, state: { inputData } }, { layer }) {
       let maxID = Math.max(0,...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
@@ -200,6 +205,9 @@ export default {
         errors[id]['parameters'][name] = ''
       }
     },
+    setErrors ({ commit, state: { errors } }, error) {
+      commit('SET_ERRORS', { ...errors, ...error })
+    }
   },
   getters: {
     getInputData({ inputData }) {
@@ -238,9 +246,6 @@ export default {
     },
     getSelectedIndex({ selectedIndex }) {
       return selectedIndex;
-    },
-    getLoaded({ loaded }) {
-      return loaded;
     },
     getTagsFilter({ tagsFilter }) {
       return tagsFilter;

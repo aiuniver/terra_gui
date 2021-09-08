@@ -142,41 +142,7 @@ node_modules/
 /.idea/.gitignore
 /terra_ai/test short.py
 /object
-/TERRA/datasets/sources/airplane.zip
-/TERRA/datasets/sources/cars.zip
-/TERRA/datasets/dataset air for YOLO/config.json
-/TERRA/datasets/dataset milk/config.json
-/TERRA/datasets/dataset YOLO/config.json
-/TERRA/datasets/sources/docs.zip
-/TERRA/datasets/dataset air for YOLO/arrays/input_1.gz
-/TERRA/datasets/dataset milk/arrays/input_1.gz
-/TERRA/datasets/dataset milk/scalers/input_1.gz
-/TERRA/datasets/dataset YOLO/arrays/input_1.gz
-/TERRA/datasets/sources/milk.zip
-/TERRA/datasets/dataset air for YOLO/arrays/output_1.gz
-/TERRA/datasets/dataset milk/arrays/output_1.gz
-/TERRA/datasets/dataset YOLO/arrays/output_1.gz
-/TERRA/datasets/dataset air for YOLO/arrays/output_2.gz
-/TERRA/datasets/dataset milk/arrays/output_2.gz
-/TERRA/datasets/dataset YOLO/arrays/output_2.gz
-/TERRA/datasets/dataset air for YOLO/arrays/output_3.gz
-/TERRA/datasets/dataset milk/arrays/output_3.gz
-/TERRA/datasets/dataset YOLO/arrays/output_3.gz
-/TERRA/datasets/sources/shares.zip
-/TERRA/datasets/sources/smarthome.zip
-/TERRA/datasets/sources/symptoms.zip
-/terra_ai/test.py
-/test-model.py
-/TERRA/modeling/VGG16 авто.model
-/TERRA/modeling/Xception.model
-/TERRA/modeling/YOLOv3.model
-/TERRA/modeling/YOLOv3 70 слоев.model
-/TERRA/modeling/YOLOv3_2.model
-/TERRA/modeling/YOLOv3_git.model
-/TERRA/modeling/YOLOv4.model
-/TERRA/modeling/YOLOv4_git.model
-/TERRA/modeling/YOLOv5.model
-/terra_ai/test2.py
+/TERRA/
 /.idea/inspectionProfiles/desktop.ini
 /.idea/desktop.ini
 /apps/api/datasets/desktop.ini
@@ -407,20 +373,20 @@ node_modules/
 /vue/desktop.ini
 /desktop.ini
 /.idea/inspectionProfiles/Project_Default.xml
-/terra_ai/test_modules/__init__.py
-/terra_ai/test_modules/models_plans.py
-/terra_ai/test_modules/pydantic test.py
-/terra_ai/test_modules/test.py
-/terra_ai/test_modules/test (keras-tf).py
-/terra_ai/test_modules/test blocks.py
-/terra_ai/test_modules/test GAN.py
-/terra_ai/test_modules/test Keras-model.py
-/terra_ai/test_modules/test Terra-model.py
-/terra_ai/test_modules/test validator.py
-/terra_ai/test_modules/YOLOv3.py
-/terra_ai/test_modules/YOLOv3_git.py
-/terra_ai/test_modules/YOLOv4.py
-/terra_ai/test_modules/YOLOv4_git.py
-/terra_ai/test_modules/YOLOv5.py
-/terra_ai/test_modules/desktop.ini
+terra_ai/test_modules/
 /terra_ai/modeling/desktop.ini
+/vue/src/components/cascades/block/desktop.ini
+/vue/src/components/cascades/comp/desktop.ini
+/vue/src/components/cascades/modals/desktop.ini
+/vue/src/components/cascades/desktop.ini
+/vue/src/components/global/modals/desktop.ini
+/vue/src/components/marking/params/block/desktop.ini
+/vue/src/components/marking/params/components/card/desktop.ini
+/vue/src/components/marking/params/components/desktop.ini
+/vue/src/components/marking/params/desktop.ini
+/vue/src/components/marking/desktop.ini
+/vue/src/assets/css/datepicker/desktop.ini
+/terra_ai/test_modules/model_noname_on_epoch_end.last.h5
+/terra_ai/test_modules/test_model.h5
+/terra_ai/test_modules/test callback.py
+/terra_ai/test_modules/callback backup.py

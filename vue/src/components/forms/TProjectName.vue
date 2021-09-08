@@ -2,6 +2,7 @@
   <div class="t-project">
     <div class="t-project__label">Project:</div>
     <input
+      ref="input-t-project"
       v-model="nameProject"
       type="text"
       class="t-project__name"
@@ -10,9 +11,10 @@
       @input="toSave = true"
       @keypress.enter="$event.target.blur()"
       v-autowidth
+      autocomplete="off"
       @focus="latest = $store.getters['projects/getProject'].name"
     />
-    <i class="t-icon icon-project-edit"></i>
+    <i class="t-icon icon-project-edit" @click="$refs['input-t-project'].focus()"></i>
   </div>
 </template>
 
@@ -91,9 +93,10 @@ export default {
   }
   & .icon-project-edit {
     display: block;
-    width: 13px;
-    height: 13px;
+    width: 24px;
+    height: 24px;
     margin-left: 5px;
+    cursor: pointer;
   }
 }
 </style>

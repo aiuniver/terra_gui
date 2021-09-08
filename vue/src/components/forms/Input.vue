@@ -8,13 +8,16 @@
       :type="type"
       :name="parse"
       :value="value"
+      autocomplete="off"
       @blur="change"
+      @input="enter"
       :disabled="disabled"
     />
   </div>
 </template>
 
 <script>
+import { debounce } from '@/utils/core/utils';
 export default {
   props: {
     label: {
@@ -35,6 +38,7 @@ export default {
   },
   data: () => ({
     isChange: false,
+    debounce: null,
   }),
   computed: {
     input: {
@@ -47,11 +51,25 @@ export default {
       },
     },
   },
+  mounted() {
+    this.debounce = debounce((e) => {
+      this.change(e)
+    }, 500);
+  },
   methods: {
+    enter(e) {
+      this.debounce(e)
+    },
     change(e) {
+      // console.log(e);
       if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
+        let value = e.target.value.trim();
+        // console.log(typeof value);
+        if (value !== '') {
+          value = this.type === 'number' ? +value : value;
+        } else {
+          value = null;
+        }
         this.$emit('change', { name: this.name, value });
         this.isChange = false;
       }
@@ -62,7 +80,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-field {
-  // margin-bottom: 20px;
+  margin-bottom: 10px;
   &__label {
     width: 150px;
     max-width: 130px;
@@ -96,7 +114,6 @@ export default {
   flex-direction: row-reverse;
   justify-content: flex-end;
   -webkit-box-pack: end;
-  margin-bottom: 10px;
   align-items: center;
   > label {
     width: auto;
@@ -111,6 +128,7 @@ export default {
   > input {
     height: 22px;
     font-size: 12px;
+    padding: 0 5px;
     line-height: 24px;
     width: 100px;
   }

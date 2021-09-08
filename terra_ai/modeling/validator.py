@@ -2,43 +2,43 @@ import copy
 import gc
 import importlib
 import sys
+from dataclasses import dataclass, field
+from typing import List, Optional, Tuple, Dict, Any, Union
 
 import networkx as nx
 import numpy as np
 import tensorflow
-from dataclasses import dataclass
-
+from tensorflow import TensorShape
 from tensorflow.python.keras.backend import clear_session
 from tensorflow.python.keras.models import Model
 
 from terra_ai.data.modeling import layers
 from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
-
+from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.052
+__version__ = 0.053
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
     LayerValidationMethodChoice,
-    SpaceToDepthDataFormatChoice,
+    SpaceToDepthDataFormatChoice, LayerConfigData,
 )
 
 
 @dataclass
 class TerraModel:
-    plan_name = ""
-    input_shape = {}
-    plan = []
-    block_plans = {}
-    pass
+    plan_name: Optional[str] = ""
+    input_shape: Dict[int, List[tuple]] = field(default_factory=dict)
+    plan: List[Tuple[int, LayerTypeChoice, dict, list, list]] = field(default_factory=list)
+    block_plans: dict = field(default_factory=dict)
 
 
-def get_links(model_plan):
+def get_links(model_plan: List[tuple]) -> Tuple[list, dict, dict, list, list]:
     start_row = []
     end_row = []
-    uplinks = {}
-    downlinks = {}
+    up_links = {}
+    down_links = {}
     all_indexes = []
     for layer in model_plan:
         if layer[3] == [-1]:
@@ -46,17 +46,17 @@ def get_links(model_plan):
         if not layer[4]:
             end_row.append(layer[0])
         all_indexes.append(layer[0])
-        downlinks[layer[0]] = layer[4]
-        uplinks[layer[0]] = layer[3]
-    return start_row, uplinks, downlinks, all_indexes, end_row
+        down_links[layer[0]] = layer[4]
+        up_links[layer[0]] = layer[3]
+    return start_row, up_links, down_links, all_indexes, end_row
 
 
-def get_idx_line(model_plan):
-    start_row, uplinks, downlinks, idx2remove, _ = get_links(model_plan)
+def get_idx_line(model_plan: List[tuple]):
+    start_row, up_links, down_links, idx2remove, _ = get_links(model_plan)
     distribution = []  # distribution plan, show rows with layers
 
     for i in start_row:
-        if uplinks[i] != [-1]:
+        if up_links[i] != [-1]:
             start_row.pop(start_row.index(i))
 
     for i in start_row:
@@ -67,23 +67,22 @@ def get_idx_line(model_plan):
     count = 1
     while idx2remove:
         count += 1
-        row_idxs = []
+        row_idx_s = []
         for idx in distribution[-1]:
-            for downlink in downlinks.get(idx):
-                if downlink not in row_idxs:
-                    row_idxs.append(downlink)
+            for down_link in down_links.get(idx):
+                if down_link not in row_idx_s:
+                    row_idx_s.append(down_link)
 
-        for link in row_idxs:
+        for link in row_idx_s:
 
             if (
-                len(uplinks.get(link)) > 1
-                and len(set(idx2remove) & set(uplinks.get(link))) != 0
+                    len(up_links.get(link)) > 1
+                    and len(set(idx2remove) & set(up_links.get(link))) != 0
             ):
-                print(set(idx2remove) & set(uplinks.get(link)))
-                row_idxs.pop(row_idxs.index(link))
+                row_idx_s.pop(row_idx_s.index(link))
 
-        distribution.append(row_idxs)
-        for idx in row_idxs:
+        distribution.append(row_idx_s)
+        for idx in row_idx_s:
             idx2remove.pop(idx2remove.index(idx))
         if count > 100:
             idx2remove = None
@@ -93,7 +92,7 @@ def get_idx_line(model_plan):
     return idx_line
 
 
-def reorder_plan(model_plan):
+def reorder_plan(model_plan: List[tuple]):
     idx_line = get_idx_line(model_plan)
     order_plan = []
     for idx in idx_line:
@@ -104,7 +103,7 @@ def reorder_plan(model_plan):
     return order_plan
 
 
-def get_edges(model_plan, full_connection=False):
+def get_edges(model_plan: List[tuple], full_connection: bool = False) -> List[Tuple[int, int]]:
     edges = []
     for layer in model_plan:
         for link in layer[3]:
@@ -118,17 +117,17 @@ def get_edges(model_plan, full_connection=False):
     return edges
 
 
-def reformat_input_shape(input_shape):
-    if len(input_shape) == 1:
-        if input_shape[0][0]:
-            input_shape = list(input_shape[0])
-            input_shape.insert(0, None)
-            return [tuple(input_shape)]
+def reformat_input_shape(input_sh: List[Tuple[Optional[int]]]) -> List[Tuple[Optional[int]]]:
+    if len(input_sh) == 1:
+        if input_sh[0][0]:
+            input_sh = list(input_sh[0])
+            input_sh.insert(0, None)
+            return [tuple(input_sh)]
         else:
-            return input_shape
+            return input_sh
     else:
         new_input = []
-        for inp in input_shape:
+        for inp in input_sh:
             if inp[0]:
                 inp = list(inp)
                 inp.insert(0, None)
@@ -138,11 +137,11 @@ def reformat_input_shape(input_shape):
         return new_input
 
 
-def get_layer_info(layer_strict, block_name=None):
+def get_layer_info(layer_strict: LayerData, block_name=None) -> tuple:
     params_dict = layer_strict.parameters.merged
     if (
-        layer_strict.group == LayerGroupChoice.input
-        or layer_strict.group == LayerGroupChoice.output
+            layer_strict.group == LayerGroupChoice.input
+            or layer_strict.group == LayerGroupChoice.output
     ):
         params_dict["name"] = f"{layer_strict.id}"
     elif block_name:
@@ -155,12 +154,12 @@ def get_layer_info(layer_strict, block_name=None):
         params_dict,
         [-1]
         if not layer_strict.bind.up
-        else [-1 if x is None else x for x in layer_strict.bind.up],
-        [x for x in layer_strict.bind.down],
+        else [-1 if i is None else i for i in layer_strict.bind.up],
+        [i for i in layer_strict.bind.down],
     )
 
 
-def tensor_shape_to_tuple(tensor_shape):
+def tensor_shape_to_tuple(tensor_shape: TensorShape):
     tuple_shape = []
     for dim in tensor_shape:
         tuple_shape.append(dim)
@@ -170,51 +169,40 @@ def tensor_shape_to_tuple(tensor_shape):
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, output_shape=None, **kwargs):
-        self.validator = LayerValidation()
-        self.model_plan = None
-        self.filled_model = None
-        self.maxwordcount = None
+    def __init__(self, model: ModelDetailsData):
+        self.validator: LayerValidation = LayerValidation()
+        self.model_plan: TerraModel = TerraModel()
+        self.model: ModelDetailsData = model
+        self.filled_model: ModelDetailsData = model
+        self.output_shape = {}
+        self.all_indexes: List[int] = []
+        self.start_row: List[int] = []
+        self.end_row: List[int] = []
+        self.up_links: Dict[int, List[int]] = {}
+        self.down_links: Dict[int, List[int]] = {}
+        self.layers_config: Dict[int, Union[LayerConfigData, dict]] = {}
+        self.layers_def: Dict[int, dict] = {}
+        self.layers_state: Dict[int, str] = {}
+        self.layer_input_shapes: Dict[int, list] = {}
+        self.layer_output_shapes: Dict[int, list] = {}
+        self.val_dictionary: Dict[int, Any] = {}
+        self.keras_code: str = ""
+        self.valid: bool = True
 
-        self.all_indexes = []
-        self.start_row = []
-        self.end_row = []
-        self.uplinks = {}
-        self.downlinks = {}
-        self.layers_config = {}
-        self.layers_def = {}
-        self.layers_state = {}
-        self.layer_input_shapes = {}
-        self.layer_output_shapes = {}
-        self.model = model
-        self.filled_model = model
-        self.model_plan = TerraModel()
-        self.model_plan.plan = []
-        self.model_plan.plan_name = ""
-        self.model_plan.input_shape = {}
-        self.model_plan.block_plans = {}
-
-        self.keras_code = ""
-        self.valid = True
-
-        self.output_shape = output_shape
-        self.maxwordcount = kwargs.get("maxwordcount")
-
-        self.val_dictionary = {}
         for layer in self.model.layers:
             self.val_dictionary[layer.id] = None
             self.layer_input_shapes[layer.id] = []
             self.layer_output_shapes[layer.id] = []
             self.layers_state[layer.id] = ""
+            if layer.group == LayerGroupChoice.output:
+                self.output_shape[layer.id] = layer.shape.output
             if layer.reference:
                 for block in self.model.references:
                     if layer.reference == block.name:
                         block_def = {}
                         block_config = {}
                         for block_layer in block.details.layers:
-                            block_def[
-                                block_layer.id
-                            ] = block_layer.parameters.defaults.merged
+                            block_def[block_layer.id] = block_layer.parameters.defaults.merged
                             block_config[block_layer.id] = block_layer.parameters.config
                         self.layers_def[layer.id] = block_def
                         self.layers_config[layer.id] = block_config
@@ -230,9 +218,7 @@ class ModelValidator:
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
                 self.model_plan.input_shape[layer.id] = layer.shape.input
-                self.layer_input_shapes[layer.id].extend(
-                    reformat_input_shape(layer.shape.input)
-                )
+                self.layer_input_shapes[layer.id].extend(reformat_input_shape(layer.shape.input))
             self.layers_state[layer.id] = layer.group.value
             self.model_plan.plan.append(get_layer_info(layer))
             if layer.reference:
@@ -248,7 +234,7 @@ class ModelValidator:
         self._get_model_links()
         self._get_reorder_model()
 
-    def _get_cycles_check(self):
+    def _get_cycles_check(self) -> None:
         """
         Check if there are cycles in the structure
 
@@ -259,15 +245,15 @@ class ModelValidator:
 
         edges = get_edges(self.model_plan.plan)
 
-        G = nx.DiGraph(edges)
-        for cycle in nx.simple_cycles(G):
+        di_graph = nx.DiGraph(edges)
+        for cycle in nx.simple_cycles(di_graph):
             if cycle:
                 self.valid = False
                 comment = f"Layers {cycle} make a cycle! Please correct the structure!"
                 for cycle_layer in cycle:
                     self.val_dictionary[cycle_layer] = comment
 
-    def _get_full_connection_check(self):
+    def _get_full_connection_check(self) -> None:
         """
         Check if there separated layers or groups of layers in plan
 
@@ -277,24 +263,25 @@ class ModelValidator:
         """
 
         edges = get_edges(self.model_plan.plan, full_connection=True)
-        G = nx.DiGraph(edges)
-        subgraphs = sorted(
-            list(nx.weakly_connected_components(G)), key=lambda subgraph: -len(subgraph)
+        di_graph = nx.DiGraph(edges)
+        sub_graphs = sorted(
+            list(nx.weakly_connected_components(di_graph)),
+            key=lambda subgraph: -len(subgraph),
         )
 
-        if len(subgraphs) > 1:
+        if len(sub_graphs) > 1:
             self.valid = False
-            for group in subgraphs[1:]:
+            for group in sub_graphs[1:]:
                 for layer in group:
                     self.val_dictionary[
                         layer
                     ] = "Connection Error: layer is not connected to main part!"
 
-    def _get_model_links(self):
+    def _get_model_links(self) -> None:
         (
             self.start_row,
-            self.uplinks,
-            self.downlinks,
+            self.up_links,
+            self.down_links,
             self.all_indexes,
             self.end_row,
         ) = get_links(self.model_plan.plan)
@@ -302,7 +289,7 @@ class ModelValidator:
     def _get_reorder_model(self):
         self.model_plan.plan = reorder_plan(self.model_plan.plan)
 
-    def _get_input_shape_check(self):
+    def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
         input_layers = {}
         for layer in self.model_plan.plan:
@@ -318,12 +305,10 @@ class ModelValidator:
                 ] = "Input shape Error: layer does not have input shape!"
 
         # check if plan input shapes is not None
-        for name, shape in self.model_plan.input_shape.items():
-            if None in shape:
+        for _id, shape in self.model_plan.input_shape.items():
+            if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[
-                    input_layers.get(name)
-                ] = "Input shape Error: layer does not have input shape!"
+                self.val_dictionary[_id] = "Input shape Error: layer does not have input shape!"
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -333,8 +318,9 @@ class ModelValidator:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     if (
-                        self.output_shape[layer[0]][0]
-                        != self.layer_output_shapes[layer[0]][0][1:]
+                            self.output_shape[layer[0]] and
+                            self.output_shape[layer[0]][0]
+                            != self.layer_output_shapes[layer[0]][0][1:]
                     ):
                         self.valid = False
                         self.val_dictionary[layer[0]] = (
@@ -351,7 +337,7 @@ class ModelValidator:
                         idx
                     ] = "Output shape Error: Unspecified output layer!"
 
-    def _model_validation(self):
+    def _model_validation(self) -> dict:
         """Full model modeling"""
         # check for cycles
         self._get_cycles_check()
@@ -391,8 +377,8 @@ class ModelValidator:
             if comment:
                 self.valid = False
                 self.val_dictionary[layer[0]] = comment
-            for downlink in self.downlinks[layer[0]]:
-                self.layer_input_shapes[downlink].extend(output_shape)
+            for down_link in self.down_links[layer[0]]:
+                self.layer_input_shapes[down_link].extend(output_shape)
         if not self.valid:
             return self.val_dictionary
 
@@ -400,7 +386,7 @@ class ModelValidator:
         self._get_output_shape_check()
         return self.val_dictionary
 
-    def _layer_validation(self, layer, layer_input_shape, defaults, config):
+    def _layer_validation(self, layer: tuple, layer_input_shape: list, defaults: dict, config: LayerConfigData):
         self.validator.set_state(
             layer[1], layer_input_shape, layer[2], defaults, config
         )
@@ -408,7 +394,7 @@ class ModelValidator:
 
     def _custom_block_validation(self, block_plan, block_input_shape, defaults, config):
         """block modeling"""
-        _, _, downlinks, _, end_row = get_links(block_plan)
+        _, _, down_links, _, end_row = get_links(block_plan)
         block_val_dict = {}
         block_input_shapes = {}
         block_output_shapes = {}
@@ -430,8 +416,8 @@ class ModelValidator:
             block_output_shapes[layer[0]] = output_shape
             if comment:
                 block_val_dict[layer[0]] = comment
-            for downlink in downlinks[layer[0]]:
-                block_input_shapes[downlink].extend(output_shape)
+            for down_link in down_links[layer[0]]:
+                block_input_shapes[down_link].extend(output_shape)
 
         block_output = []
         for idx in end_row:
@@ -447,7 +433,7 @@ class ModelValidator:
 
         return block_output, block_comment
 
-    def compile_keras_code(self):
+    def compile_keras_code(self) -> None:
         """Create keras code from model plan"""
 
         self.keras_code = ""
@@ -456,19 +442,19 @@ class ModelValidator:
         input_list = []
         output_list = []
         for layer in self.model_plan.plan:
-            # керас код под block_plan пока не готов
+            # Keras код под block_plan пока не готов
             # layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
 
             if (
-                layer[1] not in layers_import.values()
-                and self.layers_config.get(layer[0]).module_type.value
-                != ModuleTypeChoice.block_plan
+                    layer[1] not in layers_import.values()
+                    and self.layers_config.get(layer[0]).module_type.value
+                    != ModuleTypeChoice.block_plan
             ):
                 layers_import[layer[0]] = layer[1]
 
             if (
-                self.layers_config.get(layer[0]).module_type.value
-                == ModuleTypeChoice.block_plan
+                    self.layers_config.get(layer[0]).module_type.value
+                    == ModuleTypeChoice.block_plan
             ):
                 for block_layer in self.model_plan.block_plans.get(layer[0]):
                     if block_layer[1] not in layers_import.values():
@@ -484,10 +470,10 @@ class ModelValidator:
                 name_dict[layer[0]] = f"x_{layer[0]}"
 
         layers_str = ""
-        for id, layer_name in layers_import.items():
+        for _id, _layer_name in layers_import.items():
             # layer_type = i if i != 'space_to_depth' else 'SpaceToDepth'
             layers_str += (
-                f"from {self.layers_config.get(id).module.value} import {layer_name}\n"
+                f"from {self.layers_config.get(_id).module.value} import {_layer_name}\n"
             )
         layers_str = f"{layers_str}from tensorflow.keras.models import Model\n\n"
 
@@ -501,76 +487,76 @@ class ModelValidator:
             outputs_str += f"{i}, "
         outputs_str = f"[{outputs_str[:-2]}]"
 
-        def get_layer_str(layer, identificator="", block_uplinks=None):
-            layer_str = ""
-            if block_uplinks:
-                block_uplinks[layer[0]] = f"{identificator}_{layer[1]}_{layer[0]}"
+        def get_layer_str(_layer, identifier="", _block_uplinks=None):
+            _layer_str = ""
+            if _block_uplinks:
+                _block_uplinks[_layer[0]] = f"{identifier}_{_layer[1]}_{_layer[0]}"
 
-            if layer[1] == LayerTypeChoice.Input:
-                layer_str = (
-                    f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = "
-                    f"{layer[1]}(shape={self.model_plan.input_shape[layer[0]]}, "
-                    f"name='{layer[2].get('name')}')\n"
+            if _layer[1] == LayerTypeChoice.Input:
+                _layer_str = (
+                    f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+                    f"{_layer[1]}(shape={self.model_plan.input_shape[_layer[0]]}, "
+                    f"name='{_layer[2].get('name')}')\n"
                 )
             else:
-                params = ""
-                for key in layer[2].keys():
+                _params = ""
+                for key in _layer[2].keys():
                     if key not in ["trainable", "output_layer"]:
-                        if isinstance(layer[2][key], str):
-                            params += f"{key}='{layer[2][key]}', "
+                        if isinstance(_layer[2][key], str):
+                            _params += f"{key}='{_layer[2][key]}', "
                         else:
-                            params += f"{key}={layer[2][key]}, "
-                if len(layer[3]) == 1:
-                    if block_uplinks:
-                        uplink = f"{block_uplinks[layer[3][0]]}"
+                            _params += f"{key}={_layer[2][key]}, "
+                if len(_layer[3]) == 1:
+                    if _block_uplinks:
+                        uplink = f"{_block_uplinks[_layer[3][0]]}"
                     else:
-                        uplink = f"{name_dict[layer[3][0]]}"
+                        uplink = f"{name_dict[_layer[3][0]]}"
                 else:
                     uplink = "["
-                    for up in layer[3]:
-                        if block_uplinks:
-                            uplink += f"{block_uplinks[up]}, "
+                    for up in _layer[3]:
+                        if _block_uplinks:
+                            uplink += f"{_block_uplinks[up]}, "
                         else:
                             uplink += f"{name_dict[up]}, "
                     uplink = f"{uplink[:-2]}]"
 
                 if (
-                    self.layers_config.get(layer[0]).module_type.value
-                    == ModuleTypeChoice.tensorflow
+                        self.layers_config.get(_layer[0]).module_type.value
+                        == ModuleTypeChoice.tensorflow
                 ):
-                    layer_str = (
-                        f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = "
-                        f"{layer[1]}({uplink}, {params[:-2]})\n"
+                    _layer_str = (
+                        f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+                        f"{_layer[1]}({uplink}, {_params[:-2]})\n"
                     )
                 elif (
-                    self.layers_config.get(layer[0]).module_type.value
-                    != ModuleTypeChoice.keras_pretrained_model
+                        self.layers_config.get(_layer[0]).module_type.value
+                        != ModuleTypeChoice.keras_pretrained_model
                 ):
-                    layer_str = (
-                        f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]} = "
-                        f"{layer[1]}({params[:-2]})({uplink})\n"
+                    _layer_str = (
+                        f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
+                        f"{_layer[1]}({_params[:-2]})({uplink})\n"
                     )
                 elif (
-                    self.layers_config.get(layer[0]).module_type.value
-                    == ModuleTypeChoice.keras_pretrained_model
+                        self.layers_config.get(_layer[0]).module_type.value
+                        == ModuleTypeChoice.keras_pretrained_model
                 ):
-                    if "trainable" in layer[2].keys():
-                        block_name = f"{block_uplinks[layer[0]] if block_uplinks else name_dict[layer[0]]}"
-                        if layer[2].get("output_layer") == "last":
+                    if "trainable" in _layer[2].keys():
+                        block_name = f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]}"
+                        if _layer[2].get("output_layer") == "last":
                             out_layer_str = f"{block_name}.output"
                         else:
-                            out_layer_str = f"{block_name}.get_layer('{layer[2].get('output_layer')}.output'"
-                        layer_str = (
-                            f"\n{block_name} = {layer[1]}({params[:-2]})\n"
+                            out_layer_str = f"{block_name}.get_layer('{_layer[2].get('output_layer')}.output'"
+                        _layer_str = (
+                            f"\n{block_name} = {_layer[1]}({_params[:-2]})\n"
                             f"for layer in {block_name}.layers:\n"
-                            f"    layer.trainable = {layer[3].get('trainable', False)}\n"
+                            f"    layer.trainable = {_layer[3].get('trainable', False)}\n"
                             f"{block_name} = Model({block_name}.input, {out_layer_str}).output, "
                             f"name='{block_name}')\n"
-                            f"{name_dict[layer[0]]} = {block_name}({uplink})\n\n"
+                            f"{name_dict[_layer[0]]} = {block_name}({uplink})\n\n"
                         )
                 else:
                     pass
-            return layer_str
+            return _layer_str
 
         for layer in self.model_plan.plan:
             if layer[1] == LayerTypeChoice.CustomBlock:
@@ -579,8 +565,8 @@ class ModelValidator:
                 for block_layer in self.model_plan.block_plans.get(layer[0]):
                     layer_str += get_layer_str(
                         block_layer,
-                        identificator=layer[2].get("name", ""),
-                        block_uplinks=block_uplinks,
+                        identifier=layer[2].get("name", ""),
+                        _block_uplinks=block_uplinks,
                     )
                 layer_str = f"\n{layer_str}\n"
             else:
@@ -594,7 +580,7 @@ class ModelValidator:
                 f"{self.keras_code}\n\nmodel = Model({inputs_str}, {outputs_str})"
             )
 
-    def get_validated(self) -> (ModelDetailsData, dict):
+    def get_validated(self) -> Tuple[ModelDetailsData, dict]:
         """Returns all necessary info about modeling"""
 
         self._model_validation()
@@ -607,6 +593,8 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
+            elif not self.layer_input_shapes.get(layer.id) or self.layer_input_shapes.get(layer.id) == [None]:
+                self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
                     self.layer_input_shapes.get(layer.id)[0][1:]
@@ -616,20 +604,22 @@ class ModelValidator:
             else:
                 front_shape = []
                 for shape in self.layer_input_shapes.get(layer.id):
-                    if shape:
+                    if shape or shape != [None]:
                         front_shape.append(shape[1:])
                     else:
-                        front_shape.append(shape)
+                        front_shape.append([])
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            self.filled_model.layers[idx].shape.output = [
-                self.layer_output_shapes.get(layer.id)[0][1:]
-                if self.layer_output_shapes.get(layer.id)[0]
-                else self.layer_output_shapes.get(layer.id)
-            ]
+            if not self.layer_output_shapes.get(layer.id) or self.layer_output_shapes.get(layer.id) == [None]:
+                self.filled_model.layers[idx].shape.output = []
+            else:
+                self.filled_model.layers[idx].shape.output = [
+                    self.layer_output_shapes.get(layer.id)[0][1:]
+                    if self.layer_output_shapes.get(layer.id)[0]
+                    else self.layer_output_shapes.get(layer.id)
+                ]
 
-        # print(self.layer_input_shapes, '\n', self.layer_output_shapes)
         self.filled_model.keras = self.keras_code
         return self.filled_model, self.val_dictionary
 
@@ -642,19 +632,20 @@ class LayerValidation:
     """Validate input shape, number uplinks and parameters compatibility"""
 
     def __init__(self):
-        self.inp_shape = [None]
-        self.layer_type = ""
-        self.def_parameters = {}
-        self.layer_parameters = {}
-        self.num_uplinks = 1
-        self.input_dimension = 2
+        self.inp_shape: List[Optional[tuple]] = [None]
+        self.layer_type: str = ""
+        self.def_parameters: dict = {}
+        self.layer_parameters: dict = {}
+        self.num_uplinks: tuple
+        self.input_dimension: tuple
         self.module = ""
         self.module_type = ""
         self.kwargs = {}
+        self.num_uplinks: Tuple[int, str] = (1, 'str')
+        self.input_dimension: Tuple[int, str] = (1, 'str')
 
-    def set_state(self, layer_type, shape, parameters, defaults, config, **kwargs):
+    def set_state(self, layer_type, shape: list, parameters: dict, defaults: dict, config: LayerConfigData, **kwargs):
         """Set input data and fill attributes"""
-        # print("LayerValidation set_state", layer_type, shape, parameters)
         self.layer_type = layer_type
         self.inp_shape = shape
         self.def_parameters = defaults
@@ -680,9 +671,9 @@ class LayerValidation:
         else:
             output_shape = [None]
             if (
-                self.module_type == ModuleTypeChoice.keras
-                or self.module_type == ModuleTypeChoice.terra_layer
-                or self.module_type == ModuleTypeChoice.keras_pretrained_model
+                    self.module_type == ModuleTypeChoice.keras
+                    or self.module_type == ModuleTypeChoice.terra_layer
+                    or self.module_type == ModuleTypeChoice.keras_pretrained_model
             ):
                 try:
                     if self.layer_type == LayerTypeChoice.Input:
@@ -702,11 +693,11 @@ class LayerValidation:
                             )
                         )
                     ]
-                    # LSTM and GRU can returns list of one tuple of tensorshapes
+                    # LSTM and GRU can returns list of one tuple of tensor shapes
                     # code below reformat it to list of shapes
                     if (
-                        len(output_shape) == 1
-                        and type(output_shape[0][0]).__name__ == "TensorShape"
+                            len(output_shape) == 1
+                            and type(output_shape[0][0]).__name__ == "TensorShape"
                     ):
                         new = []
                         for shape in output_shape[0]:
@@ -714,7 +705,7 @@ class LayerValidation:
                         return new, None
 
                     return output_shape, None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
             if self.module_type == ModuleTypeChoice.tensorflow:
                 try:
@@ -729,14 +720,14 @@ class LayerValidation:
                     )
                     # print(type(tensor_shape_to_tuple(output.shape)))
                     return [tensor_shape_to_tuple(output.shape)], None
-                except:
+                except Exception:
                     return output_shape, self.parameters_validation()
 
     def get_problem_parameter(
-        self, base_dict: dict, check_dict: dict, problem_dict, inp_shape, revert=False
+            self, base_dict: dict, check_dict: dict, problem_dict, inp_shape, revert=False
     ):
         """check each not default parameter from check_dict by setting it in base_dict
-        revert means set defaul parameter in layer parameters and need additional check if pass
+        revert means set default parameter in layer parameters and need additional check if pass
         on initial layer parameters"""
         for param in base_dict.keys():
             val_dict = copy.deepcopy(base_dict)
@@ -744,8 +735,8 @@ class LayerValidation:
                 val_dict[param] = check_dict.get(param)
                 try:
                     if (
-                        self.module_type == ModuleTypeChoice.keras
-                        or self.module_type == ModuleTypeChoice.terra_layer
+                            self.module_type == ModuleTypeChoice.keras
+                            or self.module_type == ModuleTypeChoice.terra_layer
                     ):
                         del val_dict["name"]
                         getattr(self.module, self.layer_type)(
@@ -771,8 +762,8 @@ class LayerValidation:
                     if revert:
                         try:
                             if (
-                                self.module_type == ModuleTypeChoice.keras
-                                or self.module_type == ModuleTypeChoice.terra_layer
+                                    self.module_type == ModuleTypeChoice.keras
+                                    or self.module_type == ModuleTypeChoice.terra_layer
                             ):
                                 getattr(self.module, self.layer_type)(
                                     **base_dict
@@ -829,7 +820,7 @@ class LayerValidation:
                     )
             return comment[:-2]
 
-    def primary_layer_validation(self):
+    def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
         comment = self.position_validation()
         if comment:
@@ -843,36 +834,36 @@ class LayerValidation:
         else:
             return None
 
-    def position_validation(self):
+    def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
         if None in self.inp_shape:
             return "Input shape Error: received empty input shape!"
         elif (
-            isinstance(self.num_uplinks[0], int)
-            and self.num_uplinks[1] == LayerValidationMethodChoice.fixed
-            and len(self.inp_shape) != self.num_uplinks[0]
+                isinstance(self.num_uplinks[0], int)
+                and self.num_uplinks[1] == LayerValidationMethodChoice.fixed
+                and len(self.inp_shape) != self.num_uplinks[0]
         ):
             return (
                 f"Position Error: Expected {self.num_uplinks[0]} "
                 f"input shape{'s' if self.num_uplinks[0] > 1 else ''} but got {len(self.inp_shape)}!"
             )
         elif (
-            isinstance(self.num_uplinks[0], int)
-            and self.num_uplinks[1] == LayerValidationMethodChoice.minimal
-            and len(self.inp_shape) < self.num_uplinks[0]
+                isinstance(self.num_uplinks[0], int)
+                and self.num_uplinks[1] == LayerValidationMethodChoice.minimal
+                and len(self.inp_shape) < self.num_uplinks[0]
         ):
             return (
                 f"Position Error: Expected {self.num_uplinks[0]} or greater "
                 f"input shape{'s' if self.num_uplinks[0] > 1 else ''} but got {len(self.inp_shape)}!"
             )
         elif (
-            isinstance(self.num_uplinks[0], tuple)
-            and self.num_uplinks[1]
-            not in [
-                LayerValidationMethodChoice.dependence_tuple2,
-                LayerValidationMethodChoice.dependence_tuple3,
-            ]
-            and len(self.inp_shape) not in self.num_uplinks[0]
+                isinstance(self.num_uplinks[0], tuple)
+                and self.num_uplinks[1]
+                not in [
+                    LayerValidationMethodChoice.dependence_tuple2,
+                    LayerValidationMethodChoice.dependence_tuple3,
+                ]
+                and len(self.inp_shape) not in self.num_uplinks[0]
         ):
             return (
                 f"Position Error: Expected one of {self.num_uplinks} "
@@ -881,8 +872,8 @@ class LayerValidation:
         else:
             return None
 
-    def input_dimension_validation(self):
-        """Dimention compatibility of first_shape shape"""
+    def input_dimension_validation(self) -> Optional[str]:
+        """Dimension compatibility of first_shape shape"""
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
@@ -908,31 +899,31 @@ class LayerValidation:
                         )
         else:
             if (
-                isinstance(self.input_dimension[0], int)
-                and self.input_dimension[1] == LayerValidationMethodChoice.fixed
-                and len(self.inp_shape[0]) != self.input_dimension[0]
+                    isinstance(self.input_dimension[0], int)
+                    and self.input_dimension[1] == LayerValidationMethodChoice.fixed
+                    and len(self.inp_shape[0]) != self.input_dimension[0]
             ):
                 return (
                     f"Input dimension Error: Expected dim = {self.input_dimension[0]} "
                     f"but got dim={len(self.inp_shape[0])}!"
                 )
             elif (
-                isinstance(self.input_dimension[0], int)
-                and self.input_dimension[1] == LayerValidationMethodChoice.minimal
-                and len(self.inp_shape[0]) < self.input_dimension[0]
+                    isinstance(self.input_dimension[0], int)
+                    and self.input_dimension[1] == LayerValidationMethodChoice.minimal
+                    and len(self.inp_shape[0]) < self.input_dimension[0]
             ):
                 return (
                     f"Input dimension Error: Expected dim = {self.input_dimension[0]} or greater "
                     f"but got dim={len(self.inp_shape[0])}!"
                 )
             elif (
-                isinstance(self.input_dimension[0], tuple)
-                and self.input_dimension[1]
-                in [
-                    LayerValidationMethodChoice.dependence_tuple2,
-                    LayerValidationMethodChoice.dependence_tuple3,
-                ]
-                and len(self.inp_shape[0]) not in self.input_dimension[0]
+                    isinstance(self.input_dimension[0], tuple)
+                    and self.input_dimension[1]
+                    in [
+                        LayerValidationMethodChoice.dependence_tuple2,
+                        LayerValidationMethodChoice.dependence_tuple3,
+                    ]
+                    and len(self.inp_shape[0]) not in self.input_dimension[0]
             ):
                 return (
                     f"Input dimension Error: Expected one of {self.input_dimension[0]} "
@@ -941,45 +932,45 @@ class LayerValidation:
             else:
                 return None
 
-    def specific_parameters_validation(self):
+    def specific_parameters_validation(self) -> str:
         """Validate specific layer parameters or its combination"""
 
         # initializer identity
         for key in self.layer_parameters.keys():
             if (
-                self.layer_parameters.get(key) == "identity"
-                and len(self.inp_shape[0]) != 2
+                    self.layer_parameters.get(key) == "identity"
+                    and len(self.inp_shape[0]) != 2
             ):
                 return (
-                    f"Parameters Error: 'Identity' initialazer in {key} can take only 2D input shape "
+                    f"Parameters Error: 'Identity' initializer in {key} can take only 2D input shape "
                     f"but received {len(self.inp_shape[0])}D input shape={self.inp_shape[0]}!"
                 )
 
         # strides and dilation_rate in 1D layers
         if isinstance(self.layer_parameters.get("strides", None), int) and isinstance(
-            self.layer_parameters.get("dilation_rate", None), int
+                self.layer_parameters.get("dilation_rate", None), int
         ):
             if (
-                self.layer_parameters.get("dilation_rate") > 1
-                and self.layer_parameters.get("strides") > 1
+                    self.layer_parameters.get("dilation_rate") > 1
+                    and self.layer_parameters.get("strides") > 1
             ):
                 return "Parameters Error: 'dilation_rate' and 'strides' cannot have value > 1 at the same time!"
 
         # strides and dilation_rate in 2+D layers
         if isinstance(
-            self.layer_parameters.get("strides", None), (tuple, list)
+                self.layer_parameters.get("strides", None), (tuple, list)
         ) and isinstance(self.layer_parameters.get("strides", None), (tuple, list)):
             if (
-                max(self.layer_parameters.get("dilation_rate")) > 1
-                and max(self.layer_parameters.get("strides")) > 1
+                    max(self.layer_parameters.get("dilation_rate")) > 1
+                    and max(self.layer_parameters.get("strides")) > 1
             ):
                 return "Parameters Error: 'dilation_rate' and 'strides' cannot have value > 1 at the same time!"
 
         # value range for axis
         if self.layer_parameters.get("axis", None) and (
-            self.layer_parameters.get("axis", None) == 0
-            or self.layer_parameters.get("axis", None) > len(self.inp_shape[0]) - 1
-            or self.layer_parameters.get("axis", None) < -len(self.inp_shape[0]) + 1
+                self.layer_parameters.get("axis", None) == 0
+                or self.layer_parameters.get("axis", None) > len(self.inp_shape[0]) - 1
+                or self.layer_parameters.get("axis", None) < -len(self.inp_shape[0]) + 1
         ):
             axis_values = list(
                 np.arange(-len(self.inp_shape[0]) + 1, len(self.inp_shape[0]))
@@ -989,16 +980,16 @@ class LayerValidation:
 
         # groups with data_format, filters and inp_shape
         if (
-            self.layer_parameters.get("groups", None)
-            and self.layer_parameters.get("data_format", None)
-            and self.layer_parameters.get("filters", None)
+                self.layer_parameters.get("groups", None)
+                and self.layer_parameters.get("data_format", None)
+                and self.layer_parameters.get("filters", None)
         ):
             dim = -self.input_dimension[0] + 1
             if self.layer_parameters.get("data_format") == "channels_last" and (
-                self.layer_parameters.get("filters")
-                % self.layer_parameters.get("groups")
-                != 0
-                or self.inp_shape[0][-1] % self.layer_parameters.get("groups") != 0
+                    self.layer_parameters.get("filters")
+                    % self.layer_parameters.get("groups")
+                    != 0
+                    or self.inp_shape[0][-1] % self.layer_parameters.get("groups") != 0
             ):
                 return (
                     f"Parameters Error: The number of filters {self.layer_parameters.get('filters')} and "
@@ -1007,10 +998,10 @@ class LayerValidation:
                 )
 
             if self.layer_parameters.get("data_format") == "channels_first" and (
-                self.layer_parameters.get("filters")
-                % self.layer_parameters.get("groups")
-                != 0
-                or self.inp_shape[0][dim] % self.layer_parameters.get("groups") != 0
+                    self.layer_parameters.get("filters")
+                    % self.layer_parameters.get("groups")
+                    != 0
+                    or self.inp_shape[0][dim] % self.layer_parameters.get("groups") != 0
             ):
                 return (
                     f"Parameters Error: The number of filters {self.layer_parameters.get('filters')} and "
@@ -1019,15 +1010,15 @@ class LayerValidation:
                 )
 
             if (
-                self.layer_parameters.get("data_format") == "channels_first"
-                and len(self.inp_shape[0]) > -dim + 1
+                    self.layer_parameters.get("data_format") == "channels_first"
+                    and len(self.inp_shape[0]) > -dim + 1
             ):
                 if (
-                    isinstance(self.layer_parameters.get("strides"), int)
-                    and self.layer_parameters.get("strides") > 1
+                        isinstance(self.layer_parameters.get("strides"), int)
+                        and self.layer_parameters.get("strides") > 1
                 ) or (
-                    isinstance(self.layer_parameters.get("strides"), (tuple, list))
-                    and max(self.layer_parameters.get("strides")) > 1
+                        isinstance(self.layer_parameters.get("strides"), (tuple, list))
+                        and max(self.layer_parameters.get("strides")) > 1
                 ):
                     return (
                         f"Parameters Error: for input shape wit dim > {-dim + 1} and 'data_format'='channels_first' "
@@ -1036,9 +1027,9 @@ class LayerValidation:
 
         # maxwordcount
         if (
-            self.layer_type == LayerTypeChoice.Embedding
-            and self.kwargs.get("maxwordcount", None)
-            and self.layer_parameters.get("input_dim", None)
+                self.layer_type == LayerTypeChoice.Embedding
+                and self.kwargs.get("maxwordcount", None)
+                and self.layer_parameters.get("input_dim", None)
         ):
             if self.layer_parameters.get("input_dim") < self.kwargs.get("maxwordcount"):
                 return (
@@ -1049,9 +1040,9 @@ class LayerValidation:
         # pretrained models exclusions
         if self.module_type == layers.extra.ModuleTypeChoice.keras_pretrained_model:
             if (
-                self.layer_parameters.get("include_top")
-                and self.layer_parameters.get("weights")
-                and self.layer_parameters.get("classes") != 1000
+                    self.layer_parameters.get("include_top")
+                    and self.layer_parameters.get("weights")
+                    and self.layer_parameters.get("classes") != 1000
             ):
                 return (
                     f"Parameters Error: If using `weights` as `'imagenet'` with `include_top` as true, "
@@ -1059,17 +1050,17 @@ class LayerValidation:
                 )
             elif self.layer_type == "InceptionV3":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                    1:
-                ] != (299, 299, 3):
+                                                                1:
+                                                                ] != (299, 299, 3):
                     return (
                         f"Input shape Error: with 'include_top'=True input shape "
                         f"must be only (299, 299, 3) but received {self.inp_shape[0][1:]}!"
                     )
                 elif (
-                    not self.layer_parameters.get("include_top")
-                    and self.inp_shape[0][1] < 75
-                    or self.inp_shape[0][2] < 75
-                    or self.inp_shape[0][3] < 3
+                        not self.layer_parameters.get("include_top")
+                        and self.inp_shape[0][1] < 75
+                        or self.inp_shape[0][2] < 75
+                        or self.inp_shape[0][3] < 3
                 ):
                     return (
                         f"Input shape Error: input shape must be greater or equal (75, 75, 3) "
@@ -1077,17 +1068,17 @@ class LayerValidation:
                     )
             elif self.layer_type == "Xception":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                    1:
-                ] != (299, 299, 3):
+                                                                1:
+                                                                ] != (299, 299, 3):
                     return (
                         f"Input shape Error: with 'include_top'=True input shape "
                         f"must be only (299, 299, 3) but received {self.inp_shape[0][1:]}!"
                     )
                 elif (
-                    not self.layer_parameters.get("include_top")
-                    and self.inp_shape[0][1] < 71
-                    or self.inp_shape[0][2] < 71
-                    or self.inp_shape[0][3] < 3
+                        not self.layer_parameters.get("include_top")
+                        and self.inp_shape[0][1] < 71
+                        or self.inp_shape[0][2] < 71
+                        or self.inp_shape[0][3] < 3
                 ):
                     return (
                         f"Input shape Error: input shape must be greater or equal (71, 71, 3) "
@@ -1095,17 +1086,17 @@ class LayerValidation:
                     )
             elif self.layer_type == "VGG16" or self.layer_type == "ResNet50":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                    1:
-                ] != (224, 224, 3):
+                                                                1:
+                                                                ] != (224, 224, 3):
                     return (
                         f"Input shape Error: with 'include_top'=True input shape "
                         f"must be only (224, 224, 3) but received {self.inp_shape[0][1:]}!"
                     )
                 elif (
-                    not self.layer_parameters.get("include_top")
-                    and self.inp_shape[0][1] < 32
-                    or self.inp_shape[0][2] < 32
-                    or self.inp_shape[0][3] < 3
+                        not self.layer_parameters.get("include_top")
+                        and self.inp_shape[0][1] < 32
+                        or self.inp_shape[0][2] < 32
+                        or self.inp_shape[0][3] < 3
                 ):
                     return (
                         f"Input shape Error: input shape must be greater or equal (32, 32, 3) "
@@ -1117,9 +1108,9 @@ class LayerValidation:
         # CustomUNETBlock exceptions
         if self.layer_type == LayerTypeChoice.CustomUNETBlock:
             if (
-                self.inp_shape[0][1] < 32
-                or self.inp_shape[0][2] < 32
-                or self.inp_shape[0][3] < 3
+                    self.inp_shape[0][1] < 32
+                    or self.inp_shape[0][2] < 32
+                    or self.inp_shape[0][3] < 3
             ):
                 return (
                     f"Input shape Error: input shape must be greater or equal (32, 32, 3) "
@@ -1128,32 +1119,32 @@ class LayerValidation:
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
                 return f"Input shape Error: input shape {self.inp_shape[0]} except channels must be whole divided by 4!"
 
-        # space_to_depth dimentions
+        # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
             if (
-                self.layer_parameters.get("data_format")
-                == SpaceToDepthDataFormatChoice.NCHW
-                or self.layer_parameters.get("data_format")
-                == SpaceToDepthDataFormatChoice.NHWC
+                    self.layer_parameters.get("data_format")
+                    == SpaceToDepthDataFormatChoice.NCHW
+                    or self.layer_parameters.get("data_format")
+                    == SpaceToDepthDataFormatChoice.NHWC
             ) and len(self.inp_shape[0]) != 4:
                 return (
                     f"Input shape Error: expected input shape dim=4 for `data_format`=`NHWC` or `NCHW` but "
                     f"received dim={len(self.inp_shape[0])} with input_shape {self.inp_shape[0]}!"
                 )
             if (
-                self.layer_parameters.get("data_format")
-                == SpaceToDepthDataFormatChoice.NCHW_VECT_C
-                and len(self.inp_shape[0]) != 5
+                    self.layer_parameters.get("data_format")
+                    == SpaceToDepthDataFormatChoice.NCHW_VECT_C
+                    and len(self.inp_shape[0]) != 5
             ):
                 return (
                     f"Input shape Error: expected input shape dim=5 for `data_format`=`NCHW_VECT_C` but "
                     f"received dim={len(self.inp_shape[0])} with input_shape {self.inp_shape[0]}!"
                 )
             if self.layer_parameters.get(
-                "data_format"
+                    "data_format"
             ) == SpaceToDepthDataFormatChoice.NCHW_VECT_C and (
-                self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0
-                or self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0
+                    self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0
+                    or self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0
             ):
                 return (
                     f"Parameters Error: Dimension size ({self.inp_shape[0][2:4]}) from "
@@ -1166,7 +1157,7 @@ class CustomLayer(tensorflow.keras.layers.Layer):
     """Pattern for create custom user block from block plan"""
 
     def __init__(self):
-        super(CustomLayer, self).__init__()
+        super().__init__()
         self.block_plan = []
         pass
 
@@ -1206,10 +1197,10 @@ class ModelCreator:
         self._get_idx_line()
         self._get_model_links()
         self.id_idx_dict = {}
-        for id in self.idx_line:
+        for _id in self.idx_line:
             for idx in range(len(self.terra_model.plan)):
-                if id == self.terra_model.plan[idx][0]:
-                    self.id_idx_dict[id] = idx
+                if _id == self.terra_model.plan[idx][0]:
+                    self.id_idx_dict[_id] = idx
                     break
         self.tensors = {}
         pass
@@ -1226,34 +1217,34 @@ class ModelCreator:
 
     def _build_keras_model(self):
         """Build keras model from plan"""
-        for id in self.idx_line:
-            layer_type = self.terra_model.plan[self.id_idx_dict.get(id)][1]
+        for _id in self.idx_line:
+            layer_type = self.terra_model.plan[self.id_idx_dict.get(_id)][1]
             # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
             #     layer_type = 'SpaceToDepth'
             # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
             if (
-                self.layer_config.get(id).module_type.value
-                == ModuleTypeChoice.tensorflow
+                    self.layer_config.get(_id).module_type.value
+                    == ModuleTypeChoice.tensorflow
             ):
-                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             elif (
-                self.layer_config.get(id).module_type.value
-                == ModuleTypeChoice.keras_pretrained_model
+                    self.layer_config.get(_id).module_type.value
+                    == ModuleTypeChoice.keras_pretrained_model
             ):
                 self._pretrained_model_init_(
-                    self.terra_model.plan[self.id_idx_dict.get(id)]
+                    self.terra_model.plan[self.id_idx_dict.get(_id)]
                 )
             elif (
-                self.layer_config.get(id).module_type.value
-                == ModuleTypeChoice.block_plan
+                    self.layer_config.get(_id).module_type.value
+                    == ModuleTypeChoice.block_plan
             ):
-                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             elif (
-                self.layer_config.get(id).module_type.value == ModuleTypeChoice.keras
-                or self.layer_config.get(id).module_type.value
-                == ModuleTypeChoice.terra_layer
+                    self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras
+                    or self.layer_config.get(_id).module_type.value
+                    == ModuleTypeChoice.terra_layer
             ):
-                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(id)])
+                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
                 sys.exit(msg)
@@ -1267,11 +1258,11 @@ class ModelCreator:
             self.layer_config.get(terra_layer[0]).module.value
         )
         if terra_layer[1] == LayerTypeChoice.Input:
-            input_shape = self.terra_model.input_shape.get(
+            _input_shape = self.terra_model.input_shape.get(
                 int(terra_layer[2].get("name"))
             )[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
-                shape=input_shape, name=terra_layer[2].get("name")
+                shape=_input_shape, name=terra_layer[2].get("name")
             )
         else:
             if len(terra_layer[3]) == 1:
@@ -1393,12 +1384,13 @@ if __name__ == "__main__":
         # "size": 2,
         # 'filters': 32,
         # 'kernel_size': (2, 2),
-        # 'strides': (3, 3),
+        'pool_size': 2,
+        'strides': 2,
         # 'dilation_rate': (1, 1),
         # 'groups': 2,
         # 'depth_multiplier': 5,
         # 'data_format': 'channels_first',
-        # "padding": 'valid',
+        "padding": 'same',
         # "output_padding": None,
         # "kernel_initializer": "glorot_uniform",
         # "beta_initializer": "glorot_uniform",
@@ -1430,8 +1422,8 @@ if __name__ == "__main__":
         # 'capacity': 128.,
         # 'randomSample': True,
         # 'roll_up': True,
-        "block_size": 2,
-        "data_format": SpaceToDepthDataFormatChoice.NCHW,
+        # "block_size": 2,
+        # "data_format": SpaceToDepthDataFormatChoice.NCHW,
     }
 
     # layers.types.Conv2D.LayerConfig.num_uplinks.value = 3
@@ -1439,7 +1431,7 @@ if __name__ == "__main__":
         # "maxwordcount": 2000
     }
 
-    layer_name = "space_to_depth"
+    layer_name = "MaxPool1D"
     # print(get_layer_defaults(layer_name))
     LV = LayerValidation()
     LV.set_state(layer_name, input_shape, params, **kwarg)
@@ -1452,7 +1444,7 @@ if __name__ == "__main__":
     x, y = LV.get_validated()
     print("\n", x, y)
 
-    x = tensorflow.keras.layers.Input(input_shape[0][1:])
+    # x = tensorflow.keras.layers.Input(input_shape[0][1:])
     # x2 = tensorflow.keras.layers.Input(input_shape[1][1:])
     # x3 = tensorflow.keras.layers.Input(input_shape[2][1:])
     # x4 = tensorflow.keras.layers.Input(input_shape[3][1:])
@@ -1463,8 +1455,8 @@ if __name__ == "__main__":
     # x = getattr(tensorflow.keras.layers, layer_name)(**params)([x, x2, x3, x4])
     # x = getattr(customLayers, layer_name)(**params)(x)
     # x = tensorflow_addons.activations.mish(x)
-    x = tensorflow.nn.space_to_depth(x, **params)
-    print(x.shape)
+    # x = tensorflow.nn.space_to_depth(x, **params)
+    # print(x.shape)
 
     # import importlib
     #

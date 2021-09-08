@@ -1,7 +1,16 @@
 <template>
   <div class="forms">
+    <t-multi-select
+      v-if="type === 'multiselect_sources_paths'"
+      :id="id"
+      name="sources_paths"
+      label="Выберите путь"
+      :errors="error"
+      inline
+    />
     <t-segmentation-manual
       v-if="type === 'segmentation_manual'"
+      :id="id"
       :value="getValue"
       :label="label"
       type="text"
@@ -17,6 +26,7 @@
       v-if="type === 'segmentation_annotation'"
       :value="getValue"
       :label="label"
+      :id="id"
       type="text"
       :parse="parse"
       :name="name"
@@ -29,6 +39,7 @@
     <t-segmentation-search
       v-if="type === 'segmentation_search'"
       :value="getValue"
+      :id="id"
       :label="label"
       type="text"
       :parse="parse"
@@ -53,7 +64,7 @@
       @cleanError="cleanError"
     />
     <t-input
-      v-if="(type === 'number' || type === 'text') && !!!valueIn && label!=='Цвет'"
+      v-if="type === 'number' || type === 'text'"
       :value="getValue"
       :label="label"
       :type="type"
@@ -110,7 +121,7 @@ export default {
   props: {
     idKey: String,
     type: String,
-    value: [String, Boolean, Number],
+    value: [String, Boolean, Number, Array],
     list: Array,
     event: String,
     label: String,
@@ -156,7 +167,7 @@ export default {
     },
   },
   created() {
-    // console.log(this.parameters)
+    console.log(this.type)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });

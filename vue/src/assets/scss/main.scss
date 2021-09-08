@@ -1,0 +1,17 @@
+:root {
+  --color__bg: #0e1621;
+  --color__page: #17212b;
+  --color__text: #fff;
+
+  @media screen {
+    &[data-theme="light"] {
+      --color__bg: #121212;
+      --color__page: #121212;
+      --color__text: #ffffff;
+    }
+  }
+}
+
+$color__bg: var(--color__bg);
+$color__page: var(--color__page);
+$color__text: var(--color__text);

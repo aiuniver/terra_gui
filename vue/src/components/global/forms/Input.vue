@@ -65,21 +65,25 @@ export default {
       }
     },
     change(e) {
-      if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
+      // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       if (this.isChange) {
         let value = e.target.value;
         value = this.type === 'number' ? +value : value;
         this.$emit('change', { name: this.name, value });
+        this.$emit('parse', { name: this.name, parse: this.parse, value });
         this.isChange = false;
       }
     },
   },
+  created() {
+    this.input = this.value
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 .t-field {
-  // margin-bottom: 20px;
+  margin-bottom: 10px;
   &__label {
     text-align: left;
     color: #a7bed3;
@@ -110,6 +114,9 @@ export default {
   }
   &__input.small {
     height: 24px;
+    height: 24px;
+    font-size: 12px;
+    line-height: 24px;
   }
 }
 .t-inline {
@@ -120,8 +127,8 @@ export default {
   margin-bottom: 10px;
   align-items: center;
   .t-field__label {
-    width: 150px;
-    max-width: 130px;
+    // width: 150px;
+    // max-width: 130px;
     padding: 0 10px;
     text-align: left;
     color: #a7bed3;
@@ -131,6 +138,7 @@ export default {
     font-size: 0.75rem;
   }
   .t-field__input {
+    padding: 0 5px;
     height: 24px;
     font-size: 12px;
     line-height: 24px;

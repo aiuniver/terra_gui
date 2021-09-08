@@ -37,8 +37,8 @@
 
 <script>
 import domtoimage from '@/assets/js/dom-to-image.min.js';
-import { createBlock, cloneBlock, mouseHelper } from '@/store/const/modeling';
-import { mapGetters } from 'vuex'
+import { mouseHelper } from '@/store/const/modeling';
+import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
 
@@ -61,7 +61,7 @@ export default {
   },
   data: () => ({
     icons: [
-      { icon: 'icon-deploy-copy', event: 'clone' },
+      { icon: 'icon-modeling-copy-white', event: 'clone' },
       { icon: 'icon-modeling-link-remove', event: 'link' },
       { icon: 'icon-modeling-remove', event: 'remove' },
     ],
@@ -161,13 +161,13 @@ export default {
 
         if (!originBlock || !targetBlock) {
           console.log('Remove invalid link', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
         if (originBlock.id === targetBlock.id) {
           console.log('Loop detected, remove link', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
@@ -176,7 +176,7 @@ export default {
 
         if (!originLinkPos || !targetLinkPos) {
           console.log('Remove invalid link (slot not exist)', link);
-          this.removeLink(link.id);
+          this.$store.dispatch('modeling/removeLink', link.id);
           continue;
         }
 
@@ -228,17 +228,13 @@ export default {
     clickIcons({ event }, block) {
       console.log(event);
       if (event === 'remove') {
-        this.blockDelete(block);
+        this.$store.dispatch('modeling/removeBlock', block);
       }
       if (event === 'clone') {
-        this.addCloneBlock(block);
+        this.$store.dispatch('modeling/cloneBlock', block);
       }
       if (event === 'link') {
-        this.links.forEach(l => {
-          if (l.originID === block.id || l.targetID === block.id) {
-            this.removeLink(l.id);
-          }
-        });
+        this.$store.dispatch('modeling/removeLinkToBlock', block);
       }
     },
     handleMauseOver(e) {
@@ -250,12 +246,12 @@ export default {
       console.log(mouseIsOver, code);
       if (mouseIsOver && code === 'Delete') {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock);
+          // this.blockDelete(this.selectedBlock);
         }
       }
       if (mouseIsOver && code === 'KeyC' && ctrlKey) {
         if (this.selectedBlock) {
-          this.blockDelete(this.selectedBlock);
+          // this.blockDelete(this.selectedBlock);
         }
       }
       // console.log(event)
@@ -331,7 +327,7 @@ export default {
         this.lastMouseX = this.mouseX;
         this.lastMouseY = this.mouseY;
 
-        this.deselectAll();
+        this.$store.dispatch('modeling/deselectBlocks');
         if (e.preventDefault) e.preventDefault();
       }
     },
@@ -416,8 +412,8 @@ export default {
         if (slotNumber === 0) {
           x += this.optionsForChild.width / 2;
           // console.log()
-          y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          // y += 42;
+          // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
+          y += 42;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -491,13 +487,7 @@ export default {
           );
         });
 
-        let maxID = Math.max(
-          0,
-          ...this.links.map(function (o) {
-            return o.id;
-          })
-        );
-
+        let maxID = Math.max(0, ...this.links.map(o => o.id));
         if (this.linkStartData.block.id !== targetBlock.id) {
           const originID = this.linkStartData.block.id;
           const originSlot = this.linkStartData.slotNumber;
@@ -521,7 +511,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true);
+          this.updateModel();
         }
       }
 
@@ -544,23 +534,21 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-
-          this.$emit('save', true);
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
-
           this.linkingStart(findBlock, findLink.originSlot);
 
+          this.updateModel();
           // this.updateScene();
         }
       }
     },
-    removeLink(linkID) {
-      console.log('removeLink');
-      this.links = this.links.filter(value => {
-        return !(value.id === linkID);
-      });
-    },
+    // removeLink(linkID) {
+    //   console.log('removeLink');
+    //   this.links = this.links.filter(value => {
+    //     return !(value.id === linkID);
+    //   });
+    // },
     async getImages() {
       try {
         const image = await domtoimage.toPng(this.$el, {
@@ -575,69 +563,70 @@ export default {
       }
     },
     // Blocks
-    addCloneBlock(oldBlock, x, y) {
-      let maxID = Math.max(0, ...this.blocks.map(o => o.id));
-      const block = cloneBlock(oldBlock, maxID + 1);
-      if (!block) {
-        console.warn('block not create: ' + block);
-        return;
-      }
-      if (x === undefined || y === undefined) {
-        x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-        y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
-      } else {
-        x = (x - this.centerX) / this.scale;
-        y = (y - this.centerY) / this.scale;
-      }
-      block.position = [x, y];
-      this.blocks.push(block);
-      this.blocks = [...this.blocks];
-    },
+    // addCloneBlock(oldBlock, x, y) {
+    //   let maxID = Math.max(0, ...this.blocks.map(o => o.id));
+    //   const block = cloneBlock(oldBlock, maxID + 1);
+    //   if (!block) {
+    //     console.warn('block not create: ' + block);
+    //     return;
+    //   }
+    //   if (x === undefined || y === undefined) {
+    //     x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+    //     y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+    //   } else {
+    //     x = (x - this.centerX) / this.scale;
+    //     y = (y - this.centerY) / this.scale;
+    //   }
+    //   block.position = [x, y];
+    //   this.blocks.push(block);
+    //   this.blocks = [...this.blocks];
+    // },
 
-    addNewBlock(nodeName, x, y) {
-      let maxID = Math.max(
-        0,
-        ...this.blocks.map(function (o) {
-          return o.id;
-        })
-      );
-      let block = createBlock(nodeName, maxID + 1);
-      if (!block) {
-        console.warn('block not create: ' + block);
-        return;
-      }
+    // addNewBlock(nodeName, x, y) {
+    //   let maxID = Math.max(
+    //     0,
+    //     ...this.blocks.map(function (o) {
+    //       return o.id;
+    //     })
+    //   );
+    //   let block = createBlock(nodeName, maxID + 1);
+    //   if (!block) {
+    //     console.warn('block not create: ' + block);
+    //     return;
+    //   }
 
-      if (x === undefined || y === undefined) {
-        x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
-        y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
-      } else {
-        x = (x - this.centerX) / this.scale;
-        y = (y - this.centerY) / this.scale;
-      }
-      block.position = [x, y];
-      this.blocks.push(block);
-      this.blocks = [...this.blocks];
+    //   if (x === undefined || y === undefined) {
+    //     x = (this.$el.clientWidth / 2 - this.centerX) / this.scale;
+    //     y = (this.$el.clientHeight / 2 - this.centerY) / this.scale;
+    //   } else {
+    //     x = (x - this.centerX) / this.scale;
+    //     y = (y - this.centerY) / this.scale;
+    //   }
+    //   block.position = [x, y];
+    //   this.blocks.push(block);
+    //   this.blocks = [...this.blocks];
 
-      // this.updateScene();
-    },
+    //   // this.updateScene();
+    // },
     position(block, event) {
       // console.log(block, event)
       block.position = event;
     },
-    deselectAll(withoutID = null) {
-      this.blocks.forEach(value => {
-        if (value.id !== withoutID && value.selected) {
-          this.blockDeselect(value);
-        }
-      });
-    },
+    // deselectAll(withoutID = null) {
+    //   this.blocks.forEach(value => {
+    //     if (value.id !== withoutID && value.selected) {
+    //       this.blockDeselect(value);
+    //     }
+    //   });
+    // },
     // Events
     blockSelect(block) {
-      block.selected = true;
-      this.selectedBlock = block;
-      this.deselectAll(block.id);
+      this.$store.dispatch('modeling/selectBlock', block);
+      // block.selected = true;
+      // this.selectedBlock = block;
+      // this.deselectAll(block.id);
       // this.$emit("nodeClick", block.id);
-      this.$emit('blockSelect', block);
+      // this.$emit('blockSelect', block);
     },
     blockDeselect(block) {
       block.selected = false;
@@ -648,32 +637,32 @@ export default {
 
       this.$emit('blockDeselect', block);
     },
-    blockDelete(block) {
-      if (block.selected) {
-        this.blockDeselect(block);
-      }
-      this.links.forEach(l => {
-        if (l.originID === block.id || l.targetID === block.id) {
-          this.removeLink(l.id);
-        }
-      });
-      this.blocks = this.blocks.filter(b => {
-        return b.id !== block.id;
-      });
-      // this.updateScene();
-    },
+    // blockDelete(block) {
+    //   if (block.selected) {
+    //     this.blockDeselect(block);
+    //   }
+    //   this.links.forEach(l => {
+    //     if (l.originID === block.id || l.targetID === block.id) {
+    //       this.removeLink(l.id);
+    //     }
+    //   });
+    //   this.blocks = this.blocks.filter(b => {
+    //     return b.id !== block.id;
+    //   });
+    //   // this.updateScene();
+    // },
     moveBlock() {
-      this.$store.dispatch('modeling/setButtons', { save: true });
-      this.$emit('save');
+      this.updateModel();
     },
 
-    updateScene() {
-      //   // this.scene = this.exportScene()
-      //   // this.$emit("update:scene", this.exportScene());
+    updateModel() {
+      this.$store.dispatch('modeling/updateModel');
     },
   },
 
   mounted() {
+    // Context menu off
+    // this.$el.addEventListener('contextmenu', event => event.preventDefault());
     this.$el.addEventListener('mouseenter', this.handleMauseOver);
     this.$el.addEventListener('mouseleave', this.handleMauseOver);
     document.documentElement.addEventListener('keyup', this.keyup);
@@ -683,11 +672,12 @@ export default {
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
     this.centerX = this.$el.clientWidth / 2;
-    // this.centerY = this.$el.clientHeight / 2;
+    this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
   },
   beforeDestroy() {
+    // this.$el.removeEventListener('contextmenu', null);
     document.documentElement.removeEventListener('keyup', this.keyup);
     this.$el.removeEventListener('mouseenter', this.handleMauseOver);
     this.$el.removeEventListener('mouseleave', this.handleMauseOver);

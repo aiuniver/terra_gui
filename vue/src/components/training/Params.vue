@@ -1,225 +1,205 @@
 <template>
-  <div class="properties project-training-properties">
-    <div class="wrapper">
-      <div class="params">
-        <form class="params-container">
-          <div class="params-item params-config">
-            <div class="inner settings">
-              <div class="params-item params-optimizer pa-3">
-                <div class="inner">
-                  <div class="field-form field-inline">
-                    <Autocomplete
-                      :options="optimazer_items"
-                      :disabled="false"
-                      :label="'Оптимизатор'"
-                      name="optimazer"
-                      :maxItem="10"
-                      placeholder="Please select an option"
-                      @focus="focus"
-                      @selected="selected"
-                    >
-                    </Autocomplete>
-                  </div>
-                  <div class="field-form form-inline-label flex wrap">
-                    <div class="field-form field-inline">
-                      <label for="field_form-batch_sizes">Размер батча</label>
-                      <input
-                        name="batch_sizes"
-                        id="field_form-batch_sizes"
-                        type="number"
-                        value="1"
-                      />
-                    </div>
-                    <div class="field-form field-inline">
-                      <label for="field_form-epochs_count"
-                        >Количество эпох</label
-                      >
-                      <input
-                        name="epochs_count"
-                        id="field_form-epochs_count"
-                        type="number"
-                        value="1"
-                      />
-                    </div>
-                    <div class="field-form field-inline">
-                      <label for="field_form-learning_rate"
-                        >Learning rate</label
-                      >
-                      <input
-                        name="optimizer[params][main][learning_rate]"
-                        id="field_form-learning_rate"
-                        type="number"
-                        value=""
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <at-collapse>
-                <at-collapse-item class="mt-3" title="Параметры оптимизатора">
-                  <div class="form-inline-label">
-                    <div class="field-form field-inline field-reverse">
-                      <label for="field_form-optimizer[params][extra][beta_1]"
-                        >Beta 1</label
-                      >
-                      <input
-                        type="number"
-                        id="field_form-optimizer[params][extra][beta_1]"
-                        name="optimizer[params][extra][beta_1]"
-                        value="0.9"
-                        data-value-type="number"
-                      />
-                    </div>
-                    <div class="field-form field-inline field-reverse">
-                      <label for="field_form-optimizer[params][extra][beta_2]"
-                        >Beta 2</label
-                      >
-                      <input
-                        type="number"
-                        id="field_form-optimizer[params][extra][beta_2]"
-                        name="optimizer[params][extra][beta_2]"
-                        value="0.999"
-                        data-value-type="number"
-                      />
-                    </div>
-                    <div class="field-form field-inline field-reverse">
-                      <label for="field_form-optimizer[params][extra][epsilon]"
-                        >Epsilon</label
-                      >
-                      <input
-                        type="number"
-                        id="field_form-optimizer[params][extra][epsilon]"
-                        name="optimizer[params][extra][epsilon]"
-                        value="1e-7"
-                        data-value-type="number"
-                      />
-                    </div>
-                    <div class="field-form field-inline field-reverse">
-                      <label for="field_form-optimizer[params][extra][amsgrad]"
-                        >Amsgrad</label
-                      >
-                      <div class="checkout-switch">
-                        <input
-                          type="checkbox"
-                          id="field_form-optimizer[params][extra][amsgrad]"
-                          name="optimizer[params][extra][amsgrad]"
-                          data-value-type="boolean"
-                          data-unchecked-value="false"
-                        />
-                        <span class="switcher"></span>
-                      </div>
-                    </div>
-                  </div>
-                </at-collapse-item>
-
-                <at-collapse-item class="mt-3" title="Параметры выходных слоев">
-                </at-collapse-item>
-
-                <at-collapse-item class="mt-3" title="Чекпоинты">
-                  <div class="inner form-inline-label flex wrap">
-                    <Select
-                      :label="'Монитор'"
-                      :lists="select_list"
-                      :value="'OPTION_1'"
-                      :parse="'checkpoint[monitor][output]'"
-                      :name="'checkpoint[monitor][output]'"
-                    />
-                    <Select
-                      :label="'Indicator'"
-                      :lists="select_list"
-                      :value="'OPTION_1'"
-                      :parse="'checkpoint[indicator]'"
-                      :name="'checkpoint[indicator]'"
-                    />
-                    <Select
-                      :label="'Тип'"
-                      :lists="select_list"
-                      :value="'OPTION_1'"
-                      :parse="'checkpoint[monitor][out_type]'"
-                      :name="'checkpoint[monitor][out_type]'"
-                    />
-                    <Select
-                      :label="'Режим'"
-                      :lists="select_list"
-                      :value="'OPTION_1'"
-                      :parse="'checkpoint[mode]'"
-                      :name="'checkpoint[mode]'"
-                    />
-                    <Checkbox
-                      :value="true"
-                      :label="'Сохранить лучшее'"
-                      type="checkbox"
-                      :parse="'checkpoint[save_best]'"
-                      :name="'checkpoint[save_best]'"
-                    />
-                    <Checkbox
-                      :value="true"
-                      :label="'Сохранить веса'"
-                      type="checkbox"
-                      :parse="'checkpoint[save_weights]'"
-                      :name="'checkpoint[save_weights]'"
-                    />
-                  </div>
-                </at-collapse-item>
-
-                <at-collapse-item class="mt-3" title="Выводить">
-                </at-collapse-item>
-              </at-collapse>
+  <div class="params">
+    <scrollbar>
+      <div class="params__items">
+        <at-collapse :value="collapse">
+          <at-collapse-item class="mt-3" :title="''">
+            <template v-for="(data, i) of main.fields">
+              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :state="state" :inline="false" @parse="parse" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="''">
+            <div class="fit">
+              <template v-for="(data, i) of fit.fields">
+                <t-auto-field-trainings
+                  v-bind="data"
+                  :key="'fit_' + i"
+                  class="fit__item"
+                  :state="state"
+                  :inline="true"
+                  @parse="parse"
+                />
+              </template>
             </div>
-          </div>
-
-          <div class="params-item params-actions pa-3">
-            <div class="inner actions">
-              <div class="actions-form">
-                <div class="item training">
-                  <button>Обучить</button>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="optimizer.name">
+            <template v-for="(data, i) of optimizerFields">
+              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" :state="state" inline @parse="parse" />
+            </template>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="outputs.name">
+            <div class="blocks-layers">
+              <template v-for="(field, i) of outputs.fields">
+                <div class="block-layers" :key="'block_layers_' + i">
+                  <div class="block-layers__header">
+                    {{ field.name }}
+                  </div>
+                  <div class="block-layers__body">
+                    <template v-for="(data, i) of field.fields">
+                      <t-auto-field-trainings
+                        v-bind="data"
+                        :key="'checkpoints_' + i"
+                        :state="state"
+                        :inline="true"
+                        @parse="parse"
+                      />
+                    </template>
+                  </div>
                 </div>
-                <div class="item stop">
-                  <button disabled="disabled">Остановить</button>
-                </div>
-                <div class="item reset">
-                  <button disabled="disabled">Сбросить</button>
-                </div>
-              </div>
+              </template>
             </div>
-          </div>
-        </form>
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" :title="checkpoints.name">
+            <div class="checkpoints">
+              <template v-for="(data, i) of checkpoints.fields">
+                <t-auto-field-trainings
+                  v-bind="data"
+                  :key="'outputs_' + i"
+                  class="checkpoints__item"
+                  :state="state"
+                  :inline="true"
+                  @parse="parse"
+                />
+              </template>
+            </div>
+          </at-collapse-item>
+        </at-collapse>
       </div>
-    </div>
+      <!-- <div class="params__items">
+        <div class="params__items--item">
+          <t-field label="Мониторинг" inline>
+              <TCheckbox small @focus="click" />
+          </t-field>
+        </div>
+      </div> -->
+      <div class="params__items">
+        <div class="params__items--item">
+          <div class="item d-flex mb-3" style="gap: 10px">
+            <button @click="start">Обучить</button>
+            <button>Остановить</button>
+          </div>
+          <div class="item d-flex" style="gap: 10px">
+            <button>Сохранить</button>
+            <button>Сбросить</button>
+          </div>
+        </div>
+      </div>
+    </scrollbar>
   </div>
 </template>
 
 <script>
-import Autocomplete from "@/components/forms/Autocomplete.vue";
-import Select from "@/components/forms/Select.vue";
-import Checkbox from "@/components/forms/Checkbox.vue";
+import ser from '../../assets/js/myserialize';
+import { mapGetters } from 'vuex';
+// import TCheckbox from '../global/new/forms/TCheckbox.vue';
+// import Checkbox from '@/components/forms/Checkbox.vue';
 
 export default {
-  name: "Params",
+  name: 'params-traning',
   components: {
-    Autocomplete,
-    Select,
-    Checkbox,
+    // TCheckbox,
+    // Checkbox,
   },
   data: () => ({
-    optimazer_items: [
-      { id: 1, name: "Adam" },
-      { id: 2, name: "SGD" },
-    ],
-    select_list: ["OPTION_1", "OPTION_2"],
+    obj: {},
+    collapse: [0, 1, 2, 3, 4],
+    optimizerValue: '',
   }),
+  computed: {
+    ...mapGetters({
+      params: 'trainings/getParams',
+    }),
+    state: {
+      set(value) {
+        this.$store.dispatch('trainings/setStateParams', value);
+      },
+      get() {
+        console.log(this.$store.getters['trainings/getStateParams']);
+        return this.$store.getters['trainings/getStateParams'];
+      },
+    },
+    main() {
+      return this.params?.main || {};
+    },
+    fit() {
+      return this.params?.fit || {};
+    },
+    outputs() {
+      return this.params?.outputs || {};
+    },
+    optimizerFields() {
+      return this.params?.optimizer?.fields?.[this.optimizerValue] || [];
+    },
+    optimizer() {
+      return this.params?.optimizer || {};
+    },
+    checkpoints() {
+      return this.params?.checkpoints || {};
+    },
+  },
   methods: {
-    focus() {},
-    selected() {},
+    click(e) {
+      console.log(e)
+    },
+    start() {
+      console.log(JSON.stringify(this.obj, null, 2));
+    },
+    parse({ parse, value, name }) {
+      // console.log(this.state);
+      this.state = { [`${parse}`]: value };
+      ser(this.obj, parse, value);
+      if (name === 'optimizer') {
+        this.optimizerValue = value;
+      }
+    },
   },
 };
 </script>
 
-<style scoped>
-.form-inline-label {
+<style lang="scss" scoped>
+.blocks-layers {
   display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
+}
+
+.block-layers {
+  width: 50%;
+  &__header {
+    color: #a7bed3;
+    display: block;
+    margin: 0 0 10px 0;
+    line-height: 1;
+    font-size: 0.75rem;
+  }
+}
+
+.params {
+  width: 400px;
+  flex-shrink: 0;
+  border-left: #0e1621 solid 1px;
+  overflow: hidden;
+  height: 85%;
+  // border-left: #0e1621  1px solid;
+  &__items {
+    height: 100%;
+    padding-bottom: 20px;
+    &--item {
+      padding: 20px;
+    }
+  }
+}
+.checkpoints {
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    width: 50%;
+  }
+}
+.fit {
+  display: flex;
+  flex-wrap: wrap;
+  &__item {
+    width: 50%;
+  }
 }
 </style>

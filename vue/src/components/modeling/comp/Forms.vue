@@ -3,8 +3,8 @@
     <template
       v-for="({ type, value, list, event, label, parse, name }, key) of items"
     >
-      <Input
-        v-if="type === 'tuple'"
+      <Tuple
+        v-if="type === 'text_array'"
         :value="getValue(valueDef[name], value)"
         :label="label"
         type="text"
@@ -53,6 +53,7 @@
 
 <script>
 import Input from "@/components/forms/Input.vue";
+import Tuple from "@/components/forms/Tuple.vue";
 import Select from "@/components/forms/Select.vue";
 
 export default {
@@ -60,6 +61,7 @@ export default {
   components: {
     Input,
     Select,
+    Tuple
   },
   props: {
     data: {
@@ -88,9 +90,9 @@ export default {
     },
     getValue(val, defVal) {
       const value = val ?? defVal;
-      if (typeof value === "object") {
-        return value.join();
-      }
+      // if (typeof value === "object") {
+      //   return value.join();
+      // }
       return value
     },
   },

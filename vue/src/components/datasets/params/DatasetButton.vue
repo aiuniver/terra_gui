@@ -28,17 +28,16 @@ export default {
           this.$store.dispatch('messages/setProgress', percent);
           if (finished) {
             this.loading = false;
+
+            this.$store.dispatch('messages/setProgress', 0);
+            this.$store.dispatch('messages/setProgressMessage', '');
+            await this.$store.dispatch('projects/get');
             const { data: dataset } = data;
             this.$store.dispatch(
               'messages/setMessage',
-              { message: `Датасет «${dataset.alias}» выбран` },
+              { message: `Датасет «${dataset.name}» выбран` },
               { root: true }
             );
-            this.$store.dispatch('projects/setProject', { dataset }, { root: true });
-            this.$store.dispatch('datasets/setLoaded', this.selectedIndex);
-            this.$store.dispatch('messages/setProgress', 0);
-            this.$store.dispatch('messages/setProgressMessage', '');
-            this.$store.dispatch('projects/get');
           } else {
             if (error) {
               this.$store.dispatch('messages/setMessage', { error });
@@ -57,10 +56,9 @@ export default {
       if (this.loading) return;
       this.loading = true;
       const { alias, group, name } = this.selected;
-      this.$store.dispatch('messages/setMessage', { message: `Выбран датасет «${name}»` });
       const { success } = await this.$store.dispatch('datasets/choice', { alias, group });
+      this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»` });
       if (success) {
-        // this.$store.dispatch('messages/setMessage', { message: `Загружаю датасет «${name}»`,});
         this.createInterval();
       }
     },

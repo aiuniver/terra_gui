@@ -62,24 +62,32 @@ def __prepare_label(value: str) -> str:
 
 
 def prepare_pydantic_field(field, parse: str) -> Field:
-    __value = "" if field.default is None else field.default
+    __value = field.default
     __list = None
 
-    if field.type_.__class__ in NUMBER_TYPES or field.type_ in NUMBER_TYPES:
+    if field.outer_type_.__class__ in NUMBER_TYPES or field.outer_type_ in NUMBER_TYPES:
         __type = FieldTypeChoice.number
-    elif field.type_ in CHECKBOX_TYPES:
+    elif field.outer_type_ in CHECKBOX_TYPES:
         __type = FieldTypeChoice.checkbox
-    elif field.type_ in SELECT_TYPES:
+    elif field.outer_type_ in SELECT_TYPES:
         __type = FieldTypeChoice.select
         __list = list(
             map(
                 lambda item: {"value": item, "label": __prepare_label(item)},
-                field.type_.values(),
+                field.outer_type_.values(),
             )
         )
+        if field.allow_none:
+            __list = [{"value": "__null__", "label": ""}] + __list
+        if not __value:
+            __value = field.default.name if field.default else None
     else:
-        __type = FieldTypeChoice.text
-        __value = str(__value)
+        if field.outer_type_.__origin__ is tuple:
+            __type = FieldTypeChoice.text_array
+            __value = __value or None
+        else:
+            __type = FieldTypeChoice.text
+            __value = str(__value)
 
     try:
         __label = Labels[field.name]

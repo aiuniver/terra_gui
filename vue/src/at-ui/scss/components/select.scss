@@ -27,6 +27,22 @@
     margin: 0 24px 0 8px;
     background-color: transparent;
 
+    &::-webkit-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-moz-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &:-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
+    &::-ms-input-placeholder {
+      color: $input-placeholder-color;
+    }
+
     &::placeholder {
       color: $input-placeholder-color;
     }
@@ -64,19 +80,22 @@
     }
     &--active {
       border-color: #fff;
+      border-radius: 4px 4px 0 0;
     }
   }
   &__selected {
     @include ellipsis();
     display: block;
-
+    line-height: 22px;
   }
   &__arrow {
     display: inline-block;
     position: absolute;
-    top: 50%;
-    right: 8px;
-    margin-top: -5px;
+    width: 6px;
+    height: 5px;
+    top: 40%;
+    right: 5px;
+    // margin-top: -5px;
     font-size: 10px;
     cursor: pointer;
     // transition: transform .2s;
@@ -95,14 +114,19 @@
   }
   &__dropdown {
     position: absolute;
+    // width: 100%;
+    left: 0 !important;
     width: 100%;
     max-height: $select-dropdown-height;
     font-size: $select-dropdown-font-size-base;
+    border: 1px solid #6c7883;
+    border-top: none;
     border-radius: 0 0 4px 4px;
     background-color: $select-dropdown-bg-color;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.2);
     overflow-y: auto;
     z-index: $zindex-dropdown;
+    padding: 2px 0;
 
     .at-select__list {
       list-style: none;
@@ -124,9 +148,10 @@
       // transition: all .2s;
       overflow: hidden;
       cursor: pointer;
+      height: 20px;
 
       &--selected {
-        font-weight: bold;
+        font-weight: normal;
         background-color: $dropdown-option-bg-c-selected;
         color: $text-color;
       }
@@ -229,7 +254,7 @@
     line-height: 1;
     white-space: nowrap;
     overflow: hidden;
-    transition: all .3s;
+    transition: all 0.3s;
     cursor: initial;
   }
   &__list {

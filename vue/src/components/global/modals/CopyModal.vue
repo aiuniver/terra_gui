@@ -1,17 +1,18 @@
 <template>
-  <at-modal v-model="dialog" width="400">
+  <at-modal v-model="dialog" width="600">
     <div slot="header" style="text-align: center">
       <span>{{ title }}</span>
     </div>
     <div class="t-pre">
       <scrollbar>
-        <p class="message"><slot></slot></p>
+        <pre class="message"><slot></slot></pre>
       </scrollbar>
     </div>
     <div slot="footer">
       <div class="copy-buffer">
         <i :class="['t-icon', 'icon-clipboard']" :title="'copy'" @click="Copy"></i>
         <p v-if="copy" class="success">Код скопирован в буфер обмена</p>
+        <p v-else>Скопировать в буфер обмена</p>
       </div>
     </div>
   </at-modal>
@@ -32,26 +33,23 @@ export default {
   }),
   methods: {
     Copy() {
-      let text = this.$el.querySelector('.message').innerHTML;
-      var textArea = document.createElement('textarea');
-      textArea.value = text;
+      const message = this.$el.querySelector('.message');
+      const selection = window.getSelection();
+      const range = document.createRange();
 
-      textArea.style.top = '0';
-      textArea.style.left = '0';
-      textArea.style.position = 'fixed';
-
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-
+      range.selectNode(message)
+      selection.removeAllRanges();
+      selection.addRange(range);
+      message.contentEditable = 'true'
+      
       try {
         document.execCommand('copy');
-        this.copy = true
+        this.copy = true;
       } catch (err) {
         console.error('Fallback: Oops, unable to copy', err);
       }
-      document.body.removeChild(textArea);
-      // alert("Скопировано в буфер обмена");
+
+      message.contentEditable = 'false'
     },
   },
   computed: {
@@ -72,11 +70,14 @@ export default {
 
 <style scoped lang="scss">
 .t-pre {
-  height: 400px;
-  padding-bottom: 10px;
-  p {
-    white-space: break-spaces;
+  height: 300px;
+  background: #0e1621;
+  border-radius: 4px;
+  box-shadow: inset 0 0 3px black;
+  pre {
+    // white-space: break-spaces;
     font-family: monospace;
+    padding: 10px;
   }
 }
 
@@ -86,7 +87,12 @@ export default {
   p {
     margin-left: 15px;
     font-size: 0.85rem;
-    color: #3eba31;
+    &.success {
+      color: #3eba31;
+    }
+  }
+  .icon-clipboard {
+    cursor: pointer;
   }
 }
 </style>

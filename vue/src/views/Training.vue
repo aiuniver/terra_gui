@@ -30,7 +30,7 @@ export default {
 
   },
   created() {
-    console.log(this.$store.dispatch('trainings/data'))
+    // console.log(this.$store.dispatch('trainings/data'))
   }
 };
 </script>

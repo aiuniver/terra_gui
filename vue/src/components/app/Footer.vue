@@ -68,6 +68,10 @@ export default {
   color: #ffb054 !important;
   cursor: pointer;
 }
+.info {
+  color: #a7bed3 !important;
+  cursor: pointer;
+}
 .success {
   color: #0f0 !important;
 }

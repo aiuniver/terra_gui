@@ -11,8 +11,8 @@ class ProjectException(Exception):
     class Meta:
         message = ExceptionMessages.UnknownError
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(self.Meta.message.value, *args, **kwargs)
+    def __init__(self, *args):
+        super().__init__(self.Meta.message.value, *args)
 
 
 class DatasetModelInputsCountNotMatchException(ProjectException):

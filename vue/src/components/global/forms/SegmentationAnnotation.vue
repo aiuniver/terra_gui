@@ -1,15 +1,35 @@
 <template>
-  <div>
+  <div class="t-segmentation-annotation">
     <div :class="['t-inline']">
-      <label class="t-field__label"><slot>{{ label }}</slot></label>
+      <label class="t-field__label"><slot></slot></label>
       <t-button class="t-field__button" :disabled="disabled" @click.native="getApi" :loading="loading">Найти</t-button>
     </div>
+    <template v-for="({ name, color }, i) of items">
+      <hr class="t-segmentation-annotation__hr" :key="'hr_up' + i" />
+      <t-input
+        :value="name"
+        label="Название класса"
+        type="text"
+        name="classes_names"
+        :key="'classes_names_' + i"
+        :parse="'classes_names[]'"
+        inline
+        autocomplete="off"
+        @change="change($event, i)"
+      />
+      <Color :value="color" label="Цвет" :key="'classes_colors_' + i" inline disabled />
+      <hr v-if="items.length === i + 1" class="t-segmentation-annotation__hr" :key="'hr_' + i" />
+    </template>
   </div>
 </template>
 
 <script>
+import Color from '../../forms/Color.vue';
 export default {
   name: 't-segmentation-annotation',
+  components: {
+    Color,
+  },
   props: {
     label: {
       type: String,
@@ -31,22 +51,30 @@ export default {
   },
   data: () => ({
     loading: false,
+    items: [],
+    classes_names: [],
+    classes_colors: []
   }),
   computed: {},
   methods: {
     async getApi() {
-      if (this.loading) return; 
-      this.loading = true
-      await this.$store.dispatch('axios', { url: '/api/v1'} )
-      this.loading = false
-    },
-    change(e) {
-      if (this.isChange) {
-        let value = e.target.value;
-        value = this.type === 'number' ? +value : value;
-        this.$emit('change', { name: this.name, value });
-        this.isChange = false;
+      if (this.loading) return;
+      this.loading = true;
+      const { data } = await this.$store.dispatch('datasets/classesAnnotation');
+      console.log(data);
+      if (data) {
+        this.items = data;
+        this.loading = false;
+        this.classes_names = data.map(item => item.name);
+        this.classes_colors = data.map(item => item.color);
+        this.$emit('change', { name: 'classes_names', value: this.classes_names });
+        this.$emit('change', { name: 'classes_colors', value: this.classes_colors });
       }
+    },
+    change({ value }, index) {
+      console.log(value,index)
+      this.classes_names[index] = value
+      this.$emit('change', { name: 'classes_names', value: this.classes_names });
     },
   },
 };
@@ -74,6 +102,15 @@ export default {
     height: 24px;
     font-size: 12px;
     line-height: 24px;
+  }
+}
+.t-segmentation-annotation {
+  &__hr {
+    height: 1px;
+    border-width: 0;
+    color: #17212b;
+    background-color: #17212b;
+    margin: 0 0 10px 0;
   }
 }
 </style>

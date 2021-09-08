@@ -1,8 +1,23 @@
 <template>
-  <div class="t-card-file" :style="bc">
+  <div class="t-card-file" :style="bc" v-click-outside="outside">
     <div v-if="id" class="t-card-file__header" :style="bg">{{ title }}</div>
     <div :class="['t-card-file__body', 'icon-file-' + type]" :style="img"></div>
-    <div class="t-card-file__footer">{{ label }}</div>
+    <div class="t-card-file__footer">
+      <div class="t-card-file__footer--label">{{ label }}</div>
+      <div class="t-card-file__footer--btn" @click="show = true">
+        <i class="t-icon icon-file-dot"></i>
+      </div>
+    </div>
+    <div v-show="show" class="t-card-file__dropdown">
+      <div
+        v-for="({ icon, event }, i) of items"
+        :key="'icon' + i"
+        class="t-card-file__dropdown--item"
+        @click="$emit('event', { label, event }), show = false"
+      >
+        <i :class="['t-icon', icon]"></i>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -15,9 +30,12 @@ export default {
     id: Number,
     cover: String,
   },
+  data: () => ({
+    show: false,
+    items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
+  }),
   computed: {
     img() {
-      console.log(this.cover);
       return this.cover
         ? { backgroundImage: `url('${this.cover}')`, backgroundPosition: 'center', backgroundSize: 'cover' }
         : {};
@@ -37,6 +55,11 @@ export default {
     },
     bc() {
       return { borderColor: this.id ? this.color : '' };
+    },
+  },
+  methods: {
+    outside() {
+      this.show = false;
     },
   },
 };
@@ -83,9 +106,48 @@ export default {
     background-size: 39px 39px;
   }
   &__footer {
-    bottom: 0;
-    border-radius: 0 0 3px 3px;
-    padding: 4px 6px 2px 6px;
+    display: flex;
+    justify-content: space-between;
+
+    &--label {
+      bottom: 0;
+      border-radius: 0 0 3px 3px;
+      padding: 4px 2px 2px 6px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    &--btn {
+      padding: 0 6px 0 0;
+      cursor: pointer;
+      i {
+        width: 16px;
+      }
+      &:hover {
+      }
+    }
+  }
+  &__dropdown {
+    position: absolute;
+    background-color: #2b5278;
+    border-radius: 4px;
+    right: 3px;
+    bottom: 3px;
+    z-index: 100;
+    &--item {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.7;
+      }
+      i {
+        width: 14px;
+      }
+    }
   }
 }
 </style>

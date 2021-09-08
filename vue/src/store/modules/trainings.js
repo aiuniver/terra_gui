@@ -1,74 +1,39 @@
 import temp from "../temp/training";
-import axios from "axios";
+import { toolbar } from "../const/trainings";
+
 export default {
   namespaced: true,
   state: () => ({
     data: temp.data,
-    toolbar: [
-      {
-        title: "Графики",
-        active: true,
-        disabled: false,
-        icon: "icon-training-charts",
-      },
-      {
-        title: "Скаттеры",
-        active: false,
-        disabled: true,
-        icon: "icon-training-scatters",
-      },
-      {
-        title: "Изображения",
-        active: false,
-        disabled: false,
-        icon: "icon-training-images",
-      },
-      {
-        title: "Текст",
-        active: true,
-        disabled: false,
-        icon: "icon-training-texts",
-      },
-    ],
+    params: [],
+    toolbar,
+    stateParams: {} 
   }),
   mutations: {
-    SET_DRAWER(state, value) {
-      state.drawer = value;
+    SET_PARAMS(state, value) {
+      state.params = value;
+    },
+    SET_STATE_PARAMS(state, value) {
+      state.stateParams = {...value};
     },
   },
   actions: {
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },
-    async data() {
-      try {
-        const { data } = await axios.post("/api/v1/exchange/get_data/", {});
-        // commit("SET_SETTINGS", data);
-        console.log(data)
-        return data;
-      } catch (error) {
-        console.log(error);
-      }
+    setStateParams({ commit, state: { stateParams } }, data) {
+      commit("SET_STATE_PARAMS", { ...stateParams, ...data });
     },
   },
   getters: {
-    getData () {
-      return 0
+    getStateParams ({ stateParams }) {
+      return stateParams || {}
+    },
+    getParams ({ params }) {
+      return params || []
     },
     getToolbar({ toolbar }) {
       return toolbar;
-    },
-    getToolbarChars({ toolbar }) {
-      return toolbar[0].active;
-    },
-    getToolbarScatters({ toolbar }) {
-      return toolbar[1].active;
-    },
-    getToolbarImages({ toolbar }) {
-      return toolbar[2].active;
-    },
-    getToolbarTexts({ toolbar }) {
-      return toolbar[3].active;
     },
     getChars({ data: { plots } }) {
       return plots;

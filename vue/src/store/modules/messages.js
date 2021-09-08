@@ -24,16 +24,16 @@ export default {
     },
   },
   actions: {
-    setMessage({ commit }, { error, message }) {
+    setMessage({ commit }, { error, message, info }) {
       console.log(message)
-      commit('SET_COLOR', error ? 'error' : 'success');
-      commit('SET_MESSAGE', error || message);
+      commit('SET_COLOR', error ? 'error' : message ? 'success' : 'info');
+      commit('SET_MESSAGE', error || message || info);
     },
     setProgressMessage({ commit }, message) {
       commit('SET_PROGRESS_MESSAGE', message);
     },
     setProgress({ commit }, progress) {
-      console.log(progress)
+      // console.log(progress)
       commit('SET_PROGRESS', ~~progress);
     },
   },

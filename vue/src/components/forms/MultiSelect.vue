@@ -3,7 +3,7 @@
     <label class="t-multi-select__label">
       <slot>{{ label }}</slot>
     </label>
-    <div :class="['t-multi-select__input', { 't-multi-select__error': error }]">
+    <div :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]">
       <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
       <span
         :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
@@ -148,6 +148,10 @@ export default {
     width: 100%;
     display: flex;
     align-items: center;
+    &--show {
+      border-bottom-right-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
     &--text {
       flex-grow: 1;
       text-overflow: ellipsis;
@@ -186,8 +190,8 @@ export default {
 }
 .t-multi__item {
   display: flex;
-  padding: 2px 6px;
-  // align-items: center;
+  padding: 3px 6px;
+  align-items: center;
   cursor: pointer;
   &--empty {
     cursor: auto;
@@ -229,10 +233,10 @@ export default {
   justify-content: flex-end;
   -webkit-box-pack: end;
   margin-bottom: 10px;
-  // align-items: center;
+  align-items: center;
   & .t-multi-select__label {
     width: auto;
-    padding: 3px 0 0 10px;
+    padding: 0 10px;
     text-align: left;
     color: #a7bed3;
     display: block;
@@ -245,8 +249,9 @@ export default {
     width: 100px;
   }
   & .t-multi-select__content {
-    width: 100px;
-    top: 24px;
+    width: auto;
+    top: 23px;
+    min-width: 100px;
   }
 }
 </style>

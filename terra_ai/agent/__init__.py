@@ -29,6 +29,7 @@ from ..data.extra import (
 )
 from ..data.training.train import TrainData
 
+from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
 from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
@@ -37,6 +38,7 @@ from .. import settings, progress
 from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
+from ..training.guinn import interactive
 
 
 class Exchange:
@@ -85,7 +87,7 @@ class Exchange:
         """
         Прогресс выбора датасета
         """
-        return progress.pool(progress.PoolName.dataset_choice)
+        return progress.pool("dataset_choice")
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
@@ -121,28 +123,33 @@ class Exchange:
         """
         Прогресс загрузки исходников датасета
         """
-        progress_data = progress.pool(progress.PoolName.dataset_source_load)
+        progress_data = progress.pool("dataset_source_load")
         if progress_data.finished and progress_data.data:
             __path = progress_data.data.absolute()
+            file_manager = FileManagerItem(path=__path).native().get("children")
             progress_data.data = {
-                "file_manager": (FileManagerItem(path=__path).native().get("children")),
+                "file_manager": file_manager,
                 "source_path": __path,
             }
         else:
             progress.data = []
         return progress_data
 
-    def _call_dataset_source_segmentation_classes_autosearch(self, path: Path) -> dict:
+    def _call_dataset_source_segmentation_classes_autosearch(
+        self, path: Path, num_classes: int, mask_range: int
+    ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
         """
-        return {}
+        return datasets_utils.get_classes_autosearch(
+            path, num_classes, mask_range
+        ).native()
 
     def _call_dataset_source_segmentation_classes_annotation(self, path: Path) -> dict:
         """
         Получение классов для сегментации при создании датасета с использованием файла аннотации
         """
-        return {}
+        return datasets_utils.get_classes_annotation(path).native()
 
     def _call_dataset_create(self, **kwargs) -> DatasetData:
         """
@@ -203,36 +210,33 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_model_update(self, model: dict, **kwargs) -> ModelDetailsData:
+    def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        if len(kwargs.keys()):
-            model.update(kwargs)
         return ModelDetailsData(**model)
 
-    def _call_model_validate(self, model: ModelDetailsData) -> dict:
+    def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
         return ModelValidator(model).get_validated()
 
-    def _call_model_layer_save(self, model: dict, **kwargs) -> ModelDetailsData:
-        """
-        Обновление слоя модели
-        """
-        model = ModelDetailsData(**model)
-        if len(kwargs.keys()):
-            model.layers.append(kwargs)
-        return model
-
-    def _call_model_create(self, model: dict, path: Path):
+    def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
         Создание модели
         """
         model_path = Path(path, f'{model.get("name")}.{settings.MODEL_EXT}')
+        if not overwrite and model_path.is_file():
+            raise exceptions.ModelAlreadyExistsException(model.get("name"))
         with open(model_path, "w") as model_ref:
             json.dump(model, model_ref)
+
+    def _call_model_delete(self, path: Path):
+        """
+        Удаление модели
+        """
+        os.remove(path)
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
@@ -244,21 +248,26 @@ class Exchange:
         """
         Деплой: прогресс загрузки
         """
-        return progress.pool(progress.PoolName.deploy_upload)
+        return progress.pool("deploy_upload")
 
     def _call_start_training(
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
         training_path: Path,
+        dataset_path: Path,
         params: TrainData,
     ):
         training_obj.terra_fit(
             dataset=dataset,
             gui_model=model,
             training_path=training_path,
+            dataset_path=dataset_path,
             training_params=params,
         )
+
+    def _call_set_interactive_config(self, config: dict) -> None:
+        interactive.get_train_results(config=config)
 
 
 agent_exchange = Exchange()

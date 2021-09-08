@@ -13,17 +13,32 @@
         />
       </button>
       <template v-for="({ value }, i) in tags">
-        <input
+        <div
+          style="
+            display: flex;
+            border-radius: 4px;
+            align-items: center;
+            border: 1px solid #6c7883;
+            margin-left: 10px;
+            padding-right: 5px;
+          "
           :key="'tag_' + i"
-          :value="value"
-          :data-index="i"
-          name="[tags][][name]"
-          type="text"
-          :class="['tags__item']"
-          :style="{ width: (value.length + 1) * 8 + 'px' }"
-          @input="change"
-          @blur="blur"
-        />
+        >
+          <input
+            :value="value"
+            :data-index="i"
+            name="[tags][][name]"
+            type="text"
+            :class="['tags__item']"
+            :style="{ width: (value.length + 1) * 8 + 'px' }"
+            autocomplete="off"
+            @input="change"
+            @blur="blur"
+          />
+          <i class="tags__remove--icon t-icon icon-tag-plus" @click="removeTag(i)"></i>
+          <!-- <div class="tags__item"></div> -->
+        </div>
+
         <!-- <span class="tags__add--span" :key="'span_' + i">{{ value }}</span> -->
       </template>
     </div>
@@ -54,6 +69,9 @@ export default {
     tags: [],
   }),
   methods: {
+    removeTag(index) {
+      this.tags = this.tags.filter((item, i) => i !== +index);
+    },
     create() {
       const el = this.$el.getElementsByClassName('tags__add--input')?.[0];
       console.log(el.value);
@@ -66,14 +84,15 @@ export default {
     change(e) {
       const index = e.target.dataset.index;
       console.log(index);
-      this.tags[+index].value = e.target.value;
+      if (e.target.value.length >= 3) {
+        this.tags[+index].value = e.target.value;
+      }
     },
     blur(e) {
       const index = e.target.dataset.index;
       if (e.target.value.length <= 2) {
         this.tags = this.tags.filter((item, i) => i !== +index);
       }
-      console.log(index);
     },
   },
 };
@@ -137,16 +156,27 @@ export default {
 .tags {
   display: flex;
   max-width: 400px;
+  &__remove {
+    &--icon {
+      height: 12px;
+      width: 12px;
+      right: 2px;
+      cursor: pointer;
+      transform: rotate(45deg);
+    }
+  }
   &__item {
-    margin-left: 10px;
-    padding: 2px 2px;
+    margin-right: 5px;
+    // margin-left: 10px;
+    border: none;
+    padding: 2px;
     width: 60px;
     height: 24px;
     color: #a7bed3;
     font-size: 12px;
     font-weight: normal;
     line-height: 24px;
-    margin-left: 8px;
+    // margin-left: 8px;
     text-align: center;
   }
   &__error {

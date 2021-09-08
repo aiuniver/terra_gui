@@ -14,7 +14,7 @@
     v-clickoutside="handleClose"
   >
     <!-- S Selection -->
-    <div :class="['at-select__selection', {'at-select__selection--active': this.visible}]" ref="trigger" @click="toggleMenu">
+    <div :class="['at-select__selection', {'at-select__selection--active': this.visible}]" ref="trigger" @click="toggleMenu" :style="`width: ${width}`">
       <span
         class="at-tag"
         v-for="(item, index) in selectedMultiple"
@@ -43,7 +43,8 @@
         @keydown.delete="handleInputDelete"
         ref="input"
       />
-      <i class="icon icon-chevron-down at-select__arrow"></i>
+      <!-- <i class="icon icon-chevron-down at-select__arrow"></i> -->
+      <i class="t-icon icon-file-arrow at-select__arrow"></i>
       <i
         class="icon icon-x at-select__clear"
         v-show="showCloseIcon"
@@ -53,7 +54,6 @@
     <!-- E Selection -->
 
     <!-- S Dropdown -->
-    <transition name="slide-up" @after-leave="doDestory">
       <div
         class="at-select__dropdown"
         :class="[
@@ -71,7 +71,6 @@
           <slot></slot>
         </ul>
       </div>
-    </transition>
     <!-- E Dropdown -->
   </div>
 </template>
@@ -131,6 +130,10 @@ export default {
       type: String,
       default: "bottom",
     },
+    width: {
+      type: String,
+      required: false
+    }
   },
   data() {
     return {

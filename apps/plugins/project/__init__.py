@@ -103,14 +103,35 @@ class Project(BaseMixinData):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
-    def set_dataset(self, dataset: DatasetData):
-        if self.model.inputs and len(self.model.inputs) != len(dataset.model.inputs):
+    def set_dataset(self, dataset: DatasetData = None):
+        if dataset is None:
+            self.dataset = None
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
+            return
+        model_init = dataset.model
+        if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
             raise exceptions.DatasetModelInputsCountNotMatchException()
-        if self.model.outputs and len(self.model.outputs) != len(dataset.model.outputs):
+        if self.model.outputs and len(self.model.outputs) != len(model_init.outputs):
             raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.dataset = dataset
         if not self.model.inputs or not self.model.outputs:
-            self.model = dataset.model
+            self.model = model_init
+        else:
+            layers_init = {"input": [], "output": []}
+            for layer in model_init.inputs + model_init.outputs:
+                layers_init[layer.group.value].append(layer.native())
+            for layer in self.model.inputs + self.model.outputs:
+                layer_init = layers_init[layer.group.value].pop(0)
+                layer_data = layer.native()
+                layer_data.update(
+                    {
+                        "shape": layer_init.get("shape"),
+                        "task": layer_init.get("task"),
+                        "num_classes": layer_init.get("num_classes"),
+                        "parameters": layer_init.get("parameters"),
+                    }
+                )
+                self.model.layers.append(layer_data)
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:

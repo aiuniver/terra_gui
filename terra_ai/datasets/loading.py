@@ -45,7 +45,7 @@ def __load_from_url(folder: Path, url: HttpUrl):
     dataset_path = Path(folder, folder_name)
 
     # Сброс прогресс-бара
-    progress_name = progress.PoolName.dataset_source_load
+    progress_name = "dataset_source_load"
 
     # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
     # что загрузка завершена и возвращаем путь в прогресс-бар
@@ -80,7 +80,7 @@ def __load_from_googledrive(folder: Path, zipfile_path: Path):
     dataset_path = Path(folder, folder_name)
 
     # Имя прогресс-бара
-    progress_name = progress.PoolName.dataset_source_load
+    progress_name = "dataset_source_load"
 
     # Если папка датасета уже существует, просто выходим и говорим прогресс-бару,
     # что загрузка завершена и возвращаем путь в прогресс-бар
@@ -118,7 +118,7 @@ def source(strict_object: SourceData):
 @progress.threading
 def __choice_from_keras(name: str, **kwargs):
     # Имя прогресс-бара
-    progress_name = progress.PoolName.dataset_choice
+    progress_name = "dataset_choice"
     progress.pool.reset(
         progress_name,
         message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.keras.value, name),
@@ -143,7 +143,7 @@ def __choice_from_keras(name: str, **kwargs):
 @progress.threading
 def __choice_from_custom(name: str, source: Path, **kwargs):
     # Имя прогресс-бара
-    progress_name = progress.PoolName.dataset_choice
+    progress_name = "dataset_choice"
     progress.pool.reset(
         progress_name,
         message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.custom.value, name),
@@ -186,7 +186,7 @@ def __choice_from_terra(name: str, folder: Path, **kwargs):
     dataset_path = Path(folder, f"{name}.{settings.DATASET_EXT}")
 
     # Имя прогресс-бара
-    progress_name = progress.PoolName.dataset_choice
+    progress_name = "dataset_choice"
     progress.pool.reset(
         progress_name,
         message=DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name),

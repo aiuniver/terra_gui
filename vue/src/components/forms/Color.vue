@@ -6,19 +6,6 @@
       </label>
 
       <div class="t-field__content" v-click-outside="outside">
-        <input
-          v-model="input"
-          :class="['t-field__input', { small: small }, { 't-field__error': error }]"
-          :type="type"
-          :name="name || parse"
-          :value="value"
-          :disabled="disabled"
-          :data-degree="degree"
-          :autocomplete="'off'"
-          @blur="change"
-          @focus="focus"
-        />
-        <div class="t-field__box" :style="{ background: input }" @click="pickerShow = true"></div>
         <div v-if="pickerShow" class="t-field__color-picker">
           <ColorPicker
             v-model="input"
@@ -26,8 +13,21 @@
             :height="100"
             :disabled="false"
             startColor="#ff0000"
+            @color-change="$emit('change', $event)"
           ></ColorPicker>
         </div>
+        <input
+          v-model="input"
+          :class="['t-field__input', { small: small }, { 't-field__error': error }]"
+          :type="type"
+          :name="name || parse"
+          :data-degree="degree"
+          :autocomplete="'off'"
+          :disabled="disabled"
+          @blur="change"
+          @focus="focus"
+        />
+        <div class="t-field__box" :style="{ background: input }" @click="click"></div>
       </div>
     </div>
   </div>
@@ -64,20 +64,25 @@ export default {
   data: () => ({
     isChange: false,
     pickerShow: false,
-    input: '#FFFFFF',
+    input: '',
   }),
   computed: {
-    /*    input: {
-      set(value) {
-        this.$emit('input', value);
-        this.isChange = true;
-      },
-      get() {
-        return this.value;
-      },
-    },*/
+    // input: {
+    //   set(value) {
+    //     this.$emit('input', value);
+    //     this.isChange = true;
+    //   },
+    //   get() {
+    //     return this.value;
+    //   },
+    // },
   },
   methods: {
+    click () {
+      if (!this.disabled) [
+        this.pickerShow = true
+      ]
+    },
     outside() {
       if (this.pickerShow) {
         this.pickerShow = false;
@@ -102,6 +107,9 @@ export default {
       // console.log("asdasdas     ", this.input)
     },
   },
+  created() {
+    this.input = this.value
+  }
 };
 </script>
 
@@ -111,6 +119,10 @@ export default {
   &__content {
     position: relative;
   }
+  &__color-picker ~ .t-field__input {
+      border-radius: 0 0 4px 4px;
+      border-color: #fff;
+    }
   &__box {
     background: #59b9ff;
     width: 20px;
@@ -123,16 +135,16 @@ export default {
   }
   &__color-picker {
     position: absolute;
-    top: -124px;
-
+    bottom: 13px;
     background-color: #1b2a3f;
-    border-radius: 4px;
-    border: 1px solid #6c7883;
+    border-radius: 4px 4px 0 0;
+    border: 1px solid #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-bottom: 10px;
-    padding: 10px;
+    width: 100px;
+    // padding: 10px;
   }
   // margin-bottom: 20px;
   &__label {
@@ -170,12 +182,13 @@ export default {
     display: flex;
     flex-direction: row-reverse;
     justify-content: flex-end;
+    align-items: center;
     -webkit-box-pack: end;
     margin-bottom: 10px;
+    width: 100%;
     .t-field__label {
-      width: 150px;
-      max-width: 130px;
-      padding: 3px 0 0 10px;
+      width: 100%;
+      padding: 0 10px;
       text-align: left;
       color: #a7bed3;
       display: block;
@@ -194,7 +207,7 @@ export default {
 .t-color {
   display: flex;
   flex-direction: column;
-  // align-items: center;
+  align-items: center;
 }
 slide-fade-enter-active {
   transition: all 0.3s ease;

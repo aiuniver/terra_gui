@@ -8,6 +8,8 @@ from terra_ai.data.datasets.extra import (
     LayerInputTypeChoice,
     LayerOutputTypeChoice,
 )
+from terra_ai.data.modeling.extra import LayerTypeChoice
+from terra_ai.data.modeling.layers.extra import ActivationChoice
 from terra_ai.data.training.extra import TaskChoice
 
 
@@ -28,6 +30,29 @@ class Tags(dict, Enum):
     smart_home = {"alias": "smart_home", "name": "Smart home"}
     trading = {"alias": "trading", "name": "Trading"}
 
+
+OutputLayersDefaults = {
+    LayerOutputTypeChoice.Classification: {
+        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.softmax},
+        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.softmax},
+    },
+    LayerOutputTypeChoice.Segmentation: {
+        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.softmax},
+        "2D": {"type": LayerTypeChoice.Conv2D, "activation": ActivationChoice.softmax},
+        "3D": {"type": LayerTypeChoice.Conv3D, "activation": ActivationChoice.softmax},
+    },
+    LayerOutputTypeChoice.TextSegmentation: {
+        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.sigmoid},
+        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.sigmoid},
+    },
+    LayerOutputTypeChoice.Regression: {
+        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.linear}
+    },
+    LayerOutputTypeChoice.Timeseries: {
+        "1D": {"type": LayerTypeChoice.Conv1D, "activation": ActivationChoice.linear},
+        "DIM": {"type": LayerTypeChoice.Dense, "activation": ActivationChoice.linear},
+    },
+}
 
 DatasetsGroups = [
     {
