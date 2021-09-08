@@ -1,0 +1,7 @@
+{
+  "name": "\u0421\u0430\u043c\u043e\u043b\u0435\u0442\u044b",
+  "weight": "test_example/airplanes",
+  "preprocess": "test_example/airplanes/preprocess.json",
+  "postprocess": null,
+  "tags": [{"alias": "image", "name": "Image"}, {"alias": "segmentation", "name": "Segmentation"}]
+}

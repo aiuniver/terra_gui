@@ -1,27 +1,18 @@
-import sys
 import os
+import json
+import os
+from typing import Callable
+
 import cv2
 import numpy as np
-from typing import Callable
-import json
 import tensorflow as tf
-from tensorflow.keras.models import load_model
 from matplotlib import pyplot as plt
+from tensorflow.keras.models import load_model
+
+from terra_ai.data.datasets.creation import CreationInputData
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.datasets.arrays_create import CreateArray
-from terra_ai.datasets.preparing import PrepareDTS
-from terra_ai.datasets.data import Preprocesses
-from terra_ai.data.datasets.dataset import DatasetData, DatasetLoadData
-from terra_ai.data.datasets.creation import SourceData, CreationData, CreationInputData
-from terra_ai.data.datasets.extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice, \
-    DatasetGroupChoice, LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice, \
-    LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice
-from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerAudioChoice, LayerPrepareMethodChoice, \
-    LayerScalerVideoChoice
-from terra_ai.datasets.creating import CreateDTS
-from terra_ai.datasets import loading
-from terra_ai import progress
 from terra_ai.utils import decamelize
-from terra_ai.training.customlosses import DiceCoefficient
 
 
 def count(bbox: np.ndarray) -> int:
@@ -88,7 +79,7 @@ def _bboxes_iou(boxes1, boxes2):
 
 
 def _(predict, original_image, frame_size, score_threshold=0.3, iou_threshold=0.45, soft_nms: bool = False,
-        sigma=0.3):
+      sigma=0.3):
     predict = tf.concat(
         [tf.reshape(x, (-1, tf.shape(x)[-1])) for x in predict], axis=0
     )
@@ -288,13 +279,13 @@ def _load_model(**params):
     path_model = os.path.join(MODEL_PATH, params['model_name'])
 
     model = load_model(path_model, compile=False,
-                            custom_objects=None)
+                       custom_objects=None)
     model.load_weights(os.path.join(path_model, params['model_name'] + '_best.h5'))
 
     return model
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # Проверка препроцеса (для изображений база 'самолеты')
     params = {'model_name': 'airplanes',
               'path_file': ['C:\\PycharmProjects\\terra_gui\\TerraAI\\datasets\\sources\\airplane\\Самолеты\\488.jpg']}
@@ -311,4 +302,3 @@ if __name__ == "__main__":
     mask = _postprocess_model(**params)
     plt.imshow(mask)
     plt.show()
-
