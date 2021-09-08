@@ -13,6 +13,7 @@ class NameAPIView(BaseAPIView):
 
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        request.project.reset()
         return BaseResponseSuccess()
 
 
