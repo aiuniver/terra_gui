@@ -75,6 +75,16 @@ const router = new Router({
       component: () => import('@/views/Deploy'),
     },
     {
+      path: '/test',
+      name: 'Test',
+      meta: { 
+        title: process.env.NODE_ENV === 'development' ? 'Test' : null,
+        access: true,
+        text: `Для перехода на страницу деплоя необходимо загрузить датасет.`, 
+      },
+      component: () => import('@/views/Test'),
+    },
+    {
       path: "*",
       name: '404',
       meta: { 

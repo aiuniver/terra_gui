@@ -10,6 +10,9 @@
       <li class="toolbar__menu--item" @click.prevent="click('validation')" title="Валидация">
         <i class="t-icon icon-model-validation"></i>
       </li>
+      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
+        <i class="t-icon icon-model-clear"></i>
+      </li>
       <hr />
       <li class="toolbar__menu--item" @click.prevent="click('input')" title="Входящий слой">
         <i class="t-icon icon-layer-input-casc"></i>
@@ -27,9 +30,6 @@
         <i class="t-icon icon-layer-output"></i>
       </li>
       <hr />
-      <li class="toolbar__menu--item" @click.prevent="click('clear')" title="Очистить">
-        <i class="t-icon icon-model-clear"></i>
-      </li>
     </ul>
   </div>
 </template>
