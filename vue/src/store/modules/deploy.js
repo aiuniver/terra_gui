@@ -75,8 +75,7 @@ export default {
     },
     actions: {
       async SendDeploy({ dispatch }, data) {
-        await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        return;
+        return await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
       },
       async CheckProgress({ commit, dispatch }) {
         const { data } = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });

@@ -1,72 +1,74 @@
 <template>
   <div class="params">
-    <div class="params-container__name">Загрузка в демо-панель</div>
-    <div class="params-container pa-5">
-      <div class="label">Название папки</div>
-      <div class="t-input">
-        <label class="t-input__label">
-          https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
-        </label>
-        <input
-          v-model="deploy"
-          class="t-input__input"
-          type="text"
-          name="deploy[deploy]"
-          @blur="$emit('blur', $event.target.value)"
+    <scrollbar>
+      <div class="params-container__name">Загрузка в демо-панель</div>
+      <div class="params-container pa-5">
+        <div class="label">Название папки</div>
+        <div class="t-input">
+          <label class="t-input__label">
+            https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
+          </label>
+          <input
+            v-model="deploy"
+            class="t-input__input"
+            type="text"
+            name="deploy[deploy]"
+            @blur="$emit('blur', $event.target.value)"
+          />
+        </div>
+        <Checkbox
+          :label="'Перезаписать с таким же названием папки'"
+          :type="'checkbox'"
+          class="pd__top"
+          @change="UseReplace"
         />
-      </div>
-      <Checkbox
-        :label="'Перезаписать с таким же названием папки'"
-        :type="'checkbox'"
-        class="pd__top"
-        @change="UseReplace"
-      />
-      <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec" />
-      <div class="password" v-if="use_sec">
-        <div class="t-input">
-          <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
-          <div class="password__icon">
-            <i
-              :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
-              :title="'show password'"
-              @click="passwordShow = !passwordShow"
-            ></i>
+        <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec" />
+        <div class="password" v-if="use_sec">
+          <div class="t-input">
+            <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
+            <div class="password__icon">
+              <i
+                :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
+                :title="'show password'"
+                @click="passwordShow = !passwordShow"
+              ></i>
+            </div>
+          </div>
+          <div class="t-input">
+            <input :type="passwordShow ? 'text' : 'password'" placeholder="Подтверждение пароля" v-model="sec_accept" />
+            <div class="password__icon">
+              <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
+            </div>
           </div>
         </div>
-        <div class="t-input">
-          <input :type="passwordShow ? 'text' : 'password'" placeholder="Подтверждение пароля" v-model="sec_accept" />
-          <div class="password__icon">
-            <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
+        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
+        <div class="loader" v-if="DataLoading">
+          <div class="loader__title">Дождитесь окончания загрузки</div>
+          <!--          <div class="loader__time">-->
+          <!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
+          <!--          </div>-->
+          <div class="loader__progress">
+            <load-spiner></load-spiner>
+          </div>
+          <!--          <div class="loader__progress">-->
+          <!--            <div class="progress-bar">-->
+          <!--              <div class="loading">-->
+          <!--                <span>78%</span>-->
+          <!--              </div>-->
+          <!--            </div>-->
+          <!--          </div>-->
+        </div>
+        <div class="req-ans" v-if="DataSent">
+          <div class="answer__success">Загрузка завершена!</div>
+          <div class="answer__label">Ссылка на сформированную загрузку</div>
+          <div class="answer__url">
+            <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
+            <a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a>
           </div>
         </div>
+        <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
       </div>
-      <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
-      <div class="loader" v-if="DataLoading">
-        <div class="loader__title">Дождитесь окончания загрузки</div>
-        <!--          <div class="loader__time">-->
-        <!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
-        <!--          </div>-->
-        <div class="loader__progress">
-          <load-spiner></load-spiner>
-        </div>
-        <!--          <div class="loader__progress">-->
-        <!--            <div class="progress-bar">-->
-        <!--              <div class="loading">-->
-        <!--                <span>78%</span>-->
-        <!--              </div>-->
-        <!--            </div>-->
-        <!--          </div>-->
-      </div>
-      <div class="req-ans" v-if="DataSent">
-        <div class="answer__success">Загрузка завершена!</div>
-        <div class="answer__label">Ссылка на сформированную загрузку</div>
-        <div class="answer__url">
-          <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
-          <a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a>
-        </div>
-      </div>
-      <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
-    </div>
+    </scrollbar>
   </div>
 </template>
 
@@ -178,9 +180,18 @@ export default {
         use_sec: this.use_sec,
       };
       if (this.use_sec) data['sec'] = this.sec;
-      this.DataLoading = true;
-      await this.$store.dispatch('deploy/SendDeploy', data);
-      this.getProgress();
+
+      const res = await this.$store.dispatch('deploy/SendDeploy', data);
+      console.log(res);
+      if (res) {
+        const { error, success } = res;
+        console.log(error, success);
+        if (!error && success) {
+          this.DataLoading = true;
+          this.getProgress();
+        }
+        // this.getProgress();
+      }
     },
   },
 };
