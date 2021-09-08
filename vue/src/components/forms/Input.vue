@@ -3,7 +3,7 @@
     <label class="t-field__label" :for="parse">{{ label }}</label>
     <input
       v-model="input"
-      class="t-field__input"
+      :class="['t-field__input', { 't-field__input--error': error }]"
       :id="parse"
       :type="type"
       :name="parse"
@@ -35,6 +35,7 @@ export default {
     name: String,
     inline: Boolean,
     disabled: Boolean,
+    error: String
   },
   data: () => ({
     isChange: false,
@@ -106,6 +107,9 @@ export default {
     transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
     &:focus {
       border-color: #fff;
+    }
+    &--error{
+      border-color: #F00;
     }
   }
 }
