@@ -1,4 +1,4 @@
-def preprocessing(preprocess_list: list):
+def make_preprocess(preprocess_list: list):
     def fun(x):
         for prep in preprocess_list:
             x = prep(x)

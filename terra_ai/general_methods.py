@@ -155,7 +155,7 @@ def _preprocess_model(**params):
         params.name: 'air2.trds'
         params.path_file: ['C:\PycharmProjects\yolov5x_helmet_demopanel_russian_label\Test_images\pos_54.jpg']
     '''
-    MODEL_PATH = 'C:\PycharmProjects/terra_gui/TerraAI/training'
+    MODEL_PATH = r'C:\Users\Anonim\Documents\terra_gui\TerraProjects'
     DATASET_PATH = 'C:\PycharmProjects/terra_gui/TerraAI/datasets'
     path_model = os.path.join(MODEL_PATH, params['model_name'])
     with open(os.path.join(path_model, 'config.json'), 'r') as cfg:
@@ -288,7 +288,7 @@ def _load_model(**params):
 if __name__ == "__main__":
     # Проверка препроцеса (для изображений база 'самолеты')
     params = {'model_name': 'airplanes',
-              'path_file': ['C:\\PycharmProjects\\terra_gui\\TerraAI\\datasets\\sources\\airplane\\Самолеты\\488.jpg']}
+              'path_file': [r"C:\Users\Anonim\Documents\terra_gui\TerraProjects\airplanes.trds\sources\1_image\Самолеты\0.jpg"]}
     x_input = _preprocess_model(**params)
     print(x_input.shape)
     plt.imshow(x_input[0])
