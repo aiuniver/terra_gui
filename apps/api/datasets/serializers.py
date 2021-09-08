@@ -174,7 +174,7 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
 
     def __init__(self, instance=None, data=None, **kwargs):
         _type_processing = data.get("type_processing")
-        if _type_processing:
+        if _type_processing == LayerTypeProcessingClassificationChoice.ranges:
             self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)
