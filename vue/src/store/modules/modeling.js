@@ -157,7 +157,7 @@ export default {
         const isValid = !Object.values(data).filter(item => item).length
         commit('SET_ERRORS_BLOCKS', data)
         if (isValid) {
-          dispatch('projects/get', {}, { root: true })
+          await dispatch('projects/get', {}, { root: true })
         }
         dispatch('messages/setMessage', isValid ? { message: `Валидация прошла успешно` } : { error: `Валидация не прошла` }, { root: true });
       }
