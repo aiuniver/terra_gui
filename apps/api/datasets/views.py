@@ -46,7 +46,10 @@ class ChoiceProgressAPIView(BaseAPIView):
                 request.project.set_dataset(progress.data)
             except project_exceptions.ProjectException as error:
                 return BaseResponseErrorGeneral(str(error))
-        return BaseResponseSuccess(data=progress.native())
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class InfoAPIView(BaseAPIView):
@@ -72,9 +75,11 @@ class SourceLoadAPIView(BaseAPIView):
 
 class SourceLoadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            data=agent_exchange("dataset_source_load_progress").native()
-        )
+        progress = agent_exchange("dataset_source_load_progress")
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
 
 class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
