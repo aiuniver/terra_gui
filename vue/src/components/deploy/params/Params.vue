@@ -1,127 +1,143 @@
 <template>
   <div class="params">
-      <div class="params-container__name">Загрузка в демо-панель</div>
-      <div class="params-container pa-5">
-        <div class="label">Название папки</div>
-        <div class="t-input">
-          <label class="t-input__label">https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}</label>
-          <input v-model="deploy" class="t-input__input" type="text" name="deploy[deploy]"  @blur="$emit('blur', $event.target.value)" />
-        </div>
-        <Checkbox :label="'Перезаписать с таким же названием папки'" :type="'checkbox'" class="pd__top" @change="UseReplace"/>
-        <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec"/>
-        <div class="password" v-if="use_sec">
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password' " placeholder="Введите пароль" v-model="sec">
-            <div class="password__icon">
-              <i
-                :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
-                :title="'show password'"
-                @click="passwordShow = !passwordShow">
-              </i>
-            </div>
-          </div>
-          <div class="t-input">
-            <input :type="passwordShow ? 'text' : 'password' " placeholder="Подтверждение пароля" v-model="sec_accept">
-            <div class="password__icon">
-              <i :class="['t-icon', checkCorrect]"
-                 :title="'is correct'">
-              </i>
-            </div>
-          </div>
-        </div>
-        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
-        <div class="loader" v-if="DataLoading">
-          <div class="loader__title">Дождитесь окончания загрузки</div>
-<!--          <div class="loader__time">-->
-<!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
-<!--          </div>-->
-          <div class="loader__progress">
-            <load-spiner></load-spiner>
-          </div>
-<!--          <div class="loader__progress">-->
-<!--            <div class="progress-bar">-->
-<!--              <div class="loading">-->
-<!--                <span>78%</span>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-        </div>
-        <div class="req-ans" v-if="DataSent">
-          <div class="answer__success">Загрузка завершена!</div>
-          <div class="answer__label">Ссылка на сформированную загрузку</div>
-          <div class="answer__url"><i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i><a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a></div>
-        </div>
-        <ModuleList v-if="DataSent" :moduleList="moduleList.api_text"/>
-
+    <div class="params-container__name">Загрузка в демо-панель</div>
+    <div class="params-container pa-5">
+      <div class="label">Название папки</div>
+      <div class="t-input">
+        <label class="t-input__label">
+          https://demo.neural-university.ru/{{ userData.login }}/{{ projectData.name_alias }}/{{ deploy }}
+        </label>
+        <input
+          v-model="deploy"
+          class="t-input__input"
+          type="text"
+          name="deploy[deploy]"
+          @blur="$emit('blur', $event.target.value)"
+        />
       </div>
+      <Checkbox
+        :label="'Перезаписать с таким же названием папки'"
+        :type="'checkbox'"
+        class="pd__top"
+        @change="UseReplace"
+      />
+      <Checkbox :label="'Использовать пароль для просмотра страницы'" :type="'checkbox'" @change="UseSec" />
+      <div class="password" v-if="use_sec">
+        <div class="t-input">
+          <input :type="passwordShow ? 'text' : 'password'" placeholder="Введите пароль" v-model="sec" />
+          <div class="password__icon">
+            <i
+              :class="['t-icon', passwordShow ? 'icon-deploy-password-open' : 'icon-deploy-password-close']"
+              :title="'show password'"
+              @click="passwordShow = !passwordShow"
+            ></i>
+          </div>
+        </div>
+        <div class="t-input">
+          <input :type="passwordShow ? 'text' : 'password'" placeholder="Подтверждение пароля" v-model="sec_accept" />
+          <div class="password__icon">
+            <i :class="['t-icon', checkCorrect]" :title="'is correct'"></i>
+          </div>
+        </div>
+      </div>
+      <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
+      <div class="loader" v-if="DataLoading">
+        <div class="loader__title">Дождитесь окончания загрузки</div>
+        <!--          <div class="loader__time">-->
+        <!--            Загружено 892 MB из 1.2 GB    Осталось: меньше минуты-->
+        <!--          </div>-->
+        <div class="loader__progress">
+          <load-spiner></load-spiner>
+        </div>
+        <!--          <div class="loader__progress">-->
+        <!--            <div class="progress-bar">-->
+        <!--              <div class="loading">-->
+        <!--                <span>78%</span>-->
+        <!--              </div>-->
+        <!--            </div>-->
+        <!--          </div>-->
+      </div>
+      <div class="req-ans" v-if="DataSent">
+        <div class="answer__success">Загрузка завершена!</div>
+        <div class="answer__label">Ссылка на сформированную загрузку</div>
+        <div class="answer__url">
+          <i :class="['t-icon', 'icon-deploy-copy']" :title="'copy'" @click="Copy(moduleList.url)"></i>
+          <a :href="moduleList.url" target="_blank">{{ moduleList.url }}</a>
+        </div>
+      </div>
+      <ModuleList v-if="DataSent" :moduleList="moduleList.api_text" />
+    </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Checkbox from "@/components/forms/Checkbox";
-import ModuleList from "./ModuleList";
-import LoadSpiner from "../../forms/LoadSpiner";
+import { mapGetters } from 'vuex';
+import Checkbox from '@/components/forms/Checkbox';
+import ModuleList from './ModuleList';
+import LoadSpiner from '../../forms/LoadSpiner';
 export default {
-  name: "Settings",
+  name: 'Settings',
   components: {
     Checkbox,
     ModuleList,
-    LoadSpiner
+    LoadSpiner,
   },
   data: () => ({
-    deploy: "",
+    deploy: '',
     replace: false,
     use_sec: false,
-    sec: "",
-    sec_accept: "",
+    sec: '',
+    sec_accept: '',
     send_disabled: true,
     DataSent: false,
     DataLoading: false,
-    passwordShow: false
+    passwordShow: false,
+    pattern: /^(?=[a-zA-Z])[A-Z_a-z0-9]+$/,
   }),
   computed: {
-  ...mapGetters({
-    height: "settings/height",
-    moduleList: "deploy/getModuleList",
-    projectData: "projects/getProject",
-    userData: "projects/getUser",
-  }),
-    checkCorrect(){
-      return this.sec == this.sec_accept && this.sec.length > 5 ? 'icon-deploy-password-correct' : 'icon-deploy-password-incorrect'
+    ...mapGetters({
+      height: 'settings/height',
+      moduleList: 'deploy/getModuleList',
+      projectData: 'projects/getProject',
+      userData: 'projects/getUser',
+    }),
+    checkCorrect() {
+      return this.sec == this.sec_accept && this.sec.length > 5
+        ? 'icon-deploy-password-correct'
+        : 'icon-deploy-password-incorrect';
     },
   },
   mounted() {
     // console.log(this.projectData)
   },
   watch: {
-    deploy(val){
-      if(val !== '') this.send_disabled = false
-      else this.send_disabled = true
+    deploy(val) {
+      if (val !== '' && this.pattern.test(this.deploy)) this.send_disabled = false;
+      else this.send_disabled = true;
     },
-    sec_accept(val){
-      if(this.use_sec){
-        if(val == this.sec) this.send_disabled = false;
+    sec_accept(val) {
+      if (this.use_sec) {
+        if (val == this.sec) this.send_disabled = false;
         else this.send_disabled = true;
       }
-    }
+    },
   },
   methods: {
     click() {
       console.log();
     },
-    Percents(number){
-      let loading = document.querySelector(".progress-bar > .loading");
-      loading.style.width = number + "%";
-      loading.find("span").value = number;
+    Percents(number) {
+      let loading = document.querySelector('.progress-bar > .loading');
+      loading.style.width = number + '%';
+      loading.find('span').value = number;
     },
-    Copy(text){
-      var textArea = document.createElement("textarea");
+    Copy(text) {
+      var textArea = document.createElement('textarea');
       textArea.value = text;
 
-      textArea.style.top = "0";
-      textArea.style.left = "0";
-      textArea.style.position = "fixed";
+      textArea.style.top = '0';
+      textArea.style.left = '0';
+      textArea.style.position = 'fixed';
 
       document.body.appendChild(textArea);
       textArea.focus();
@@ -141,31 +157,31 @@ export default {
     UseReplace(data) {
       this.replace = data.value;
     },
-    async progress(){
-        let answer = await this.$store.dispatch('deploy/CheckProgress');
-        console.log(answer)
-        if(!answer){
-          // this.Percents(30);
-          this.getProgress();
-        }else {
-          this.DataLoading = false;
-          this.DataSent = true;
-        }
+    async progress() {
+      let answer = await this.$store.dispatch('deploy/CheckProgress');
+      console.log(answer);
+      if (!answer) {
+        // this.Percents(30);
+        this.getProgress();
+      } else {
+        this.DataLoading = false;
+        this.DataSent = true;
+      }
     },
-    getProgress(){
+    getProgress() {
       setTimeout(this.progress, 2000);
     },
-    async SendData(){
+    async SendData() {
       let data = {
         deploy: this.deploy,
         replace: this.replace,
         use_sec: this.use_sec,
-      }
-      if(this.use_sec) data['sec'] = this.sec
+      };
+      if (this.use_sec) data['sec'] = this.sec;
       this.DataLoading = true;
       await this.$store.dispatch('deploy/SendDeploy', data);
       this.getProgress();
-    }
+    },
   },
 };
 </script>
@@ -176,116 +192,115 @@ export default {
   width: 470px;
   border-left: #0e1621 solid 1px;
 }
-.params-container__name{
+.params-container__name {
   padding: 30px 0 0 20px;
 }
-.pd__top{
+.pd__top {
   padding: 10px 0;
 }
-.label{
-  color: #A7BED3;
+.label {
+  color: #a7bed3;
   font-size: 12px;
   line-height: 24px;
 }
-.color__grey{
-  color: #6C7883;
+.color__grey {
+  color: #6c7883;
 }
 button {
   font-size: 0.875rem;
   margin-top: 10px;
   width: 107px;
 }
-.t-input{
+.t-input {
   padding-bottom: 10px;
 }
-.loader{
+.loader {
   padding-top: 20px;
 }
-.loader__title{
+.loader__title {
   font-size: 14px;
   line-height: 24px;
   text-align: center;
 }
-.loader__time{
+.loader__time {
   padding-top: 20px;
   font-size: 12px;
   line-height: 24px;
-  color: #A7BED3;
+  color: #a7bed3;
   width: 100%;
   text-align: center;
 }
-.loader__progress{
+.loader__progress {
   padding-top: 20px;
   width: 100%;
   display: flex;
   justify-content: center;
 }
-.progress-bar{
+.progress-bar {
   width: 426px;
-  background: #2B5278;
+  background: #2b5278;
   border-radius: 4px;
 }
-.loading{
-  background: #65B9F4;
+.loading {
+  background: #65b9f4;
   border-radius: 4px;
   width: 78%;
-  span{
+  span {
     position: relative;
     margin-left: 201px;
   }
 }
-.t-input{
-  &__label{
-    color: #6C7883;
+.t-input {
+  &__label {
+    color: #6c7883;
     display: block;
     margin: 0 0 10px 0;
     line-height: 1.25;
-    font-size: .75rem;
+    font-size: 0.75rem;
     user-select: none;
   }
-  &__input{
+  &__input {
     color: #fff;
-    border-color: #6C7883;
-    background: #242F3D;
+    border-color: #6c7883;
+    background: #242f3d;
     width: 100%;
   }
 }
-.req-ans{
-  .answer__success{
+.req-ans {
+  .answer__success {
     font-size: 14px;
     line-height: 24px;
-    color: #FFFFFF;
+    color: #ffffff;
     padding-top: 10px;
   }
-  .answer__label{
-    color: #A7BED3;
+  .answer__label {
+    color: #a7bed3;
     font-size: 12px;
     line-height: 24px;
     padding-top: 15px;
   }
-  .answer__url{
+  .answer__url {
     font-size: 14px;
     line-height: 24px;
-    color: #65B9F4;
+    color: #65b9f4;
     display: flex;
-    a{
+    a {
       padding-left: 10px;
-      color: #65B9F4;
+      color: #65b9f4;
     }
-    i{
+    i {
       cursor: pointer;
       width: 32px;
     }
   }
 }
-.password__icon{
+.password__icon {
   position: absolute;
   width: 415px;
-  i{
+  i {
     position: relative;
     float: right;
     margin-top: -34px;
   }
 }
-
 </style>
