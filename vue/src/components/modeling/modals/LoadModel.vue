@@ -168,6 +168,7 @@ export default {
       overflow: hidden;
     }
     &--icon {
+      flex: 0 0 20px;
       display: block;
       content: '';
       width: 18px;
