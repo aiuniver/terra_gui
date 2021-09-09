@@ -281,12 +281,13 @@ $circleConnectedColor: #569dcf;
     width: 200px;
     top: 0;
     height: auto;
-    padding: 10px;
+    padding: 5px 10px;
     color: #fff;
     border: 2px solid red;
     background-color: #2b5278;
     border-radius: 5px;
-    font-size: 0.9em;
+    font-size: 12px;
+    line-height: 1.2;
     text-align: center;
   }
 

@@ -21,7 +21,7 @@
     </div>
     <at-modal v-model="save" width="400" :maskClosable="false" :showClose="false">
       <div slot="header" style="text-align: center">
-        <span>Сохранить проект</span>
+        <span>Сохранить модель</span>
       </div>
       <div class="inner form-inline-label">
         <div class="field-form">
