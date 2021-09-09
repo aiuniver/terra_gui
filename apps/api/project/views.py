@@ -1,3 +1,7 @@
+from terra_ai.agent import agent_exchange
+
+from apps.plugins.project import project_path, data_path
+
 from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorFields
 from .serializers import NameSerializer
 
@@ -14,12 +18,14 @@ class NameAPIView(BaseAPIView):
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.reset()
+        request.project.save()
         return BaseResponseSuccess()
 
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.save()
+        # agent_exchange("project_save", **serializer.validated_data)
         return BaseResponseSuccess()
 
 
