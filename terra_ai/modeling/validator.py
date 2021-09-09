@@ -24,7 +24,7 @@ from terra_ai.data.modeling.layers.extra import (
     LayerValidationMethodChoice,
     SpaceToDepthDataFormatChoice, LayerConfigData,
 )
-from terra_ai.exceptions.modeling import ModelingMessages
+from terra_ai.exceptions.modeling import ValidatorMessages
 
 
 @dataclass
@@ -274,7 +274,7 @@ class ModelValidator:
             self.valid = False
             for group in sub_graphs[1:]:
                 for layer in group:
-                    self.val_dictionary[layer] = ModelingMessages.LayerNotConnectedToMainPart.value
+                    self.val_dictionary[layer] = ValidatorMessages.LayerNotConnectedToMainPart.value
 
     def _get_model_links(self) -> None:
         (
@@ -299,13 +299,13 @@ class ModelValidator:
             if idx not in input_layers.keys():
                 self.valid = False
                 self.layer_input_shapes[idx].append(None)
-                self.val_dictionary[idx] = ModelingMessages.LayerDoesNotHaveInputShape.value
+                self.val_dictionary[idx] = ValidatorMessages.LayerDoesNotHaveInputShape.value
 
         # check if plan input shapes is not None
         for _id, shape in self.model_plan.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[_id] = ModelingMessages.LayerDoesNotHaveInputShape.value
+                self.val_dictionary[_id] = ValidatorMessages.LayerDoesNotHaveInputShape.value
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -320,7 +320,7 @@ class ModelValidator:
                             != self.layer_output_shapes[layer[0]][0][1:]
                     ):
                         self.valid = False
-                        self.val_dictionary[layer[0]] = ModelingMessages.UnexpectedOutputShape % (
+                        self.val_dictionary[layer[0]] = ValidatorMessages.UnexpectedOutputShape % (
                             self.output_shape[layer[0]][0],
                             self.layer_output_shapes[layer[0]]
                         )
@@ -331,7 +331,7 @@ class ModelValidator:
                     self.valid = False
                     self.val_dictionary[
                         idx
-                    ] = ModelingMessages.UnspecifiedOutputLayer
+                    ] = ValidatorMessages.UnspecifiedOutputLayer
 
     def _model_validation(self) -> dict:
         """Full model modeling"""
@@ -803,8 +803,8 @@ class LayerValidation:
             inp_shape=self.inp_shape,
             revert=True,
         )
-        comment = "Parameters Error: check the following parameters: "
-        # TODO доработать exception
+
+        comment = ""
         if problem_params:
             for key in problem_params.keys():
                 if isinstance(problem_params[key][0], str):
@@ -815,7 +815,7 @@ class LayerValidation:
                     comment += (
                         f"{key}={problem_params[key][0]} ({problem_params[key][1]}); "
                     )
-            return comment[:-2]
+            return ValidatorMessages.CheckFollowingParameters.value % comment[:-2]
 
     def primary_layer_validation(self) -> Optional[str]:
         """Whole modeling for specific parameters, uplink number and input dimension"""
@@ -834,13 +834,13 @@ class LayerValidation:
     def position_validation(self) -> Optional[str]:
         """Validate number of uplinks"""
         if None in self.inp_shape:
-            return ModelingMessages.InputShapeEmpty.value
+            return ValidatorMessages.InputShapeEmpty.value
         elif (
                 isinstance(self.num_uplinks[0], int)
                 and self.num_uplinks[1] == LayerValidationMethodChoice.fixed
                 and len(self.inp_shape) != self.num_uplinks[0]
         ):
-            return ModelingMessages.IncorrectQuantityInputShape.value % (
+            return ValidatorMessages.IncorrectQuantityInputShape.value % (
                 self.num_uplinks[0],
                 's' if self.num_uplinks[0] > 1 else '',
                 len(self.inp_shape)
@@ -850,7 +850,7 @@ class LayerValidation:
                 and self.num_uplinks[1] == LayerValidationMethodChoice.minimal
                 and len(self.inp_shape) < self.num_uplinks[0]
         ):
-            return ModelingMessages.IncorrectQuantityInputShape.value % (
+            return ValidatorMessages.IncorrectQuantityInputShape.value % (
                 f"{self.num_uplinks[0]} or greater",
                 's' if self.num_uplinks[0] > 1 else '',
                 len(self.inp_shape)
@@ -864,7 +864,7 @@ class LayerValidation:
                 ]
                 and len(self.inp_shape) not in self.num_uplinks[0]
         ):
-            return ModelingMessages.IncorrectQuantityInputShape.value % (
+            return ValidatorMessages.IncorrectQuantityInputShape.value % (
                 f"one of {self.num_uplinks}",
                 "s",
                 len(self.inp_shape))
@@ -876,7 +876,7 @@ class LayerValidation:
         if len(self.inp_shape) > 1:
             for shape in self.inp_shape[1:]:
                 if len(self.inp_shape[0]) != len(shape):
-                    return ModelingMessages.InputShapesHaveDifferentSizes.value % self.inp_shape
+                    return ValidatorMessages.InputShapesHaveDifferentSizes.value % self.inp_shape
             axis = self.layer_parameters.get("axis", None)
             if axis:
                 first_shape = list(self.inp_shape[0])
@@ -885,20 +885,20 @@ class LayerValidation:
                     shape = list(shape)
                     shape.pop(axis)
                     if shape != first_shape:
-                        return ModelingMessages.MismatchedInputShapes.value % (
+                        return ValidatorMessages.MismatchedInputShapes.value % (
                             axis, self.inp_shape
                         )
             else:
                 for shape in self.inp_shape[1:]:
                     if shape != self.inp_shape[0]:
-                        return ModelingMessages.InputShapesAreDifferent.value % self.inp_shape
+                        return ValidatorMessages.InputShapesAreDifferent.value % self.inp_shape
         else:
             if (
                     isinstance(self.input_dimension[0], int)
                     and self.input_dimension[1] == LayerValidationMethodChoice.fixed
                     and len(self.inp_shape[0]) != self.input_dimension[0]
             ):
-                return ModelingMessages.IncorrectQuantityInputDimensions.value % (
+                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
                     self.input_dimension[0], len(self.inp_shape[0])
                 )
             elif (
@@ -906,7 +906,7 @@ class LayerValidation:
                     and self.input_dimension[1] == LayerValidationMethodChoice.minimal
                     and len(self.inp_shape[0]) < self.input_dimension[0]
             ):
-                return ModelingMessages.IncorrectQuantityInputDimensions.value (
+                return ValidatorMessages.IncorrectQuantityInputDimensions.value (
                     f"{self.input_dimension[0]} or greater",
                     len(self.inp_shape[0])
                 )
@@ -919,7 +919,7 @@ class LayerValidation:
                     ]
                     and len(self.inp_shape[0]) not in self.input_dimension[0]
             ):
-                return ModelingMessages.IncorrectQuantityInputDimensions.value % (
+                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
                     f"one of {self.input_dimension[0]}",
                     len(self.inp_shape[0])
                 )
@@ -935,7 +935,7 @@ class LayerValidation:
                     self.layer_parameters.get(key) == "identity"
                     and len(self.inp_shape[0]) != 2
             ):
-                return ModelingMessages.InitializerCanTakeOnlyNDInputShape.value % (
+                return ValidatorMessages.InitializerCanTakeOnlyNDInputShape.value % (
                     "'Identity'",
                     key,
                     2,
@@ -951,7 +951,7 @@ class LayerValidation:
                     self.layer_parameters.get("dilation_rate") > 1
                     and self.layer_parameters.get("strides") > 1
             ):
-                return ModelingMessages.CannotHaveValue.value % ("'dilation_rate' and 'strides'", "> 1")
+                return ValidatorMessages.CannotHaveValue.value % ("'dilation_rate' and 'strides'", "> 1")
 
         # strides and dilation_rate in 2+D layers
         if isinstance(
@@ -961,7 +961,7 @@ class LayerValidation:
                     max(self.layer_parameters.get("dilation_rate")) > 1
                     and max(self.layer_parameters.get("strides")) > 1
             ):
-                return ModelingMessages.CannotHaveValue % ("'dilation_rate' and 'strides'", "> 1")
+                return ValidatorMessages.CannotHaveValue % ("'dilation_rate' and 'strides'", "> 1")
 
         # value range for axis
         if self.layer_parameters.get("axis", None) and (
@@ -973,7 +973,7 @@ class LayerValidation:
                 np.arange(-len(self.inp_shape[0]) + 1, len(self.inp_shape[0]))
             )
             axis_values.pop(axis_values.index(0))
-            return ModelingMessages.CanTakeOneOfTheFollowingValues.value % ('axis', axis_values)
+            return ValidatorMessages.CanTakeOneOfTheFollowingValues.value % ('axis', axis_values)
 
         # groups with data_format, filters and inp_shape
         if (
@@ -988,7 +988,7 @@ class LayerValidation:
                     != 0
                     or self.inp_shape[0][-1] % self.layer_parameters.get("groups") != 0
             ):
-                return ModelingMessages.IncorrectNumberOfFiltersAndChannels.value % (
+                return ValidatorMessages.IncorrectNumberOfFiltersAndChannels.value % (
                     self.layer_parameters.get('filters'),
                     self.inp_shape[0][-1],
                     self.layer_parameters.get('groups')
@@ -1000,7 +1000,7 @@ class LayerValidation:
                     != 0
                     or self.inp_shape[0][dim] % self.layer_parameters.get("groups") != 0
             ):
-                return ModelingMessages.IncorrectNumberOfFiltersAndChannels.value % (
+                return ValidatorMessages.IncorrectNumberOfFiltersAndChannels.value % (
                     self.layer_parameters.get('filters'),
                     self.inp_shape[0][dim],
                     self.layer_parameters.get('groups')
@@ -1017,7 +1017,7 @@ class LayerValidation:
                         isinstance(self.layer_parameters.get("strides"), (tuple, list))
                         and max(self.layer_parameters.get("strides")) > 1
                 ):
-                    return ModelingMessages.ParameterCanNotBeForInputShape.value % (
+                    return ValidatorMessages.ParameterCanNotBeForInputShape.value % (
                         f"dim > {-dim + 1} and 'data_format'='channels_first'",
                         "strides",
                         "> 1",
@@ -1031,7 +1031,7 @@ class LayerValidation:
                 and self.layer_parameters.get("input_dim", None)
         ):
             if self.layer_parameters.get("input_dim") < self.kwargs.get("maxwordcount"):
-                return ModelingMessages.InputDimMustBeThenSizeOf.value % (
+                return ValidatorMessages.InputDimMustBeThenSizeOf.value % (
                     self.layer_parameters.get('input_dim'),
                     "equal or greater",
                     f"words dictionary (maxwordcount={self.kwargs.get('maxwordcount')})"
@@ -1044,7 +1044,7 @@ class LayerValidation:
                     and self.layer_parameters.get("weights")
                     and self.layer_parameters.get("classes") != 1000
             ):
-                return ModelingMessages.ClassesShouldBe.value % (
+                return ValidatorMessages.ClassesShouldBe.value % (
                     "using `weights` as `imagenet` with `include_top` as true",
                     1000,
                     self.layer_parameters.get('classes'))
@@ -1052,7 +1052,7 @@ class LayerValidation:
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
                                                                 1:
                                                                 ] != (299, 299, 3):
-                    return ModelingMessages.InputShapeMustBeOnly.value % (
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
                         "'include_top'=True",
                         (299, 299, 3),
                         self.inp_shape[0][1:]
@@ -1063,7 +1063,7 @@ class LayerValidation:
                         or self.inp_shape[0][2] < 75
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ModelingMessages.InputShapeMustBeInEchDim.value % (
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
                         "greater or equal",
                         (75, 75, 3),
                         self.inp_shape[0][1:]
@@ -1072,7 +1072,7 @@ class LayerValidation:
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
                                                                 1:
                                                                 ] != (299, 299, 3):
-                    return ModelingMessages.InputShapeMustBeOnly.value % (
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
                         "'include_top'=True",
                         (299, 299, 3),
                         self.inp_shape[0][1:])
@@ -1082,7 +1082,7 @@ class LayerValidation:
                         or self.inp_shape[0][2] < 71
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ModelingMessages.InputShapeMustBeInEchDim.value % (
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
                         "greater or equal",
                         (71, 71, 3),
                         self.inp_shape[0][1:]
@@ -1091,7 +1091,7 @@ class LayerValidation:
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][
                                                                 1:
                                                                 ] != (224, 224, 3):
-                    return ModelingMessages.InputShapeMustBeOnly.value % (
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
                         "'include_top'=True",
                         (224, 224, 3),
                         self.inp_shape[0][1:]
@@ -1102,7 +1102,7 @@ class LayerValidation:
                         or self.inp_shape[0][2] < 32
                         or self.inp_shape[0][3] < 3
                 ):
-                    return ModelingMessages.InputShapeMustBeInEchDim.value % (
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
                         "greater or equal",
                         (32, 32, 3),
                         self.inp_shape[0][1:]
@@ -1117,13 +1117,13 @@ class LayerValidation:
                     or self.inp_shape[0][2] < 32
                     or self.inp_shape[0][3] < 3
             ):
-                return ModelingMessages.InputShapeMustBeInEchDim % (
+                return ValidatorMessages.InputShapeMustBeInEchDim % (
                     "greater or equal",
                     (32, 32, 3),
                     self.inp_shape[0][1:]
                 )
             if self.inp_shape[0][1] % 4 != 0 or self.inp_shape[0][2] % 4 != 0:
-                return ModelingMessages.InputShapeMustBeWholeDividedBy.value % (self.inp_shape[0], 4)
+                return ValidatorMessages.InputShapeMustBeWholeDividedBy.value % (self.inp_shape[0], 4)
 
         # space_to_depth dimensions
         if self.layer_type == LayerTypeChoice.SpaceToDepth:
@@ -1133,7 +1133,7 @@ class LayerValidation:
                     or self.layer_parameters.get("data_format")
                     == SpaceToDepthDataFormatChoice.NHWC
             ) and len(self.inp_shape[0]) != 4:
-                return ModelingMessages.ExpectedOtherInputShapeDim.value % (
+                return ValidatorMessages.ExpectedOtherInputShapeDim.value % (
                     4, "`data_format`=`NHWC` or `NCHW`", len(self.inp_shape[0]), self.inp_shape[0]
                 )
             if (
@@ -1141,7 +1141,7 @@ class LayerValidation:
                     == SpaceToDepthDataFormatChoice.NCHW_VECT_C
                     and len(self.inp_shape[0]) != 5
             ):
-                return ModelingMessages.ExpectedOtherInputShapeDim.value % (
+                return ValidatorMessages.ExpectedOtherInputShapeDim.value % (
                     5, "`data_format`=`NCHW_VECT_C`", len(self.inp_shape[0]), self.inp_shape[0]
                 )
             if self.layer_parameters.get(
@@ -1150,7 +1150,7 @@ class LayerValidation:
                     self.inp_shape[0][2] % self.layer_parameters.get("block_size") != 0
                     or self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0
             ):
-                return ModelingMessages.DimensionSizeMustBeEvenlyDivisible.value % (
+                return ValidatorMessages.DimensionSizeMustBeEvenlyDivisible.value % (
                     self.inp_shape[0][2:4],
                     f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"

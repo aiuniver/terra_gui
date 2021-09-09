@@ -42,6 +42,8 @@ class GetAPIView(BaseAPIView):
         try:
             model = agent_exchange("model_get", **serializer.validated_data)
             return BaseResponseSuccess(model.native())
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -142,6 +144,8 @@ class UpdateAPIView(BaseAPIView):
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
             return BaseResponseSuccess()
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -160,6 +164,8 @@ class ValidateAPIView(BaseAPIView):
             )
             request.project.set_model(model)
             return BaseResponseSuccess(errors)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -201,5 +207,8 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.get("path"))
-        return BaseResponseSuccess()
+        try:
+            agent_exchange("model_delete", path=request.data.get("path"))
+            return BaseResponseSuccess()
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))

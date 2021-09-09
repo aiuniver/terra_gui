@@ -4,6 +4,10 @@ from .base import TerraBaseException
 
 
 class ModelingMessages(str, Enum):
+    pass
+
+
+class ValidatorMessages(str, Enum):
     # Connection
     LayerNotConnectedToMainPart = "Layer is not connected to main part"
     # Input Shape
@@ -13,11 +17,11 @@ class ModelingMessages(str, Enum):
     InputShapeMustBeWholeDividedBy = "Input shape `%s` except channels must be whole divided by %s"
     LayerDoesNotHaveInputShape = "Layer does not have input shape"
     # Output Shape
-    UnexpectedOutputShape = "Expected output shape `%s` but got output shape `%s`"
+    UnexpectedOutputShape = "Expected output shape %s but got output shape %s"
     UnspecifiedOutputLayer = "Unspecified output layer"
     # Parameters
-    CheckFollowingParameters = "Check the following parameters"
-    InitializerCanTakeOnlyNDInputShape = "%s initializer in %s can take only %sD input shape but "\
+    CheckFollowingParameters = "Check the following parameters: %s"
+    InitializerCanTakeOnlyNDInputShape = "%s initializer in %s can take only %sD input shape but " \
                                          "received %sD input shape: %s"
     CanTakeOneOfTheFollowingValues = "%s can take one of the following values: %s"
     CannotHaveValue = "%s cannot have value %s at the same time"
@@ -40,3 +44,6 @@ class ModelingMessages(str, Enum):
 class ModelingException(TerraBaseException):
     class Meta:
         message: str = "Undefined error of modeling"
+
+
+
