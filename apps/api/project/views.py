@@ -28,6 +28,11 @@ class InfoAPIView(BaseAPIView):
         )
 
 
+class DeleteAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
+
+
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.reset()
