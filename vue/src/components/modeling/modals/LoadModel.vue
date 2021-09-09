@@ -52,7 +52,7 @@
             <div class="model-arch-img my-5">
               <img alt="" width="100" height="200" :src="'data:image/png;base64,' + info.image || ''" />
             </div>
-            <div class="model-save-arch-btn"><button :disabled="!model" @click="download">Загрузить</button></div>
+            <div class="model-save-arch-btn"><t-button :disabled="!model" @click="download">Загрузить</t-button></div>
           </div>
         </div>
       </div>
@@ -210,6 +210,10 @@ export default {
       width: 100%;
       height: auto;
     }
+  }
+
+  &-arch-btn {
+    line-height: 1;
   }
 
   &-info-param {
