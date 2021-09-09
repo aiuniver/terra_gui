@@ -1,13 +1,11 @@
 import copy
 import os
 import re
-from time import sleep
 from typing import Union
 
 import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
-import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix
