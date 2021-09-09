@@ -55,7 +55,7 @@ export default {
       },
       showlegend: true,
       legend: {
-        y: -0.25,
+        y: -0.2,
         itemsizing: "constant",
         orientation: "h",
         font: {
@@ -115,6 +115,22 @@ export default {
   }
   .indicator{
     background: #65CA35;
+  }
+}
+.undertraining{
+  span{
+    color: #F3D11D;
+  }
+  .indicator{
+    background: #F3D11D;
+  }
+}
+.retraining{
+  span{
+    color: #CA5035;
+  }
+  .indicator{
+    background: #CA5035;
   }
 }
 .item{

@@ -125,6 +125,7 @@ export default {
       return this.params?.fit || {};
     },
     outputs() {
+      console.log(this.params?.outputs || {});
       return this.params?.outputs || {};
     },
     optimizerFields() {
@@ -165,7 +166,7 @@ export default {
 .block-layers {
   width: 50%;
   &__header {
-    color: #a7bed3;
+    color: #A7BED3;
     display: block;
     margin: 0 0 10px 0;
     line-height: 1;
