@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import mkdtemp, NamedTemporaryFile
 from pydantic.networks import HttpUrl
 
+from ..utils import context_cwd
 from . import pool
 
 
@@ -38,12 +39,14 @@ def pack(progress_name: str, title: str, source: Path, delete=True) -> Path:
     pool.reset(progress_name, message=title, finished=False)
     zip_destination = NamedTemporaryFile(suffix=".zip", delete=delete)
     try:
-        with zipfile.ZipFile(zip_destination.name, "w") as zipfile_ref:
-            quantity = sum(list(map(lambda item: len(item[2]), os.walk(source))))
+        with context_cwd(source), zipfile.ZipFile(
+            zip_destination.name, "w"
+        ) as zipfile_ref:
+            quantity = sum(list(map(lambda item: len(item[2]), os.walk("./"))))
             __num = 0
-            for path, dirs, files in os.walk(source):
+            for path, dirs, files in os.walk("./"):
                 for file in files:
-                    zipfile_ref.write(Path(path, file).absolute())
+                    zipfile_ref.write(Path(path, file))
                     __num += 1
                     pool(progress_name, percent=__num / quantity * 100)
     except Exception as error:
