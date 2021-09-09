@@ -51,6 +51,12 @@ export default {
     async loadProject({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/load/", data }, { root: true });
     },
+    async removeProject({ dispatch }, data) {
+      return await dispatch("axios", { url: "/project/remove/", data }, { root: true });
+    },
+    async infoProject({ dispatch }, data) {
+      return await dispatch("axios", { url: "/project/info/", data }, { root: true });
+    },
     async saveProject({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/save/", data }, { root: true });
     },
