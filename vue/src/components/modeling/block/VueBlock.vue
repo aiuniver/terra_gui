@@ -225,8 +225,8 @@ $ioPaddingInner: 2px 0;
 $ioHeight: 16px;
 $ioFontSize: 14px;
 
-$circleBorder: 4px;
-$circleSize: 10px;
+$circleBorder: 3px;
+$circleSize: 3px;
 $circleMargin: 2px; // left/right
 
 $circleNewColor: #00ff00;
@@ -281,12 +281,13 @@ $circleConnectedColor: #569dcf;
     width: 200px;
     top: 0;
     height: auto;
-    padding: 10px;
+    padding: 5px 10px;
     color: #fff;
     border: 2px solid red;
     background-color: #2b5278;
     border-radius: 5px;
-    font-size: 0.9em;
+    font-size: 12px;
+    line-height: 1.2;
     text-align: center;
   }
 
@@ -384,6 +385,7 @@ $circleConnectedColor: #569dcf;
       width: $circleSize;
       height: $circleSize;
       border: $circleBorder solid rgba(0, 0, 0, 0.178);
+      background: #65b9f4;
       border-radius: 100%;
       cursor: crosshair;
       z-index: 999;

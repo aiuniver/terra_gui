@@ -7,6 +7,7 @@ export default {
     model: {},
     blocks: [],
     errorsBlocks: {},
+    errorsFields: {},
     links: [],
     modeling: {
       list: [],
@@ -22,6 +23,9 @@ export default {
     },
     SET_ERRORS_BLOCKS(state, value) {
       state.errorsBlocks = { ...value }
+    },
+    SET_ERRORS_FIELDS(state, value) {
+      state.errorsFields = { ...value }
     },
     SET_MODEL(state, value) {
       state.model = value;
@@ -119,7 +123,7 @@ export default {
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },
-    async updateModel({ commit, state: { blocks, links }, dispatch }) {
+    async updateModel({ commit, state: { blocks, links, errorsBlocks }, dispatch }, block) {
       const semdBlocks = JSON.parse(JSON.stringify(blocks))
       semdBlocks.forEach(block => {
         // if (block.group !== 'input') block.shape.input = null;
@@ -136,8 +140,21 @@ export default {
           .filter(link => link);
       });
       commit('SET_STATUS', { isUpdate: true });
-      // commit('SET_ERRORS_BLOCKS', {});
-      return await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
+
+      const res = await dispatch('axios', { url: '/modeling/update/', data: { layers: semdBlocks } }, { root: true });
+      if (res) {
+        const { data, error, success } = res
+        console.log(data, error, success, block)
+        if (error) {
+          const newError = {}
+          for (const key in error) {
+            newError[key.replace('fields', block.id)] = error[key]
+          }
+          console.log(newError)
+          commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
+        }
+      }
+      return res
     },
     async getModel({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/get/', data: value }, { root: true });
@@ -182,6 +199,7 @@ export default {
     getModel: ({ model }) => model,
     getBlocks: ({ blocks }) => blocks,
     getErrorsBlocks: ({ errorsBlocks }) => errorsBlocks,
+    getErrorsFields: ({ errorsFields }) => errorsFields,
     getLinks: ({ links }) => links,
     getSelect: ({ select }) => select,
     getStatus: ({ status }) => status,

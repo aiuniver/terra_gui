@@ -7,6 +7,9 @@ import tensorflow
 from typing import Any
 from pathlib import Path
 
+
+from ..data.projects.project import ProjectsInfoData, ProjectsList
+
 from ..data.datasets.dataset import (
     DatasetLoadData,
     CustomDatasetConfigData,
@@ -35,6 +38,7 @@ from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
+from ..progress import utils as progress_utils
 from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
@@ -76,6 +80,33 @@ class Exchange:
         else:
             __type = HardwareAcceleratorChoice.GPU
         return HardwareAcceleratorData(type=__type)
+
+    def _call_projects_info(self, path: Path) -> ProjectsInfoData:
+        """
+        Получение списка проектов
+        """
+        projects = ProjectsList()
+        for filename in os.listdir(path):
+            try:
+                projects.append({"value": Path(path, filename)})
+            except Exception:
+                pass
+        projects.sort(key=lambda item: item.label)
+        return ProjectsInfoData(projects=projects.native())
+
+    def _call_project_save(
+        self, source: Path, target: Path, name: str, overwrite: bool
+    ):
+        """
+        Сохранение проекта
+        """
+        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
+        if not overwrite and project_path.is_file():
+            raise exceptions.ProjectAlreadyExistsException(name)
+        zip_destination = progress_utils.pack(
+            "project_save", "Сохранение проекта", source, delete=False
+        )
+        shutil.move(zip_destination.name, project_path)
 
     def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
         """
@@ -173,7 +204,7 @@ class Exchange:
         files.sort(key=lambda item: item.label)
         return files
 
-    def _call_models(self, path: str) -> ModelsGroupsList:
+    def _call_models_info(self, path: Path) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
@@ -238,6 +269,31 @@ class Exchange:
         """
         os.remove(path)
 
+    def _call_start_training(
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        dataset_path: Path,
+        params: TrainData,
+    ):
+        """
+        Старт обучения
+        """
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            dataset_path=dataset_path,
+            training_params=params,
+        )
+
+    def _call_set_interactive_config(self, config: dict):
+        """
+        Обновление интерактивных параметров обучения
+        """
+        interactive.get_train_results(config=config)
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
@@ -249,25 +305,6 @@ class Exchange:
         Деплой: прогресс загрузки
         """
         return progress.pool("deploy_upload")
-
-    def _call_start_training(
-        self,
-        dataset: DatasetData,
-        model: ModelDetailsData,
-        training_path: Path,
-        dataset_path: Path,
-        params: TrainData,
-    ):
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-        )
-
-    def _call_set_interactive_config(self, config: dict) -> None:
-        interactive.get_train_results(config=config)
 
 
 agent_exchange = Exchange()

@@ -24,10 +24,10 @@
         </div>
         <at-collapse :value="collapse">
           <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
-            <Forms :data="main" @change="change" />
+            <Forms :data="main" :id="block.id" @change="change" />
           </at-collapse-item>
           <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
-            <Forms :data="extra" @change="change" />
+            <Forms :data="extra" :id="block.id" @change="change" />
           </at-collapse-item>
           <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange>
             <Shape
@@ -119,7 +119,7 @@ export default {
   },
   methods: {
     async saveModel() {
-      await this.$store.dispatch('modeling/updateModel', {});
+      await this.$store.dispatch('modeling/updateModel', this.block);
     },
     async changeType({ value }) {
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });

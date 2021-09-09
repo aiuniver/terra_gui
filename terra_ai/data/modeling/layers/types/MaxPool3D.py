@@ -6,8 +6,14 @@ from typing import Optional, Tuple
 from pydantic.types import PositiveInt
 
 from ....mixins import BaseMixinData
-from ..extra import PaddingChoice, DataFormatChoice, LayerConfigData, LayerValidationMethodChoice, ModuleChoice, \
-    ModuleTypeChoice
+from ..extra import (
+    PaddingChoice,
+    DataFormatChoice,
+    LayerConfigData,
+    LayerValidationMethodChoice,
+    ModuleChoice,
+    ModuleTypeChoice,
+)
 
 LayerConfig = LayerConfigData(
     **{
@@ -27,7 +33,7 @@ LayerConfig = LayerConfigData(
 
 class ParametersMainData(BaseMixinData):
     pool_size: Tuple[PositiveInt, PositiveInt, PositiveInt] = (2, 2, 2)
-    strides: Optional[PositiveInt]
+    strides: Optional[Tuple[PositiveInt, PositiveInt, PositiveInt]]
     padding: PaddingChoice = PaddingChoice.same
 
 

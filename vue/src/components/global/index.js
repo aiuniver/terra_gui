@@ -11,7 +11,10 @@ import MultiSelect from './forms/MultiSelect';
 import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
-import SelectNew from './forms/SelectNew';
+
+import TInput from './new/forms/TInput';
+import TCheckbox from './new/forms/TCheckbox';
+import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 
 export default [
@@ -27,6 +30,9 @@ export default [
   SegmentationAnnotation,
   Autocomplete,
   MultiSelect,
-  SelectNew,
+
+  TInput,
+  TCheckbox,
+  TSelect,
   TField
 ];

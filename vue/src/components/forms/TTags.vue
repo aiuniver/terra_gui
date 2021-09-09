@@ -30,7 +30,7 @@
             name="[tags][][name]"
             type="text"
             :class="['tags__item']"
-            :style="{ width: (value.length + 1) * 8 + 'px' }"
+            :style="{ width: (value.length + 1) * 8  <= 90 ? (value.length + 1) * 8  + 'px' : '90px' }"
             autocomplete="off"
             @input="change"
             @blur="blur"

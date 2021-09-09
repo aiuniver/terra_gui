@@ -13,9 +13,9 @@
               <IndexCard v-for="(card, i) in Cards" :key="'card-' + i" v-bind="card" />
             </div>
           </div>
-          <div class="board__table">
-            <Table @ReloadAll="ReloadAll" />
-          </div>
+<!--          <div class="board__table">-->
+<!--            <Table @ReloadAll="ReloadAll" />-->
+<!--          </div>-->
         </div>
       </div>
     </scrollbar>
@@ -25,11 +25,11 @@
 <script>
 import { mapGetters } from 'vuex';
 import IndexCard from './IndexCard';
-import Table from './Table';
+// import Table from './Table';
 export default {
   components: {
     IndexCard,
-    Table,
+    // Table,
   },
   data: () => ({}),
   computed: {

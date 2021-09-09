@@ -119,7 +119,7 @@ export default {
     },
     sec_accept(val) {
       if (this.use_sec) {
-        if (val == this.sec) this.send_disabled = false;
+        if (val == this.sec && this.pattern.test(this.deploy)) this.send_disabled = false;
         else this.send_disabled = true;
       }
     },
