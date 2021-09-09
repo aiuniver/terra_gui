@@ -37,17 +37,17 @@
           <div class="wrapper hidden">
             <div class="modal-arch-info">
               <div class="model-arch-info-param name">
-                Name:
+                <span>Name:</span>
                 <span>{{ info.alias || '' }}</span>
               </div>
               <div class="model-arch-info-param input_shape">
-                Input shape:
-                <span>{{ info.input_shape || '' }}</span>
+                <span>Input shape:</span>
+                <span>[{{ info.input_shape || '' }}]</span>
               </div>
-              <div class="model-arch-info-param datatype">
+              <!-- <div class="model-arch-info-param datatype">
                 Datatype:
                 <span>{{ info.name }}</span>
-              </div>
+              </div> -->
             </div>
             <div class="model-arch-img my-5">
               <img alt="" width="100" height="200" :src="'data:image/png;base64,' + info.image || ''" />
@@ -203,7 +203,18 @@ export default {
     }
   }
 }
+.name {
+  margin-bottom: 5px;
+  line-height: 1px;
+}
 
+.model-arch-info-param {
+  span {
+    &:first-child {
+      color: #65b9f4;
+    }
+  }
+}
 .row {
   margin-left: -23px;
 }
