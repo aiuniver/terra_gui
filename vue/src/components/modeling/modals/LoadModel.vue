@@ -1,5 +1,5 @@
 <template>
-  <at-modal v-model="dialog" width="680" showClose>
+  <at-modal class="ms" v-model="dialog" width="680" showClose>
     <div slot="header" style="text-align: center">
       <span>Загрузка модели</span>
     </div>
@@ -7,11 +7,21 @@
       <div class="col-16 models-list scroll-area">
         <scrollbar>
           <ul class="loaded-list">
-            <li class="loaded-list__item" v-for="(list, i) of preset" :key="`preset_${i}`" @click="getModel(list)">
+            <li
+              :class="['loaded-list__item', { 'loaded-list__item--active': selected === list.label }]"
+              v-for="(list, i) of preset"
+              :key="`preset_${i}`"
+              @click="getModel(list), (selected = list.label)"
+            >
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
             </li>
-            <li class="loaded-list__item" v-for="(list, i) of custom" :key="`custom_${i}`" @click="getModel(list)">
+            <li
+              :class="['loaded-list__item', { 'loaded-list__item--active': selected === list.label }]"
+              v-for="(list, i) of custom"
+              :key="`custom_${i}`"
+              @click="getModel(list), (selected = list.label)"
+            >
               <i class="loaded-list__item--icon"></i>
               <span class="loaded-list__item--text">{{ list.label }}</span>
               <div class="loaded-list__item--empty"></div>
@@ -62,13 +72,16 @@ export default {
     lists: [],
     info: {},
     model: null,
+    selected: '',
   }),
   computed: {
     ...mapGetters({}),
     preset() {
+      console.log(this.lists[0]?.models);
       return this.lists[0]?.models || [];
     },
     custom() {
+      console.log(this.lists[1]?.models);
       return this.lists[1]?.models || [];
     },
     dialog: {
@@ -128,7 +141,19 @@ export default {
     align-items: center;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
     cursor: pointer;
+    border-radius: 0 4px 4px 0;
+    padding: 0px 15px 0px 20px;
+    height: 42px;
+    margin-right: 15px;
+    &--active {
+      background: #2b5278;
+      color: #65b9f4;
+      .loaded-list__item--icon {
+        background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjE3IDBIMkMwLjkgMCAwIDAuOSAwIDJWMTZDMCAxNy4xIDAuOSAxOCAyIDE4SDE2QzE3LjEgMTggMTggMTcuMSAxOCAxNlY2LjgzQzE4IDYuMyAxNy43OSA1Ljc5IDE3LjQxIDUuNDJMMTIuNTggMC41OUMxMi4yMSAwLjIxIDExLjcgMCAxMS4xNyAwWk01IDEySDEzQzEzLjU1IDEyIDE0IDEyLjQ1IDE0IDEzQzE0IDEzLjU1IDEzLjU1IDE0IDEzIDE0SDVDNC40NSAxNCA0IDEzLjU1IDQgMTNDNCAxMi40NSA0LjQ1IDEyIDUgMTJaTTUgOEgxM0MxMy41NSA4IDE0IDguNDUgMTQgOUMxNCA5LjU1IDEzLjU1IDEwIDEzIDEwSDVDNC40NSAxMCA0IDkuNTUgNCA5QzQgOC40NSA0LjQ1IDggNSA4Wk01IDRIMTBDMTAuNTUgNCAxMSA0LjQ1IDExIDVDMTEgNS41NSAxMC41NSA2IDEwIDZINUM0LjQ1IDYgNCA1LjU1IDQgNUM0IDQuNDUgNC40NSA0IDUgNFoiIGZpbGw9IiM2NUI5RjQiLz4KPC9zdmc+Cg==');
+      }
+    }
     &:hover {
+      background: #2b5278;
       color: #65b9f4;
       .loaded-list__item--icon {
         background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTExLjE3IDBIMkMwLjkgMCAwIDAuOSAwIDJWMTZDMCAxNy4xIDAuOSAxOCAyIDE4SDE2QzE3LjEgMTggMTggMTcuMSAxOCAxNlY2LjgzQzE4IDYuMyAxNy43OSA1Ljc5IDE3LjQxIDUuNDJMMTIuNTggMC41OUMxMi4yMSAwLjIxIDExLjcgMCAxMS4xNyAwWk01IDEySDEzQzEzLjU1IDEyIDE0IDEyLjQ1IDE0IDEzQzE0IDEzLjU1IDEzLjU1IDE0IDEzIDE0SDVDNC40NSAxNCA0IDEzLjU1IDQgMTNDNCAxMi40NSA0LjQ1IDEyIDUgMTJaTTUgOEgxM0MxMy41NSA4IDE0IDguNDUgMTQgOUMxNCA5LjU1IDEzLjU1IDEwIDEzIDEwSDVDNC40NSAxMCA0IDkuNTUgNCA5QzQgOC40NSA0LjQ1IDggNSA4Wk01IDRIMTBDMTAuNTUgNCAxMSA0LjQ1IDExIDVDMTEgNS41NSAxMC41NSA2IDEwIDZINUM0LjQ1IDYgNCA1LjU1IDQgNUM0IDQuNDUgNC40NSA0IDUgNFoiIGZpbGw9IiM2NUI5RjQiLz4KPC9zdmc+Cg==');
@@ -137,7 +162,7 @@ export default {
 
     &--text {
       line-height: 1;
-      padding: 10px 10px;
+      padding-left: 10px;
       font-size: 0.875rem;
       user-select: none;
       overflow: hidden;
@@ -158,11 +183,12 @@ export default {
     }
     &--remove {
       border-radius: 2px;
-      margin-right: 10px;
+      margin-right: 4px;
+      padding: 2px;
       i {
         display: block;
-        width: 26px;
-        height: 26px;
+        width: 18px;
+        height: 18px;
         cursor: pointer;
         user-select: none;
 
@@ -176,5 +202,9 @@ export default {
       }
     }
   }
+}
+
+.row {
+  margin-left: -23px;
 }
 </style>
