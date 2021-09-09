@@ -275,11 +275,6 @@ class DatasetData(AliasMixinData):
     group: Optional[DatasetGroupChoice]
     use_generator: bool = False
     tags: Optional[TagsList] = TagsList()
-    # num_classes: Dict[PositiveInt, PositiveInt] = {}
-    # classes_names: Dict[PositiveInt, List[str]] = {}
-    # classes_colors: Dict[PositiveInt, List[Color]] = {}
-    # encoding: Dict[PositiveInt, str] = {}
-    # task_type: Dict[int, TaskChoice] = {}
     inputs: Dict[PositiveInt, DatasetInputsData] = {}
     outputs: Dict[PositiveInt, DatasetOutputsData] = {}
 

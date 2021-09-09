@@ -1,123 +1,358 @@
+from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
+    LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
+from terra_ai.data.datasets.creation import CreationInputData, CreationOutputData
+from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice,\
+    LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
+
 import os
+import re
 import cv2
 import numpy as np
+import pandas as pd
 import random
 import joblib
-
+import pymorphy2
+import librosa.feature as librosa_feature
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import MinMaxScaler
-from gensim.models.word2vec import Word2Vec
+from pydub import AudioSegment
 # import imgaug.augmenters as iaa
 from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
-import librosa.feature as librosa_feature
 from pydantic.color import Color
 from pydantic import DirectoryPath
-
-from ..data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, LayerYoloChoice, \
-    LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
-
+from typing import Union
 from tensorflow import concat as tf_concat
 from tensorflow import maximum as tf_maximum
 from tensorflow import minimum as tf_minimum
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
+from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras import utils
 
 
 class CreateArray(object):
 
-    def __init__(self, datasets_path: DirectoryPath):
+    @staticmethod
+    def instructions_image(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        self.scaler: dict = {}
-        self.tokenizer: dict = {}
-        self.word2vec: dict = {}
-        self.augmentation: dict = {}
-        self.temporary: dict = {'bounding_boxes': {}}
-        self.datasets_path = datasets_path
+        instructions: dict = {}
+        options = put_data.parameters.native()
+        del options['augmentation']
+        options['put'] = put_data.id
 
-        self.file_folder = None
-        self.txt_list: dict = {}
+        instructions['parameters'] = options
+        instructions['instructions'] = paths_list
 
-    def load_preprocess(self, path_dataset, keys):
+        return instructions
 
-        for param in ['augmentation', 'scaler', 'tokenizer', 'word2vec']:
-            for key in keys:
-                if os.path.isfile(os.path.join(self.datasets_path, path_dataset, param, f'{key}.gz')):
-                    self.__dict__[param][key] = joblib.load(os.path.join(self.datasets_path, path_dataset, param, f'{key}.gz'))
-                else:
-                    self.__dict__[param][key] = None
+    @staticmethod
+    def instructions_video(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        pass
+        instructions: dict = {}
+        video: list = []
+        cur_step = 0
 
-    def create_image(self, file_folder: str, image_path: str, **options):
+        for elem in paths_list:
+            name, ext = os.path.splitext(os.path.basename(elem))
+            if put_data.parameters.video_mode == LayerVideoModeChoice.completely:
+                video.append(
+                    os.path.join(os.path.dirname(elem), f'{name}_[{cur_step}-{put_data.parameters.max_frames}]{ext}'))
+            elif put_data.parameters.video_mode == LayerVideoModeChoice.length_and_step:
+                cur_step = 0
+                stop_flag = False
+                cap = cv2.VideoCapture(elem)
+                frame_count = int(cap.get(7))
+                while not stop_flag:
+                    video.append(os.path.join(os.path.dirname(elem),
+                                              f'{name}_[{cur_step}-{cur_step + put_data.parameters.length}]{ext}'))
 
-        shape = (options['height'], options['width'])
-        if not os.path.exists(image_path):
-            image_path = os.path.join(self.datasets_path, image_path)
-        img = load_img(image_path, target_size=shape)
+                    cur_step += put_data.parameters.step
+                    if cur_step + put_data.parameters.length > frame_count:
+                        stop_flag = True
+                        # if put_data.parameters.length < frame_count:
+                        #     video.append(os.path.join(os.path.dirname(elem), f'{name}_[{frame_count - put_data.parameters.length}, {frame_count}]{ext}'))
+                        #     y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
+
+        options = put_data.parameters.native()
+        del options['video_mode']
+        del options['length']
+        del options['step']
+        del options['max_frames']
+        options['put'] = put_data.id
+
+        instructions['parameters'] = options
+        instructions['instructions'] = video
+
+        return instructions
+
+    @staticmethod
+    def instructions_audio(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        instructions: dict = {}
+        audio: list = []
+
+        for elem in paths_list:
+            name, ext = os.path.splitext(os.path.basename(elem))
+            if put_data.parameters.audio_mode == LayerAudioModeChoice.completely:
+                audio.append(
+                    os.path.join(os.path.dirname(elem), f'{name}_[0.0-{put_data.parameters.max_seconds}]{ext}'))
+            elif put_data.parameters.audio_mode == LayerAudioModeChoice.length_and_step:
+                cur_step = 0.0
+                stop_flag = False
+                sample_length = AudioSegment.from_file(elem).duration_seconds
+                while not stop_flag:
+                    audio.append(os.path.join(os.path.dirname(elem),
+                                              f'{name}_[{cur_step}-{put_data.parameters.max_seconds}]{ext}'))
+                    cur_step += put_data.parameters.step
+                    if cur_step + put_data.parameters.length > sample_length:
+                        stop_flag = True
+
+        options = put_data.parameters.native()
+        for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
+            if elem in options.keys():
+                del options[elem]
+        options['put'] = put_data.id
+
+        instructions['parameters'] = options
+        instructions['instructions'] = audio
+
+        return instructions
+
+    @staticmethod
+    def instructions_text(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+
+            with open(file_path, 'r', encoding='utf-8') as txt:
+                text = txt.read()
+
+            if open_symbol:
+                text = re.sub(open_symbol, f" {open_symbol}", text)
+                text = re.sub(close_symbol, f"{close_symbol} ", text)
+
+            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+
+            return text
+
+        def apply_pymorphy(text, morphy) -> str:
+
+            words_list = text.split(' ')
+            words_list = [morphy.parse(w)[0].normal_form for w in words_list]
+
+            return ' '.join(words_list)
+
+        instructions: dict = {}
+        txt_list: dict = {}
+        text: list = []
+        lower: bool = True
+        open_tags, close_tags = None, None
+        open_symbol, close_symbol = None, None
+        if put_data.parameters.open_tags:
+            open_tags, close_tags = put_data.parameters.open_tags.split(' '), put_data.parameters.close_tags.split(' ')
+        if open_tags:
+            open_symbol = open_tags[0][0]
+            close_symbol = close_tags[0][-1]
+
+        for idx, path in enumerate(paths_list):
+            txt_list[path] = read_text(file_path=path, lower=lower, del_symbols=put_data.parameters.filters, split=' ',
+                                       open_symbol=open_symbol, close_symbol=close_symbol)
+
+        if open_symbol:
+            for key in txt_list.keys():
+                words = []
+                for word in txt_list[key].split(' '):
+                    if word not in open_tags + close_tags:
+                        words.append(word)
+                txt_list[key] = ' '.join(words)
+
+        if put_data.parameters.pymorphy:
+            pymorphy = pymorphy2.MorphAnalyzer()
+            for key, value in txt_list.items():
+                txt_list[key] = apply_pymorphy(value, pymorphy)
+
+        for idx, (key, value) in enumerate(sorted(txt_list.items())):
+            if put_data.parameters.text_mode == LayerTextModeChoice.completely:
+                text.append(' '.join(value.split(' ')[:put_data.parameters.max_words]))
+            elif put_data.parameters.text_mode == LayerTextModeChoice.length_and_step:
+                max_length = len(value.split(' '))
+                cur_step = 0
+                stop_flag = False
+                while not stop_flag:
+                    text.append(' '.join(value.split(' ')[cur_step: cur_step + put_data.parameters.length]))
+                    cur_step += put_data.parameters.step
+                    if cur_step + put_data.parameters.length > max_length:
+                        stop_flag = True
+
+        options = put_data.parameters.native()
+        length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else options[
+            'max_words']
+
+        instructions['parameters'] = {'prepare_method': put_data.parameters.prepare_method,
+                                      'put': put_data.id,
+                                      'length': length,
+                                      'max_words_count': put_data.parameters.max_words_count,
+                                      'word_to_vec_size': put_data.parameters.word_to_vec_size,
+                                      'filters': put_data.parameters.filters
+                                      }
+        instructions['instructions'] = text
+
+        return instructions
+
+    @staticmethod
+    def instructions_classification(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        instructions: dict = {}
+        if put_data.parameters.sources_paths[0].is_file() and put_data.parameters.sources_paths[0].suffix == ".csv":
+            file_name = put_data.parameters.sources_paths[0]
+            data = pd.read_csv(file_name, usecols=put_data.parameters.cols_names)
+            column = data[put_data.parameters.cols_names[0]].to_list()
+            classes_names = []
+            for elem in column:
+                if elem not in classes_names:
+                    classes_names.append(elem)
+            num_classes = len(classes_names)
+        else:
+            classes_names = sorted([os.path.basename(elem) for elem in put_data.parameters.sources_paths])
+            num_classes = len(classes_names)
+
+        instructions["parameters"] = {"one_hot_encoding": put_data.parameters.one_hot_encoding,
+                                      "classes_names": classes_names,
+                                      "num_classes": num_classes,
+                                      'put': put_data.id
+                                      }
+        instructions['instructions'] = paths_list
+
+        return instructions
+
+    @staticmethod
+    def instructions_regression(number_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        options = put_data.parameters.native()
+        options["put"] = put_data.id
+
+        instructions: dict = {'parameters': options,
+                              'instructions': number_list}
+
+        return instructions
+
+    @staticmethod
+    def instructions_segmentation(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        instructions: dict = {}
+        instructions['parameters'] = {'mask_range': put_data.parameters.mask_range,
+                                      'num_classes': len(put_data.parameters.classes_names),
+                                      'height': put_data.parameters.height,
+                                      'width': put_data.parameters.width,
+                                      'classes_colors': [Color(color).as_rgb_tuple() for color in
+                                                         put_data.parameters.classes_colors],
+                                      'put': put_data.id
+                                      }
+        instructions['instructions'] = paths_list
+
+        return instructions
+
+    @staticmethod
+    def instructions_text_segmentation(paths_list: list,
+                                       put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+
+        """
+
+        Args:
+            **put_data:
+                open_tags: str
+                    Открывающие теги.
+                close_tags: str
+                    Закрывающие теги.
+
+        Returns:
+
+        """
+
+        def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
+
+            with open(file_path, 'r', encoding='utf-8') as txt:
+                text = txt.read()
+
+            if open_symbol:
+                text = re.sub(open_symbol, f" {open_symbol}", text)
+                text = re.sub(close_symbol, f"{close_symbol} ", text)
+
+            text = ' '.join(text_to_word_sequence(text, **{'lower': lower, 'filters': del_symbols, 'split': split}))
+
+            return text
+
+        def get_samples(doc_text: str, op_tags, cl_tags):
+
+            words = []
+            indexes = []
+            idx = []
+            for word in doc_text.split(' '):
+                try:
+                    if word in op_tags:
+                        idx.append(op_tags[op_tags.index(word)])
+                    elif word in cl_tags:
+                        idx.remove(op_tags[cl_tags.index(word)])
+                    else:
+                        indexes.append(idx.copy())
+                except ValueError:
+                    pass
+                    # print(word)
+
+            return indexes
+
+        options = put_data.parameters.native()
+        instructions: dict = {}
+        text_segm: list = []
+        text_segm_data: list = []
+        open_tags: list = options['open_tags'].split(' ')
+        close_tags: list = options['close_tags'].split(' ')
+        open_symbol = open_tags[0][0]
+        close_symbol = close_tags[0][-1]
+        for elem in paths_list:
+            text = read_text(elem, True, options['filters'], ' ', open_symbol, close_symbol)
+            text_segm.append(get_samples(text, open_tags, close_tags))
+
+        for text in text_segm:
+            if options['text_mode'] == LayerTextModeChoice.completely:
+                text_segm_data.append(text[0:options['max_words']])
+            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
+                max_length = len(text)
+                cur_step = 0
+                stop_flag = False
+                while not stop_flag:
+                    text_segm_data.append(text[cur_step:cur_step + options['length']])
+                    cur_step += options['step']
+                    if cur_step + options['length'] > max_length:
+                        stop_flag = True
+
+        length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else options[
+            'max_words']
+
+        instructions['parameters'] = {'num_classes': len(open_tags),
+                                      'classes_names': open_tags,
+                                      'put': put_data.id,
+                                      'length': length
+                                      }
+        instructions['instructions'] = text_segm_data
+
+        return instructions
+
+    @staticmethod
+    def create_image(image_path: str, **options: dict) -> np.ndarray:
+
+        img = load_img(image_path, target_size=(options['height'], options['width']))
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
-        if self.augmentation[options['put']]:
-            if options['object_detection']:
-                txt_name = os.path.splitext(os.path.basename(image_path))[0] + '.txt'
-                txt_path = os.path.join(os.path.sep, *os.path.dirname(image_path).split(os.path.sep)[:-2],
-                                        '2_object_detection', 'obj_train_data', txt_name)  # TODO - цифра 2 и OTD
-                with open(txt_path, 'r') as b_boxes:
-                    bounding_boxes = b_boxes.read()
-
-                current_boxes = []
-                for elem in bounding_boxes.split('\n'):
-                    # b_box = self.yolo_to_imgaug(elem.split(' '), shape=array.shape[:2])
-                    if elem:
-                        b_box = elem.split(',')
-                        b_box = [int(x) for x in b_box]
-                        current_boxes.append(
-                            BoundingBox(
-                                **{'label': b_box[4], 'x1': b_box[0], 'y1': b_box[1], 'x2': b_box[2], 'y2': b_box[3]}))
-
-                bbs = BoundingBoxesOnImage(current_boxes, shape=array.shape)
-                array, bbs_aug = self.augmentation[options['put']](image=array, bounding_boxes=bbs)
-                list_of_bounding_boxes = []
-                for elem in bbs_aug.remove_out_of_image().clip_out_of_image().bounding_boxes:
-                    bb = elem.__dict__
-                    # b_box_coord = self.imgaug_to_yolo([bb['label'], bb['x1'], bb['y1'], bb['x2'], bb['y2']],
-                    #                                   shape=array.shape[:2])
-                    # if b_box_coord != ():
-                    if bb:
-                        list_of_bounding_boxes.append([bb['x1'], bb['y1'], bb['x2'], bb['y2'], bb['label']])
-
-                self.temporary['bounding_boxes'][txt_path] = list_of_bounding_boxes
-            else:
-                array = self.augmentation[options['put']](image=array)
-
-        if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
-            arr_shape = array.shape
-            array = self.scaler[options['put']].transform(array.reshape(-1, 1)).reshape(arr_shape).astype('float32')
+        if options['scaler'] != LayerScalerImageChoice.no_scaler and options['object_scaler']:
+            orig_shape = array.shape
+            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
 
         return array
 
-    def create_video(self, _, video_path: str, **options) -> np.ndarray:
-
-        """
-        Args:
-            video: str
-                Путь к файлу.
-            **options: Параметры обработки:
-                height: int
-                    Высота кадра.
-                width: int
-                    Ширина кадра.
-                fill_mode: int
-                    Режим заполнения недостающих кадров (Черными кадрами, Средним значением, Последними кадрами).
-                frame_mode: str
-                    Режим обработки кадра (Сохранить пропорции, Растянуть).
-        Returns:
-            array: np.ndarray
-                Массив видео.
-        """
+    @staticmethod
+    def create_video(video_path: str, **options: dict) -> np.ndarray:
 
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
@@ -171,11 +406,9 @@ class CreateArray(object):
 
             return video_array
 
-        if not os.path.exists(video_path):
-            video_path = os.path.join(self.datasets_path, video_path)
         array = []
         shape = (options['height'], options['width'])
-        slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split(', ')]
+        slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
         frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
 
@@ -200,67 +433,27 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
-        # print(array.shape)
         if max_frames < frames_count:
             array = add_frames(video_array=array,
                                fill_mode=options['fill_mode'],
                                frames_to_add=frames_count - max_frames,
                                total_frames=max_frames)
 
-        if options['scaler'] == LayerScalerVideoChoice.min_max_scaler:
-            arr_shape = array.shape
-            array = self.scaler[options['put']].transform(array.reshape(-1, 1)).reshape(arr_shape).astype('float32')
+        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['object_scaler']:
+            orig_shape = array.shape
+            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
 
         return array
 
-    def create_text(self, _, text: str, **options):
-
-        """
-        Args:
-            _: None
-                Путь к файлу.
-            text: str
-                Отрывок текста.
-            **options: Параметры обработки текста:
-                embedding: Tokenizer object, bool
-                    Перевод в числовую последовательность.
-                bag_of_words: Tokenizer object, bool
-                    Перевод в формат bag_of_words.
-                word_to_vec: Word2Vec object, bool
-                    Перевод в векторное представление Word2Vec.
-                put: str
-                    Индекс входа или выхода.
-        Returns:
-            array: np.ndarray
-                Массив текстового вектора.
-        """
-
-        array = []
-        text = text.split(' ')
-
-        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
-            array = self.tokenizer[options['put']].texts_to_sequences([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
-            array = self.tokenizer[options['put']].texts_to_matrix([text])[0]
-        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
-            for word in text:
-                array.append(self.word2vec[options['put']][word])
-
-        if len(array) < options['length']:
-            words_to_add = [0 for _ in range((options['length']) - len(array))]
-            array += words_to_add
-
-        array = np.array(array)
-
-        return array
-
-    def create_audio(self, file_folder: str, audio: str, **options) -> np.ndarray:
+    @staticmethod
+    def create_audio(audio_path: str, **options: dict) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        slicing = [float(x) for x in audio[audio.index('[') + 1:audio.index(']')].split(', ')]
-        y, sr = librosa_load(path=audio, sr=options.get('sample_rate'),
+        slicing = [float(x) for x in audio_path[audio_path.index('[') + 1:audio_path.index(']')].split('-')]
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'),
                              offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
@@ -279,124 +472,58 @@ class CreateArray(object):
         if array.dtype == 'float64':
             array = array.astype('float32')
 
+        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options['object_scaler']:
+            orig_shape = array.shape
+            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
+
         return array
 
-    def create_dataframe(self, _, row_number: int, **options):
-        """
-                Args:
-                    _: путь к файлу,
-                    row_number: номер строки с сырыми данными датафрейма,
-                    **options: Параметры обработки колонок:
-                        MinMaxScaler: лист индексов колонок для обработки
-                        StandardScaler: лист индексов колонок для обработки
-                        Categorical: лист индексов колонок для перевода по готовым категориям
-                        Categorical_ranges: лист индексов колонок для перевода по категориям по диапазонам
-                        one_hot_encoding: лист индексов колонок для перевода в ОНЕ
-                        put: str  Индекс входа или выхода.
-                Returns:
-                    array: np.ndarray
-                        Массив вектора обработанных данных.
-        """
-        if 'timeseries' in options.keys():
-            length = options['length']
-        else:
-            length = 1
-        row_number = int(row_number)
-        row = self.df_ts.iloc[list(range(row_number, row_number + length)),
-                              list(range(len(self.columns)))].values.tolist()
-        if options['xlen_step']:
-            row = row[0]
-        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
-            array = self.scaler[options['put']].transform(row)
-        else:
-            if 'MinMaxScaler' in options.keys():
-                for j in range(length):
-                    for i in options['MinMaxScaler']:
-                        row[j][i] = self.scaler[options['put']]['MinMaxScaler'][f'col_{i + 1}'].transform(
-                            np.array(row[j][i]).reshape(-1, 1)).tolist()
+    @staticmethod
+    def create_text(text: str, **options: dict) -> np.ndarray:
 
-            if 'StandardScaler' in options.keys():
-                for j in range(length):
-                    for i in options['StandardScaler']:
-                        row[j][i] = self.scaler[options['put']]['StandardScaler'][f'col_{i + 1}'].transform(
-                            np.array(row[j][i]).reshape(-1, 1)).tolist()
+        array = []
+        text = text.split(' ')
 
-            if 'Categorical' in options.keys():
-                for j in range(length):
-                    for i in options['Categorical']['lst_cols']:
-                        row[j][i] = list(options['Categorical'][f'col_{i}']).index(row[j][i])
+        if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
+            array = options['object_tokenizer'].texts_to_sequences([text])[0]
+        elif options['prepare_method'] == LayerPrepareMethodChoice.bag_of_words:
+            array = options['object_tokenizer'].texts_to_matrix([text])[0]
+        elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+            for word in text:
+                array.append(options['object_word2vec'][word])
 
-            if 'Categorical_ranges' in options.keys():
-                for j in range(length):
-                    for i in options['Categorical_ranges']['lst_cols']:
-                        for k in range(len(options['Categorical_ranges'][f'col_{i}'])):
-                            if row[j][i] <= options['Categorical_ranges'][f'col_{i}'][f'range_{k}']:
-                                row[j][i] = k
-                                break
-
-            if 'one_hot_encoding' in options.keys():
-                for j in range(length):
-                    for i in options['one_hot_encoding']['lst_cols']:
-                        row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding'][f'col_{i}'],
-                                                         dtype='uint8').tolist()
-
-            array = []
-            for i in row:
-                tmp = []
-                for j in i:
-                    if type(j) == list:
-                        if type(j[0]) == list:
-                            tmp.extend(j[0])
-                        else:
-                            tmp.extend(j)
-                    else:
-                        tmp.append(j)
-                array.append(tmp)
+        if len(array) < options['length']:
+            if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
+                words_to_add = [0 for _ in range((options['length']) - len(array))]
+            elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
+                words_to_add = [[0 for _ in range(options['word_to_vec_size'])] for _ in
+                                range((options['length']) - len(array))]
+            array += words_to_add
 
         array = np.array(array)
 
         return array
 
     @staticmethod
-    def create_classification(_, class_name, **options):
-        # print(options)
-        index = options['classes_names'].index(class_name)
+    def create_classification(class_name: str, **options) -> np.ndarray:
+
+        index = options['classes_names'].index(os.path.basename(class_name))
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
         index = np.array(index)
 
         return index
 
-    def create_regression(self, _, index, **options):
-        if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
-            index = self.scaler[options['put']].transform(np.array(index).reshape(-1, 1)).reshape(1, )[0]
+    @staticmethod
+    def create_regression(index: int, **options) -> np.ndarray:
+
         array = np.array(index)
+
         return array
 
-    def create_segmentation(self, file_folder: str, image_path: str, **options: dict) -> np.ndarray:
-
-        """
-
-        Args:
-            file_folder: str
-                Путь к папке
-                Путь к файлу
-            image_path: str
-            **options: Параметры сегментации:
-                mask_range: int
-                    Диапазон для каждого из RGB каналов.
-                num_classes: int
-                    Общее количество классов.
-                shape: tuple
-                    Размер картинки (высота, ширина).
-                classes_colors: list
-                    Список цветов для каждого класса.
-
-        Returns:
-            array: np.ndarray
-                Массив принадлежности каждого пикселя к определенному классу в формате One-Hot Encoding.
-
-        """
+    @staticmethod
+    def create_segmentation(image_path: str, **options: dict) -> np.ndarray:
 
         def cluster_to_ohe(mask_image):
 
@@ -406,11 +533,11 @@ class CreateArray(object):
             labels = km.labels_
             cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
             cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
-            cl_mask = cl_mask.reshape(options['shape'][0], options['shape'][1], cl_mask.shape[-1])
-            mask_ohe = np.zeros(options['shape'])
+            cl_mask = cl_mask.reshape(options['height'], options['width'], cl_mask.shape[-1])
+            mask_ohe = np.zeros((options['height'], options['width']))
             for k, color in enumerate(options['classes_colors']):
                 rgb = Color(color).as_rgb_tuple()
-                mask = np.zeros(options['shape'])
+                mask = np.zeros((options['height'], options['width']))
 
                 for j, cl_rgb in enumerate(cl_cent):
                     if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
@@ -424,314 +551,25 @@ class CreateArray(object):
                     mask_ohe = np.dstack((mask_ohe, mask))
 
             return mask_ohe
-        if not os.path.exists(image_path):
-            image_path = os.path.join(self.datasets_path, image_path)
-        img = load_img(path=image_path, target_size=options['shape'])
+
+        img = load_img(path=image_path, target_size=(options['height'], options['width']))
         array = img_to_array(img, dtype=np.uint8)
         array = cluster_to_ohe(array)
 
         return array
 
-    def create_text_segmentation(self, _, text: str, slicing: list, **options):
+    @staticmethod
+    def create_text_segmentation(text: list, **options) -> np.ndarray:
 
         array = []
-        if slicing[1] - slicing[0] < len(text):
-            text = text[slicing[0]:slicing[1]]
-
+        if len(text) < options['length']:
+            text += [list() for _ in range(options['length'] - len(text))]
         for elem in text:
             tags = [0 for _ in range(options['num_classes'])]
             if elem:
-                for idx in elem:
-                    tags[idx] = 1
+                for cls_name in elem:
+                    tags[options['classes_names'].index(cls_name)] = 1
             array.append(tags)
         array = np.array(array, dtype='uint8')
 
         return array
-
-    def create_timeseries(self, _, row_number, **options):
-        """
-            Args:
-                _: путь к файлу,
-                row_number: номер строки с сырыми данными для предсказания значения,
-                **options: Параметры обработки колонок:
-                    depth: количество значений для предсказания
-                    length: количество примеров для обучения
-                    put: str  Индекс входа или выхода.
-            Returns:
-                array: np.ndarray
-                    Массив обработанных данных.
-        """
-
-        if options['bool_trend']:
-            array = np.array(row_number)
-
-        else:
-            row_number = int(row_number)
-            array = self.df_ts.loc[
-                list(range(row_number + options['length'], row_number + options['length'] + options['depth'])),
-                list(self.y_cols)].values
-
-            if 'standard_scaler' in options.values() or 'min_max_scaler' in options.values():
-                array = self.scaler[options['put']].transform(array)
-
-        return array
-
-    def create_object_detection(self, file_folder: str, txt_path: str, **options):
-
-        """
-        Args:
-            file_folder: str
-                Путь к файлу
-            txt_path: str
-                Путь к файлу
-            **options: Параметры сегментации:
-                height: int ######!!!!!!
-                    Высота изображения.
-                width: int ######!!!!!!
-                    Ширина изображения.
-                num_classes: int
-                    Количество классов.
-        Returns:
-            array: np.ndarray
-                Массивы в трёх выходах.
-        """
-
-        def bbox_iou(boxes1, boxes2):
-
-            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
-            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
-
-            boxes1 = tf_concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
-                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
-            boxes2 = tf_concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
-                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
-
-            left_up = tf_maximum(boxes1[..., :2], boxes2[..., :2])
-            right_down = tf_minimum(boxes1[..., 2:], boxes2[..., 2:])
-
-            inter_section = tf_maximum(right_down - left_up, 0.0)
-            inter_area = inter_section[..., 0] * inter_section[..., 1]
-            union_area = boxes1_area + boxes2_area - inter_area
-
-            return 1.0 * inter_area / union_area
-
-        # height: int = options['height']
-        # width: int = options['width']
-        num_classes: int = options['num_classes']
-        zero_boxes_flag: bool = False
-        strides = np.array([8, 16, 32])
-        output_levels = len(strides)
-        train_input_sizes = 416
-        anchor_per_scale = 3
-        yolo_anchors = None
-
-        if options['yolo'] == LayerYoloChoice.v3:
-            yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
-                            [[30, 61], [62, 45], [59, 119]],
-                            [[116, 90], [156, 198], [373, 326]]]
-        elif options['yolo'] == LayerYoloChoice.v4:
-            yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
-                            [[36, 75], [76, 55], [72, 146]],
-                            [[142, 110], [192, 243], [459, 401]]]
-
-        anchors = (np.array(yolo_anchors).T / strides).T
-        max_bbox_per_scale = 100
-        train_input_size = random.choice([train_input_sizes])
-        train_output_sizes = train_input_size // strides
-
-        if self.temporary['bounding_boxes']:
-            real_boxes = self.temporary['bounding_boxes'][txt_path]
-        else:
-            with open(txt_path, 'r') as txt:
-                bb_file = txt.read()
-            real_boxes = []
-            for elem in bb_file.split('\n'):
-                tmp = []
-                if elem:
-                    for num in elem.split(','):
-                        tmp.append(int(num))
-                    real_boxes.append(tmp)
-
-        if not real_boxes:
-            zero_boxes_flag = True
-            real_boxes = [[0, 0, 0, 0, 0]]
-        real_boxes = np.array(real_boxes)
-        label = [np.zeros((train_output_sizes[i], train_output_sizes[i], anchor_per_scale,
-                           5 + num_classes)) for i in range(output_levels)]
-        bboxes_xywh = [np.zeros((max_bbox_per_scale, 4)) for _ in range(output_levels)]
-        bbox_count = np.zeros((output_levels,))
-
-        for bbox in real_boxes:
-            bbox_class_ind = int(bbox[4])
-            bbox_coordinate = np.array(bbox[:4])
-            one_hot = np.zeros(num_classes, dtype=np.float)
-            one_hot[bbox_class_ind] = 0.0 if zero_boxes_flag else 1.0
-            uniform_distribution = np.full(num_classes, 1.0 / num_classes)
-            deta = 0.01
-            smooth_one_hot = one_hot * (1 - deta) + deta * uniform_distribution
-
-            bbox_xywh = np.concatenate([(bbox_coordinate[2:] + bbox_coordinate[:2]) * 0.5,
-                                        bbox_coordinate[2:] - bbox_coordinate[:2]], axis=-1)
-            bbox_xywh_scaled = 1.0 * bbox_xywh[np.newaxis, :] / strides[:, np.newaxis]
-
-            iou = []
-            exist_positive = False
-            for i in range(output_levels):  # range(3):
-                anchors_xywh = np.zeros((anchor_per_scale, 4))
-                anchors_xywh[:, 0:2] = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32) + 0.5
-                anchors_xywh[:, 2:4] = anchors[i]
-
-                iou_scale = bbox_iou(bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh)
-                iou.append(iou_scale)
-                iou_mask = iou_scale > 0.3
-
-                if np.any(iou_mask):
-                    xind, yind = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32)
-
-                    label[i][yind, xind, iou_mask, :] = 0
-                    label[i][yind, xind, iou_mask, 0:4] = bbox_xywh
-                    label[i][yind, xind, iou_mask, 4:5] = 0.0 if zero_boxes_flag else 1.0
-                    label[i][yind, xind, iou_mask, 5:] = smooth_one_hot
-
-                    bbox_ind = int(bbox_count[i] % max_bbox_per_scale)
-                    bboxes_xywh[i][bbox_ind, :4] = bbox_xywh
-                    bbox_count[i] += 1
-
-                    exist_positive = True
-
-            if not exist_positive:
-                best_anchor_ind = np.argmax(np.array(iou).reshape(-1), axis=-1)
-                best_detect = int(best_anchor_ind / anchor_per_scale)
-                best_anchor = int(best_anchor_ind % anchor_per_scale)
-                xind, yind = np.floor(bbox_xywh_scaled[best_detect, 0:2]).astype(np.int32)
-
-                label[best_detect][yind, xind, best_anchor, :] = 0
-                label[best_detect][yind, xind, best_anchor, 0:4] = bbox_xywh
-                label[best_detect][yind, xind, best_anchor, 4:5] = 0.0 if zero_boxes_flag else 1.0
-                label[best_detect][yind, xind, best_anchor, 5:] = smooth_one_hot
-
-                bbox_ind = int(bbox_count[best_detect] % max_bbox_per_scale)
-                bboxes_xywh[best_detect][bbox_ind, :4] = bbox_xywh
-                bbox_count[best_detect] += 1
-
-        label_sbbox, label_mbbox, label_lbbox = label
-        sbboxes, mbboxes, lbboxes = bboxes_xywh
-
-        return np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'), \
-               np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'), \
-               np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')
-
-    def create_scaler(self, put_id: int, **options):
-
-        if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
-            self.scaler[put_id] = MinMaxScaler()
-            array = np.array([[0], [255]])
-            self.scaler[put_id].fit(array)
-
-    def create_tokenizer(self, put_id: int, **options):
-
-        """
-
-        Args:
-            put_id: int
-                Номер входа или выхода.
-            **options: Параметры токенайзера:
-                       num_words: int
-                           Количество слов для токенайзера.
-                       filters: str
-                           Символы, подлежащие удалению.
-                       lower: bool
-                           Перевод заглавных букв в строчные.
-                       split: str
-                           Символ разделения.
-                       char_level: bool
-                           Учёт каждого символа в качестве отдельного токена.
-                       oov_token: str
-                           В случае указания этот токен будет заменять все слова, не попавшие в
-                           диапазон частотности слов 0 < num_words.
-
-        Returns:
-            Объект Токенайзер.
-
-        """
-
-        self.tokenizer[put_id] = Tokenizer(**options)
-
-        pass
-
-    def create_word2vec(self, put_id: int, words: list, **options) -> None:
-
-        """
-
-        Args:
-            put_id: int
-                Номер входа или выхода.
-            words: list
-                Список слов для обучения Word2Vec.
-            **options: Параметры Word2Vec:
-                       size: int
-                           Dimensionality of the word vectors.
-                       window: int
-                           Maximum distance between the current and predicted word within a sentence.
-                       min_count: int
-                           Ignores all words with total frequency lower than this.
-                       workers: int
-                           Use these many worker threads to train the model (=faster training with multicore machines).
-                       iter: int
-                           Number of iterations (epochs) over the corpus.
-
-        Returns:
-            Объект Word2Vec.
-
-        """
-
-        self.word2vec[put_id] = Word2Vec(words, **options)
-
-        pass
-
-    def inverse_data(self, put: str, array: np.ndarray):
-
-        """
-
-        Args:
-            put: str
-                Рассматриваемый вход или выход (input_2, output_1);
-            array: np.ndarray
-                NumPy массив, подлежащий возврату в исходное состояние.
-
-        Returns:
-            Данные в исходном состоянии.
-
-        """
-
-        inverted_data = None
-
-        for attr in self.__dict__.keys():
-            if self.__dict__[attr] and put in self.__dict__[attr].keys():
-                if attr == 'tokenizer':
-                    if array.shape[0] == self.tokenizer[put].num_words:
-                        idx = 0
-                        arr = []
-                        for num in array:
-                            if num == 1:
-                                arr.append(idx)
-                            idx += 1
-                        array = np.array(arr)
-                    inv_tokenizer = {index: word for word, index in self.tokenizer[put].word_index.items()}
-                    inverted_data = ' '.join([inv_tokenizer[seq] for seq in array])
-
-                elif attr == 'word2vec':
-                    text_list = []
-                    for i in range(len(array)):
-                        text_list.append(
-                            self.word2vec[put].wv.most_similar(positive=np.expand_dims(array[i], axis=0), topn=1)[0][0])
-                    inverted_data = ' '.join(text_list)
-
-                elif attr == 'scaler':
-                    original_shape = array.shape
-                    array = array.reshape(-1, 1)
-                    array = self.scaler[put].inverse_transform(array)
-                    inverted_data = array.reshape(original_shape)
-            break
-
-        return inverted_data
