@@ -7,6 +7,9 @@ import tensorflow
 from typing import Any
 from pathlib import Path
 
+
+from ..data.projects.project import ProjectsInfoData
+
 from ..data.datasets.dataset import (
     DatasetLoadData,
     CustomDatasetConfigData,
@@ -77,6 +80,35 @@ class Exchange:
         else:
             __type = HardwareAcceleratorChoice.GPU
         return HardwareAcceleratorData(type=__type)
+
+    def _call_projects_info(self, path: Path) -> ProjectsInfoData:
+        """
+        Получение списка проектов
+        """
+        # models = ModelsGroupsList(ModelsGroups)
+        # models_path = Path(settings.ASSETS_PATH, "models")
+        # for filename in os.listdir(models_path):
+        #     try:
+        #         models.get(ModelGroupChoice.preset.name).models.append(
+        #             {"value": Path(models_path, filename)}
+        #         )
+        #     except Exception:
+        #         pass
+        # models.get(ModelGroupChoice.preset.name).models.sort(
+        #     key=lambda item: item.label
+        # )
+        # for filename in os.listdir(path):
+        #     try:
+        #         models.get(ModelGroupChoice.custom.name).models.append(
+        #             {"value": Path(path, filename)}
+        #         )
+        #     except Exception:
+        #         pass
+        # models.get(ModelGroupChoice.custom.name).models.sort(
+        #     key=lambda item: item.label
+        # )
+        # return models
+        return ProjectsInfoData()
 
     def _call_project_save(
         self, source: Path, target: Path, name: str, overwrite: bool
@@ -188,7 +220,7 @@ class Exchange:
         files.sort(key=lambda item: item.label)
         return files
 
-    def _call_models(self, path: str) -> ModelsGroupsList:
+    def _call_models_info(self, path: Path) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
