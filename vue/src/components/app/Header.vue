@@ -2,7 +2,7 @@
   <div class="header">
     <div class="header__left">
       <a href="#" class="header__left--logo"></a>
-      <TProjectName @save="saveNameProject"/>
+      <TProjectName @save="saveNameProject" />
     </div>
     <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
@@ -19,25 +19,26 @@
         <i class="profile"></i>
       </div>
     </div>
-    <at-modal v-model="save" width="400">
+    <at-modal v-model="save" width="400" :maskClosable="false" :showClose="false">
       <div slot="header" style="text-align: center">
         <span>Сохранить проект</span>
       </div>
       <div class="inner form-inline-label">
         <div class="field-form">
           <label>Название проекта</label>
-          <input v-model="nameProject" type="text" />
+          <input v-model="nameProject" type="text" :disabled="loading" />
         </div>
         <div class="field-form field-inline field-reverse">
-          <label @click="checVal = !checVal">Перезаписать</label>
+          <label @click="checkbox">Перезаписать</label>
           <div class="checkout-switch">
-            <input v-model="checVal" type="checkbox" />
+            <input v-model="checVal" type="checkbox" :disabled="loading" />
             <span class="switcher"></span>
           </div>
         </div>
       </div>
       <template slot="footer">
-        <button @click="saveProject">Сохранить</button>
+        <t-button @click="saveProject" :loading="loading">Сохранить</t-button>
+        <t-button @click="save = false" cancel :disabled="loading">Отменить</t-button>
       </template>
     </at-modal>
     <at-modal v-model="load" width="400">
@@ -82,6 +83,7 @@ export default {
     ],
     save: false,
     load: false,
+    loading: false,
   }),
   computed: {
     nameProject: {
@@ -94,17 +96,21 @@ export default {
     },
   },
   methods: {
+    checkbox() {
+      if (!this.loading) {
+        this.checVal = !this.checVal;
+      }
+    },
+    message(message) {
+      this.$store.dispatch('messages/setMessage', { message });
+    },
     async saveNameProject(name) {
       if (this.nameProject.length > 2) {
-        this.$store.dispatch('messages/setMessage', {
-          message: `Изменение названия проекта на «${name}»`,
-        });
+        this.message(`Изменение названия проекта на «${name}»`);
         await this.$store.dispatch('projects/saveNameProject', {
           name,
         });
-        this.$store.dispatch('messages/setMessage', {
-          message: `Название проекта изменено на «${name}»`,
-        });
+        this.message(`Название проекта изменено на «${name}»`);
         this.save = false;
       } else {
         this.$store.dispatch('messages/setMessage', {
@@ -117,13 +123,11 @@ export default {
         await this.$Modal.confirm({
           title: 'Внимание!',
           content: 'Создать новый проект?',
-          width: 300,
+          width: 400,
         });
         const res = this.$store.dispatch('projects/createProject', {});
         if (res) {
-          this.$store.dispatch('messages/setMessage', {
-            message: `Новый проект «${this.nameProject}» создан`,
-          });
+          this.message(`Новый проект «${this.nameProject}» создан`);
         }
       } catch (error) {
         console.log(error);
@@ -133,9 +137,7 @@ export default {
       try {
         const res = this.$store.dispatch('projects/loadProject', {});
         if (res) {
-          this.$store.dispatch('messages/setMessage', {
-            message: `Проект «${this.nameProject}» загружен`,
-          });
+          this.message(`Проект «${this.nameProject}» загружен`);
         }
       } catch (error) {
         console.log(error);
@@ -143,15 +145,23 @@ export default {
     },
     async saveProject() {
       try {
-        const res = this.$store.dispatch('projects/saveProject', {});
-        if (res) {
-          this.$store.dispatch('messages/setMessage', {
-            message: `Проект «${this.nameProject}» сохранен`,
-          });
+        this.loading = true;
+        this.message(`Сохранения проекта «${this.nameProject}»`);
+        const res = await this.$store.dispatch('projects/saveProject', {
+          name: this.nameProject,
+          overwrite: this.checVal,
+        });
+        // console.log(res);
+        if (res || !res.error) {
+          this.message(`Проект «${this.nameProject}» сохранен`);
           this.save = false;
+        } else {
+          this.message(res.error);
         }
+        this.loading = false;
       } catch (error) {
         console.log(error);
+        this.loading = false;
       }
     },
     click(type) {
@@ -162,15 +172,8 @@ export default {
         this.save = true;
       } else if (type === 'project-load') {
         this.load = true;
-        this.loadProject()
+        this.loadProject();
       }
-    },
-    change(value) {
-      console.log(value);
-    },
-    handleFocusOut(e) {
-      console.log(e);
-      (this.clickProject = e), this.$nextTick(() => this.$refs.project.focus());
     },
   },
 };
