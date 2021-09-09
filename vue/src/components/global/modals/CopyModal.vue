@@ -9,7 +9,7 @@
       </scrollbar>
     </div>
     <div slot="footer">
-      <div class="copy-buffer">
+      <div class="copy-buffer" v-if="!noCopy">
         <i :class="['t-icon', 'icon-clipboard']" :title="'copy'" @click="Copy"></i>
         <p v-if="copy" class="success">Код скопирован в буфер обмена</p>
         <p v-else>Скопировать в буфер обмена</p>
@@ -26,6 +26,10 @@ export default {
       type: String,
       default: 'Title',
     },
+    noCopy: {
+      type: Boolean,
+      default: false,
+    },
     value: Boolean,
   },
   data: () => ({
@@ -37,11 +41,11 @@ export default {
       const selection = window.getSelection();
       const range = document.createRange();
 
-      range.selectNode(message)
+      range.selectNode(message);
       selection.removeAllRanges();
       selection.addRange(range);
-      message.contentEditable = 'true'
-      
+      message.contentEditable = 'true';
+
       try {
         document.execCommand('copy');
         this.copy = true;
@@ -49,7 +53,7 @@ export default {
         console.error('Fallback: Oops, unable to copy', err);
       }
 
-      message.contentEditable = 'false'
+      message.contentEditable = 'false';
     },
   },
   computed: {
@@ -57,7 +61,7 @@ export default {
       set(value) {
         this.$emit('input', value);
         if (!value) {
-          this.copy = value
+          this.copy = value;
         }
       },
       get() {
