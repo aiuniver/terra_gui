@@ -1,7 +1,11 @@
 <template>
   <main class="page-not-found">
     <div class="cont">
-      <h1>Test</h1>
+      <div>
+        <t-field inline>
+          <t-select-new :list="list" small />
+        </t-field>
+      </div>
     </div>
   </main>
 </template>
@@ -9,6 +13,13 @@
 <script>
 export default {
   name: 'page-not-found',
+  data: () => ({
+    list: [
+      // { value: 'test', label: 'test' },
+      // { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
+      // { value: 'tesfd dfdft', label: 'te fdfdf dfdst' },
+    ],
+  }),
   computed: {
     url() {
       return decodeURI(window.location.pathname);
@@ -33,19 +44,18 @@ export default {
     justify-content: center;
     align-items: center;
     background-color: var(--color__page);
-    .t-icon{
-      height: 70px;
-      width: 70px;
-      margin-bottom: 20px;
+    > div {
+      width: 300px;
+      height: 300px;
     }
   }
 }
 .title {
-    color: #6c7883;
-    font-size: 1.5rem;
-    span {
-      color: #a9a9a9;
-      font-weight: 700;
-    }
+  color: #6c7883;
+  font-size: 1.5rem;
+  span {
+    color: #a9a9a9;
+    font-weight: 700;
+  }
 }
 </style>
