@@ -10,11 +10,12 @@
       <div class="model__config">
         <t-input
           :value="name"
-          :label="'Название проекта'"
+          :label="'Название модель'"
           :type="'text'"
           :parse="'parse'"
           :name="'name'"
           :key="'name-key'"
+          :error="err"
           @change="name = $event.value"
         />
         <t-checkbox
@@ -31,10 +32,8 @@
       <Loading v-if="!image" />
     </div>
     <template slot="footer">
-      <button @click="save">Сохранить</button>
-      <button class="at-btn at-btn--default" @click="close">
-        <span class="at-btn__text">Отменить</span>
-      </button>
+      <t-button @click.native="save">Сохранить</t-button>
+      <t-button cancel @click.native="close">Отменить</t-button>
     </template>
   </at-modal>
 </template>
@@ -54,6 +53,7 @@ export default {
   data: () => ({
     name: '',
     overwrite: false,
+    err: '',
   }),
   computed: {
     dialog: {
@@ -70,16 +70,30 @@ export default {
       console.log(e);
     },
     async save() {
+      this.err = null;
+
       const res = await this.$store.dispatch('modeling/createModel', {
         name: this.name,
         preview: this.image.slice(22),
         overwrite: this.overwrite,
       });
-      this.dialog = false;
-      console.log(this.name);
-      console.log(this.overwrite);
+
       console.log(res);
-      // this.$emit('input', false);
+
+      if (res?.error && res?.error?.general) {
+        await this.$store.dispatch(
+          'messages/setMessage',
+          { error: `Moдель '${this.name}' уже создана` },
+          { root: true }
+        );
+        this.err = `Moдель '${this.name}' уже создана`;
+      } else if (res?.error) {
+        await this.$store.dispatch('messages/setMessage', { error: 'Поле не может быть пустым' }, { root: true });
+        this.err = 'Поле не может быть пустым';
+      }
+      console.log(`this.err ${this.err}`);
+
+      if (!this.err) this.dialog = false;
     },
 
     close() {

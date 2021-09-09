@@ -1,5 +1,5 @@
 <template>
-  <button class="t-button" :disabled="disabled">
+  <button :class="['t-button', { 't-button--cancel': cancel }]" :disabled="disabled" @click="click">
     <i v-if="loading" class="t-btn__loading t-icon icon-loading-new"></i>
     <span v-else class="t-btn__text">
       <slot>Загрузить</slot>
@@ -12,7 +12,15 @@ export default {
   name: 't-button',
   props: {
     loading: Boolean,
+    cancel: Boolean,
     disabled: Boolean,
+  },
+  methods: {
+    click(e) {
+      if (!this.loading && !this.disabled) {
+        this.$emit('click', e);
+      }
+    },
   },
 };
 </script>
@@ -22,7 +30,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: .875rem;
+  font-size: 0.875rem;
   width: 100%;
   color: #fff;
   background-color: #2b5278;
@@ -58,6 +66,14 @@ export default {
     font-size: inherit;
     color: inherit;
     line-height: inherit;
+  }
+  &--cancel {
+    background-color: #17212b;
+    &:hover {
+      background-color: #2b5278;
+      border-color: #2b5278;
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 50%);
+    }
   }
 }
 </style>

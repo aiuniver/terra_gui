@@ -1,0 +1,197 @@
+<template>
+  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]">
+    <i :class="['t-select__icon t-icon icon-file-arrow', { 't-select__icon--rotate': show }]" @click="click"></i>
+    <input
+      class="t-select__input"
+      v-model="search"
+      readonly
+      :name="name"
+      :disabled="disabled"
+      :placeholder="placeholder || ''"
+      :autocomplete="'off'"
+      @click="click"
+      @blur="select(false)"
+      @focus="$emit('focus', $event)"
+    />
+    <div class="t-select__content" v-show="show">
+      <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
+        {{ item.label }}
+      </div>
+      <div class="t-select__content--empty" v-if="!filterList.length">Нет данных</div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 't-select-new',
+  props: {
+    type: String,
+    placeholder: String,
+    value: [String, Number],
+    name: String,
+    parse: String,
+    list: [Array, Object],
+    disabled: Boolean,
+    small: Boolean,
+    error: String,
+  },
+  data() {
+    return {
+      selected: {},
+      show: false,
+      search: '',
+    };
+  },
+  created() {
+    this.search = this.value;
+    console.log(this.$parent);
+  },
+  computed: {
+    filterList() {
+      return this.list || [];
+      // ? this.list.filter(item => {
+      //     const search = this.search;
+      //     return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
+      //   })
+      // : [];
+    },
+  },
+  methods: {
+    select(item) {
+      if (item) {
+        this.selected = item;
+        this.show = false;
+        this.search = item.label;
+        this.$emit('input', this.selected.value);
+        this.$emit('change', { name: this.name, value: item.value });
+        this.$emit('parse', { name: this.name, parse: this.parse, value: item.value });
+      } else {
+        this.search = this.selected.label || this.value;
+        this.show = false;
+      }
+    },
+    click(e) {
+      this.show = !this.show;
+      this.$emit('click', e);
+    },
+  },
+  watch: {
+    value: {
+      handler(value) {
+        // console.log(value)
+        this.show = false;
+        this.search = value;
+      },
+    },
+  },
+};
+</script>
+
+<style lang="scss" scoped>
+.t-select {
+  position: relative;
+  height: 42px;
+  &__icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    cursor: pointer;
+    transition-duration: 100ms;
+    &--rotate {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__input {
+    height: 42px;
+    width: 100%;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    padding: 0 20px 0 10px;
+    border-radius: 4px;
+    border: 1px solid #6c7883;
+    color: #fff;
+    background: #242f3d;
+    transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    cursor: pointer;
+    &:focus {
+      border-color: #e7ecf5;
+    }
+    &:disabled {
+      border-color: #6c7883;
+      cursor: default;
+      opacity: 0.35;
+    }
+  }
+  &__content {
+    position: absolute;
+    top: 41px;
+    width: 100%;
+    border: 1px solid #6c7883;
+    box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border-radius: 0 0 4px 4px;
+    z-index: 3;
+    color: #a7bed3;
+    background-color: #242f3d;
+    &--item {
+      color: inherit;
+      font-size: 14px;
+      line-height: 24px;
+      text-align: left;
+      cursor: pointer;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      padding: 0 10px;
+      &:hover {
+        color: #e7ecf5;
+        background-color: #6c7883;
+      }
+    }
+    &--empty {
+      color: inherit;
+      font-size: 14px;
+      line-height: 24px;
+      padding: 0 10px;
+      cursor: default;
+    }
+  }
+  &--active &__input {
+    border-radius: 4px 4px 0 0;
+  }
+  &--small {
+    height: 24px;
+    width: 109px;
+  }
+  &--small &__input {
+    height: 24px;
+    font-size: 12px;
+    padding: 0 15px 0 5px;
+    line-height: 24px;
+  }
+  &--small &__icon {
+    top: 0px;
+  }
+  &--small &__content {
+    width: auto;
+    top: 23px;
+    min-width: 109px;
+    &--item {
+      padding: 0 5px;
+      font-size: 12px;
+      line-height: 22px;
+    }
+    &--empty {
+      font-size: 12px;
+      padding: 0 5px;
+      line-height: 22px;
+    }
+  }
+}
+</style>

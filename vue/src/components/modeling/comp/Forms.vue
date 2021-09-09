@@ -22,6 +22,7 @@
         :parse="parse"
         :name="name"
         :key="blockType + key"
+        :error="getError(parse)"
         inline
         @change="change"
       />
@@ -68,8 +69,12 @@ export default {
       type: Object,
       default: () => ({ type: "main", items: [], value: {} }),
     },
+    id: Number
   },
   computed: {
+    errors() {
+      return this.$store.getters['modeling/getErrorsFields'] || {}
+    },
     items() {
       return this.data?.items || [];
     },
@@ -85,6 +90,13 @@ export default {
     },
   },
   methods: {
+    getError(parse) {
+      if (!this.id) return;
+      const key = parse.replace('parameters', `[${this.id}][parameters]`)
+      console.log(key)
+      console.log(this.id)
+      return this.errors?.[key]?.[0] || ''
+    },
     change(e) {
       this.$emit("change", { type: this.type, ...e });
     },

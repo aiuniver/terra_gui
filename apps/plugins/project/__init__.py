@@ -27,6 +27,7 @@ DATA_PATH = {
     "datasets": Path(settings.TERRA_AI_DATA_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_DATA_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_DATA_PATH, "training").absolute(),
+    "projects": Path(settings.TERRA_AI_DATA_PATH, "projects").absolute(),
 }
 PROJECT_PATH = {
     "base": Path(settings.TERRA_AI_PROJECT_PATH).absolute(),
@@ -43,6 +44,7 @@ class DataPathData(BaseMixinData):
     datasets: DirectoryPath
     modeling: DirectoryPath
     training: DirectoryPath
+    projects: DirectoryPath
 
     @validator(
         "base",
@@ -50,14 +52,12 @@ class DataPathData(BaseMixinData):
         "datasets",
         "modeling",
         "training",
+        "projects",
         allow_reuse=True,
         pre=True,
     )
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        try:
-            os.makedirs(value)
-        except FileExistsError:
-            pass
+        os.makedirs(value, exist_ok=True)
         return value
 
 
@@ -70,10 +70,7 @@ class ProjectPathData(BaseMixinData):
 
     @validator("base", "datasets", "modeling", "training", allow_reuse=True, pre=True)
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        try:
-            os.makedirs(value)
-        except FileExistsError:
-            pass
+        os.makedirs(value, exist_ok=True)
         return value
 
 
@@ -98,6 +95,11 @@ class Project(BaseMixinData):
         _data = super().dict(**kwargs)
         _data.update({"name_alias": self.name_alias})
         return _data
+
+    def reset(self):
+        self.name = UNKNOWN_NAME
+        self.dataset = None
+        self.model = ModelDetailsData(**EmptyModelDetailsData)
 
     def save(self):
         with open(project_path.config, "w") as _config_ref:
@@ -132,6 +134,8 @@ class Project(BaseMixinData):
                     }
                 )
                 self.model.layers.append(layer_data)
+                self.model.name = model_init.name
+                self.model.alias = model_init.alias
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:

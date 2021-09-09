@@ -94,7 +94,7 @@ export default {
     DataSent: false,
     DataLoading: false,
     passwordShow: false,
-    pattern: /^(?=[a-zA-Z])[A-Z_a-z0-9]+$/,
+    pattern: /^(?=[a-zA-Zа-яА-Я])[а-яА-ЯA-Z_a-z0-9]+$/,
   }),
   computed: {
     ...mapGetters({
@@ -119,7 +119,7 @@ export default {
     },
     sec_accept(val) {
       if (this.use_sec) {
-        if (val == this.sec) this.send_disabled = false;
+        if (val == this.sec &&  this.pattern.test(this.deploy)) this.send_disabled = false;
         else this.send_disabled = true;
       }
     },
