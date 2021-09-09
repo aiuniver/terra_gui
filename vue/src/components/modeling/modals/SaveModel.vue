@@ -31,10 +31,8 @@
       <Loading v-if="!image" />
     </div>
     <template slot="footer">
-      <button @click="save">Сохранить</button>
-      <button class="at-btn at-btn--default" @click="close">
-        <span class="at-btn__text">Отменить</span>
-      </button>
+      <t-button  @click.native="save">Сохранить</t-button>
+      <t-button cancel  @click.native="close">Отменить</t-button>
     </template>
   </at-modal>
 </template>
