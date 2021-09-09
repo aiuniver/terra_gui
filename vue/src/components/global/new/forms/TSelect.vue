@@ -1,5 +1,5 @@
 <template>
-  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]">
+  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]" v-click-outside="outside">
     <i :class="['t-select__icon t-icon icon-file-arrow', { 't-select__icon--rotate': show }]" @click="click"></i>
     <input
       class="t-select__input"
@@ -58,6 +58,12 @@ export default {
     },
   },
   methods: {
+    label() {
+      this.show = !this.show;
+    },
+    outside() {
+      this.show = false
+    },
     select(item) {
       if (item) {
         this.selected = item;
