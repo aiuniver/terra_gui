@@ -40,14 +40,18 @@ class ChoiceAPIView(BaseAPIView):
 
 class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        update_project = False
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
             try:
                 request.project.set_dataset(progress.data)
+                update_project = True
             except project_exceptions.ProjectException as error:
                 return BaseResponseErrorGeneral(str(error))
         if progress.success:
-            return BaseResponseSuccess(data=progress.native())
+            return BaseResponseSuccess(
+                data=progress.native(), update_project=update_project
+            )
         else:
             return BaseResponseErrorGeneral(progress.error, data=progress.native())
 
@@ -140,6 +144,7 @@ class SourcesAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        update_project = False
         serializer = DeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
@@ -153,7 +158,8 @@ class DeleteAPIView(BaseAPIView):
                 request.project.dataset.alias == serializer.validated_data.get("alias")
             ):
                 request.project.set_dataset()
-            return BaseResponseSuccess()
+                update_project = True
+            return BaseResponseSuccess(update_project=update_project)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
         except TerraBaseException as error:

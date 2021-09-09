@@ -134,6 +134,8 @@ class Project(BaseMixinData):
                     }
                 )
                 self.model.layers.append(layer_data)
+                self.model.name = model_init.name
+                self.model.alias = model_init.alias
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
