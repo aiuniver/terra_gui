@@ -19,6 +19,7 @@
       :parse="parse"
       :name="name"
       :inline="inline"
+      :small="true"
       :disabled="disabled"
       @parse="change"
     />
@@ -36,11 +37,12 @@
     <t-select-new
       v-if="type === 'select'"
       :value="getValue"
-      :label="label"
+      :inputLabel="label"
       :list="list"
       :parse="parse"
       :name="name"
       :inline="inline"
+      :small="true"
       :disabled="disabled"
       @parse="change"
     />
@@ -130,5 +132,6 @@ export default {
 
 <style lang="scss" scoped>
 .forms {
+  padding-top: 10px;
 }
 </style>

@@ -1,6 +1,7 @@
 import temp from "../temp/training";
 import { toolbar } from "../const/trainings";
 
+
 export default {
   namespaced: true,
   state: () => ({

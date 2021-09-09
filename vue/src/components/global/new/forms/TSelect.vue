@@ -13,6 +13,7 @@
       @blur="select(false)"
       @focus="$emit('focus', $event)"
     />
+    <label :for="name">{{ inputLabel }}</label>
     <div class="t-select__content" v-show="show">
       <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
@@ -31,6 +32,7 @@ export default {
     value: [String, Number],
     name: String,
     parse: String,
+    inputLabel: String,
     list: [Array, Object],
     disabled: Boolean,
     small: Boolean,
@@ -98,6 +100,14 @@ export default {
 .t-select {
   position: relative;
   height: 42px;
+  label{
+    position: absolute;
+    margin-left: 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 12px;
+    color: #A7BED3;
+  }
   &__icon {
     position: absolute;
     top: 10px;

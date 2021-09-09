@@ -64,6 +64,7 @@ export default {
     border-radius: 4px;
     padding: 5px;
     overflow: hidden;
+    background: #242F3D;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;
