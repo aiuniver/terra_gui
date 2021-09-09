@@ -192,7 +192,6 @@ const temp = {
             mode: "lines",
           },
         ],
-        title: "accuracy и val_accuracy Эпоха №040",
         xaxis: {
           title: "эпоха",
         },
@@ -379,7 +378,6 @@ const temp = {
             mode: "lines",
           },
         ],
-        title: "loss и val_loss Эпоха №040",
         xaxis: {
           title: "эпоха",
         },
@@ -9190,7 +9188,6 @@ const temp = {
             mode: "lines",
           },
         ],
-        title: "Ошибка output_1 для 100 классов. Эпоха №040",
         xaxis: {
           title: "эпоха",
         },
@@ -18001,7 +17998,6 @@ const temp = {
             mode: "lines",
           },
         ],
-        title: "Точность output_1 для 100 классов. Эпоха №040",
         xaxis: {
           title: "эпоха",
         },
