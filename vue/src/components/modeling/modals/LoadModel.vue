@@ -203,18 +203,28 @@ export default {
     }
   }
 }
-.name {
-  margin-bottom: 5px;
-  line-height: 1px;
-}
 
-.model-arch-info-param {
-  span {
-    &:first-child {
-      color: #65b9f4;
+.model-arch {
+  &-img {
+    img {
+      width: 100%;
+      height: auto;
+    }
+  }
+
+  &-info-param {
+    .name {
+      margin-bottom: 5px;
+      line-height: 1px;
+    }
+    span {
+      &:first-child {
+        color: #65b9f4;
+      }
     }
   }
 }
+
 .row {
   margin-left: -23px;
 }
