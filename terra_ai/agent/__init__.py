@@ -35,6 +35,7 @@ from ..datasets.creating import CreateDTS
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
+from ..progress import utils as progress_utils
 from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
@@ -76,6 +77,20 @@ class Exchange:
         else:
             __type = HardwareAcceleratorChoice.GPU
         return HardwareAcceleratorData(type=__type)
+
+    def _call_project_save(
+        self, source: Path, target: Path, name: str, overwrite: bool
+    ):
+        """
+        Сохранение проекта
+        """
+        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
+        if not overwrite and project_path.is_file():
+            raise exceptions.ProjectAlreadyExistsException(name)
+        zip_destination = progress_utils.pack(
+            "project_save", "Сохранение проекта", source, delete=False
+        )
+        shutil.move(zip_destination.name, project_path)
 
     def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
         """

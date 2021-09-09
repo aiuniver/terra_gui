@@ -78,6 +78,8 @@ class LoadAPIView(BaseAPIView):
                 }
             )
             model.layers.append(layer_data)
+            model.name = model_init.name
+            model.alias = model_init.alias
         return model
 
     def post(self, request, **kwargs):
@@ -89,7 +91,9 @@ class LoadAPIView(BaseAPIView):
             if request.project.dataset:
                 model = self._update_layers(model, request.project.dataset.model)
             request.project.set_model(model)
-            return BaseResponseSuccess(request.project.model.native())
+            return BaseResponseSuccess(
+                request.project.model.native(), update_project=True
+            )
         except project_exceptions.ProjectException as error:
             return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
@@ -106,7 +110,7 @@ class InfoAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.clear_model()
-        return BaseResponseSuccess()
+        return BaseResponseSuccess(update_project=True)
 
 
 class UpdateAPIView(BaseAPIView):
@@ -141,7 +145,7 @@ class UpdateAPIView(BaseAPIView):
             model_data.update(data)
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
-            return BaseResponseSuccess()
+            return BaseResponseSuccess(update_project=True)
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -159,7 +163,7 @@ class ValidateAPIView(BaseAPIView):
                 "model_validate", model=request.project.model
             )
             request.project.set_model(model)
-            return BaseResponseSuccess(errors)
+            return BaseResponseSuccess(errors, update_project=True)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
