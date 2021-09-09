@@ -238,6 +238,31 @@ class Exchange:
         """
         os.remove(path)
 
+    def _call_start_training(
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        dataset_path: Path,
+        params: TrainData,
+    ):
+        """
+        Старт обучения
+        """
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            dataset_path=dataset_path,
+            training_params=params,
+        )
+
+    def _call_set_interactive_config(self, config: dict):
+        """
+        Обновление интерактивных параметров обучения
+        """
+        interactive.get_train_results(config=config)
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
@@ -249,25 +274,6 @@ class Exchange:
         Деплой: прогресс загрузки
         """
         return progress.pool("deploy_upload")
-
-    def _call_start_training(
-        self,
-        dataset: DatasetData,
-        model: ModelDetailsData,
-        training_path: Path,
-        dataset_path: Path,
-        params: TrainData,
-    ):
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-        )
-
-    def _call_set_interactive_config(self, config: dict) -> None:
-        interactive.get_train_results(config=config)
 
 
 agent_exchange = Exchange()
