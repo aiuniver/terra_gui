@@ -54,6 +54,8 @@ class UploadAPIView(BaseAPIView):
 
 class UploadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            data=agent_exchange("deploy_upload_progress").native()
-        )
+        progress = agent_exchange("deploy_upload_progress")
+        if progress.success:
+            return BaseResponseSuccess(data=progress.native())
+        else:
+            return BaseResponseErrorGeneral(progress.error, data=progress.native())

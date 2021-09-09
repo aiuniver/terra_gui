@@ -32,7 +32,7 @@ def __run_rsync(progress_name: str, file: str, destination: str):
 @progress.threading
 def upload(source: Path, data: dict):
     # Сброс прогресс-бара
-    progress_name = progress.PoolName.deploy_upload
+    progress_name = "deploy_upload"
     progress.pool.reset(progress_name)
 
     try:

@@ -9,7 +9,7 @@ export default {
       state.project = { ...state.project, ...value };
     },
     SET_USER(state, value) {
-      state.user = { ...state.user, ...value}
+      state.user = { ...state.user, ...value }
     },
   },
   actions: {
@@ -31,7 +31,7 @@ export default {
 
       commit("trainings/SET_PARAMS", base, { root: true });
     },
-    async saveProject({ dispatch }, name) {
+    async saveNameProject({ dispatch }, name) {
       console.log(name);
       const res = { url: "/project/name/", data: name };
       const { data } = await dispatch("axios", res, { root: true });
@@ -42,6 +42,17 @@ export default {
     },
     setProject({ commit }, data) {
       commit("SET_PROJECT", data);
+    },
+    async createProject({ dispatch }, data) {
+      const res = await dispatch("axios", { url: "/project/create/", data }, { root: true });
+      document.location.href = "/"; // "Миша, все хня, давай по новой" 
+      return res
+    },
+    async loadProject({ dispatch }, data) {
+      return await dispatch("axios", { url: "/project/load/", data }, { root: true });
+    },
+    async saveProject({ dispatch }, data) {
+      return await dispatch("axios", { url: "/project/save/", data }, { root: true });
     },
   },
   getters: {

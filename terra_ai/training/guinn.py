@@ -1,6 +1,16 @@
 import gc
 import os
 import sys
+
+import copy
+import os
+
+import psutil
+import time
+
+from terra_ai.guiexchange import Exchange
+import pynvml as N
+
 from pathlib import Path
 from typing import Tuple
 
@@ -18,11 +28,14 @@ from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTy
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDTS
 from terra_ai.modeling.validator import ModelValidator
-from terra_ai.training.customcallback import FitCallback
+# from terra_ai.training.customcallback import FitCallback
+from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 from terra_ai.training.data import custom_losses_dict
 
 __version__ = 0.01
+
+interactive = InteractiveCallback()
 
 
 class GUINN:
@@ -55,11 +68,11 @@ class GUINN:
         self.retrain_flag = False
         self.shuffle: bool = True
         self.model_is_trained: bool = False
-
         """
         Logs
         """
         self.history: dict = {}
+        self.progress_name = "training"
 
     @staticmethod
     def _check_metrics(metrics: list, num_classes: int = 2) -> list:
@@ -88,14 +101,15 @@ class GUINN:
                                         num_classes=output_layer.get("classes_quantity"))
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
+        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss)
 
-    def _set_callbacks(self, dataset: object, batch_size: int, epochs: int, checkpoint: dict) -> None:
-        print(('Добавление колбэков', '...'))
-        callback = FitCallback(dataset=dataset, exchange=None, batch_size=batch_size, epochs=epochs)
+    def _set_callbacks(self, dataset: PrepareDTS, batch_size: int, epochs: int, checkpoint: dict) -> None:
+        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
+        callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
         self.callbacks = [callback]
         checkpoint.update([('filepath', 'test_model.h5')])
         self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
-        print(('Добавление колбэков', 'выполнено'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
     @staticmethod
     def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDTS:
@@ -116,8 +130,8 @@ class GUINN:
 
         optimizer_object = getattr(keras.optimizers, params.optimizer.type.value)
         self.optimizer = optimizer_object(**params.optimizer.parameters_dict)
-        print(params.optimizer.parameters_dict)
-        print(self.optimizer)
+        # print(params.optimizer.parameters_dict)
+        # print(self.optimizer)
 
     def set_custom_metrics(self, params=None) -> None:
         for i_key in self.metrics.keys():
@@ -201,7 +215,7 @@ class GUINN:
                   training_path: Path = "",
                   dataset_path: Path = "",
                   training_params: TrainData = None,
-                  ) -> None:
+                  ) -> dict:
         """
         This method created for using wth externally compiled models
 
@@ -237,11 +251,9 @@ class GUINN:
                                         custom_objects=custom_objects)
 
                 self.nn_name = f"{self.model.name}"
-                self.Exch.print_2status_bar(('Загружена модель', model_name[0]))
-                # TODO определить или заменить self.Exch (возможно, self.callbacks)
+                progress.pool(self.progress_name, finished=False, data={'status': f'Загружена модель {model_name[0]}'})
             except Exception:
-                self.Exch.print_2status_bar(('Ошибка загрузки модели', "!!!"))
-                print("Ошибка загрузки модели!!!")
+                progress.pool(self.progress_name, finished=False, data={'status': 'Ошибка загрузки модели!!!'})
 
             if self.stop_training and (self.callbacks[0].last_epoch != self.sum_epoch):
                 if self.retrain_flag:
@@ -274,7 +286,7 @@ class GUINN:
                 self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
 
             self.sum_epoch += self.epochs
-        self.model_is_trained = True
+        return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
         # self.stop_training = self.callbacks[0].stop_training
 
     def nn_cleaner(self, retrain: bool = False) -> None:
@@ -301,22 +313,17 @@ class GUINN:
 
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
-        print(('Компиляция модели', '...'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         self.set_custom_metrics()
-        print(self.loss)
-        print(self.metrics)
         self.model.compile(loss=self.loss,
-                           optimizer='adam',  # self.optimizer,
+                           optimizer=self.optimizer,
                            metrics=self.metrics
                            )
-        print(('Компиляция модели', 'выполнена'))
-        print(('Начало обучения', '...'))
+        progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         if not retrain:
             self._set_callbacks(dataset=dataset, batch_size=params.batch,
                                 epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
-
-        print(('Начало обучения', '...'))
-
+        progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         self.history = self.model.fit(
             self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
             batch_size=self.batch_size,
@@ -326,6 +333,7 @@ class GUINN:
             verbose=verbose,
             callbacks=self.callbacks
         )
+        self.model_is_trained = True
 
     def yolo_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
         # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
@@ -407,3 +415,274 @@ class GUINN:
         )
 
 
+class MemoryUsage:
+    def __init__(self, debug=False):
+        self.debug = debug
+        try:
+            N.nvmlInit()
+            self.gpu = True
+        except:
+            self.gpu = False
+
+    def get_usage(self):
+        usage_dict = {}
+        if self.gpu:
+            gpu_utilization = N.nvmlDeviceGetUtilizationRates(N.nvmlDeviceGetHandleByIndex(0))
+            gpu_memory = N.nvmlDeviceGetMemoryInfo(N.nvmlDeviceGetHandleByIndex(0))
+            usage_dict["GPU"] = {
+                'gpu_utilization': f'{gpu_utilization.gpu: .2f}%',
+                'gpu_memory_used': f'{gpu_memory.used / 1024 ** 3: .2f}GB',
+                'gpu_memory_total': f'{gpu_memory.total / 1024 ** 3: .2f}GB'
+            }
+            if self.debug:
+                print(f'GPU usage: {gpu_utilization.gpu: .2f}% ({gpu_memory.used / 1024 ** 3: .2f}GB / '
+                      f'{gpu_memory.total / 1024 ** 3: .2f}GB)')
+        else:
+            cpu_usage = psutil.cpu_percent(percpu=True)
+            usage_dict["CPU"] = {
+                'cpu_utilization': f'{sum(cpu_usage) / len(cpu_usage): .2f}%',
+            }
+            if self.debug:
+                print(f'Average CPU usage: {sum(cpu_usage) / len(cpu_usage): .2f}%')
+                print(f'Max CPU usage: {max(cpu_usage): .2f}%')
+        usage_dict["RAM"] = {
+            'ram_utilization': f'{psutil.virtual_memory().percent: .2f}%',
+            'ram_memory_used': f'{psutil.virtual_memory().used / 1024 ** 3: .2f}GB',
+            'ram_memory_total': f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB'
+        }
+        usage_dict["Disk"] = {
+            'disk_utilization': f'{psutil.disk_usage("/").percent: .2f}%',
+            'disk_memory_used': f'{psutil.disk_usage("/").used / 1024 ** 3: .2f}GB',
+            'disk_memory_total': f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB'
+        }
+        if self.debug:
+            print(f'RAM usage: {psutil.virtual_memory().percent: .2f}% '
+                  f'({psutil.virtual_memory().used / 1024 ** 3: .2f}GB / '
+                  f'{psutil.virtual_memory().total / 1024 ** 3: .2f}GB)')
+            print(f'Disk usage: {psutil.disk_usage("/").percent: .2f}% '
+                  f'({psutil.disk_usage("/").used / 1024 ** 3: .2f}GB / '
+                  f'{psutil.disk_usage("/").total / 1024 ** 3: .2f}GB)')
+        return usage_dict
+
+
+class FitCallback(keras.callbacks.Callback):
+    """CustomCallback for all task type"""
+
+    def __init__(self, dataset: PrepareDTS, batch_size: int = None, epochs: int = None,
+                 save_model_path: str = "./", model_name: str = "noname"):
+        super().__init__()
+        self.usage_info = MemoryUsage(debug=False)
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.epochs = epochs
+        self.batch = 0
+        self.num_batches = 0
+        self.epoch = 0
+        self.last_epoch = 1
+        self.history = {}
+        self._start_time = time.time()
+        self._time_batch_step = time.time()
+        self._time_first_step = time.time()
+        self._sum_time = 0
+        self.stop_training = False
+        self.retrain_flag = False
+        self.stop_flag = False
+        self.retrain_epochs = 0
+        self.save_model_path = save_model_path
+        self.nn_name = model_name
+        self.progress_name = "training"
+        self.result = {
+            'info': None,
+            'usage': self.usage_info.get_usage(),
+            'train_data': None
+        }
+
+    def _set_result_data(self, param: dict) -> None:
+        for key in param.keys():
+            if key in self.result.keys():
+                self.result[key] = param[key]
+
+    def _get_result_data(self):
+        return self.result
+
+    def save_lastmodel(self) -> None:
+        """
+        Saving last model on each epoch end
+
+        Returns:
+            None
+        """
+        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
+        file_path_model: str = os.path.join(
+            self.save_model_path, f"{model_name}"
+        )
+        self.model.save(file_path_model)
+        self._set_result_data({'info': f"Последняя модель сохранена как {file_path_model}"})
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1) / self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch - 1} из {self.epochs}",
+            data=self._get_result_data(),
+            finished=False,
+        )
+        pass
+
+    def _estimate_step(self, current, start, now):
+        if current:
+            _time_per_unit = (now - start) / current
+        else:
+            _time_per_unit = (now - start)
+        return _time_per_unit
+
+    def eta_format(self, eta):
+        if eta > 3600:
+            eta_format = '%d ч %02d мин %02d сек' % (eta // 3600,
+                                                     (eta % 3600) // 60, eta % 60)
+        elif eta > 60:
+            eta_format = '%d мин %02d сек' % (eta // 60, eta % 60)
+        else:
+            eta_format = '%d сек' % eta
+        return ' %s' % eta_format
+
+    def update_progress(self, target, current, start_time, finalize=False, stop_current=0, stop_flag=False):
+        """
+        Updates the progress bar.
+        """
+        if finalize:
+            _now_time = time.time()
+            eta = _now_time - start_time
+        else:
+            _now_time = time.time()
+            if stop_flag:
+                time_per_unit = self._estimate_step(stop_current, start_time, _now_time)
+            else:
+                time_per_unit = self._estimate_step(current, start_time, _now_time)
+            eta = time_per_unit * (target - current)
+        return [self.eta_format(eta), int(eta)]
+
+    def on_train_begin(self, logs=None):
+        self.stop_training = False
+        self._start_time = time.time()
+        if not self.stop_flag:
+            self.batch = 0
+        self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch = epoch
+        self._time_first_step = time.time()
+
+    def on_train_batch_end(self, batch, logs=None):
+        stop = False
+        if stop:
+            self.model.stop_training = True
+            self.stop_training = True
+            self.stop_flag = True
+            msg = f'ожидайте остановку...'
+            self.batch += 1
+            print(('Обучение остановлено пользователем', msg))
+        else:
+            train_batch_data = None
+            msg_batch = f'Батч {batch}/{self.num_batches}'
+            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
+                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
+            time_start = \
+                self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
+            if self.retrain_flag:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения дообучения:' \
+                                     f'{self.eta_format(time_start)}, '
+            elif self.stop_flag:
+                msg_progress_end = f'Расчетное время окончания после остановки:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(self._sum_time + time_start)}, '
+            else:
+                msg_progress_end = f'Расчетное время окончания:' \
+                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
+                msg_progress_start = f'Время выполнения:' \
+                                     f'{self.eta_format(time_start)}, '
+            self.batch += 1
+
+            if interactive.urgent_predict:
+                if self.dataset.data.use_generator:
+                    upred = self.model.predict(self.dataset.dataset.get('val').batch(1))
+                else:
+                    upred = self.model.predict(self.dataset.X.get('val'))
+                # for data_type in ['train', 'val']:
+                #     upred[data_type] = self.model.predict(self.dataset.X.get(data_type))
+
+                train_batch_data = interactive.update_state(y_pred=upred)
+            if train_batch_data:
+                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
+                                       'train_data': train_batch_data
+                                       })
+                # progress.pool(
+                #     self.progress_name,
+                #     percent=(self.last_epoch - 1) / self.epochs * 100,
+                #     message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                #     data=self._get_result_data(),
+                #     finished=False,
+                # )
+            else:
+                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}"})
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1) / self.epochs * 100,
+                message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+                data=self._get_result_data(),
+                finished=False,
+            )
+
+    def on_epoch_end(self, epoch, logs=None):
+        """
+        Returns:
+            {}:
+        """
+        if self.dataset.data.use_generator:
+            scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
+        else:
+            scheduled_predict = self.model.predict(self.dataset.X.get('val'))
+        interacive_logs = copy.deepcopy(logs)
+        interacive_logs['epoch'] = epoch + 1
+        current_epoch_time = time.time() - self._time_first_step
+        train_epoch_data = interactive.update_state(
+            fit_logs=interacive_logs,
+            y_pred=scheduled_predict,
+            current_epoch_time=current_epoch_time,
+            on_epoch_end_flag=True
+        )
+        self._set_result_data({'train_data': train_epoch_data})
+        progress.pool(
+            self.progress_name,
+            percent=(self.last_epoch - 1) / self.epochs * 100,
+            message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
+            data=self._get_result_data(),
+            finished=False,
+        )
+        self.last_epoch += 1
+
+    def on_train_end(self, logs=None):
+        self.save_lastmodel()
+        time_end = self.update_progress(self.num_batches * self.epochs + 1,
+                                        self.batch, self._start_time, finalize=True)[1]
+        self._sum_time += time_end
+        if self.model.stop_training:
+            msg = f'Модель сохранена.'
+            print(('Обучение остановлено пользователем!', msg))
+        else:
+            if self.retrain_flag:
+                msg = f'Затрачено времени на обучение: ' \
+                      f'{self.eta_format(time_end)} '
+            else:
+                msg = f'Затрачено времени на обучение: ' \
+                      f'{self.eta_format(self._sum_time)} '
+            self._set_result_data({'info': f"Обучение закончено. {msg}"})
+            progress.pool(
+                self.progress_name,
+                percent=(self.last_epoch - 1) / self.epochs * 100,
+                message=f"Обучение завершено. Эпоха {self.last_epoch - 1} из {self.epochs}",
+                data=self._get_result_data(),
+                finished=True,
+            )
+            # print(msg)

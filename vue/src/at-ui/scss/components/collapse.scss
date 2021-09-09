@@ -47,6 +47,9 @@
     background-color: $collapse-header-bg-color;
     // transition: all .3s;
     cursor: pointer;
+    &--center {
+      text-align: center;
+    }
   }
   &__icon {
     position: absolute;

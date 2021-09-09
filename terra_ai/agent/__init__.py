@@ -38,6 +38,7 @@ from .. import settings, progress
 from . import exceptions
 from ..modeling.validator import ModelValidator
 from ..training import training_obj
+from ..training.guinn import interactive
 
 
 class Exchange:
@@ -86,7 +87,7 @@ class Exchange:
         """
         Прогресс выбора датасета
         """
-        return progress.pool(progress.PoolName.dataset_choice)
+        return progress.pool("dataset_choice")
 
     def _call_dataset_delete(self, path: str, group: str, alias: str):
         """
@@ -122,11 +123,12 @@ class Exchange:
         """
         Прогресс загрузки исходников датасета
         """
-        progress_data = progress.pool(progress.PoolName.dataset_source_load)
+        progress_data = progress.pool("dataset_source_load")
         if progress_data.finished and progress_data.data:
             __path = progress_data.data.absolute()
+            file_manager = FileManagerItem(path=__path).native().get("children")
             progress_data.data = {
-                "file_manager": (FileManagerItem(path=__path).native().get("children")),
+                "file_manager": file_manager,
                 "source_path": __path,
             }
         else:
@@ -208,14 +210,13 @@ class Exchange:
             config = json.load(config_ref)
             return ModelDetailsData(**config)
 
-    def _call_model_update(self, model: dict, **kwargs) -> ModelDetailsData:
+    def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        model.update(kwargs)
         return ModelDetailsData(**model)
 
-    def _call_model_validate(self, model: ModelDetailsData) -> dict:
+    def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
@@ -237,6 +238,31 @@ class Exchange:
         """
         os.remove(path)
 
+    def _call_start_training(
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        dataset_path: Path,
+        params: TrainData,
+    ):
+        """
+        Старт обучения
+        """
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            dataset_path=dataset_path,
+            training_params=params,
+        )
+
+    def _call_set_interactive_config(self, config: dict):
+        """
+        Обновление интерактивных параметров обучения
+        """
+        interactive.get_train_results(config=config)
+
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
@@ -247,23 +273,7 @@ class Exchange:
         """
         Деплой: прогресс загрузки
         """
-        return progress.pool(progress.PoolName.deploy_upload)
-
-    def _call_start_training(
-        self,
-        dataset: DatasetData,
-        model: ModelDetailsData,
-        training_path: Path,
-        dataset_path: Path,
-        params: TrainData,
-    ):
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-        )
+        return progress.pool("deploy_upload")
 
 
 agent_exchange = Exchange()

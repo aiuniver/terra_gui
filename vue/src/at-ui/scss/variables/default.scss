@@ -137,7 +137,7 @@ $border-radius-sm: 4px;
 $font-family: 'Open Sans', sans-serif;
 $code-family: Open Sans, sans-serif;
 
-$font-size-smest: 11px;
+$font-size-smest: 12px;
 $font-size-smer: 12px;
 $font-size-sm: 13px;
 $font-size-base: 16px;
@@ -495,11 +495,11 @@ $select-bg-c-disabled: $grey-50;
 $select-selection-bg-color: $select-bg-color;
 $select-selection-bg-color-disabled: tint($border-color-base, 70%);
 
-$select-padding-sm: 0 14px 0 8px;
-$select-padding-base: 0 14px 0 8px;
+$select-padding-sm: 0 14px 0 5px;
+$select-padding-base: 0 14px 0 5px;
 $select-padding-lg: 0 14px 0 8px;
 
-$select-selection-height-sm: 22px;
+$select-selection-height-sm: 24px;
 $select-selection-height-base: 26px;
 $select-selection-height-lg: 30px;
 

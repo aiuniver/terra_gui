@@ -7,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 
 
+
+
 class BaseAPIView(APIView):
     pass
 
@@ -67,4 +69,5 @@ class BaseResponseErrorFields(BaseResponseError):
                     __locs = __locs[:-1]
                 __errors = recursive_update(__errors, __loc_dict)
             error = __errors
+
         super().__init__(error={"fields": error}, *args, **kwargs)

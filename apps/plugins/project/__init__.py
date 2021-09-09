@@ -27,6 +27,7 @@ DATA_PATH = {
     "datasets": Path(settings.TERRA_AI_DATA_PATH, "datasets").absolute(),
     "modeling": Path(settings.TERRA_AI_DATA_PATH, "modeling").absolute(),
     "training": Path(settings.TERRA_AI_DATA_PATH, "training").absolute(),
+    "projects": Path(settings.TERRA_AI_DATA_PATH, "projects").absolute(),
 }
 PROJECT_PATH = {
     "base": Path(settings.TERRA_AI_PROJECT_PATH).absolute(),
@@ -43,6 +44,7 @@ class DataPathData(BaseMixinData):
     datasets: DirectoryPath
     modeling: DirectoryPath
     training: DirectoryPath
+    projects: DirectoryPath
 
     @validator(
         "base",
@@ -50,14 +52,12 @@ class DataPathData(BaseMixinData):
         "datasets",
         "modeling",
         "training",
+        "projects",
         allow_reuse=True,
         pre=True,
     )
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        try:
-            os.makedirs(value)
-        except FileExistsError:
-            pass
+        os.makedirs(value, exist_ok=True)
         return value
 
 
@@ -70,10 +70,7 @@ class ProjectPathData(BaseMixinData):
 
     @validator("base", "datasets", "modeling", "training", allow_reuse=True, pre=True)
     def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
-        try:
-            os.makedirs(value)
-        except FileExistsError:
-            pass
+        os.makedirs(value, exist_ok=True)
         return value
 
 
@@ -99,11 +96,20 @@ class Project(BaseMixinData):
         _data.update({"name_alias": self.name_alias})
         return _data
 
+    def reset(self):
+        self.name = UNKNOWN_NAME
+        self.dataset = None
+        self.model = ModelDetailsData(**EmptyModelDetailsData)
+
     def save(self):
         with open(project_path.config, "w") as _config_ref:
             json.dump(json.loads(self.json()), _config_ref)
 
-    def set_dataset(self, dataset: DatasetData):
+    def set_dataset(self, dataset: DatasetData = None):
+        if dataset is None:
+            self.dataset = None
+            self.model = ModelDetailsData(**EmptyModelDetailsData)
+            return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
             raise exceptions.DatasetModelInputsCountNotMatchException()
@@ -124,6 +130,7 @@ class Project(BaseMixinData):
                         "shape": layer_init.get("shape"),
                         "task": layer_init.get("task"),
                         "num_classes": layer_init.get("num_classes"),
+                        "parameters": layer_init.get("parameters"),
                     }
                 )
                 self.model.layers.append(layer_data)

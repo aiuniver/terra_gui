@@ -54,7 +54,6 @@
     <!-- E Selection -->
 
     <!-- S Dropdown -->
-    <transition name="slide-up" @after-leave="doDestory">
       <div
         class="at-select__dropdown"
         :class="[
@@ -72,7 +71,6 @@
           <slot></slot>
         </ul>
       </div>
-    </transition>
     <!-- E Dropdown -->
   </div>
 </template>

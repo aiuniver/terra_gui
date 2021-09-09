@@ -158,7 +158,12 @@ from ..types import (
     ConstrainedFloatValueGe0Le1,
     ConstrainedLayerNameValue,
 )
-from ..exceptions import ValueTypeException, PartTotalException, ListEmptyException
+from ..exceptions import (
+    ValueTypeException,
+    PartTotalException,
+    ListEmptyException,
+    ObjectDetectionQuantityLayersException,
+)
 from .extra import SourceModeChoice, LayerInputTypeChoice, LayerOutputTypeChoice
 from .tags import TagsList
 from . import creations
@@ -359,8 +364,21 @@ class CreationData(AliasMixinData):
     outputs: CreationOutputsList = CreationOutputsList()
     "`output`-слои"
 
-    @validator("inputs", "outputs", allow_reuse=True)
+    @validator("inputs", "outputs")
     def _validate_required(cls, value: UniqueListMixin) -> UniqueListMixin:
         if not len(value):
             raise ListEmptyException(type(value))
+        return value
+
+    @validator("outputs")
+    def _validate_outputs(cls, value: UniqueListMixin) -> UniqueListMixin:
+        if not value:
+            return value
+        is_object_detection = False
+        for layer in value:
+            if layer.type == LayerOutputTypeChoice.ObjectDetection:
+                is_object_detection = True
+                break
+        if is_object_detection and len(value) > 1:
+            raise ObjectDetectionQuantityLayersException(f"{len(value)} output layers")
         return value

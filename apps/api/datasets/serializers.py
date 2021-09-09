@@ -80,9 +80,12 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
         _text_mode = data.get("text_mode")
         if _text_mode == LayerTextModeChoice.completely.name:
             self.fields.get("max_words").required = True
+            data.pop("length", None)
+            data.pop("step", None)
         elif _text_mode == LayerTextModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+            data.pop("max_words", None)
 
         _prepare_method = data.get("prepare_method")
         if _prepare_method in [
@@ -90,9 +93,10 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
             LayerPrepareMethodChoice.bag_of_words.name,
         ]:
             self.fields.get("max_words_count").required = True
+            data.pop("word_to_vec_size", None)
         elif _prepare_method == LayerPrepareMethodChoice.word_to_vec.name:
             self.fields.get("word_to_vec_size").required = True
-        data.update({_prepare_method: True})
+            data.pop("max_words_count", None)
 
         super().__init__(instance=instance, data=data, **kwargs)
 
@@ -174,7 +178,7 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
 
     def __init__(self, instance=None, data=None, **kwargs):
         _type_processing = data.get("type_processing")
-        if _type_processing:
+        if _type_processing == LayerTypeProcessingClassificationChoice.ranges:
             self.fields.get("ranges").required = True
 
         super().__init__(instance=instance, data=data, **kwargs)

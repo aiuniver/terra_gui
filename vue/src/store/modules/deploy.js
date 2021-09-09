@@ -11,55 +11,110 @@ export default {
           type: "card",
           original: {
             type: "image",
-            imgUrl: 'img.png'
+            imgUrl: '1.jpg'
           },
           result: {
-            type: "text",
-            data: "Дерево"
+            type: "image",
+            imgUrl: 'segmentation/1.jpg'
+          }
+        },
+        {
+          type: "card",
+           original: {
+            type: "image",
+            imgUrl: '2.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/2.jpg'
+          }
+        },
+        {
+          type: "card",
+       original: {
+            type: "image",
+            imgUrl: '3.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/3.jpg'
+          }
+        },
+                {
+          type: "card",
+        original: {
+            type: "image",
+            imgUrl: '4.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/4.jpg'
           }
         },
         {
           type: "card",
           original: {
             type: "image",
-            imgUrl: 'img_1.png'
+            imgUrl: '5.jpg'
           },
           result: {
-            type: "text",
-            data: "Кошка"
-          }
-        },
-        {
-          type: "card",
-          original: {
             type: "image",
-            imgUrl: 'img_2.png'
-          },
-          result: {
-            type: "text",
-            data: "Здание, Дом, Река"
+            imgUrl: 'segmentation/5.jpg'
           }
         },
                 {
           type: "card",
           original: {
             type: "image",
-            imgUrl: 'img_3.png'
+            imgUrl: '6.jpg'
           },
           result: {
-            type: "text",
-            data: "Птица"
+            type: "image",
+            imgUrl: 'segmentation/6.jpg'
           }
         },
                 {
           type: "card",
           original: {
             type: "image",
-            imgUrl: 'img_4.png'
+            imgUrl: '7.jpg'
           },
           result: {
-            type: "text",
-            data: "Дерево, Кошка, Здание, Дом, Река, Птица, Самолет"
+            type: "image",
+            imgUrl: 'segmentation/7.jpg'
+          }
+        },
+                {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: '8.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/8.jpg'
+          }
+        },
+                {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: '9.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/9.jpg'
+          }
+        },
+                {
+          type: "card",
+          original: {
+            type: "image",
+            imgUrl: '10.jpg'
+          },
+          result: {
+            type: "image",
+            imgUrl: 'segmentation/10.jpg'
           }
         },
       ],
@@ -75,8 +130,7 @@ export default {
     },
     actions: {
       async SendDeploy({ dispatch }, data) {
-        await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
-        return;
+        return await dispatch('axios', { url: '/deploy/upload/', data: data }, { root: true });
       },
       async CheckProgress({ commit, dispatch }) {
         const { data } = await dispatch('axios', { url: '/deploy/upload/progress/'}, { root: true });

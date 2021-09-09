@@ -2,7 +2,7 @@
   <div class="header">
     <div class="header__left">
       <a href="#" class="header__left--logo"></a>
-      <TProjectName />
+      <TProjectName @save="saveNameProject" />
     </div>
     <!-- <div class="header__center">Название задачи / Название эксперимента</div> -->
     <div class="header__right">
@@ -19,37 +19,35 @@
         <i class="profile"></i>
       </div>
     </div>
-       <at-modal
-         v-model="save"
-         width="400"
-       >
-         <div slot="header" style="text-align: center">
-           <span>Сохранить проект</span>
-         </div>
-         <div class="inner form-inline-label">
-           <div class="field-form">
-             <label>Название проекта</label
-             ><input v-model="nameProject" type="text" />
-           </div>
-           <div class="field-form field-inline field-reverse">
-             <label @click="checVal = !checVal">Перезаписать</label>
-             <div class="checkout-switch">
-               <input v-model="checVal" type="checkbox" />
-               <span class="switcher"></span>
-             </div>
-           </div>
-         </div>
-         <template slot="footer">
-           <button @click="saveProject">Сохранить</button>
-         </template>
-       </at-modal>
-       <at-modal v-model="load" width="400">
-         <div slot="header" style="text-align: center">
-           <span>Загрузить проект</span>
-         </div>
+    <at-modal v-model="save" width="400" :maskClosable="false" :showClose="false">
+      <div slot="header" style="text-align: center">
+        <span>Сохранить проект</span>
+      </div>
+      <div class="inner form-inline-label">
+        <div class="field-form">
+          <label>Название проекта</label>
+          <input v-model="nameProject" type="text" :disabled="loading" />
+        </div>
+        <div class="field-form field-inline field-reverse">
+          <label @click="checkbox">Перезаписать</label>
+          <div class="checkout-switch">
+            <input v-model="checVal" type="checkbox" :disabled="loading" />
+            <span class="switcher"></span>
+          </div>
+        </div>
+      </div>
+      <template slot="footer">
+        <t-button @click="saveProject" :loading="loading">Сохранить</t-button>
+        <t-button @click="save = false" cancel :disabled="loading">Отменить</t-button>
+      </template>
+    </at-modal>
+    <at-modal v-model="load" width="400">
+      <div slot="header" style="text-align: center">
+        <span>Загрузить проект</span>
+      </div>
 
-         <div slot="footer"></div>
-       </at-modal>
+      <div slot="footer"></div>
+    </at-modal>
   </div>
 </template>
 
@@ -85,6 +83,7 @@ export default {
     ],
     save: false,
     load: false,
+    loading: false,
   }),
   computed: {
     nameProject: {
@@ -97,17 +96,21 @@ export default {
     },
   },
   methods: {
-    async saveProject() {
+    checkbox() {
+      if (!this.loading) {
+        this.checVal = !this.checVal;
+      }
+    },
+    message(message) {
+      this.$store.dispatch('messages/setMessage', { message });
+    },
+    async saveNameProject(name) {
       if (this.nameProject.length > 2) {
-        this.$store.dispatch('messages/setMessage', {
-          message: `Изменение названия проекта на «${this.nameProject}»`,
+        this.message(`Изменение названия проекта на «${name}»`);
+        await this.$store.dispatch('projects/saveNameProject', {
+          name,
         });
-        await this.$store.dispatch('projects/saveProject', {
-          name: this.nameProject,
-        });
-        this.$store.dispatch('messages/setMessage', {
-          message: `Название проекта изменено на «${this.nameProject}»`,
-        });
+        this.message(`Название проекта изменено на «${name}»`);
         this.save = false;
       } else {
         this.$store.dispatch('messages/setMessage', {
@@ -115,37 +118,62 @@ export default {
         });
       }
     },
-    outside() {
-      if (this.projectNameEdit) {
-        this.projectNameEdit = false;
-        this.nameProject = this.$refs.nameProjectSpan.innerText;
-        this.saveProject();
+    async createProject() {
+      try {
+        await this.$Modal.confirm({
+          title: 'Внимание!',
+          content: 'Создать новый проект?',
+          width: 400,
+        });
+        const res = this.$store.dispatch('projects/createProject', {});
+        if (res) {
+          this.message(`Новый проект «${this.nameProject}» создан`);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async loadProject() {
+      try {
+        const res = this.$store.dispatch('projects/loadProject', {});
+        if (res) {
+          this.message(`Проект «${this.nameProject}» загружен`);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async saveProject() {
+      try {
+        this.loading = true;
+        this.message(`Сохранения проекта «${this.nameProject}»`);
+        const res = await this.$store.dispatch('projects/saveProject', {
+          name: this.nameProject,
+          overwrite: this.checVal,
+        });
+        // console.log(res);
+        if (res || !res.error) {
+          this.message(`Проект «${this.nameProject}» сохранен`);
+          this.save = false;
+        } else {
+          this.message(res.error);
+        }
+        this.loading = false;
+      } catch (error) {
+        console.log(error);
+        this.loading = false;
       }
     },
     click(type) {
       console.log(type);
       if (type === 'project-new') {
-        this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Очистить проект?',
-          width: 300
-        }).then(() => {
-          console.log('ok')
-        }).catch(() => {
-          console.log('cancel')
-        })
+        this.createProject();
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
         this.load = true;
+        this.loadProject();
       }
-    },
-    change(value) {
-      console.log(value);
-    },
-    handleFocusOut(e) {
-      console.log(e);
-      (this.clickProject = e), this.$nextTick(() => this.$refs.project.focus());
     },
   },
 };

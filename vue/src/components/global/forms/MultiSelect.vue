@@ -64,7 +64,7 @@ export default {
   }),
   computed: {
     lists() {
-      return this.mixinFiles
+      return this.mixinFiles;
     },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);
@@ -110,7 +110,7 @@ export default {
         }
       }
       // this.$emit('change', this.selected);
-      this.mixinCheck(this.selected, this.id)
+      this.mixinCheck(this.selected, this.id);
     },
   },
   created() {
@@ -120,6 +120,10 @@ export default {
     if (Array.isArray(value)) {
       this.selected = this.filterList.filter(item => value.includes(item.value));
     }
+  },
+  watch: {
+    filterList() {
+      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value))},
   },
 };
 </script>
@@ -165,7 +169,7 @@ export default {
       overflow: hidden;
       color: #747b82;
       font-size: 0.75rem;
-      padding: 0 8px;
+      padding: 0 5px;
     }
     &--active {
       color: #fff;

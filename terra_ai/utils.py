@@ -7,4 +7,10 @@ def decamelize(camel_case_string: str):
 
 
 def camelize(snake_case_string: str):
+    if snake_case_string == 'auc':
+        return 'AUC'
+    if snake_case_string == 'kullback_leibler_divergence':
+        return 'KLDivergence'
+    if snake_case_string == 'logcosh':
+        return 'LogCoshError'
     return re.sub('_.', lambda x: x.group()[1].upper(), snake_case_string.title())

@@ -13,12 +13,16 @@ import { mapGetters } from 'vuex'
 export default {
   name: 'TChars',
   components: {
-    TChar
+    TChar,
   },
   computed: {
     ...mapGetters({
       chars : 'trainings/getChars'    
     })
+  },
+  mounted() {
+    this.$emit('isLoad', true)
+    console.log('mounted')
   }
 }
 </script>
@@ -26,8 +30,8 @@ export default {
 <style lang="scss" scoped>
 .charts {
   margin-bottom: 20px;
-  &__title {
-  }
+  // &__title {
+  // }
   &__content {
     margin-top: 10px;
     display: -webkit-box;

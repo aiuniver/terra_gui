@@ -17,7 +17,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.052
+__version__ = 0.053
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
@@ -170,12 +170,12 @@ def tensor_shape_to_tuple(tensor_shape: TensorShape):
 class ModelValidator:
     """Make validation of model plan"""
 
-    def __init__(self, model: ModelDetailsData, output_shape=None):
+    def __init__(self, model: ModelDetailsData):
         self.validator: LayerValidation = LayerValidation()
         self.model_plan: TerraModel = TerraModel()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
-        self.output_shape = output_shape
+        self.output_shape = {}
         self.all_indexes: List[int] = []
         self.start_row: List[int] = []
         self.end_row: List[int] = []
@@ -195,6 +195,8 @@ class ModelValidator:
             self.layer_input_shapes[layer.id] = []
             self.layer_output_shapes[layer.id] = []
             self.layers_state[layer.id] = ""
+            if layer.group == LayerGroupChoice.output:
+                self.output_shape[layer.id] = layer.shape.output
             if layer.reference:
                 for block in self.model.references:
                     if layer.reference == block.name:
@@ -317,6 +319,7 @@ class ModelValidator:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     if (
+                            self.output_shape[layer[0]] and
                             self.output_shape[layer[0]][0]
                             != self.layer_output_shapes[layer[0]][0][1:]
                     ):
@@ -590,7 +593,7 @@ class ModelValidator:
             # fill inputs
             if layer.group == LayerGroupChoice.input:
                 pass
-            elif not self.layer_input_shapes.get(layer.id):
+            elif not self.layer_input_shapes.get(layer.id) or self.layer_input_shapes.get(layer.id) == [None]:
                 self.filled_model.layers[idx].shape.input = []
             elif len(self.layer_input_shapes.get(layer.id)) == 1:
                 self.filled_model.layers[idx].shape.input = [
@@ -601,14 +604,14 @@ class ModelValidator:
             else:
                 front_shape = []
                 for shape in self.layer_input_shapes.get(layer.id):
-                    if shape:
+                    if shape or shape != [None]:
                         front_shape.append(shape[1:])
                     else:
-                        front_shape.append(shape)
+                        front_shape.append([])
                 self.filled_model.layers[idx].shape.input = front_shape
 
             # fill outputs
-            if not self.layer_output_shapes.get(layer.id):
+            if not self.layer_output_shapes.get(layer.id) or self.layer_output_shapes.get(layer.id) == [None]:
                 self.filled_model.layers[idx].shape.output = []
             else:
                 self.filled_model.layers[idx].shape.output = [
@@ -1389,12 +1392,13 @@ if __name__ == "__main__":
         # "size": 2,
         # 'filters': 32,
         # 'kernel_size': (2, 2),
-        # 'strides': (3, 3),
+        'pool_size': 2,
+        'strides': 2,
         # 'dilation_rate': (1, 1),
         # 'groups': 2,
         # 'depth_multiplier': 5,
         # 'data_format': 'channels_first',
-        # "padding": 'valid',
+        "padding": 'same',
         # "output_padding": None,
         # "kernel_initializer": "glorot_uniform",
         # "beta_initializer": "glorot_uniform",
@@ -1426,8 +1430,8 @@ if __name__ == "__main__":
         # 'capacity': 128.,
         # 'randomSample': True,
         # 'roll_up': True,
-        "block_size": 2,
-        "data_format": SpaceToDepthDataFormatChoice.NCHW,
+        # "block_size": 2,
+        # "data_format": SpaceToDepthDataFormatChoice.NCHW,
     }
 
     # layers.types.Conv2D.LayerConfig.num_uplinks.value = 3
@@ -1435,7 +1439,7 @@ if __name__ == "__main__":
         # "maxwordcount": 2000
     }
 
-    layer_name = "space_to_depth"
+    layer_name = "MaxPool1D"
     # print(get_layer_defaults(layer_name))
     LV = LayerValidation()
     LV.set_state(layer_name, input_shape, params, **kwarg)
@@ -1448,7 +1452,7 @@ if __name__ == "__main__":
     x, y = LV.get_validated()
     print("\n", x, y)
 
-    x = tensorflow.keras.layers.Input(input_shape[0][1:])
+    # x = tensorflow.keras.layers.Input(input_shape[0][1:])
     # x2 = tensorflow.keras.layers.Input(input_shape[1][1:])
     # x3 = tensorflow.keras.layers.Input(input_shape[2][1:])
     # x4 = tensorflow.keras.layers.Input(input_shape[3][1:])
@@ -1459,8 +1463,8 @@ if __name__ == "__main__":
     # x = getattr(tensorflow.keras.layers, layer_name)(**params)([x, x2, x3, x4])
     # x = getattr(customLayers, layer_name)(**params)(x)
     # x = tensorflow_addons.activations.mish(x)
-    x = tensorflow.nn.space_to_depth(x, **params)
-    print(x.shape)
+    # x = tensorflow.nn.space_to_depth(x, **params)
+    # print(x.shape)
 
     # import importlib
     #

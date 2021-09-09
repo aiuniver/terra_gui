@@ -2,19 +2,17 @@
   <div class="t-project">
     <div class="t-project__label">Project:</div>
     <input
-      ref="input-t-project"
       v-model="nameProject"
-      type="text"
-      class="t-project__name"
-      maxlength="50"
-      @blur="saveProject"
-      @input="toSave = true"
-      @keypress.enter="$event.target.blur()"
       v-autowidth
+      class="t-project__name"
+      type="text"
+      maxlength="50"
       autocomplete="off"
-      @focus="latest = $store.getters['projects/getProject'].name"
+      @keypress.enter="$event.target.blur()"
+      @blur="saveProject"
+      @focus="latest = nameProject"
     />
-    <i class="t-icon icon-project-edit" @click="$refs['input-t-project'].focus()"></i>
+    <i class="t-icon icon-project-edit" @click="click"></i>
   </div>
 </template>
 
@@ -22,7 +20,6 @@
 export default {
   name: 't-project-name',
   data: () => ({
-    toSave: false,
     latest: '',
   }),
   computed: {
@@ -36,26 +33,12 @@ export default {
     },
   },
   methods: {
+    click() {
+      this.$el.getElementsByTagName('input')[0].focus()
+    },
     async saveProject() {
-      if (!this.toSave || this.latest === this.nameProject) return;
-      if (this.nameProject.length > 2) {
-        this.$store.dispatch('messages/setMessage', {
-          message: `Изменение названия проекта на «${this.nameProject}»`,
-        });
-        await this.$store.dispatch('projects/saveProject', {
-          name: this.nameProject,
-        });
-        this.$store.dispatch('messages/setMessage', {
-          message: `Название проекта изменено на «${this.nameProject}»`,
-        });
-        this.latest = this.nameProject;
-      } else {
-        this.$store.dispatch('messages/setMessage', {
-          error: 'Длина не может быть < 3 сим.',
-        });
-        this.nameProject = this.latest;
-      }
-      this.toSave = false;
+      if (this.latest === this.nameProject) return;
+      this.$emit('save', this.nameProject );
     },
   },
 };

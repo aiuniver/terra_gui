@@ -4,7 +4,7 @@
     <scrollbar>
       <div class="params__items">
         <div class="params__items--item">
-          <t-input
+          <Input
             v-model="block.name"
             :label="'Название слоя'"
             :type="'text'"
@@ -18,16 +18,16 @@
             :list="listWithoutOutputInput"
             label="Тип слоя"
             name="type"
-            :disabled="isBlock || isInputOutput"
+            :disabled="isBlock || isInput"
             @change="changeType"
           />
         </div>
         <at-collapse :value="collapse">
           <at-collapse-item v-show="main.items.length" class="mb-3" title="Параметры слоя">
-            <Forms :data="main" @change="change" />
+            <Forms :data="main" :id="block.id" @change="change" />
           </at-collapse-item>
           <at-collapse-item v-show="extra.items.length" class="mb-3" title="Дополнительные параметры">
-            <Forms :data="extra" @change="change" />
+            <Forms :data="extra" :id="block.id" @change="change" />
           </at-collapse-item>
           <at-collapse-item v-show="!isBlock" class="mb-3" title="Размерность слоя" notChange>
             <Shape
@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import Input from "@/components/forms/Input.vue";
 import Navbar from '@/components/modeling/comp/Navbar.vue';
 import Shape from '@/components/forms/Shape.vue';
 import Autocomplete2 from '@/components/forms/Autocomplete2.vue';
@@ -68,7 +69,7 @@ export default {
     Autocomplete2,
     Forms,
     Navbar,
-    // Select
+    Input
   },
   data: () => ({
     collapse: ['0', '2'],
@@ -85,11 +86,11 @@ export default {
     isBlock() {
       return !this.block.id;
     },
-    isInputOutput() {
-      return this.block.group === 'input' || this.block.group === 'output';
+    isInput() {
+      return this.block.group === 'input';
     },
     listWithoutOutputInput() {
-      return this.list.filter(item => !(item.value.toLowerCase() === 'input' || item.value.toLowerCase() === 'dense'));
+      return this.list.filter(item => !(item.value.toLowerCase() === 'input'));
     },
 
     buttonSave() {
@@ -118,7 +119,7 @@ export default {
   },
   methods: {
     async saveModel() {
-      await this.$store.dispatch('modeling/updateModel', {});
+      await this.$store.dispatch('modeling/updateModel', this.block);
     },
     async changeType({ value }) {
       await this.$store.dispatch('modeling/typeBlock', { type: value, block: this.block });

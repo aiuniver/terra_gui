@@ -55,7 +55,7 @@ import store from "./store/index";
 // } from '@/at-ui/src'
 
 import AtComponents from '@/at-ui/src'
-import '@/at-ui/scss/index.scss' 
+import '@/at-ui/scss/index.scss'
 
 Vue.use(AtComponents)
 
@@ -113,6 +113,8 @@ Vue.use(Vuex);
 Vue.use(VueAxios, axios);
 // Vue.use(VueRouter);
 export const bus = new Vue();
+
+import '@/assets/scss/main.scss'
 
 new Vue({
   router,
