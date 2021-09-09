@@ -28,6 +28,11 @@ class InfoAPIView(BaseAPIView):
         )
 
 
+class LoadAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess()
+
+
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess()
@@ -57,8 +62,3 @@ class SaveAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except agent_exceptions.ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
-
-
-class LoadAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        return BaseResponseSuccess()
