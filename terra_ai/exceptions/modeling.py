@@ -11,7 +11,7 @@ class ModelingMessages(str, Enum):
     InputShapeMustBeInEchDim = "Input shape must be %s %s in each dim but received input shape %s"
     InputShapeMustBeOnly = "With %s input shape must be only %s but received: %s"
     InputShapeMustBeWholeDividedBy = "Input shape `%s` except channels must be whole divided by %s"
-    LayerHaveNotInputShape = "Layer does not have input shape"
+    LayerDoesNotHaveInputShape = "Layer does not have input shape"
     # Output Shape
     UnexpectedOutputShape = "Expected output shape `%s` but got output shape `%s`"
     UnspecifiedOutputLayer = "Unspecified output layer"
@@ -19,7 +19,7 @@ class ModelingMessages(str, Enum):
     CheckFollowingParameters = "Check the following parameters"
     InitializerCanTakeOnlyNDInputShape = "%s initializer in %s can take only %sD input shape but "\
                                          "received %sD input shape: %s"
-    CanTakeOneOfTheFollowingValues = "%s can take one of the following values %s"
+    CanTakeOneOfTheFollowingValues = "%s can take one of the following values: %s"
     CannotHaveValue = "%s cannot have value %s at the same time"
     ClassesShouldBe = "If %s, `classes` should be %s but received: %s"
     DimensionSizeMustBeEvenlyDivisible = "Dimension size (%s) from %s both must be evenly divisible by %s"

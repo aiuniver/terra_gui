@@ -274,9 +274,7 @@ class ModelValidator:
             self.valid = False
             for group in sub_graphs[1:]:
                 for layer in group:
-                    self.val_dictionary[
-                        layer
-                    ] = ModelingMessages.LayerNotConnectedToMainPart.value
+                    self.val_dictionary[layer] = ModelingMessages.LayerNotConnectedToMainPart.value
 
     def _get_model_links(self) -> None:
         (
@@ -301,15 +299,13 @@ class ModelValidator:
             if idx not in input_layers.keys():
                 self.valid = False
                 self.layer_input_shapes[idx].append(None)
-                self.val_dictionary[
-                    idx
-                ] = ModelingMessages.LayerHaveNotInputShape.value
+                self.val_dictionary[idx] = ModelingMessages.LayerDoesNotHaveInputShape.value
 
         # check if plan input shapes is not None
         for _id, shape in self.model_plan.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
-                self.val_dictionary[_id] = ModelingMessages.LayerHaveNotInputShape.value
+                self.val_dictionary[_id] = ModelingMessages.LayerDoesNotHaveInputShape.value
 
     def _get_output_shape_check(self):
         """Check compatibility of dataset's and results model output shapes"""
@@ -1049,7 +1045,7 @@ class LayerValidation:
                     and self.layer_parameters.get("classes") != 1000
             ):
                 return ModelingMessages.ClassesShouldBe.value % (
-                    "using `weights` as `'imagenet'` with `include_top` as true",
+                    "using `weights` as `imagenet` with `include_top` as true",
                     1000,
                     self.layer_parameters.get('classes'))
             elif self.layer_type == "InceptionV3":
@@ -1155,7 +1151,7 @@ class LayerValidation:
                     or self.inp_shape[0][3] % self.layer_parameters.get("block_size") != 0
             ):
                 return ModelingMessages.DimensionSizeMustBeEvenlyDivisible.value % (
-                    {self.inp_shape[0][2:4]},
+                    self.inp_shape[0][2:4],
                     f"input_shape {self.inp_shape[0]}",
                     f"block_size = {self.layer_parameters.get('block_size')}"
                 )
