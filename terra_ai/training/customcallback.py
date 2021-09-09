@@ -250,9 +250,6 @@ class InteractiveCallback:
     """Callback for interactive requests"""
 
     def __init__(self):
-        """
-        log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
-        """
         self.losses = None
         self.metrics = None
         self.loss_obj = None
