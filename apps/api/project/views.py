@@ -21,6 +21,13 @@ class NameAPIView(BaseAPIView):
         return BaseResponseSuccess(update_project=True)
 
 
+class InfoAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        return BaseResponseSuccess(
+            agent_exchange("projects_info", path=data_path.projects).native()
+        )
+
+
 class CreateAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.reset()
