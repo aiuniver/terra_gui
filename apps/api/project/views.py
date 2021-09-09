@@ -19,6 +19,7 @@ class CreateAPIView(BaseAPIView):
 
 class SaveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        request.project.save()
         return BaseResponseSuccess()
 
 
