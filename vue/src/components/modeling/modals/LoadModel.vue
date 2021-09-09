@@ -231,6 +231,6 @@ export default {
 }
 
 .row {
-  margin-left: -23px;
+  margin: 0 0 0 -23px;
 }
 </style>
