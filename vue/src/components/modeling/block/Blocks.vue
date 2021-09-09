@@ -259,6 +259,8 @@ export default {
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
+        this.centerX = this.$el.clientWidth / 2 - 100;
+        this.centerY = this.$el.clientHeight / 2;
         return;
       }
       let deltaScale = value === 1 ? 1.1 : 0.9090909090909091;
@@ -671,7 +673,7 @@ export default {
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
-    this.centerX = this.$el.clientWidth / 2;
+    this.centerX = this.$el.clientWidth / 2 - 100;
     this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();

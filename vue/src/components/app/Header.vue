@@ -41,26 +41,23 @@
         <t-button @click="save = false" cancel :disabled="loading">Отменить</t-button>
       </template>
     </at-modal>
-    <at-modal v-model="load" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Загрузить проект</span>
-      </div>
-
-      <div slot="footer"></div>
-    </at-modal>
+    <loadProject v-model="dialog" :list="listProject" @load="loadProject" @remove="removeProject" />
   </div>
 </template>
 
 <script>
 import TProjectName from '../forms/TProjectName.vue';
+import loadProject from './modal/LoadProject.vue';
 
 export default {
   name: 'THeader',
   components: {
     TProjectName,
+    loadProject,
   },
   data: () => ({
     checVal: false,
+    dialog: false,
     clickProject: false,
     projectNameEdit: false,
     name: 'kjkjkjkj',
@@ -84,6 +81,7 @@ export default {
     save: false,
     load: false,
     loading: false,
+    listProject: [],
   }),
   computed: {
     nameProject: {
@@ -104,6 +102,9 @@ export default {
     message(message) {
       this.$store.dispatch('messages/setMessage', { message });
     },
+    error(message) {
+      this.$store.dispatch('messages/setMessage', { error: message });
+    },
     async saveNameProject(name) {
       if (this.nameProject.length > 2) {
         this.message(`Изменение названия проекта на «${name}»`);
@@ -122,10 +123,12 @@ export default {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
-          content: 'Создать новый проект?',
+          content: 'Создание нового проекта удалит текущий. Создать новый проект?',
           width: 400,
+          maskClosable: false,
+          showClose: false
         });
-        const res = this.$store.dispatch('projects/createProject', {});
+        const res = await this.$store.dispatch('projects/createProject', {});
         if (res) {
           this.message(`Новый проект «${this.nameProject}» создан`);
         }
@@ -133,11 +136,42 @@ export default {
         console.log(error);
       }
     },
-    async loadProject() {
+    async loadProject(list) {
+      console.log(list);
       try {
-        const res = this.$store.dispatch('projects/loadProject', {});
+        const res = await this.$store.dispatch('projects/loadProject', {});
+        console.log(res);
         if (res) {
-          this.message(`Проект «${this.nameProject}» загружен`);
+          this.message(`Проект «${list.label}» загружен`);
+          this.dialog = false;
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async removeProject(list) {
+      console.log(list);
+      try {
+        const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
+        if (res) {
+          this.message(`Проект «${list.label}» удален`);
+          await this.infoProject();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async infoProject() {
+      try {
+        const res = await this.$store.dispatch('projects/infoProject', {});
+        if (res) {
+          const {
+            data: { projects },
+          } = res;
+          this.listProject = projects;
+          console.log(this.listProject);
+          this.dialog = true;
+          // this.message(`Проект «${this.nameProject}» загружен`);
         }
       } catch (error) {
         console.log(error);
@@ -152,11 +186,12 @@ export default {
           overwrite: this.checVal,
         });
         // console.log(res);
-        if (res || !res.error) {
+        if (res && !res.error) {
           this.message(`Проект «${this.nameProject}» сохранен`);
           this.save = false;
+          this.checVal = false;
         } else {
-          this.message(res.error);
+          this.error(res.error.general);
         }
         this.loading = false;
       } catch (error) {
@@ -171,8 +206,8 @@ export default {
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
-        this.load = true;
-        this.loadProject();
+        // this.load = true;
+        this.infoProject();
       }
     },
   },
@@ -190,62 +225,18 @@ export default {
   left: 0;
   top: 0;
   z-index: 800;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
   display: flex;
-  -webkit-box-direction: normal;
-  -moz-box-direction: normal;
-  -webkit-box-orient: horizontal;
-  -moz-box-orient: horizontal;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
   flex-direction: row;
-  -webkit-flex-wrap: nowrap;
-  -ms-flex-wrap: nowrap;
   flex-wrap: nowrap;
-  -webkit-box-pack: center;
-  -moz-box-pack: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
   justify-content: center;
-  -webkit-align-content: center;
-  -ms-flex-line-pack: center;
   align-content: center;
-  -webkit-box-align: center;
-  -moz-box-align: center;
-  -webkit-align-items: center;
-  -ms-flex-align: center;
   align-items: center;
   &__left {
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: nowrap;
-    -ms-flex-wrap: nowrap;
     flex-wrap: nowrap;
-    -webkit-box-pack: start;
-    -moz-box-pack: start;
-    -webkit-justify-content: flex-start;
-    -ms-flex-pack: start;
     justify-content: flex-start;
-    -webkit-align-content: flex-start;
-    -ms-flex-line-pack: start;
     align-content: flex-start;
-    -webkit-box-align: center;
-    -moz-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
     &--logo {
       display: block;
@@ -302,33 +293,11 @@ export default {
     white-space: nowrap;
   }
   &__right {
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: nowrap;
-    -ms-flex-wrap: nowrap;
     flex-wrap: nowrap;
-    -webkit-box-pack: end;
-    -moz-box-pack: end;
-    -webkit-justify-content: flex-end;
-    -ms-flex-pack: end;
     justify-content: flex-end;
-    -webkit-align-content: center;
-    -ms-flex-line-pack: center;
     align-content: center;
-    -webkit-box-align: center;
-    -moz-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
     &--icon {
       margin: 0 10px 0 0;
@@ -349,18 +318,8 @@ export default {
     }
   }
   & > * {
-    -webkit-box-ordinal-group: 1;
-    -moz-box-ordinal-group: 1;
-    -webkit-order: 0;
-    -ms-flex-order: 0;
     order: 0;
-    -webkit-box-flex: 1;
-    -moz-box-flex: 1;
-    -webkit-flex: 1 1 auto;
-    -ms-flex: 1 1 auto;
     flex: 1 1 auto;
-    -webkit-align-self: auto;
-    -ms-flex-item-align: auto;
     align-self: auto;
   }
 }

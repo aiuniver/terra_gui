@@ -1,13 +1,11 @@
 import copy
 import os
 import re
-from time import sleep
 from typing import Union
 
 import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
-import tensorflow as tf
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
 from sklearn.metrics import confusion_matrix
@@ -156,6 +154,10 @@ loss_metric_config = {
             "log_name": "cosine_similarity",
             "mode": "max"
         },  # min if loss, max if metric
+        "DiceCoefficient": {
+            "log_name": "dice_coef",
+            "mode": "max"
+        },
         "FalseNegatives": {
             "log_name": "false_negatives",
             "mode": "min"
@@ -248,9 +250,6 @@ class InteractiveCallback:
     """Callback for interactive requests"""
 
     def __init__(self):
-        """
-        log_history:    epoch_num -> metrics/loss -> output_idx - > metric/loss -> train ->  total/classes
-        """
         self.losses = None
         self.metrics = None
         self.loss_obj = None
@@ -289,15 +288,28 @@ class InteractiveCallback:
                 #     'show_for_model': True,
                 #     'show_for_classes': False
                 # },
+                # {
+                #     'id': 2,
+                #     'output_idx': 2,
+                #     'show_for_model': False,
+                #     'show_for_classes': True
+                # },
             ],
             'metric_graphs': [
-                {
-                    'id': 1,
-                    'output_idx': 2,
-                    'show_for_model': True,
-                    'show_for_classes': False,
-                    'show_metric': 'CategoricalAccuracy'
-                }
+                # {
+                #     'id': 1,
+                #     'output_idx': 2,
+                #     'show_for_model': True,
+                #     'show_for_classes': False,
+                #     'show_metric': 'CategoricalAccuracy'
+                # },
+                # {
+                #     'id': 2,
+                #     'output_idx': 2,
+                #     'show_for_model': False,
+                #     'show_for_classes': True,
+                #     'show_metric': 'CategoricalAccuracy'
+                # }
             ],
             'intermediate_result': {
                 'show_results': False,
@@ -331,8 +343,8 @@ class InteractiveCallback:
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
-        self._prepare_interactive_config()
         self.dataset = dataset
+        # self._prepare_interactive_config()
         self._prepare_y_true()
         self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
@@ -408,21 +420,44 @@ class InteractiveCallback:
                 }
             )
             _id += 1
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Classification or \
+                    self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Segmentation:
+                self.interactive_config.get('loss_graphs').append(
+                    {
+                        'id': _id,
+                        'output_idx': out,
+                        'show_for_model': False,
+                        'show_for_classes': True
+                    }
+                )
+                _id += 1
 
         # fill metric_graphs config
         _id = 1
         for out in self.metrics.keys():
-            for metric_name in self.metrics.get(out):
+            self.interactive_config.get('metric_graphs').append(
+                {
+                    'id': _id,
+                    'output_idx': out,
+                    'show_for_model': True,
+                    'show_for_classes': False,
+                    'show_metric': self.metrics.get(out)[0]
+                }
+            )
+            _id += 1
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Classification or \
+                    self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Segmentation:
                 self.interactive_config.get('metric_graphs').append(
                     {
                         'id': _id,
                         'output_idx': out,
                         'show_for_model': True,
                         'show_for_classes': False,
-                        'show_metric': metric_name
+                        'show_metric': self.metrics.get(out)[0]
                     }
                 )
                 _id += 1
+            break
 
         # fill progress_table_config
         for out in self.metrics.keys():
@@ -440,7 +475,11 @@ class InteractiveCallback:
         for out, out_metrics in metrics.items():
             output[out] = []
             for metric in out_metrics:
-                output[out].append(camelize(metric.name))
+                metric_name = metric.name
+                if re.search(r'_\d+$', metric_name):
+                    end = len(f"_{metric_name.split('_')[-1]}")
+                    metric_name = metric_name[:-end]
+                output[out].append(camelize(metric_name))
         return output
 
     @staticmethod
@@ -448,7 +487,7 @@ class InteractiveCallback:
         loss_obj = {}
         for out in losses.keys():
             # TODO: предусмотреть импорт из других модулей
-            loss_obj[out] = getattr(tensorflow.keras.losses, losses.get(out))()
+            loss_obj[out] = getattr(tensorflow.keras.losses, losses.get(out))
         return loss_obj
 
     @staticmethod
@@ -543,7 +582,8 @@ class InteractiveCallback:
                 self.log_history[f'{out}']['progress_state']['metrics'][f"{metric}"] = {
                     'mean_log_history': [], 'normal_state': [], 'underfitting': [], 'overfitting': []
                 }
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
+            if self.dataset.data.task_type.get(out) == TaskChoice.Classification or \
+                    self.dataset.data.task_type.get(out) == TaskChoice.Segmentation:
                 self.log_history[f'{out}']['class_loss'] = {}
                 self.log_history[f'{out}']['class_metrics'] = {}
                 for class_name in self.dataset.data.classes_names.get(out):
@@ -560,8 +600,10 @@ class InteractiveCallback:
         }
         for task_type in self.y_true.keys():
             for out in self.dataset.data.outputs.keys():
-                if self.dataset.data.outputs.get(
-                        out).task == TaskChoice.Classification and self.dataset.data.use_generator:
+                if (
+                        self.dataset.data.outputs.get(out).task == TaskChoice.Classification
+                        and self.dataset.data.use_generator
+                ):
                     self.y_true.get(task_type)[f'{out}'] = []
                     for column_name in self.dataset.dataframe.get(task_type).columns:
                         if column_name.split('_')[0] == f'{out}':
@@ -573,8 +615,24 @@ class InteractiveCallback:
                                     else self.dataset.data.classes_names.get(out).index(lbl))
                             self.y_true[task_type][f'{out}'] = np.array(self.y_true[task_type][f'{out}'])
                             break
-                elif self.dataset.data.outputs.get(out).task == TaskChoice.Classification and \
-                        not self.dataset.data.use_generator:
+                elif (
+                        self.dataset.data.outputs.get(out).task == TaskChoice.Classification
+                        and not self.dataset.data.use_generator
+                ):
+                    self.y_true[task_type][f'{out}'] = self.dataset.Y.get(task_type).get(f"{out}")
+                elif (
+                        self.dataset.data.outputs.get(out).task == TaskChoice.Segmentation
+                        and self.dataset.data.use_generator
+                ):
+                    # TODO: загрузка из генераторов занимает уйму времени, нужны другие варианты
+                    self.y_true[task_type][f'{out}'] = []
+                    for _, y_val in self.dataset.dataset[task_type].batch(1):
+                        self.y_true[task_type][f'{out}'].extend(y_val.get(f'{out}').numpy())
+                    self.y_true[task_type][f'{out}'] = np.array(self.y_true[task_type][f'{out}'])
+                elif (
+                        self.dataset.data.outputs.get(out).task == TaskChoice.Segmentation
+                        and not self.dataset.data.use_generator
+                ):
                     self.y_true[task_type][f'{out}'] = self.dataset.Y.get(task_type).get(f"{out}")
                 else:
                     pass
@@ -592,13 +650,34 @@ class InteractiveCallback:
         dataset_balance = {}
         for out in self.dataset.data.outputs.keys():
             dataset_balance[f'{out}'] = {}
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
+            if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
                 for data_type in self.y_true.keys():
                     dataset_balance[f'{out}'][data_type] = class_counter(
                         self.y_true.get(data_type).get(f'{out}'),
                         self.dataset.data.classes_names.get(out),
                         self.dataset.data.encoding.get(out) == 'ohe'
                     )
+            if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
+                for data_type in self.y_true.keys():
+                    dataset_balance[f'{out}'][data_type] = {
+                        'presence_balance': {},
+                        'square_balance': {}
+                    }
+                    classes = np.arange(self.dataset.data.num_classes.get(2))
+                    class_square = {}
+                    class_count = {}
+                    for cl in classes:
+                        class_square[self.dataset.data.classes_names.get(out)[cl]] = np.round(
+                            np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
+                            / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape))
+                        class_count[self.dataset.data.classes_names.get(out)[cl]] = 0
+
+                    for img in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
+                        for cl in classes:
+                            if cl in img:
+                                class_count[self.dataset.data.classes_names.get(out)[cl]] += 1
+                    dataset_balance[f'{out}'][data_type]['presence_balance'] = class_count
+                    dataset_balance[f'{out}'][data_type]['square_balance'] = class_square
         return dataset_balance
 
     def _prepare_class_idx(self) -> dict:
@@ -610,12 +689,14 @@ class InteractiveCallback:
             class_idx[data_type] = {}
             for out in self.y_true.get(data_type).keys():
                 class_idx[data_type][out] = {}
-                for name in self.dataset.data.classes_names.get(int(out)):
-                    class_idx[data_type][out][name] = []
-                y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) \
-                    if self.dataset.data.encoding.get(int(out)) == 'ohe' else self.y_true.get(data_type).get(out)
-                for idx in range(len(y_true)):
-                    class_idx[data_type][out][self.dataset.data.classes_names.get(int(out))[y_true[idx]]].append(idx)
+                if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Classification:
+                    for name in self.dataset.data.classes_names.get(int(out)):
+                        class_idx[data_type][out][name] = []
+                    y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) \
+                        if self.dataset.data.encoding.get(int(out)) == 'ohe' else self.y_true.get(data_type).get(out)
+                    for idx in range(len(y_true)):
+                        class_idx[data_type][out][self.dataset.data.classes_names.get(int(out))[y_true[idx]]].append(
+                            idx)
         return class_idx
 
     def _prepare_seed(self):
@@ -682,23 +763,65 @@ class InteractiveCallback:
             else:
                 self.y_pred[out] = y_pred[idx]
 
-    @staticmethod
-    def _get_loss_calculation(loss_name, loss_obj, y_true, y_pred, ohe=True, num_classes=10):
-        if loss_name == Loss.SparseCategoricalCrossentropy:
-            return loss_obj(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred).numpy()
-        else:
-            return loss_obj(y_true if ohe else to_categorical(y_true, num_classes), y_pred).numpy()
+    def _get_loss_calculation(self, loss_name, loss_obj, output, y_true, y_pred):
+        if self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Classification and \
+                loss_name == Loss.SparseCategoricalCrossentropy:
+            return loss_obj()(
+                np.argmax(y_true, axis=-1) if self.dataset.data.encoding.get(int(output)) == "ohe" else y_true, y_pred
+            ).numpy()
+        elif self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Classification:
+            return loss_obj()(
+                y_true if self.dataset.data.encoding.get(int(output)) == "ohe"
+                else to_categorical(y_true, self.dataset.data.num_classes.get(int(output))), y_pred
+            ).numpy()
 
-    @staticmethod
-    def _get_metric_calculation(metric_name, metric_obj, y_true, y_pred, ohe=True, num_classes=10):
-        if metric_name == Metric.Accuracy:
-            metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else y_true, np.argmax(y_pred, axis=-1))
-        elif metric_name == Metric.SparseCategoricalAccuracy or \
-                metric_name == Metric.SparseTopKCategoricalAccuracy or \
-                metric_name == Metric.SparseCategoricalCrossentropy:
-            metric_obj.update_state(np.argmax(y_true, axis=-1) if ohe else y_true, y_pred)
+        elif self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Segmentation and \
+                loss_name == Loss.SparseCategoricalCrossentropy:
+            return loss_obj()(
+                np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
+                if self.dataset.data.encoding.get(int(output)) == "ohe" else y_true, y_pred
+            ).numpy()
+        elif self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Segmentation:
+            return loss_obj()(
+                y_true if self.dataset.data.encoding.get(int(output)) == "ohe"
+                else to_categorical(y_true, self.dataset.data.num_classes.get(int(output))), y_pred
+            ).numpy()
         else:
-            metric_obj.update_state(y_true if ohe else to_categorical(y_true, num_classes), y_pred)
+            return 0.
+
+    def _get_metric_calculation(self, metric_name, metric_obj, output, y_true, y_pred):
+        if self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Classification:
+            if metric_name == Metric.Accuracy:
+                metric_obj.update_state(
+                    np.argmax(y_true, axis=-1) if self.dataset.data.encoding.get(int(output)) == "ohe"
+                    else y_true, np.argmax(y_pred, axis=-1)
+                )
+            elif metric_name == Metric.SparseCategoricalAccuracy or \
+                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
+                    metric_name == Metric.SparseCategoricalCrossentropy:
+                metric_obj.update_state(
+                    np.argmax(y_true, axis=-1) if self.dataset.data.encoding.get(int(output)) == "ohe" else y_true,
+                    y_pred
+                )
+            else:
+                metric_obj.update_state(
+                    y_true if self.dataset.data.encoding.get(int(output)) == "ohe"
+                    else to_categorical(y_true, self.dataset.data.num_classes.get(int(output))), y_pred
+                )
+
+        if self.dataset.data.outputs.get(int(output)).task == LayerOutputTypeChoice.Segmentation:
+            if metric_name == Metric.SparseCategoricalAccuracy or \
+                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
+                    metric_name == Metric.SparseCategoricalCrossentropy:
+                metric_obj.update_state(
+                    np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
+                    if self.dataset.data.encoding.get(int(output)) == "ohe" else y_true, y_pred
+                )
+            else:
+                metric_obj.update_state(
+                    y_true if self.dataset.data.encoding.get(int(output)) == "ohe"
+                    else to_categorical(y_true, self.dataset.data.num_classes.get(int(output))), y_pred
+                )
         return metric_obj.result().numpy()
 
     def _get_mean_log(self, logs):
@@ -714,12 +837,6 @@ class InteractiveCallback:
         else:
             self.log_history['epochs'].append(self.current_epoch)
         for out in self.dataset.data.outputs.keys():
-            if self.dataset.data.encoding.get(out) == 'ohe':
-                ohe = True
-            else:
-                ohe = False
-            num_classes = self.dataset.data.num_classes.get(out)
-
             for loss_name in self.log_history.get(f'{out}').get('loss').keys():
                 for data_type in ['train', 'val']:
                     # fill losses
@@ -732,7 +849,6 @@ class InteractiveCallback:
                             self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type)
                             if self.current_logs.get(f'{out}').get('loss').get(loss_name).get(data_type) else 0.
                         )
-
                 # fill loss progress state
                 if data_idx or data_idx == 0:
                     self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'][data_idx] = \
@@ -741,7 +857,6 @@ class InteractiveCallback:
                     self.log_history[f'{out}']['progress_state']['loss'][loss_name]['mean_log_history'].append(
                         self._get_mean_log(self.log_history.get(f'{out}').get('loss').get(loss_name).get('val'))
                     )
-
                 # get progress state data
                 loss_underfitting = self._evaluate_underfitting(
                     loss_name,
@@ -775,16 +890,34 @@ class InteractiveCallback:
                         normal_state)
 
                 # get Classification loss logs
-                if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                    # fill class losses
+                if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
                     for cls in self.log_history.get(f'{out}').get('class_loss').keys():
                         class_loss = self._get_loss_calculation(
-                            self.losses.get(f'{out}'),
-                            self.loss_obj.get(f'{out}'),
-                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                            ohe,
-                            num_classes
+                            loss_name=self.losses.get(f'{out}'),
+                            loss_obj=self.loss_obj.get(f'{out}'),
+                            output=out,
+                            y_true=self.y_true.get('val').get(f'{out}')[
+                                self.class_idx.get('val').get(f'{out}').get(cls)],
+                            y_pred=self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                        )
+                        if data_idx or data_idx == 0:
+                            self.log_history[f'{out}']['class_loss'][cls][loss_name][data_idx] = \
+                                class_loss if class_loss else 0.
+                        else:
+                            self.log_history[f'{out}']['class_loss'][cls][loss_name].append(
+                                class_loss if class_loss else 0.
+                            )
+                # get Segmentation loss logs
+                if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
+                    for cls in self.log_history.get(f'{out}').get('class_loss').keys():
+                        class_loss = self._get_loss_calculation(
+                            loss_name=self.losses.get(f'{out}'),
+                            loss_obj=self.loss_obj.get(f'{out}'),
+                            output=out,
+                            y_true=self.y_true.get('val').get(f'{out}')[:, :, :, self.dataset.data.classes_names.get(
+                                int(out)).index(cls)],
+                            y_pred=self.y_pred.get(f'{out}')[:, :, :, self.dataset.data.classes_names.get(
+                                int(out)).index(cls)],
                         )
                         if data_idx or data_idx == 0:
                             self.log_history[f'{out}']['class_loss'][cls][loss_name][data_idx] = \
@@ -801,7 +934,8 @@ class InteractiveCallback:
                         # print(data_idx,  self.log_history[f'{out}']['metrics'][metric_name])
                         self.log_history[f'{out}']['metrics'][metric_name][data_type][data_idx] = \
                             self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) \
-                                if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type) else 0.
+                                if self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(
+                                data_type) else 0.
                     else:
                         self.log_history[f'{out}']['metrics'][metric_name][data_type].append(
                             self.current_logs.get(f'{out}').get('metrics').get(metric_name).get(data_type)
@@ -847,16 +981,35 @@ class InteractiveCallback:
                     self.log_history[f'{out}']['progress_state']['metrics'][metric_name]['normal_state'].append(
                         normal_state)
 
+                # fill class losses
                 if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                    # fill class losses
                     for cls in self.log_history.get(f'{out}').get('class_metrics').keys():
                         class_metric = self._get_metric_calculation(
-                            metric_name,
-                            self.metrics_obj.get(f'{out}').get(metric_name),
-                            self.y_true.get('val').get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                            self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
-                            ohe,
-                            num_classes
+                            metric_name=metric_name,
+                            metric_obj=self.metrics_obj.get(f'{out}').get(metric_name),
+                            output=out,
+                            y_true=self.y_true.get('val').get(f'{out}')[
+                                self.class_idx.get('val').get(f'{out}').get(cls)],
+                            y_pred=self.y_pred.get(f'{out}')[self.class_idx.get('val').get(f'{out}').get(cls)],
+                        )
+                        if data_idx or data_idx == 0:
+                            self.log_history[f'{out}']['class_metrics'][cls][metric_name][data_idx] = \
+                                class_metric if class_metric else 0.
+                        else:
+                            self.log_history[f'{out}']['class_metrics'][cls][metric_name].append(
+                                class_metric if class_metric else 0.
+                            )
+
+                if self.dataset.data.task_type.get(out) == TaskChoice.Segmentation:
+                    for cls in self.log_history.get(f'{out}').get('class_metrics').keys():
+                        class_metric = self._get_metric_calculation(
+                            metric_name=metric_name,
+                            metric_obj=self.metrics_obj.get(f'{out}').get(metric_name),
+                            output=out,
+                            y_true=self.y_true.get('val').get(f'{out}')[:, :, :, self.dataset.data.classes_names.get(
+                                int(out)).index(cls)],
+                            y_pred=self.y_pred.get(f'{out}')[:, :, :, self.dataset.data.classes_names.get(
+                                int(out)).index(cls)],
                         )
                         if data_idx or data_idx == 0:
                             self.log_history[f'{out}']['class_metrics'][cls][metric_name][data_idx] = \
@@ -1047,7 +1200,6 @@ class InteractiveCallback:
                             "plot_data": []
                         }
                     )
-
         else:
             pass
         return data_return
@@ -1229,30 +1381,32 @@ class InteractiveCallback:
                     'predict_value': {},
                     'class_stat': {}
                 }
-                for inp in self.dataset.X.get('train').keys():
+                for inp in self.dataset.data.inputs.keys():
+                    path, type_choice = self._postprocess_initial_data(
+                        input_id=f"{inp}",
+                        example_idx=self.example_idx[idx],
+                    )
                     return_data[idx]['initial_data'] = {
                         'layer': f'Input_{inp}',
-                        'data': self._postprocess_initial_data(
-                            input_id=inp,
-                            example_idx=self.example_idx[idx],
-                        )
+                        'data': path,
+                        'type': type_choice
                     }
                 for out in self.y_true.get('train').keys():
-                    true_lbl, predict_lbl, color_mark, stat = self._postprocess_result_data(
+                    true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
                         output_id=out,
                         data_type='val',
                         example_idx=self.example_idx[idx],
                         show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
                     return_data[idx]['true_value'] = {
-                        "type": "class_name",
+                        "type": out_type,
                         "layer": f"Output_{out}",
-                        "data": true_lbl
+                        "data": true_value
                     }
                     return_data[idx]['predict_value'] = {
-                        "type": "class_name",
+                        "type": out_type,
                         "layer": f"Output_{out}",
-                        "data": predict_lbl,
+                        "data": predict_value,
                         "color_mark": color_mark
                     }
                     if stat:
@@ -1279,22 +1433,46 @@ class InteractiveCallback:
         return_data = {}
         _id = 1
         for out in self.interactive_config.get("statistic_data").get("output_id"):
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification:
-                cm = self._get_confusion_matrix(
+            if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
+                cm, cm_percent = self._get_confusion_matrix(
                     np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1)
                     if self.dataset.data.encoding.get(out) == "ohe" else self.y_true.get("val").get(f'{out}'),
-                    np.argmax(self.y_pred.get(f'{out}'), axis=-1)
+                    np.argmax(self.y_pred.get(f'{out}'), axis=-1),
+                    get_percent=True
                 )
-                return_data[f'{out}'] = {
-                    "id": _id,
-                    "task_type": TaskChoice.Classification.name,
-                    "graph_name": f"Output_{out} - Confusion matrix",
-                    "x_label": "Предсказание",
-                    "y_label": "Истинное значение",
-                    "labels": self.dataset.data.classes_names.get(out),
-                    "data_array": cm[0],
-                    "data_percent_array": cm[1]
-                }
+                return_data[f'{out}'] = dict(
+                    id=_id,
+                    task_type=TaskChoice.Classification.name,
+                    graph_name=f"Output_{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=self.dataset.data.classes_names.get(out),
+                    data_array=cm,
+                    data_percent_array=cm_percent)
+                _id += 1
+            elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
+                cm, cm_percent = self._get_confusion_matrix(
+                    np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).reshape(
+                        np.prod(np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).shape)).astype('int'),
+                    np.argmax(self.y_pred.get(f'{out}'), axis=-1).reshape(
+                        np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
+                    get_percent=True
+                )
+                # cm = np.round(cm[1] * 100 / np.array(
+                #     [[np.sum(self.y_true.get("val").get(f'{out}')[:, :, :, cl_id])] * \
+                #      self.dataset.data.num_classes.get(2) for
+                #      cl_id in range(self.dataset.data.num_classes.get(2))]), 1)
+
+                return_data[f'{out}'] = dict(
+                    id=_id,
+                    task_type=TaskChoice.Segmentation.name,
+                    graph_name=f"Output_{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=self.dataset.data.classes_names.get(out),
+                    data_array=cm,
+                    data_percent_array=cm_percent
+                )
                 _id += 1
             else:
                 return_data[f'{out}'] = {}
@@ -1334,7 +1512,7 @@ class InteractiveCallback:
         return_data = {}
         _id = 1
         for out in self.y_true.get('train').keys():
-            if self.dataset.data.task_type.get(int(out)) == TaskChoice.Classification:
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Classification:
                 class_train_names, class_train_count = sort_dict(
                     self.dataset_balance.get(out).get('train'),
                     mode=self.interactive_config.get('data_balance').get('sorted')
@@ -1371,18 +1549,95 @@ class InteractiveCallback:
                     }
                 ]
                 _id += 2
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Segmentation:
+                presence_train_names, presence_train_count = sort_dict(
+                    self.dataset_balance.get(out).get('train').get('presence_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                presence_val_names, presence_val_count = sort_dict(
+                    self.dataset_balance.get(out).get('val').get('presence_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                square_train_names, square_train_count = sort_dict(
+                    self.dataset_balance.get(out).get('train').get('square_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                square_val_names, square_val_count = sort_dict(
+                    self.dataset_balance.get(out).get('val').get('square_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                return_data[out] = [
+                    {
+                        'id': _id,
+                        'graph_name': 'Тренировочная выборка - баланс присутсвия',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': presence_train_names,
+                                'values': presence_train_count
+                            },
+                        ]
+                    },
+                    {
+                        'id': _id + 1,
+                        'graph_name': 'Проверочная выборка - баланс присутсвия',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': presence_val_names,
+                                'values': presence_val_count
+                            },
+                        ]
+                    },
+                    {
+                        'id': _id + 2,
+                        'graph_name': 'Тренировочная выборка - процент пространства',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': square_train_names,
+                                'values': square_train_count
+                            },
+                        ]
+                    },
+                    {
+                        'id': _id + 3,
+                        'graph_name': 'Проверочная выборка - процент пространства',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': square_val_names,
+                                'values': square_val_count
+                            },
+                        ]
+                    }
+                ]
+                _id += 4
+
         return return_data
 
     @staticmethod
-    def _get_confusion_matrix(y_true, y_pred) -> tuple:
+    def _get_confusion_matrix(y_true, y_pred, get_percent=True) -> tuple:
         cm = confusion_matrix(y_true, y_pred)
+        cm_percent = None
+        if get_percent:
+            cm_percent = np.zeros_like(cm).astype('float32')
+            for i in range(len(cm)):
+                total = np.sum(cm[i])
+                for j in range(len(cm[i])):
+                    cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
+        return cm, cm_percent
 
-        cm_percent = np.zeros_like(cm).astype('float32')
-        for i in range(len(cm)):
-            total = np.sum(cm[i])
-            for j in range(len(cm[i])):
-                cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
-        return (cm, cm_percent)
+    @staticmethod
+    def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
+        axis = tuple(np.arange(1, len(y_true.shape))) if batch_mode else None
+        intersection = np.sum(y_true * y_pred, axis=axis)
+        union = np.sum(y_true, axis=axis) + np.sum(y_pred, axis=axis)
+        return (2.0 * intersection + smooth) / (union + smooth)
 
     def _prepare_example_idx_to_show(self) -> dict:
         """
@@ -1391,38 +1646,45 @@ class InteractiveCallback:
         }
         """
         example_idx = {}
+        out = self.interactive_config.get('intermediate_result').get('main_output')
+        ohe = self.dataset.data.encoding.get(int(out)) == 'ohe'
         count = self.interactive_config.get('intermediate_result').get('num_examples')
         choice_type = self.interactive_config.get('intermediate_result').get('example_choice_type')
         if choice_type == 'best' or choice_type == 'worst':
-            y_true = self.dataset.Y.get('val').get(
-                f"{self.interactive_config.get('intermediate_result').get('main_output')}")
-            y_pred = self.y_pred.get(f"{self.interactive_config.get('intermediate_result').get('main_output')}")
-            if (y_pred.shape[-1] == y_true.shape[-1]) \
-                    and (self.dataset.data.encoding.get(
-                self.interactive_config.get('intermediate_result').get('main_output')) == 'ohe') \
-                    and (y_true.shape[-1] > 1):
-                classes = np.argmax(y_true, axis=-1)
-            elif (len(y_true.shape) == 1) \
-                    and (self.dataset.data.encoding.get(
-                self.interactive_config.get('intermediate_result').get('main_output')) != 'ohe') \
-                    and (y_pred.shape[-1] > 1):
-                classes = copy.copy(y_true)
-            elif (len(y_true.shape) == 1) \
-                    and (self.dataset.data.encoding.get(
-                self.interactive_config.get('intermediate_result').get('main_output')) != 'ohe') \
-                    and (y_pred.shape[-1] == 1):
-                classes = copy.deepcopy(y_true)
-            else:
-                classes = copy.deepcopy(y_true)
+            if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Classification:
+                y_true = self.y_true.get('val').get(f"{out}")
+                y_pred = self.y_pred.get(f"{out}")
+                if y_pred.shape[-1] == y_true.shape[-1] and ohe and y_true.shape[-1] > 1:
+                    classes = np.argmax(y_true, axis=-1)
+                elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] > 1:
+                    classes = copy.deepcopy(y_true)
+                elif len(y_true.shape) == 1 and not ohe and y_pred.shape[-1] == 1:
+                    classes = copy.deepcopy(y_true)
+                else:
+                    classes = copy.deepcopy(y_true)
+                probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
+                sorted_args = np.argsort(probs)
+                if choice_type == 'best':
+                    example_idx = sorted_args[::-1][:count]
+                if choice_type == 'worst':
+                    example_idx = sorted_args[:count]
 
-            probs = np.array([pred[classes[i]] for i, pred in enumerate(y_pred)])
-            sorted_args = np.argsort(probs)
-            if choice_type == 'best':
-                example_idx = sorted_args[::-1][:count]
-            elif choice_type == 'worst':
-                example_idx = sorted_args[:count]
+            elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
+                y_true = self.y_true.get('val').get(f"{out}")
+                y_pred = to_categorical(
+                    np.argmax(self.y_pred.get(f"{out}"), axis=-1),
+                    num_classes=self.dataset.data.num_classes.get(int(out))
+                )
+                dice_val = self._dice_coef(y_true, y_pred, batch_mode=True)
+                dice_dict = dict(zip(np.arange(0, len(dice_val)), dice_val))
+                if choice_type == 'best':
+                    example_idx, _ = sort_dict(dice_dict, mode='descending')
+                    example_idx = example_idx[:count]
+                if choice_type == 'worst':
+                    example_idx, _ = sort_dict(dice_dict, mode='ascending')
+                    example_idx = example_idx[:count]
             else:
-                example_idx = np.random.choice(len(probs), count, replace=False)
+                pass
         elif choice_type == 'seed':
             example_idx = self.seed_idx[:self.interactive_config.get('intermediate_result').get('num_examples')]
         elif choice_type == 'random':
@@ -1452,32 +1714,36 @@ class InteractiveCallback:
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
         # temp_file = tempfile.NamedTemporaryFile(delete=False)
+        column_idx = 0
+        for column_name in self.dataset.dataframe.get('val').columns:
+            if column_name.split('_')[0] == input_id:
+                column_idx = self.dataset.dataframe.get('val').columns.tolist().index(column_name)
         initial_file_path = os.path.join(self.dataset.datasets_path, self.dataset.dataframe.get(
-            'val').iat[example_idx, 0])
-        # TODO: посмотреть как реализовать '.iat[example_idx, 0]' для нескольких входов
+            'val').iat[example_idx, column_idx])
         if self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Image:
             img = Image.open(initial_file_path)
+            img = img.resize(self.dataset.data.inputs.get(int(input_id)).shape[0:2][::-1], Image.ANTIALIAS)
             img = img.convert('RGB')
             save_path = f"/tmp/initial_data_image{example_idx}_input{input_id}.webp"
             img.save(save_path, 'webp')
-            return save_path
+            return save_path, LayerInputTypeChoice.Image
         elif self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Text:
             text_str = open(initial_file_path, 'r')
-            return text_str
+            return text_str, LayerInputTypeChoice.Text
         elif self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             save_path = f"/tmp/initial_data_video{example_idx}_input{input_id}.webp"
             clip.write_videofile(save_path)
-            return save_path
+            return save_path, LayerInputTypeChoice.Video
         elif self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Audio:
             save_path = f"/tmp/initial_data_audio{example_idx}_input{input_id}.webp"
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
-            return save_path
+            return save_path, LayerInputTypeChoice.Audio
         elif self.dataset.data.inputs.get(int(input_id)).task == LayerInputTypeChoice.Dataframe:
             # TODO: обсудить как пересылать датафреймы на фронт
-            return initial_file_path
+            return initial_file_path, LayerInputTypeChoice.Dataframe
         else:
-            return initial_file_path
+            return initial_file_path, None
 
     def _postprocess_result_data(self, output_id: str, data_type: str, example_idx: int, show_stat=True):
         if self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Classification:
@@ -1506,10 +1772,58 @@ class InteractiveCallback:
                         "value": f"{round(val * 100, 1)}%",
                         "color_mark": class_color_mark
                     }
-            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat
+            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat, "class_names"
 
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Segmentation:
-            pass
+            labels = self.dataset.data.classes_names.get(int(output_id))
+
+            # prepare y_true image
+            y_true = np.expand_dims(np.argmax(self.y_true.get(data_type).get(output_id)[example_idx], axis=-1), axis=-1)
+            for color_idx in range(len(self.dataset.data.classes_colors.get(int(output_id)))):
+                y_true = np.where(
+                    y_true == [color_idx],
+                    np.array(self.dataset.data.classes_colors.get(int(output_id))[color_idx].as_rgb_tuple()),
+                    y_true
+                )
+            y_true = tensorflow.keras.utils.array_to_img(y_true)
+            y_true = y_true.convert('RGB')
+            y_true_save_path = f"/tmp/true_segmentation_data_image{example_idx}_output_{output_id}.webp"
+            y_true.save(y_true_save_path, 'webp')
+
+            # prepare y_pred image
+            y_pred = np.expand_dims(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1), axis=-1)
+            for color_idx in range(len(self.dataset.data.classes_colors.get(int(output_id)))):
+                y_pred = np.where(
+                    y_pred == [color_idx],
+                    np.array(self.dataset.data.classes_colors.get(int(output_id))[color_idx].as_rgb_tuple()),
+                    y_pred
+                )
+            y_pred = tensorflow.keras.utils.array_to_img(y_pred)
+            y_pred = y_pred.convert('RGB')
+            y_pred_save_path = f"/tmp/predict_segmentation_data_image{example_idx}_output_{output_id}.webp"
+            y_pred.save(y_pred_save_path, 'webp')
+
+            class_stat = {}
+            if show_stat:
+                y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
+                y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
+                                        self.dataset.data.num_classes.get(int(output_id)))
+                for idx, cls in enumerate(labels):
+                    dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
+                                        1)
+                    # cm = confusion_matrix(
+                    #     y_true[:, :, idx].reshape(np.prod(y_true[:, :, idx].shape)).astype('int'),
+                    #     y_pred[:, :, idx].reshape(np.prod(y_pred[:, :, idx].shape)).astype('int')
+                    # )
+                    # precision = cm[1][1] * 100 / (cm[1][1] + cm[0][1])
+                    # recall = cm[1][1] * 100 / (cm[1][1] + cm[1][0])
+                    # f1 = round(2 * precision * recall / (precision + recall), 1)
+                    class_stat[cls] = {
+                        "value": f"{dice_val}%",
+                        "color_mark": 'green' if dice_val >= 90 else 'red'
+                    }
+            return y_true_save_path, y_pred_save_path, None, class_stat, "image"
+
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.TextSegmentation:
             pass
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Regression:
