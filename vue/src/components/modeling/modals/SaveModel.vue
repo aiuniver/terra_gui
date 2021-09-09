@@ -93,7 +93,14 @@ export default {
       }
       console.log(`this.err ${this.err}`);
 
-      if (!this.err) this.dialog = false;
+      if (!this.err) {
+        this.dialog = false;
+        await this.$store.dispatch(
+          'messages/setMessage',
+          { message: `Moдель '${this.name}' сохранена` },
+          { root: true }
+        );
+      }
     },
 
     close() {
