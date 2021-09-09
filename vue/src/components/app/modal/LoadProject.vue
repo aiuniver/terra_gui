@@ -1,5 +1,5 @@
 <template>
-  <at-modal class="ms" v-model="dialog" width="400" :maskClosable="false" :showClose="false">
+  <at-modal v-show="show" class="ms" v-model="dialog" width="400" :maskClosable="false" :showClose="false">
     <div slot="header" style="text-align: center">
       <span>Загрузка проекта</span>
     </div>
@@ -15,7 +15,7 @@
             <i class="loaded-list__item--icon"></i>
             <span class="loaded-list__item--text">{{ item.label }}</span>
             <div class="loaded-list__item--empty"></div>
-            <div class="loaded-list__item--remove" @click.stop="$emit('remove', item)">
+            <div class="loaded-list__item--remove" @click.stop="remove(item)">
               <i></i>
             </div>
           </li>
@@ -23,7 +23,7 @@
       </scrollbar>
     </div>
     <template slot="footer">
-      <t-button @click="remove" :disabled="!selected.label">Загрузить</t-button>
+      <t-button @click="load" :disabled="!selected.label">Загрузить</t-button>
       <t-button @click="dialog = false" cancel>Отменить</t-button>
     </template>
   </at-modal>
@@ -39,6 +39,7 @@ export default {
   },
   data: () => ({
     selected: {},
+    show: true,
   }),
   computed: {
     ...mapGetters({}),
@@ -52,8 +53,41 @@ export default {
     },
   },
   methods: {
-    remove() {
-      this.$emit('remove', this.selected);
+    remove(list) {
+      // this.show = false;
+      this.$Modal
+        .confirm({
+          title: 'Внимание!',
+          content: `Вы действительно желаете удалить проект «${list.label}» ?`,
+          width: 400,
+          maskClosable: false,
+          showClose: false,
+        })
+        .then(() => {
+          this.$emit('remove', list);
+          // this.show = true;
+        })
+        .catch(() => {
+          // this.show = true;
+        });
+    },
+    load() {
+      // this.show = false;
+      this.$Modal
+        .confirm({
+          title: 'Внимание!',
+          content: `Загрузка проекта удалит текущий. Вы действительно хотите загрузить проект «${this.selected.label}» ?`,
+          width: 400,
+          maskClosable: false,
+          showClose: false,
+        })
+        .then(() => {
+          this.$emit('load', this.selected);
+          // this.show = true;
+        })
+        .catch(() => {
+          // this.show = true;
+        });
     },
   },
 };

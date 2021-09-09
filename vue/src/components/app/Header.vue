@@ -123,7 +123,7 @@ export default {
       try {
         await this.$Modal.confirm({
           title: 'Внимание!',
-          content: 'Создать новый проект?',
+          content: 'Создание нового проекта удалит текущий. Создать новый проект?',
           width: 400,
           maskClosable: false,
           showClose: false
@@ -143,7 +143,6 @@ export default {
         console.log(res);
         if (res) {
           this.message(`Проект «${list.label}» загружен`);
-          await this.infoProject();
           this.dialog = false;
         }
       } catch (error) {
@@ -156,7 +155,7 @@ export default {
         const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
         if (res) {
           this.message(`Проект «${list.label}» удален`);
-          this.dialog = false;
+          await this.infoProject();
         }
       } catch (error) {
         console.log(error);

@@ -49,10 +49,12 @@ export default {
       return res
     },
     async loadProject({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/load/", data }, { root: true });
+      const res = await dispatch("axios", { url: "/project/load/", data }, { root: true });
+      document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
+      return res
     },
     async removeProject({ dispatch }, data) {
-      return await dispatch("axios", { url: "/project/remove/", data }, { root: true });
+      return await dispatch("axios", { url: "/project/delete/", data }, { root: true });
     },
     async infoProject({ dispatch }, data) {
       return await dispatch("axios", { url: "/project/info/", data }, { root: true });
