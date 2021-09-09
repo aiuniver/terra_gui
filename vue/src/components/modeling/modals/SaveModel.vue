@@ -5,7 +5,7 @@
     </div>
     <div class="model modal-save-model">
       <div v-if="image" class="model__image">
-        <img alt="" width="auto" height="400" :src="image || ''" />
+        <img alt="" width="auto" height="auto" :src="image || ''" />
       </div>
       <div class="model__config">
         <t-input
@@ -135,7 +135,9 @@ export default {
   justify-content: center;
 
   &__image {
-    height: 400px;
+    height: auto;
+    width: 100%;
+    margin-bottom: 20px;
     img {
       width: 100%;
     }
