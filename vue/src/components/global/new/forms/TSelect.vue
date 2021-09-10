@@ -1,5 +1,5 @@
 <template>
-  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]">
+  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]" v-click-outside="outside">
     <i :class="['t-select__icon t-icon icon-file-arrow', { 't-select__icon--rotate': show }]" @click="click"></i>
     <input
       class="t-select__input"
@@ -13,6 +13,7 @@
       @blur="select(false)"
       @focus="$emit('focus', $event)"
     />
+    <label :for="name">{{ inputLabel }}</label>
     <div class="t-select__content" v-show="show">
       <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
@@ -31,6 +32,7 @@ export default {
     value: [String, Number],
     name: String,
     parse: String,
+    inputLabel: String,
     list: [Array, Object],
     disabled: Boolean,
     small: Boolean,
@@ -45,7 +47,7 @@ export default {
   },
   created() {
     this.search = this.value;
-    console.log(this.$parent);
+    console.log(this.list);
   },
   computed: {
     filterList() {
@@ -58,6 +60,12 @@ export default {
     },
   },
   methods: {
+    label() {
+      this.show = !this.show;
+    },
+    outside() {
+      this.show = false
+    },
     select(item) {
       if (item) {
         this.selected = item;
@@ -92,6 +100,14 @@ export default {
 .t-select {
   position: relative;
   height: 42px;
+  label{
+    position: absolute;
+    margin-left: 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 12px;
+    color: #A7BED3;
+  }
   &__icon {
     position: absolute;
     top: 10px;

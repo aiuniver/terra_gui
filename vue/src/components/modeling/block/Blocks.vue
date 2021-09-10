@@ -259,8 +259,11 @@ export default {
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
+        this.centerX = this.$el.clientWidth / 2 - 100;
+        this.centerY = this.$el.clientHeight / 2;
         return;
       }
+
       let deltaScale = value === 1 ? 1.1 : 0.9090909090909091;
       this.scale *= deltaScale;
       // this.scale = (value === 1) ? this.scale + 0.1 : this.scale - 0.1;
@@ -271,17 +274,13 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let zoomingCenter = {
-        x: this.mouseX,
-        y: this.mouseY,
-      };
-
-      let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = ((this.$el.clientWidth / 2) - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = ((this.$el.clientHeight / 2) - this.centerY) * (deltaScale - 1);
 
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
-
+      console.log(this.centerX);
+      
       // this.updateScene();
     },
     handleMove(e) {
@@ -359,6 +358,8 @@ export default {
       if (this.$el.contains(target)) {
         // if (e.preventDefault) e.preventDefault()
 
+        console.log(e.deltaY)
+
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
         // console.log(deltaScale)
         this.scale *= deltaScale;
@@ -371,6 +372,7 @@ export default {
           return;
         }
 
+        console.log(this.mouseX)
         let zoomingCenter = {
           x: this.mouseX,
           y: this.mouseY,
@@ -671,7 +673,7 @@ export default {
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
-    this.centerX = this.$el.clientWidth / 2;
+    this.centerX = this.$el.clientWidth / 2 - 100;
     this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();

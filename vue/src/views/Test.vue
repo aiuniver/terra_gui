@@ -3,6 +3,16 @@
     <div class="cont">
       <div>
         <t-field inline>
+          <t-input-new :list="list" small />
+        </t-field>
+      </div>
+      <div>
+        <t-field inline>
+          <t-checkbox-new :list="list" small />
+        </t-field>
+      </div>
+      <div>
+        <t-field inline>
           <t-select-new :list="list" small />
         </t-field>
       </div>
@@ -15,9 +25,9 @@ export default {
   name: 'page-not-found',
   data: () => ({
     list: [
-      // { value: 'test', label: 'test' },
-      // { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
-      // { value: 'tesfd dfdft', label: 'te fdfdf dfdst' },
+      { value: 'test', label: 'test' },
+      { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
+      { value: 'tesfd dfdft', label: 'te fdfdf dfdst' },
     ],
   }),
   computed: {
@@ -46,7 +56,6 @@ export default {
     background-color: var(--color__page);
     > div {
       width: 300px;
-      height: 300px;
     }
   }
 }

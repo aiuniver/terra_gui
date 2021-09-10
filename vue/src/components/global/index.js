@@ -12,6 +12,8 @@ import Checkbox from './forms/Checkbox';
 import Input from './forms/Input';
 import Select from './forms/Select';
 
+import TInput from './new/forms/TInput';
+import TCheckbox from './new/forms/TCheckbox';
 import TSelect from './new/forms/TSelect';
 import TField from './forms/TField';
 
@@ -29,6 +31,8 @@ export default [
   Autocomplete,
   MultiSelect,
 
+  TInput,
+  TCheckbox,
   TSelect,
   TField
 ];

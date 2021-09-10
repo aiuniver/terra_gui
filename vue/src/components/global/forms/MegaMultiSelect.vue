@@ -51,7 +51,7 @@ export default {
 
 <style lang="scss" scoped>
 .t-mega-select {
-  margin: 0 0 10px 0;
+  margin: 10px 0 10px 0;
   &__header {
     color: #a7bed3;
     display: block;
@@ -64,6 +64,7 @@ export default {
     border-radius: 4px;
     padding: 5px;
     overflow: hidden;
+    background: #242F3D;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;

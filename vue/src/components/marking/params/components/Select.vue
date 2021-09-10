@@ -102,7 +102,6 @@ export default {
   flex-direction: row-reverse;
   justify-content: flex-end;
   -webkit-box-pack: end;
-  margin-bottom: 10px;
   align-items: center;
   &.right {
     flex-direction: row;
