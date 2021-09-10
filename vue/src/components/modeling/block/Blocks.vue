@@ -273,16 +273,16 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let zoomingCenter = {
-        x: this.mouseX,
-        y: this.mouseY,
-      };
+      // let zoomingCenter = {
+      //   x: this.mouseX,
+      //   y: this.mouseY,
+      // };
 
-      let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
+      // let deltaOffsetX = (zoomingCenter.x - this.centerX) * (deltaScale - 1);
+      // let deltaOffsetY = (zoomingCenter.y - this.centerY) * (deltaScale - 1);
 
-      this.centerX -= deltaOffsetX;
-      this.centerY -= deltaOffsetY;
+      // this.centerX -= deltaOffsetX;
+      // this.centerY -= deltaOffsetY;
 
       // this.updateScene();
     },
