@@ -102,7 +102,6 @@ export default {
   flex-direction: row-reverse;
   justify-content: flex-end;
   -webkit-box-pack: end;
-  align-items: center;
   &.right {
     flex-direction: row;
     .t-field__label {
@@ -110,7 +109,6 @@ export default {
     }
   }
   &__label {
-    width: 150px;
     padding: 0 10px;
     text-align: left;
     color: #a7bed3;

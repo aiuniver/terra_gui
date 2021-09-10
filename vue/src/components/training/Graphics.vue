@@ -12,13 +12,17 @@
             <Images />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Прогресс обучения" center>
-            <Scatters />
+            <Progress />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Таблица прогресса обучения" center>
             <Texts />
           </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Статистические данные" center></at-collapse-item>
-          <at-collapse-item class="mt-3" title="Баланс данных" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Статистические данные" center>
+            <Stats />
+          </at-collapse-item>
+          <at-collapse-item class="mt-3" title="Баланс данных" center>
+            <Balance />
+          </at-collapse-item>
         </at-collapse>
       </div>
     </scrollbar>
@@ -26,18 +30,23 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-import Images from "./main/images/index.vue";
-import Texts from "./main/texts/index.vue";
-import Scatters from "./main/Scatters.vue";
+import { mapGetters } from 'vuex'
+import Images from './main/images/index.vue'
+import Texts from './main/texts/index.vue'
+import Progress from './main/progress/'
 import LoadSpiner from '../forms/LoadSpiner.vue'
+import Stats from './main/stats'
+import Balance from './main/balance'
+
 export default {
   name: 'Graphics',
   components: {
     Images,
     Texts,
-    Scatters,
+    Progress,
     LoadSpiner,
+    Stats,
+    Balance,
     Chars: () => import('./main/chars/index.vue'),
   },
   data: () => ({
