@@ -1,5 +1,3 @@
-import shutil
-
 from pydantic import ValidationError
 
 from terra_ai.agent import agent_exchange
@@ -79,6 +77,8 @@ class LoadAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+        except Exception as error:
+            return BaseResponseErrorFields(str(error))
 
 
 class DeleteAPIView(BaseAPIView):
