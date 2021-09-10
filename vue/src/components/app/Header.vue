@@ -124,7 +124,7 @@ export default {
         await this.$Modal.confirm({
           title: 'Внимание!',
           content: 'Создание нового проекта удалит текущий. Создать новый проект?',
-          width: 400,
+          width: 300,
           maskClosable: false,
           showClose: false
         });

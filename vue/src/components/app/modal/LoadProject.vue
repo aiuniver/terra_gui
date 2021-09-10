@@ -19,6 +19,9 @@
               <i></i>
             </div>
           </li>
+          <li v-if="!list.length" class="loaded-list__no-list">
+            Нет проектов для загрузки
+          </li>
         </ul>
       </scrollbar>
     </div>
@@ -99,6 +102,12 @@ export default {
 }
 
 .loaded-list {
+  &__no-list {
+    text-align: center;
+    padding: 7px 0;
+    font-size: 16px;
+    color: #a7bed3;
+  }
   &__item {
     display: flex;
     align-items: center;
