@@ -1,68 +1,12 @@
-import tensorflow as tf
+import os
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
-from tensorflow.keras.models import load_model
 import numpy as np
 
-import json
-import os
-from pathlib import Path
-from collections import OrderedDict
-import cv2
-
-from terra_ai.cascades.cascade import BuildModelCascade, CascadeElement, CascadeBlock
-from terra_ai.common import get_functions, list2tuple
-from terra_ai import general_fucntions
+from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
 from terra_ai.general_fucntions.image.preprocess import resize_img
-
-
-ROOT_PATH = str(Path(__file__).parent.parent)
-
-
-def load_images(path):
-    data = os.listdir(path)
-
-    def fun():
-        for image_path in data:
-            image = tf.keras.preprocessing.image.load_img(os.path.join(path, image_path))
-            image = tf.keras.preprocessing.image.img_to_array(image)
-            yield image
-
-    return fun
-
-
-def json2cascade(path: str):
-    with open(path) as cfg:
-        config = json.load(cfg)
-
-    path_model = os.path.join(ROOT_PATH, config['weight'])
-
-    model = load_model(path_model, compile=False, custom_objects=None)
-    model.load_weights(os.path.join(path_model, config['model_name'] + '_best.h5'))
-
-    type_model = config['tags'][0]['alias']
-    type_model_module = getattr(general_fucntions, type_model)
-
-    if config['preprocess']:
-        preprocess_functions = get_functions(getattr(type_model_module, 'preprocess'))
-
-        with open(os.path.join(ROOT_PATH, config['preprocess'])) as cfg:
-            preprocess = json.load(cfg)
-
-        preprocess = list2tuple(preprocess)
-        preprocess = [preprocess_functions[name](param) for name, param in preprocess.items()]
-        preprocess = getattr(type_model_module, 'make_preprocess')(preprocess)
-    else:
-        preprocess = None
-
-    if config['postprocessing']:  # пока так
-        postprocessing = None
-        pass
-    else:
-        postprocessing = None
-
-    model = BuildModelCascade(preprocess, model, postprocessing)
-
-    return model
+from terra_ai.common import json2cascade, ROOT_PATH, load_images
 
 
 def plot_mask_segmentation(predict, num_classes, classes_colors):
