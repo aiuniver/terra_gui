@@ -24,7 +24,7 @@
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
     </div>
-    <CopyModal v-model="dialogError" noCopy :title="'Ошибка!'">{{ message }}</CopyModal>
+    <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
   </div>
 </template>
 

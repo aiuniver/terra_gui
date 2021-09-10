@@ -9,7 +9,7 @@
       </scrollbar>
     </div>
     <div slot="footer">
-      <div class="copy-buffer" v-if="!noCopy">
+      <div class="copy-buffer">
         <i :class="['t-icon', 'icon-clipboard']" :title="'copy'" @click="Copy"></i>
         <p v-if="copy" class="success">Код скопирован в буфер обмена</p>
         <p v-else>Скопировать в буфер обмена</p>
@@ -25,10 +25,6 @@ export default {
     title: {
       type: String,
       default: 'Title',
-    },
-    noCopy: {
-      type: Boolean,
-      default: false,
     },
     value: Boolean,
   },
