@@ -1,5 +1,4 @@
-from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
-    LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
+from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
 from terra_ai.data.datasets.creation import CreationInputData, CreationOutputData
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice,\
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
@@ -9,21 +8,14 @@ import re
 import cv2
 import numpy as np
 import pandas as pd
-import random
-import joblib
+import shutil
 import pymorphy2
 import librosa.feature as librosa_feature
 from sklearn.cluster import KMeans
 from pydub import AudioSegment
-# import imgaug.augmenters as iaa
-from imgaug.augmentables.bbs import BoundingBox, BoundingBoxesOnImage
 from librosa import load as librosa_load
 from pydantic.color import Color
-from pydantic import DirectoryPath
 from typing import Union
-from tensorflow import concat as tf_concat
-from tensorflow import maximum as tf_maximum
-from tensorflow import minimum as tf_minimum
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -32,89 +24,89 @@ from tensorflow.keras import utils
 
 class CreateArray(object):
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def instructions_image(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        instructions: dict = {}
-        options = put_data.parameters.native()
-        del options['augmentation']
-        options['put'] = put_data.id
+        options = put_data.native()
 
-        instructions['parameters'] = options
-        instructions['instructions'] = paths_list
+        instructions = {'instructions': paths_list,
+                        'parameters': {'height': options['parameters']['height'],
+                                       'width': options['parameters']['width'],
+                                       'net': options['parameters']['net'],
+                                       'object_detection': options['parameters']['object_detection'],
+                                       'scaler': options['parameters']['scaler'],
+                                       'max_scaler': options['parameters']['max_scaler'],
+                                       'min_scaler': options['parameters']['min_scaler'],
+                                       'put': options['id']}}
 
         return instructions
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def instructions_video(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        instructions: dict = {}
+        put_data = put_data.native()
         video: list = []
         cur_step = 0
 
         for elem in paths_list:
-            name, ext = os.path.splitext(os.path.basename(elem))
-            if put_data.parameters.video_mode == LayerVideoModeChoice.completely:
-                video.append(
-                    os.path.join(os.path.dirname(elem), f'{name}_[{cur_step}-{put_data.parameters.max_frames}]{ext}'))
-            elif put_data.parameters.video_mode == LayerVideoModeChoice.length_and_step:
+            if put_data['parameters']['video_mode'] == LayerVideoModeChoice.completely:
+                video.append(';'.join([elem, f'[{cur_step}-{put_data["parameters"]["max_frames"]}]']))
+            elif put_data['parameters']['video_mode'] == LayerVideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
                 cap = cv2.VideoCapture(elem)
                 frame_count = int(cap.get(7))
                 while not stop_flag:
-                    video.append(os.path.join(os.path.dirname(elem),
-                                              f'{name}_[{cur_step}-{cur_step + put_data.parameters.length}]{ext}'))
-
-                    cur_step += put_data.parameters.step
-                    if cur_step + put_data.parameters.length > frame_count:
+                    video.append(';'.join([elem, f'[{cur_step}-{cur_step + put_data["parameters"]["length"]}]']))
+                    cur_step += put_data['parameters']['step']
+                    if cur_step + put_data['parameters']['length'] > frame_count:
                         stop_flag = True
-                        # if put_data.parameters.length < frame_count:
-                        #     video.append(os.path.join(os.path.dirname(elem), f'{name}_[{frame_count - put_data.parameters.length}, {frame_count}]{ext}'))
-                        #     y_cls.append(csv_y_cls[idx]) if csv_flag else y_cls.append(cur_class)
+                        if put_data['parameters']['length'] < frame_count:
+                            video.append(
+                                ';'.join([elem, f'[{frame_count - put_data["parameters"]["length"]}-{frame_count}]']))
 
-        options = put_data.parameters.native()
-        del options['video_mode']
-        del options['length']
-        del options['step']
-        del options['max_frames']
-        options['put'] = put_data.id
-
-        instructions['parameters'] = options
-        instructions['instructions'] = video
+        instructions = {'instructions': video,
+                        'parameters': {'height': put_data['parameters']['height'],
+                                       'width': put_data['parameters']['width'],
+                                       'put': put_data['id'],
+                                       'min_scaler': put_data['parameters']['min_scaler'],
+                                       'max_scaler': put_data['parameters']['max_scaler'],
+                                       'scaler': put_data['parameters']['scaler'],
+                                       'frame_mode': put_data['parameters']['frame_mode'],
+                                       'fill_mode': put_data['parameters']['fill_mode'],
+                                       'video_mode': put_data['parameters']['video_mode'],
+                                       'max_frames': put_data['parameters']['max_frames']}}
 
         return instructions
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def instructions_audio(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        instructions: dict = {}
+        options = put_data.native()
         audio: list = []
 
         for elem in paths_list:
             name, ext = os.path.splitext(os.path.basename(elem))
-            if put_data.parameters.audio_mode == LayerAudioModeChoice.completely:
-                audio.append(
-                    os.path.join(os.path.dirname(elem), f'{name}_[0.0-{put_data.parameters.max_seconds}]{ext}'))
-            elif put_data.parameters.audio_mode == LayerAudioModeChoice.length_and_step:
+            if options['parameters']['audio_mode'] == LayerAudioModeChoice.completely:
+                audio.append(';'.join([elem, f'[0.0-{options["parameters"]["max_seconds"]}]']))
+            elif options['parameters']['audio_mode'] == LayerAudioModeChoice.length_and_step:
                 cur_step = 0.0
                 stop_flag = False
                 sample_length = AudioSegment.from_file(elem).duration_seconds
                 while not stop_flag:
-                    audio.append(os.path.join(os.path.dirname(elem),
-                                              f'{name}_[{cur_step}-{put_data.parameters.max_seconds}]{ext}'))
-                    cur_step += put_data.parameters.step
-                    if cur_step + put_data.parameters.length > sample_length:
+                    audio.append(';'.join([elem, f'[{cur_step}-{cur_step + options["parameters"]["max_seconds"]}]']))
+                    cur_step += options['parameters']['step']
+                    cur_step = round(cur_step, 1)
+                    if cur_step + options['parameters']['length'] > sample_length:
                         stop_flag = True
 
-        options = put_data.parameters.native()
-        for elem in ['audio_mode', 'file_info', 'length', 'step', 'max_seconds']:
-            if elem in options.keys():
-                del options[elem]
-        options['put'] = put_data.id
-
-        instructions['parameters'] = options
-        instructions['instructions'] = audio
+        instructions = {'instructions': audio,
+                        'parameters': {'sample_rate': options['parameters']['sample_rate'],
+                                       'parameter': options['parameters']['parameter'],
+                                       'scaler': options['parameters']['scaler'],
+                                       'max_scaler': options['parameters']['max_scaler'],
+                                       'min_scaler': options['parameters']['min_scaler'],
+                                       'put': options['id']}}
 
         return instructions
 
@@ -141,6 +133,7 @@ class CreateArray(object):
 
             return ' '.join(words_list)
 
+        filters = put_data.parameters.filters
         instructions: dict = {}
         txt_list: dict = {}
         text: list = []
@@ -161,7 +154,7 @@ class CreateArray(object):
             for key in txt_list.keys():
                 words = []
                 for word in txt_list[key].split(' '):
-                    if word not in open_tags + close_tags:
+                    if not word in open_tags + close_tags:
                         words.append(word)
                 txt_list[key] = ' '.join(words)
 
@@ -228,26 +221,29 @@ class CreateArray(object):
     def instructions_regression(number_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
         options = put_data.parameters.native()
+
         options["put"] = put_data.id
 
-        instructions: dict = {'parameters': options,
-                              'instructions': number_list}
+        instructions = {'instructions': number_list,
+                        'parameters': options}
 
         return instructions
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def instructions_segmentation(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
 
-        instructions: dict = {}
-        instructions['parameters'] = {'mask_range': put_data.parameters.mask_range,
-                                      'num_classes': len(put_data.parameters.classes_names),
-                                      'height': put_data.parameters.height,
-                                      'width': put_data.parameters.width,
-                                      'classes_colors': [Color(color).as_rgb_tuple() for color in
-                                                         put_data.parameters.classes_colors],
-                                      'put': put_data.id
-                                      }
-        instructions['instructions'] = paths_list
+        options = put_data.native()
+
+        instructions = {'instructions': paths_list,
+                        'parameters': {'mask_range': options['parameters']['mask_range'],
+                                       'num_classes': len(options['parameters']['classes_names']),
+                                       'height': options['parameters']['height'],
+                                       'width': options['parameters']['width'],
+                                       'classes_colors': [Color(color).as_rgb_tuple() for color in
+                                                          options['parameters']['classes_colors']],
+                                       'put': options['id']
+                                       }
+                        }
 
         return instructions
 
@@ -337,21 +333,157 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
+    def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        for elem in paths_list:
+            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_image', os.path.basename(os.path.dirname(elem))),
+                        exist_ok=True)
+            shutil.copyfile(elem,
+                            os.path.join(tmp_folder, f'{options["put"]}_image', os.path.basename(os.path.dirname(elem)),
+                                         os.path.basename(elem)))
+
+        if dataset_folder:
+            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_image')):
+                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_image'), dataset_folder)
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod  # СДЕЛАНО
+    def cut_video(paths_list: list, tmp_folder=None, dataset_folder=None, **options):
+
+        def add_frames(video_array, fill_mode, frames_to_add, total_frames):
+
+            frames: np.ndarray = np.array([])
+
+            if fill_mode == LayerVideoFillModeChoice.black_frames:
+                frames = np.zeros((frames_to_add, *orig_shape, 3), dtype='uint8')
+            elif fill_mode == LayerVideoFillModeChoice.average_value:
+                mean = np.mean(video_array, axis=0, dtype='uint16')
+                frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
+            elif fill_mode == LayerVideoFillModeChoice.last_frames:
+                current_frames = (total_frames - frames_to_add)
+                if current_frames > frames_to_add:
+                    frames = np.flip(video_array[-frames_to_add:], axis=0)
+                elif current_frames <= frames_to_add:
+                    for i in range(frames_to_add // current_frames):
+                        frames = np.flip(video_array[-current_frames:], axis=0)
+                        video_array = np.concatenate((video_array, frames), axis=0)
+                    if frames_to_add + current_frames != video_array.shape[0]:
+                        frames = np.flip(video_array[-(frames_to_add + current_frames - video_array.shape[0]):], axis=0)
+                        video_array = np.concatenate((video_array, frames), axis=0)
+                    frames = video_array[current_frames:]
+
+            return frames
+
+        instructions_paths = []
+
+        for elem in paths_list:
+            tmp_array = []
+            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem))),
+                        exist_ok=True)
+            path, slicing = elem.split(';')
+            slicing = [int(x) for x in slicing[1:-1].split('-')]
+            name, ext = os.path.splitext(os.path.basename(path))
+            cap = cv2.VideoCapture(path)
+            cap.set(1, slicing[0])
+            orig_shape = (int(cap.get(3)), int(cap.get(4)))
+            frames_count = options['max_frames'] if options['video_mode'] == 'completely' else int(cap.get(7))
+            frames_number = 0
+            save_path = os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem)),
+                                     f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
+            instructions_paths.append(save_path)
+            output_movie = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)), orig_shape)
+            stop_flag = False
+            while not stop_flag:
+                ret, frame = cap.read()
+                frames_number += 1
+                output_movie.write(frame)
+                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret:
+                    tmp_array.append(frame)
+                if not ret or frames_number > frames_count:
+                    stop_flag = True
+            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count:
+                frames_array = add_frames(video_array=np.array(tmp_array),
+                                          fill_mode=options['fill_mode'],
+                                          frames_to_add=options['max_frames'] - frames_count,
+                                          total_frames=options['max_frames'])
+                for arr in frames_array:
+                    output_movie.write(arr)
+
+            output_movie.release()
+
+        if dataset_folder:
+            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_video')):
+                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_video'), dataset_folder)
+
+        instructions = {'instructions': instructions_paths,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod  # СДЕЛАНО
+    def cut_audio(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions_paths = []
+        for elem in paths_list:
+            path, slicing = elem.split(';')
+            name, ext = os.path.splitext(os.path.basename(path))
+            slicing = [float(x) for x in slicing[1:-1].split('-')]
+            os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path))),
+                        exist_ok=True)
+            audio = AudioSegment.from_file(path, start_second=slicing[0], duration=slicing[1])
+            save_path = os.path.join(tmp_folder, f'{options["put"]}_audio', os.path.basename(os.path.dirname(path)),
+                                     f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
+            audio.export(save_path)
+            instructions_paths.append(save_path)
+
+        if dataset_folder:
+            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_audio')):
+                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_audio'), dataset_folder)
+
+        instructions = {'instructions': instructions_paths,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod  # СДЕЛАНО
+    def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        for elem in paths_list:
+            os.makedirs(
+                os.path.join(tmp_folder, f'{options["put"]}_segmentation', os.path.basename(os.path.dirname(elem))),
+                exist_ok=True)
+            shutil.copyfile(elem, os.path.join(tmp_folder, f'{options["put"]}_segmentation',
+                                               os.path.basename(os.path.dirname(elem)), os.path.basename(elem)))
+
+        if dataset_folder:
+            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_segmentation')):
+                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_segmentation'), dataset_folder)
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod  # СДЕЛАНО
     def create_image(image_path: str, **options: dict) -> np.ndarray:
 
         img = load_img(image_path, target_size=(options['height'], options['width']))
         array = img_to_array(img, dtype=np.uint8)
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
-        if options['scaler'] != LayerScalerImageChoice.no_scaler and options['object_scaler']:
+        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('object_scaler'):
             orig_shape = array.shape
             array = options['object_scaler'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
 
         return array
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def create_video(video_path: str, **options: dict) -> np.ndarray:
 
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
@@ -384,38 +516,14 @@ class CreateArray(object):
 
             return resized
 
-        def add_frames(video_array, fill_mode, frames_to_add, total_frames):
-
-            frames: np.ndarray = np.array([])
-
-            if fill_mode == LayerVideoFillModeChoice.black_frames:
-                frames = np.zeros((frames_to_add, *shape, 3), dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.average_value:
-                mean = np.mean(video_array, axis=0, dtype='uint16')
-                frames = np.full((frames_to_add, *mean.shape), mean, dtype='uint8')
-            elif fill_mode == LayerVideoFillModeChoice.last_frames:
-                if total_frames > frames_to_add:
-                    frames = np.flip(video_array[-frames_to_add:], axis=0)
-                elif total_frames <= frames_to_add:
-                    for i in range(frames_to_add // total_frames):
-                        frames = np.flip(video_array[-total_frames:], axis=0)
-                        video_array = np.concatenate((video_array, frames), axis=0)
-                    if frames_to_add + total_frames != video_array.shape[0]:
-                        frames = np.flip(video_array[-(frames_to_add + total_frames - video_array.shape[0]):], axis=0)
-            video_array = np.concatenate((video_array, frames), axis=0)
-
-            return video_array
-
         array = []
         shape = (options['height'], options['width'])
         slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
         frames_count = slicing[1] - slicing[0]
         resize_layer = Resizing(*shape)
-
         cap = cv2.VideoCapture(video_path)
         width = int(cap.get(3))
         height = int(cap.get(4))
-        max_frames = int(cap.get(7))
         cap.set(1, slicing[0])
         try:
             for _ in range(frames_count):
@@ -433,11 +541,6 @@ class CreateArray(object):
             cap.release()
 
         array = np.array(array)
-        if max_frames < frames_count:
-            array = add_frames(video_array=array,
-                               fill_mode=options['fill_mode'],
-                               frames_to_add=frames_count - max_frames,
-                               total_frames=max_frames)
 
         if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['object_scaler']:
             orig_shape = array.shape
@@ -446,15 +549,13 @@ class CreateArray(object):
 
         return array
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def create_audio(audio_path: str, **options: dict) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
         sample_rate = options['sample_rate']
-        slicing = [float(x) for x in audio_path[audio_path.index('[') + 1:audio_path.index(']')].split('-')]
-        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'),
-                             offset=slicing[0], duration=slicing[1] - slicing[0], res_type='kaiser_best')
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_best')
         if sample_rate > len(y):
             zeros = np.zeros((sample_rate - len(y),))
             y = np.concatenate((y, zeros))
@@ -472,7 +573,7 @@ class CreateArray(object):
         if array.dtype == 'float64':
             array = array.astype('float32')
 
-        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options['object_scaler']:
+        if options['scaler'] != LayerScalerAudioChoice.no_scaler and options.get('object_scaler'):
             orig_shape = array.shape
             array = options['object_scaler'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
@@ -522,7 +623,7 @@ class CreateArray(object):
 
         return array
 
-    @staticmethod
+    @staticmethod  # СДЕЛАНО
     def create_segmentation(image_path: str, **options: dict) -> np.ndarray:
 
         def cluster_to_ohe(mask_image):
@@ -538,13 +639,11 @@ class CreateArray(object):
             for k, color in enumerate(options['classes_colors']):
                 rgb = Color(color).as_rgb_tuple()
                 mask = np.zeros((options['height'], options['width']))
-
                 for j, cl_rgb in enumerate(cl_cent):
                     if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
                             rgb[1] in range(cl_rgb[1] - options['mask_range'], cl_rgb[1] + options['mask_range']) and \
                             rgb[2] in range(cl_rgb[2] - options['mask_range'], cl_rgb[2] + options['mask_range']):
                         mask = cl_mask[:, :, j]
-
                 if k == 0:
                     mask_ohe = mask
                 else:
