@@ -1,15 +1,15 @@
 const toolbar = [
   {
     title: "Графики",
-    active: true,
+    active: false,
     disabled: false,
     icon: "icon-training-charts",
   },
   {
-    title: "Скаттеры",
+    title: "Графики",
     active: false,
-    disabled: true,
-    icon: "icon-training-scatters",
+    disabled: false,
+    icon: "icon-training-charts",
   },
   {
     title: "Изображения",
@@ -18,10 +18,28 @@ const toolbar = [
     icon: "icon-training-images",
   },
   {
+    title: "Прогресс",
+    active: false,
+    disabled: false,
+    icon: "icon-training-progress",
+  },
+  {
     title: "Текст",
-    active: true,
+    active: false,
     disabled: false,
     icon: "icon-training-texts",
+  },
+  {
+    title: "Скаттеры",
+    active: false,
+    disabled: false,
+    icon: "icon-training-scatters",
+  },
+  {
+    title: "Баланс",
+    active: false,
+    disabled: false,
+    icon: "icon-training-balance",
   },
 ]
 
