@@ -142,7 +142,7 @@ export default {
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
     cursor: pointer;
     border-radius: 0 4px 4px 0;
-    padding: 0px 15px 0px 20px;
+    padding: 5px 15px 5px 20px;
     height: 42px;
     margin-right: 15px;
     &--active {
