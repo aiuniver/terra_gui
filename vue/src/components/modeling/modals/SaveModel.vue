@@ -10,7 +10,7 @@
       <div class="model__config">
         <t-input
           :value="name"
-          :label="'Название модель'"
+          :label="'Название модели'"
           :type="'text'"
           :parse="'parse'"
           :name="'name'"
