@@ -36,13 +36,15 @@ export default {
   flex-direction: column;
   margin-bottom: 10px;
   &__label {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     color: #a7bed3;
     line-height: 1.5;
     font-size: 0.75rem;
     padding: 0 0 10px 0;
     cursor: default;
     user-select: none;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   &__input {
   }
