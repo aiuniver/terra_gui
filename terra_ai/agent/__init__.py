@@ -108,6 +108,14 @@ class Exchange:
         )
         shutil.move(zip_destination.name, project_path)
 
+    def _call_project_load(self, source: Path, target: Path):
+        """
+        Загрузка проекта
+        """
+        shutil.rmtree(target, ignore_errors=True)
+        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+        shutil.move(destination, target)
+
     def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
         """
         Выбор датасета
