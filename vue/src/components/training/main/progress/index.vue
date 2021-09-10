@@ -1,7 +1,7 @@
 <template>
   <div class="t-progress">
     <Timers />
-    <Sysinfo :data="data"/>
+    <Sysinfo :usage="usage"/>
   </div>
 </template>
 
@@ -16,8 +16,8 @@ export default {
     Timers,
   },
   computed: {
-    data() {
-      return this.$store.getters['trainings/getTest'].usage;
+    usage() {
+      return this.$store.getters['trainings/getTest']('usage');
     },
   },
   mounted() {
