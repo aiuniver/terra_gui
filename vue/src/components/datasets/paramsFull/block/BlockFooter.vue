@@ -10,8 +10,7 @@
           small
           :error="nameError"
           @focus="nameError = ''"
-        >
-        </t-input-new>
+        ></t-input-new>
       </t-field>
     </div>
     <div class="block-footer__item block-tags">
@@ -75,16 +74,9 @@ export default {
     flex: 0 0 150px;
     margin-right: 36px;
   }
-  // &__input-custom {
-  //   label {
-  //     padding-bottom: 8px;
-  //   }
-  //   input {
-  //     vertical-align: middle;
-  //     padding: 0 5px;
-  //     font-size: 12px;
-  //   }
-  // }
+  input {
+    width: 100%;
+  }
 }
 
 .action {

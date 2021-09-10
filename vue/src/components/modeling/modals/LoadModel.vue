@@ -38,11 +38,11 @@
             <div class="modal-arch-info">
               <div class="model-arch-info-param name">
                 <span>Name:</span>
-                <span>{{ info.alias || '' }}</span>
+                <span>{{ info.alias ? ` ${info.alias}` : '' }}</span>
               </div>
               <div class="model-arch-info-param input_shape">
                 <span>Input shape:</span>
-                <span>[{{ info.input_shape || '' }}]</span>
+                <span>{{ info.input_shape ? ` [${info.input_shape}]` : '' }}</span>
               </div>
               <!-- <div class="model-arch-info-param datatype">
                 Datatype:
@@ -136,14 +136,14 @@ export default {
 }
 
 .loaded-list {
+  padding: 3px 0;
   &__item {
     display: flex;
     align-items: center;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
     cursor: pointer;
     border-radius: 0 4px 4px 0;
-    padding: 0px 15px 0px 20px;
-    height: 42px;
+    padding: 10px 15px 10px 20px;
     margin-right: 15px;
     &--active {
       background: #2b5278;
@@ -165,7 +165,6 @@ export default {
       padding-left: 10px;
       font-size: 0.875rem;
       user-select: none;
-      overflow: hidden;
     }
     &--icon {
       flex: 0 0 20px;
@@ -218,10 +217,6 @@ export default {
   }
 
   &-info-param {
-    .name {
-      margin-bottom: 5px;
-      line-height: 1px;
-    }
     span {
       &:first-child {
         color: #65b9f4;
