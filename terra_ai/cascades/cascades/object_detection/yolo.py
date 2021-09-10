@@ -1,4 +1,4 @@
-from cascade import CascadeElement, CascadeBlock
+from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -136,9 +136,9 @@ class YoloCascade(CascadeBlock):
         )
 
         adjacency_map = OrderedDict([
-            (self.preprocess_cascad, ['ITER']),
-            (self.yolo, [0]),
-            (self.postprocess_cascad, [1, 'ITER'])
+            (self.preprocess_cascad, ['INPUT']),
+            (self.yolo, [self.preprocess_cascad]),
+            (self.postprocess_cascad, [self.yolo, 'INPUT'])
         ])
 
         super().__init__(adjacency_map)
