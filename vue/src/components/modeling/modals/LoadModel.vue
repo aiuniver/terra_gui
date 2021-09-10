@@ -136,6 +136,7 @@ export default {
 }
 
 .loaded-list {
+  padding: 3px 0;
   &__item {
     display: flex;
     align-items: center;
