@@ -146,9 +146,9 @@ export default {
     font-size: 12px;
     line-height: 24px;
     width: 100px;
-    &.small {
+    & .small {
       height: 24px;
-      width: 24px;
+      // width: 24px;
       font-size: 12px;
       line-height: 24px;
       padding: 0 3px;

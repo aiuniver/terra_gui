@@ -61,7 +61,7 @@ export default {
       this.$Modal
         .confirm({
           title: 'Внимание!',
-          content: `Вы действительно желаете удалить проект «${list.label}» ?`,
+          content: `Вы действительно желаете удалить проект «${list.label}»?`,
           width: 400,
           maskClosable: false,
           showClose: false,
@@ -79,7 +79,7 @@ export default {
       this.$Modal
         .confirm({
           title: 'Внимание!',
-          content: `Загрузка проекта удалит текущий. Вы действительно хотите загрузить проект «${this.selected.label}» ?`,
+          content: `Загрузка проекта удалит текущий. Вы действительно хотите загрузить проект «${this.selected.label}»?`,
           width: 400,
           maskClosable: false,
           showClose: false,

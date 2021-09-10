@@ -1,16 +1,17 @@
 <template>
   <form class="block-footer" @submit.prevent>
     <div class="block-footer__item">
-      <t-input
-        class="block-footer__input-custom"
-        v-model="nameProject"
-        parse="[name]"
-        small
-        :error="nameError"
-        @focus="nameError = ''"
-      >
-        Название датасета
-      </t-input>
+      <t-field :label="'Название датасета'">
+        <t-input-new
+          class="block-footer__input-custom"
+          v-model="nameProject"
+          parse="[name]"
+          small
+          :error="nameError"
+          @focus="nameError = ''"
+        >
+        </t-input-new>
+      </t-field>
     </div>
     <div class="block-footer__item block-tags">
       <TTags />

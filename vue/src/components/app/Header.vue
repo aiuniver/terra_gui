@@ -126,7 +126,7 @@ export default {
           content: 'Создание нового проекта удалит текущий. Создать новый проект?',
           width: 300,
           maskClosable: false,
-          showClose: false
+          showClose: false,
         });
         const res = await this.$store.dispatch('projects/createProject', {});
         if (res) {
@@ -139,7 +139,7 @@ export default {
     async loadProject(list) {
       console.log(list);
       try {
-        const res = await this.$store.dispatch('projects/loadProject', {});
+        const res = await this.$store.dispatch('projects/loadProject', { path: list.value });
         console.log(res);
         if (res) {
           this.message(`Проект «${list.label}» загружен`);
