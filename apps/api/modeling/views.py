@@ -9,6 +9,7 @@ from apps.plugins.project import exceptions as project_exceptions
 
 from terra_ai.agent import agent_exchange
 from terra_ai.agent import exceptions as agent_exceptions
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.extra import LayerGroupChoice
 
@@ -92,7 +93,7 @@ class LoadAPIView(BaseAPIView):
                 model = self._update_layers(model, request.project.dataset.model)
             request.project.set_model(model)
             return BaseResponseSuccess(
-                request.project.model.native(), update_project=True
+                request.project.model.native(), save_project=True
             )
         except project_exceptions.ProjectException as error:
             return BaseResponseErrorGeneral(str(error))
@@ -110,7 +111,7 @@ class InfoAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.clear_model()
-        return BaseResponseSuccess(update_project=True)
+        return BaseResponseSuccess(save_project=True)
 
 
 class UpdateAPIView(BaseAPIView):
@@ -145,7 +146,7 @@ class UpdateAPIView(BaseAPIView):
             model_data.update(data)
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
-            return BaseResponseSuccess(update_project=True)
+            return BaseResponseSuccess(save_project=True)
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -157,13 +158,34 @@ class UpdateAPIView(BaseAPIView):
 
 
 class ValidateAPIView(BaseAPIView):
+    def _reset_layers_shape(
+        self, dataset: DatasetData, model: ModelDetailsData
+    ) -> ModelDetailsData:
+        for layer in model.middles:
+            layer.shape.input = []
+            layer.shape.output = []
+        for index, layer in enumerate(model.inputs):
+            layer.shape.output = []
+            if dataset:
+                layer.shape = dataset.model.inputs[index].shape
+        for index, layer in enumerate(model.outputs):
+            layer.shape.input = []
+            if dataset:
+                layer.shape = dataset.model.outputs[index].shape
+            else:
+                layer.shape.output = []
+        return model
+
     def post(self, request, **kwargs):
         try:
             model, errors = agent_exchange(
-                "model_validate", model=request.project.model
+                "model_validate",
+                model=self._reset_layers_shape(
+                    request.project.dataset, request.project.model
+                ),
             )
             request.project.set_model(model)
-            return BaseResponseSuccess(errors, update_project=True)
+            return BaseResponseSuccess(errors, save_project=True)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -205,5 +227,5 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.get("path"))
+        agent_exchange("model_delete", path=request.data.get("path"))
         return BaseResponseSuccess()

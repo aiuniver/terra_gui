@@ -8,7 +8,7 @@ from typing import Any
 from pathlib import Path
 
 
-from ..data.projects.project import ProjectsInfoData
+from ..data.projects.project import ProjectsInfoData, ProjectsList
 
 from ..data.datasets.dataset import (
     DatasetLoadData,
@@ -85,30 +85,14 @@ class Exchange:
         """
         Получение списка проектов
         """
-        # models = ModelsGroupsList(ModelsGroups)
-        # models_path = Path(settings.ASSETS_PATH, "models")
-        # for filename in os.listdir(models_path):
-        #     try:
-        #         models.get(ModelGroupChoice.preset.name).models.append(
-        #             {"value": Path(models_path, filename)}
-        #         )
-        #     except Exception:
-        #         pass
-        # models.get(ModelGroupChoice.preset.name).models.sort(
-        #     key=lambda item: item.label
-        # )
-        # for filename in os.listdir(path):
-        #     try:
-        #         models.get(ModelGroupChoice.custom.name).models.append(
-        #             {"value": Path(path, filename)}
-        #         )
-        #     except Exception:
-        #         pass
-        # models.get(ModelGroupChoice.custom.name).models.sort(
-        #     key=lambda item: item.label
-        # )
-        # return models
-        return ProjectsInfoData()
+        projects = ProjectsList()
+        for filename in os.listdir(path):
+            try:
+                projects.append({"value": Path(path, filename)})
+            except Exception:
+                pass
+        projects.sort(key=lambda item: item.label)
+        return ProjectsInfoData(projects=projects.native())
 
     def _call_project_save(
         self, source: Path, target: Path, name: str, overwrite: bool
@@ -123,6 +107,14 @@ class Exchange:
             "project_save", "Сохранение проекта", source, delete=False
         )
         shutil.move(zip_destination.name, project_path)
+
+    def _call_project_load(self, source: Path, target: Path):
+        """
+        Загрузка проекта
+        """
+        shutil.rmtree(target, ignore_errors=True)
+        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+        shutil.move(destination, target)
 
     def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
         """

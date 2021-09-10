@@ -6,6 +6,14 @@ from ..types import confilepath
 from ... import settings
 
 
+class ProjectPathData(BaseMixinData):
+    """
+    Путь к проекту
+    """
+
+    path: confilepath(ext=settings.PROJECT_EXT)
+
+
 class ProjectListData(BaseMixinData):
     """
     Информация о проекте в списке

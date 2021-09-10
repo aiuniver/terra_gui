@@ -6,7 +6,7 @@
 
     <input
       v-model="input"
-      :class="['t-field__input', { small: small }, { 't-field__error': error }]"
+      :class="['t-field__input', { 'small': small }, { 't-field__error': error }]"
       :type="type"
       :name="name || parse"
       :value="value"
@@ -116,9 +116,10 @@ export default {
   }
   &__input.small {
     height: 24px;
-    height: 24px;
+    width: 24px;
     font-size: 12px;
     line-height: 24px;
+    padding: 0 3px;
   }
 }
 .t-inline {
@@ -145,6 +146,13 @@ export default {
     font-size: 12px;
     line-height: 24px;
     width: 100px;
+    & .small {
+      height: 24px;
+      // width: 24px;
+      font-size: 12px;
+      line-height: 24px;
+      padding: 0 3px;
+    }
   }
 }
 </style>

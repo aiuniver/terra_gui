@@ -7,6 +7,7 @@
       :lang="lang"
       @change="change"
       value-type="DD.MM.YYYY HH:mm"
+      :editable="false"
       >
       </date-picker>
       <span class="t-datepicker__label">

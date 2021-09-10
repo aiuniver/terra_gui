@@ -1,10 +1,11 @@
 import os
 import re
 import json
+import shutil
 
 from typing import Optional
 from pathlib import Path
-from pydantic import validator, ValidationError, DirectoryPath
+from pydantic import validator, ValidationError, DirectoryPath, FilePath
 from transliterate import slugify
 
 from django.conf import settings
@@ -68,9 +69,18 @@ class ProjectPathData(BaseMixinData):
     modeling: DirectoryPath
     training: DirectoryPath
 
-    @validator("base", "datasets", "modeling", "training", allow_reuse=True, pre=True)
-    def _validate_path(cls, value: DirectoryPath) -> DirectoryPath:
+    @validator("base", "datasets", "modeling", "training", pre=True)
+    def _validate_directory(cls, value: DirectoryPath) -> DirectoryPath:
         os.makedirs(value, exist_ok=True)
+        return value
+
+    @validator("config", pre=True)
+    def _validate_config(cls, value: FilePath) -> FilePath:
+        try:
+            with open(PROJECT_PATH.get("config"), "x") as _config_ref:
+                _config_ref.write("{}")
+        except FileExistsError:
+            pass
         return value
 
 
@@ -82,14 +92,14 @@ class Project(BaseMixinData):
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
 
-    def __init__(self, save=False, **data):
-        super().__init__(**data)
-        if save:
-            self.save()
-
     @property
     def name_alias(self) -> str:
         return re.sub(r"([\-]+)", "_", slugify(self.name, language_code="ru"))
+
+    def _set_data(self, name: str, dataset: DatasetData, model: ModelDetailsData):
+        self.name = name
+        self.dataset = dataset
+        self.model = model
 
     def dict(self, **kwargs):
         _data = super().dict(**kwargs)
@@ -97,9 +107,28 @@ class Project(BaseMixinData):
         return _data
 
     def reset(self):
-        self.name = UNKNOWN_NAME
-        self.dataset = None
-        self.model = ModelDetailsData(**EmptyModelDetailsData)
+        shutil.rmtree(project_path.base, ignore_errors=True)
+        ProjectPathData(**PROJECT_PATH)
+        self._set_data(
+            name=UNKNOWN_NAME,
+            dataset=None,
+            model=ModelDetailsData(**EmptyModelDetailsData),
+        )
+        self.save()
+
+    def load(self):
+        try:
+            with open(project_path.config, "r") as _config_ref:
+                _config = json.load(_config_ref)
+                _dataset = _config.get("dataset", None)
+                _model = _config.get("model", None)
+                self._set_data(
+                    name=_config.get("name", UNKNOWN_NAME),
+                    dataset=DatasetData(**_dataset) if _dataset else None,
+                    model=ModelDetailsData(**(_model or EmptyModelDetailsData)),
+                )
+        except Exception:
+            self.reset()
 
     def save(self):
         with open(project_path.config, "w") as _config_ref:
@@ -154,20 +183,13 @@ class Project(BaseMixinData):
 
 
 data_path = DataPathData(**DATA_PATH)
+project_path = ProjectPathData(**PROJECT_PATH)
 
 try:
-    project_path = ProjectPathData(**PROJECT_PATH)
-    project_save = False
-except ValidationError as error:
-    with open(PROJECT_PATH.get("config"), "x") as config_ref:
-        config_ref.write("{}")
-    project_path = ProjectPathData(**PROJECT_PATH)
-    project_save = True
+    with open(project_path.config, "r") as _config_ref:
+        _config = json.load(_config_ref)
+except Exception:
+    _config = {}
 
-if project_save:
-    project = Project(save=True, hardware=agent_exchange("hardware_accelerator"))
-else:
-    with open(project_path.config, "r") as config_ref:
-        data = json.load(config_ref)
-        data.update({"hardware": agent_exchange("hardware_accelerator")})
-        project = Project(**data)
+_config.update({"hardware": agent_exchange("hardware_accelerator")})
+project = Project(**_config)

@@ -19,35 +19,9 @@
         <i class="profile"></i>
       </div>
     </div>
-    <at-modal v-model="save" width="400" :maskClosable="false" :showClose="false">
-      <div slot="header" style="text-align: center">
-        <span>Сохранить модель</span>
-      </div>
-      <div class="inner form-inline-label">
-        <div class="field-form">
-          <label>Название проекта</label>
-          <input v-model="nameProject" type="text" :disabled="loading" />
-        </div>
-        <div class="field-form field-inline field-reverse">
-          <label @click="checkbox">Перезаписать</label>
-          <div class="checkout-switch">
-            <input v-model="checVal" type="checkbox" :disabled="loading" />
-            <span class="switcher"></span>
-          </div>
-        </div>
-      </div>
-      <template slot="footer">
-        <t-button @click="saveProject" :loading="loading">Сохранить</t-button>
-        <t-button @click="save = false" cancel :disabled="loading">Отменить</t-button>
-      </template>
-    </at-modal>
-    <at-modal v-model="load" width="400">
-      <div slot="header" style="text-align: center">
-        <span>Загрузить проект</span>
-      </div>
-
-      <div slot="footer"></div>
-    </at-modal>
+    <CreateProject v-model="dialogCreate" @message="message" @start="dialogSave = true" />
+    <LoadProject v-model="dialogLoad" @message="message" @start="dialogSave = true" />
+    <SaveProject v-model="dialogSave" @message="message" />
   </div>
 </template>
 
@@ -58,12 +32,14 @@ export default {
   name: 'THeader',
   components: {
     TProjectName,
+    LoadProject: () => import('./modal/LoadProject.vue'),
+    CreateProject: () => import('./modal/CreateProject.vue'),
+    SaveProject: () => import('./modal/SaveProject.vue'),
   },
   data: () => ({
-    checVal: false,
-    clickProject: false,
-    projectNameEdit: false,
-    name: 'kjkjkjkj',
+    dialogLoad: false,
+    dialogCreate: false,
+    dialogSave: false,
     items: [
       {
         title: 'Создать новый проект',
@@ -81,9 +57,6 @@ export default {
         icon: 'icon-project-load',
       },
     ],
-    save: false,
-    load: false,
-    loading: false,
   }),
   computed: {
     nameProject: {
@@ -96,83 +69,27 @@ export default {
     },
   },
   methods: {
-    checkbox() {
-      if (!this.loading) {
-        this.checVal = !this.checVal;
-      }
-    },
     message(message) {
-      this.$store.dispatch('messages/setMessage', { message });
+      this.$store.dispatch('messages/setMessage', message);
     },
     async saveNameProject(name) {
       if (this.nameProject.length > 2) {
-        this.message(`Изменение названия проекта на «${name}»`);
+        this.message({ message: `Изменение названия проекта на «${name}»` });
         await this.$store.dispatch('projects/saveNameProject', {
           name,
         });
-        this.message(`Название проекта изменено на «${name}»`);
-        this.save = false;
+        this.message({ message: `Название проекта изменено на «${name}»` });
       } else {
-        this.$store.dispatch('messages/setMessage', {
-          error: 'Длина не может быть < 3 сим.',
-        });
-      }
-    },
-    async createProject() {
-      try {
-        await this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Создать новый проект?',
-          width: 400,
-        });
-        const res = this.$store.dispatch('projects/createProject', {});
-        if (res) {
-          this.message(`Новый проект «${this.nameProject}» создан`);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async loadProject() {
-      try {
-        const res = this.$store.dispatch('projects/loadProject', {});
-        if (res) {
-          this.message(`Проект «${this.nameProject}» загружен`);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async saveProject() {
-      try {
-        this.loading = true;
-        this.message(`Сохранения проекта «${this.nameProject}»`);
-        const res = await this.$store.dispatch('projects/saveProject', {
-          name: this.nameProject,
-          overwrite: this.checVal,
-        });
-        // console.log(res);
-        if (res || !res.error) {
-          this.message(`Проект «${this.nameProject}» сохранен`);
-          this.save = false;
-        } else {
-          this.message(res.error);
-        }
-        this.loading = false;
-      } catch (error) {
-        console.log(error);
-        this.loading = false;
+        this.message({ error: 'Длина не может быть < 3 сим.' });
       }
     },
     click(type) {
-      console.log(type);
       if (type === 'project-new') {
-        this.createProject();
+        this.dialogCreate = true;
       } else if (type === 'project-save') {
-        this.save = true;
+        this.dialogSave = true;
       } else if (type === 'project-load') {
-        this.load = true;
-        this.loadProject();
+        this.dialogLoad = true;
       }
     },
   },
@@ -190,62 +107,18 @@ export default {
   left: 0;
   top: 0;
   z-index: 800;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
   display: flex;
-  -webkit-box-direction: normal;
-  -moz-box-direction: normal;
-  -webkit-box-orient: horizontal;
-  -moz-box-orient: horizontal;
-  -webkit-flex-direction: row;
-  -ms-flex-direction: row;
   flex-direction: row;
-  -webkit-flex-wrap: nowrap;
-  -ms-flex-wrap: nowrap;
   flex-wrap: nowrap;
-  -webkit-box-pack: center;
-  -moz-box-pack: center;
-  -webkit-justify-content: center;
-  -ms-flex-pack: center;
   justify-content: center;
-  -webkit-align-content: center;
-  -ms-flex-line-pack: center;
   align-content: center;
-  -webkit-box-align: center;
-  -moz-box-align: center;
-  -webkit-align-items: center;
-  -ms-flex-align: center;
   align-items: center;
   &__left {
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: nowrap;
-    -ms-flex-wrap: nowrap;
     flex-wrap: nowrap;
-    -webkit-box-pack: start;
-    -moz-box-pack: start;
-    -webkit-justify-content: flex-start;
-    -ms-flex-pack: start;
     justify-content: flex-start;
-    -webkit-align-content: flex-start;
-    -ms-flex-line-pack: start;
     align-content: flex-start;
-    -webkit-box-align: center;
-    -moz-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
     &--logo {
       display: block;
@@ -302,33 +175,11 @@ export default {
     white-space: nowrap;
   }
   &__right {
-    display: -webkit-box;
-    display: -moz-box;
-    display: -ms-flexbox;
-    display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: nowrap;
-    -ms-flex-wrap: nowrap;
     flex-wrap: nowrap;
-    -webkit-box-pack: end;
-    -moz-box-pack: end;
-    -webkit-justify-content: flex-end;
-    -ms-flex-pack: end;
     justify-content: flex-end;
-    -webkit-align-content: center;
-    -ms-flex-line-pack: center;
     align-content: center;
-    -webkit-box-align: center;
-    -moz-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
     align-items: center;
     &--icon {
       margin: 0 10px 0 0;
@@ -349,18 +200,8 @@ export default {
     }
   }
   & > * {
-    -webkit-box-ordinal-group: 1;
-    -moz-box-ordinal-group: 1;
-    -webkit-order: 0;
-    -ms-flex-order: 0;
     order: 0;
-    -webkit-box-flex: 1;
-    -moz-box-flex: 1;
-    -webkit-flex: 1 1 auto;
-    -ms-flex: 1 1 auto;
     flex: 1 1 auto;
-    -webkit-align-self: auto;
-    -ms-flex-item-align: auto;
     align-self: auto;
   }
 }

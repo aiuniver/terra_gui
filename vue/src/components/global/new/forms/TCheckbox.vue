@@ -15,7 +15,7 @@
 
 <script>
 export default {
-  name: 't-checkbox',
+  name: 't-checkbox-new',
   props: {
     value: Boolean,
     name: String,
@@ -26,21 +26,18 @@ export default {
     checked: false,
   }),
   methods: {
-    change(e) {
-      console.log(e)
-      // const value = e.target.checked;
-      // this.$emit('change', { name: this.name, value });
-      // this.$emit('parse', { parse: this.parse, value });
-      // if (this.error) {
-        // this.$emit('cleanError', true);
-      // }
+    label() {
+      this.checked = !this.checked
     },
-  },
-  watch: {
-    checked(e) {
-      console.log(e)
-    }
-
+    change(e) {
+      console.log(e);
+      const value = e.target.checked;
+      this.$emit('change', { name: this.name, value });
+      this.$emit('parse', { parse: this.parse, value });
+      if (this.error) {
+      this.$emit('cleanError', true);
+      }
+    },
   },
   created() {
     this.checked = this.value;

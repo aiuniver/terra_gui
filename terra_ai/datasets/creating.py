@@ -1,6 +1,6 @@
 from terra_ai.datasets.preprocessing import CreatePreprocessing
 from terra_ai.data.datasets.extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice,\
-    LayerAudioModeChoice, LayerVideoModeChoice, LayerPrepareMethodChoice, LayerScalerImageChoice
+    LayerPrepareMethodChoice, LayerScalerImageChoice
 from terra_ai.utils import decamelize
 from terra_ai.datasets.data import DataType, InstructionsData, DatasetInstructionsData
 from terra_ai.data.datasets.creation import CreationData, CreationInputsList, CreationOutputsList
@@ -13,16 +13,13 @@ import os
 import random
 import numpy as np
 import pandas as pd
-import shutil
 import json
 import joblib
-import cv2
+import tempfile
 from pathlib import Path
 from typing import Union
-from pydub import AudioSegment
 from datetime import datetime
 from pytz import timezone
-from time import time
 
 
 class CreateDataset(object):
@@ -30,16 +27,20 @@ class CreateDataset(object):
     def __init__(self, cr_data: CreationData):
 
         creation_data = self.preprocess_creation_data(cr_data)
-        self.file_folder: str = str(creation_data.source_path)
+
+        os.makedirs(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
+        self.paths = DatasetPathsData(
+            basepath=Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
+        self.temp_directory = tempfile.mkdtemp()
+
+        self.source_directory: str = str(creation_data.source_path)
         self.dataframe: dict = {}
         self.temporary: dict = {}
         self.tags: dict = {}
         self.preprocessing = CreatePreprocessing()
         self.use_generator: bool = False
-
-        os.makedirs(Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'), exist_ok=True)
-        self.paths = DatasetPathsData(
-            basepath=Path(creation_data.datasets_path, f'{creation_data.alias}.{DATASET_EXT}'))
+        self.source_path = creation_data.source_path  # исправить
+        self.y_cls: list = []
 
         self.instructions: DatasetInstructionsData = self.create_instructions(creation_data)
         self.create_preprocessing(self.instructions)
@@ -54,7 +55,7 @@ class CreateDataset(object):
             self.write_arrays(x_array, y_array)
 
         self.write_preprocesses_to_files()
-        self.write_instructions_to_files()
+        self.write_instructions_to_files(creation_data=creation_data)
         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
 
         # self.minvalue_y: int = 0
@@ -66,7 +67,7 @@ class CreateDataset(object):
         pass
 
     @staticmethod
-    def preprocess_creation_data(creation_data: CreationData) -> CreationData:
+    def preprocess_creation_data(creation_data):
 
         for out in creation_data.outputs:
             if out.type == LayerOutputTypeChoice.Classification:
@@ -101,12 +102,7 @@ class CreateDataset(object):
         outputs = self.create_put_instructions(data=creation_data.outputs)
         for out in creation_data.outputs:
             if out.type == LayerOutputTypeChoice.Classification and not out.parameters.cols_names:
-                if isinstance(inputs[1].instructions, list):
-                    outputs[out.id].instructions = [os.path.basename(os.path.dirname(elem)) for elem in
-                                                    inputs[1].instructions]
-                elif isinstance(inputs[1].instructions, dict):
-                    outputs[out.id].instructions = [os.path.basename(os.path.dirname(elem)) for elem in
-                                                    inputs[1].instructions.keys()]
+                outputs[out.id].instructions = self.y_cls
         instructions = DatasetInstructionsData(inputs=inputs, outputs=outputs)
 
         return instructions
@@ -119,31 +115,39 @@ class CreateDataset(object):
             paths_list: list = []
             for paths in elem.parameters.sources_paths:
                 if paths.is_dir():
-                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.file_folder, paths))):
+                    for directory, folder, file_name in sorted(os.walk(os.path.join(self.source_directory, paths))):
                         if file_name:
-                            file_folder = directory.replace(self.file_folder, '')[1:]
+                            file_folder = directory.replace(self.source_directory, '')[1:]
                             for name in sorted(file_name):
                                 paths_list.append(os.path.join(file_folder, name))
                 elif paths.is_file() and paths.suffix == '.csv' and elem.type not in [LayerInputTypeChoice.Dataframe,
                                                                                       LayerOutputTypeChoice.Timeseries]:
-                    data = pd.read_csv(os.path.join(self.file_folder, paths), usecols=elem.parameters.cols_names)
+                    data = pd.read_csv(os.path.join(self.source_directory, paths), usecols=elem.parameters.cols_names)
                     paths_list = data[elem.parameters.cols_names[0]].to_list()
+            temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
+            instr = getattr(CreateArray(), f"instructions_{decamelize(elem.type)}")(temp_paths_list, **elem.native())
 
-            if elem.type not in [LayerInputTypeChoice.Dataframe, LayerOutputTypeChoice.Classification,
-                                 LayerOutputTypeChoice.Regression, LayerOutputTypeChoice.Timeseries]:
-                cur_time = time()
-                self.write_sources_to_files(tmp_sources=self.file_folder, dataset_sources=self.paths.sources,
-                                            paths_list=paths_list, put_data=elem)
-                print(time() - cur_time)
-                paths_list = [os.path.join(self.paths.sources, f'{elem.id}_{decamelize(elem.type)}', path)
-                              for path in paths_list]
+            if not elem.type == LayerOutputTypeChoice.Classification:
+                y_classes = sorted(list(instr['instructions'].keys())) if\
+                    isinstance(instr['instructions'], dict) else instr['instructions']
+                self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
+
             instructions_data = InstructionsData(
-                **getattr(CreateArray(), f"instructions_{decamelize(elem.type)}")(paths_list, elem))
-
+                **getattr(CreateArray(), f"cut_{decamelize(elem.type)}")(instr['instructions'], self.temp_directory,
+                                                                         os.path.join(self.paths.sources,
+                                                                                      f"{elem.id}_{decamelize(elem.type)}"),
+                                                                         **instr['parameters']))
             if elem.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
-                                 LayerOutputTypeChoice.TextSegmentation]:
-                instructions_data.instructions = [path.replace(str(self.paths.basepath), '')[1:] for path in
-                                                  instructions_data.instructions]
+                                 LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
+                if elem.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
+                                 LayerOutputTypeChoice.Segmentation]:
+                    new_paths = [os.path.join('sources', f'{elem.id}_{decamelize(elem.type)}',
+                                              path.replace(self.source_directory + os.path.sep, '')) for path in
+                                 instructions_data.instructions]
+                else:
+                    new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for path
+                                 in instructions_data.instructions]
+                instructions_data.instructions = new_paths
 
             instructions.update([(elem.id, instructions_data)])
 
@@ -177,8 +181,6 @@ class CreateDataset(object):
                 peg.append(len(classes))
             else:
                 peg.append(len(classes))
-
-        print(peg)
 
         split_sequence = {"train": [], "val": [], "test": []}
         for i in range(len(peg) - 1):
@@ -214,10 +216,8 @@ class CreateDataset(object):
             #         **self.instructions.inputs.get(key).parameters,
             #     )
             # else:
-            classes_names = [os.path.basename(x) for x in creation_data.inputs.get(
-                key).parameters.sources_paths]
+            classes_names = [os.path.basename(x) for x in creation_data.inputs.get(key).parameters.sources_paths]
             num_classes = len(classes_names)
-            print(self.preprocessing.preprocessing.get(key))
             if creation_data.inputs.get(key).type == LayerInputTypeChoice.Text:
                 array = getattr(CreateArray(), f'create_{self.tags[key]}')(
                     self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
@@ -258,7 +258,8 @@ class CreateDataset(object):
                 array = getattr(CreateArray(), f'create_{self.tags[key]}')(
                     os.path.join(self.paths.basepath, self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}']),
                     **self.instructions.outputs.get(key).parameters, **self.preprocessing.preprocessing.get(key))
-            cl_names = self.instructions.outputs.get(key).parameters['classes_names']
+            cl_names = self.instructions.outputs.get(key).parameters[
+                'classes_names']  # creation_data.outputs.get(key).parameters.__dict__.get('classes_names')
             classes_names = cl_names if cl_names else [os.path.basename(x) for x in creation_data.outputs.get(
                 key).parameters.sources_paths]
             num_classes = len(classes_names)
@@ -294,6 +295,7 @@ class CreateDataset(object):
     def create_dataset_arrays(self, put_data: dict) -> dict:
 
         out_array = {'train': {}, 'val': {}, 'test': {}}
+        # num_arrays = 1
         for split in list(out_array.keys()):
             for key in put_data.keys():
                 current_arrays: list = []
@@ -318,7 +320,6 @@ class CreateDataset(object):
                         array = getattr(CreateArray(), f'create_{self.tags[key]}')(
                             os.path.join(self.paths.basepath, self.dataframe[split].loc[i, f'{key}_{self.tags[key]}']),
                             **put_data.get(key).parameters, **self.preprocessing.preprocessing.get(key))
-                    # print(np.array(array).shape, self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'])
                     # if self.tags[key] == 'object_detection':
                     #     for j in range(num_arrays):
                     #         globals()[f'current_arrays_{j + 1}'].append(array[j])
@@ -329,130 +330,10 @@ class CreateDataset(object):
                 #     for j in range(num_arrays):
                 #         out_array[split][key + j] = np.array(globals()[f'current_arrays_{j + 1}'])
                 # else:
+                print(np.array(current_arrays).shape)
                 out_array[split][key] = np.array(current_arrays)
 
         return out_array
-
-    def write_sources_to_files(self, tmp_sources, dataset_sources, paths_list, put_data):
-        os.makedirs(dataset_sources, exist_ok=True)
-        for elem in paths_list:
-            if put_data.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
-                                 LayerOutputTypeChoice.Segmentation]:
-                os.makedirs(
-                    os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)),
-                    exist_ok=True)
-                shutil.copyfile(os.path.join(tmp_sources, elem),
-                                os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', elem))
-            elif put_data.type == LayerInputTypeChoice.Video:
-                cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
-                cur_step = 0
-                frame_count = int(cap.get(7))
-                name, ext = os.path.splitext(os.path.basename(elem))
-                if put_data.parameters.video_mode == LayerVideoModeChoice.length_and_step:
-                    if frame_count < put_data.parameters.length:
-                        os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                                 os.path.dirname(elem)), exist_ok=True)
-                        output_movie = cv2.VideoWriter(
-                            os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                         os.path.dirname(elem),
-                                         f'{name}_[{cur_step}-{put_data.parameters.length + cur_step}]{ext}'),
-                            cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)),
-                            (int(cap.get(3)), int(cap.get(4))))
-                        cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
-                        cap.set(1, cur_step)
-                        frame_number = 0
-                        stop_flag = False
-                        while not stop_flag:
-                            ret, frame = cap.read()
-                            frame_number += 1
-                            if not ret or frame_number > frame_count:
-                                stop_flag = True
-                            output_movie.write(frame)
-
-                        output_movie.release()
-                    else:
-                        for i in range(((frame_count - put_data.parameters.length) // put_data.parameters.step) + 1):
-                            os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                                     os.path.dirname(elem)), exist_ok=True)
-                            output_movie = cv2.VideoWriter(
-                                os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                             os.path.dirname(elem),
-                                             f'{name}_[{cur_step}-{put_data.parameters.length + cur_step}]{ext}'),
-                                cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)),
-                                (int(cap.get(3)), int(cap.get(4))))
-                            cap = cv2.VideoCapture(os.path.join(tmp_sources, elem))
-                            cap.set(1, cur_step)
-                            frame_number = 0
-                            stop_flag = False
-                            while not stop_flag:
-                                ret, frame = cap.read()
-                                frame_number += 1
-                                if not ret or frame_number > put_data.parameters.length:
-                                    stop_flag = True
-                                output_movie.write(frame)
-
-                            output_movie.release()
-                            cur_step += put_data.parameters.step
-                elif put_data.parameters.video_mode == LayerVideoModeChoice.completely:
-                    frame_count = put_data.parameters.max_frames if frame_count > put_data.parameters.max_frames else\
-                        frame_count
-                    frame_number = 0
-                    os.makedirs(
-                        os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)),
-                        exist_ok=True)
-                    output_movie = cv2.VideoWriter(
-                        os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
-                                     f'{name}_[{cur_step}-{put_data.parameters.max_frames}]{ext}'),
-                        cv2.VideoWriter_fourcc(*'XVID'), int(cap.get(5)),
-                        (int(cap.get(3)), int(cap.get(4))))
-                    stop_flag = False
-                    while not stop_flag:
-                        ret, frame = cap.read()
-                        frame_number += 1
-                        if not ret or frame_number > frame_count:
-                            stop_flag = True
-                        output_movie.write(frame)
-                    output_movie.release()
-            elif put_data.type in [LayerInputTypeChoice.Audio, LayerOutputTypeChoice.Audio]:
-                name, ext = os.path.splitext(os.path.basename(elem))
-                if put_data.parameters.audio_mode == LayerAudioModeChoice.length_and_step:
-                    cur_step = 0.0
-                    stop_flag = False
-                    audio = AudioSegment.from_file(os.path.join(tmp_sources, elem))
-                    duration = audio.duration_seconds
-                    while not stop_flag:
-                        audio = AudioSegment.from_file(os.path.join(tmp_sources, elem), start_second=cur_step,
-                                                       duration=put_data.parameters.length)
-                        os.makedirs(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                                 os.path.dirname(elem)), exist_ok=True)
-                        audio.export(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                                  os.path.dirname(elem),
-                                                  f'{name}_[{cur_step}-{cur_step + put_data.parameters.length}]{ext}'),
-                                     format=ext[1:])
-                        cur_step += put_data.parameters.step
-                        cur_step = round(cur_step, 1)
-                        if cur_step + put_data.parameters.length > duration:
-                            stop_flag = True
-                elif put_data.parameters.audio_mode == LayerAudioModeChoice.completely:
-                    audio = AudioSegment.from_file(os.path.join(tmp_sources, elem), start_second=0.0,
-                                                   duration=put_data.parameters.max_seconds)
-                    os.makedirs(
-                        os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)),
-                        exist_ok=True)
-                    audio.export(
-                        os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem),
-                                     f'{name}_[0.0-{put_data.parameters.max_seconds}]{ext}'), format=ext[1:])
-            elif put_data.type in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
-                                   LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.ObjectDetection]:
-                name = os.path.basename(elem)
-                os.makedirs(
-                    os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}', os.path.dirname(elem)),
-                    exist_ok=True)
-                shutil.copy(os.path.join(tmp_sources, elem),
-                            os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}',
-                                         os.path.dirname(elem), name))
-        if not os.path.isdir(os.path.join(dataset_sources, f'{put_data.id}_{decamelize(put_data.type)}')):
-            shutil.move(os.path.join(tmp_sources, f'{put_data.id}_{decamelize(put_data.type)}'), dataset_sources)
 
     def write_arrays(self, array_x, array_y):
 
@@ -462,15 +343,20 @@ class CreateDataset(object):
                     os.makedirs(os.path.join(self.paths.arrays, sample), exist_ok=True)
                     joblib.dump(array[sample][inp], os.path.join(self.paths.arrays, sample, f'{inp}.gz'))
 
-    def write_instructions_to_files(self):
+    def write_instructions_to_files(self, creation_data: CreationData):
 
-        os.makedirs(os.path.join(self.paths.instructions, 'parameters'), exist_ok=True)
-        for put in self.instructions.__dict__.keys():
-            for idx in self.instructions.__dict__[put].keys():
-                with open(os.path.join(self.paths.instructions, 'parameters', f'{idx}_{put}.json'), 'w') as cfg:
-                    json.dump(self.instructions.__dict__[put][idx].parameters, cfg)
+        parameters_path = os.path.join(self.paths.instructions, 'parameters')
+        tables_path = os.path.join(self.paths.instructions, 'tables')
 
-        os.makedirs(os.path.join(self.paths.instructions, 'tables'), exist_ok=True)
+        os.makedirs(parameters_path, exist_ok=True)
+        for inp in creation_data.inputs:
+            with open(os.path.join(parameters_path, f'{inp.id}_inputs.json'), 'w') as cfg:
+                json.dump(inp.native(), cfg)
+        for out in creation_data.outputs:
+            with open(os.path.join(parameters_path, f'{out.id}_outputs.json'), 'w') as cfg:
+                json.dump(out.native(), cfg)
+
+        os.makedirs(tables_path, exist_ok=True)
         for key in self.dataframe.keys():
             self.dataframe[key].to_csv(os.path.join(self.paths.instructions, 'tables', f'{key}.csv'))
 
@@ -506,7 +392,7 @@ class CreateDataset(object):
                 'use_generator': creation_data.use_generator,
                 'tags': tags_list,
                 'user_tags': creation_data.tags,
-                'language': '',
+                'language': '',  # зачем?...
                 'date': datetime.now().astimezone(timezone("Europe/Moscow")).isoformat(),
                 'size': {'value': size_bytes}
                 }

@@ -30,10 +30,10 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import CopyModal from "../global/modals/CopyModal";
+import CopyModal from '../global/modals/CopyModal';
 export default {
   components: {
-    CopyModal
+    CopyModal,
   },
   data: () => ({
     dialogError: false,
@@ -100,10 +100,10 @@ export default {
   justify-content: flex-start;
   align-content: stretch;
   align-items: stretch;
-  &__copy-buffer{
+  &__copy-buffer {
     display: flex;
     align-items: center;
-    p{
+    p {
       margin-left: 5px;
     }
   }
