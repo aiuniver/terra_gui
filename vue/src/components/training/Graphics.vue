@@ -5,9 +5,11 @@
         <at-collapse @on-change="change">
           <at-collapse-item class="mt-3" title="Лоссы" center>
             <LoadSpiner v-show="loading" />
-            <Chars v-if="show" @isLoad="loading = false" />
+            <LossGraphs v-if="show" @isLoad="loading = false" />
           </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
+          <at-collapse-item class="mt-3" title="Метрики" center>
+            <MetricGraphs @isLoad="loading = false" />
+          </at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
             <Images />
           </at-collapse-item>
@@ -30,13 +32,13 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Images from './main/images/index.vue'
-import Texts from './main/texts/index.vue'
-import Progress from './main/progress/'
-import LoadSpiner from '../forms/LoadSpiner.vue'
-import Stats from './main/stats'
-import Balance from './main/balance'
+import { mapGetters } from 'vuex';
+import Images from './main/images/index.vue';
+import Texts from './main/texts/index.vue';
+import Progress from './main/progress/';
+import LoadSpiner from '../forms/LoadSpiner.vue';
+import Stats from './main/stats';
+import Balance from './main/balance';
 
 export default {
   name: 'Graphics',
@@ -47,11 +49,12 @@ export default {
     LoadSpiner,
     Stats,
     Balance,
-    Chars: () => import('./main/chars/index.vue'),
+    LossGraphs: () => import('./main/chars/LossGraphs.vue'),
+    MetricGraphs: () => import('./main/chars/MetricGraphs.vue'),
   },
   data: () => ({
     collabse: [],
-    loading: true
+    loading: true,
   }),
   computed: {
     ...mapGetters({
@@ -61,16 +64,16 @@ export default {
       texts: 'trainings/getToolbarTexts',
       // height: "settings/autoHeight",
     }),
-    show () {
-      return this.collabse.includes('0')
-    }
+    show() {
+      return this.collabse.includes('0');
+    },
   },
   methods: {
     change(e) {
-      this.collabse = e
-      console.log(e)
-    }
-  }
+      this.collabse = e;
+      console.log(e);
+    },
+  },
 };
 </script>
 
