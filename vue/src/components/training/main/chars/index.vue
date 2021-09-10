@@ -2,7 +2,9 @@
   <div class="charts">
     <div class="charts__title">Графики</div>
     <div class="charts__content">
-      <TChar v-for="(char, i) of chars" :key="'char_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char_' + i" :char="char" />
     </div>
   </div>
 </template>
@@ -18,7 +20,10 @@ export default {
   computed: {
     ...mapGetters({
       chars : 'trainings/getChars'    
-    })
+    }),
+    lossGraphs() {
+      return this.$store.getters['trainings/getTrainData']('loss_graphs') || []
+    }
   },
   mounted() {
     this.$emit('isLoad', true)

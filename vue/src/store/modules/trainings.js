@@ -52,5 +52,8 @@ export default {
     getTest: ({ test }) => (key) => {
       return test?.[key] || {};
     },
+    getTrainData: ({ test }) => (key) => {
+      return test?.train_data?.[key] || {};
+    },
   },
 };
