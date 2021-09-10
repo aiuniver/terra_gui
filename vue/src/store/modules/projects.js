@@ -50,7 +50,7 @@ export default {
     },
     async loadProject({ dispatch }, data) {
       const res = await dispatch("axios", { url: "/project/load/", data }, { root: true });
-      // document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
+      document.location.href = "/"; // "Миша, все хня, давай по новой, снова" 
       return res
     },
     async removeProject({ dispatch }, data) {

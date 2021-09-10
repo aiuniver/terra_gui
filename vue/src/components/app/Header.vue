@@ -60,7 +60,6 @@ export default {
     dialog: false,
     clickProject: false,
     projectNameEdit: false,
-    name: 'kjkjkjkj',
     items: [
       {
         title: 'Создать новый проект',
@@ -129,7 +128,7 @@ export default {
           showClose: false,
         });
         const res = await this.$store.dispatch('projects/createProject', {});
-        if (res) {
+        if (res && !res.error) {
           this.message(`Новый проект «${this.nameProject}» создан`);
         }
       } catch (error) {
@@ -139,9 +138,9 @@ export default {
     async loadProject(list) {
       console.log(list);
       try {
-        const res = await this.$store.dispatch('projects/loadProject', { path: list.value });
+        const res = await this.$store.dispatch('projects/loadProject', { value: list.value });
         console.log(res);
-        if (res) {
+        if (res && !res.error) {
           this.message(`Проект «${list.label}» загружен`);
           this.dialog = false;
         }
@@ -153,7 +152,7 @@ export default {
       console.log(list);
       try {
         const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
-        if (res) {
+        if (res && !res.error) {
           this.message(`Проект «${list.label}» удален`);
           await this.infoProject();
         }
@@ -169,9 +168,7 @@ export default {
             data: { projects },
           } = res;
           this.listProject = projects;
-          console.log(this.listProject);
           this.dialog = true;
-          // this.message(`Проект «${this.nameProject}» загружен`);
         }
       } catch (error) {
         console.log(error);
@@ -185,7 +182,6 @@ export default {
           name: this.nameProject,
           overwrite: this.checVal,
         });
-        // console.log(res);
         if (res && !res.error) {
           this.message(`Проект «${this.nameProject}» сохранен`);
           this.save = false;
@@ -200,13 +196,11 @@ export default {
       }
     },
     click(type) {
-      console.log(type);
       if (type === 'project-new') {
         this.createProject();
       } else if (type === 'project-save') {
         this.save = true;
       } else if (type === 'project-load') {
-        // this.load = true;
         this.infoProject();
       }
     },
