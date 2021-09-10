@@ -52,9 +52,11 @@ export default {
     align-items: center;
     color: #A7BED3;
     width: fit-content;
+    gap: 30px;
     &__gradient {
         display: flex;
         gap: 5px;
+        margin-bottom: 10px;
         .colors {
             background: linear-gradient(180deg, #003B7F 0%, #54A3FF 100%);
             border-radius: 4px;
@@ -81,8 +83,9 @@ export default {
             display: flex;
             flex-wrap: wrap;
             max-width: 500px;
-            margin: 10px auto;
+            margin: 10px auto 25px;
             justify-content: flex-end;
+            position: relative;
             .legend-left, .legend-bottom {
                 font-size: 9px;
                 line-height: 11px;
@@ -101,6 +104,9 @@ export default {
             .legend-bottom {
                 display: flex;
                 justify-content: flex-end;
+                position: absolute;
+                right: 0;
+                top: 100%;
                 * {
                     flex: 0 0 40px;
                     word-wrap: break-word;
@@ -134,7 +140,7 @@ export default {
     &__label-left {
         position: absolute;
         top: 50%;
-        left: 0;
+        left: -25px;
         transform: rotate(-90deg) translateX(50%);
     }
 }
