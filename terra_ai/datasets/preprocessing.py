@@ -1,27 +1,31 @@
+from terra_ai.data.datasets.dataset import DatasetPathsData
+from terra_ai.data.datasets.extra import LayerScalerImageChoice
+
 import os
 import joblib
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from gensim.models.word2vec import Word2Vec
-from terra_ai.data.datasets.extra import LayerScalerImageChoice
 from tensorflow.keras.preprocessing.text import Tokenizer
 
 
 class CreatePreprocessing(object):
 
-    def __init__(self):
+    def __init__(self, dataset_path=None):
 
+        if dataset_path:
+            self.paths = DatasetPathsData(basepath=dataset_path)
         self.preprocessing = {}
 
-    def load_preprocesses(self, path_dataset, keys):
+    def load_preprocesses(self, keys):
 
         for key in keys:
             preprocess = {}
             for param in ['augmentation', 'scaler', 'tokenizer', 'word2vec']:
-                if os.path.isfile(os.path.join(path_dataset, param, f'{key}.gz')):
-                    preprocess[param] = joblib.load(os.path.join(path_dataset, param, f'{key}.gz'))
+                if os.path.isfile(os.path.join(self.paths.__dict__[param], f'{key}.gz')):
+                    preprocess[f'object_{param}'] = joblib.load(os.path.join(self.paths.__dict__[param], f'{key}.gz'))
                 else:
-                    preprocess[param] = None
+                    preprocess[f'object_{param}'] = None
             self.preprocessing[key] = preprocess
         pass
 
@@ -47,7 +51,7 @@ class CreatePreprocessing(object):
             put_id: int
                 Номер входа или выхода.
             text_list: list
-                Список слов для обучения Word2Vec.
+                Список слов для обучения токенайзера.
             **options: Параметры токенайзера:
                        num_words: int
                            Количество слов для токенайзера.
@@ -67,7 +71,6 @@ class CreatePreprocessing(object):
             Объект Токенайзер.
 
         """
-
         tokenizer = Tokenizer(**{'num_words': options['max_words_count'],
                                  'filters': options['filters'],
                                  'lower': False,

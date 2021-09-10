@@ -27,9 +27,9 @@ class PrepareDataset(object):
         self.instructions: dict = {'inputs': {}, 'outputs': {}}
         self.dts_prepared: bool = False
         self.dataframe: dict = {}
-        self.preprocessing = CreatePreprocessing()
         if self.data.group != 'keras':
             self.paths = DatasetPathsData(basepath=datasets_path)
+            self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
 
         self.X: dict = {'train': {}, 'val': {}, 'test': {}}
         self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
@@ -178,8 +178,7 @@ class PrepareDataset(object):
                 self.dataframe[put] = pd.read_csv(os.path.join(self.paths.instructions, 'tables', f'{put}.csv'),
                                                   index_col=0)
 
-            self.preprocessing.load_preprocesses(self.paths.basepath,
-                                                 list(self.data.inputs.keys()) + list(self.data.outputs.keys()))
+            self.preprocessing.load_preprocesses(list(self.data.inputs.keys()) + list(self.data.outputs.keys()))
 
             if self.data.use_generator:
                 for instr in os.listdir(os.path.join(self.paths.instructions, 'parameters')):

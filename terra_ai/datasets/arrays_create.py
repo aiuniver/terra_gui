@@ -1,5 +1,4 @@
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
-from terra_ai.data.datasets.creation import CreationInputData, CreationOutputData
 from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice,\
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
@@ -15,7 +14,6 @@ from sklearn.cluster import KMeans
 from pydub import AudioSegment
 from librosa import load as librosa_load
 from pydantic.color import Color
-from typing import Union
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -24,10 +22,8 @@ from tensorflow.keras import utils
 
 class CreateArray(object):
 
-    @staticmethod  # СДЕЛАНО
-    def instructions_image(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
-
-        options = put_data.native()
+    @staticmethod
+    def instructions_image(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
                         'parameters': {'height': options['parameters']['height'],
@@ -41,52 +37,49 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
-    def instructions_video(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    @staticmethod
+    def instructions_video(paths_list: list, **options: dict) -> dict:
 
-        put_data = put_data.native()
         video: list = []
         cur_step = 0
 
         for elem in paths_list:
-            if put_data['parameters']['video_mode'] == LayerVideoModeChoice.completely:
-                video.append(';'.join([elem, f'[{cur_step}-{put_data["parameters"]["max_frames"]}]']))
-            elif put_data['parameters']['video_mode'] == LayerVideoModeChoice.length_and_step:
+            if options['parameters']['video_mode'] == LayerVideoModeChoice.completely:
+                video.append(';'.join([elem, f'[{cur_step}-{options["parameters"]["max_frames"]}]']))
+            elif options['parameters']['video_mode'] == LayerVideoModeChoice.length_and_step:
                 cur_step = 0
                 stop_flag = False
                 cap = cv2.VideoCapture(elem)
                 frame_count = int(cap.get(7))
                 while not stop_flag:
-                    video.append(';'.join([elem, f'[{cur_step}-{cur_step + put_data["parameters"]["length"]}]']))
-                    cur_step += put_data['parameters']['step']
-                    if cur_step + put_data['parameters']['length'] > frame_count:
+                    video.append(';'.join([elem, f'[{cur_step}-{cur_step + options["parameters"]["length"]}]']))
+                    cur_step += options['parameters']['step']
+                    if cur_step + options['parameters']['length'] > frame_count:
                         stop_flag = True
-                        if put_data['parameters']['length'] < frame_count:
+                        if options['parameters']['length'] < frame_count:
                             video.append(
-                                ';'.join([elem, f'[{frame_count - put_data["parameters"]["length"]}-{frame_count}]']))
+                                ';'.join([elem, f'[{frame_count - options["parameters"]["length"]}-{frame_count}]']))
 
         instructions = {'instructions': video,
-                        'parameters': {'height': put_data['parameters']['height'],
-                                       'width': put_data['parameters']['width'],
-                                       'put': put_data['id'],
-                                       'min_scaler': put_data['parameters']['min_scaler'],
-                                       'max_scaler': put_data['parameters']['max_scaler'],
-                                       'scaler': put_data['parameters']['scaler'],
-                                       'frame_mode': put_data['parameters']['frame_mode'],
-                                       'fill_mode': put_data['parameters']['fill_mode'],
-                                       'video_mode': put_data['parameters']['video_mode'],
-                                       'max_frames': put_data['parameters']['max_frames']}}
+                        'parameters': {'height': options['parameters']['height'],
+                                       'width': options['parameters']['width'],
+                                       'put': options['id'],
+                                       'min_scaler': options['parameters']['min_scaler'],
+                                       'max_scaler': options['parameters']['max_scaler'],
+                                       'scaler': options['parameters']['scaler'],
+                                       'frame_mode': options['parameters']['frame_mode'],
+                                       'fill_mode': options['parameters']['fill_mode'],
+                                       'video_mode': options['parameters']['video_mode'],
+                                       'max_frames': options['parameters']['max_frames']}}
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
-    def instructions_audio(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    @staticmethod
+    def instructions_audio(paths_list: list, **options: dict) -> dict:
 
-        options = put_data.native()
         audio: list = []
 
         for elem in paths_list:
-            name, ext = os.path.splitext(os.path.basename(elem))
             if options['parameters']['audio_mode'] == LayerAudioModeChoice.completely:
                 audio.append(';'.join([elem, f'[0.0-{options["parameters"]["max_seconds"]}]']))
             elif options['parameters']['audio_mode'] == LayerAudioModeChoice.length_and_step:
@@ -111,7 +104,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_text(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    def instructions_text(paths_list: list, **options: dict) -> dict:
 
         def read_text(file_path, lower, del_symbols, split, open_symbol=None, close_symbol=None) -> str:
 
@@ -133,23 +126,27 @@ class CreateArray(object):
 
             return ' '.join(words_list)
 
-        filters = put_data.parameters.filters
-        instructions: dict = {}
         txt_list: dict = {}
-        text: list = []
+        text: dict = {}
         lower: bool = True
         open_tags, close_tags = None, None
         open_symbol, close_symbol = None, None
-        if put_data.parameters.open_tags:
-            open_tags, close_tags = put_data.parameters.open_tags.split(' '), put_data.parameters.close_tags.split(' ')
+        if options['parameters'].get('open_tags'):
+            open_tags, close_tags = options['parameters']['open_tags'].split(' '), options['parameters'][
+                'close_tags'].split(' ')
         if open_tags:
             open_symbol = open_tags[0][0]
             close_symbol = close_tags[0][-1]
+        length = options['parameters']['length'] if options['parameters'][
+                                                        'text_mode'] == LayerTextModeChoice.length_and_step else \
+        options['parameters']['max_words']
 
-        for idx, path in enumerate(paths_list):
-            txt_list[path] = read_text(file_path=path, lower=lower, del_symbols=put_data.parameters.filters, split=' ',
-                                       open_symbol=open_symbol, close_symbol=close_symbol)
-
+        for path in paths_list:
+            text_file = read_text(file_path=path, lower=lower, del_symbols=options['parameters']['filters'], split=' ',
+                                  open_symbol=open_symbol, close_symbol=close_symbol)
+            if text_file:
+                txt_list[path] = text_file
+        ### ДОБАВИТЬ ОТКРЫТИЕ ИЗ ТАБЛИЦЫ
         if open_symbol:
             for key in txt_list.keys():
                 words = []
@@ -158,81 +155,77 @@ class CreateArray(object):
                         words.append(word)
                 txt_list[key] = ' '.join(words)
 
-        if put_data.parameters.pymorphy:
+        if options['parameters']['pymorphy']:
             pymorphy = pymorphy2.MorphAnalyzer()
             for key, value in txt_list.items():
                 txt_list[key] = apply_pymorphy(value, pymorphy)
 
-        for idx, (key, value) in enumerate(sorted(txt_list.items())):
-            if put_data.parameters.text_mode == LayerTextModeChoice.completely:
-                text.append(' '.join(value.split(' ')[:put_data.parameters.max_words]))
-            elif put_data.parameters.text_mode == LayerTextModeChoice.length_and_step:
+        for key, value in sorted(txt_list.items()):
+            if options['parameters']['text_mode'] == LayerTextModeChoice.completely:
+                text[';'.join([key, f'[0-{options["parameters"]["max_words"]}]'])] = ' '.join(
+                    value.split(' ')[:options['parameters']['max_words']])
+            elif options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step:
                 max_length = len(value.split(' '))
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text.append(' '.join(value.split(' ')[cur_step: cur_step + put_data.parameters.length]))
-                    cur_step += put_data.parameters.step
-                    if cur_step + put_data.parameters.length > max_length:
+                    text[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = ' '.join(
+                        value.split(' ')[cur_step: cur_step + length])
+                    cur_step += options['parameters']['step']
+                    if cur_step + options['parameters']['length'] > max_length:
                         stop_flag = True
 
-        options = put_data.parameters.native()
-        length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else options[
-            'max_words']
-
-        instructions['parameters'] = {'prepare_method': put_data.parameters.prepare_method,
-                                      'put': put_data.id,
-                                      'length': length,
-                                      'max_words_count': put_data.parameters.max_words_count,
-                                      'word_to_vec_size': put_data.parameters.word_to_vec_size,
-                                      'filters': put_data.parameters.filters
-                                      }
-        instructions['instructions'] = text
+        instructions = {'instructions': text,
+                        'parameters': {'prepare_method': options['parameters']['prepare_method'],
+                                       'put': options['id'],
+                                       'length': length,
+                                       'max_words_count': options['parameters']['max_words_count'],
+                                       'word_to_vec_size': options['parameters'].get('word_to_vec_size'),
+                                       'filters': options['parameters']['filters']
+                                       },
+                        }
 
         return instructions
 
     @staticmethod
-    def instructions_classification(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    def instructions_classification(paths_list: list, **options: dict) -> dict:
 
-        instructions: dict = {}
-        if put_data.parameters.sources_paths[0].is_file() and put_data.parameters.sources_paths[0].suffix == ".csv":
-            file_name = put_data.parameters.sources_paths[0]
-            data = pd.read_csv(file_name, usecols=put_data.parameters.cols_names)
-            column = data[put_data.parameters.cols_names[0]].to_list()
+        if os.path.isfile(options['parameters']['sources_paths'][0]) and\
+                options['parameters']['sources_paths'][0].endswith('.csv'):
+            file_name = options['parameters']['sources_paths'][0]
+            data = pd.read_csv(file_name, usecols=options['parameters']['cols_names'])
+            column = data[options['parameters']['cols_names'][0]].to_list()
             classes_names = []
             for elem in column:
                 if elem not in classes_names:
                     classes_names.append(elem)
             num_classes = len(classes_names)
         else:
-            classes_names = sorted([os.path.basename(elem) for elem in put_data.parameters.sources_paths])
+            classes_names = sorted([os.path.basename(elem) for elem in options['parameters']['sources_paths']])
             num_classes = len(classes_names)
 
-        instructions["parameters"] = {"one_hot_encoding": put_data.parameters.one_hot_encoding,
-                                      "classes_names": classes_names,
-                                      "num_classes": num_classes,
-                                      'put': put_data.id
-                                      }
-        instructions['instructions'] = paths_list
+        instructions = {'instructions': paths_list,
+                        'parameters': {"one_hot_encoding": options['parameters']['one_hot_encoding'],
+                                       "classes_names": classes_names,
+                                       "num_classes": num_classes,
+                                       'put': options['id']
+                                       }
+                        }
 
         return instructions
 
     @staticmethod
-    def instructions_regression(number_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    def instructions_regression(number_list: list, **options: dict) -> dict:
 
-        options = put_data.parameters.native()
-
-        options["put"] = put_data.id
+        options["put"] = options['id']
 
         instructions = {'instructions': number_list,
                         'parameters': options}
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
-    def instructions_segmentation(paths_list: list, put_data: Union[CreationInputData, CreationOutputData]) -> dict:
-
-        options = put_data.native()
+    @staticmethod
+    def instructions_segmentation(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
                         'parameters': {'mask_range': options['parameters']['mask_range'],
@@ -241,6 +234,7 @@ class CreateArray(object):
                                        'width': options['parameters']['width'],
                                        'classes_colors': [Color(color).as_rgb_tuple() for color in
                                                           options['parameters']['classes_colors']],
+                                       'classes_names': options['parameters']['classes_names'],
                                        'put': options['id']
                                        }
                         }
@@ -248,8 +242,7 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_text_segmentation(paths_list: list,
-                                       put_data: Union[CreationInputData, CreationOutputData]) -> dict:
+    def instructions_text_segmentation(paths_list: list, **options: dict) -> dict:
 
         """
 
@@ -279,7 +272,6 @@ class CreateArray(object):
 
         def get_samples(doc_text: str, op_tags, cl_tags):
 
-            words = []
             indexes = []
             idx = []
             for word in doc_text.split(' '):
@@ -296,44 +288,48 @@ class CreateArray(object):
 
             return indexes
 
-        options = put_data.parameters.native()
-        instructions: dict = {}
-        text_segm: list = []
-        text_segm_data: list = []
-        open_tags: list = options['open_tags'].split(' ')
-        close_tags: list = options['close_tags'].split(' ')
+        text_list: dict = {}
+        text_segm_data: dict = {}
+        open_tags: list = options['parameters']['open_tags'].split(' ')
+        close_tags: list = options['parameters']['close_tags'].split(' ')
         open_symbol = open_tags[0][0]
         close_symbol = close_tags[0][-1]
-        for elem in paths_list:
-            text = read_text(elem, True, options['filters'], ' ', open_symbol, close_symbol)
-            text_segm.append(get_samples(text, open_tags, close_tags))
+        length = options['parameters']['length'] if\
+            options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step else\
+            options['parameters']['max_words']
 
-        for text in text_segm:
-            if options['text_mode'] == LayerTextModeChoice.completely:
-                text_segm_data.append(text[0:options['max_words']])
-            elif options['text_mode'] == LayerTextModeChoice.length_and_step:
-                max_length = len(text)
+        for path in paths_list:
+            text_file = read_text(file_path=path, lower=True, del_symbols=options['parameters']['filters'], split=' ',
+                                  open_symbol=open_symbol, close_symbol=close_symbol)
+            if text_file:
+                text_list[path] = get_samples(text_file, open_tags, close_tags)
+
+        for key, value in sorted(text_list.items()):
+            if options['parameters']['text_mode'] == LayerTextModeChoice.completely:
+                text_segm_data[';'.join([key, f'[0-{options["parameters"]["max_words"]}]'])] =\
+                    value[:options['parameters']['max_words']]
+            elif options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step:
+                max_length = len(value)
                 cur_step = 0
                 stop_flag = False
                 while not stop_flag:
-                    text_segm_data.append(text[cur_step:cur_step + options['length']])
-                    cur_step += options['step']
-                    if cur_step + options['length'] > max_length:
+                    text_segm_data[';'.join([key, f'[{cur_step}-{cur_step + length}]'])] = value[
+                                                                                           cur_step:cur_step + length]
+                    cur_step += options['parameters']['step']
+                    if cur_step + length > max_length:
                         stop_flag = True
 
-        length = options['length'] if options['text_mode'] == LayerTextModeChoice.length_and_step else options[
-            'max_words']
-
-        instructions['parameters'] = {'num_classes': len(open_tags),
-                                      'classes_names': open_tags,
-                                      'put': put_data.id,
-                                      'length': length
-                                      }
-        instructions['instructions'] = text_segm_data
+        instructions = {'instructions': text_segm_data,
+                        'parameters': {'num_classes': len(open_tags),
+                                       'classes_names': open_tags,
+                                       'put': options['id'],
+                                       'length': length
+                                       }
+                        }
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
+    @staticmethod
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -352,7 +348,7 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
+    @staticmethod
     def cut_video(paths_list: list, tmp_folder=None, dataset_folder=None, **options):
 
         def add_frames(video_array, fill_mode, frames_to_add, total_frames):
@@ -407,11 +403,11 @@ class CreateArray(object):
                 if not ret or frames_number > frames_count:
                     stop_flag = True
             if options['video_mode'] == 'completely' and options['max_frames'] > frames_count:
-                frames_array = add_frames(video_array=np.array(tmp_array),
-                                          fill_mode=options['fill_mode'],
-                                          frames_to_add=options['max_frames'] - frames_count,
-                                          total_frames=options['max_frames'])
-                for arr in frames_array:
+                frames_to_add = add_frames(video_array=np.array(tmp_array),
+                                           fill_mode=options['fill_mode'],
+                                           frames_to_add=options['max_frames'] - frames_count,
+                                           total_frames=options['max_frames'])
+                for arr in frames_to_add:
                     output_movie.write(arr)
 
             output_movie.release()
@@ -425,7 +421,7 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
+    @staticmethod
     def cut_audio(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         instructions_paths = []
@@ -450,7 +446,46 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
+    @staticmethod
+    def cut_text(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        text_list = []
+        for elem in sorted(paths_list.keys()):
+            # path, _ = elem.split(';')
+            # name, ext = os.path.splitext(os.path.basename(path))
+            # os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_text', os.path.basename(os.path.dirname(path))), exist_ok=True)
+            # shutil.copyfile(path, os.path.join(tmp_folder, f'{options["put"]}_text', os.path.basename(os.path.dirname(path)), os.path.basename(path)))
+            text_list.append(paths_list[elem])
+
+        # if dataset_folder:
+        # if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_text')):
+        # shutil.move(os.path.join(tmp_folder, f'{options["put"]}_text'), dataset_folder)
+
+        text_list = []
+        for key in sorted(paths_list.keys()):
+            text_list.append(paths_list[key])
+        instructions = {'instructions': text_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_classification(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_regression(number_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions = {'instructions': number_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def cut_segmentation(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -469,8 +504,32 @@ class CreateArray(object):
 
         return instructions
 
-    @staticmethod  # СДЕЛАНО
-    def create_image(image_path: str, **options: dict) -> np.ndarray:
+    @staticmethod
+    def cut_text_segmentation(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        text_list = []
+        for elem in sorted(paths_list.keys()):
+            # path, slicing = elem.split(';')
+            # name, ext = os.path.splitext(os.path.basename(path))
+            # os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_text_segmentation', os.path.basename(os.path.dirname(path))), exist_ok=True)
+            # shutil.copyfile(path, os.path.join(tmp_folder, f'{options["put"]}_text_segmentation', os.path.basename(os.path.dirname(path)), os.path.basename(path)))
+            text_list.append(paths_list[elem])
+
+        # if dataset_folder:
+        # if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_text_segmentation')):
+        # shutil.move(os.path.join(tmp_folder, f'{options["put"]}_text_segmentation'), dataset_folder)
+
+        text_list = []
+        for key in sorted(paths_list.keys()):
+            text_list.append(paths_list[key])
+
+        instructions = {'instructions': text_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_image(image_path: str, **options) -> np.ndarray:
 
         img = load_img(image_path, target_size=(options['height'], options['width']))
         array = img_to_array(img, dtype=np.uint8)
@@ -483,8 +542,8 @@ class CreateArray(object):
 
         return array
 
-    @staticmethod  # СДЕЛАНО
-    def create_video(video_path: str, **options: dict) -> np.ndarray:
+    @staticmethod
+    def create_video(video_path: str, **options) -> np.ndarray:
 
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
@@ -549,8 +608,8 @@ class CreateArray(object):
 
         return array
 
-    @staticmethod  # СДЕЛАНО
-    def create_audio(audio_path: str, **options: dict) -> np.ndarray:
+    @staticmethod
+    def create_audio(audio_path: str, **options) -> np.ndarray:
 
         array = []
         parameter = options['parameter']
@@ -581,10 +640,11 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def create_text(text: str, **options: dict) -> np.ndarray:
+    def create_text(text: str, **options) -> np.ndarray:
 
         array = []
         text = text.split(' ')
+        words_to_add = []
 
         if options['prepare_method'] == LayerPrepareMethodChoice.embedding:
             array = options['object_tokenizer'].texts_to_sequences([text])[0]
@@ -623,8 +683,8 @@ class CreateArray(object):
 
         return array
 
-    @staticmethod  # СДЕЛАНО
-    def create_segmentation(image_path: str, **options: dict) -> np.ndarray:
+    @staticmethod
+    def create_segmentation(image_path: str, **options) -> np.ndarray:
 
         def cluster_to_ohe(mask_image):
 
