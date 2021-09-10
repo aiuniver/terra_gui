@@ -70,6 +70,7 @@ export default {
   },
   methods: {
     change(e) {
+      this.$emit('collabse', this.collabse)
       this.collabse = e;
       console.log(e);
     },
