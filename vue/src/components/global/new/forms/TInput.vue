@@ -82,6 +82,11 @@ export default {
     width: 109px;
     font-size: 12px;
     line-height: 24px;
+    padding: 0 5px;
+  }
+  &--error {
+    border-color: #b53b3b;
+    color: #b53b3b;
   }
 }
 </style>
