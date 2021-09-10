@@ -4,7 +4,7 @@ from collections import OrderedDict
 from terra_ai.common import ROOT_PATH, json2cascade, load_images
 from terra_ai.cascades.cascade import CascadeElement, CascadeBlock
 
-import tensorflow as tf
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -13,8 +13,8 @@ cascade_pet = json2cascade(os.path.join(ROOT_PATH, "test_example/petImages/confi
 print(cascade_pet)
 
 
-INPUT_TRDS_FRONT_CAT = load_images(os.path.join(ROOT_PATH, "/home/evgeniy/terra_gui/test_example/petImages/Cat"))
-INPUT_TRDS_FRONT_DOG = load_images(os.path.join(ROOT_PATH, "/home/evgeniy/terra_gui/test_example/petImages/Dog"))
+INPUT_TRDS_FRONT_CAT = load_images(os.path.join(ROOT_PATH, os.path.join(ROOT_PATH, "test_example/petImages/Cat")))
+INPUT_TRDS_FRONT_DOG = load_images(os.path.join(ROOT_PATH, os.path.join(ROOT_PATH, "test_example/petImages/Dog")))
 
 
 def print_classes(score):
@@ -38,11 +38,12 @@ for cat_img, dog_img in zip(INPUT_TRDS_FRONT_CAT(), INPUT_TRDS_FRONT_DOG()):
 
     example(cat_img)
 
+    cat_img = cat_img.astype(np.int)
     plt.imshow(cat_img)
     plt.show()
 
     example(dog_img)
 
+    dog_img = dog_img.astype(np.int)
     plt.imshow(dog_img)
     plt.show()
-
