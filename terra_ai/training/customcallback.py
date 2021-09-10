@@ -62,185 +62,240 @@ loss_metric_config = {
     "loss": {
         "BinaryCrossentropy": {
             "log_name": "binary_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "CategoricalCrossentropy": {
             "log_name": "categorical_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "CategoricalHinge": {
             "log_name": "categorical_hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
+        },
+        'ContrastiveLoss': {
+            "log_name": "contrastive_loss",
+            "mode": "min",
+            "module": "tensorflow_addons.losses"
         },
         "CosineSimilarity": {
             "log_name": "cosine_similarity",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },  # min if loss, max if metric
         "Hinge": {
             "log_name": "hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "Huber": {
             "log_name": "huber",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "KLDivergence": {
             "log_name": "kullback_leibler_divergence",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "LogCosh": {
             "log_name": "logcosh",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "MeanAbsoluteError": {
             "log_name": "mean_absolute_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "MeanAbsolutePercentageError": {
             "log_name": "mean_absolute_percentage_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "MeanSquaredError": {
             "log_name": "mean_squared_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "MeanSquaredLogarithmicError": {
             "log_name": "mean_squared_logarithmic_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "Poisson": {
             "log_name": "poisson",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "SparseCategoricalCrossentropy": {
             "log_name": "sparse_categorical_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
         "SquaredHinge": {
             "log_name": "squared_hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.losses"
         },
     },
     "metric": {
         "AUC": {
             "log_name": "auc",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "Accuracy": {
             "log_name": "accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "BinaryAccuracy": {
             "log_name": "binary_accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "BinaryCrossentropy": {
             "log_name": "binary_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "CategoricalAccuracy": {
             "log_name": "categorical_accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "CategoricalCrossentropy": {
             "log_name": "categorical_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "CategoricalHinge": {
             "log_name": "categorical_hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
+        },
+        'CohenKappa': {
+            "log_name": "cohen_kappa",
+            "mode": "max",
+            "module": "tensorflow_addons.metrics"
         },
         "CosineSimilarity": {
             "log_name": "cosine_similarity",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },  # min if loss, max if metric
         "DiceCoefficient": {
             "log_name": "dice_coef",
-            "mode": "max"
+            "mode": "max",
+            "module": "terra_ai.training.customlosses"
         },
         "FalseNegatives": {
             "log_name": "false_negatives",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "FalsePositives": {
             "log_name": "false_positives",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "Hinge": {
             "log_name": "hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "KLDivergence": {
             "log_name": "kullback_leibler_divergence",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "LogCoshError": {
             "log_name": "logcosh",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "MeanAbsoluteError": {
             "log_name": "mean_absolute_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "MeanAbsolutePercentageError": {
             "log_name": "mean_absolute_percentage_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "MeanIoU": {
             "log_name": "mean_io_u",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "MeanSquaredError": {
             "log_name": "mean_squared_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "MeanSquaredLogarithmicError": {
             "log_name": "mean_squared_logarithmic_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "Poisson": {
             "log_name": "poisson",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "Precision": {
             "log_name": "precision",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "Recall": {
             "log_name": "recall",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "RootMeanSquaredError": {
             "log_name": "root_mean_squared_error",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "SparseCategoricalAccuracy": {
             "log_name": "sparse_categorical_accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "SparseCategoricalCrossentropy": {
             "log_name": "sparse_categorical_crossentropy",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "SparseTopKCategoricalAccuracy": {
             "log_name": "sparse_top_k_categorical_accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "SquaredHinge": {
             "log_name": "squared_hinge",
-            "mode": "min"
+            "mode": "min",
+            "module": "tensorflow.keras.metrics"
         },
         "TopKCategoricalAccuracy": {
             "log_name": "top_k_categorical_accuracy",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "TrueNegatives": {
             "log_name": "true_negatives",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
         "TruePositives": {
             "log_name": "true_positives",
-            "mode": "max"
+            "mode": "max",
+            "module": "tensorflow.keras.metrics"
         },
     }
 }
@@ -344,7 +399,7 @@ class InteractiveCallback:
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
         self.dataset = dataset
-        # self._prepare_interactive_config()
+        self._prepare_interactive_config()
         self._prepare_y_true()
         self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
@@ -1811,13 +1866,6 @@ class InteractiveCallback:
                 for idx, cls in enumerate(labels):
                     dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
                                         1)
-                    # cm = confusion_matrix(
-                    #     y_true[:, :, idx].reshape(np.prod(y_true[:, :, idx].shape)).astype('int'),
-                    #     y_pred[:, :, idx].reshape(np.prod(y_pred[:, :, idx].shape)).astype('int')
-                    # )
-                    # precision = cm[1][1] * 100 / (cm[1][1] + cm[0][1])
-                    # recall = cm[1][1] * 100 / (cm[1][1] + cm[1][0])
-                    # f1 = round(2 * precision * recall / (precision + recall), 1)
                     class_stat[cls] = {
                         "value": f"{dice_val}%",
                         "color_mark": 'green' if dice_val >= 90 else 'red'
@@ -1835,5 +1883,7 @@ class InteractiveCallback:
 
 
 if __name__ == '__main__':
-    print(camelize('logcosh'))
+    from tensorflow_addons.losses import ContrastiveLoss
+    xxx = ContrastiveLoss()
+    print(xxx.name)
     pass
