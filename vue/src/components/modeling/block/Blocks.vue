@@ -554,7 +554,7 @@ export default {
     async getImages() {
       try {
         const image = await domtoimage.toPng(this.$el, {
-          bgcolor: '#000000',
+          bgcolor: '#00000000',
           filter: node => {
             return node.className !== 'btn-zoom';
           },
