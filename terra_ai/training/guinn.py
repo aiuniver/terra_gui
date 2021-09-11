@@ -26,7 +26,7 @@ from terra_ai.data.datasets.extra import LayerOutputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
 from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
 from terra_ai.data.training.train import TrainData
-from terra_ai.datasets.preparing import PrepareDTS
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
 # from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customcallback import InteractiveCallback
@@ -105,7 +105,7 @@ class GUINN:
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss)
         # return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
 
-    def _set_callbacks(self, dataset: PrepareDTS, batch_size: int, epochs: int, checkpoint: dict) -> None:
+    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
         print(('Добавление колбэков', '...'))
         # callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
         # self.callbacks = [callback]
@@ -114,8 +114,8 @@ class GUINN:
         print(('Добавление колбэков', 'выполнено'))
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDTS:
-        prepared_dataset = PrepareDTS(data=dataset, datasets_path=datasets_path)
+    def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDataset:
+        prepared_dataset = PrepareDataset(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
 
@@ -317,7 +317,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=1, retrain=False) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=1, retrain=False) -> None:
         print(('Компиляция модели', '...'))
         self.set_custom_metrics()
         print(self.loss)
@@ -345,7 +345,7 @@ class GUINN:
         )
         self.model_is_trained = True
 
-    def yolo_model_fit(self, params: TrainData, dataset: PrepareDTS, verbose=0, retrain=False) -> None:
+    def yolo_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
         # Массив используемых анкоров (в пикселях). Используется по 3 анкора на каждый из 3 уровней сеток
         # данные значения коррелируются с размерностью входного изображения input_shape
         anchors = np.array(
@@ -478,7 +478,7 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDTS, batch_size: int = None, epochs: int = None,
+    def __init__(self, dataset: PrepareDataset, batch_size: int = None, epochs: int = None,
                  save_model_path: str = "./", model_name: str = "noname"):
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
