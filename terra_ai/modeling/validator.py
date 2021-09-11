@@ -491,7 +491,7 @@ class ModelValidator:
             if _layer[1] == LayerTypeChoice.Input:
                 _layer_str = (
                     f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
-                    f"{_layer[1]}(shape={self.model_plan.input_shape[_layer[0]]}, "
+                    f"{_layer[1]}(shape={self.model_plan.input_shape[_layer[0]][0]}, "
                     f"name='{_layer[2].get('name')}')\n"
                 )
             else:
