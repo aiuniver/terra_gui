@@ -172,12 +172,12 @@ export default {
           slot: link.originSlot,
           style: {
             stroke: 'rgb(101, 185, 244)',
-            strokeWidth: 3 * this.scale,
+            strokeWidth: 2 * this.scale,
             fill: 'none',
           },
           outlineStyle: {
             stroke: '#666',
-            strokeWidth: 6 * this.scale,
+            strokeWidth: 2 * this.scale,
             strokeOpacity: 0.6,
             fill: 'none',
           },
@@ -188,7 +188,7 @@ export default {
         // eslint-disable-next-line vue/no-side-effects-in-computed-properties
         this.tempLink.style = {
           stroke: '#8f8f8f',
-          strokeWidth: 3 * this.scale,
+          strokeWidth: 2 * this.scale,
           fill: 'none',
         };
 
