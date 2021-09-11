@@ -16,6 +16,7 @@ import pandas as pd
 import json
 import joblib
 import tempfile
+import shutil
 from pathlib import Path
 from typing import Union
 from datetime import datetime
@@ -57,6 +58,8 @@ class CreateDataset(object):
         self.write_preprocesses_to_files()
         self.write_instructions_to_files(creation_data=creation_data)
         self.datasetdata = DatasetData(**self.write_dataset_configure(creation_data=creation_data))
+
+        shutil.rmtree(self.temp_directory)
 
         # self.minvalue_y: int = 0
         # self.maxvalue_y: int = 0
