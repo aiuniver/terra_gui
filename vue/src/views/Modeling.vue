@@ -78,6 +78,7 @@ export default {
       }
       if (btn === 'save') {
         this.saveModel();
+        this.$store.dispatch('modeling/selectBlock', {});
       }
       if (btn === 'validation') {
         this.validateModel();
