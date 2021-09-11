@@ -106,7 +106,7 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models_info", path=data_path.modeling).native()
+            agent_exchange("models", path=data_path.modeling).native()
         )
 
 
