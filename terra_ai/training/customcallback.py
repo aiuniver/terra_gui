@@ -1505,6 +1505,7 @@ class InteractiveCallback:
                     data_array=cm,
                     data_percent_array=cm_percent)
                 _id += 1
+
             elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
                 cm, cm_percent = self._get_confusion_matrix(
                     np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).reshape(
@@ -1529,6 +1530,19 @@ class InteractiveCallback:
                     data_percent_array=cm_percent
                 )
                 _id += 1
+
+            elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Regression:
+                # Scatter
+                pass
+
+            elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries:
+                # autocorrelation
+                pass
+
+            elif self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.ObjectDetection:
+                # accuracy for classes? smth else?
+                pass
+
             else:
                 return_data[f'{out}'] = {}
         return return_data
@@ -1604,6 +1618,7 @@ class InteractiveCallback:
                     }
                 ]
                 _id += 2
+
             if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Segmentation:
                 presence_train_names, presence_train_count = sort_dict(
                     self.dataset_balance.get(out).get('train').get('presence_balance'),
@@ -1672,6 +1687,18 @@ class InteractiveCallback:
                     }
                 ]
                 _id += 4
+
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Regression:
+                # histograms for result and any chosen categorizing column
+                pass
+
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Timeseries:
+                # just graphic in case dataframe
+                pass
+
+            if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.ObjectDetection:
+                # frequency of classes, like with segmentation
+                pass
 
         return return_data
 
@@ -1873,12 +1900,20 @@ class InteractiveCallback:
             return y_true_save_path, y_pred_save_path, None, class_stat, "image"
 
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.TextSegmentation:
+            # coloured text
+            # stat - f1 or dice for classes
             pass
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Regression:
+            # values
+            # stat - deviation
             pass
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Timeseries:
+            # values
+            # stat - deviation
             pass
         elif self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.ObjectDetection:
+            # image with bb
+            # accuracy, corellation bb for classes
             pass
 
 
