@@ -80,11 +80,11 @@ export default {
   computed: {
     ...mapGetters({}),
     preset() {
-      console.log(this.lists[0]?.models);
+      // console.log(this.lists[0]?.models);
       return this.lists[0]?.models || [];
     },
     custom() {
-      console.log(this.lists[1]?.models);
+      // console.log(this.lists[1]?.models);
       return this.lists[1]?.models || [];
     },
     dialog: {
@@ -106,7 +106,7 @@ export default {
           // this.$Message(action)
           if (action == 'confirm') {
             const { success } = await this.$store.dispatch('modeling/removeModel', { path: name });
-            console.log(success);
+            // console.log(success);
             if (success) {
               this.load();
             }

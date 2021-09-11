@@ -50,9 +50,9 @@ export default {
     },
   },
   actions: {
-    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, type) {
+    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, position }) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
-      let block = createBlock(type, maxID + 1, layers_types, list);
+      let block = createBlock(type, maxID + 1, layers_types, list, position);
       if (!block) return;
       blocks.push(block);
       dispatch('updateModel');
