@@ -1,12 +1,12 @@
 <template>
-  <at-modal v-model="dialog" width="500" showClose>
+  <at-modal v-model="dialog" width="400" showClose>
     <div slot="header" style="text-align: center">
       <span>Сохранить модель</span>
     </div>
     <div class="model modal-save-model">
       <div class="model__image">
-        <Loading v-if="!image" />
-        <img v-if="image" alt="" width="auto" height="auto" :src="image || ''" />
+        <Loading v-if="!image" class="model__image--loading" />
+        <img v-else alt="" width="auto" height="auto" :src="image || ''" />
       </div>
       <div class="model__config">
         <t-input
@@ -136,10 +136,19 @@ export default {
 
   &__image {
     height: auto;
-    width: 100%;
+    width: 360px;
+    height: 360px;
     margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    &--loading {
+      margin: 0 auto;
+      display: block;
+    }
     img {
       width: 100%;
+      height: 100%;
     }
   }
 }

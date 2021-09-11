@@ -50,7 +50,7 @@ export default {
       this.imageModel = null;
       this.dialogSaveModel = true;
       const image = await this.$refs.container.getImages();
-      this.imageModel = await this.$store.dispatch('modeling/getImageModel', image);
+      this.imageModel = (await this.$store.dispatch('modeling/getImageModel', image))['data'];
     },
     async validateModel() {
       await this.$store.dispatch('modeling/validateModel', {});
