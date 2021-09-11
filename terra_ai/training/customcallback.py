@@ -309,6 +309,7 @@ class InteractiveCallback:
         self.metrics = None
         self.loss_obj = None
         self.metrics_obj = None
+        self.dataset_config = None
         self.dataset = None
         self.y_true = {}
         self.y_pred = {}
@@ -1796,6 +1797,7 @@ class InteractiveCallback:
         AudioSegment.from_file("audio_path").export("audio.webm", format="webm")
         """
         # temp_file = tempfile.NamedTemporaryFile(delete=False)
+        # if not self.dataset.g
         column_idx = 0
         for column_name in self.dataset.dataframe.get('val').columns:
             if column_name.split('_')[0] == input_id:
@@ -1828,6 +1830,7 @@ class InteractiveCallback:
             return initial_file_path, None
 
     def _postprocess_result_data(self, output_id: str, data_type: str, example_idx: int, show_stat=True):
+
         if self.dataset.data.outputs.get(int(output_id)).task == LayerOutputTypeChoice.Classification:
             labels = self.dataset.data.classes_names.get(int(output_id))
             ohe = True if self.dataset.data.encoding.get(int(output_id)) == 'ohe' else False
