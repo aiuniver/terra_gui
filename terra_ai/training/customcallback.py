@@ -280,6 +280,28 @@ class InteractiveCallback:
 
         self.urgent_predict = False
 
+        self.train_states = {
+            "status": "no_train",  # training, trained, stopped, retrain
+            "buttons": {
+                "train": {
+                    "title": "Обучить",  # Возобновить, Дообучить
+                    "visible": True
+                },
+                "stop": {
+                    "title": "Остановить",
+                    "visible": False
+                },
+                "clear": {
+                    "title": "Сбросить",
+                    "visible": False
+                },
+                "save": {
+                    "title": "Сохранить",
+                    "visible": False
+                }
+            }
+        }
+
         self.interactive_config = {
             'loss_graphs': [
                 # {
@@ -351,6 +373,36 @@ class InteractiveCallback:
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         # self.example_idx = self._prepare_example_idx_to_show()
+
+    def set_status(self, status):
+        self.train_states["status"] = status
+        if status in ["training", "addtrain", "retrain"]:
+            self.train_states["buttons"]["train"]["title"] = "Возобновить"
+            self.train_states["buttons"]["train"]["visible"] = False
+            self.train_states["buttons"]["stop"]["visible"] = True
+            self.train_states["buttons"]["clear"]["visible"] = False
+            self.train_states["buttons"]["save"]["visible"] = False
+        elif status == "trained":
+            self.train_states["buttons"]["train"]["title"] = "Дообучить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = True
+            self.train_states["buttons"]["save"]["visible"] = True
+        elif status == "stopped":
+            self.train_states["buttons"]["train"]["title"] = "Возобновить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = True
+            self.train_states["buttons"]["save"]["visible"] = True
+        else:
+            self.train_states["buttons"]["train"]["title"] = "Обучить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = False
+            self.train_states["buttons"]["save"]["visible"] = False
+
+    def get_states(self):
+        return self.train_states
 
     def update_train_progress(self, data: dict):
         self.train_progress = data

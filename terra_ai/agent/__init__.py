@@ -288,6 +288,12 @@ class Exchange:
         """
         Старт обучения
         """
+        if interactive.get_states().get("status") == "stopped":
+            interactive.set_status("addtrain")
+        elif interactive.get_states().get("status") == "trained":
+            interactive.set_status("retrain")
+        else:
+            interactive.set_status("training")
         training_obj.terra_fit(
             dataset=dataset,
             gui_model=model,
@@ -295,6 +301,13 @@ class Exchange:
             dataset_path=dataset_path,
             training_params=params,
         )
+        return interactive.train_states
+
+    def _call_stop_training(self):
+        interactive.set_status("stopped")
+
+    def _call_clear_training(self):
+        interactive.set_status("no_train")
 
     def _call_set_interactive_config(self, config: dict):
         """
