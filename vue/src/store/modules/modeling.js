@@ -120,6 +120,9 @@ export default {
       commit('SET_STATUS', { isUpdate: false });
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
     },
+    async getImageModel({ dispatch }, preview) {
+      return await dispatch('axios', { url: '/modeling/preview/', preview }, { root: true });
+    },
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
     },

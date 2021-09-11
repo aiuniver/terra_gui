@@ -4,8 +4,9 @@
       <span>Сохранить модель</span>
     </div>
     <div class="model modal-save-model">
-      <div v-if="image" class="model__image">
-        <img alt="" width="auto" height="auto" :src="image || ''" />
+      <div class="model__image">
+        <Loading v-if="!image" />
+        <img v-if="image" alt="" width="auto" height="auto" :src="image || ''" />
       </div>
       <div class="model__config">
         <t-input
@@ -29,7 +30,6 @@
           @change="overwrite = $event.value"
         />
       </div>
-      <Loading v-if="!image" />
     </div>
     <template slot="footer">
       <t-button @click.native="save">Сохранить</t-button>
