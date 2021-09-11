@@ -183,7 +183,12 @@ from pydantic.types import PositiveInt
 from pydantic.color import Color
 
 from .tags import TagsList
-from .extra import DatasetGroupChoice, LayerInputTypeChoice, LayerOutputTypeChoice, LayerEncodingChoice
+from .extra import (
+    DatasetGroupChoice,
+    LayerInputTypeChoice,
+    LayerOutputTypeChoice,
+    LayerEncodingChoice,
+)
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
@@ -234,10 +239,10 @@ class DatasetLayerData(BaseMixinData):
     datatype: str
     dtype: str
     shape: Tuple[PositiveInt, ...]
-    num_classes: PositiveInt
-    classes_names: List
-    classes_colors: Optional[List]
-    encoding: LayerEncodingChoice
+    num_classes: Optional[PositiveInt]
+    classes_names: Optional[List[str]]
+    classes_colors: Optional[List[Color]]
+    encoding: LayerEncodingChoice = LayerEncodingChoice.none
 
 
 class DatasetPathsData(BaseMixinData):
@@ -251,7 +256,16 @@ class DatasetPathsData(BaseMixinData):
     word2vec: Optional[DirectoryPath]
     augmentation: Optional[DirectoryPath]
 
-    @validator('arrays', 'sources', 'instructions', 'scaler', 'tokenizer', 'word2vec', 'augmentation', always=True)
+    @validator(
+        "arrays",
+        "sources",
+        "instructions",
+        "scaler",
+        "tokenizer",
+        "word2vec",
+        "augmentation",
+        always=True,
+    )
     def _validate_internal_path(cls, value, values, field) -> Path:
         return Path(values.get("basepath"), field.name)
 
@@ -284,46 +298,56 @@ class DatasetData(AliasMixinData):
         data.update({"alias": self.alias, "name": self.name})
         layers = []
         for _id, layer in self.inputs.items():
-            layers.append(
-                {
-                    "id": _id,
-                    "name": layer.name,
-                    "type": LayerTypeChoice.Input,
-                    "group": LayerGroupChoice.input,
-                    "shape": {"input": [layer.shape]},
-                    "task": layer.task,
-                    "num_classes": self.num_classes.get(_id),
-                }
-            )
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": LayerTypeChoice.Input,
+                "group": LayerGroupChoice.input,
+                "shape": {"input": [layer.shape]},
+                "task": layer.task,
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
         for _id, layer in self.outputs.items():
             output_layer_defaults = OutputLayersDefaults.get(layer.task, {}).get(
                 layer.datatype, {}
             )
             activation = output_layer_defaults.get("activation", ActivationChoice.relu)
-            units = self.num_classes.get(_id, layer.shape[-1] if layer.shape else 1)
-            layers.append(
-                {
-                    "id": _id,
-                    "name": layer.name,
-                    "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
-                    "group": LayerGroupChoice.output,
-                    "shape": {"output": [layer.shape]},
-                    "task": layer.task,
-                    "num_classes": self.num_classes.get(_id, None),
-                    "parameters": {
-                        "main": {
-                            "activation": activation,
-                            "units": units,
-                            "filters": units,
-                        },
-                        "extra": {
-                            "activation": activation,
-                            "units": units,
-                            "filters": units,
-                        },
-                    },
-                }
-            )
+            units = layer.num_classes
+            params = {
+                "activation": activation,
+            }
+            if units:
+                params.update(
+                    {
+                        "units": units,
+                        "filters": units,
+                    }
+                )
+            _data = {
+                "id": _id,
+                "name": layer.name,
+                "type": output_layer_defaults.get("type", LayerTypeChoice.Dense),
+                "group": LayerGroupChoice.output,
+                "shape": {"output": [layer.shape]},
+                "task": layer.task,
+                "parameters": {
+                    "main": params,
+                    "extra": params,
+                },
+            }
+            if layer.num_classes:
+                _data.update(
+                    {
+                        "num_classes": layer.num_classes,
+                    }
+                )
+            layers.append(_data)
         data.update({"layers": layers})
         return ModelDetailsData(**data)
 
