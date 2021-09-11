@@ -22,7 +22,7 @@ const typeBlock = [
   },
 ];
 
-const createBlock = function (group, id, typeLayers, list) {
+const createBlock = function (group, id, typeLayers, list, [x, y] = []) {
   if (!group || !id) {
     return null;
   }
@@ -58,7 +58,7 @@ const createBlock = function (group, id, typeLayers, list) {
       input: [],
       output: [],
     },
-    position: [0, 0],
+    position: [x ?? -90, y ?? 0],
     parameters: {
       main,
       extra,
@@ -124,7 +124,7 @@ const prepareBlocks = function (blocks, list) {
     }
     newBlock = { ...newBlock, ...block };
     if (!newBlock.position) {
-      newBlock.position = [0, last];
+      newBlock.position = [-90, last];
       last = last + 60;
     }
     return newBlock;

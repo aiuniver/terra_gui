@@ -114,7 +114,7 @@ export default {
         width: this.options.width + 'px',
         transform: 'scale(' + (this.options.scale + '') + ')',
         transformOrigin: 'top left',
-        zIndex: this.selected ? 10 : 1,
+        zIndex: this.selected  || this.hover ? 10 : 1,
       };
     },
   },
