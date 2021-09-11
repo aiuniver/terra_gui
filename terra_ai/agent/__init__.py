@@ -212,7 +212,7 @@ class Exchange:
         files.sort(key=lambda item: item.label)
         return files
 
-    def _call_models_info(self, path: Path) -> ModelsGroupsList:
+    def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
@@ -246,20 +246,29 @@ class Exchange:
         """
         data = ModelLoadData(value=value)
         with open(data.value.absolute(), "r") as config_ref:
-            config = json.load(config_ref)
-            return ModelDetailsData(**config)
+            try:
+                config = json.load(config_ref)
+                return ModelDetailsData(**config)
+            except Exception as error:
+                raise exceptions.FailedGetModelException(error.__str__())
 
     def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        return ModelDetailsData(**model)
+        try:
+            return ModelDetailsData(**model)
+        except Exception as error:
+            raise exceptions.FailedUpdateModelException(error.__str__())
 
     def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
-        return ModelValidator(model).get_validated()
+        try:
+            return ModelValidator(model).get_validated()
+        except Exception as error:
+            raise exceptions.FailedValidateModelException(error.__str__())
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
@@ -275,7 +284,10 @@ class Exchange:
         """
         Удаление модели
         """
-        os.remove(path)
+        try:
+            os.remove(path)
+        except FileNotFoundError as error:
+            raise exceptions.FailedDeleteModelException(error.__str__())
 
     def _call_start_training(
         self,
@@ -288,19 +300,24 @@ class Exchange:
         """
         Старт обучения
         """
+
         if interactive.get_states().get("status") == "stopped":
             interactive.set_status("addtrain")
         elif interactive.get_states().get("status") == "trained":
             interactive.set_status("retrain")
         else:
             interactive.set_status("training")
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-        )
+
+        try:
+            training_obj.terra_fit(
+                dataset=dataset,
+                gui_model=model,
+                training_path=training_path,
+                dataset_path=dataset_path,
+                training_params=params,
+                )
+        except Exception as error:
+            raise exceptions.FailedStartTrainException(error.__str__())
         return interactive.train_states
 
     def _call_stop_training(self):
@@ -313,19 +330,28 @@ class Exchange:
         """
         Обновление интерактивных параметров обучения
         """
-        interactive.get_train_results(config=config)
+        try:
+            interactive.get_train_results(config=config)
+        except Exception as error:
+            raise exceptions.FailedSetInteractiveConfigException(error.__str__())
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
         """
-        deploy_loading.upload(source, kwargs)
+        try:
+            deploy_loading.upload(source, kwargs)
+        except Exception as error:
+            raise exceptions.FailedUploadDeployException(error.__str__())
 
     def _call_deploy_upload_progress(self) -> progress.ProgressData:
         """
         Деплой: прогресс загрузки
         """
-        return progress.pool("deploy_upload")
+        try:
+            return progress.pool("deploy_upload")
+        except Exception as error:
+            raise exceptions.FailedGetUploadDeployResultException(error.__str__())
 
 
 agent_exchange = Exchange()
