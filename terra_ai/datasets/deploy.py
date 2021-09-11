@@ -7,6 +7,7 @@ import tempfile
 import json
 import os
 import numpy as np
+import shutil
 
 
 class DeployDataset(object):
@@ -15,7 +16,7 @@ class DeployDataset(object):
 
         self.data = None
         self.paths: DatasetPathsData = DatasetPathsData(basepath=dataset_path)
-        self.temp_directory = tempfile.mkdtemp()
+
 
         self.instructions: dict = {}
 
@@ -33,6 +34,7 @@ class DeployDataset(object):
     def make_array(self, paths_dict: dict):
 
         paths_array = paths_dict.copy()
+        temp_directory = tempfile.mkdtemp()
 
         for inp in self.data.inputs.keys():
             instr = getattr(CreateArray(),
@@ -40,7 +42,7 @@ class DeployDataset(object):
                                                                                       **self.instructions[inp])
             cut = getattr(CreateArray(),
                           f'cut_{decamelize(self.data.inputs[inp].task)}')(instr['instructions'],
-                                                                           tmp_folder=self.temp_directory,
+                                                                           tmp_folder=temp_directory,
                                                                            **instr['parameters'],
                                                                            **self.preprocessing.preprocessing[inp])
             array = []
@@ -48,5 +50,7 @@ class DeployDataset(object):
                 array.append(getattr(CreateArray(),
                                      f'create_{decamelize(self.data.inputs[inp].task)}')(elem, **cut['parameters']))
             paths_array[inp] = np.array(array)
+
+        shutil.rmtree(temp_directory, ignore_errors=True)
 
         return paths_array
