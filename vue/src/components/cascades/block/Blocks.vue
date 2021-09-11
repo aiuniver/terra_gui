@@ -1,3 +1,4 @@
+/* eslint-disable vue/no-side-effects-in-computed-properties */
 <template>
   <div class="board">
     <VueLink :lines="lines" />
@@ -96,7 +97,7 @@ export default {
     },
     links: {
       set(value) {
-        console.log(value)
+        console.log(value);
         this.$store.dispatch('cascades/setLinks', value);
       },
       get() {
@@ -104,7 +105,7 @@ export default {
       },
     },
     optionsForChild() {
-      console.log(this.centerX, this.centerY)
+      console.log(this.centerX, this.centerY);
       return {
         width: 200,
         titleHeight: 48,
@@ -184,7 +185,8 @@ export default {
       }
 
       if (this.tempLink) {
-        this.tempLink.style = {          // eslint-disable-line
+        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+        this.tempLink.style = {
           stroke: '#8f8f8f',
           strokeWidth: 3 * this.scale,
           fill: 'none',
@@ -398,8 +400,10 @@ export default {
       return { x, y };
     },
     // Linking
-    findindexBlock (id) {
-      return this.blocks.findIndex((block) => { return block.id === id })
+    findindexBlock(id) {
+      return this.blocks.findIndex(block => {
+        return block.id === id;
+      });
     },
     linkingStart(block, slotNumber) {
       console.log('linkingStart');
@@ -418,7 +422,10 @@ export default {
     linkingStop(targetBlock, slotNumber) {
       console.log('linkingStop');
       if (this.linkStartData && targetBlock && slotNumber > -1) {
-        const { slotNumber: originSlot, block: { id: originID } } = this.linkStartData;
+        const {
+          slotNumber: originSlot,
+          block: { id: originID },
+        } = this.linkStartData;
         const targetID = targetBlock.id;
         const targetSlot = slotNumber;
 
@@ -441,10 +448,10 @@ export default {
         );
 
         if (this.linkStartData.block.id !== targetBlock.id) {
-            const originID = this.linkStartData.block.id
-            const originSlot = this.linkStartData.slotNumber
-            const targetID = targetBlock.id
-            const targetSlot = slotNumber
+          const originID = this.linkStartData.block.id;
+          const originSlot = this.linkStartData.slotNumber;
+          const targetID = targetBlock.id;
+          const targetSlot = slotNumber;
 
           this.links.push({
             id: maxID + 1,
@@ -463,7 +470,7 @@ export default {
           // if (!this.blocks[indexTargetBlock].bind.up.includes(originID)) {
           //   this.blocks[indexTargetBlock].bind.up.push(+originID)
           // }
-          this.$emit('save', true)
+          this.$emit('save', true);
         }
       }
 
@@ -486,8 +493,8 @@ export default {
           this.links = this.links.filter(value => {
             return !(value.targetID === targetBlock.id && value.targetSlot === slotNumber);
           });
-          
-          this.$emit('save', true)
+
+          this.$emit('save', true);
           targetBlock.inputs[findLink.targetSlot].active = false;
           findBlock.outputs[findLink.originSlot].active = false;
 
@@ -506,6 +513,10 @@ export default {
     async getImages() {
       try {
         const image = await domtoimage.toPng(this.$el, {
+          bgcolor: '#17212b',
+          style: {
+            opacity: '0.8',
+          },
           filter: node => {
             return node.className !== 'btn-zoom';
           },
@@ -586,7 +597,7 @@ export default {
       // this.updateScene();
     },
     moveBlock() {
-      this.$store.dispatch('cascades/setButtons', {save: true})
+      this.$store.dispatch('cascades/setButtons', { save: true });
     },
 
     updateScene() {
@@ -645,7 +656,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer; 
+    cursor: pointer;
     i {
       width: 14px;
       height: 14px;
