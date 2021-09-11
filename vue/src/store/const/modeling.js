@@ -124,7 +124,7 @@ const prepareBlocks = function (blocks, list) {
     }
     newBlock = { ...newBlock, ...block };
     if (!newBlock.position) {
-      newBlock.position = [0, -200 + last];
+      newBlock.position = [0, last];
       last = last + 60;
     }
     return newBlock;
