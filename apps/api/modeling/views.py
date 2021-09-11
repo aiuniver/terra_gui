@@ -9,6 +9,7 @@ from apps.plugins.project import exceptions as project_exceptions
 
 from terra_ai.agent import agent_exchange
 from terra_ai.agent import exceptions as agent_exceptions
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.extra import LayerGroupChoice
 
@@ -157,10 +158,31 @@ class UpdateAPIView(BaseAPIView):
 
 
 class ValidateAPIView(BaseAPIView):
+    def _reset_layers_shape(
+        self, dataset: DatasetData, model: ModelDetailsData
+    ) -> ModelDetailsData:
+        for layer in model.middles:
+            layer.shape.input = []
+            layer.shape.output = []
+        for index, layer in enumerate(model.inputs):
+            layer.shape.output = []
+            if dataset:
+                layer.shape = dataset.model.inputs[index].shape
+        for index, layer in enumerate(model.outputs):
+            layer.shape.input = []
+            if dataset:
+                layer.shape = dataset.model.outputs[index].shape
+            else:
+                layer.shape.output = []
+        return model
+
     def post(self, request, **kwargs):
         try:
             model, errors = agent_exchange(
-                "model_validate", model=request.project.model
+                "model_validate",
+                model=self._reset_layers_shape(
+                    request.project.dataset, request.project.model
+                ),
             )
             request.project.set_model(model)
             return BaseResponseSuccess(errors, save_project=True)

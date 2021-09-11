@@ -19,47 +19,27 @@
         <i class="profile"></i>
       </div>
     </div>
-    <at-modal v-model="save" width="400" :maskClosable="false" :showClose="false">
-      <div slot="header" style="text-align: center">
-        <span>Сохранить модель</span>
-      </div>
-      <div class="inner form-inline-label">
-        <div class="field-form">
-          <label>Название проекта</label>
-          <input v-model="nameProject" type="text" :disabled="loading" />
-        </div>
-        <div class="field-form field-inline field-reverse">
-          <label @click="checkbox">Перезаписать</label>
-          <div class="checkout-switch">
-            <input v-model="checVal" type="checkbox" :disabled="loading" />
-            <span class="switcher"></span>
-          </div>
-        </div>
-      </div>
-      <template slot="footer">
-        <t-button @click="saveProject" :loading="loading">Сохранить</t-button>
-        <t-button @click="save = false" cancel :disabled="loading">Отменить</t-button>
-      </template>
-    </at-modal>
-    <loadProject v-model="dialog" :list="listProject" @load="loadProject" @remove="removeProject" />
+    <CreateProject v-model="dialogCreate" @message="message" @start="dialogSave = true" />
+    <LoadProject v-model="dialogLoad" @message="message" @start="dialogSave = true" />
+    <SaveProject v-model="dialogSave" @message="message" />
   </div>
 </template>
 
 <script>
 import TProjectName from '../forms/TProjectName.vue';
-import loadProject from './modal/LoadProject.vue';
 
 export default {
   name: 'THeader',
   components: {
     TProjectName,
-    loadProject,
+    LoadProject: () => import('./modal/LoadProject.vue'),
+    CreateProject: () => import('./modal/CreateProject.vue'),
+    SaveProject: () => import('./modal/SaveProject.vue'),
   },
   data: () => ({
-    checVal: false,
-    dialog: false,
-    clickProject: false,
-    projectNameEdit: false,
+    dialogLoad: false,
+    dialogCreate: false,
+    dialogSave: false,
     items: [
       {
         title: 'Создать новый проект',
@@ -77,10 +57,6 @@ export default {
         icon: 'icon-project-load',
       },
     ],
-    save: false,
-    load: false,
-    loading: false,
-    listProject: [],
   }),
   computed: {
     nameProject: {
@@ -93,115 +69,27 @@ export default {
     },
   },
   methods: {
-    checkbox() {
-      if (!this.loading) {
-        this.checVal = !this.checVal;
-      }
-    },
     message(message) {
-      this.$store.dispatch('messages/setMessage', { message });
-    },
-    error(message) {
-      this.$store.dispatch('messages/setMessage', { error: message });
+      this.$store.dispatch('messages/setMessage', message);
     },
     async saveNameProject(name) {
       if (this.nameProject.length > 2) {
-        this.message(`Изменение названия проекта на «${name}»`);
+        this.message({ message: `Изменение названия проекта на «${name}»` });
         await this.$store.dispatch('projects/saveNameProject', {
           name,
         });
-        this.message(`Название проекта изменено на «${name}»`);
-        this.save = false;
+        this.message({ message: `Название проекта изменено на «${name}»` });
       } else {
-        this.$store.dispatch('messages/setMessage', {
-          error: 'Длина не может быть < 3 сим.',
-        });
-      }
-    },
-    async createProject() {
-      try {
-        await this.$Modal.confirm({
-          title: 'Внимание!',
-          content: 'Создание нового проекта удалит текущий. Создать новый проект?',
-          width: 300,
-          maskClosable: false,
-          showClose: false,
-        });
-        const res = await this.$store.dispatch('projects/createProject', {});
-        if (res && !res.error) {
-          this.message(`Новый проект «${this.nameProject}» создан`);
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async loadProject(list) {
-      console.log(list);
-      try {
-        const res = await this.$store.dispatch('projects/loadProject', { value: list.value });
-        console.log(res);
-        if (res && !res.error) {
-          this.message(`Проект «${list.label}» загружен`);
-          this.dialog = false;
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async removeProject(list) {
-      console.log(list);
-      try {
-        const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
-        if (res && !res.error) {
-          this.message(`Проект «${list.label}» удален`);
-          await this.infoProject();
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async infoProject() {
-      try {
-        const res = await this.$store.dispatch('projects/infoProject', {});
-        if (res) {
-          const {
-            data: { projects },
-          } = res;
-          this.listProject = projects;
-          this.dialog = true;
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async saveProject() {
-      try {
-        this.loading = true;
-        this.message(`Сохранения проекта «${this.nameProject}»`);
-        const res = await this.$store.dispatch('projects/saveProject', {
-          name: this.nameProject,
-          overwrite: this.checVal,
-        });
-        if (res && !res.error) {
-          this.message(`Проект «${this.nameProject}» сохранен`);
-          this.save = false;
-          this.checVal = false;
-        } else {
-          this.error(res.error.general);
-        }
-        this.loading = false;
-      } catch (error) {
-        console.log(error);
-        this.loading = false;
+        this.message({ error: 'Длина не может быть < 3 сим.' });
       }
     },
     click(type) {
       if (type === 'project-new') {
-        this.createProject();
+        this.dialogCreate = true;
       } else if (type === 'project-save') {
-        this.save = true;
+        this.dialogSave = true;
       } else if (type === 'project-load') {
-        this.infoProject();
+        this.dialogLoad = true;
       }
     },
   },

@@ -2,7 +2,9 @@
   <div class="charts">
     <div class="charts__title">Графики</div>
     <div class="charts__content">
-      <TChar v-for="(char, i) of chars" :key="'char_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char1_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char2_' + i" :char="char" />
+      <TChar v-for="(char, i) of lossGraphs" :key="'char3_' + i" :char="char" />
     </div>
   </div>
 </template>
@@ -11,14 +13,17 @@
 import TChar from './TChar.vue'
 import { mapGetters } from 'vuex'
 export default {
-  name: 'TChars',
+  name: 'TLossGraphs',
   components: {
     TChar,
   },
   computed: {
     ...mapGetters({
       chars : 'trainings/getChars'    
-    })
+    }),
+    lossGraphs() {
+      return this.$store.getters['trainings/getTrainData']('loss_graphs') || []
+    }
   },
   mounted() {
     this.$emit('isLoad', true)

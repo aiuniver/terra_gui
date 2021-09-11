@@ -1,8 +1,8 @@
 <template>
   <main class="page-training">
     <div class="container">
-      <Toolbar/>
-      <Graphics/>
+      <Toolbar :collabse="collabse"/>
+      <Graphics @collabse="collabse = $event"/>
       <Params/>
     </div>
   </main>
@@ -21,11 +21,9 @@ export default {
     Graphics,
     Params
   },
-  data() {
-    return {
-
-    };
-  },
+  data: () => ({
+    collabse: []
+  }),
   methods: {
 
   },

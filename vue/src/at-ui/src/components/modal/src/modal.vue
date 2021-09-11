@@ -23,7 +23,7 @@
           </div>
           <div class="at-modal__body">
             <slot>
-              <p>{{ content }}</p>
+              <p v-html="content"></p>
               <div class="at-modal__input" v-if="showInput">
                 <at-input v-model="inputValue" :placeholder="inputPlaceholder" @keyup.enter.native="handleAction('confirm')" ref="input"></at-input>
               </div>

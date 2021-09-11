@@ -1,30 +1,38 @@
 <template>
   <div class="t-progress">
-      <Timers />
-      <Sysinfo />
+    <Timers />
+    <Sysinfo :usage="usage"/>
   </div>
 </template>
 
 <script>
-import Sysinfo from './Sysinfo.vue'
-import Timers from './Timers.vue'
+import Sysinfo from './Sysinfo.vue';
+import Timers from './Timers.vue';
 
 export default {
-    name: 't-progress',
-    components: {
-        Sysinfo,
-        Timers
-    }
-}
+  name: 't-progress',
+  components: {
+    Sysinfo,
+    Timers,
+  },
+  computed: {
+    usage() {
+      return this.$store.getters['trainings/getTest']('usage');
+    },
+  },
+  mounted() {
+    console.log(this.data);
+  },
+};
 </script>
 
 <style lang="scss" scoped>
 .t-progress {
-    font-size: 12px;
-    line-height: 24px;
-    color: #A7BED3;
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
+  font-size: 12px;
+  line-height: 24px;
+  color: #a7bed3;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 </style>

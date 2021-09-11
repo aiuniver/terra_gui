@@ -94,6 +94,49 @@ class ModelDetailsData(AliasMixinData):
     keras: Optional[str] = ""
     "Код на keras"
 
+    #     def __str__(self):
+    #         if self.image:
+    #             _is_image = "\033[1;32mYes\033[0m"
+    #         else:
+    #             _is_image = "\033[1;31mNo\033[0m"
+    #         if self.keras:
+    #             _is_keras = "\033[1;32mYes\033[0m"
+    #         else:
+    #             _is_keras = "\033[1;31mNo\033[0m"
+    #
+    #         # name: str
+    #         # "Название"
+    #         # type: LayerTypeChoice
+    #         # "Тип слоя"
+    #         # group: LayerGroupChoice
+    #         # "Группа слоя"
+    #         # bind: LayerBindData = LayerBindData()
+    #         # "Связи со слоями"
+    #         # shape: LayerShapeData = LayerShapeData()
+    #         # "Размерности слоя"
+    #         # task: Optional[Union[LayerInputTypeChoice, LayerOutputTypeChoice]]
+    #         # "Тип задачи"
+    #         # num_classes: Optional[PositiveInt]
+    #         # "Количество классов"
+    #         # position: Optional[Tuple[int, int]]
+    #         # "Расположение слоя в сетке модели"
+    #         # parameters: Any
+    #         # "Параметры слоя"
+    #         # reference: Optional[ReferenceLayerType]
+    #         # "Ссылка на блок, описанный в модели в поле `references`"
+    #
+    #         _layers = ""
+    #         for index, layer in enumerate(self.layers):
+    #             _layers += f"      {index+1} {layer.type} [{layer.name}]\n"
+    #
+    #         output = f"""—————————————————————————————————————————————————
+    # Model \033[0;36m{self.name} [{self.alias}]\033[0m
+    #       Image : {_is_image}
+    #       Keras : {_is_keras}
+    #       ———————————————————————————————————————————
+    # {_layers}—————————————————————————————————————————————————"""
+    #         return output
+
     @property
     def inputs(self) -> LayersList:
         layers = LayersList()
