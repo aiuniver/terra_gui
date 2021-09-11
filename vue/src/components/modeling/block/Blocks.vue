@@ -1,5 +1,5 @@
 <template>
-  <div class="board">
+  <div class="t-block">
     <VueLink :lines="lines" />
     <VueBlock
       v-for="block in blocks"
@@ -31,6 +31,10 @@
       <div class="btn-zoom__item">
         <i class="t-icon icon-zoom-dec" @click="zoom(-1)"></i>
       </div>
+    </div>
+    <div class="t-block__center" :style="scaleCenter">
+      <div class="t-block__center--vertical"></div>
+      <div class="t-block__center--horizontal"></div>
     </div>
   </div>
 </template>
@@ -99,6 +103,14 @@ export default {
     ...mapGetters({
       project: 'projects/getProject',
     }),
+    scaleCenter() {
+      return {
+        top: this.centerY + 'px',
+        left: this.centerX + 'px',
+        transform: 'scale(' + (this.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
+    },
     filter() {
       return {
         input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
@@ -194,14 +206,16 @@ export default {
           slot: link.originSlot,
           style: {
             stroke: 'rgb(101, 185, 244)',
-            strokeWidth: 3 * this.scale,
+            strokeWidth: 2 * this.scale,
             fill: 'none',
+            zIndex: 999,
           },
           outlineStyle: {
             stroke: '#666',
-            strokeWidth: 6 * this.scale,
+            strokeWidth: 2 * this.scale,
             strokeOpacity: 0.6,
             fill: 'none',
+            zIndex: 999,
           },
         });
       }
@@ -211,7 +225,7 @@ export default {
         this.tempLink.style = {
           // eslint-disable-line
           stroke: '#8f8f8f',
-          strokeWidth: 3 * this.scale,
+          strokeWidth: 2 * this.scale,
           fill: 'none',
         };
 
@@ -222,6 +236,17 @@ export default {
     },
   },
   methods: {
+    getCenter() {
+      if (this.scale > 1.5) {
+        this.scale = 1.5;
+      }
+      const x = this.$el.clientWidth / 2 - this.optionsForChild.width / 2 - this.centerX;
+      const y = this.$el.clientHeight / 2 - this.centerY;
+      console.log(this.centerX);
+      console.log(this.centerY);
+
+      return [x, y];
+    },
     getError(id) {
       return this.errorsBlocks?.[id] || '';
     },
@@ -259,7 +284,7 @@ export default {
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
-        this.centerX = this.$el.clientWidth / 2 - 100;
+        this.centerX = this.$el.clientWidth / 2;
         this.centerY = this.$el.clientHeight / 2;
         return;
       }
@@ -274,22 +299,21 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let deltaOffsetX = ((this.$el.clientWidth / 2) - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = ((this.$el.clientHeight / 2) - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = (this.$el.clientWidth / 2 - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = (this.$el.clientHeight / 2 - this.centerY) * (deltaScale - 1);
 
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
-      console.log(this.centerX);
-      
+
       // this.updateScene();
     },
     handleMove(e) {
-      // console.log('handleMove')
       let mouse = mouseHelper(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;
 
       if (this.dragging) {
+        console.log('handleMove');
         let diffX = this.mouseX - this.lastMouseX;
         let diffY = this.mouseY - this.lastMouseY;
 
@@ -358,10 +382,10 @@ export default {
       if (this.$el.contains(target)) {
         // if (e.preventDefault) e.preventDefault()
 
-        console.log(e.deltaY)
+        // console.log(e.deltaY);
 
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
-        // console.log(deltaScale)
+        // console.log(deltaScale);
         this.scale *= deltaScale;
 
         if (this.scale < this.minScale) {
@@ -372,7 +396,7 @@ export default {
           return;
         }
 
-        console.log(this.mouseX)
+        // console.log(this.mouseX);
         let zoomingCenter = {
           x: this.mouseX,
           y: this.mouseY,
@@ -384,6 +408,7 @@ export default {
         this.centerX -= deltaOffsetX;
         this.centerY -= deltaOffsetY;
 
+        // console.log(this.centerX, this.centerY);
         // this.updateScene();
       }
     },
@@ -398,10 +423,6 @@ export default {
 
       x += block.position[0];
       y += block.position[1];
-      // console.log(this.optionsForChild)
-      // console.log(isInput)
-
-      // y += this.optionsForChild.titleHeight
 
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
@@ -554,6 +575,7 @@ export default {
     async getImages() {
       try {
         const image = await domtoimage.toPng(this.$el, {
+          bgcolor: '#00000000',
           filter: node => {
             return node.className !== 'btn-zoom';
           },
@@ -673,7 +695,7 @@ export default {
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
-    this.centerX = this.$el.clientWidth / 2 - 100;
+    this.centerX = this.$el.clientWidth / 2;
     this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
@@ -692,13 +714,37 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.board {
+.t-block {
   flex-shrink: 1;
   width: 100%;
   background-color: #17212b;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+
+  &__center {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    pointer-events: none;
+    &--vertical {
+      position: absolute;
+      top: -75px;
+      left: 0;
+      height: 100%;
+      width: 1px;
+      background-color: #ffffff1f;
+      transform: rotate(180deg);
+    }
+    &--horizontal {
+      position: absolute;
+      top: 0;
+      left: -75px;
+      height: 1px;
+      width: 100%;
+      background-color: #ffffff1f;
+    }
+  }
 }
 .btn-zoom {
   display: flex;

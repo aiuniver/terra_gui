@@ -7,6 +7,15 @@ class ExceptionMessages(str, Enum):
     MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
     ModelAlreadyExists = "Model `%s` already exists"
     ProjectAlreadyExists = "Project `%s` already exists"
+    FailedGetModel = "Error when getting the model: %s"
+    FailedValidateModel = "Error when validating the model: %s"
+    FailedUpdateModel = "Error when updating the model: %s"
+    FailedCreateModel = "Error when creating the model: %s"
+    FailedDeleteModel = "Error when deleting the model: %s"
+    FailedStartTrain = "Error when start training model: %s"
+    FailedSetInteractiveConfig = "Error when setting interactive config: %s"
+    FailedUploadDeploy = "Error when uploading deploy: %s"
+    FailedGetUploadDeployResult = "Error when getting upload deploy result: %s"
 
 
 class ExchangeBaseException(Exception):
@@ -35,3 +44,50 @@ class ModelAlreadyExistsException(ExchangeBaseException):
 class ProjectAlreadyExistsException(ExchangeBaseException):
     def __init__(self, __name: str):
         super().__init__(ExceptionMessages.ProjectAlreadyExists % str(__name))
+
+
+class FailedGetModelException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedGetModel % __error)
+
+
+class FailedValidateModelException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedValidateModel % __error)
+
+
+class FailedUpdateModelException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedUpdateModel % __error)
+
+
+class FailedCreateModelException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedCreateModel % __error)
+
+
+class FailedDeleteModelException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedDeleteModel % __error)
+
+
+class FailedStartTrainException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedStartTrain % __error)
+
+
+class FailedSetInteractiveConfigException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedSetInteractiveConfig % __error)
+
+
+class FailedUploadDeployException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedUploadDeploy % __error)
+
+
+class FailedGetUploadDeployResultException(ExchangeBaseException):
+    def __init__(self, __error: str):
+        super().__init__(ExceptionMessages.FailedGetUploadDeployResult % __error)
+
+

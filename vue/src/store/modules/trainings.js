@@ -49,8 +49,11 @@ export default {
     getTexts({ data: { texts } }) {
       return texts;
     },
-    getTest({ test }) {
-      return test;
+    getTest: ({ test }) => (key) => {
+      return test?.[key] || {};
+    },
+    getTrainData: ({ test }) => (key) => {
+      return test?.train_data?.[key] || {};
     },
   },
 };

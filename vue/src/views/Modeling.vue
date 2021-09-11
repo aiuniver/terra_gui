@@ -42,14 +42,18 @@ export default {
   },
   methods: {
     addBlock(type) {
-      console.log(type);
+      // console.log(type);
+      // console.log(this.$refs.container.centerX);
+      const position = this.$refs.container.getCenter();
       this.create = false;
-      this.$store.dispatch('modeling/addBlock', type);
+      this.$store.dispatch('modeling/addBlock', { type, position });
     },
     async saveModel() {
       this.imageModel = null;
       this.dialogSaveModel = true;
-      this.imageModel = await this.$refs.container.getImages();
+      let image = await this.$refs.container.getImages();
+      const { data = null } = await this.$store.dispatch('modeling/getImageModel', image.slice(22));
+      if (data) this.imageModel = data;
     },
     async validateModel() {
       await this.$store.dispatch('modeling/validateModel', {});
@@ -78,6 +82,7 @@ export default {
       }
       if (btn === 'save') {
         this.saveModel();
+        this.$store.dispatch('modeling/selectBlock', {});
       }
       if (btn === 'validation') {
         this.validateModel();
