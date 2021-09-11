@@ -6,7 +6,7 @@
     <div class="model modal-save-model">
       <div class="model__image">
         <Loading v-if="!image" class="model__image--loading" />
-        <img v-else alt="" width="auto" height="auto" :src="image || ''" />
+        <img v-else alt="" width="auto" height="auto" :src="'data:image/png;base64,' + image || ''" />
       </div>
       <div class="model__config">
         <t-input
@@ -32,7 +32,7 @@
       </div>
     </div>
     <template slot="footer">
-      <t-button @click.native="save">Сохранить</t-button>
+      <t-button @click.native="save" :disabled="!image">Сохранить</t-button>
       <t-button cancel @click.native="close">Отменить</t-button>
     </template>
   </at-modal>
@@ -70,36 +70,38 @@ export default {
       console.log(e);
     },
     async save() {
-      this.err = null;
+      if (this.image) {
+        this.err = null;
 
-      const res = await this.$store.dispatch('modeling/createModel', {
-        name: this.name,
-        preview: this.image.slice(22),
-        overwrite: this.overwrite,
-      });
+        const res = await this.$store.dispatch('modeling/createModel', {
+          name: this.name,
+          preview: this.image,
+          overwrite: this.overwrite,
+        });
 
-      console.log(res);
+        console.log(res);
 
-      if (res?.error && res?.error?.general) {
-        await this.$store.dispatch(
-          'messages/setMessage',
-          { error: `Moдель '${this.name}' уже создана` },
-          { root: true }
-        );
-        this.err = `Moдель '${this.name}' уже создана`;
-      } else if (res?.error) {
-        await this.$store.dispatch('messages/setMessage', { error: 'Поле не может быть пустым' }, { root: true });
-        this.err = 'Поле не может быть пустым';
-      }
-      console.log(`this.err ${this.err}`);
+        if (res?.error && res?.error?.general) {
+          await this.$store.dispatch(
+            'messages/setMessage',
+            { error: `Moдель '${this.name}' уже создана` },
+            { root: true }
+          );
+          this.err = `Moдель '${this.name}' уже создана`;
+        } else if (res?.error) {
+          await this.$store.dispatch('messages/setMessage', { error: 'Поле не может быть пустым' }, { root: true });
+          this.err = 'Поле не может быть пустым';
+        }
+        console.log(`this.err ${this.err}`);
 
-      if (!this.err) {
-        this.dialog = false;
-        await this.$store.dispatch(
-          'messages/setMessage',
-          { message: `Moдель '${this.name}' сохранена` },
-          { root: true }
-        );
+        if (!this.err) {
+          this.dialog = false;
+          await this.$store.dispatch(
+            'messages/setMessage',
+            { message: `Moдель '${this.name}' сохранена` },
+            { root: true }
+          );
+        }
       }
     },
 

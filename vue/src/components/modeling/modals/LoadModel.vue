@@ -98,10 +98,21 @@ export default {
   },
   methods: {
     async removeModel(name) {
-      const { data } = await this.$store.dispatch('modeling/removeModel', { path: name });
-      if (data) {
-        this.load();
-      }
+      this.$Modal.confirm({
+        title: 'Внимание!',
+        content: 'Уверены, что хотите удалить эту модель?',
+        width: 300,
+        callback: async action => {
+          // this.$Message(action)
+          if (action == 'confirm') {
+            const { success } = await this.$store.dispatch('modeling/removeModel', { path: name });
+            console.log(success);
+            if (success) {
+              this.load();
+            }
+          }
+        },
+      });
     },
     async load() {
       const { data } = await this.$store.dispatch('modeling/info', {});
@@ -211,7 +222,8 @@ export default {
   &-img {
     img {
       width: 100%;
-      height: auto;
+      height: 230px;
+      object-fit: contain;
     }
   }
 
