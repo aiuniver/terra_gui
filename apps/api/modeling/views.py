@@ -1,5 +1,7 @@
 import re
+import base64
 
+from tempfile import NamedTemporaryFile
 from pydantic import ValidationError
 from transliterate import slugify
 from collections.abc import MutableMapping
@@ -19,7 +21,13 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
+from .serializers import (
+    ModelGetSerializer,
+    UpdateSerializer,
+    PreviewSerializer,
+    CreateSerializer,
+)
+from .utils import autocrop_image_square
 
 
 def flatten_dict(
@@ -43,6 +51,8 @@ class GetAPIView(BaseAPIView):
         try:
             model = agent_exchange("model_get", **serializer.validated_data)
             return BaseResponseSuccess(model.native())
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -104,7 +114,7 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models_info", path=data_path.modeling).native()
+            agent_exchange("models", path=data_path.modeling).native()
         )
 
 
@@ -147,6 +157,8 @@ class UpdateAPIView(BaseAPIView):
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
             return BaseResponseSuccess(save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -186,8 +198,23 @@ class ValidateAPIView(BaseAPIView):
             )
             request.project.set_model(model)
             return BaseResponseSuccess(errors, save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class PreviewAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = PreviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        filepath = NamedTemporaryFile(suffix=".png", delete=False)
+        filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
+        autocrop_image_square(filepath.name, min_size=600)
+        with open(filepath.name, "rb") as filepath_ref:
+            content = filepath_ref.read()
+            return BaseResponseSuccess(base64.b64encode(content))
 
 
 class CreateAPIView(BaseAPIView):
@@ -227,5 +254,8 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.data.get("path"))
-        return BaseResponseSuccess()
+        try:
+            agent_exchange("model_delete", path=request.data.get("path"))
+            return BaseResponseSuccess()
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))

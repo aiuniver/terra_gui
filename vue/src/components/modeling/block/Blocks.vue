@@ -194,12 +194,12 @@ export default {
           slot: link.originSlot,
           style: {
             stroke: 'rgb(101, 185, 244)',
-            strokeWidth: 3 * this.scale,
+            strokeWidth: 2 * this.scale,
             fill: 'none',
           },
           outlineStyle: {
             stroke: '#666',
-            strokeWidth: 6 * this.scale,
+            strokeWidth: 2 * this.scale,
             strokeOpacity: 0.6,
             fill: 'none',
           },
@@ -211,7 +211,7 @@ export default {
         this.tempLink.style = {
           // eslint-disable-line
           stroke: '#8f8f8f',
-          strokeWidth: 3 * this.scale,
+          strokeWidth: 2 * this.scale,
           fill: 'none',
         };
 
@@ -274,13 +274,13 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let deltaOffsetX = ((this.$el.clientWidth / 2) - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = ((this.$el.clientHeight / 2) - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = (this.$el.clientWidth / 2 - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = (this.$el.clientHeight / 2 - this.centerY) * (deltaScale - 1);
 
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
       console.log(this.centerX);
-      
+
       // this.updateScene();
     },
     handleMove(e) {
@@ -358,7 +358,7 @@ export default {
       if (this.$el.contains(target)) {
         // if (e.preventDefault) e.preventDefault()
 
-        console.log(e.deltaY)
+        console.log(e.deltaY);
 
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
         // console.log(deltaScale)
@@ -372,7 +372,7 @@ export default {
           return;
         }
 
-        console.log(this.mouseX)
+        console.log(this.mouseX);
         let zoomingCenter = {
           x: this.mouseX,
           y: this.mouseY,
@@ -554,6 +554,7 @@ export default {
     async getImages() {
       try {
         const image = await domtoimage.toPng(this.$el, {
+          bgcolor: '#00000000',
           filter: node => {
             return node.className !== 'btn-zoom';
           },

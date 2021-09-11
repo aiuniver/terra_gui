@@ -1,5 +1,5 @@
 <template>
-  <at-modal class="ms" v-model="dialog" width="680" showClose>
+  <at-modal v-model="dialog" width="680" showClose>
     <div slot="header" style="text-align: center">
       <span>Загрузка модели</span>
     </div>
@@ -38,7 +38,7 @@
             <div class="modal-arch-info">
               <div class="model-arch-info-param name">
                 <span>Name:</span>
-                <span>{{ info.alias ? ` ${info.alias}` : '' }}</span>
+                <span>{{ info.alias ? ` ${info.name}` : '' }}</span>
               </div>
               <div class="model-arch-info-param input_shape">
                 <span>Input shape:</span>
@@ -74,6 +74,9 @@ export default {
     model: null,
     selected: '',
   }),
+  mounted() {
+    console.log(this.$el.getElementsByClassName('at-modal__footer')[0].remove());
+  },
   computed: {
     ...mapGetters({}),
     preset() {

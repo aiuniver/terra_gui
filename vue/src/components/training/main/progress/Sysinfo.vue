@@ -5,23 +5,23 @@
       <div class="t-sysinfo__grid-item">GPU</div>
       <div :class="['t-sysinfo__grid-item', { warning: isWarning(gpu.gpu_utilization) }]">
         <p class="t-sysinfo__gpu-name">NVIDIA GeForce GTX 1060 6 GB</p>
-        <p>{{ `${gpu.gpu_utilization || ''} (${gpu.gpu_memory_used || ''} / ${gpu.gpu_memory_total || ''})` }}</p>
+        <p>{{ `${gpu.gpu_utilization || '0%'} (${gpu.gpu_memory_used || '0'} / ${gpu.gpu_memory_total || '0'})` }}</p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: gpu.gpu_utilization }"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: gpu.gpu_utilization || '0%'}"></div>
         </div>
       </div>
       <div class="t-sysinfo__grid-item">RAM</div>
       <div :class="['t-sysinfo__grid-item', { warning: isWarning(ram.ram_utilization) }]">
-        <p>{{ `${ram.ram_utilization || ''} (${ram.ram_memory_used || ''} / ${ram.ram_memory_total || ''})` }}</p>
+        <p>{{ `${ram.ram_utilization || '0%'} (${ram.ram_memory_used || '0'} / ${ram.ram_memory_total || '0'})` }}</p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: ram.ram_utilization }"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: ram.ram_utilization || '0%' }"></div>
         </div>
       </div>
       <div class="t-sysinfo__grid-item">Disk</div>
       <div :class="['t-sysinfo__grid-item', { warning: isWarning(disk.disk_utilization) }]">
-        <p>{{ `${disk.disk_utilization || ''} (${disk.disk_memory_used || ''} / ${disk.disk_memory_total || ''})` }}</p>
+        <p>{{ `${disk.disk_utilization || '0%'} (${disk.disk_memory_used || '0'} / ${disk.disk_memory_total || '0'})` }}</p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: disk.disk_utilization }"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: disk.disk_utilization || '0%'}"></div>
         </div>
       </div>
     </div>
@@ -32,22 +32,23 @@
 export default {
   name: '',
   props: {
-    data: Object,
+    usage: Object,
   },
   computed: {
     disk() {
-      return this.data?.Disk || {};
+      return this.usage?.Disk || {};
     },
     gpu() {
-      return this.data?.GPU || {};
+      return this.usage?.GPU || {};
     },
     ram() {
-      return this.data?.RAM || {};
+      return this.usage?.RAM || {};
     },
   },
   methods: {
     isWarning(value) {
       const int = value?.trim()?.replace('%', '');
+      console.log()
       return +int > 50;
     },
   },
