@@ -1,5 +1,5 @@
 <template>
-  <at-modal class="ms" v-model="dialog" width="680" showClose>
+  <at-modal v-model="dialog" width="680" showClose>
     <div slot="header" style="text-align: center">
       <span>Загрузка модели</span>
     </div>
@@ -74,6 +74,9 @@ export default {
     model: null,
     selected: '',
   }),
+  mounted() {
+    console.log(this.$el.getElementsByClassName('at-modal__footer')[0].remove());
+  },
   computed: {
     ...mapGetters({}),
     preset() {
