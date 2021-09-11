@@ -43,6 +43,8 @@ class GetAPIView(BaseAPIView):
         try:
             model = agent_exchange("model_get", **serializer.validated_data)
             return BaseResponseSuccess(model.native())
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -104,7 +106,7 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models_info", path=data_path.modeling).native()
+            agent_exchange("models", path=data_path.modeling).native()
         )
 
 
@@ -147,6 +149,8 @@ class UpdateAPIView(BaseAPIView):
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
             return BaseResponseSuccess(save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -186,6 +190,8 @@ class ValidateAPIView(BaseAPIView):
             )
             request.project.set_model(model)
             return BaseResponseSuccess(errors, save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -227,5 +233,8 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.data.get("path"))
-        return BaseResponseSuccess()
+        try:
+            agent_exchange("model_delete", path=request.data.get("path"))
+            return BaseResponseSuccess()
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
