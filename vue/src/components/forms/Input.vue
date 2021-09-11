@@ -3,7 +3,7 @@
     <label class="t-field__label" :for="parse">{{ label }}</label>
     <input
       v-model="input"
-      :class="['t-field__input', { 't-field__input--error': error }]"
+      :class="['t-field__input', { 't-field__input--error': error ? true : false }]"
       :id="parse"
       :type="type"
       :name="parse"
@@ -35,7 +35,7 @@ export default {
     name: String,
     inline: Boolean,
     disabled: Boolean,
-    error: String
+    error: String,
   },
   data: () => ({
     isChange: false,
@@ -53,13 +53,13 @@ export default {
     },
   },
   mounted() {
-    this.debounce = debounce((e) => {
-      this.change(e)
+    this.debounce = debounce(e => {
+      this.change(e);
     }, 500);
   },
   methods: {
     enter(e) {
-      this.debounce(e)
+      this.debounce(e);
     },
     change(e) {
       // console.log(e);
@@ -108,8 +108,8 @@ export default {
     &:focus {
       border-color: #fff;
     }
-    &--error{
-      border-color: #F00;
+    &--error {
+      border-color: #f00;
     }
   }
 }

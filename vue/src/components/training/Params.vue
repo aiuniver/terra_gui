@@ -23,9 +23,11 @@
             </div>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="optimizer.name">
-            <template v-for="(data, i) of optimizerFields">
-              <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" :state="state" inline @parse="parse" />
-            </template>
+            <div class="optimizer">
+              <template v-for="(data, i) of optimizerFields">
+                <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" class="optimizer__item" :state="state" inline @parse="parse" />
+              </template>
+            </div>
           </at-collapse-item>
           <at-collapse-item class="mt-3" :title="outputs.name">
             <div class="blocks-layers">
@@ -114,7 +116,7 @@ export default {
         this.$store.dispatch('trainings/setStateParams', value);
       },
       get() {
-        console.log(this.$store.getters['trainings/getStateParams']);
+        // console.log(this.$store.getters['trainings/getStateParams']);
         return this.$store.getters['trainings/getStateParams'];
       },
     },
@@ -125,6 +127,7 @@ export default {
       return this.params?.fit || {};
     },
     outputs() {
+      console.log(this.params?.outputs || {});
       return this.params?.outputs || {};
     },
     optimizerFields() {
@@ -139,7 +142,7 @@ export default {
   },
   methods: {
     click(e) {
-      console.log(e)
+      console.log(e);
     },
     start() {
       console.log(JSON.stringify(this.obj, null, 2));
@@ -188,14 +191,8 @@ export default {
     }
   }
 }
-.checkpoints {
-  display: flex;
-  flex-wrap: wrap;
-  &__item {
-    width: 50%;
-  }
-}
-.fit {
+
+.fit, .optimizer, .checkpoints {
   display: flex;
   flex-wrap: wrap;
   &__item {

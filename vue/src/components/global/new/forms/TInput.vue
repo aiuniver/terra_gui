@@ -13,7 +13,7 @@
 
 <script>
 export default {
-  name: 't-input',
+  name: 't-input-new',
   props: {
     type: String,
     value: [String, Number],
@@ -38,6 +38,9 @@ export default {
     },
   },
   methods: {
+    label() {
+      this.$el.focus()
+    },
     focus(e) {
       this.$emit('focus', e);
       if (this.error) {
@@ -79,6 +82,11 @@ export default {
     width: 109px;
     font-size: 12px;
     line-height: 24px;
+    padding: 0 5px;
+  }
+  &--error {
+    border-color: #b53b3b;
+    color: #b53b3b;
   }
 }
 </style>

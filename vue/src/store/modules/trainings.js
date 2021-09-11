@@ -1,5 +1,6 @@
-import temp from "../temp/training";
+import { temp, test } from "../temp/training";
 import { toolbar } from "../const/trainings";
+
 
 export default {
   namespaced: true,
@@ -7,14 +8,15 @@ export default {
     data: temp.data,
     params: [],
     toolbar,
-    stateParams: {} 
+    stateParams: {},
+    test
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
     },
     SET_STATE_PARAMS(state, value) {
-      state.stateParams = {...value};
+      state.stateParams = { ...value };
     },
   },
   actions: {
@@ -26,10 +28,10 @@ export default {
     },
   },
   getters: {
-    getStateParams ({ stateParams }) {
+    getStateParams({ stateParams }) {
       return stateParams || {}
     },
-    getParams ({ params }) {
+    getParams({ params }) {
       return params || []
     },
     getToolbar({ toolbar }) {
@@ -38,7 +40,7 @@ export default {
     getChars({ data: { plots } }) {
       return plots;
     },
-    getScatters({ data: {scatters} }) {
+    getScatters({ data: { scatters } }) {
       return scatters;
     },
     getImages({ data: { images: { images } } }) {
@@ -46,6 +48,12 @@ export default {
     },
     getTexts({ data: { texts } }) {
       return texts;
+    },
+    getTest: ({ test }) => (key) => {
+      return test?.[key] || {};
+    },
+    getTrainData: ({ test }) => (key) => {
+      return test?.train_data?.[key] || {};
     },
   },
 };

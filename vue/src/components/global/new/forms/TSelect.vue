@@ -1,6 +1,6 @@
 <template>
-  <div :class="['t-select', { 't-select--active': show }]">
-    <i :class="['t-icon icon-file-arrow', { spin: show }]" @click="click"></i>
+  <div :class="['t-select', { 't-select--active': show }, { 't-select--small': small }]" v-click-outside="outside">
+    <i :class="['t-select__icon t-icon icon-file-arrow', { 't-select__icon--rotate': show }]" @click="click"></i>
     <input
       class="t-select__input"
       v-model="search"
@@ -11,7 +11,9 @@
       :autocomplete="'off'"
       @click="click"
       @blur="select(false)"
+      @focus="$emit('focus', $event)"
     />
+    <label :for="name">{{ inputLabel }}</label>
     <div class="t-select__content" v-show="show">
       <div class="t-select__content--item" v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
@@ -25,17 +27,15 @@
 export default {
   name: 't-select-new',
   props: {
-    label: {
-      type: String,
-      default: 'Label',
-    },
     type: String,
     placeholder: String,
     value: [String, Number],
     name: String,
     parse: String,
+    inputLabel: String,
     list: [Array, Object],
     disabled: Boolean,
+    small: Boolean,
     error: String,
   },
   data() {
@@ -46,9 +46,8 @@ export default {
     };
   },
   created() {
-    // this.$emit("selected", { name: this.value });
-    // this.$emit('parse', { parse: this.parse, value: this.value });
     this.search = this.value;
+    console.log(this.list);
   },
   computed: {
     filterList() {
@@ -61,8 +60,13 @@ export default {
     },
   },
   methods: {
+    label() {
+      this.show = !this.show;
+    },
+    outside() {
+      this.show = false
+    },
     select(item) {
-      // console.log(item);
       if (item) {
         this.selected = item;
         this.show = false;
@@ -75,10 +79,9 @@ export default {
         this.show = false;
       }
     },
-    click() {
-      // target.select();
-      this.show = true;
-      this.$emit('focus', true);
+    click(e) {
+      this.show = !this.show;
+      this.$emit('click', e);
     },
   },
   watch: {
@@ -96,100 +99,114 @@ export default {
 <style lang="scss" scoped>
 .t-select {
   position: relative;
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  margin-bottom: 10px;
-  align-items: center;
-  & .t-icon{
+  height: 42px;
+  label{
     position: absolute;
-    left: 94px;
+    margin-left: 10px;
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 12px;
+    color: #A7BED3;
+  }
+  &__icon {
+    position: absolute;
+    top: 10px;
+    right: 10px;
     width: 8px;
     cursor: pointer;
     transition-duration: 100ms;
-  }
-  & .spin{
-    transform: rotate(180deg);
-  }
-  &--active {
-    .t-select__input {
-      border-radius: 4px 4px 0 0;
+    &--rotate {
+      transform: rotate(180deg);
     }
-    // .t-select__content {
-      // border-top: 0 !important;
-    // }
   }
-  &__label {
-    // width: 150px;
-    // max-width: 130px;
-    padding: 0 10px;
-    text-align: left;
-    color: #a7bed3;
-    display: block;
-    margin: 0;
-    line-height: 1;
-    font-size: 0.75rem;
-    text-overflow: ellipsis;
-    // white-space: nowrap;
-    overflow: hidden;
-  }
+
   &__input {
-    flex: 0 0 109px;
-    height: 24px;
-    font-size: 0.75rem;
-    max-width: 109px;
+    height: 42px;
+    width: 100%;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 400;
     text-overflow: ellipsis;
     overflow: hidden;
-    padding: 0 20px 0 5px;
-    font-weight: 400;
-    border: 1px solid;
+    padding: 0 20px 0 10px;
     border-radius: 4px;
-    border-color: #6c7883;
-    transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    border: 1px solid #6c7883;
     color: #fff;
     background: #242f3d;
+    transition: border-color 0.3s ease-in-out, opacity 0.3s ease-in-out;
     cursor: pointer;
     &:focus {
-      border: 1px solid #e7ecf5;
+      border-color: #e7ecf5;
     }
     &:disabled {
-      border: 1px solid #6c7883;
-      cursor: auto;
+      border-color: #6c7883;
+      cursor: default;
       opacity: 0.35;
     }
   }
   &__content {
     position: absolute;
-    top: 23px;
-    background-color: #242f3d;
-    width: auto;
-    min-width: 109px;
+    top: 41px;
+    width: 100%;
     border: 1px solid #6c7883;
     box-shadow: 0px -8px 34px 0px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     border-radius: 0 0 4px 4px;
     z-index: 3;
+    color: #a7bed3;
+    background-color: #242f3d;
     &--item {
-      color: #a7bed3;
-      font-size: 0.75em;
-      line-height: 1.5;
+      color: inherit;
+      font-size: 14px;
+      line-height: 24px;
       text-align: left;
       cursor: pointer;
       text-overflow: ellipsis;
       white-space: nowrap;
       overflow: hidden;
-      padding: 2px 5px;
+      padding: 0 10px;
       &:hover {
         color: #e7ecf5;
         background-color: #6c7883;
       }
     }
     &--empty {
-      color: #a7bed3;
-      font-size: 0.7em;
-      line-height: 1.5;
-      padding: 2px 5px;
+      color: inherit;
+      font-size: 14px;
+      line-height: 24px;
+      padding: 0 10px;
       cursor: default;
+    }
+  }
+  &--active &__input {
+    border-radius: 4px 4px 0 0;
+  }
+  &--small {
+    height: 24px;
+    width: 109px;
+  }
+  &--small &__input {
+    height: 24px;
+    font-size: 12px;
+    padding: 0 15px 0 5px;
+    line-height: 24px;
+  }
+  &--small &__icon {
+    top: 0px;
+  }
+  &--small &__content {
+    width: auto;
+    top: 23px;
+    min-width: 109px;
+    &--item {
+      padding: 0 5px;
+      font-size: 12px;
+      line-height: 22px;
+    }
+    &--empty {
+      font-size: 12px;
+      padding: 0 5px;
+      line-height: 22px;
     }
   }
 }

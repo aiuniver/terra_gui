@@ -17,21 +17,13 @@ export default {
       type: String,
       default: 'Label',
     },
-    inline: Boolean
+    inline: Boolean,
   },
   methods: {
     click() {
-      const input = this.$el.getElementsByTagName('input')?.[0]
-      const type = input.type
-      if (input) {
-        console.log(input)
-        if (type === 'checkbox') {
-          input.checked = !input.checked
-        }
+      if (this.$children?.[0]?.label) {
+        this.$children[0].label();
       }
-      // console.log(this.$el.getElementsByTagName('input')?.[0]?.focus());
-      // console.log(this.$el.getElementsByTagName('input')?.[0].checked = !this.$el.getElementsByTagName('input')?.[0].checked);
-
     },
   },
 };
@@ -44,13 +36,15 @@ export default {
   flex-direction: column;
   margin-bottom: 10px;
   &__label {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     color: #a7bed3;
-    line-height: 1.5;
+    line-height: 1;
     font-size: 0.75rem;
     padding: 0 0 10px 0;
     cursor: default;
     user-select: none;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
   &__input {
   }
@@ -64,7 +58,7 @@ export default {
       padding: 0 0 0 10px;
     }
     // .t-field__input {
-      // flex: 0 0 109px;
+    // flex: 0 0 109px;
     // }
   }
 }

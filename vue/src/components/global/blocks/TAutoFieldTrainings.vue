@@ -11,17 +11,18 @@
       :disabled="disabled"
       @parse="change"
     />
-    <t-input
-      v-if="type === 'number' || type === 'text'"
-      :value="getValue"
-      :label="label"
-      :type="type"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
+    <t-field v-if="type === 'number' || type === 'text'" :label="label" inline>
+      <t-input-new
+        small
+        :style="{ width: '70px' }"
+        :value="getValue"
+        :type="type"
+        :parse="parse"
+        :name="name"
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
     <t-checkbox
       v-if="type === 'checkbox'"
       :value="getValue"
@@ -33,17 +34,19 @@
       :disabled="disabled"
       @parse="change"
     />
-    <t-select-new
-      v-if="type === 'select'"
-      :value="getValue"
-      :label="label"
-      :list="list"
-      :parse="parse"
-      :name="name"
-      :inline="inline"
-      :disabled="disabled"
-      @parse="change"
-    />
+    <t-field v-if="type === 'select'" :label="label" inline>
+      <t-select-new
+        :value="getValue"
+        :list="list"
+        :parse="parse"
+        :name="name"
+        :inline="inline"
+        small
+        :disabled="disabled"
+        @parse="change"
+      />
+    </t-field>
+
     <t-auto-complete
       v-if="type === 'auto_complete'"
       :value="getValue"
@@ -87,7 +90,7 @@ export default {
     id: Number,
     state: Object,
     inline: Boolean,
-    disabled: Boolean
+    disabled: Boolean,
   },
   data: () => ({
     valueIn: null,
@@ -108,14 +111,14 @@ export default {
     change({ parse, name, value }) {
       // console.log(parse, value)
       // this.valueIn = null;
-      this.$emit('parse', { parse, name, value});
+      this.$emit('parse', { parse, name, value });
       // this.$nextTick(() => {
       //   this.valueIn = value;
       // });
     },
   },
   created() {
-    console.log(this.disabled)
+    // console.log(this.disabled);
   },
   mounted() {
     this.$emit('parse', { name: this.name, value: this.getValue, parse: this.parse });
@@ -130,5 +133,6 @@ export default {
 
 <style lang="scss" scoped>
 .forms {
+  // padding-top: 10px;
 }
 </style>

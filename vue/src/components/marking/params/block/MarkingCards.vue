@@ -8,7 +8,7 @@
         label="Сортировать по:"
         :lists="[]"
         select-pos="right"
-        width="170px"
+        width="180px"
         />
     </div>
     <div class="t-marking__cards">
@@ -45,6 +45,7 @@ export default {
       display: flex;
       justify-content: space-between;
       width: 100%;
+      align-items: center;
       p {
         font-size: 14px;
         line-height: 24px;
