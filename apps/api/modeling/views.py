@@ -19,7 +19,12 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
+from .serializers import (
+    ModelGetSerializer,
+    UpdateSerializer,
+    PreviewSerializer,
+    CreateSerializer,
+)
 
 
 def flatten_dict(
@@ -194,6 +199,14 @@ class ValidateAPIView(BaseAPIView):
             return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class PreviewAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = PreviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        return BaseResponseSuccess(serializer.validated_data.get("preview"))
 
 
 class CreateAPIView(BaseAPIView):
