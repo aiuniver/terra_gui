@@ -59,7 +59,7 @@
           // console.log(l)
           let dist = this.distance(l.x1, l.y1, l.x2, l.y2) * 0.2
           const data  = [
-            `M ${l.x1}, ${l.y1} C ${(l.x1)}, ${l.y1 + 50 }, ${(l.x2)}, ${l.y2 - 50}, ${l.x2}, ${l.y2}`,
+            `M ${l.x1}, ${l.y1} C ${(l.x1)}, ${l.y1 + dist }, ${(l.x2)}, ${l.y2 - dist}, ${l.x2}, ${l.y2}`,
             `M ${l.x1}, ${l.y1} C ${(l.x1 + dist)}, ${l.y1}, ${(l.x2 - dist)}, ${l.y2}, ${l.x2}, ${l.y2}`,
             `M ${l.x1}, ${l.y1} C ${(l.x1 - dist)}, ${l.y1}, ${(l.x2 + dist)}, ${l.y2}, ${l.x2}, ${l.y2}`
           ]

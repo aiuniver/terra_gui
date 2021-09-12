@@ -645,7 +645,11 @@ export default {
     // },
     // Events
     blockSelect(block) {
-      this.$store.dispatch('modeling/selectBlock', block);
+      this.$store.dispatch('modeling/deselectBlocks', block);
+      this.$nextTick(() => {
+        this.$store.dispatch('modeling/selectBlock', block);
+      });
+
       // block.selected = true;
       // this.selectedBlock = block;
       // this.deselectAll(block.id);
@@ -654,11 +658,9 @@ export default {
     },
     blockDeselect(block) {
       block.selected = false;
-
       if (block && this.selectedBlock && this.selectedBlock.id === block.id) {
         this.selectedBlock = null;
       }
-
       this.$emit('blockDeselect', block);
     },
     // blockDelete(block) {

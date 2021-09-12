@@ -37,17 +37,19 @@ class ModelLoadData(BaseMixinData):
     "Пусть к фалу модели"
 
 
-class BlockDetailsData(BaseMixinData):
+class BlockDetailsData(AliasMixinData):
     """
     Детальная информация о блоке
     """
 
-    name: Optional[AliasType]
-    "Название модели: `rasposnavanie_avtomobiley`"
+    name: Optional[str]
+    "Название блока"
     image: Optional[Base64Type]
-    "Изображение схемы модели в `base64`"
+    "Изображение схемы блока в `base64`"
     layers: Optional[LayersList]
     "Список слоев"
+    keras: Optional[str] = ""
+    "Код на keras"
 
 
 class BlockData(AliasMixinData):
@@ -55,7 +57,7 @@ class BlockData(AliasMixinData):
     Информация о блоке
     """
 
-    name: str
+    name: Optional[str]
     "Название"
     file_path: Optional[confilepath(ext="block")]
     "Путь к файлу блока"
@@ -75,7 +77,7 @@ class BlocksList(UniqueListMixin):
 
     class Meta:
         source = BlockData
-        identifier = "name"
+        identifier = "alias"
 
 
 class ModelDetailsData(AliasMixinData):
