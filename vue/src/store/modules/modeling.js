@@ -158,7 +158,7 @@ export default {
           for (const key in error) {
             newError[key.replace('fields', block.id)] = error[key]
           }
-          console.log(newError)
+          // console.log(newError)
           commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
         }
       }

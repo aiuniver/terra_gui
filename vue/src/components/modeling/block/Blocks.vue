@@ -204,6 +204,7 @@ export default {
           x2: x2,
           y2: y2,
           slot: link.originSlot,
+          scale: this.scale,
           style: {
             stroke: 'rgb(101, 185, 244)',
             strokeWidth: 2 * this.scale,
@@ -427,6 +428,7 @@ export default {
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
+          y += -3
         } else {
           x += this.optionsForChild.width / 2 - (block.inputs.length * 10) / 2;
           x += 20 * slotNumber;
@@ -436,7 +438,7 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 42;
+          y += 45;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
