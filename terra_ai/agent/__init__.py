@@ -278,10 +278,7 @@ class Exchange:
         if not overwrite and model_path.is_file():
             raise exceptions.ModelAlreadyExistsException(model.get("name"))
         with open(model_path, "w") as model_ref:
-            try:
-                json.dump(model, model_ref)
-            except Exception as error:
-                raise exceptions.FailedCreateModelException(error.__str__())
+            json.dump(model, model_ref)
 
     def _call_model_delete(self, path: Path):
         """
@@ -303,16 +300,31 @@ class Exchange:
         """
         Старт обучения
         """
+
+        if interactive.get_states().get("status") == "stopped":
+            interactive.set_status("addtrain")
+        elif interactive.get_states().get("status") == "trained":
+            interactive.set_status("retrain")
+        else:
+            interactive.set_status("training")
+
         try:
             training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-            )
+                dataset=dataset,
+                gui_model=model,
+                training_path=training_path,
+                dataset_path=dataset_path,
+                training_params=params,
+                )
         except Exception as error:
             raise exceptions.FailedStartTrainException(error.__str__())
+        return interactive.train_states
+
+    def _call_stop_training(self):
+        interactive.set_status("stopped")
+
+    def _call_clear_training(self):
+        interactive.set_status("no_train")
 
     def _call_set_interactive_config(self, config: dict):
         """

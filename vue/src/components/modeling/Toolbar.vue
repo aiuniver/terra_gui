@@ -77,7 +77,7 @@ export default {
   methods: {
     click({ currentTarget }, comm) {
       const classList = [...currentTarget?.classList] || [];
-      console.log(classList);
+      // console.log(classList);
       if (!classList.includes('disabled')) {
         this.$emit('actions', comm);
       }

@@ -42,9 +42,11 @@ export default {
   },
   methods: {
     addBlock(type) {
-      console.log(type);
+      // console.log(type);
+      // console.log(this.$refs.container.centerX);
+      const position = this.$refs.container.getCenter();
       this.create = false;
-      this.$store.dispatch('modeling/addBlock', type);
+      this.$store.dispatch('modeling/addBlock', { type, position });
     },
     async saveModel() {
       this.imageModel = null;
