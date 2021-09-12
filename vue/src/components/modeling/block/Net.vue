@@ -3,46 +3,48 @@
     <circle :cx="1" :cy="endpointY" :r="1" :fill="color" />
     <circle :cx="endpointX" :cy="1" :r="1" :fill="color" />
     <path :d="line.data" :style="line.style" />
-    <template v-for="i of qtyXdown">
-      <line
-        :x1="0"
-        :y1="y + pixel * i"
-        :x2="lengthWidth"
-        :y2="y + pixel * i"
-        :key="'key_X_down_' + i"
-        :style="style"
-      ></line>
-    </template>
-    <template v-for="(i, index) of qtyXup">
-      <line
-        :x1="0"
-        :y1="y - pixel * index"
-        :x2="lengthWidth"
-        :y2="y - pixel * index"
-        :key="'key_X_up_' + i"
-        :style="style"
-      ></line>
-    </template>
-    <template v-for="i of qtyYleft">
-      <line
-        :x1="x + pixel * i"
-        :y1="0"
-        :x2="x + pixel * i"
-        :y2="lengthHeight"
-        :key="'key_Y_down_' + i"
-        :style="style"
-      ></line>
-    </template>
-    <template v-for="(i, index) of qtyYright">
-      <line
-        :x1="x - pixel * index"
-        :y1="0"
-        :x2="x - pixel * index"
-        :y2="lengthHeight"
-        :key="'key_Y_up_' + i"
-        :style="style"
-      ></line>
-    </template>
+    <g v-if="$config.isDev">
+      <template v-for="i of qtyXdown">
+        <line
+          :x1="0"
+          :y1="y + pixel * i"
+          :x2="lengthWidth"
+          :y2="y + pixel * i"
+          :key="'key_X_down_' + i"
+          :style="style"
+        ></line>
+      </template>
+      <template v-for="(i, index) of qtyXup">
+        <line
+          :x1="0"
+          :y1="y - pixel * index"
+          :x2="lengthWidth"
+          :y2="y - pixel * index"
+          :key="'key_X_up_' + i"
+          :style="style"
+        ></line>
+      </template>
+      <template v-for="i of qtyYleft">
+        <line
+          :x1="x + pixel * i"
+          :y1="0"
+          :x2="x + pixel * i"
+          :y2="lengthHeight"
+          :key="'key_Y_down_' + i"
+          :style="style"
+        ></line>
+      </template>
+      <template v-for="(i, index) of qtyYright">
+        <line
+          :x1="x - pixel * index"
+          :y1="0"
+          :x2="x - pixel * index"
+          :y2="lengthHeight"
+          :key="'key_Y_up_' + i"
+          :style="style"
+        ></line>
+      </template>
+    </g>
   </svg>
 </template>
 
@@ -98,7 +100,7 @@ export default {
       return { stroke: '#6c78832f', strokeWidth: 0.5 * this.scale };
     },
     line() {
-      const dist = 100 * this.scale;
+      const dist = 60 * this.scale;
       return {
         data: `M ${this.x},${this.y + dist} ${this.x},${this.y - dist} M ${this.x + dist},${this.y} ${this.x - dist},${
           this.y

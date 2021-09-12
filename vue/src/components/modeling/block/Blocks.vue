@@ -1,5 +1,5 @@
 <template>
-  <div class="t-block">
+  <div class="t-block" @contextmenu="contextmenu">
     <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
     <VueLink class="t-block__lines" :lines="lines" />
     <VueBlock
@@ -236,6 +236,11 @@ export default {
     },
   },
   methods: {
+    contextmenu(e) {
+      if (!this.$config.isDev) {
+        e.preventDefault();
+      }
+    },
     getCenter() {
       if (this.scale > 1.5) {
         this.scale = 1.5;
@@ -574,7 +579,7 @@ export default {
     //   });
     // },
     async getImages() {
-      const tags = ['line', 'circle']
+      const tags = ['line', 'circle'];
       try {
         const image = await domtoimage.toPng(this.$el, {
           bgcolor: '#00000000',

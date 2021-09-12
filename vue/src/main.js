@@ -97,6 +97,11 @@ Vue.use(vuescroll, {
   name: 'scrollbar'
 });
 
+Vue.prototype.$config = {
+  isDev: process.env.NODE_ENV === 'development'
+}
+
+
 // import all directivs
 import directives from '@/utils/directives'
 directives.forEach(directive=>Vue.directive(directive.name, directive))
