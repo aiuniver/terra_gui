@@ -1,7 +1,7 @@
 <template>
   <div class="t-block">
     <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
-    <VueLink class="t-block__center" :lines="lines" />
+    <VueLink class="t-block__lines" :lines="lines" />
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
@@ -574,11 +574,12 @@ export default {
     //   });
     // },
     async getImages() {
+      const tags = ['line', 'circle']
       try {
         const image = await domtoimage.toPng(this.$el, {
           bgcolor: '#00000000',
           filter: node => {
-            return node.className !== 'btn-zoom';
+            return !(['btn-zoom'].includes(node.className) || tags.includes(node.tagName));
           },
         });
         return image;
@@ -725,6 +726,9 @@ export default {
   overflow: hidden;
   box-sizing: border-box;
 
+  &__lines {
+    position: absolute;
+  }
   &__center {
     position: absolute;
   }
