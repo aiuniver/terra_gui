@@ -1,6 +1,7 @@
 <template>
   <div class="t-block">
-    <VueLink :lines="lines" />
+    <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
+    <VueLink class="t-block__center" :lines="lines" />
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
@@ -32,10 +33,6 @@
         <i class="t-icon icon-zoom-dec" @click="zoom(-1)"></i>
       </div>
     </div>
-    <div class="t-block__center" :style="scaleCenter">
-      <div class="t-block__center--vertical"></div>
-      <div class="t-block__center--horizontal"></div>
-    </div>
   </div>
 </template>
 
@@ -45,12 +42,14 @@ import { mouseHelper } from '@/store/const/modeling';
 import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
+import Net from './Net';
 
 export default {
   name: 'VueBlockContainer',
   components: {
     VueBlock,
     VueLink,
+    Net,
   },
   props: {
     blocksContent: {
@@ -428,7 +427,7 @@ export default {
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
-          y += -3
+          y += -3;
         } else {
           x += this.optionsForChild.width / 2 - (block.inputs.length * 10) / 2;
           x += 20 * slotNumber;
@@ -728,26 +727,6 @@ export default {
 
   &__center {
     position: absolute;
-    width: 150px;
-    height: 150px;
-    pointer-events: none;
-    &--vertical {
-      position: absolute;
-      top: -75px;
-      left: 0;
-      height: 100%;
-      width: 1px;
-      background-color: #ffffff1f;
-      transform: rotate(180deg);
-    }
-    &--horizontal {
-      position: absolute;
-      top: 0;
-      left: -75px;
-      height: 1px;
-      width: 100%;
-      background-color: #ffffff1f;
-    }
   }
 }
 .btn-zoom {
