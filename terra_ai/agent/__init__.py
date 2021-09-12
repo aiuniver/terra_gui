@@ -289,7 +289,7 @@ class Exchange:
         except FileNotFoundError as error:
             raise exceptions.FailedDeleteModelException(error.__str__())
 
-    def _call_start_training(
+    def _call_training_start(
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
@@ -300,7 +300,6 @@ class Exchange:
         """
         Старт обучения
         """
-
         if interactive.get_states().get("status") == "stopped":
             interactive.set_status("addtrain")
         elif interactive.get_states().get("status") == "trained":
@@ -315,18 +314,24 @@ class Exchange:
                 training_path=training_path,
                 dataset_path=dataset_path,
                 training_params=params,
-                )
+            )
         except Exception as error:
             raise exceptions.FailedStartTrainException(error.__str__())
         return interactive.train_states
 
-    def _call_stop_training(self):
+    def _call_training_stop(self):
+        """
+        Остановить обучение
+        """
         interactive.set_status("stopped")
 
-    def _call_clear_training(self):
+    def _call_training_clear(self):
+        """
+        Очистить обучение
+        """
         interactive.set_status("no_train")
 
-    def _call_set_interactive_config(self, config: dict):
+    def _call_training_interactive(self, config: dict):
         """
         Обновление интерактивных параметров обучения
         """
@@ -334,6 +339,12 @@ class Exchange:
             interactive.get_train_results(config=config)
         except Exception as error:
             raise exceptions.FailedSetInteractiveConfigException(error.__str__())
+
+    def _call_training_progress(self) -> progress.ProgressData:
+        """
+        Прогресс обучения
+        """
+        return progress.pool("training")
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
