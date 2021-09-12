@@ -97,10 +97,11 @@ Vue.use(vuescroll, {
   name: 'scrollbar'
 });
 
+import pkg from '../package.json'
 Vue.prototype.$config = {
-  isDev: process.env.NODE_ENV === 'development'
+  isDev: process.env.NODE_ENV === 'development',
+  version: pkg.version
 }
-
 
 // import all directivs
 import directives from '@/utils/directives'

@@ -23,6 +23,7 @@
     </div>
     <div class="footer__copyright">
       {{ `Copyright © «Университет искусственного интеллекта», ${new Date().getFullYear()}` }}
+      <span v-if="version" class="footer__version">{{ version }}</span>
     </div>
     <CopyModal v-model="dialogError" :title="'Ошибка!'">{{ message }}</CopyModal>
   </div>
@@ -51,6 +52,9 @@ export default {
     },
     style() {
       return { backgroundColor: '#' + this.protsessor.color };
+    },
+    version() {
+      return this.$config.isDev ? `ver. ${this.$config.version}` : '';
     },
   },
   methods: {
@@ -100,6 +104,9 @@ export default {
   justify-content: flex-start;
   align-content: stretch;
   align-items: stretch;
+  &__version{
+    color: ivory;
+  }
   &__copy-buffer {
     display: flex;
     align-items: center;
