@@ -116,11 +116,16 @@ class Exchange:
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
-    def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
+    def _call_dataset_choice(
+        self, custom_path: Path, destination: Path, group: str, alias: str
+    ) -> DatasetData:
         """
         Выбор датасета
         """
-        datasets_loading.choice(DatasetLoadData(path=path, group=group, alias=alias))
+        datasets_loading.choice(
+            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            destination=destination,
+        )
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:
         """
@@ -296,6 +301,7 @@ class Exchange:
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
+        initial_config: dict
     ):
         """
         Старт обучения
@@ -314,6 +320,7 @@ class Exchange:
                 training_path=training_path,
                 dataset_path=dataset_path,
                 training_params=params,
+                initial_config=initial_config
             )
         except Exception as error:
             raise exceptions.FailedStartTrainException(error.__str__())

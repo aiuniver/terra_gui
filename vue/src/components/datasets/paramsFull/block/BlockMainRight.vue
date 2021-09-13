@@ -24,7 +24,9 @@
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"
+                    :update="mixinUpdateDate"
                     root
+                    @multiselect="mixinUpdate"
                     @change="mixinChange"
                   />
                 </template>

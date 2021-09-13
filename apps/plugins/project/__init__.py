@@ -156,6 +156,7 @@ class Project(BaseMixinData):
                 layer_data = layer.native()
                 layer_data.update(
                     {
+                        "type": layer_init.get("type"),
                         "shape": layer_init.get("shape"),
                         "task": layer_init.get("task"),
                         "num_classes": layer_init.get("num_classes"),

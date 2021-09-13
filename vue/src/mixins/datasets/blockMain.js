@@ -9,7 +9,37 @@ export default {
       },
     },
   },
+  data: () => ({
+    mixinUpdateDate: {},
+    mixinFilter: {
+      Image: ['folder', 'table'],
+      Text: ['folder', 'table'],
+      Audio: ['folder', 'table'],
+      Video: ['folder', 'table'],
+      Classification: ['table'],
+      Segmentation: ['folder', 'table'],
+      Regression: ['table'],
+      Timeseries: ['table'],
+      ObjectDetection: ['folder', 'table'],
+      Dataframe: ['folder', 'table'],
+    }
+  }),
   methods: {
+    mixinUpdate({ id, value }) {
+      if (value.length) {
+        const files = this.$store.getters['datasets/getFilesSource'] || []
+        const { extra } = files.find(item => item.path === value[0].value);
+        if (extra) {
+          for (let key in extra) {
+            this.mixinChange({ id, name: key, value: extra[key] });
+          }
+          this.mixinUpdateDate = {};
+          this.$nextTick(() => {
+            this.mixinUpdateDate = extra;
+          });
+        }
+      }
+    },
     mixinCheck(selected, id) {
       this.mixinFiles = this.mixinFiles.map(file => {
         if (selected.find(item => item.value === file.value)) {

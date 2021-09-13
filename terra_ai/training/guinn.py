@@ -5,11 +5,8 @@ import sys
 
 import copy
 import os
-
 import psutil
 import time
-
-from terra_ai.guiexchange import Exchange
 import pynvml as N
 
 from pathlib import Path
@@ -29,7 +26,6 @@ from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTy
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
-# from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 from terra_ai.training.data import custom_losses_dict
@@ -92,7 +88,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData,
-                             training_path: Path, dataset_path: Path) -> None:
+                             training_path: Path, dataset_path: str, initial_config: dict) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.epochs = params.epochs if interactive.get_states().get("status") != "addtrain" \
@@ -107,7 +103,8 @@ class GUINN:
                                         num_classes=output_layer.get("classes_quantity"))
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
-        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss)
+        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
+                                   dataset_path=dataset_path, initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
@@ -118,7 +115,7 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDataset:
+    def _prepare_dataset(dataset: DatasetData, datasets_path: str) -> PrepareDataset:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
@@ -219,8 +216,9 @@ class GUINN:
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
                   training_path: Path = "",
-                  dataset_path: Path = "",
+                  dataset_path: str = "",
                   training_params: TrainData = None,
+                  initial_config: dict = None
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -237,7 +235,7 @@ class GUINN:
         """
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "retrain" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path,
-                                  params=training_params, training_path=training_path)
+                                  params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
 
         if interactive.get_states().get("status") == "trained":
@@ -525,7 +523,7 @@ class FitCallback(keras.callbacks.Callback):
             # log_history это сохраненная self.log_history
             self.log_history = copy.deepcopy(log_history)
             self.last_epoch = max(log_history.get('epoch')) + 1
-            self._get_metric_checkpoint(log_history.get('logs'))
+            self._get_metric_name_checkpoint(log_history.get('logs'))
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -556,7 +554,7 @@ class FitCallback(keras.callbacks.Callback):
             elif self.checkpoint_config.get('type') == 'metric' and \
                     self.checkpoint_config.get('indicator') == 'val' and \
                     'val' in log:
-                camelize_log = self.clean_and_camelize_log_name(log)
+                camelize_log = self._clean_and_camelize_log_name(log)
                 if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
                     self.metric_checkpoint = log
                     break
@@ -569,7 +567,7 @@ class FitCallback(keras.callbacks.Callback):
             elif self.checkpoint_config.get('type') == 'metric' and \
                     self.checkpoint_config.get('indicator') != 'val' and \
                     'val' not in log:
-                camelize_log = self.clean_and_camelize_log_name(log)
+                camelize_log = self._clean_and_camelize_log_name(log)
                 if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
                     self.metric_checkpoint = log
                     break
@@ -582,7 +580,7 @@ class FitCallback(keras.callbacks.Callback):
                 pass
 
     @staticmethod
-    def clean_and_camelize_log_name(fit_log_name):
+    def _clean_and_camelize_log_name(fit_log_name):
         """Камелизатор исключительно для fit_logs"""
         if re.search(r'_\d+$', fit_log_name):
             end = len(f"_{fit_log_name.split('_')[-1]}")
@@ -603,13 +601,13 @@ class FitCallback(keras.callbacks.Callback):
             }
             for metric in logs:
                 self.log_history['logs'][metric] = []
-            self._get_metric_checkpoint(logs)
+            self._get_metric_name_checkpoint(logs)
             print(f"Chosen {self.metric_checkpoint} for monitoring")
         self.log_history['epoch'].append(epoch)
         for metric in logs:
             self.log_history['logs'][metric].append(logs.get(metric))
 
-    def _best_case_monitoring(self, logs):
+    def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         if self.checkpoint_config.get('mode') == 'min' and \
                 logs.get(self.metric_checkpoint) < min(self.log_history.get('logs').get(self.metric_checkpoint)):
@@ -771,11 +769,10 @@ class FitCallback(keras.callbacks.Callback):
         interacive_logs = copy.deepcopy(logs)
         interacive_logs['epoch'] = epoch + 1
         current_epoch_time = time.time() - self._time_first_step
-        interacive_logs['current_epoch_time'] = current_epoch_time
         train_epoch_data = interactive.update_state(
             fit_logs=interacive_logs,
             y_pred=scheduled_predict,
-            current_epoch_time=interacive_logs['current_epoch_time'],
+            current_epoch_time=current_epoch_time,
             on_epoch_end_flag=True
         )
         self._set_result_data({'train_data': train_epoch_data})
@@ -789,7 +786,7 @@ class FitCallback(keras.callbacks.Callback):
 
         # сохранение лучшей эпохи
         if self.last_epoch > 1:
-            if self._best_case_monitoring(logs):
+            if self._best_epoch_monitoring(logs):
                 self.model.save_weights(f'/content/best_weights_metric_{self.metric_checkpoint}_epoch_{self.last_epoch}')
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
         self._fill_log_history(self.last_epoch, logs)

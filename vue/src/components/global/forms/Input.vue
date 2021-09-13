@@ -6,7 +6,7 @@
 
     <input
       v-model="input"
-      :class="['t-field__input', { 'small': small }, { 't-field__error': error }]"
+      :class="['t-field__input', { small: small }, { 't-field__error': error }]"
       :type="type"
       :name="name || parse"
       :value="value"
@@ -41,6 +41,7 @@ export default {
     small: Boolean,
     error: String,
     degree: Number, // for serialize
+    update: Object,
   },
   data: () => ({
     isChange: false,
@@ -48,7 +49,7 @@ export default {
   computed: {
     input: {
       set(value) {
-        console.log(value);
+        // console.log(value);
         this.$emit('input', value);
         this.isChange = true;
       },
@@ -59,7 +60,7 @@ export default {
   },
   methods: {
     focus(e) {
-      console.log(e);
+      // console.log(e);
       this.$emit('focus', e);
       if (this.error) {
         this.$emit('cleanError', true);
@@ -69,7 +70,7 @@ export default {
       // if (+e.target.value > 99 && this.name === 'classes') e.target.value = '99'
       let value = e.target.value;
       if (this.isChange && value !== '') {
-        console.log(e);
+        // console.log(e);
         value = this.type === 'number' ? +value : value;
         this.$emit('change', { name: this.name, value });
         this.$emit('parse', { name: this.name, parse: this.parse, value });
@@ -79,6 +80,18 @@ export default {
   },
   created() {
     this.input = this.value;
+  },
+  watch: {
+    update(obj) {
+      console.log(obj);
+      if (obj[this.name]) {
+        console.log('ok')
+        this.$el.getElementsByTagName('input')[0].value = obj[this.name]
+        this.$nextTick(() => {
+          this.input = obj[this.name];
+        });
+      }
+    },
   },
 };
 </script>

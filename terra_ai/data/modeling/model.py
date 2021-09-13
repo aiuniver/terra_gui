@@ -2,14 +2,14 @@
 ## Структура данных моделей
 """
 
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from pydantic import validator
 from pydantic.types import PositiveInt
 
 from terra_ai.data.modeling.layer import LayersList
 from ... import settings
 from ..mixins import BaseMixinData, AliasMixinData, UniqueListMixin
-from ..types import confilepath, AliasType, Base64Type
+from ..types import confilepath, Base64Type
 from .extra import LayerBindPositionChoice, LayerGroupChoice
 
 
@@ -37,52 +37,9 @@ class ModelLoadData(BaseMixinData):
     "Пусть к фалу модели"
 
 
-class BlockDetailsData(AliasMixinData):
+class ModelBaseDetailsData(AliasMixinData):
     """
-    Детальная информация о блоке
-    """
-
-    name: Optional[str]
-    "Название блока"
-    image: Optional[Base64Type]
-    "Изображение схемы блока в `base64`"
-    layers: Optional[LayersList]
-    "Список слоев"
-    keras: Optional[str] = ""
-    "Код на keras"
-
-
-class BlockData(AliasMixinData):
-    """
-    Информация о блоке
-    """
-
-    name: Optional[str]
-    "Название"
-    file_path: Optional[confilepath(ext="block")]
-    "Путь к файлу блока"
-    details: Optional[BlockDetailsData]
-    "Детальная информация о блоке"
-
-
-class BlocksList(UniqueListMixin):
-    """
-    Список блоков, основанных на `BlockData`
-    ```
-    class Meta:
-        source = BlockData
-        identifier = "name"
-    ```
-    """
-
-    class Meta:
-        source = BlockData
-        identifier = "alias"
-
-
-class ModelDetailsData(AliasMixinData):
-    """
-    Детальная информация о модели
+    Базова информация о проектировании
     """
 
     name: Optional[str]
@@ -91,8 +48,6 @@ class ModelDetailsData(AliasMixinData):
     "Изображение схемы модели в `base64`"
     layers: LayersList = []
     "Список слоев"
-    references: BlocksList = BlocksList()
-    "Списки блоков, используемых в модели"
     keras: Optional[str] = ""
     "Код на keras"
 
@@ -162,6 +117,62 @@ class ModelDetailsData(AliasMixinData):
             if layer.group == LayerGroupChoice.output:
                 layers.append(layer)
         return layers
+
+    @property
+    def input_shape(self) -> str:
+        shapes = []
+        for layer in self.inputs:
+            shapes += layer.shape.input
+        return str(shapes)
+
+    def dict(self, **kwargs):
+        data = super().dict(**kwargs)
+        data.update({"input_shape": self.input_shape})
+        return data
+
+
+class BlockDetailsData(ModelBaseDetailsData):
+    """
+    Детальная информация о блоке
+    """
+
+    pass
+
+
+class BlockData(AliasMixinData):
+    """
+    Информация о блоке
+    """
+
+    name: Optional[str]
+    "Название"
+    file_path: Optional[confilepath(ext="block")]
+    "Путь к файлу блока"
+    details: Optional[BlockDetailsData]
+    "Детальная информация о блоке"
+
+
+class BlocksList(UniqueListMixin):
+    """
+    Список блоков, основанных на `BlockData`
+    ```
+    class Meta:
+        source = BlockData
+        identifier = "name"
+    ```
+    """
+
+    class Meta:
+        source = BlockData
+        identifier = "alias"
+
+
+class ModelDetailsData(ModelBaseDetailsData):
+    """
+    Детальная информация о модели
+    """
+
+    references: BlocksList = BlocksList()
 
 
 class ModelData(AliasMixinData):
