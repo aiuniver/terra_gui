@@ -82,7 +82,13 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     filterList() {
-      return this.lists.filter(item => !item.id || item.id === this.id);
+      const { type } = this.$store.getters['datasets/getInputDataByID'](this.id);
+      const filter = this.mixinFilter?.[type || ''] || [];
+      // console.log(type, filter);
+      return this.lists
+        .filter(item => !item.id || item.id === this.id)
+        // .filter(item => item.type !== 'table')
+        .filter(item => filter.includes(item.type));
     },
   },
   methods: {
