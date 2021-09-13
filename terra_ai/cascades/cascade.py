@@ -64,7 +64,7 @@ class CascadeBlock(Cascade):
 
         global cascade
         for cascade, inp in self.adjacency_map.items():
-            if cascade(*[item if j == 'ITER' else j.out for j in inp]) is None:
+            if cascade(*[item if j == 'INPUT' else j.out for j in inp]) is None:
                 return None
 
         self.out = cascade.out
@@ -73,3 +73,23 @@ class CascadeBlock(Cascade):
     def loop(self, iterator):
         for item in iterator:
             yield self.__call__(item)
+
+
+class BuildModelCascade(CascadeBlock):
+
+    def __init__(self, preprocess, model, postprocessing, name=None):
+
+        self.preprocess = CascadeElement(preprocess, name="Препроцесс") if preprocess else preprocess
+        self.model = CascadeElement(model, name=name) if name else CascadeElement(model, name="Модель")
+        self.postprocessing = CascadeElement(postprocessing, name="Постпроцесс") if postprocessing else postprocessing
+
+        adjacency_map = OrderedDict()
+        if self.preprocess:
+            adjacency_map[self.preprocess] = ['INPUT']
+
+        adjacency_map[self.model] = [self.preprocess]
+
+        if self.postprocessing:
+            adjacency_map[self.postprocessing] = [self.model, 'INPUT']
+
+        super(BuildModelCascade, self).__init__(adjacency_map)

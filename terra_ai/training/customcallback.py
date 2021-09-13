@@ -15,7 +15,7 @@ from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
-from terra_ai.datasets.preparing import PrepareDTS
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
 
@@ -298,6 +298,10 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },
+        "DiceCoef": {
+            "log_name": "dice_coef",
+            "mode": "max"
+        },
     }
 }
 
@@ -416,7 +420,7 @@ class InteractiveCallback:
         }
         pass
 
-    def set_attributes(self, dataset: PrepareDTS, metrics: dict, losses: dict):
+    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)

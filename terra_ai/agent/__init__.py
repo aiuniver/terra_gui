@@ -34,7 +34,7 @@ from ..data.training.train import TrainData
 
 from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
-from ..datasets.creating import CreateDTS
+from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
@@ -194,9 +194,9 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        creation = CreateDTS()
-        dataset = creation.create_dataset(CreationData(**kwargs))
-        return dataset
+        data = CreationData(**kwargs)
+        creation = CreateDataset(data)
+        return creation.datasetdata
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
