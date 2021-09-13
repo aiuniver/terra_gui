@@ -368,73 +368,78 @@ class InteractiveCallback:
         }
 
         self.interactive_config = {
-            'loss_graphs': [
-                # {
-                #     'id': 1,
-                #     'output_idx': 2,
-                #     'show_for_model': True,
-                #     'show_for_classes': False
-                # },
-                # {
-                #     'id': 2,
-                #     'output_idx': 2,
-                #     'show_for_model': False,
-                #     'show_for_classes': True
-                # },
-            ],
-            'metric_graphs': [
-                # {
-                #     'id': 1,
-                #     'output_idx': 2,
-                #     'show_for_model': True,
-                #     'show_for_classes': False,
-                #     'show_metric': 'CategoricalAccuracy'
-                # },
-                # {
-                #     'id': 2,
-                #     'output_idx': 2,
-                #     'show_for_model': False,
-                #     'show_for_classes': True,
-                #     'show_metric': 'CategoricalAccuracy'
-                # }
-            ],
-            'intermediate_result': {
-                'show_results': False,
-                'example_choice_type': 'seed',
-                'main_output': 2,
-                'num_examples': 10,
-                'show_statistic': False,
-                'autoupdate': False
-            },
-            'progress_table': [
-                {
-                    'output_idx': 2,
-                    'show_loss': True,
-                    'show_metrics': True,
-                }
-            ],
-            'statistic_data': {
-                'output_id': [2],
-                'autoupdate': False
-            },
-            'data_balance': {
-                'show_train': True,
-                'show_val': True,
-                'sorted': 'by_name'  # 'descending', 'ascending'
-            }
+            # 'loss_graphs': [
+            #     # {
+            #     #     'id': 1,
+            #     #     'output_idx': 2,
+            #     #     'show_for_model': True,
+            #     #     'show_for_classes': False
+            #     # },
+            #     # {
+            #     #     'id': 2,
+            #     #     'output_idx': 2,
+            #     #     'show_for_model': False,
+            #     #     'show_for_classes': True
+            #     # },
+            # ],
+            # 'metric_graphs': [
+            #     # {
+            #     #     'id': 1,
+            #     #     'output_idx': 2,
+            #     #     'show_for_model': True,
+            #     #     'show_for_classes': False,
+            #     #     'show_metric': 'CategoricalAccuracy'
+            #     # },
+            #     # {
+            #     #     'id': 2,
+            #     #     'output_idx': 2,
+            #     #     'show_for_model': False,
+            #     #     'show_for_classes': True,
+            #     #     'show_metric': 'CategoricalAccuracy'
+            #     # }
+            # ],
+            # 'intermediate_result': {
+            #     'show_results': False,
+            #     'example_choice_type': 'seed',
+            #     'main_output': 2,
+            #     'num_examples': 10,
+            #     'show_statistic': False,
+            #     'autoupdate': False
+            # },
+            # 'progress_table': [
+            #     {
+            #         'output_idx': 2,
+            #         'show_loss': True,
+            #         'show_metrics': True,
+            #     }
+            # ],
+            # 'statistic_data': {
+            #     'output_id': [2],
+            #     'autoupdate': False
+            # },
+            # 'data_balance': {
+            #     'show_train': True,
+            #     'show_val': True,
+            #     'sorted': 'by_name'  # 'descending', 'ascending'
+            # }
         }
         pass
 
-    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict, dataset_path: str):
+    def set_attributes(self, dataset: PrepareDataset,
+                       metrics: dict,
+                       losses: dict,
+                       dataset_path: str,
+                       initial_config: dict):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
+        self.interactive_config = initial_config
         # self.dataset = dataset
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = dataset.X.get("val") if dataset.data.group == DatasetGroupChoice.keras else None
         self._prepare_y_true(dataset)
-        self._prepare_interactive_config()
+        # self._prepare_interactive_config()
 
         self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
@@ -557,7 +562,11 @@ class InteractiveCallback:
         for out in metrics.keys():
             metrics_obj[f"{out}"] = {}
             for metric in metrics.get(out):
-                metrics_obj[f"{out}"][camelize(metric.name)] = metric
+                metric_name = metric.name
+                if re.search(r'_\d+$', metric_name):
+                    end = len(f"_{metric_name.split('_')[-1]}")
+                    metric_name = metric_name[:-end]
+                metrics_obj[f"{out}"][camelize(metric_name)] = metric
         return metrics_obj
 
     def _prepare_dataset_config(self, dataset: PrepareDataset, dataset_path: str):
@@ -631,47 +640,47 @@ class InteractiveCallback:
                 else:
                     pass
 
-    def _prepare_interactive_config(self):
-        # fill loss_graphs config
-        _id = 1
-        for out in self.losses.keys():
-            self.interactive_config.get('loss_graphs').append(
-                dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False)
-            )
-            _id += 1
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-                self.interactive_config.get('loss_graphs').append(
-                    dict(id=_id, output_idx=out, show_for_model=False, show_for_classes=True)
-                )
-                _id += 1
-
-        # fill metric_graphs config
-        _id = 1
-        for out in self.metrics.keys():
-            self.interactive_config.get('metric_graphs').append(
-                dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
-                     show_metric=self.metrics.get(out)[0])
-            )
-            _id += 1
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-                self.interactive_config.get('metric_graphs').append(
-                    dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
-                         show_metric=self.metrics.get(out)[0])
-                )
-                _id += 1
-            break
-
-        # fill progress_table_config
-        for out in self.metrics.keys():
-            self.interactive_config.get('progress_table').append(
-                {
-                    'output_idx': out,
-                    'show_loss': True,
-                    'show_metrics': True,
-                }
-            )
+    # def _prepare_interactive_config(self):
+    #     # fill loss_graphs config
+    #     _id = 1
+    #     for out in self.losses.keys():
+    #         self.interactive_config.get('loss_graphs').append(
+    #             dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False)
+    #         )
+    #         _id += 1
+    #         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+    #                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+    #             self.interactive_config.get('loss_graphs').append(
+    #                 dict(id=_id, output_idx=out, show_for_model=False, show_for_classes=True)
+    #             )
+    #             _id += 1
+    #
+    #     # fill metric_graphs config
+    #     _id = 1
+    #     for out in self.metrics.keys():
+    #         self.interactive_config.get('metric_graphs').append(
+    #             dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
+    #                  show_metric=self.metrics.get(out)[0])
+    #         )
+    #         _id += 1
+    #         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+    #                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+    #             self.interactive_config.get('metric_graphs').append(
+    #                 dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
+    #                      show_metric=self.metrics.get(out)[0])
+    #             )
+    #             _id += 1
+    #         break
+    #
+    #     # fill progress_table_config
+    #     for out in self.metrics.keys():
+    #         self.interactive_config.get('progress_table').append(
+    #             {
+    #                 'output_idx': out,
+    #                 'show_loss': True,
+    #                 'show_metrics': True,
+    #             }
+    #         )
 
     def _prepare_null_log_history_template(self):
         """
@@ -806,7 +815,7 @@ class InteractiveCallback:
                         for cl in classes:
                             if cl in img_array:
                                 class_count[
-                                    self.dataset_config.get("outputs").get(out).get("classes_names").get(out)[cl]
+                                    self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
                                 ] += 1
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["square_balance"] = class_square
@@ -1922,8 +1931,8 @@ class InteractiveCallback:
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webp"
-            clip.write_videofile(f"{save_path}.webp")
+            save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
+            clip.write_videofile(save_path)
             return save_path, LayerInputTypeChoice.Video
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
             # filepath = NamedTemporaryFile()
@@ -1976,7 +1985,7 @@ class InteractiveCallback:
                     y_true == [color_idx],
                     np.array(
                         self.dataset_config.get("outputs").get(output_id).get("classes_colors")[
-                            color_idx].as_rgb_tuple()),
+                            color_idx]),
                     y_true
                 )
             y_true = tensorflow.keras.utils.array_to_img(y_true)
@@ -1990,8 +1999,7 @@ class InteractiveCallback:
             for color_idx in range(len(self.dataset_config.get("outputs").get(output_id).get("classes_colors"))):
                 y_pred = np.where(
                     y_pred == [color_idx],
-                    np.array(self.dataset_config.get("outputs").get(output_id).get("classes_colors")[
-                                 color_idx].as_rgb_tuple()),
+                    np.array(self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
                     y_pred
                 )
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
@@ -2004,7 +2012,7 @@ class InteractiveCallback:
             if show_stat:
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
                 y_pred = to_categorical(np.argmax(self.y_pred.get(output_id)[example_idx], axis=-1),
-                                        self.dataset_config.get("outputs").get(output_id).get("classes_colors"))
+                                        self.dataset_config.get("outputs").get(output_id).get("num_classes"))
                 for idx, cls in enumerate(labels):
                     dice_val = np.round(self._dice_coef(y_true[:, :, idx], y_pred[:, :, idx], batch_mode=False) * 100,
                                         1)
