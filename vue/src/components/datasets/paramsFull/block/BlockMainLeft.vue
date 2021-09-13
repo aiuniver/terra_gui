@@ -1,5 +1,5 @@
 <template>
-  <div class="block-left" :key="componentKey">
+  <div class="block-left">
     <div class="block-left__fab">
       <Fab @click="addCard" />
     </div>
@@ -20,13 +20,13 @@
                   <t-auto-field
                     v-bind="data"
                     :parameters="parameters"
-                    :extra="extra"
                     :errors="errors"
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"
+                    :update="mixinUpdateDate"
                     root
-                    @multiselect="multiselect"
+                    @multiselect="mixinUpdate"
                     @change="mixinChange"
                   />
                 </template>
@@ -64,14 +64,11 @@ export default {
         gutterOfEnds: '6px',
       },
     },
-    extra: {},
-    componentKey: 1
   }),
   computed: {
     ...mapGetters({
       input: 'datasets/getTypeInput',
       inputData: 'datasets/getInputData',
-      filesSource: 'datasets/getFilesSource',
     }),
     inputDataInput() {
       const arr = this.inputData.filter(item => {
@@ -90,17 +87,6 @@ export default {
     },
   },
   methods: {
-    multiselect({ id, value }) {
-      if (value.length) {
-        const { extra } = this.filesSource.find(item => item.path === value[0].value);
-        if (extra) {
-          for (let key in extra) {
-            this.mixinChange({ id, name: key, value: extra[key] });
-          }
-          this.componentKey += 1;
-        }
-      }
-    },
     error(id, key) {
       const errors = this.$store.getters['datasets/getErrors'](id);
       return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';

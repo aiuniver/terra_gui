@@ -111,7 +111,7 @@ export default {
           this.selected = [...this.selected, list];
         }
       }
-      console.log(this.id)
+      // console.log(this.id)
       this.$emit('multiselect', { value: this.selected, id: this.id });
       this.mixinCheck(this.selected, this.id);
     },
