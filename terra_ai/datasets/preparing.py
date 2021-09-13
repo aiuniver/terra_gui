@@ -7,6 +7,7 @@ from ..utils import decamelize
 
 from tensorflow.keras import utils
 from tensorflow.python.data.ops.dataset_ops import DatasetV2 as Dataset
+from tensorflow.python.ops.ragged.ragged_factory_ops import constant
 from sklearn.model_selection import train_test_split
 
 from terra_ai.datasets.preprocessing import CreatePreprocessing
@@ -30,6 +31,8 @@ class PrepareDataset(object):
         if self.data.group != 'keras':
             self.paths = DatasetPathsData(basepath=datasets_path)
             self.preprocessing = CreatePreprocessing(dataset_path=self.paths.basepath)
+        else:
+            self.preprocessing = CreatePreprocessing()
 
         self.X: dict = {'train': {}, 'val': {}, 'test': {}}
         self.Y: dict = {'train': {}, 'val': {}, 'test': {}}
@@ -145,10 +148,6 @@ class PrepareDataset(object):
         self.Y['val']['2'] = y_val
         self.Y['test']['2'] = y_test
 
-        self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
-        self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
-        self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
-
         pass
 
     def prepare_dataset(self):
@@ -171,7 +170,24 @@ class PrepareDataset(object):
             pass
 
         if self.data.group == DatasetGroupChoice.keras:
+
             self.keras_datasets()
+
+            if self.data.alias in ['mnist', 'fashion_mnist', 'cifar10', 'cifar100']:
+                self.preprocessing.create_scaler(put_id=1, array=self.X['train']['1'], scaler='min_max_scaler')
+                for key in self.X.keys():
+                    for inp in self.X[key]:
+                        self.X[key][inp] = self.preprocessing.preprocessing[1]['object_scaler']\
+                            .transform(self.X[key][inp].reshape(-1, 1)).reshape(self.X[key][inp].shape)
+
+            if self.data.alias in ['imdb', 'reuters']:
+                for key in self.X.keys():
+                    for inp in self.X[key]:
+                        self.X[key][inp] = constant(self.X[key][inp])
+
+            self.dataset['train'] = Dataset.from_tensor_slices((self.X['train'], self.Y['train']))
+            self.dataset['val'] = Dataset.from_tensor_slices((self.X['val'], self.Y['val']))
+            self.dataset['test'] = Dataset.from_tensor_slices((self.X['test'], self.Y['test']))
 
         elif self.data.group == DatasetGroupChoice.custom:
             for put in ['train', 'val', 'test']:
