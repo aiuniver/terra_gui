@@ -38,7 +38,7 @@ class CreatePreprocessing(object):
         scaler = None
         if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
             scaler = MinMaxScaler()
-            array = array.reshape(-1, 1) if array else np.array([[0], [255]])
+            array = array.reshape(-1, 1) if isinstance(array, np.ndarray) else np.array([[0], [255]])
             scaler.fit(array)
 
         self.preprocessing[put_id] = {'object_scaler': scaler}
