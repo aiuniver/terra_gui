@@ -31,11 +31,9 @@ DATASET_SOURCE_UNPACK_TITLE = "Распаковка исходников дат�
 DATASET_CHOICE_TITLE = "Загрузка датасета %s.%s"
 DATASET_CHOICE_UNPACK_TITLE = "Распаковка датасета %s.%s"
 DATASET_CHOICE_TERRA_URL = "https://storage.googleapis.com/terra_ai/DataSets/Numpy/"
-DATASETS_SOURCE_DIR = Path(settings.TMP_DIR, "datasets_sources")
-DATASETS_CHOICE_DIR = Path(settings.TMP_DIR, "datasets_choices")
+DATASETS_SOURCE_DIR = Path(settings.TMP_DIR, "datasets", "sources")
 
 os.makedirs(DATASETS_SOURCE_DIR, exist_ok=True)
-os.makedirs(DATASETS_CHOICE_DIR, exist_ok=True)
 
 
 @progress.threading
@@ -116,7 +114,7 @@ def source(strict_object: SourceData):
 
 
 @progress.threading
-def __choice_from_keras(name: str, **kwargs):
+def __choice_from_keras(name: str, destination: Path, **kwargs):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -132,9 +130,9 @@ def __choice_from_keras(name: str, **kwargs):
         .datasets.get(name)
     )
     if dataset:
-        progress.pool(
-            progress_name, percent=100, data={"dataset": dataset}, finished=True
-        )
+        shutil.rmtree(destination, ignore_errors=True)
+        os.makedirs(destination, exist_ok=True)
+        progress.pool(progress_name, percent=100, data=dataset, finished=True)
     else:
         progress.pool(
             progress_name,
@@ -143,7 +141,7 @@ def __choice_from_keras(name: str, **kwargs):
 
 
 @progress.threading
-def __choice_from_custom(name: str, source: Path, **kwargs):
+def __choice_from_custom(name: str, destination: Path, source: Path, **kwargs):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -157,14 +155,11 @@ def __choice_from_custom(name: str, source: Path, **kwargs):
         data = CustomDatasetConfigData(
             path=Path(source, f"{name}.{settings.DATASET_EXT}")
         )
+        shutil.rmtree(destination)
+        shutil.copytree(data.path, destination)
         dataset = DatasetData(**data.config)
         if dataset:
-            progress.pool(
-                progress_name,
-                percent=100,
-                data={"dataset": dataset, "path": data.path},
-                finished=True,
-            )
+            progress.pool(progress_name, percent=100, data=dataset, finished=True)
         else:
             progress.pool(
                 progress_name,
@@ -188,10 +183,7 @@ def __choice_from_custom(name: str, source: Path, **kwargs):
 
 
 @progress.threading
-def __choice_from_terra(name: str, folder: Path, **kwargs):
-    # Получение папки датасета
-    dataset_path = Path(folder, f"{name}.{settings.DATASET_EXT}")
-
+def __choice_from_terra(name: str, destination: Path, **kwargs):
     # Имя прогресс-бара
     progress_name = "dataset_choice"
     progress.pool.reset(
@@ -200,35 +192,29 @@ def __choice_from_terra(name: str, folder: Path, **kwargs):
         finished=False,
     )
 
-    if not dataset_path.exists():
-        try:
-            zipfile_path = progress_utils.download(
-                progress_name,
-                DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name),
-                f"{DATASET_CHOICE_TERRA_URL}{name}.zip",
-            )
-            zip_destination = progress_utils.unpack(
-                progress_name,
-                DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
-                zipfile_path,
-            )
-            shutil.move(zip_destination, dataset_path)
-            os.remove(zipfile_path.absolute())
-        except (Exception, requests.exceptions.ConnectionError) as error:
-            progress.pool(progress_name, error=str(error))
-            return
+    try:
+        zipfile_path = progress_utils.download(
+            progress_name,
+            DATASET_CHOICE_TITLE % (DatasetGroupChoice.terra.value, name),
+            f"{DATASET_CHOICE_TERRA_URL}{name}.zip",
+        )
+        zip_destination = progress_utils.unpack(
+            progress_name,
+            DATASET_CHOICE_UNPACK_TITLE % (DatasetGroupChoice.terra.value, name),
+            zipfile_path,
+        )
+        shutil.move(zip_destination, destination)
+        os.remove(zipfile_path.absolute())
+    except (Exception, requests.exceptions.ConnectionError) as error:
+        progress.pool(progress_name, error=str(error))
+        return
 
     # Выбор датасета
     try:
-        data = CustomDatasetConfigData(path=dataset_path)
+        data = CustomDatasetConfigData(path=destination)
         dataset = DatasetData(**data.config)
         if dataset:
-            progress.pool(
-                progress_name,
-                percent=100,
-                data={"dataset": dataset, "path": data.path},
-                finished=True,
-            )
+            progress.pool(progress_name, percent=100, data=dataset, finished=True)
         else:
             progress.pool(
                 progress_name,
@@ -251,14 +237,14 @@ def __choice_from_terra(name: str, folder: Path, **kwargs):
         progress.pool(progress_name, error=str(error))
 
 
-def choice(dataset_choice: DatasetLoadData):
+def choice(dataset_choice: DatasetLoadData, destination: Path):
     __method_name = f"__choice_from_{dataset_choice.group.lower()}"
     __method = getattr(sys.modules.get(__name__), __method_name, None)
     if __method:
-        choice_folder = Path(DATASETS_CHOICE_DIR, dataset_choice.group.lower())
-        os.makedirs(choice_folder, exist_ok=True)
         __method(
-            name=dataset_choice.alias, folder=choice_folder, source=dataset_choice.path
+            name=dataset_choice.alias,
+            destination=destination,
+            source=dataset_choice.path,
         )
     else:
         raise DatasetChoiceUndefinedMethodException(dataset_choice.group.value)

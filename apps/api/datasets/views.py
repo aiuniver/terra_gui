@@ -1,5 +1,3 @@
-import shutil
-
 from pydantic import ValidationError
 
 from apps.plugins.project import data_path, project_path
@@ -30,7 +28,8 @@ class ChoiceAPIView(BaseAPIView):
         try:
             agent_exchange(
                 "dataset_choice",
-                path=str(data_path.datasets),
+                custom_path=data_path.datasets,
+                destination=project_path.datasets,
                 **serializer.validated_data,
             )
             return BaseResponseSuccess()
@@ -46,9 +45,7 @@ class ChoiceProgressAPIView(BaseAPIView):
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
             try:
-                shutil.rmtree(project_path.datasets)
-                shutil.copytree(progress.data.get("path"), project_path.datasets)
-                request.project.set_dataset(progress.data.get("dataset"))
+                request.project.set_dataset(progress.data)
                 save_project = True
             except project_exceptions.ProjectException as error:
                 return BaseResponseErrorGeneral(str(error))
