@@ -16,8 +16,6 @@ class DeployDataset(object):
 
         self.data = None
         self.paths: DatasetPathsData = DatasetPathsData(basepath=dataset_path)
-
-
         self.instructions: dict = {}
 
         for instr_json in os.listdir(os.path.join(self.paths.instructions, 'parameters')):
@@ -47,8 +45,11 @@ class DeployDataset(object):
                                                                            **self.preprocessing.preprocessing[inp])
             array = []
             for elem in cut['instructions']:
+                arr = getattr(CreateArray(),
+                              f'create_{decamelize(self.data.inputs[inp].task)}')(elem, **cut['parameters'])
                 array.append(getattr(CreateArray(),
-                                     f'create_{decamelize(self.data.inputs[inp].task)}')(elem, **cut['parameters']))
+                                     f'preprocess_{decamelize(self.data.inputs[inp].task)}')(arr['instructions'],
+                                                                                             **arr['parameters']))
             paths_array[inp] = np.array(array)
 
         shutil.rmtree(temp_directory, ignore_errors=True)
