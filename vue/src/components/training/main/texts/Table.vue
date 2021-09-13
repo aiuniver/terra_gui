@@ -14,19 +14,20 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="({data:{output_1:{accuracy, loss, val_accuracy, val_loss}}, time, number}, i) of epochs" :key="'epoch_' + i">
-        <td class="epoch_num">{{ number }}</td>
-        <td>{{ time }}</td>
-        <td class="value"><span>{{ accuracy | int }}</span><i>.</i>{{ accuracy | drob }}</td>
-        <td class="value"><span>{{ loss | int }}</span><i>.</i>{{ loss | drob }}</td>
-        <td class="value"><span>{{ val_accuracy | int }}</span><i>.</i>{{ val_accuracy | drob }}</td>
-        <td class="value"><span>{{ val_loss | int }}</span><i>.</i>{{ val_loss | drob }}</td>
-
+      <tr v-for="({time, data}, key, i) of data" :key="'epoch_' + i">
+        <td class="epoch_num">{{ key }}</td>
+        <td>{{ time | int }}</td>
+        <template v-for="item, key, i of data">
+          <td class="value" :key="key + '_tr_1' + i"><span>{{ item.loss.loss | drob }}</span><i>.</i>{{ '' }}</td>
+          <td class="value" :key="key + '_tr_2' + i"><span>{{ item.loss.val_loss | drob }}</span><i>.</i>{{ '' }}</td>
+          <td class="value" :key="key + '_tr_3' + i"><span>{{ item.metrics.AUC | drob}}</span><i>.</i>{{ '' }}</td>
+          <td class="value" :key="key + '_tr_4' + i"><span>{{ item.metrics.val_AUC | drob }}</span><i>.</i>{{ '' }}</td>
+        </template>
       </tr>
     </tbody>
     <tfoot>
       <tr>
-        <th colspan="6">{{ summary }}</th>
+        <th colspan="6">{{ 'summary' }}</th>
       </tr>
     </tfoot>
   </table>
@@ -36,14 +37,10 @@
 export default {
   name: "TTable",
   props: {
-    summary: {
-      type: String,
-      default: ''
-    },
-    epochs: {
-      type: Array,
-      default: () => [],
-    },
+    data: {
+      type: Object,
+      default: () => {}
+    }    
   },
   filters: {
     int(val) {

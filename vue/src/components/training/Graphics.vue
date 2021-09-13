@@ -13,6 +13,8 @@
           <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
             <PrePesults/>
+            <!-- <Images /> -->
+            <Prediction />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Прогресс обучения" center>
             <Progress />
@@ -34,6 +36,7 @@
 
 <script>
 import { mapGetters } from 'vuex';
+// import Images from './main/images/index.vue';
 // import Images from "./main/images/index.vue";
 import Texts from "./main/texts/index.vue";
 import Scatters from "./main/Scatters.vue";
@@ -45,16 +48,16 @@ import Progress from './main/progress/';
 import LoadSpiner from '../forms/LoadSpiner.vue';
 import Stats from './main/stats';
 import Balance from './main/balance';
+import Prediction from './main/prediction';
 
 export default {
   name: 'Graphics',
   components: {
-    // Images,
+    Prediction,
     Texts,
+    // Images,
     Progress,
     LoadSpiner,
-    PrePesults,
-    Chars: () => import('./main/chars/index.vue'),
     Stats,
     Balance,
     LossGraphs: () => import('./main/chars/LossGraphs.vue'),
@@ -78,7 +81,7 @@ export default {
   },
   methods: {
     change(e) {
-      this.$emit('collabse', this.collabse)
+      this.$emit('collabse', this.collabse);
       this.collabse = e;
       console.log(e);
     },

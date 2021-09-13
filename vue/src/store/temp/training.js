@@ -18841,286 +18841,324 @@ const test = {
     "progress_table": {
       "1": {
         "time": 7.233344078063965,
-        "Output_2": {
-          "loss": {
-            "loss": 0.9713165163993835,
-            "val_loss": 0.942412257194519
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.5084558725357056,
-            "val_CategoricalAccuracy": 0.568359375,
-            "AUC": 0.7065025568008423,
-            "val_AUC": 0.7676296234130859
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.9713165163993835,
+              "val_loss": 0.942412257194519
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.5084558725357056,
+              "val_CategoricalAccuracy": 0.568359375,
+              "AUC": 0.7065025568008423,
+              "val_AUC": 0.7676296234130859
+            }
           }
         }
       },
       "2": {
         "time": 1.1706864833831787,
-        "Output_2": {
-          "loss": {
-            "loss": 0.8578746318817139,
-            "val_loss": 0.8653479218482971
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.5926470756530762,
-            "val_CategoricalAccuracy": 0.6015625,
-            "AUC": 0.7891879677772522,
-            "val_AUC": 0.8073110580444336
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.8578746318817139,
+              "val_loss": 0.8653479218482971
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.5926470756530762,
+              "val_CategoricalAccuracy": 0.6015625,
+              "AUC": 0.7891879677772522,
+              "val_AUC": 0.8073110580444336
+            }
           }
         }
       },
       "3": {
         "time": 1.1642217636108398,
-        "Output_2": {
-          "loss": {
-            "loss": 0.802897572517395,
-            "val_loss": 0.8113749623298645
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.637499988079071,
-            "val_CategoricalAccuracy": 0.638671875,
-            "AUC": 0.8201937079429626,
-            "val_AUC": 0.8251056671142578
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.802897572517395,
+              "val_loss": 0.8113749623298645
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.637499988079071,
+              "val_CategoricalAccuracy": 0.638671875,
+              "AUC": 0.8201937079429626,
+              "val_AUC": 0.8251056671142578
+            }
           }
         }
       },
       "4": {
         "time": 1.0538578033447266,
-        "Output_2": {
-          "loss": {
-            "loss": 0.7554795145988464,
-            "val_loss": 0.7803205251693726
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.6658087968826294,
-            "val_CategoricalAccuracy": 0.63671875,
-            "AUC": 0.8444119095802307,
-            "val_AUC": 0.8321304321289062
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.7554795145988464,
+              "val_loss": 0.7803205251693726
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.6658087968826294,
+              "val_CategoricalAccuracy": 0.63671875,
+              "AUC": 0.8444119095802307,
+              "val_AUC": 0.8321304321289062
+            }
           }
         }
       },
       "5": {
         "time": 1.1631839275360107,
-        "Output_2": {
-          "loss": {
-            "loss": 0.7013662457466125,
-            "val_loss": 0.7638459205627441
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.7018382549285889,
-            "val_CategoricalAccuracy": 0.640625,
-            "AUC": 0.8699883818626404,
-            "val_AUC": 0.8367853164672852
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.7013662457466125,
+              "val_loss": 0.7638459205627441
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.7018382549285889,
+              "val_CategoricalAccuracy": 0.640625,
+              "AUC": 0.8699883818626404,
+              "val_AUC": 0.8367853164672852
+            }
           }
         }
       },
       "6": {
         "time": 1.1669681072235107,
-        "Output_2": {
-          "loss": {
-            "loss": 0.6513573527336121,
-            "val_loss": 0.7569182515144348
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.7301470637321472,
-            "val_CategoricalAccuracy": 0.6484375,
-            "AUC": 0.890245795249939,
-            "val_AUC": 0.8393497467041016
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.6513573527336121,
+              "val_loss": 0.7569182515144348
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.7301470637321472,
+              "val_CategoricalAccuracy": 0.6484375,
+              "AUC": 0.890245795249939,
+              "val_AUC": 0.8393497467041016
+            }
           }
         }
       },
       "7": {
         "time": 1.1550495624542236,
-        "Output_2": {
-          "loss": {
-            "loss": 0.6137965321540833,
-            "val_loss": 0.7524999380111694
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.7540441155433655,
-            "val_CategoricalAccuracy": 0.642578125,
-            "AUC": 0.9042181968688965,
-            "val_AUC": 0.8411540985107422
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.6137965321540833,
+              "val_loss": 0.7524999380111694
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.7540441155433655,
+              "val_CategoricalAccuracy": 0.642578125,
+              "AUC": 0.9042181968688965,
+              "val_AUC": 0.8411540985107422
+            }
           }
         }
       },
       "8": {
         "time": 1.154860258102417,
-        "Output_2": {
-          "loss": {
-            "loss": 0.5739713907241821,
-            "val_loss": 0.7603248357772827
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.7768382430076599,
-            "val_CategoricalAccuracy": 0.654296875,
-            "AUC": 0.9187082052230835,
-            "val_AUC": 0.8384675979614258
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.5739713907241821,
+              "val_loss": 0.7603248357772827
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.7768382430076599,
+              "val_CategoricalAccuracy": 0.654296875,
+              "AUC": 0.9187082052230835,
+              "val_AUC": 0.8384675979614258
+            }
           }
         }
       },
       "9": {
         "time": 1.6223797798156738,
-        "Output_2": {
-          "loss": {
-            "loss": 0.5361674427986145,
-            "val_loss": 0.757815957069397
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8011029362678528,
-            "val_CategoricalAccuracy": 0.650390625,
-            "AUC": 0.930651843547821,
-            "val_AUC": 0.8404455184936523
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.5361674427986145,
+              "val_loss": 0.757815957069397
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8011029362678528,
+              "val_CategoricalAccuracy": 0.650390625,
+              "AUC": 0.930651843547821,
+              "val_AUC": 0.8404455184936523
+            }
           }
         }
       },
       "10": {
         "time": 1.6033599376678467,
-        "Output_2": {
-          "loss": {
-            "loss": 0.5122222900390625,
-            "val_loss": 0.7624929547309875
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8058823347091675,
-            "val_CategoricalAccuracy": 0.65234375,
-            "AUC": 0.9371531009674072,
-            "val_AUC": 0.8388462066650391
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.5122222900390625,
+              "val_loss": 0.7624929547309875
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8058823347091675,
+              "val_CategoricalAccuracy": 0.65234375,
+              "AUC": 0.9371531009674072,
+              "val_AUC": 0.8388462066650391
+            }
           }
         }
       },
       "11": {
         "time": 1.607417106628418,
-        "Output_2": {
-          "loss": {
-            "loss": 0.4707668423652649,
-            "val_loss": 0.7704657912254333
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8297793865203857,
-            "val_CategoricalAccuracy": 0.650390625,
-            "AUC": 0.949375331401825,
-            "val_AUC": 0.838221549987793
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.4707668423652649,
+              "val_loss": 0.7704657912254333
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8297793865203857,
+              "val_CategoricalAccuracy": 0.650390625,
+              "AUC": 0.949375331401825,
+              "val_AUC": 0.838221549987793
+            }
           }
         }
       },
       "12": {
         "time": 1.6039378643035889,
-        "Output_2": {
-          "loss": {
-            "loss": 0.4400102198123932,
-            "val_loss": 0.7801728844642639
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.846323549747467,
-            "val_CategoricalAccuracy": 0.6484375,
-            "AUC": 0.9565418362617493,
-            "val_AUC": 0.8360595703125
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.4400102198123932,
+              "val_loss": 0.7801728844642639
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.846323549747467,
+              "val_CategoricalAccuracy": 0.6484375,
+              "AUC": 0.9565418362617493,
+              "val_AUC": 0.8360595703125
+            }
           }
         }
       },
       "13": {
         "time": 1.5945181846618652,
-        "Output_2": {
-          "loss": {
-            "loss": 0.4212392568588257,
-            "val_loss": 0.7979251146316528
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8507353067398071,
-            "val_CategoricalAccuracy": 0.640625,
-            "AUC": 0.96000075340271,
-            "val_AUC": 0.8328495025634766
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.4212392568588257,
+              "val_loss": 0.7979251146316528
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8507353067398071,
+              "val_CategoricalAccuracy": 0.640625,
+              "AUC": 0.96000075340271,
+              "val_AUC": 0.8328495025634766
+            }
           }
         }
       },
       "14": {
         "time": 1.6025996208190918,
-        "Output_2": {
-          "loss": {
-            "loss": 0.3897399306297302,
-            "val_loss": 0.8107377290725708
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8716911673545837,
-            "val_CategoricalAccuracy": 0.634765625,
-            "AUC": 0.9670868515968323,
-            "val_AUC": 0.8318805694580078
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.3897399306297302,
+              "val_loss": 0.8107377290725708
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8716911673545837,
+              "val_CategoricalAccuracy": 0.634765625,
+              "AUC": 0.9670868515968323,
+              "val_AUC": 0.8318805694580078
+            }
           }
         }
       },
       "15": {
         "time": 1.6053509712219238,
-        "Output_2": {
-          "loss": {
-            "loss": 0.36565807461738586,
-            "val_loss": 0.8108655214309692
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.875,
-            "val_CategoricalAccuracy": 0.6171875,
-            "AUC": 0.9714330434799194,
-            "val_AUC": 0.831751823425293
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.36565807461738586,
+              "val_loss": 0.8108655214309692
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.875,
+              "val_CategoricalAccuracy": 0.6171875,
+              "AUC": 0.9714330434799194,
+              "val_AUC": 0.831751823425293
+            }
           }
         }
       },
       "16": {
         "time": 1.6080682277679443,
-        "Output_2": {
-          "loss": {
-            "loss": 0.35009679198265076,
-            "val_loss": 0.8039129972457886
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8852941393852234,
-            "val_CategoricalAccuracy": 0.642578125,
-            "AUC": 0.9741295576095581,
-            "val_AUC": 0.8363142013549805
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.35009679198265076,
+              "val_loss": 0.8039129972457886
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8852941393852234,
+              "val_CategoricalAccuracy": 0.642578125,
+              "AUC": 0.9741295576095581,
+              "val_AUC": 0.8363142013549805
+            }
           }
         }
       },
       "17": {
         "time": 1.6172418594360352,
-        "Output_2": {
-          "loss": {
-            "loss": 0.320663183927536,
-            "val_loss": 0.822633683681488
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.8996323347091675,
-            "val_CategoricalAccuracy": 0.640625,
-            "AUC": 0.9791555404663086,
-            "val_AUC": 0.8329286575317383
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.320663183927536,
+              "val_loss": 0.822633683681488
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.8996323347091675,
+              "val_CategoricalAccuracy": 0.640625,
+              "AUC": 0.9791555404663086,
+              "val_AUC": 0.8329286575317383
+            }
           }
         }
       },
       "18": {
         "time": 1.6087923049926758,
-        "Output_2": {
-          "loss": {
-            "loss": 0.2962569296360016,
-            "val_loss": 0.8183935284614563
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.903676450252533,
-            "val_CategoricalAccuracy": 0.6484375,
-            "AUC": 0.9830375909805298,
-            "val_AUC": 0.8340539932250977
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.2962569296360016,
+              "val_loss": 0.8183935284614563
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.903676450252533,
+              "val_CategoricalAccuracy": 0.6484375,
+              "AUC": 0.9830375909805298,
+              "val_AUC": 0.8340539932250977
+            }
           }
         }
       },
       "19": {
         "time": 1.607330322265625,
-        "Output_2": {
-          "loss": {
-            "loss": 0.28572311997413635,
-            "val_loss": 0.8381450176239014
-          },
-          "metrics": {
-            "CategoricalAccuracy": 0.9084559082984924,
-            "val_CategoricalAccuracy": 0.634765625,
-            "AUC": 0.9846197962760925,
-            "val_AUC": 0.832606315612793
+        "data": {
+          "Output_2": {
+            "loss": {
+              "loss": 0.28572311997413635,
+              "val_loss": 0.8381450176239014
+            },
+            "metrics": {
+              "CategoricalAccuracy": 0.9084559082984924,
+              "val_CategoricalAccuracy": 0.634765625,
+              "AUC": 0.9846197962760925,
+              "val_AUC": 0.832606315612793
+            }
           }
         }
       },
@@ -19210,7 +19248,7 @@ const test = {
           "y_label": "Значение",
           "plot_data": [
             {
-              "labels": ['Мерседес','Рено','Феррари'],
+              "labels": ['Мерседес', 'Рено', 'Феррари'],
               "values": [174, 176, 163]
             }
           ]

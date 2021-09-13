@@ -16,7 +16,7 @@ from librosa import load as librosa_load
 from pydantic.color import Color
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import load_img, img_to_array, smart_resize
 from tensorflow.keras import utils
 
 
@@ -529,10 +529,165 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_image(image_path: str, **options) -> np.ndarray:
+    def create_image(image_path: str, **options) -> dict:
 
-        img = load_img(image_path, target_size=(options['height'], options['width']))
+        img = load_img(image_path)
         array = img_to_array(img, dtype=np.uint8)
+
+        instructions = {'instructions': array,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_video(video_path: str, **options) -> dict:
+
+        array = []
+        slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
+        frames_count = slicing[1] - slicing[0]
+        cap = cv2.VideoCapture(video_path)
+        cap.set(1, slicing[0])
+        try:
+            for _ in range(frames_count):
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                frame = frame[:, :, [2, 1, 0]]
+                array.append(frame)
+        finally:
+            cap.release()
+
+        array = np.array(array)
+
+        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['object_scaler']:
+            orig_shape = array.shape
+            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
+
+        instructions = {'instructions': array,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_audio(audio_path: str, **options) -> dict:
+
+        array = []
+        parameter = options['parameter']
+        sample_rate = options['sample_rate']
+        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_best')
+        if sample_rate > len(y):
+            zeros = np.zeros((sample_rate - len(y),))
+            y = np.concatenate((y, zeros))
+
+        if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
+            array = getattr(librosa_feature, parameter)(y=y, sr=sr)
+        elif parameter == 'rms':
+            array = getattr(librosa_feature, parameter)(y=y)[0]
+        elif parameter == 'zero_crossing_rate':
+            array = getattr(librosa_feature, parameter)(y=y)
+        elif parameter == 'audio_signal':
+            array = y
+
+        array = np.array(array)
+        if array.dtype == 'float64':
+            array = array.astype('float32')
+
+        instructions = {'instructions': array,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_text(text: str, **options) -> dict:
+
+        instructions = {'instructions': text,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_classification(class_name: str, **options) -> dict:
+
+        index = options['classes_names'].index(os.path.basename(class_name))
+        if options['one_hot_encoding']:
+            index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
+        index = np.array(index)
+
+        instructions = {'instructions': index,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_regression(index: int, **options) -> dict:
+
+        instructions = {'instructions': np.array(index),
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_segmentation(image_path: str, **options) -> dict:
+
+        def cluster_to_ohe(mask_image):
+
+            mask_image = mask_image.reshape(-1, 3)
+            km = KMeans(n_clusters=options['num_classes'])
+            km.fit(mask_image)
+            labels = km.labels_
+            cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
+            cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
+            cl_mask = cl_mask.reshape(options['height'], options['width'], cl_mask.shape[-1])
+            mask_ohe = np.zeros((options['height'], options['width']))
+            for k, color in enumerate(options['classes_colors']):
+                rgb = Color(color).as_rgb_tuple()
+                mask = np.zeros((options['height'], options['width']))
+                for j, cl_rgb in enumerate(cl_cent):
+                    if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
+                            rgb[1] in range(cl_rgb[1] - options['mask_range'], cl_rgb[1] + options['mask_range']) and \
+                            rgb[2] in range(cl_rgb[2] - options['mask_range'], cl_rgb[2] + options['mask_range']):
+                        mask = cl_mask[:, :, j]
+                if k == 0:
+                    mask_ohe = mask
+                else:
+                    mask_ohe = np.dstack((mask_ohe, mask))
+
+            return mask_ohe
+
+        img = load_img(path=image_path, target_size=(options['height'], options['width']))
+        array = img_to_array(img, dtype=np.uint8)
+        array = cluster_to_ohe(array)
+
+        instructions = {'instructions': array,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def create_text_segmentation(text: list, **options) -> dict:
+
+        array = []
+        if len(text) < options['length']:
+            text += [list() for _ in range(options['length'] - len(text))]
+        for elem in text:
+            tags = [0 for _ in range(options['num_classes'])]
+            if elem:
+                for cls_name in elem:
+                    tags[options['classes_names'].index(cls_name)] = 1
+            array.append(tags)
+        array = np.array(array, dtype='uint8')
+
+        instructions = {'instructions': array,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
+
+        array = smart_resize(array, (options['height'], options['width']), interpolation='bilinear')
+
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
         if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('object_scaler'):
@@ -543,7 +698,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def create_video(video_path: str, **options) -> np.ndarray:
+    def preprocess_video(array: np.ndarray, **options) -> np.ndarray:
 
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
@@ -575,33 +730,18 @@ class CreateArray(object):
 
             return resized
 
-        array = []
-        shape = (options['height'], options['width'])
-        slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
-        frames_count = slicing[1] - slicing[0]
-        resize_layer = Resizing(*shape)
-        cap = cv2.VideoCapture(video_path)
-        width = int(cap.get(3))
-        height = int(cap.get(4))
-        cap.set(1, slicing[0])
-        try:
-            for _ in range(frames_count):
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                if shape != (height, width):
-                    frame = resize_frame(one_frame=frame,
-                                         original_shape=(height, width),
-                                         target_shape=shape,
-                                         frame_mode=options['frame_mode'])
-                frame = frame[:, :, [2, 1, 0]]
-                array.append(frame)
-        finally:
-            cap.release()
+        orig_shape = array.shape[1:]
+        trgt_shape = (options['height'], options['width'])
+        resize_layer = Resizing(*trgt_shape)
 
-        array = np.array(array)
+        for i in range(len(array)):
+            if array[i].shape[1:-1] != trgt_shape:
+                array[i] = resize_frame(one_frame=array[i],
+                                        original_shape=orig_shape,
+                                        target_shape=trgt_shape,
+                                        frame_mode=options['frame_mode'])
 
-        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options['object_scaler']:
+        if options['scaler'] != LayerScalerVideoChoice.no_scaler and options.get('object_scaler'):
             orig_shape = array.shape
             array = options['object_scaler'].transform(array.reshape(-1, 1))
             array = array.reshape(orig_shape)
@@ -609,28 +749,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def create_audio(audio_path: str, **options) -> np.ndarray:
-
-        array = []
-        parameter = options['parameter']
-        sample_rate = options['sample_rate']
-        y, sr = librosa_load(path=audio_path, sr=options.get('sample_rate'), res_type='kaiser_best')
-        if sample_rate > len(y):
-            zeros = np.zeros((sample_rate - len(y),))
-            y = np.concatenate((y, zeros))
-
-        if parameter in ['chroma_stft', 'mfcc', 'spectral_centroid', 'spectral_bandwidth', 'spectral_rolloff']:
-            array = getattr(librosa_feature, parameter)(y=y, sr=sr)
-        elif parameter == 'rms':
-            array = getattr(librosa_feature, parameter)(y=y)[0]
-        elif parameter == 'zero_crossing_rate':
-            array = getattr(librosa_feature, parameter)(y=y)
-        elif parameter == 'audio_signal':
-            array = y
-
-        array = np.array(array)
-        if array.dtype == 'float64':
-            array = array.astype('float32')
+    def preprocess_audio(array: np.ndarray, **options) -> np.ndarray:
 
         if options['scaler'] != LayerScalerAudioChoice.no_scaler and options.get('object_scaler'):
             orig_shape = array.shape
@@ -640,7 +759,7 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def create_text(text: str, **options) -> np.ndarray:
+    def preprocess_text(text: str, **options) -> np.ndarray:
 
         array = []
         text = text.split(' ')
@@ -667,68 +786,26 @@ class CreateArray(object):
         return array
 
     @staticmethod
-    def create_classification(class_name: str, **options) -> np.ndarray:
-
-        index = options['classes_names'].index(os.path.basename(class_name))
-        if options['one_hot_encoding']:
-            index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
-        index = np.array(index)
-
-        return index
-
-    @staticmethod
-    def create_regression(index: int, **options) -> np.ndarray:
-
-        array = np.array(index)
+    def preprocess_classification(array: np.ndarray, **options) -> np.ndarray:
 
         return array
 
     @staticmethod
-    def create_segmentation(image_path: str, **options) -> np.ndarray:
+    def preprocess_regression(array: np.ndarray, **options) -> np.ndarray:
 
-        def cluster_to_ohe(mask_image):
-
-            mask_image = mask_image.reshape(-1, 3)
-            km = KMeans(n_clusters=options['num_classes'])
-            km.fit(mask_image)
-            labels = km.labels_
-            cl_cent = km.cluster_centers_.astype('uint8')[:max(labels) + 1]
-            cl_mask = utils.to_categorical(labels, max(labels) + 1, dtype='uint8')
-            cl_mask = cl_mask.reshape(options['height'], options['width'], cl_mask.shape[-1])
-            mask_ohe = np.zeros((options['height'], options['width']))
-            for k, color in enumerate(options['classes_colors']):
-                rgb = Color(color).as_rgb_tuple()
-                mask = np.zeros((options['height'], options['width']))
-                for j, cl_rgb in enumerate(cl_cent):
-                    if rgb[0] in range(cl_rgb[0] - options['mask_range'], cl_rgb[0] + options['mask_range']) and \
-                            rgb[1] in range(cl_rgb[1] - options['mask_range'], cl_rgb[1] + options['mask_range']) and \
-                            rgb[2] in range(cl_rgb[2] - options['mask_range'], cl_rgb[2] + options['mask_range']):
-                        mask = cl_mask[:, :, j]
-                if k == 0:
-                    mask_ohe = mask
-                else:
-                    mask_ohe = np.dstack((mask_ohe, mask))
-
-            return mask_ohe
-
-        img = load_img(path=image_path, target_size=(options['height'], options['width']))
-        array = img_to_array(img, dtype=np.uint8)
-        array = cluster_to_ohe(array)
+        if options['scaler'] != LayerScalerImageChoice.no_scaler and options.get('object_scaler'):
+            orig_shape = array.shape
+            array = options['object_scaler'].transform(array.reshape(-1, 1))
+            array = array.reshape(orig_shape)
 
         return array
 
     @staticmethod
-    def create_text_segmentation(text: list, **options) -> np.ndarray:
+    def preprocess_segmentation(array: np.ndarray, **options) -> np.ndarray:
 
-        array = []
-        if len(text) < options['length']:
-            text += [list() for _ in range(options['length'] - len(text))]
-        for elem in text:
-            tags = [0 for _ in range(options['num_classes'])]
-            if elem:
-                for cls_name in elem:
-                    tags[options['classes_names'].index(cls_name)] = 1
-            array.append(tags)
-        array = np.array(array, dtype='uint8')
+        return array
+
+    @staticmethod
+    def preprocess_text_segmentation(array: np.ndarray, **options) -> np.ndarray:
 
         return array

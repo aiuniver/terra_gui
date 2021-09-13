@@ -196,7 +196,7 @@ LayerImageDefaults = [
         "label": "Скейлер",
         "name": "scaler",
         "parse": "scaler",
-        "value": LayerScalerImageChoice.no_scaler.name,
+        "value": LayerScalerImageChoice.min_max_scaler.name,
         "list": list(
             map(
                 lambda item: {
@@ -306,6 +306,7 @@ LayerTextDefaults = [
                     "label": "Максимальное количество слов",
                     "name": "max_words_count",
                     "parse": "max_words_count",
+                    "value": 20000,
                 },
             ],
             "bag_of_words": [
@@ -314,6 +315,7 @@ LayerTextDefaults = [
                     "label": "Максимальное количество слов",
                     "name": "max_words_count",
                     "parse": "max_words_count",
+                    "value": 20000,
                 },
             ],
             "word_to_vec": [
@@ -322,6 +324,7 @@ LayerTextDefaults = [
                     "label": "Размер Word2Vec пространства",
                     "name": "word_to_vec_size",
                     "parse": "word_to_vec_size",
+                    "value": 200,
                 },
             ],
         },
@@ -336,6 +339,7 @@ LayerAudioDefaults = [
         "label": "Частота дискретизации",
         "name": "sample_rate",
         "parse": "sample_rate",
+        "value": 22050,
     },
     {
         "type": "select",
@@ -398,7 +402,7 @@ LayerAudioDefaults = [
         "label": "Скейлер",
         "name": "scaler",
         "parse": "scaler",
-        "value": LayerScalerAudioChoice.no_scaler.name,
+        "value": LayerScalerAudioChoice.min_max_scaler.name,
         "list": list(
             map(
                 lambda item: {
@@ -547,7 +551,7 @@ Defaults = {
                                 "label": "Скейлер",
                                 "name": "scaler",
                                 "parse": "scaler",
-                                "value": LayerScalerVideoChoice.no_scaler.name,
+                                "value": LayerScalerVideoChoice.min_max_scaler.name,
                                 "list": list(
                                     map(
                                         lambda item: {
@@ -790,13 +794,13 @@ Defaults = {
                         "TextSegmentation": [
                             {
                                 "type": "text",
-                                "label": "Открывающие теги",
+                                "label": "Открывающие теги (через пробел)",
                                 "name": "open_tags",
                                 "parse": "open_tags",
                             },
                             {
                                 "type": "text",
-                                "label": "Закрывающие теги",
+                                "label": "Закрывающие теги (через пробел)",
                                 "name": "close_tags",
                                 "parse": "close_tags",
                             },
@@ -808,7 +812,7 @@ Defaults = {
                                 "label": "Скейлер",
                                 "name": "scaler",
                                 "parse": "scaler",
-                                "value": LayerScalerRegressionChoice.no_scaler.name,
+                                "value": LayerScalerRegressionChoice.min_max_scaler.name,
                                 "list": list(
                                     map(
                                         lambda item: {
@@ -879,7 +883,7 @@ Defaults = {
                                             "label": "Скейлер",
                                             "name": "scaler",
                                             "parse": "scaler",
-                                            "value": LayerScalerTimeseriesChoice.no_scaler.name,
+                                            "value": LayerScalerTimeseriesChoice.min_max_scaler.name,
                                             "list": list(
                                                 map(
                                                     lambda item: {
