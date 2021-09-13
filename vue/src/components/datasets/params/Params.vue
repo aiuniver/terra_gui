@@ -67,10 +67,10 @@ export default {
   methods: {
     async createInterval(label = null) {
       this.interval = setTimeout(async () => {
-        const { data } = await this.$store.dispatch('datasets/loadProgress', {});
-        console.log(data);
-        if (data) {
-          const { finished, message, percent, error } = data;
+        const res = await this.$store.dispatch('datasets/loadProgress', {});
+        console.log(res);
+        if (res) {
+          const { finished, message, percent, error } = res.data;
           console.log(percent);
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
@@ -82,7 +82,7 @@ export default {
           if (finished) {
             const {
               data: { file_manager, source_path },
-            } = data;
+            } = res.data;
             this.$store.dispatch('datasets/setFilesSource', file_manager);
             this.$store.dispatch('datasets/setSourcePath', source_path);
             this.$store.dispatch('datasets/setFilesDrop', []);
@@ -97,6 +97,9 @@ export default {
           } else {
             this.createInterval(label);
           }
+        } else {
+          this.loading = false;
+          this.$store.dispatch('settings/setOverlay', false);
         }
         // console.log(data);
       }, 1000);

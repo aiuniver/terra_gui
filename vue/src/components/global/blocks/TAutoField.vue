@@ -5,6 +5,7 @@
       :id="id"
       name="sources_paths"
       label="Выберите путь"
+      @multiselect="$emit('multiselect', $event)"
       :errors="error"
       inline
     />
@@ -72,6 +73,7 @@
       :name="name"
       :key="name + idKey"
       :error="error"
+      :update="update"
       inline
       @change="change"
       @cleanError="cleanError"
@@ -109,6 +111,8 @@
         :key="idKey + i"
         :id="id"
         :parameters="parameters"
+        :update="update"
+        @multiselect="$emit('multiselect', $event)"
         @change="$emit('change', $event)"
       />
     </template>
@@ -131,6 +135,7 @@ export default {
     id: Number,
     root: Boolean,
     parameters: Object,
+    update: Object
   },
   data: () => ({
     valueIn: null,
@@ -167,7 +172,7 @@ export default {
     },
   },
   created() {
-    console.log(this.type)
+    // console.log(this.type)
   },
   mounted() {
     this.$emit('change', { id: this.id, value: this.getValue, name: this.name, root: this.root });

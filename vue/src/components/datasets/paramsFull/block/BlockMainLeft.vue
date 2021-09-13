@@ -15,7 +15,6 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
-              <template v-slot:multi>Входные данные {{ inputData.id }}</template>
               <template v-slot:default="{ data: { parameters, errors } }">
                 <template v-for="(data, index) of input">
                   <t-auto-field
@@ -25,13 +24,12 @@
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"
+                    :update="mixinUpdateDate"
                     root
+                    @multiselect="mixinUpdate"
                     @change="mixinChange"
                   />
                 </template>
-                <!-- <t-radio :lists="testListRadio" @change="test" :parse="'test'" /> -->
-                <!-- <t-color @change="test" :parse="'test'" inline /> -->
-                <!-- <TFieldInline /> -->
               </template>
             </CardLayer>
           </template>
@@ -66,35 +64,12 @@ export default {
         gutterOfEnds: '6px',
       },
     },
-    testListRadio: [
-      {
-        key: 'testKey1',
-        value: true,
-        label: 'Изображения',
-      },
-      {
-        key: 'testKey2',
-        value: false,
-        label: 'Текст',
-      },
-      {
-        key: 'testKey3',
-        value: false,
-        label: 'Аудио',
-      },
-      {
-        key: 'testKey4',
-        value: false,
-        label: 'Классификация',
-      },
-    ],
   }),
   computed: {
     ...mapGetters({
       input: 'datasets/getTypeInput',
       inputData: 'datasets/getInputData',
     }),
-
     inputDataInput() {
       const arr = this.inputData.filter(item => {
         return item.layer === 'input';
@@ -112,9 +87,6 @@ export default {
     },
   },
   methods: {
-    test(e) {
-      console.log(e);
-    },
     error(id, key) {
       const errors = this.$store.getters['datasets/getErrors'](id);
       return errors?.[key]?.[0] || errors?.parameters?.[key]?.[0] || '';
