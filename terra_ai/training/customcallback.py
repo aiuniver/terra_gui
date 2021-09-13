@@ -694,11 +694,11 @@ class InteractiveCallback:
                 self.log_history[f'{out}']['progress_state']['metrics'][f"{metric}"] = {
                     'mean_log_history': [], 'normal_state': [], 'underfitting': [], 'overfitting': []
                 }
-            if self.dataset.data.task_type.get(out) == TaskChoice.Classification or \
-                    self.dataset.data.task_type.get(out) == TaskChoice.Segmentation:
+            if self.dataset.data.outputs.get(out).task == TaskChoice.Classification or \
+                    self.dataset.data.outputs.get(out).task == TaskChoice.Segmentation:
                 self.log_history[f'{out}']['class_loss'] = {}
                 self.log_history[f'{out}']['class_metrics'] = {}
-                for class_name in self.dataset.data.classes_names.get(out):
+                for class_name in self.dataset.data.outputs.get(out).classes_names:
                     self.log_history[f'{out}']['class_metrics'][f"{class_name}"] = {}
                     self.log_history[f'{out}']['class_loss'][f"{class_name}"] = {}
                     self.log_history[f'{out}']['class_loss'][f"{class_name}"][self.losses.get(f'{out}')] = []
@@ -766,8 +766,8 @@ class InteractiveCallback:
                 for data_type in self.y_true.keys():
                     dataset_balance[f'{out}'][data_type] = class_counter(
                         self.y_true.get(data_type).get(f'{out}'),
-                        self.dataset.data.classes_names.get(out),
-                        self.dataset.data.encoding.get(out) == 'ohe'
+                        self.dataset.data.outputs.get(out).classes_names,
+                        self.dataset.data.outputs.get(out).encoding == 'ohe'
                     )
             if self.dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Segmentation:
                 for data_type in self.y_true.keys():
@@ -779,15 +779,15 @@ class InteractiveCallback:
                     class_square = {}
                     class_count = {}
                     for cl in classes:
-                        class_square[self.dataset.data.classes_names.get(out)[cl]] = np.round(
+                        class_square[self.dataset.data.outputs.get(out).classes_names[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(f"{out}")[:, :, :, cl]) * 100
                             / np.prod(self.y_true.get(data_type).get(f"{out}")[:, :, :, 0].shape))
-                        class_count[self.dataset.data.classes_names.get(out)[cl]] = 0
+                        class_count[self.dataset.data.outputs.get(out).classes_names[cl]] = 0
 
                     for img in np.argmax(self.y_true.get(data_type).get(f"{out}"), axis=-1):
                         for cl in classes:
                             if cl in img:
-                                class_count[self.dataset.data.classes_names.get(out)[cl]] += 1
+                                class_count[self.dataset.data.outputs.get(out).classes_names[cl]] += 1
                     dataset_balance[f'{out}'][data_type]['presence_balance'] = class_count
                     dataset_balance[f'{out}'][data_type]['square_balance'] = class_square
         return dataset_balance
@@ -802,13 +802,13 @@ class InteractiveCallback:
             for out in self.y_true.get(data_type).keys():
                 class_idx[data_type][out] = {}
                 if self.dataset.data.outputs.get(int(out)).task == LayerOutputTypeChoice.Classification:
-                    for name in self.dataset.data.classes_names.get(int(out)):
+                    for name in self.dataset.data.outputs.get(int(out)).classes_names:
                         class_idx[data_type][out][name] = []
                     y_true = np.argmax(self.y_true.get(data_type).get(out), axis=-1) \
-                        if self.dataset.data.encoding.get(int(out)) == 'ohe' else self.y_true.get(data_type).get(out)
+                        if self.dataset.data.outputs.get(int(out)).encoding == 'ohe' else self.y_true.get(data_type).get(out)
                     for idx in range(len(y_true)):
-                        class_idx[data_type][out][self.dataset.data.classes_names.get(int(out))[y_true[idx]]].append(
-                            idx)
+                        class_idx[data_type][out][self.dataset.data.outputs.get(int(out)).classes_names[y_true[idx]
+                        ]].append(idx)
         return class_idx
 
     def _prepare_seed(self):
@@ -1786,7 +1786,7 @@ class InteractiveCallback:
         """
         example_idx = {}
         out = self.interactive_config.get('intermediate_result').get('main_output')
-        ohe = self.dataset.data.encoding.get(int(out)) == 'ohe'
+        ohe = self.dataset.data.outputs.get(int(out)).encoding == 'ohe'
         count = self.interactive_config.get('intermediate_result').get('num_examples')
         choice_type = self.interactive_config.get('intermediate_result').get('example_choice_type')
         if choice_type == 'best' or choice_type == 'worst':

@@ -70,6 +70,7 @@ class GUINN:
         Logs
         """
         self.history: dict = {}
+        self.progress_name = "training"
 
     @staticmethod
     def _check_metrics(metrics: list, num_classes: int = 2) -> list:
