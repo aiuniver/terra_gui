@@ -301,6 +301,7 @@ class Exchange:
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
+        initial_config: dict
     ):
         """
         Старт обучения
@@ -319,6 +320,7 @@ class Exchange:
                 training_path=training_path,
                 dataset_path=dataset_path,
                 training_params=params,
+                initial_config=initial_config
             )
         except Exception as error:
             raise exceptions.FailedStartTrainException(error.__str__())

@@ -1,14 +1,10 @@
 import gc
-import os
 import sys
 
 import copy
 import os
-
 import psutil
 import time
-
-from terra_ai.guiexchange import Exchange
 import pynvml as N
 
 from pathlib import Path
@@ -28,7 +24,6 @@ from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTy
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
-# from terra_ai.training.customcallback import FitCallback
 from terra_ai.training.customcallback import InteractiveCallback
 from terra_ai.training.customlosses import DiceCoefficient, yolo_loss
 from terra_ai.training.data import custom_losses_dict
@@ -89,7 +84,7 @@ class GUINN:
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData,
-                             training_path: Path, dataset_path: Path) -> None:
+                             training_path: Path, dataset_path: str, initial_config: dict) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
         self.epochs = params.epochs if interactive.get_states().get("status") != "addtrain" \
@@ -104,7 +99,8 @@ class GUINN:
                                         num_classes=output_layer.get("classes_quantity"))
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
-        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss)
+        interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
+                                   dataset_path=dataset_path, initial_config=initial_config)
 
     def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
@@ -115,7 +111,7 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
     @staticmethod
-    def _prepare_dataset(dataset: DatasetData, datasets_path: Path) -> PrepareDataset:
+    def _prepare_dataset(dataset: DatasetData, datasets_path: str) -> PrepareDataset:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
         return prepared_dataset
@@ -216,8 +212,9 @@ class GUINN:
                   dataset: DatasetData,
                   gui_model: ModelDetailsData,
                   training_path: Path = "",
-                  dataset_path: Path = "",
+                  dataset_path: str = "",
                   training_params: TrainData = None,
+                  initial_config: dict = None
                   ) -> dict:
         """
         This method created for using wth externally compiled models
@@ -234,7 +231,7 @@ class GUINN:
         """
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "retrain" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path,
-                                  params=training_params, training_path=training_path)
+                                  params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
 
         if interactive.get_states().get("status") == "trained":

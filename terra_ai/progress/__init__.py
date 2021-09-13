@@ -60,6 +60,8 @@ class ProgressPool:
         )
         # with open("111.txt", "a") as f:
         #     f.write(str(self.__pool.get("training").dict()))
+        # print(self.__pool.get("training"))
+        # print()
 
     def reset(self, name: str, **kwargs):
         self.__pool.update({name: ProgressData(**kwargs)})
