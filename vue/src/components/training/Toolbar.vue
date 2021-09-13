@@ -28,7 +28,7 @@ export default {
   },
   methods: {
     active(index) {
-      console.log(this.collabse)
+      // console.log(this.collabse)
       return this.collabse.includes(index.toString());
     },
     click() {
