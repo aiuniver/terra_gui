@@ -5,6 +5,7 @@
       :id="id"
       name="sources_paths"
       label="Выберите путь"
+      @multiselect="$emit('multiselect', $event)"
       :errors="error"
       inline
     />
@@ -109,6 +110,7 @@
         :key="idKey + i"
         :id="id"
         :parameters="parameters"
+        @multiselect="$emit('multiselect', $event)"
         @change="$emit('change', $event)"
       />
     </template>

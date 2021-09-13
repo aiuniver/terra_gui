@@ -1,5 +1,5 @@
 <template>
-  <div class="block-left">
+  <div class="block-left" :key="componentKey">
     <div class="block-left__fab">
       <Fab @click="addCard" />
     </div>
@@ -15,23 +15,21 @@
               @click-btn="optionsCard($event, inputData.id)"
             >
               <template v-slot:header>Входные данные {{ inputData.id }}</template>
-              <template v-slot:multi>Входные данные {{ inputData.id }}</template>
               <template v-slot:default="{ data: { parameters, errors } }">
                 <template v-for="(data, index) of input">
                   <t-auto-field
                     v-bind="data"
                     :parameters="parameters"
+                    :extra="extra"
                     :errors="errors"
                     :key="inputData.color + index"
                     :idKey="'key_' + index"
                     :id="inputData.id"
                     root
+                    @multiselect="multiselect"
                     @change="mixinChange"
                   />
                 </template>
-                <!-- <t-radio :lists="testListRadio" @change="test" :parse="'test'" /> -->
-                <!-- <t-color @change="test" :parse="'test'" inline /> -->
-                <!-- <TFieldInline /> -->
               </template>
             </CardLayer>
           </template>
@@ -66,35 +64,15 @@ export default {
         gutterOfEnds: '6px',
       },
     },
-    testListRadio: [
-      {
-        key: 'testKey1',
-        value: true,
-        label: 'Изображения',
-      },
-      {
-        key: 'testKey2',
-        value: false,
-        label: 'Текст',
-      },
-      {
-        key: 'testKey3',
-        value: false,
-        label: 'Аудио',
-      },
-      {
-        key: 'testKey4',
-        value: false,
-        label: 'Классификация',
-      },
-    ],
+    extra: {},
+    componentKey: 1
   }),
   computed: {
     ...mapGetters({
       input: 'datasets/getTypeInput',
       inputData: 'datasets/getInputData',
+      filesSource: 'datasets/getFilesSource',
     }),
-
     inputDataInput() {
       const arr = this.inputData.filter(item => {
         return item.layer === 'input';
@@ -112,8 +90,16 @@ export default {
     },
   },
   methods: {
-    test(e) {
-      console.log(e);
+    multiselect({ id, value }) {
+      if (value.length) {
+        const { extra } = this.filesSource.find(item => item.path === value[0].value);
+        if (extra) {
+          for (let key in extra) {
+            this.mixinChange({ id, name: key, value: extra[key] });
+          }
+          this.componentKey += 1;
+        }
+      }
     },
     error(id, key) {
       const errors = this.$store.getters['datasets/getErrors'](id);
