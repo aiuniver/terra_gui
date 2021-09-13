@@ -2,15 +2,24 @@
   <div class="t-scatters">
     <div class="t-scatters__header">
       <div class="checks">
-        <t-checkbox :inline="true" label="Выход “10”" @change="change" name="out10" />
-        <t-checkbox :inline="true" label="Выход “11”" @change="change" name="out11" />
+        <template v-for="(item, key, i) of statisticData">
+          <t-checkbox
+            v-if="item.labels"
+            :key="'check_' + i"
+            :inline="true"
+            :label="`Выход ${key}`"
+            :value="true"
+            :name="key"
+            @change="change($event, key)"
+          />
+        </template>
         <t-checkbox :inline="true" label="Автоотбновление" />
       </div>
       <button @click="showContent = !showContent">Показать</button>
     </div>
     <div v-if="showContent" class="t-scatters__content">
-      <template v-for="output, i of statisticData">
-        <Matrix v-if="output.data_array" v-bind="output" :key="i" />
+      <template v-for="(output, key, i) of statisticData">
+        <Matrix v-if="output.data_array && isShowKeys.includes(key)" v-bind="output" :key="i" />
       </template>
     </div>
   </div>
@@ -30,15 +39,20 @@ export default {
     },
   },
   data: () => ({
-    out10: false,
-    out11: false,
     showContent: true,
+    isShowKeys: [],
   }),
   methods: {
-    change(e) {
-      this[e.name] = e.value;
+    change(e, key) {
+      console.log(e)
+      this.isShowKeys = !this.isShowKeys.includes(key)
+        ? [...this.isShowKeys, key]
+        : this.isShowKeys.filter(item => item !== key);
     },
   },
+  created() {
+    this.isShowKeys = Object.keys(this.statisticData)
+  }
 };
 </script>
 

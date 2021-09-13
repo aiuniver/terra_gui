@@ -21,6 +21,7 @@
             v-for="(item, i) in values"
             :key="'col_' + i"
             :style="{ background: getColor(percent[i]) }"
+            :title="`${item} / ${percent[i]}%`"
           >
             {{ `${item}, ${percent[i]}%` }}
           </div>
@@ -153,6 +154,7 @@ export default {
       text-align: center;
       justify-content: center;
       align-items: center;
+      cursor: default;
     }
   }
   &__label--top {
