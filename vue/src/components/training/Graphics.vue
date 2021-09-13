@@ -9,7 +9,7 @@
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
-            <Images />
+            <PrePesults/>
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Прогресс обучения" center>
             <Scatters />
@@ -27,17 +27,19 @@
 
 <script>
 import { mapGetters } from 'vuex';
-import Images from "./main/images/index.vue";
+// import Images from "./main/images/index.vue";
 import Texts from "./main/texts/index.vue";
 import Scatters from "./main/Scatters.vue";
 import LoadSpiner from '../forms/LoadSpiner.vue'
+import PrePesults from "./main/PrePesults";
 export default {
   name: 'Graphics',
   components: {
-    Images,
+    // Images,
     Texts,
     Scatters,
     LoadSpiner,
+    PrePesults,
     Chars: () => import('./main/chars/index.vue'),
   },
   data: () => ({
