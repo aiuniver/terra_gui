@@ -59,38 +59,30 @@ export default {
 <style lang="scss" scoped>
 table {
   user-select: none;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
   border-collapse: collapse;
-  border-spacing: 0;
+  border-spacing: 1px;
+  border: 1px solid #242f3d;
+  box-sizing: border-box;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.25);
+  border-radius: 4px;
   th {
     background: #242f3d;
-    line-height: 1.25;
-    padding: 10px 15px;
+    line-height: 16px;
+    padding: 5px 10px;
     color: #a7bed3;
-    font-size: 0.875rem;
+    font-size: 12px;
     text-align: center;
     border: 1px solid #0e1621;
   }
   td {
-    line-height: 1.25;
-    padding: 10px 15px;
-    color: #a7bed3;
-    font-size: 0.875rem;
+    line-height: 16px;
+    padding: 5px 10px;
+    color: #fff;
+    font-size: 12px;
     text-align: center;
     border: 1px solid #0e1621;
     &.value {
-      color: #fff;
-      font-size: 0.75rem;
-      text-align: right;
-      font-family: monospace, sans-serif;
-      i {
-        color: #4b6780;
-        font-style: normal;
-      }
-      span {
-        color: #65b9f4;
-      }
+      text-align: center;
     }
   }
 }

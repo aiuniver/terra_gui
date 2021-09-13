@@ -1,9 +1,16 @@
 <template>
-  <at-modal v-show="show" class="ms" v-model="dialog" width="400" :maskClosable="false" :showClose="false">
-    <div slot="header" style="text-align: center">
+  <at-modal v-show="show" class="t-modal" v-model="dialog" width="400" :maskClosable="false" :showClose="false">
+    <div slot="header">
       <span>Загрузка проекта</span>
     </div>
-    <div class="list">
+    <div class="t-modal__body">
+      <p>Загрузка проекта удалит текущий.</p>
+    </div>
+
+    <div class="t-modal__sub-body">
+      <span class="t-modal__link" @click="$emit('start', true)">Сохранить проект</span>
+    </div>
+    <div class="t-modal__list" ref="list">
       <scrollbar>
         <ul class="loaded-list">
           <li
@@ -19,30 +26,30 @@
               <i></i>
             </div>
           </li>
+          <li v-if="!list.length" class="loaded-list__no-list">Нет проектов для загрузки</li>
         </ul>
       </scrollbar>
     </div>
+
     <template slot="footer">
-      <t-button @click="load" :disabled="!selected.label">Загрузить</t-button>
+      <t-button @click="loadProject(selected)" :disabled="!selected.label">Загрузить</t-button>
       <t-button @click="dialog = false" cancel>Отменить</t-button>
     </template>
   </at-modal>
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
 export default {
-  name: 'ModalLoadModel',
+  name: 'modal-load-project',
   props: {
     value: Boolean,
-    list: Array,
   },
   data: () => ({
     selected: {},
     show: true,
+    list: [],
   }),
   computed: {
-    ...mapGetters({}),
     dialog: {
       set(value) {
         this.$emit('input', value);
@@ -57,48 +64,103 @@ export default {
       // this.show = false;
       this.$Modal
         .confirm({
-          title: 'Внимание!',
-          content: `Вы действительно желаете удалить проект «${list.label}» ?`,
-          width: 400,
+          title: 'Удаление проекта',
+          content: `Вы действительно хотите удалить проект «${list.label}»?`,
+          width: 300,
           maskClosable: false,
           showClose: false,
         })
         .then(() => {
-          this.$emit('remove', list);
+          this.removeProject(list);
           // this.show = true;
         })
         .catch(() => {
           // this.show = true;
         });
     },
-    load() {
-      // this.show = false;
-      this.$Modal
-        .confirm({
-          title: 'Внимание!',
-          content: `Загрузка проекта удалит текущий. Вы действительно хотите загрузить проект «${this.selected.label}» ?`,
-          width: 400,
-          maskClosable: false,
-          showClose: false,
-        })
-        .then(() => {
-          this.$emit('load', this.selected);
-          // this.show = true;
-        })
-        .catch(() => {
-          // this.show = true;
+    async loadProject(list) {
+      console.log(list);
+      try {
+        const res = await this.$store.dispatch('projects/loadProject', { value: list.value });
+        console.log(res);
+        if (res && !res.error) {
+          this.$emit('message', { message: `Проект «${list.label}» загружен` });
+          this.dialog = false;
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async removeProject(list) {
+      console.log(list);
+      try {
+        const res = await this.$store.dispatch('projects/removeProject', { path: list.value });
+        if (res && !res.error) {
+          this.$emit('message', { message: `Проект «${list.label}» удален` });
+          this.infoProject();
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async infoProject() {
+      try {
+        const res = await this.$store.dispatch('projects/infoProject', {});
+        if (res) {
+          const {
+            data: { projects },
+          } = res;
+          this.list = projects;
+        }
+        this.$nextTick(() => {
+          if (this.$refs.list.clientHeight > 200) {
+            this.$refs.list.style.height = '200px';
+          }
         });
+      } catch (error) {
+        console.log(error);
+      }
+    },
+  },
+  watch: {
+    dialog(value) {
+      if (value) {
+        this.infoProject();
+      }
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-.scroll-area {
-  height: 350px;
+.t-modal {
+  &__body {
+    p {
+      color: #d34444;
+    }
+  }
+  &__sub-body {
+    display: flex;
+    // justify-content: flex-end;
+  }
+  &__link {
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 14px;
+    color: #51aeff;
+  }
+  &__list {
+    // height: 200px;
+  }
 }
 
 .loaded-list {
+  &__no-list {
+    text-align: center;
+    padding: 7px 0;
+    font-size: 16px;
+    color: #a7bed3;
+  }
   &__item {
     display: flex;
     align-items: center;
@@ -166,34 +228,5 @@ export default {
       }
     }
   }
-}
-
-.model-arch {
-  &-img {
-    img {
-      width: 100%;
-      height: auto;
-    }
-  }
-
-  &-arch-btn {
-    line-height: 1;
-  }
-
-  &-info-param {
-    .name {
-      margin-bottom: 5px;
-      line-height: 1px;
-    }
-    span {
-      &:first-child {
-        color: #65b9f4;
-      }
-    }
-  }
-}
-
-.row {
-  margin: 0 0 0 -23px;
 }
 </style>

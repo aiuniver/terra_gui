@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from apps.plugins.project import data_path
+from apps.plugins.project import data_path, project_path
 from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
@@ -28,7 +28,8 @@ class ChoiceAPIView(BaseAPIView):
         try:
             agent_exchange(
                 "dataset_choice",
-                path=str(data_path.datasets),
+                custom_path=data_path.datasets,
+                destination=project_path.datasets,
                 **serializer.validated_data,
             )
             return BaseResponseSuccess()
@@ -40,17 +41,17 @@ class ChoiceAPIView(BaseAPIView):
 
 class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        update_project = False
+        save_project = False
         progress = agent_exchange("dataset_choice_progress")
         if progress.finished and progress.data:
             try:
                 request.project.set_dataset(progress.data)
-                update_project = True
+                save_project = True
             except project_exceptions.ProjectException as error:
                 return BaseResponseErrorGeneral(str(error))
         if progress.success:
             return BaseResponseSuccess(
-                data=progress.native(), update_project=update_project
+                data=progress.native(), save_project=save_project
             )
         else:
             return BaseResponseErrorGeneral(progress.error, data=progress.native())
@@ -144,7 +145,7 @@ class SourcesAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        update_project = False
+        save_project = False
         serializer = DeleteSerializer(data=request.data)
         if not serializer.is_valid():
             return BaseResponseErrorFields(serializer.errors)
@@ -158,8 +159,8 @@ class DeleteAPIView(BaseAPIView):
                 request.project.dataset.alias == serializer.validated_data.get("alias")
             ):
                 request.project.set_dataset()
-                update_project = True
-            return BaseResponseSuccess(update_project=update_project)
+                save_project = True
+            return BaseResponseSuccess(save_project=save_project)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
         except TerraBaseException as error:

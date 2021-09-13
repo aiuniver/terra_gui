@@ -1,5 +1,7 @@
 import re
+import base64
 
+from tempfile import NamedTemporaryFile
 from pydantic import ValidationError
 from transliterate import slugify
 from collections.abc import MutableMapping
@@ -9,6 +11,7 @@ from apps.plugins.project import exceptions as project_exceptions
 
 from terra_ai.agent import agent_exchange
 from terra_ai.agent import exceptions as agent_exceptions
+from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.extra import LayerGroupChoice
 
@@ -18,7 +21,13 @@ from ..base import (
     BaseResponseErrorFields,
     BaseResponseErrorGeneral,
 )
-from .serializers import ModelGetSerializer, UpdateSerializer, CreateSerializer
+from .serializers import (
+    ModelGetSerializer,
+    UpdateSerializer,
+    PreviewSerializer,
+    CreateSerializer,
+)
+from .utils import autocrop_image_square
 
 
 def flatten_dict(
@@ -42,6 +51,8 @@ class GetAPIView(BaseAPIView):
         try:
             model = agent_exchange("model_get", **serializer.validated_data)
             return BaseResponseSuccess(model.native())
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
 
@@ -92,7 +103,7 @@ class LoadAPIView(BaseAPIView):
                 model = self._update_layers(model, request.project.dataset.model)
             request.project.set_model(model)
             return BaseResponseSuccess(
-                request.project.model.native(), update_project=True
+                request.project.model.native(), save_project=True
             )
         except project_exceptions.ProjectException as error:
             return BaseResponseErrorGeneral(str(error))
@@ -103,14 +114,14 @@ class LoadAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("models_info", path=data_path.modeling).native()
+            agent_exchange("models", path=data_path.modeling).native()
         )
 
 
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         request.project.clear_model()
-        return BaseResponseSuccess(update_project=True)
+        return BaseResponseSuccess(save_project=True)
 
 
 class UpdateAPIView(BaseAPIView):
@@ -145,7 +156,9 @@ class UpdateAPIView(BaseAPIView):
             model_data.update(data)
             model = agent_exchange("model_update", model=model_data)
             request.project.set_model(model)
-            return BaseResponseSuccess(update_project=True)
+            return BaseResponseSuccess(save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             answer = BaseResponseErrorFields(error)
             buff_error = flatten_dict(answer.data["error"])
@@ -157,15 +170,51 @@ class UpdateAPIView(BaseAPIView):
 
 
 class ValidateAPIView(BaseAPIView):
+    def _reset_layers_shape(
+        self, dataset: DatasetData, model: ModelDetailsData
+    ) -> ModelDetailsData:
+        for layer in model.middles:
+            layer.shape.input = []
+            layer.shape.output = []
+        for index, layer in enumerate(model.inputs):
+            layer.shape.output = []
+            if dataset:
+                layer.shape = dataset.model.inputs[index].shape
+        for index, layer in enumerate(model.outputs):
+            layer.shape.input = []
+            if dataset:
+                layer.shape = dataset.model.outputs[index].shape
+            else:
+                layer.shape.output = []
+        return model
+
     def post(self, request, **kwargs):
         try:
             model, errors = agent_exchange(
-                "model_validate", model=request.project.model
+                "model_validate",
+                model=self._reset_layers_shape(
+                    request.project.dataset, request.project.model
+                ),
             )
             request.project.set_model(model)
-            return BaseResponseSuccess(errors, update_project=True)
+            return BaseResponseSuccess(errors, save_project=True)
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
         except ValidationError as error:
             return BaseResponseErrorFields(error)
+
+
+class PreviewAPIView(BaseAPIView):
+    def post(self, request, **kwargs):
+        serializer = PreviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return BaseResponseErrorFields(serializer.errors)
+        filepath = NamedTemporaryFile(suffix=".png")
+        filepath.write(base64.b64decode(serializer.validated_data.get("preview")))
+        autocrop_image_square(filepath.name, min_size=600)
+        with open(filepath.name, "rb") as filepath_ref:
+            content = filepath_ref.read()
+            return BaseResponseSuccess(base64.b64encode(content))
 
 
 class CreateAPIView(BaseAPIView):
@@ -205,5 +254,8 @@ class CreateAPIView(BaseAPIView):
 
 class DeleteAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        agent_exchange("model_delete", path=request.get("path"))
-        return BaseResponseSuccess()
+        try:
+            agent_exchange("model_delete", path=request.data.get("path"))
+            return BaseResponseSuccess()
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))

@@ -47,7 +47,7 @@ export default {
   },
   created() {
     this.search = this.value;
-    console.log(this.$parent);
+    console.log(this.list);
   },
   computed: {
     filterList() {

@@ -64,7 +64,7 @@ export default {
         justify-content: space-between;
         p, button {
             font-size: 14px;
-            line-height: 24px;
+            line-height: 22px;
         }
         button {
             flex: 0 0 130px;

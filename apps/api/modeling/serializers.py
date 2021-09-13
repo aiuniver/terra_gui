@@ -36,6 +36,10 @@ class UpdateSerializer(serializers.Serializer):
     layers = serializers.ListSerializer(child=LayerSerializer())
 
 
+class PreviewSerializer(serializers.Serializer):
+    preview = serializers.CharField()
+
+
 class CreateSerializer(serializers.Serializer):
     name = serializers.CharField()
     overwrite = serializers.BooleanField(default=False)

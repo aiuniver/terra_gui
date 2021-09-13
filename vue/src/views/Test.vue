@@ -25,9 +25,9 @@ export default {
   name: 'page-not-found',
   data: () => ({
     list: [
-      // { value: 'test', label: 'test' },
-      // { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
-      // { value: 'tesfd dfdft', label: 'te fdfdf dfdst' },
+      { value: 'test', label: 'test' },
+      { value: 'dfdfdfdfdfd', label: 'tedfdfdfddddddddfdfst' },
+      { value: 'tesfd dfdft', label: 'te fdfdf dfdst' },
     ],
   }),
   computed: {
