@@ -132,7 +132,9 @@ def __choice_from_keras(name: str, **kwargs):
         .datasets.get(name)
     )
     if dataset:
-        progress.pool(progress_name, percent=100, data=dataset, finished=True)
+        progress.pool(
+            progress_name, percent=100, data={"dataset": dataset}, finished=True
+        )
     else:
         progress.pool(
             progress_name,
@@ -157,7 +159,12 @@ def __choice_from_custom(name: str, source: Path, **kwargs):
         )
         dataset = DatasetData(**data.config)
         if dataset:
-            progress.pool(progress_name, percent=100, data=dataset, finished=True)
+            progress.pool(
+                progress_name,
+                percent=100,
+                data={"dataset": dataset, "path": data.path},
+                finished=True,
+            )
         else:
             progress.pool(
                 progress_name,
@@ -216,7 +223,12 @@ def __choice_from_terra(name: str, folder: Path, **kwargs):
         data = CustomDatasetConfigData(path=dataset_path)
         dataset = DatasetData(**data.config)
         if dataset:
-            progress.pool(progress_name, percent=100, data=dataset, finished=True)
+            progress.pool(
+                progress_name,
+                percent=100,
+                data={"dataset": dataset, "path": data.path},
+                finished=True,
+            )
         else:
             progress.pool(
                 progress_name,

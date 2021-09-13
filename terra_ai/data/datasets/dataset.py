@@ -192,7 +192,6 @@ from .extra import (
 from ..mixins import AliasMixinData, UniqueListMixin, BaseMixinData
 from ..extra import FileSizeData
 from ..exceptions import TrdsDirExtException, TrdsConfigFileNotFoundException
-from ..training.extra import TaskChoice
 from ..modeling.model import ModelDetailsData
 from ..modeling.extra import LayerTypeChoice, LayerGroupChoice
 from ..modeling.layers.extra import ActivationChoice
