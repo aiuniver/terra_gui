@@ -15,7 +15,7 @@ from terra_ai import progress
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
-from terra_ai.datasets.preparing import PrepareDTS
+from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
 
@@ -298,6 +298,10 @@ loss_metric_config = {
             "mode": "max",
             "module": "tensorflow.keras.metrics"
         },
+        "DiceCoef": {
+            "log_name": "dice_coef",
+            "mode": "max"
+        },
     }
 }
 
@@ -336,6 +340,28 @@ class InteractiveCallback:
         self.progress_name = "training"
 
         self.urgent_predict = False
+
+        self.train_states = {
+            "status": "no_train",  # training, trained, stopped, retrain
+            "buttons": {
+                "train": {
+                    "title": "Обучить",  # Возобновить, Дообучить
+                    "visible": True
+                },
+                "stop": {
+                    "title": "Остановить",
+                    "visible": False
+                },
+                "clear": {
+                    "title": "Сбросить",
+                    "visible": False
+                },
+                "save": {
+                    "title": "Сохранить",
+                    "visible": False
+                }
+            }
+        }
 
         self.interactive_config = {
             'loss_graphs': [
@@ -395,7 +421,7 @@ class InteractiveCallback:
         }
         pass
 
-    def set_attributes(self, dataset: PrepareDTS, metrics: dict, losses: dict):
+    def set_attributes(self, dataset: PrepareDataset, metrics: dict, losses: dict):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
@@ -408,6 +434,36 @@ class InteractiveCallback:
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
         # self.example_idx = self._prepare_example_idx_to_show()
+
+    def set_status(self, status):
+        self.train_states["status"] = status
+        if status in ["training", "addtrain", "retrain"]:
+            self.train_states["buttons"]["train"]["title"] = "Возобновить"
+            self.train_states["buttons"]["train"]["visible"] = False
+            self.train_states["buttons"]["stop"]["visible"] = True
+            self.train_states["buttons"]["clear"]["visible"] = False
+            self.train_states["buttons"]["save"]["visible"] = False
+        elif status == "trained":
+            self.train_states["buttons"]["train"]["title"] = "Дообучить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = True
+            self.train_states["buttons"]["save"]["visible"] = True
+        elif status == "stopped":
+            self.train_states["buttons"]["train"]["title"] = "Возобновить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = True
+            self.train_states["buttons"]["save"]["visible"] = True
+        else:
+            self.train_states["buttons"]["train"]["title"] = "Обучить"
+            self.train_states["buttons"]["train"]["visible"] = True
+            self.train_states["buttons"]["stop"]["visible"] = False
+            self.train_states["buttons"]["clear"]["visible"] = False
+            self.train_states["buttons"]["save"]["visible"] = False
+
+    def get_states(self):
+        return self.train_states
 
     def update_train_progress(self, data: dict):
         self.train_progress = data

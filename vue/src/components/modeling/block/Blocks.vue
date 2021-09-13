@@ -1,6 +1,7 @@
 <template>
-  <div class="t-block">
-    <VueLink :lines="lines" />
+  <div class="t-block" @contextmenu="contextmenu">
+    <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
+    <VueLink class="t-block__lines" :lines="lines" />
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
@@ -32,10 +33,6 @@
         <i class="t-icon icon-zoom-dec" @click="zoom(-1)"></i>
       </div>
     </div>
-    <div class="t-block__center" :style="scaleCenter">
-      <div class="t-block__center--vertical"></div>
-      <div class="t-block__center--horizontal"></div>
-    </div>
   </div>
 </template>
 
@@ -45,12 +42,14 @@ import { mouseHelper } from '@/store/const/modeling';
 import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
+import Net from './Net';
 
 export default {
   name: 'VueBlockContainer',
   components: {
     VueBlock,
     VueLink,
+    Net,
   },
   props: {
     blocksContent: {
@@ -204,6 +203,7 @@ export default {
           x2: x2,
           y2: y2,
           slot: link.originSlot,
+          scale: this.scale,
           style: {
             stroke: 'rgb(101, 185, 244)',
             strokeWidth: 2 * this.scale,
@@ -236,6 +236,11 @@ export default {
     },
   },
   methods: {
+    contextmenu(e) {
+      if (!this.$config.isDev) {
+        e.preventDefault();
+      }
+    },
     getCenter() {
       if (this.scale > 1.5) {
         this.scale = 1.5;
@@ -427,6 +432,7 @@ export default {
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
+          y += -3;
         } else {
           x += this.optionsForChild.width / 2 - (block.inputs.length * 10) / 2;
           x += 20 * slotNumber;
@@ -436,7 +442,7 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 42;
+          y += 45;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -573,11 +579,12 @@ export default {
     //   });
     // },
     async getImages() {
+      const tags = ['line', 'circle'];
       try {
         const image = await domtoimage.toPng(this.$el, {
           bgcolor: '#00000000',
           filter: node => {
-            return node.className !== 'btn-zoom';
+            return !(['btn-zoom'].includes(node.className) || tags.includes(node.tagName));
           },
         });
         return image;
@@ -645,7 +652,11 @@ export default {
     // },
     // Events
     blockSelect(block) {
-      this.$store.dispatch('modeling/selectBlock', block);
+      this.$store.dispatch('modeling/deselectBlocks', block);
+      this.$nextTick(() => {
+        this.$store.dispatch('modeling/selectBlock', block);
+      });
+
       // block.selected = true;
       // this.selectedBlock = block;
       // this.deselectAll(block.id);
@@ -654,11 +665,9 @@ export default {
     },
     blockDeselect(block) {
       block.selected = false;
-
       if (block && this.selectedBlock && this.selectedBlock.id === block.id) {
         this.selectedBlock = null;
       }
-
       this.$emit('blockDeselect', block);
     },
     // blockDelete(block) {
@@ -722,28 +731,11 @@ export default {
   overflow: hidden;
   box-sizing: border-box;
 
+  &__lines {
+    position: absolute;
+  }
   &__center {
     position: absolute;
-    width: 150px;
-    height: 150px;
-    pointer-events: none;
-    &--vertical {
-      position: absolute;
-      top: -75px;
-      left: 0;
-      height: 100%;
-      width: 1px;
-      background-color: #ffffff1f;
-      transform: rotate(180deg);
-    }
-    &--horizontal {
-      position: absolute;
-      top: 0;
-      left: -75px;
-      height: 1px;
-      width: 100%;
-      background-color: #ffffff1f;
-    }
   }
 }
 .btn-zoom {

@@ -109,9 +109,10 @@ export default {
     async info({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
-    async load({ dispatch }, value) {
+    async load({ commit, dispatch }, value) {
       const { data: model } = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
       if (model) {
+        commit('SET_ERRORS_BLOCKS', {});
         await dispatch('projects/get', {}, { root: true });
       }
       return model;
@@ -157,7 +158,7 @@ export default {
           for (const key in error) {
             newError[key.replace('fields', block.id)] = error[key]
           }
-          console.log(newError)
+          // console.log(newError)
           commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
         }
       }
