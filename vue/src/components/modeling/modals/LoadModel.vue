@@ -42,7 +42,7 @@
               </div>
               <div class="model-arch-info-param input_shape">
                 <span>Input shape:</span>
-                <span>{{ info.input_shape ? ` [${info.input_shape}]` : '' }}</span>
+                <span>{{ info.input_shape ? ` ${info.input_shape}` : '' }}</span>
               </div>
               <!-- <div class="model-arch-info-param datatype">
                 Datatype:
