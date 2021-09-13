@@ -18,3 +18,4 @@ pynvml==11.0.0
 moviepy==1.0.3
 numpy==1.19.5
 albumentations==1.0.3
+opencv-python==4.5.3.56
