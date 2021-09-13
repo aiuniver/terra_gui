@@ -38,11 +38,6 @@
 import { mapGetters } from 'vuex';
 // import Images from './main/images/index.vue';
 // import Images from "./main/images/index.vue";
-import Texts from "./main/texts/index.vue";
-import Scatters from "./main/Scatters.vue";
-import LoadSpiner from '../forms/LoadSpiner.vue'
-import PrePesults from "./main/PrePesults";
-import Images from './main/images/index.vue';
 import Texts from './main/texts/index.vue';
 import Progress from './main/progress/';
 import LoadSpiner from '../forms/LoadSpiner.vue';
