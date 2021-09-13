@@ -30,22 +30,22 @@
         </t-field>
       </div>
       <div class="predictions__param">
-        <t-button style="width: 150px; height: 40px" @click.native="showTable = !showTable">Показать</t-button>
+        <t-button style="width: 150px; height: 40px" @click.native="showTextTable = !showTextTable">Показать</t-button>
       </div>
     </div>
-    <PredictionsTable :show="showTable" />
+    <TextTable :show="showTextTable" />
   </div>
 </template>
 
 <script>
-import PredictionsTable from './PredictionsTable';
+import TextTable from './TextTable';
 export default {
   name: 'Predictions',
   components: {
-    PredictionsTable,
+    TextTable,
   },
   data: () => ({
-    showTable: false,
+    showTextTable: false,
   }),
 };
 </script>

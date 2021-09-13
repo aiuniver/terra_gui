@@ -1,32 +1,32 @@
 <template>
-  <div class="predictions-table" v-if="show">
-    <div class="predictions-table__columns">
-      <div class="predictions-table__column">
+  <div class="text-table" v-if="show">
+    <div class="text-table__columns">
+      <div class="text-table__column">
         <p>Слой</p>
       </div>
-      <div class="predictions-table__column predictions-table__column--mainer">
+      <div class="text-table__column text-table__column--mainer">
         <p>Истинное значение</p>
         <p>Output_2</p>
       </div>
-      <div class="predictions-table__column predictions-table__column--mainer">
+      <div class="text-table__column text-table__column--mainer">
         <p>Предсказание</p>
         <p>Output_3</p>
       </div>
-      <div class="predictions-table__column">
+      <div class="text-table__column">
         <p>Tags color</p>
       </div>
     </div>
     <scrollbar>
-      <div class="predictions-table__body">
+      <div class="text-table__body">
         <!-- First Row -->
-        <div class="predictions-table__rows">
-          <div class="predictions-table__row">
-            <div class="predictions-table__content">
+        <div class="text-table__rows">
+          <div class="text-table__row">
+            <div class="text-table__content">
               <p>1</p>
             </div>
           </div>
-          <div class="predictions-table__row predictions-table__row--mainer">
-            <div class="predictions-table__content">
+          <div class="text-table__row text-table__row--mainer">
+            <div class="text-table__content">
               <p>
                 Идейные соображения высшего порядка, а также сложившаяся структура организации играет важную роль в
                 формировании направлений прогрессивного развития. Товарищи! постоянное информационно-пропагандистское
@@ -38,9 +38,9 @@
                 разработке новых предложений.
               </p>
             </div>
-            <div class="predictions-table__content">
+            <div class="text-table__content">
               <p>
-                <span class="predictions-table__content--marked" style="background: #5dbb31">
+                <span class="text-table__content--marked" style="background: #5dbb31">
                   Идейные соображения высшего порядка, а также сложившаяся структура организации играет
                 </span>
                 важную роль в формировании направлений прогрессивного развития. Товарищи! постоянное
@@ -53,8 +53,8 @@
               </p>
             </div>
           </div>
-          <div class="predictions-table__row predictions-table__row--mainer">
-            <div class="predictions-table__content">
+          <div class="text-table__row text-table__row--mainer">
+            <div class="text-table__content">
               <p>
                 Идейные соображения высшего порядка, а также сложившаяся структура организации играет важную роль в
                 формировании направлений прогрессивного развития. Товарищи! постоянное информационно-пропагандистское
@@ -67,31 +67,31 @@
               </p>
             </div>
           </div>
-          <div class="predictions-table__row">
-            <div class="predictions-table__content predictions-table__content--tags">
+          <div class="text-table__row">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #ffb054"></div>
+              <div class="text-table__content--tag" style="background: #ffb054"></div>
             </div>
-            <div class="predictions-table__content predictions-table__content--tags">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #fe8900"></div>
+              <div class="text-table__content--tag" style="background: #fe8900"></div>
             </div>
-            <div class="predictions-table__content predictions-table__content--tags">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #e21175"></div>
+              <div class="text-table__content--tag" style="background: #e21175"></div>
             </div>
           </div>
         </div>
 
         <!-- Second Row -->
-        <div class="predictions-table__rows">
-          <div class="predictions-table__row">
-            <div class="predictions-table__content">
+        <div class="text-table__rows">
+          <div class="text-table__row">
+            <div class="text-table__content">
               <p>2</p>
             </div>
           </div>
-          <div class="predictions-table__row predictions-table__row--mainer">
-            <div class="predictions-table__content">
+          <div class="text-table__row text-table__row--mainer">
+            <div class="text-table__content">
               <p>
                 Идейные соображения высшего порядка, а также сложившаяся структура организации играет важную роль в
                 формировании направлений прогрессивного развития. Товарищи! постоянное информационно-пропагандистское
@@ -103,9 +103,9 @@
                 разработке новых предложений.
               </p>
             </div>
-            <div class="predictions-table__content">
+            <div class="text-table__content">
               <p>
-                <span class="predictions-table__content--marked" style="background: #5dbb31">
+                <span class="text-table__content--marked" style="background: #5dbb31">
                   Идейные соображения высшего порядка, а также сложившаяся структура организации играет
                 </span>
                 важную роль в формировании направлений прогрессивного развития. Товарищи! постоянное
@@ -118,8 +118,8 @@
               </p>
             </div>
           </div>
-          <div class="predictions-table__row predictions-table__row--mainer">
-            <div class="predictions-table__content">
+          <div class="text-table__row text-table__row--mainer">
+            <div class="text-table__content">
               <p>
                 Идейные соображения высшего порядка, а также сложившаяся структура организации играет важную роль в
                 формировании направлений прогрессивного развития. Товарищи! постоянное информационно-пропагандистское
@@ -132,18 +132,18 @@
               </p>
             </div>
           </div>
-          <div class="predictions-table__row">
-            <div class="predictions-table__content predictions-table__content--tags">
+          <div class="text-table__row">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #fe8900"></div>
+              <div class="text-table__content--tag" style="background: #fe8900"></div>
             </div>
-            <div class="predictions-table__content predictions-table__content--tags">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #5dbb31"></div>
+              <div class="text-table__content--tag" style="background: #5dbb31"></div>
             </div>
-            <div class="predictions-table__content predictions-table__content--tags">
+            <div class="text-table__content text-table__content--tags">
               <p>s1</p>
-              <div class="predictions-table__content--tag" style="background: #6011e2"></div>
+              <div class="text-table__content--tag" style="background: #6011e2"></div>
             </div>
           </div>
         </div>
@@ -154,7 +154,7 @@
 
 <script>
 export default {
-  name: 'PredictionsTable',
+  name: 'TextTable',
   props: {
     show: Boolean,
   },
@@ -176,7 +176,7 @@ export default {
 $bgGray: #242f3d;
 $border: #0e1621;
 
-.predictions-table {
+.text-table {
   width: 100%;
   border: 1px solid $bgGray;
   border-radius: 3px;
@@ -209,7 +209,7 @@ $border: #0e1621;
   &__columns {
     display: flex;
     width: 100%;
-    .predictions-table__column {
+    .text-table__column {
       text-align: center;
       height: 44px;
       background: $bgGray;
@@ -258,7 +258,7 @@ $border: #0e1621;
     &:first-child {
       border-top: 0;
     }
-    .predictions-table__row {
+    .text-table__row {
       border-right: 1px solid $border;
 
       p {
@@ -277,7 +277,7 @@ $border: #0e1621;
       }
       &--mainer {
         padding: 10px;
-        .predictions-table__content {
+        .text-table__content {
           margin-top: 10px;
           &--marked {
             mix-blend-mode: lighten;
