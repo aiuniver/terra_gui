@@ -7,7 +7,6 @@ import tensorflow
 from typing import Any, NoReturn
 from pathlib import Path
 
-
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 
 from ..data.datasets.dataset import (
@@ -161,12 +160,12 @@ class Exchange:
             raise exceptions.DatasetCanNotBeDeletedException(alias, group)
 
 
-    def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
+    def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
         Получение данных для страницы датасетов: датасеты и теги
         """
         info = DatasetsGroupsList(DatasetsGroups)
-        for dirname in os.listdir(path):
+        for dirname in os.listdir(str(path.absolute())):
             try:
                 dataset_config = CustomDatasetConfigData(path=Path(path, dirname))
                 info.get(DatasetGroupChoice.custom.name).datasets.append(
