@@ -32,6 +32,9 @@ def main(**params):
 
     def fun(img):
 
+        if len(img.shape) == 3:
+            img = img[np.newaxis, ...]
+
         if resize:
             img = resize(img)
         if retype:

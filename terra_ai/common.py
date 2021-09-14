@@ -50,7 +50,6 @@ def make_preprocess(preprocess_list):
             out.append(prep(element))
 
         return out
-
     return fun
 
 
