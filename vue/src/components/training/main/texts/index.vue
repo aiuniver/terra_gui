@@ -16,7 +16,7 @@
     <div class="texts__content">
       <div class="inner">
         <div class="epochs">
-          <Table :epochs="epochs" :summary="summary" />
+          <Table :data="progressTable" />
         </div>
       </div>
     </div>
@@ -24,25 +24,18 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Table from './Table.vue'
+import Table from './Table.vue';
 export default {
   name: 'Texts',
   components: {
-    Table
+    Table,
   },
   computed: {
-    ...mapGetters({
-      tables: 'trainings/getTexts'
-    }),
-    epochs() {
-      return this.tables.epochs || []
+    progressTable() {
+      return this.$store.getters['trainings/getTrainData']('progress_table') || [];
     },
-    summary() {
-      return this.tables.summary || ''
-    }
-  }
-}
+  },
+};
 </script>
 
 <style lang="scss" scoped>
@@ -55,7 +48,7 @@ export default {
     &__out {
       flex-shrink: 0;
       > p {
-        color: #A7BED3;
+        color: #a7bed3;
         font-weight: 600;
         font-size: 14px;
         line-height: 17px;
@@ -69,8 +62,7 @@ export default {
   &__content {
     margin-top: 10px;
     box-sizing: border-box;
- }
+  }
 }
-
 </style>
 

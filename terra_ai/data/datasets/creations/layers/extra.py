@@ -52,6 +52,8 @@ class ParametersTextData(SourcesPathsData):
     put: Optional[str]
     deploy: Optional[bool] = False
     cols_names: Optional[List[str]]
+    open_tags: Optional[str]
+    close_tags: Optional[str]
 
     @validator("text_mode")
     def _validate_text_mode(cls, value: LayerTextModeChoice) -> LayerTextModeChoice:

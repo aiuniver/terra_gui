@@ -115,6 +115,12 @@ class LayerYoloChoice(str, Enum):
     v4 = "v4"
 
 
+class LayerEncodingChoice(str, Enum):
+    none = "none"
+    ohe = "ohe"
+    multi = "multi"
+
+
 class DatasetGroupChoice(str, Enum):
     keras = "keras"
     terra = "terra"

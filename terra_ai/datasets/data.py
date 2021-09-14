@@ -19,7 +19,6 @@ class Preprocesses(str, Enum):
     tokenizer = "tokenizer"
     word2vec = "word2vec"
     augmentation = "augmentation"
-    # tsgenerator = "tsgenerator"
 
 
 class InstructionsData(BaseMixinData):

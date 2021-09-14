@@ -1,3 +1,3 @@
-from .guinn import GUINN
+from terra_ai.training.guinn import GUINN
 
 training_obj = GUINN()

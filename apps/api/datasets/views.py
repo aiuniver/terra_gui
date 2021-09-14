@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from apps.plugins.project import data_path
+from apps.plugins.project import data_path, project_path
 from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
@@ -28,7 +28,8 @@ class ChoiceAPIView(BaseAPIView):
         try:
             agent_exchange(
                 "dataset_choice",
-                path=str(data_path.datasets),
+                custom_path=data_path.datasets,
+                destination=project_path.datasets,
                 **serializer.validated_data,
             )
             return BaseResponseSuccess()

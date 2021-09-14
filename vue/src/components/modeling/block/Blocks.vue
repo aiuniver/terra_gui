@@ -1,6 +1,7 @@
 <template>
-  <div class="board">
-    <VueLink :lines="lines" />
+  <div class="t-block" @contextmenu="contextmenu">
+    <Net class="t-block__center" :x="centerX" :y="centerY" :scale="scale" />
+    <VueLink class="t-block__lines" :lines="lines" />
     <VueBlock
       v-for="block in blocks"
       :key="block.id"
@@ -41,12 +42,14 @@ import { mouseHelper } from '@/store/const/modeling';
 import { mapGetters } from 'vuex';
 import VueBlock from './VueBlock';
 import VueLink from './VueLink';
+import Net from './Net';
 
 export default {
   name: 'VueBlockContainer',
   components: {
     VueBlock,
     VueLink,
+    Net,
   },
   props: {
     blocksContent: {
@@ -99,6 +102,14 @@ export default {
     ...mapGetters({
       project: 'projects/getProject',
     }),
+    scaleCenter() {
+      return {
+        top: this.centerY + 'px',
+        left: this.centerX + 'px',
+        transform: 'scale(' + (this.scale + '') + ')',
+        transformOrigin: 'top left',
+      };
+    },
     filter() {
       return {
         input: this.project?.dataset ? ['link'] : ['clone', 'link', 'remove'],
@@ -192,16 +203,19 @@ export default {
           x2: x2,
           y2: y2,
           slot: link.originSlot,
+          scale: this.scale,
           style: {
             stroke: 'rgb(101, 185, 244)',
-            strokeWidth: 3 * this.scale,
+            strokeWidth: 2 * this.scale,
             fill: 'none',
+            zIndex: 999,
           },
           outlineStyle: {
             stroke: '#666',
-            strokeWidth: 6 * this.scale,
+            strokeWidth: 2 * this.scale,
             strokeOpacity: 0.6,
             fill: 'none',
+            zIndex: 999,
           },
         });
       }
@@ -211,7 +225,7 @@ export default {
         this.tempLink.style = {
           // eslint-disable-line
           stroke: '#8f8f8f',
-          strokeWidth: 3 * this.scale,
+          strokeWidth: 2 * this.scale,
           fill: 'none',
         };
 
@@ -222,6 +236,22 @@ export default {
     },
   },
   methods: {
+    contextmenu(e) {
+      if (!this.$config.isDev) {
+        e.preventDefault();
+      }
+    },
+    getCenter() {
+      if (this.scale > 1.5) {
+        this.scale = 1.5;
+      }
+      const x = this.$el.clientWidth / 2 - this.optionsForChild.width / 2 - this.centerX;
+      const y = this.$el.clientHeight / 2 - this.centerY;
+      console.log(this.centerX);
+      console.log(this.centerY);
+
+      return [x, y];
+    },
     getError(id) {
       return this.errorsBlocks?.[id] || '';
     },
@@ -259,7 +289,7 @@ export default {
     zoom(value) {
       if (value === 0) {
         this.scale = 1;
-        this.centerX = this.$el.clientWidth / 2 - 100;
+        this.centerX = this.$el.clientWidth / 2;
         this.centerY = this.$el.clientHeight / 2;
         return;
       }
@@ -274,22 +304,21 @@ export default {
         this.scale = this.maxScale;
         return;
       }
-      let deltaOffsetX = ((this.$el.clientWidth / 2) - this.centerX) * (deltaScale - 1);
-      let deltaOffsetY = ((this.$el.clientHeight / 2) - this.centerY) * (deltaScale - 1);
+      let deltaOffsetX = (this.$el.clientWidth / 2 - this.centerX) * (deltaScale - 1);
+      let deltaOffsetY = (this.$el.clientHeight / 2 - this.centerY) * (deltaScale - 1);
 
       this.centerX -= deltaOffsetX;
       this.centerY -= deltaOffsetY;
-      console.log(this.centerX);
-      
+
       // this.updateScene();
     },
     handleMove(e) {
-      // console.log('handleMove')
       let mouse = mouseHelper(this.$el, e);
       this.mouseX = mouse.x;
       this.mouseY = mouse.y;
 
       if (this.dragging) {
+        console.log('handleMove');
         let diffX = this.mouseX - this.lastMouseX;
         let diffY = this.mouseY - this.lastMouseY;
 
@@ -358,10 +387,10 @@ export default {
       if (this.$el.contains(target)) {
         // if (e.preventDefault) e.preventDefault()
 
-        console.log(e.deltaY)
+        // console.log(e.deltaY);
 
         let deltaScale = Math.pow(1.1, e.deltaY * -0.01);
-        // console.log(deltaScale)
+        // console.log(deltaScale);
         this.scale *= deltaScale;
 
         if (this.scale < this.minScale) {
@@ -372,7 +401,7 @@ export default {
           return;
         }
 
-        console.log(this.mouseX)
+        // console.log(this.mouseX);
         let zoomingCenter = {
           x: this.mouseX,
           y: this.mouseY,
@@ -384,6 +413,7 @@ export default {
         this.centerX -= deltaOffsetX;
         this.centerY -= deltaOffsetY;
 
+        // console.log(this.centerX, this.centerY);
         // this.updateScene();
       }
     },
@@ -398,14 +428,11 @@ export default {
 
       x += block.position[0];
       y += block.position[1];
-      // console.log(this.optionsForChild)
-      // console.log(isInput)
-
-      // y += this.optionsForChild.titleHeight
 
       if (isInput && block.inputs.length > slotNumber) {
         if (block.inputs.length === 1) {
           x += this.optionsForChild.width / 2;
+          y += -3;
         } else {
           x += this.optionsForChild.width / 2 - (block.inputs.length * 10) / 2;
           x += 20 * slotNumber;
@@ -415,7 +442,7 @@ export default {
           x += this.optionsForChild.width / 2;
           // console.log()
           // y += this.$refs?.['block_' + block.id]?.[0]?.getHeight();
-          y += 42;
+          y += 45;
         }
         if (slotNumber === 1) {
           x += this.optionsForChild.width;
@@ -552,10 +579,12 @@ export default {
     //   });
     // },
     async getImages() {
+      const tags = ['line', 'circle'];
       try {
         const image = await domtoimage.toPng(this.$el, {
+          bgcolor: '#00000000',
           filter: node => {
-            return node.className !== 'btn-zoom';
+            return !(['btn-zoom'].includes(node.className) || tags.includes(node.tagName));
           },
         });
         return image;
@@ -623,7 +652,11 @@ export default {
     // },
     // Events
     blockSelect(block) {
-      this.$store.dispatch('modeling/selectBlock', block);
+      this.$store.dispatch('modeling/deselectBlocks', block);
+      this.$nextTick(() => {
+        this.$store.dispatch('modeling/selectBlock', block);
+      });
+
       // block.selected = true;
       // this.selectedBlock = block;
       // this.deselectAll(block.id);
@@ -632,11 +665,9 @@ export default {
     },
     blockDeselect(block) {
       block.selected = false;
-
       if (block && this.selectedBlock && this.selectedBlock.id === block.id) {
         this.selectedBlock = null;
       }
-
       this.$emit('blockDeselect', block);
     },
     // blockDelete(block) {
@@ -673,7 +704,7 @@ export default {
     document.documentElement.addEventListener('mouseup', this.handleUp, true);
     document.documentElement.addEventListener('wheel', this.handleWheel, true);
 
-    this.centerX = this.$el.clientWidth / 2 - 100;
+    this.centerX = this.$el.clientWidth / 2;
     this.centerY = this.$el.clientHeight / 2;
 
     // this.importScene();
@@ -692,13 +723,20 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.board {
+.t-block {
   flex-shrink: 1;
   width: 100%;
   background-color: #17212b;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+
+  &__lines {
+    position: absolute;
+  }
+  &__center {
+    position: absolute;
+  }
 }
 .btn-zoom {
   display: flex;

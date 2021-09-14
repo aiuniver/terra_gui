@@ -41,7 +41,7 @@
             </div>
           </div>
         </div>
-        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Отправить</button>
+        <button :disabled="send_disabled" @click="SendData" v-if="!DataSent">Загрузить</button>
         <div class="loader" v-if="DataLoading">
           <div class="loader__title">Дождитесь окончания загрузки</div>
           <!--          <div class="loader__time">-->
@@ -179,6 +179,7 @@ export default {
         replace: this.replace,
         use_sec: this.use_sec,
       };
+
       if (this.use_sec) data['sec'] = this.sec;
 
       const res = await this.$store.dispatch('deploy/SendDeploy', data);

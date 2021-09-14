@@ -3,7 +3,9 @@
     <label class="t-multi-select__label">
       <slot>{{ label }}</slot>
     </label>
-    <div :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]">
+    <div
+      :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]"
+    >
       <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
       <span
         :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
@@ -80,7 +82,13 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     filterList() {
-      return this.lists.filter(item => !item.id || item.id === this.id);
+      const { type } = this.$store.getters['datasets/getInputDataByID'](this.id);
+      const filter = this.mixinFilter?.[type || ''] || [];
+      // console.log(type, filter);
+      return this.lists
+        .filter(item => !item.id || item.id === this.id)
+        // .filter(item => item.type !== 'table')
+        .filter(item => filter.includes(item.type));
     },
   },
   methods: {
@@ -109,7 +117,8 @@ export default {
           this.selected = [...this.selected, list];
         }
       }
-      // this.$emit('change', this.selected);
+      // console.log(this.id)
+      this.$emit('multiselect', { value: this.selected, id: this.id });
       this.mixinCheck(this.selected, this.id);
     },
   },
@@ -123,7 +132,8 @@ export default {
   },
   watch: {
     filterList() {
-      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value))},
+      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value));
+    },
   },
 };
 </script>

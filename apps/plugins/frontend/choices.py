@@ -48,9 +48,9 @@ class LayerScalerChoice(str, Enum):
 
 
 class LayerScalerImageChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
     terra_image_scaler = "TerraImageScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -58,8 +58,8 @@ class LayerScalerImageChoice(str, Enum):
 
 
 class LayerScalerVideoChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -67,8 +67,8 @@ class LayerScalerVideoChoice(str, Enum):
 
 
 class LayerScalerAudioChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -76,9 +76,9 @@ class LayerScalerAudioChoice(str, Enum):
 
 
 class LayerScalerRegressionChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
     standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:
@@ -88,9 +88,9 @@ class LayerScalerRegressionChoice(str, Enum):
 
 
 class LayerScalerTimeseriesChoice(str, Enum):
-    no_scaler = "Не применять"
     min_max_scaler = "MinMaxScaler"
     standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
 
     @staticmethod
     def items_tuple() -> list:

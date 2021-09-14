@@ -34,7 +34,7 @@ from ..data.training.train import TrainData
 
 from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
-from ..datasets.creating import CreateDTS
+from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
 
 from .. import settings, progress
@@ -116,11 +116,16 @@ class Exchange:
         destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
         shutil.move(destination, target)
 
-    def _call_dataset_choice(self, path: str, group: str, alias: str) -> DatasetData:
+    def _call_dataset_choice(
+        self, custom_path: Path, destination: Path, group: str, alias: str
+    ) -> DatasetData:
         """
         Выбор датасета
         """
-        datasets_loading.choice(DatasetLoadData(path=path, group=group, alias=alias))
+        datasets_loading.choice(
+            DatasetLoadData(path=custom_path, group=group, alias=alias),
+            destination=destination,
+        )
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:
         """
@@ -194,9 +199,9 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        creation = CreateDTS()
-        dataset = creation.create_dataset(CreationData(**kwargs))
-        return dataset
+        data = CreationData(**kwargs)
+        creation = CreateDataset(data)
+        return creation.datasetdata
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
         """
@@ -212,7 +217,7 @@ class Exchange:
         files.sort(key=lambda item: item.label)
         return files
 
-    def _call_models_info(self, path: Path) -> ModelsGroupsList:
+    def _call_models(self, path: str) -> ModelsGroupsList:
         """
         Получение списка моделей
         """
@@ -246,20 +251,29 @@ class Exchange:
         """
         data = ModelLoadData(value=value)
         with open(data.value.absolute(), "r") as config_ref:
-            config = json.load(config_ref)
-            return ModelDetailsData(**config)
+            try:
+                config = json.load(config_ref)
+                return ModelDetailsData(**config)
+            except Exception as error:
+                raise exceptions.FailedGetModelException(error.__str__())
 
     def _call_model_update(self, model: dict) -> ModelDetailsData:
         """
         Обновление модели
         """
-        return ModelDetailsData(**model)
+        try:
+            return ModelDetailsData(**model)
+        except Exception as error:
+            raise exceptions.FailedUpdateModelException(error.__str__())
 
     def _call_model_validate(self, model: ModelDetailsData) -> tuple:
         """
         Валидация модели
         """
-        return ModelValidator(model).get_validated()
+        try:
+            return ModelValidator(model).get_validated()
+        except Exception as error:
+            raise exceptions.FailedValidateModelException(error.__str__())
 
     def _call_model_create(self, model: dict, path: Path, overwrite: bool):
         """
@@ -275,44 +289,87 @@ class Exchange:
         """
         Удаление модели
         """
-        os.remove(path)
+        try:
+            os.remove(path)
+        except FileNotFoundError as error:
+            raise exceptions.FailedDeleteModelException(error.__str__())
 
-    def _call_start_training(
+    def _call_training_start(
         self,
         dataset: DatasetData,
         model: ModelDetailsData,
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
+        initial_config: dict
     ):
         """
         Старт обучения
         """
-        training_obj.terra_fit(
-            dataset=dataset,
-            gui_model=model,
-            training_path=training_path,
-            dataset_path=dataset_path,
-            training_params=params,
-        )
+        if interactive.get_states().get("status") == "stopped":
+            interactive.set_status("addtrain")
+        elif interactive.get_states().get("status") == "trained":
+            interactive.set_status("retrain")
+        else:
+            interactive.set_status("training")
 
-    def _call_set_interactive_config(self, config: dict):
+        try:
+            training_obj.terra_fit(
+                dataset=dataset,
+                gui_model=model,
+                training_path=training_path,
+                dataset_path=dataset_path,
+                training_params=params,
+                initial_config=initial_config
+            )
+        except Exception as error:
+            raise exceptions.FailedStartTrainException(error.__str__())
+        return interactive.train_states
+
+    def _call_training_stop(self):
+        """
+        Остановить обучение
+        """
+        interactive.set_status("stopped")
+
+    def _call_training_clear(self):
+        """
+        Очистить обучение
+        """
+        interactive.set_status("no_train")
+
+    def _call_training_interactive(self, config: dict):
         """
         Обновление интерактивных параметров обучения
         """
-        interactive.get_train_results(config=config)
+        try:
+            interactive.get_train_results(config=config)
+        except Exception as error:
+            raise exceptions.FailedSetInteractiveConfigException(error.__str__())
+
+    def _call_training_progress(self) -> progress.ProgressData:
+        """
+        Прогресс обучения
+        """
+        return progress.pool("training")
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """
         Деплой: загрузка
         """
-        deploy_loading.upload(source, kwargs)
+        try:
+            deploy_loading.upload(source, kwargs)
+        except Exception as error:
+            raise exceptions.FailedUploadDeployException(error.__str__())
 
     def _call_deploy_upload_progress(self) -> progress.ProgressData:
         """
         Деплой: прогресс загрузки
         """
-        return progress.pool("deploy_upload")
+        try:
+            return progress.pool("deploy_upload")
+        except Exception as error:
+            raise exceptions.FailedGetUploadDeployResultException(error.__str__())
 
 
 agent_exchange = Exchange()

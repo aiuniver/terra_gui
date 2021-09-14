@@ -50,9 +50,9 @@ export default {
     },
   },
   actions: {
-    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, type) {
+    addBlock({ dispatch, commit, state: { blocks, modeling: { layers_types, list } } }, { type, position }) {
       let maxID = Math.max(0, ...blocks.map(o => o.id));
-      let block = createBlock(type, maxID + 1, layers_types, list);
+      let block = createBlock(type, maxID + 1, layers_types, list, position);
       if (!block) return;
       blocks.push(block);
       dispatch('updateModel');
@@ -109,9 +109,10 @@ export default {
     async info({ dispatch }, value) {
       return await dispatch('axios', { url: '/modeling/info/', data: value }, { root: true });
     },
-    async load({ dispatch }, value) {
+    async load({ commit, dispatch }, value) {
       const { data: model } = await dispatch('axios', { url: '/modeling/load/', data: value }, { root: true });
       if (model) {
+        commit('SET_ERRORS_BLOCKS', {});
         await dispatch('projects/get', {}, { root: true });
       }
       return model;
@@ -119,6 +120,13 @@ export default {
     async createModel({ dispatch, commit }, data) {
       commit('SET_STATUS', { isUpdate: false });
       return await dispatch('axios', { url: '/modeling/create/', data }, { root: true });
+    },
+    async getImageModel({ dispatch }, preview) {
+      return await dispatch('axios', {
+        url: '/modeling/preview/', data: {
+          preview
+        }
+      }, { root: true });
     },
     async removeModel({ dispatch }, data) {
       return await dispatch('axios', { url: '/modeling/delete/', data }, { root: true });
@@ -150,7 +158,7 @@ export default {
           for (const key in error) {
             newError[key.replace('fields', block.id)] = error[key]
           }
-          console.log(newError)
+          // console.log(newError)
           commit('SET_ERRORS_FIELDS', { ...errorsBlocks, ...newError });
         }
       }
