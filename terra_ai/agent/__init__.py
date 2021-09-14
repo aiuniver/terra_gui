@@ -4,7 +4,7 @@ import shutil
 
 import tensorflow
 
-from typing import Any
+from typing import Any, NoReturn
 from pathlib import Path
 
 
@@ -85,14 +85,17 @@ class Exchange:
         """
         Получение списка проектов
         """
-        projects = ProjectsList()
-        for filename in os.listdir(path):
-            try:
-                projects.append({"value": Path(path, filename)})
-            except Exception:
-                pass
-        projects.sort(key=lambda item: item.label)
-        return ProjectsInfoData(projects=projects.native())
+        try:
+            projects = ProjectsList()
+            for filename in os.listdir(path):
+                if filename.endswith('project'):
+                    projects.append({"value": Path(path, filename)})
+            projects.sort(key=lambda item: item.label)
+            return ProjectsInfoData(projects=projects.native())
+        except FileNotFoundError:
+            raise exceptions.FileNotFoundException(str(path))
+        except Exception as error:
+            raise exceptions.FailedGetProjectsInfoException(str(error))
 
     def _call_project_save(
         self, source: Path, target: Path, name: str, overwrite: bool
@@ -100,32 +103,45 @@ class Exchange:
         """
         Сохранение проекта
         """
-        project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
-        if not overwrite and project_path.is_file():
-            raise exceptions.ProjectAlreadyExistsException(name)
-        zip_destination = progress_utils.pack(
-            "project_save", "Сохранение проекта", source, delete=False
-        )
-        shutil.move(zip_destination.name, project_path)
+        try:
+            project_path = Path(target, f"{name}.{settings.PROJECT_EXT}")
+            if not overwrite and project_path.is_file():
+                raise exceptions.ProjectAlreadyExistsException(name)
+            zip_destination = progress_utils.pack(
+                "project_save", "Сохранение проекта", source, delete=False
+            )
+            try:
+                shutil.move(zip_destination.name, project_path)
+            except FileNotFoundError:
+                raise exceptions.ProjectNotFoundException(name, target)
+        except Exception as error:
+            raise exceptions.FailedSaveProjectException(str(error))
+
 
     def _call_project_load(self, source: Path, target: Path):
         """
         Загрузка проекта
         """
-        shutil.rmtree(target, ignore_errors=True)
-        destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
-        shutil.move(destination, target)
+        try:
+            shutil.rmtree(target, ignore_errors=True)
+            destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+            shutil.move(destination, target)
+        except Exception as error:
+            raise exceptions.FailedLoadProjectException(str(error))
 
     def _call_dataset_choice(
         self, custom_path: Path, destination: Path, group: str, alias: str
-    ) -> DatasetData:
+    ) -> NoReturn:
         """
         Выбор датасета
         """
-        datasets_loading.choice(
-            DatasetLoadData(path=custom_path, group=group, alias=alias),
-            destination=destination,
-        )
+        try:
+            datasets_loading.choice(
+                DatasetLoadData(path=custom_path, group=group, alias=alias),
+                destination=destination,
+            )
+        except Exception as error:
+            raise exceptions.FailedChoiceDatasetException(str(error))
 
     def _call_dataset_choice_progress(self) -> progress.ProgressData:
         """
@@ -141,6 +157,9 @@ class Exchange:
             shutil.rmtree(
                 Path(path, f"{alias}.{settings.DATASET_EXT}"), ignore_errors=True
             )
+        else:
+            raise exceptions.DatasetCanNotBeDeletedException(alias, group)
+
 
     def _call_datasets_info(self, path: str) -> DatasetsGroupsList:
         """
