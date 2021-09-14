@@ -341,5 +341,5 @@ class DeleteSerializer(serializers.Serializer):
 
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
-    num_classes = serializers.IntegerField(min_value=1, max_value=10)
+    num_classes = serializers.IntegerField(min_value=1)
     mask_range = serializers.IntegerField(min_value=1)

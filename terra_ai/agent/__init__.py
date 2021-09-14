@@ -7,7 +7,6 @@ import tensorflow
 from typing import Any
 from pathlib import Path
 
-
 from ..data.projects.project import ProjectsInfoData, ProjectsList
 
 from ..data.datasets.dataset import (
