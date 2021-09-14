@@ -11,7 +11,7 @@ class ParametersData(SourcesPathsData):
     type_processing: Optional[LayerTypeProcessingClassificationChoice]
     ranges: Optional[str]
 
-    cols_names: Optional[List[str]]
+    cols_names: Optional[List[int]]
 
     @validator("type_processing")
     def _validate_type_processing(

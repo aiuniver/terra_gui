@@ -879,9 +879,7 @@ class CreateDTS(object):
 
         return instructions
 
-    def instructions_dataframe(
-            self, _, put_data: Union[CreationInputData, CreationOutputData]
-    ):
+    def instructions_dataframe(self, _, put_data: Union[CreationInputData, CreationOutputData]):
         """
         Args:
             _
@@ -925,6 +923,7 @@ class CreateDTS(object):
         options = put_data.parameters.native()
         transpose = options["transpose"]
         instructions = {"instructions": {}, "parameters": {}}
+
         if "classification" in self.tags.values():
             step = 1
             y_col = self.user_parameters[2].cols_names
@@ -1002,7 +1001,6 @@ class CreateDTS(object):
                     df = pd.DataFrame({"slices": xlen_array})
                 instructions["parameters"]["scaler"] = options["scaler"]
                 instructions["parameters"]["put"] = put_data.id
-
             else:
                 if transpose:
                     general_df = pd.read_csv(
@@ -1222,9 +1220,7 @@ class CreateDTS(object):
         instructions["parameters"]["put"] = put_data.id
         return instructions
 
-    def instructions_timeseries(
-            self, _, put_data: Union[CreationInputData, CreationOutputData]
-    ):
+    def instructions_timeseries(self, _, put_data: Union[CreationInputData, CreationOutputData]):
         """
         Args:
             _
@@ -1345,26 +1341,16 @@ class CreateDTS(object):
         self.encoding[put_data.id] = "ohe" if put_data.parameters.one_hot_encoding else None
 
         if "dataframe" in self.tags.values():
-            transpose = self.user_parameters.get(
-                list(self.tags.keys())[list(self.tags.values()).index("dataframe")]
-            ).transpose
             separator = self.user_parameters.get(
                 list(self.tags.keys())[list(self.tags.values()).index("dataframe")]).separator
             if not any(self.y_cls):
                 file_name = options["sources_paths"][0]
-                if transpose:
-                    tmp_df = pd.read_csv(
-                        os.path.join(self.file_folder, file_name), sep=separator
-                    ).T
-                    tmp_df.columns = tmp_df.iloc[0]
-                    tmp_df.drop(tmp_df.index[[0]], inplace=True)
-                    data = tmp_df.loc[:, options["cols_names"][0].split(" ")]
-                else:
-                    data = pd.read_csv(
-                        os.path.join(self.file_folder, file_name),
-                        usecols=options["cols_names"],
-                        sep=separator,
-                    )
+
+                data = pd.read_csv(
+                    os.path.join(self.file_folder, file_name),
+                    usecols=options["cols_names"],
+                    sep=separator,
+                )
                 column = data[options["cols_names"][0]].to_list()
 
                 if options['type_processing'] == "categorical":
@@ -1395,18 +1381,11 @@ class CreateDTS(object):
                                 self.y_cls.append(i)
                                 break
             else:
-                if transpose:
-                    data = pd.read_csv(
-                        os.path.join(self.file_folder, options["sources_paths"][0]),
-                        sep=separator,
-                        nrows=1,
-                    ).values
-                else:
-                    data = pd.read_csv(
-                        os.path.join(self.file_folder, options["sources_paths"][0]),
-                        sep=separator,
-                        usecols=[0],
-                    ).values
+                data = pd.read_csv(
+                    os.path.join(self.file_folder, options["sources_paths"][0]),
+                    sep=separator,
+                    usecols=[0],
+                ).values
                 tmp = []
                 for i in data:
                     tmp.append(i[0])

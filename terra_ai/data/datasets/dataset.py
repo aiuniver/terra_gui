@@ -238,9 +238,9 @@ class DatasetLayerData(BaseMixinData):
 
 class DatasetPathsData(BaseMixinData):
     datasets: Optional[DirectoryPath]
-    arrays: str  # DirectoryPath
-    instructions: str  # DirectoryPath
-    dataset_sources: str  # DirectoryPath
+    # arrays: str  # DirectoryPath
+    # instructions: str  # DirectoryPath
+    # dataset_sources: str  # DirectoryPath
     tmp_sources: Optional[DirectoryPath]
 
 
