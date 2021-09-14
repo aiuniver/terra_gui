@@ -6,9 +6,9 @@
         :key="'tabs_' + i"
         :class="['t-table__label', { 't-table__label--active': tab.active }]"
         @click="clickTab(tab)"
-        :style="{ order: tab.id }"
+        :style="{ order: tab.id, backgroundColor: color(tab.layer) || '' }"
       >
-        <span>{{ `${tab.active ? tab.name : ''}  ${tab.id}` }}</span>
+        <span>{{ `${tab.active ? tab.label : ''}  ${tab.id}` }}</span>
         <i v-if="tab.active" class="t-icon icon-file-dot"></i>
       </div>
 
@@ -21,7 +21,7 @@
         <div v-for="(i, idx) of 6" :key="'idx_r_' + i" class="t-table__row">{{ idx ? idx : '' }}</div>
       </div>
 
-      <div v-if="selectTable.length" class="t-table__border t-table__border--selected">
+      <div v-if="selectTable.length" class="t-table__border t-table__border--selected" :style="getColor">
         <div
           v-for="(row, index) in selectTable"
           :class="['t-table__col', { 't-table__col--first': index === 0 }]"
@@ -69,17 +69,29 @@ export default {
     table: Array,
   },
   data: () => ({
-    group: [],
     show: false,
     items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
     selected: [],
   }),
   computed: {
+    getColor() {
+      const id = this.group.filter(item => item.active)
+      console.log()
+      return { borderColor: this.color(id?.[0]?.layer) || ''} 
+    },
     origTable() {
       return this.originTable.filter(item => !this.selected.includes(item[0]));
     },
     selectTable() {
       return this.originTable.filter(item => this.selected.includes(item[0]));
+    },
+    group: {
+      set(value) {
+        this.$store.dispatch('datasets/setTableGroup', value);
+      },
+      get() {
+        return this.$store.getters['datasets/getTableGroup'];
+      },
     },
   },
   created() {
@@ -96,12 +108,17 @@ export default {
     this.originTable = newarr;
   },
   methods: {
+    color(id) {
+      const selectInputData = this.$store.getters['datasets/getInputDataByID'](id) || {}
+      return selectInputData.color || '';
+    },
     tadSave() {
       this.group.forEach(item => {
         if (item.active) {
           item.data = this.selected;
         }
       });
+      this.group = [...this.group];
     },
     tabDeselect(id) {
       this.group = this.group.map(item => {
@@ -117,13 +134,14 @@ export default {
     addGroup() {
       console.log('dsdsdsdsds');
       this.tabDeselect(999);
-      this.group.push({ id: this.group.length + 1, name: 'Группа', data: [this.selected], active: true });
+      this.group.push({ id: this.group.length + 1, label: 'Группа', data: [this.selected], active: true });
       this.selected = [];
+      this.tadSave();
     },
     select([name]) {
       console.log('yuyuyuyuyu');
       if (this.group.length === 0) {
-        this.group.push({ id: this.group.length + 1, name: 'Группа', data: [], active: true });
+        this.group.push({ id: this.group.length + 1, label: 'Группа', data: [], active: true });
       }
       this.selected.push(name);
       this.tadSave();
