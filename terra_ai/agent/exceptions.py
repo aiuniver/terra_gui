@@ -1,12 +1,17 @@
+from pathlib import Path
 from typing import Any
 from enum import Enum
 
 
 class ExceptionMessages(str, Enum):
+    UnknownError = "Unknown error"
     CallMethodNotFound = "Instance of `%s` must have method `%s`"
     MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
     ModelAlreadyExists = "Model `%s` already exists"
     ProjectAlreadyExists = "Project `%s` already exists"
+    ProjectNotFound = "Project `%s` not found in `%s`"
+    FileNotFound = "No such file or directory: %s"
+    DatasetCanNotBeDeleted = "Dataset `%s` from group `%s` can't be deleted"
     FailedGetModel = "Error when getting the model: %s"
     FailedValidateModel = "Error when validating the model: %s"
     FailedUpdateModel = "Error when updating the model: %s"
@@ -16,78 +21,145 @@ class ExceptionMessages(str, Enum):
     FailedSetInteractiveConfig = "Error when setting interactive config: %s"
     FailedUploadDeploy = "Error when uploading deploy: %s"
     FailedGetUploadDeployResult = "Error when getting upload deploy result: %s"
-
+    FailedCreateDataset = "Ошибка создания датасета: %s"
+    FailedGetProjectsInfo = "Error when getting projects info: %s"
+    FailedSaveProject = "Error when saving project: %s"
+    FailedLoadProject = "Error when loading project: %s"
+    FailedChoiceDataset = "Error when choosing dataset: %s"
+    FailedDeleteDataset = "Dataset could not be deleted: %s"
 
 class ExchangeBaseException(Exception):
-    pass
+    class Meta:
+        message: ExceptionMessages = ExceptionMessages.UnknownError
+
+    def __init__(self, *args, **kwargs):
+        if not args:
+            args = (self.Meta.message.value,)
+        super().__init__(*args)
+
+
+class ValueException(ExchangeBaseException):
+    def __init__(self, __value: Any):
+        super().__init__(self.Meta.message.value % str(__value))
 
 
 class CallMethodNotFoundException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.CallMethodNotFound
+
     def __init__(self, __class: Any, __method: str):
-        super().__init__(
-            ExceptionMessages.CallMethodNotFound % (str(__class), str(__method))
-        )
+        super().__init__(self.Meta.message.value % (str(__class), str(__method)))
 
 
 class MethodNotCallableException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.MethodNotCallable
+
     def __init__(self, __class: Any, __method: str):
-        super().__init__(
-            ExceptionMessages.MethodNotCallable % (str(__method), str(__class))
-        )
+        super().__init__(self.Meta.message.value % (str(__method), str(__class)))
 
 
-class ModelAlreadyExistsException(ExchangeBaseException):
-    def __init__(self, __name: str):
-        super().__init__(ExceptionMessages.ModelAlreadyExists % str(__name))
+class ProjectNotFoundException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.ProjectNotFound
+
+    def __init__(self, __project: str, __target: Path):
+        super().__init__(self.Meta.message.value % ((str(__project)), str(__target)))
 
 
-class ProjectAlreadyExistsException(ExchangeBaseException):
-    def __init__(self, __name: str):
-        super().__init__(ExceptionMessages.ProjectAlreadyExists % str(__name))
+class DatasetCanNotBeDeletedException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.DatasetCanNotBeDeleted
+
+    def __init__(self, __dataset: str, __group: str):
+        super().__init__(self.Meta.message.value % ((str(__dataset)), str(__group)))
 
 
-class FailedGetModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedGetModel % __error)
+class ModelAlreadyExistsException(ValueException):
+    class Meta:
+        message = ExceptionMessages.ModelAlreadyExists
 
 
-class FailedValidateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedValidateModel % __error)
+class ProjectAlreadyExistsException(ValueException):
+    class Meta:
+        message = ExceptionMessages.ProjectAlreadyExists
 
 
-class FailedUpdateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedUpdateModel % __error)
+class FailedGetModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedGetModel
 
 
-class FailedCreateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedCreateModel % __error)
+class FailedValidateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedValidateModel
 
 
-class FailedDeleteModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedDeleteModel % __error)
+class FailedUpdateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedUpdateModel
 
 
-class FailedStartTrainException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedStartTrain % __error)
+class FailedCreateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedCreateModel
 
 
-class FailedSetInteractiveConfigException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedSetInteractiveConfig % __error)
+class FailedDeleteModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedDeleteModel
 
 
-class FailedUploadDeployException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedUploadDeploy % __error)
+class FailedStartTrainException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedStartTrain
 
 
-class FailedGetUploadDeployResultException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedGetUploadDeployResult % __error)
+class FailedSetInteractiveConfigException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedSetInteractiveConfig
 
 
+class FailedUploadDeployException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedUploadDeploy
+
+
+class FailedGetUploadDeployResultException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedGetUploadDeployResult
+
+
+class FailedCreateDatasetException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedCreateDataset
+
+
+class FailedGetProjectsInfoException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedGetProjectsInfo
+
+
+class FileNotFoundException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FileNotFound
+
+
+class FailedSaveProjectException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedSaveProject
+
+
+class FailedLoadProjectException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedLoadProject
+
+
+class FailedChoiceDatasetException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedChoiceDataset
+
+
+class FailedDeleteDatasetException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedDeleteDataset

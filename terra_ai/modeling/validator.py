@@ -3,6 +3,7 @@ import gc
 import importlib
 import sys
 from dataclasses import dataclass, field
+
 from typing import List, Optional, Tuple, Dict, Any, Union
 
 import networkx as nx
@@ -17,7 +18,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.054
+__version__ = 0.055
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
@@ -912,9 +913,9 @@ class LayerValidation:
                     and self.input_dimension[1] == LayerValidationMethodChoice.minimal
                     and len(self.inp_shape[0]) < self.input_dimension[0]
             ):
-                return ValidatorMessages.IncorrectQuantityInputDimensions.value (
+                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
                     f"{self.input_dimension[0]} or greater",
-                    len(self.inp_shape[0])
+                    len(self.inp_shape[0]),
                 )
             elif (
                     isinstance(self.input_dimension[0], tuple)
