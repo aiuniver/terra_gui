@@ -584,19 +584,6 @@ Defaults = {
                         "Dataframe": [
                             SourcesPaths,
                             {
-                                "type": "text",
-                                "label": "Сепаратор",
-                                "name": "separator",
-                                "parse": "separator",
-                            },
-                            {
-                                "type": "checkbox",
-                                "label": "Транспонирование",
-                                "name": "transpose",
-                                "parse": "transpose",
-                                "value": False,
-                            },
-                            {
                                 "type": "checkbox",
                                 "label": "Выровнять базу",
                                 "name": "align_base",
