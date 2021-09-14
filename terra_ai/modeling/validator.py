@@ -3,6 +3,7 @@ import gc
 import importlib
 import sys
 from dataclasses import dataclass, field
+
 from typing import List, Optional, Tuple, Dict, Any, Union
 
 import networkx as nx
@@ -17,7 +18,7 @@ from terra_ai.data.modeling.extra import LayerGroupChoice, LayerTypeChoice
 from terra_ai.data.modeling.layer import LayerData
 from terra_ai.data.modeling.model import ModelDetailsData
 
-__version__ = 0.054
+__version__ = 0.055
 
 from terra_ai.data.modeling.layers.extra import (
     ModuleTypeChoice,
@@ -27,12 +28,12 @@ from terra_ai.data.modeling.layers.extra import (
 from terra_ai.exceptions.modeling import ValidatorMessages
 
 
-@dataclass
-class TerraModel:
-    plan_name: Optional[str] = ""
-    input_shape: Dict[int, List[tuple]] = field(default_factory=dict)
-    plan: List[Tuple[int, LayerTypeChoice, dict, list, list]] = field(default_factory=list)
-    block_plans: dict = field(default_factory=dict)
+# @dataclass
+# class TerraModel:
+#     plan_name: Optional[str] = ""
+#     input_shape: Dict[int, List[tuple]] = field(default_factory=dict)
+#     plan: List[Tuple[int, LayerTypeChoice, dict, list, list]] = field(default_factory=list)
+#     block_plans: dict = field(default_factory=dict)
 
 
 def get_links(model_plan: List[tuple]) -> Tuple[list, dict, dict, list, list]:
@@ -172,7 +173,7 @@ class ModelValidator:
 
     def __init__(self, model: ModelDetailsData):
         self.validator: LayerValidation = LayerValidation()
-        self.model_plan: TerraModel = TerraModel()
+        # self.model_plan: TerraModel = TerraModel()
         self.model: ModelDetailsData = model
         self.filled_model: ModelDetailsData = model
         self.output_shape = {}
@@ -189,6 +190,12 @@ class ModelValidator:
         self.val_dictionary: Dict[int, Any] = {}
         self.keras_code: str = ""
         self.valid: bool = True
+
+        # reset state in self.model_plan
+        # self.plan_name = ""
+        self.input_shape = {}
+        self.model_plan = []
+        self.block_plans = {}
 
         for layer in self.model.layers:
             self.val_dictionary[layer.id] = None
@@ -215,13 +222,13 @@ class ModelValidator:
 
     def _build_model_plan(self):
         # оставить описание
-        self.model_plan.plan_name = self.model.alias
+        # self.model_plan.plan_name = self.model.alias
         for layer in self.model.layers:
             if layer.group == LayerGroupChoice.input:
-                self.model_plan.input_shape[layer.id] = layer.shape.input
+                self.input_shape[layer.id] = layer.shape.input
                 self.layer_input_shapes[layer.id].extend(reformat_input_shape(layer.shape.input))
             self.layers_state[layer.id] = layer.group.value
-            self.model_plan.plan.append(get_layer_info(layer))
+            self.model_plan.append(get_layer_info(layer))
             if layer.reference:
                 for block in self.model.references:
                     if layer.reference == block.name:
@@ -230,7 +237,7 @@ class ModelValidator:
                             block_plan.append(
                                 get_layer_info(block_layer, block_name=layer.name)
                             )
-                        self.model_plan.block_plans[layer.id] = reorder_plan(block_plan)
+                        self.block_plans[layer.id] = reorder_plan(block_plan)
                         break
         self._get_model_links()
         self._get_reorder_model()
@@ -244,7 +251,7 @@ class ModelValidator:
             valid, bool:            True if no cycles, otherwise False
         """
 
-        edges = get_edges(self.model_plan.plan)
+        edges = get_edges(self.model_plan)
 
         di_graph = nx.DiGraph(edges)
         for cycle in nx.simple_cycles(di_graph):
@@ -263,7 +270,7 @@ class ModelValidator:
             valid, bool:            True if no separation, otherwise False
         """
 
-        edges = get_edges(self.model_plan.plan, full_connection=True)
+        edges = get_edges(self.model_plan, full_connection=True)
         di_graph = nx.DiGraph(edges)
         sub_graphs = sorted(
             list(nx.weakly_connected_components(di_graph)),
@@ -283,16 +290,16 @@ class ModelValidator:
             self.down_links,
             self.all_indexes,
             self.end_row,
-        ) = get_links(self.model_plan.plan)
+        ) = get_links(self.model_plan)
 
     def _get_reorder_model(self):
-        self.model_plan.plan = reorder_plan(self.model_plan.plan)
+        self.model_plan = reorder_plan(self.model_plan)
 
     def _get_input_shape_check(self) -> None:
         """Check empty input shapes"""
         input_layers = {}
-        for layer in self.model_plan.plan:
-            if layer[0] in self.model_plan.input_shape.keys():
+        for layer in self.model_plan:
+            if layer[0] in self.input_shape.keys():
                 input_layers[layer[0]] = layer[2].get("name")
 
         for idx in self.start_row:
@@ -302,7 +309,7 @@ class ModelValidator:
                 self.val_dictionary[idx] = ValidatorMessages.LayerDoesNotHaveInputShape.value
 
         # check if plan input shapes is not None
-        for _id, shape in self.model_plan.input_shape.items():
+        for _id, shape in self.input_shape.items():
             if not shape or None in shape:
                 self.valid = False
                 self.val_dictionary[_id] = ValidatorMessages.LayerDoesNotHaveInputShape.value
@@ -311,7 +318,7 @@ class ModelValidator:
         """Check compatibility of dataset's and results model output shapes"""
         if self.output_shape:
             outputs = []
-            for layer in self.model_plan.plan:
+            for layer in self.model_plan:
                 if layer[0] in self.output_shape.keys():
                     outputs.append(layer[0])
                     if (
@@ -352,10 +359,10 @@ class ModelValidator:
             return self.val_dictionary
 
         # check layers
-        for layer in self.model_plan.plan:
+        for layer in self.model_plan:
             if layer[1] == LayerTypeChoice.CustomBlock:
                 output_shape, comment = self._custom_block_validation(
-                    self.model_plan.block_plans[layer[0]],
+                    self.block_plans[layer[0]],
                     self.layer_input_shapes.get(layer[0]),
                     self.layers_def[layer[0]],
                     self.layers_config[layer[0]],
@@ -437,7 +444,7 @@ class ModelValidator:
         name_dict = {}
         input_list = []
         output_list = []
-        for layer in self.model_plan.plan:
+        for layer in self.model_plan:
             # Keras код под block_plan пока не готов
             # layer_type = layer[1] if layer[1] != 'space_to_depth' else 'SpaceToDepth'
 
@@ -452,7 +459,7 @@ class ModelValidator:
                     self.layers_config.get(layer[0]).module_type.value
                     == ModuleTypeChoice.block_plan
             ):
-                for block_layer in self.model_plan.block_plans.get(layer[0]):
+                for block_layer in self.block_plans.get(layer[0]):
                     if block_layer[1] not in layers_import.values():
                         layers_import[block_layer[0]] = block_layer[1]
 
@@ -491,7 +498,7 @@ class ModelValidator:
             if _layer[1] == LayerTypeChoice.Input:
                 _layer_str = (
                     f"{_block_uplinks[_layer[0]] if _block_uplinks else name_dict[_layer[0]]} = "
-                    f"{_layer[1]}(shape={self.model_plan.input_shape[_layer[0]][0]}, "
+                    f"{_layer[1]}(shape={self.input_shape[_layer[0]][0]}, "
                     f"name='{_layer[2].get('name')}')\n"
                 )
             else:
@@ -554,11 +561,11 @@ class ModelValidator:
                     pass
             return _layer_str
 
-        for layer in self.model_plan.plan:
+        for layer in self.model_plan:
             if layer[1] == LayerTypeChoice.CustomBlock:
                 layer_str = ""
                 block_uplinks = {-1: name_dict[layer[3][0]]}
-                for block_layer in self.model_plan.block_plans.get(layer[0]):
+                for block_layer in self.block_plans.get(layer[0]):
                     layer_str += get_layer_str(
                         block_layer,
                         identifier=layer[2].get("name", ""),
@@ -620,7 +627,7 @@ class ModelValidator:
         return self.filled_model, self.val_dictionary
 
     def get_keras_model(self):
-        mc = ModelCreator(self.model_plan, self.layers_config)
+        mc = ModelCreator(self.model_plan, self.input_shape, self.block_plans, self.layers_config)
         return mc.create_model()
 
 
@@ -906,9 +913,9 @@ class LayerValidation:
                     and self.input_dimension[1] == LayerValidationMethodChoice.minimal
                     and len(self.inp_shape[0]) < self.input_dimension[0]
             ):
-                return ValidatorMessages.IncorrectQuantityInputDimensions.value (
+                return ValidatorMessages.IncorrectQuantityInputDimensions.value % (
                     f"{self.input_dimension[0]} or greater",
-                    len(self.inp_shape[0])
+                    len(self.inp_shape[0]),
                 )
             elif (
                     isinstance(self.input_dimension[0], tuple)
@@ -1192,9 +1199,11 @@ class CustomLayer(tensorflow.keras.layers.Layer):
 class ModelCreator:
     """Create model from plan object"""
 
-    def __init__(self, terra_model, layer_config):
+    def __init__(self, model_plan, input_shapes, block_plans, layer_config):
         super().__init__()
-        self.terra_model = terra_model
+        self.model_plan = model_plan
+        self.block_plans = block_plans
+        self.input_shape = input_shapes
         self.nnmodel = None
         self.layer_config = layer_config
         # self.debug = False
@@ -1202,8 +1211,8 @@ class ModelCreator:
         self._get_model_links()
         self.id_idx_dict = {}
         for _id in self.idx_line:
-            for idx in range(len(self.terra_model.plan)):
-                if _id == self.terra_model.plan[idx][0]:
+            for idx in range(len(self.model_plan)):
+                if _id == self.model_plan[idx][0]:
                     self.id_idx_dict[_id] = idx
                     break
         self.tensors = {}
@@ -1212,17 +1221,17 @@ class ModelCreator:
     def _get_model_links(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
         self.start_row, self.uplinks, self.downlinks, _, self.end_row = get_links(
-            self.terra_model.plan
+            self.model_plan
         )
 
     def _get_idx_line(self):
         """Get start_row, uplinks, downlinks from terra_plan"""
-        self.idx_line = get_idx_line(self.terra_model.plan)
+        self.idx_line = get_idx_line(self.model_plan)
 
     def _build_keras_model(self):
         """Build keras model from plan"""
         for _id in self.idx_line:
-            layer_type = self.terra_model.plan[self.id_idx_dict.get(_id)][1]
+            layer_type = self.model_plan[self.id_idx_dict.get(_id)][1]
             # if layer_type == 'space_to_depth':  # TODO: костыль для 'space_to_depth'
             #     layer_type = 'SpaceToDepth'
             # module_type = getattr(layers.types, layer_type).LayerConfig.module_type.value
@@ -1230,25 +1239,25 @@ class ModelCreator:
                     self.layer_config.get(_id).module_type.value
                     == ModuleTypeChoice.tensorflow
             ):
-                self._tf_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
+                self._tf_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
             elif (
                     self.layer_config.get(_id).module_type.value
                     == ModuleTypeChoice.keras_pretrained_model
             ):
                 self._pretrained_model_init_(
-                    self.terra_model.plan[self.id_idx_dict.get(_id)]
+                    self.model_plan[self.id_idx_dict.get(_id)]
                 )
             elif (
                     self.layer_config.get(_id).module_type.value
                     == ModuleTypeChoice.block_plan
             ):
-                self._custom_block_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
+                self._custom_block_init(self.model_plan[self.id_idx_dict.get(_id)])
             elif (
                     self.layer_config.get(_id).module_type.value == ModuleTypeChoice.keras
                     or self.layer_config.get(_id).module_type.value
                     == ModuleTypeChoice.terra_layer
             ):
-                self._keras_layer_init(self.terra_model.plan[self.id_idx_dict.get(_id)])
+                self._keras_layer_init(self.model_plan[self.id_idx_dict.get(_id)])
             else:
                 msg = f'Error: "Layer `{layer_type}` is not found'
                 sys.exit(msg)
@@ -1262,7 +1271,7 @@ class ModelCreator:
             self.layer_config.get(terra_layer[0]).module.value
         )
         if terra_layer[1] == LayerTypeChoice.Input:
-            _input_shape = self.terra_model.input_shape.get(
+            _input_shape = self.input_shape.get(
                 int(terra_layer[2].get("name"))
             )[0]
             self.tensors[terra_layer[0]] = getattr(module, terra_layer[1])(
@@ -1328,7 +1337,7 @@ class ModelCreator:
 
     def _custom_block_init(self, terra_layer):
         block_object = CustomLayer()
-        block_object.block_plan = self.terra_model.block_plans.get(terra_layer[0])
+        block_object.block_plan = self.block_plans.get(terra_layer[0])
         for layer in block_object.block_plan:
             # TODO: поправить на конфиг self.layer_config.get(terra_layer[0]).module.value
             #  когда будет рабочая версия ModelData с блоками

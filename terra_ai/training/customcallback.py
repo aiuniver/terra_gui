@@ -1546,7 +1546,7 @@ class InteractiveCallback:
                     },
                     {
                         'type': 'video',
-                        'file_path': '/content/file.webm'
+                        'data': '/content/file.webm'
                         'layer': f'Input_{layer_id}',
                     },
                     {

@@ -1,5 +1,11 @@
 <template>
   <div class="csv-table">
+    <div class="grouped__actions">
+      <t-button v-if="selected_cols.length" @click.native="grouping">Связать</t-button>
+      <t-field inline v-if="selected_cols.length">
+        <t-select-new @change="selectGroup = $event.value" :list="list_inp_out" small />
+      </t-field>
+    </div>
     <div class="table__data">
       <div class="table__col">
         <div class="table__row"></div>
@@ -10,16 +16,25 @@
         <div class="table__row">8</div>
       </div>
       <div class="selected__cols"></div>
+
+      <div id="grouped__cols">
+        <div class="grouped__col" v-for="{ value: group } in list_inp_out" :key="'k_' + group" :data-group="group">
+          <div class="grouped__col-content" :data-group="group">
+            <small class="grouped__cols-headline">{{ group }}</small>
+          </div>
+        </div>
+      </div>
       <div
         class="table__col"
         v-for="(row, index) in arr"
         :key="'row_' + index"
-        @mousedown="select(index)"
+        @click="select(index)"
         :data-index="index"
       >
         <div class="table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
       </div>
     </div>
+
     <div class="table__footer">
       <span>Список файлов</span>
       <div class="table__footer--btn" @click="show = true">
@@ -50,8 +65,15 @@ export default {
     table: Array,
   },
   data: () => ({
+    list_inp_out: [
+      { label: 'outpu1', value: 'outpu1' },
+      { label: 'input1', value: 'input1' },
+      { label: 'outpu2', value: 'outpu2' },
+    ],
+    selectGroup: null,
     table_test: [],
     selected_cols: [],
+    grouped_cols: [],
     show: false,
     items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
   }),
@@ -72,8 +94,38 @@ export default {
   },
   created() {
     console.log(this.table);
+    this.list_inp_out.forEach(el => {
+      this.grouped_cols.push({
+        groupName: el.value,
+        selectedCols: [],
+      });
+    });
   },
   methods: {
+    grouping() {
+      if (this.selected_cols.length > 0 && this.selectGroup) {
+        this.grouped_cols = this.grouped_cols.map(el => {
+          if (el.groupName === this.selectGroup)
+            return { groupName: this.selectGroup, selectedCols: [...new Set(this.selected_cols)] };
+          return el;
+        });
+        const group = document.querySelector(`.grouped__col[data-group="${this.selectGroup}"] > .grouped__col-content`);
+
+        this.grouped_cols
+          .find(el => el.groupName === this.selectGroup)
+          .selectedCols.forEach(el => {
+            group.appendChild(document.querySelector(`.table__col[data-index='${el}']`));
+          });
+        group.style.display = 'flex';
+
+        for (let el of document.querySelectorAll(`.grouped__col-content`))
+          if (el.length === 0) el.style.display = 'none';
+
+        document.querySelector('.selected__cols').style.display = 'none';
+        this.selected_cols = [];
+        this.selectGroup = '';
+      }
+    },
     compare(a, b) {
       if (a.dataset.index < b.dataset.index) {
         return -1;
@@ -99,28 +151,39 @@ export default {
     },
     select(index) {
       event.preventDefault();
-      if (event.which == 1) {
-        const key = this.selected_cols.indexOf(index);
-        const selected_cols = document.querySelector('.selected__cols');
-        const unselected_cols = document.querySelector('.table__data');
-        let col = document.querySelector(`.table__col[data-index='${index}']`);
-        if (key !== -1) {
-          this.selected_cols.splice(key, 1);
-          document.querySelector(`.selected__cols`).removeChild(col);
-          unselected_cols.append(col);
-          this.sortOnDataIndex(unselected_cols);
+      const selected = document.querySelector('.selected__cols');
+      const table = document.querySelector('.table__data');
+      const col = document.querySelector(`.table__col[data-index="${index}"]`);
+      if (!this.selected_cols.includes(index)) {
+        this.selected_cols.push(index);
+        if (col.parentElement.hasAttribute('data-group') && col.parentElement.childNodes.length === 2)
+          col.parentElement.style.display = 'none';
+        selected.appendChild(col);
+      } else {
+        this.selected_cols.splice(this.selected_cols.indexOf(index), 1);
+        const checkGroup = this.grouped_cols.find(el => el.selectedCols.includes(index));
+        if (checkGroup) {
+          document.querySelector(`.grouped__col-content[data-group="${checkGroup.groupName}"]`).appendChild(col);
+          document.querySelector(`.grouped__col-content[data-group="${checkGroup.groupName}"]`).style.display = 'flex';
         } else {
-          this.selected_cols.push(index);
-          document.querySelector(`.table__data`).removeChild(col);
-          selected_cols.append(col);
-          this.sortOnDataIndex(selected_cols);
-        }
+          this.grouped_cols = this.grouped_cols.map(el => {
+            if (el.selectedCols.includes(index)) el.selectedCols.splice(el.selectedCols.indexOf(index), 1);
+            if (el.selectedCols.length === 0)
+              document.querySelector(`.grouped__col-content[data-group="${el.groupName}"]`).style.display = 'none';
 
-        if (this.selected_cols.length == 0) {
-          selected_cols.style.display = 'none';
-        } else {
-          selected_cols.style.display = 'flex';
+            return {
+              groupName: el.groupName,
+              selectedCols: el.selectedCols,
+            };
+          });
+          table.appendChild(col);
         }
+      }
+      this.sortOnDataIndex(table);
+      if (this.selected_cols.length > 0) {
+        selected.style.display = 'flex';
+      } else {
+        selected.style.display = 'none';
       }
     },
   },
@@ -128,6 +191,40 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+#grouped__cols {
+  display: flex;
+}
+.grouped__col-content {
+  border: 1px solid #89d764;
+  border-radius: 4px;
+  play: flex;
+  display: none;
+  position: relative;
+}
+.grouped__cols-headline {
+  position: absolute;
+  top: -18px;
+}
+
+.selected__cols {
+  display: flex;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.selected {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #fff;
+
+  &:nth-child(1) {
+    border-radius: 6px 0 0 6px;
+  }
+  &:last-child {
+    border-radius: 0 6px 6px 0;
+  }
+}
+
 .csv-table {
   font-size: 0.75rem;
   border-collapse: collapse;
@@ -206,25 +303,6 @@ export default {
         width: 14px;
       }
     }
-  }
-}
-
-.selected__cols {
-  display: flex;
-  border: 1px solid #89d764;
-  border-radius: 4px;
-}
-
-.selected {
-  border: 1px solid #89d764;
-  border-radius: 4px;
-  color: #fff;
-
-  &:nth-child(1) {
-    border-radius: 6px 0 0 6px;
-  }
-  &:last-child {
-    border-radius: 0 6px 6px 0;
   }
 }
 </style>

@@ -1,4 +1,6 @@
 import gc
+import os
+import re
 import sys
 
 import copy
@@ -31,6 +33,8 @@ from terra_ai.training.data import custom_losses_dict
 from matplotlib import pyplot as plt
 
 __version__ = 0.01
+
+from terra_ai.utils import camelize
 
 interactive = InteractiveCallback()
 
@@ -468,8 +472,19 @@ class MemoryUsage:
 class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
-    def __init__(self, dataset: PrepareDataset, batch_size: int = None, epochs: int = None,
-                 save_model_path: str = "./", model_name: str = "noname"):
+    def __init__(self, dataset: PrepareDataset, checkpoint_config: dict, batch_size: int = None, epochs: int = None,
+                 save_model_path: str = "./", model_name: str = "noname", log_history: dict = None):
+        """
+        Для примера
+        checkpoint_config = {
+            'monitor_layer': 3,
+            'type': 'loss',
+            'metric_name': 'KLDivergence',
+            'indicator': 'val',
+            'mode': 'min'
+        }
+        """
+
         super().__init__()
         self.usage_info = MemoryUsage(debug=False)
         self.dataset = dataset
@@ -479,7 +494,6 @@ class FitCallback(keras.callbacks.Callback):
         self.num_batches = 0
         self.epoch = 0
         self.last_epoch = 1
-        self.history = {}
         self._start_time = time.time()
         self._time_batch_step = time.time()
         self._time_first_step = time.time()
@@ -497,6 +511,112 @@ class FitCallback(keras.callbacks.Callback):
             'train_data': None,
             'states': {}
         }
+
+        # аттрибуты для чекпоинта
+        self.log_history = {
+            'epoch': [],
+            'logs': {}
+        }
+        self.checkpoint_config = checkpoint_config
+        self.num_outputs = len(self.dataset.data.outputs.keys())
+        if log_history:
+            # log_history это сохраненная self.log_history
+            self.log_history = copy.deepcopy(log_history)
+            self.last_epoch = max(log_history.get('epoch')) + 1
+            self._get_metric_name_checkpoint(log_history.get('logs'))
+
+    def _get_metric_name_checkpoint(self, logs: dict):
+        """Поиск среди fit_logs нужного параметра"""
+        self.metric_checkpoint = "loss"
+        for log in logs.keys():
+            if self.checkpoint_config.get('type') == 'loss' and \
+                    self.checkpoint_config.get('indicator') == 'val' and \
+                    'val' in log and 'loss' in log:
+                if self.num_outputs == 1:
+                    self.metric_checkpoint = log
+                    break
+                else:
+                    if f"{self.checkpoint_config.get('monitor_layer')}" in log:
+                        self.metric_checkpoint = log
+                        break
+
+            elif self.checkpoint_config.get('type') == 'loss' and \
+                    self.checkpoint_config.get('indicator') != 'val' and \
+                    'val' not in log and 'loss' in log:
+                if self.num_outputs == 1:
+                    self.metric_checkpoint = log
+                    break
+                else:
+                    if f"{self.checkpoint_config.get('monitor_layer')}" in log:
+                        self.metric_checkpoint = log
+                        break
+
+            elif self.checkpoint_config.get('type') == 'metric' and \
+                    self.checkpoint_config.get('indicator') == 'val' and \
+                    'val' in log:
+                camelize_log = self._clean_and_camelize_log_name(log)
+                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
+                    self.metric_checkpoint = log
+                    break
+                else:
+                    if f"{self.checkpoint_config.get('monitor_layer')}" in log and \
+                            camelize_log == self.checkpoint_config.get('metric_name'):
+                        self.metric_checkpoint = log
+                        break
+
+            elif self.checkpoint_config.get('type') == 'metric' and \
+                    self.checkpoint_config.get('indicator') != 'val' and \
+                    'val' not in log:
+                camelize_log = self._clean_and_camelize_log_name(log)
+                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
+                    self.metric_checkpoint = log
+                    break
+                else:
+                    if f"{self.checkpoint_config.get('monitor_layer')}" in log and \
+                            camelize_log == self.checkpoint_config.get('metric_name'):
+                        self.metric_checkpoint = log
+                        break
+            else:
+                pass
+
+    @staticmethod
+    def _clean_and_camelize_log_name(fit_log_name):
+        """Камелизатор исключительно для fit_logs"""
+        if re.search(r'_\d+$', fit_log_name):
+            end = len(f"_{fit_log_name.split('_')[-1]}")
+            fit_log_name = fit_log_name[:-end]
+        if "val" in fit_log_name:
+            fit_log_name = fit_log_name[4:]
+        if re.search(r'^\d+_', fit_log_name):
+            start = len(f"{fit_log_name.split('_')[0]}_")
+            fit_log_name = fit_log_name[start:]
+        return camelize(fit_log_name)
+
+    def _fill_log_history(self, epoch, logs):
+        """Заполнение истории логов"""
+        if epoch == 1:
+            self.log_history = {
+                'epoch': [],
+                'logs': {}
+            }
+            for metric in logs:
+                self.log_history['logs'][metric] = []
+            self._get_metric_name_checkpoint(logs)
+            print(f"Chosen {self.metric_checkpoint} for monitoring")
+        self.log_history['epoch'].append(epoch)
+        for metric in logs:
+            self.log_history['logs'][metric].append(logs.get(metric))
+
+    def _best_epoch_monitoring(self, logs):
+        """Оценка текущей эпохи"""
+        if self.checkpoint_config.get('mode') == 'min' and \
+                logs.get(self.metric_checkpoint) < min(self.log_history.get('logs').get(self.metric_checkpoint)):
+            return True
+        elif self.checkpoint_config.get('mode') == 'max' and \
+                logs.get(self.metric_checkpoint) > max(self.log_history.get('logs').get(self.metric_checkpoint)):
+            return True
+        else:
+            return False
 
     def _set_result_data(self, param: dict) -> None:
         for key in param.keys():
@@ -663,6 +783,14 @@ class FitCallback(keras.callbacks.Callback):
             data=self._get_result_data(),
             finished=False,
         )
+
+        # сохранение лучшей эпохи
+        if self.last_epoch > 1:
+            if self._best_epoch_monitoring(logs):
+                self.model.save_weights(f'/content/best_weights_metric_{self.metric_checkpoint}_epoch_{self.last_epoch}')
+                print(f"Epoch {self.last_epoch} - best weights was successfully saved")
+        self._fill_log_history(self.last_epoch, logs)
+
         if self._get_train_status() != "stopped":
             self.last_epoch += 1
 

@@ -9,8 +9,20 @@ export default {
       },
     },
   },
-  data: ()=> ({
-    mixinUpdateDate: {}
+  data: () => ({
+    mixinUpdateDate: {},
+    mixinFilter: {
+      Image: ['folder', 'table'],
+      Text: ['folder', 'table'],
+      Audio: ['folder', 'table'],
+      Video: ['folder', 'table'],
+      Classification: ['table'],
+      Segmentation: ['folder', 'table'],
+      Regression: ['table'],
+      Timeseries: ['table'],
+      ObjectDetection: ['folder', 'table'],
+      Dataframe: ['folder', 'table'],
+    }
   }),
   methods: {
     mixinUpdate({ id, value }) {

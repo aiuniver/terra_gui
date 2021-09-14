@@ -49,6 +49,8 @@ class LayerParametersSerializer(serializers.Serializer):
     sources_paths = serializers.ListSerializer(child=DirectoryOrFilePathField())
 
     def validate_sources_paths(self, value):
+        if self.__class__ == LayerParametersClassificationSerializer:
+            return value
         if not len(value):
             raise serializers.ValidationError("Этот список не может быть пустым.")
         return value
@@ -341,5 +343,5 @@ class DeleteSerializer(serializers.Serializer):
 
 
 class SourceSegmentationClassesAutosearchSerializer(serializers.Serializer):
-    num_classes = serializers.IntegerField(min_value=1, max_value=10)
+    num_classes = serializers.IntegerField(min_value=1)
     mask_range = serializers.IntegerField(min_value=1)
