@@ -1,15 +1,16 @@
 <template>
   <div class="t-table">
-    <div class="t-table__header">
+    <div class="t-table__header" v-click-outside="outside">
       <div
         v-for="(tab, i) of group"
         :key="'tabs_' + i"
         :class="['t-table__label', { 't-table__label--active': tab.active }]"
         @click="clickTab(tab)"
-        :style="{ order: tab.id, backgroundColor: color(tab.layer) || '' }"
+        :style="{ order: tab.id, backgroundColor: color(tab.layer) || '', borderColor: color(tab.layer) || '' }"
       >
         <span>{{ `${tab.active ? tab.label : ''}  ${tab.id}` }}</span>
-        <i v-if="tab.active" class="t-icon icon-file-dot"></i>
+        <i v-if="tab.active" class="t-icon icon-file-dot" @click="show = true"></i>
+        <PopUpMenu v-if="tab.active && show" />
       </div>
 
       <div v-if="selectTable.length || group.length" class="t-table__add" @click="addGroup">
@@ -59,6 +60,7 @@
 </template>
 
 <script>
+import PopUpMenu from '@/components/global/forms/PopUpMenu.vue';
 export default {
   name: 'CardTable',
   props: {
@@ -68,6 +70,9 @@ export default {
     cover: String,
     table: Array,
   },
+  components: {
+    PopUpMenu,
+  },
   data: () => ({
     show: false,
     items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
@@ -75,9 +80,9 @@ export default {
   }),
   computed: {
     getColor() {
-      const id = this.group.filter(item => item.active)
-      console.log()
-      return { borderColor: this.color(id?.[0]?.layer) || ''} 
+      const id = this.group.filter(item => item.active);
+      console.log();
+      return { borderColor: this.color(id?.[0]?.layer) || '' };
     },
     origTable() {
       return this.originTable.filter(item => !this.selected.includes(item[0]));
@@ -108,8 +113,11 @@ export default {
     this.originTable = newarr;
   },
   methods: {
+    outside() {
+      this.show = false;
+    },
     color(id) {
-      const selectInputData = this.$store.getters['datasets/getInputDataByID'](id) || {}
+      const selectInputData = this.$store.getters['datasets/getInputDataByID'](id) || {};
       return selectInputData.color || '';
     },
     tadSave() {
@@ -139,6 +147,7 @@ export default {
       this.tadSave();
     },
     select([name]) {
+      if (this.show) return;
       console.log('yuyuyuyuyu');
       if (this.group.length === 0) {
         this.group.push({ id: this.group.length + 1, label: 'Группа', data: [], active: true });
@@ -189,6 +198,7 @@ export default {
   }
   &__label {
     // min-width: 92px;
+    position: relative;
     border: 1px solid #6c7883;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
@@ -199,7 +209,6 @@ export default {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    z-index: 1;
     cursor: default;
     margin-left: -2px;
     &:first-child {
@@ -218,7 +227,7 @@ export default {
       min-width: 92px;
       margin-bottom: -1px;
       margin-left: 0px;
-      order: -1 !important;
+      // order: -1 !important;
       justify-content: space-between;
     }
   }
@@ -237,8 +246,7 @@ export default {
     &--selected {
       padding: 0;
       border: 1px solid #6c7883;
-      border-radius: 4px;
-      border-top-left-radius: 0px;
+      border-radius: 0px 0px 4px 4px;
     }
   }
   &__col {

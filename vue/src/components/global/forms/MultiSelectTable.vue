@@ -79,7 +79,7 @@ export default {
     },
     filterList() {
       return this.group.map(item => {
-        return { label: `${item.label} ${item.id}`, value: item.id };
+        return { label: `${item.label} ${item.id}`, value: item.data, id: item.id };
       });
       // .filter(item => !item.id || item.id === this.id)
       // .filter(item => filter.includes(item.type));
@@ -105,19 +105,26 @@ export default {
       if (typeof list === 'boolean') {
         this.selected = this.filterList.map(item => (!list ? item : null)).filter(item => item);
       } else {
-        if (this.selected.find(item => item.value === list.value)) {
-          this.selected = this.selected.filter(item => item.value !== list.value);
+        if (this.selected.find(item => item.id === list.id)) {
+          this.selected = this.selected.filter(item => item.id !== list.id);
+          this.group = this.group.map(item => {
+            if (item.id === list.id) {
+              item.layer = 0;
+            }
+            return item;
+          });
         } else {
           this.selected = [...this.selected, list];
+          this.group = this.group.map(item => {
+            if (item.id === list.id) {
+              item.layer = this.id;
+            }
+            return item;
+          });
         }
       }
-      console.log(list)
-      this.group = this.group.map(item => {
-        if (item.id === list.value) {
-          item.layer = this.id
-        } 
-        return item      
-      });
+      console.log(list);
+
       // this.$emit('multiselect', { value: this.selected, id: this.id });
       // this.mixinCheck(this.selected, this.id);
     },
@@ -132,7 +139,7 @@ export default {
   },
   watch: {
     filterList() {
-      this.selected = this.selected.filter(element => this.group.find(item => item.value === element.value));
+      this.selected = this.selected.filter(element => this.group.find(item => item.id === element.id));
     },
   },
 };
