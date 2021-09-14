@@ -1916,7 +1916,7 @@ class InteractiveCallback:
         if self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Image:
             if self.dataset_config.get("group") != 'keras':
                 img = Image.open(initial_file_path)
-                img = img.resize(
+                img = img.change_size(
                     self.dataset_config.get("inputs").get(input_id).get("input_shape")[0:2][::-1],
                     Image.ANTIALIAS
                 )
