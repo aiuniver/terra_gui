@@ -3,6 +3,7 @@ from enum import Enum
 
 
 class ExceptionMessages(str, Enum):
+    UnknownError = "Unknown error"
     CallMethodNotFound = "Instance of `%s` must have method `%s`"
     MethodNotCallable = "Method `%s` of instance of `%s` must be callable"
     ModelAlreadyExists = "Model `%s` already exists"
@@ -16,78 +17,95 @@ class ExceptionMessages(str, Enum):
     FailedSetInteractiveConfig = "Error when setting interactive config: %s"
     FailedUploadDeploy = "Error when uploading deploy: %s"
     FailedGetUploadDeployResult = "Error when getting upload deploy result: %s"
+    FailedCreateDataset = "Ошибка создания датасета: %s"
 
 
 class ExchangeBaseException(Exception):
-    pass
+    class Meta:
+        message: ExceptionMessages = ExceptionMessages.UnknownError
+
+    def __init__(self, *args, **kwargs):
+        if not args:
+            args = (self.Meta.message.value,)
+        super().__init__(*args)
+
+
+class ValueException(ExchangeBaseException):
+    def __init__(self, __value: Any):
+        super().__init__(self.Meta.message.value % str(__value))
 
 
 class CallMethodNotFoundException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.CallMethodNotFound
+
     def __init__(self, __class: Any, __method: str):
-        super().__init__(
-            ExceptionMessages.CallMethodNotFound % (str(__class), str(__method))
-        )
+        super().__init__(self.Meta.message.value % (str(__class), str(__method)))
 
 
 class MethodNotCallableException(ExchangeBaseException):
+    class Meta:
+        message = ExceptionMessages.MethodNotCallable
+
     def __init__(self, __class: Any, __method: str):
-        super().__init__(
-            ExceptionMessages.MethodNotCallable % (str(__method), str(__class))
-        )
+        super().__init__(self.Meta.message.value % (str(__method), str(__class)))
 
 
-class ModelAlreadyExistsException(ExchangeBaseException):
-    def __init__(self, __name: str):
-        super().__init__(ExceptionMessages.ModelAlreadyExists % str(__name))
+class ModelAlreadyExistsException(ValueException):
+    class Meta:
+        message = ExceptionMessages.ModelAlreadyExists
 
 
-class ProjectAlreadyExistsException(ExchangeBaseException):
-    def __init__(self, __name: str):
-        super().__init__(ExceptionMessages.ProjectAlreadyExists % str(__name))
+class ProjectAlreadyExistsException(ValueException):
+    class Meta:
+        message = ExceptionMessages.ProjectAlreadyExists
 
 
-class FailedGetModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedGetModel % __error)
+class FailedGetModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedGetModel
 
 
-class FailedValidateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedValidateModel % __error)
+class FailedValidateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedValidateModel
 
 
-class FailedUpdateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedUpdateModel % __error)
+class FailedUpdateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedUpdateModel
 
 
-class FailedCreateModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedCreateModel % __error)
+class FailedCreateModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedCreateModel
 
 
-class FailedDeleteModelException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedDeleteModel % __error)
+class FailedDeleteModelException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedDeleteModel
 
 
-class FailedStartTrainException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedStartTrain % __error)
+class FailedStartTrainException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedStartTrain
 
 
-class FailedSetInteractiveConfigException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedSetInteractiveConfig % __error)
+class FailedSetInteractiveConfigException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedSetInteractiveConfig
 
 
-class FailedUploadDeployException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedUploadDeploy % __error)
+class FailedUploadDeployException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedUploadDeploy
 
 
-class FailedGetUploadDeployResultException(ExchangeBaseException):
-    def __init__(self, __error: str):
-        super().__init__(ExceptionMessages.FailedGetUploadDeployResult % __error)
+class FailedGetUploadDeployResultException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedGetUploadDeployResult
 
 
+class FailedCreateDatasetException(ValueException):
+    class Meta:
+        message = ExceptionMessages.FailedCreateDataset

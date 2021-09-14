@@ -199,8 +199,11 @@ class Exchange:
         """
         Создание датасета из исходников
         """
-        data = CreationData(**kwargs)
-        creation = CreateDataset(data)
+        try:
+            data = CreationData(**kwargs)
+            creation = CreateDataset(data)
+        except Exception as error:
+            raise exceptions.FailedCreateDatasetException(str(error))
         return creation.datasetdata
 
     def _call_datasets_sources(self, path: str) -> FilePathSourcesList:
@@ -301,7 +304,7 @@ class Exchange:
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
-        initial_config: dict
+        initial_config: dict,
     ):
         """
         Старт обучения
@@ -320,7 +323,7 @@ class Exchange:
                 training_path=training_path,
                 dataset_path=dataset_path,
                 training_params=params,
-                initial_config=initial_config
+                initial_config=initial_config,
             )
         except Exception as error:
             raise exceptions.FailedStartTrainException(error.__str__())
