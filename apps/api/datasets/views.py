@@ -4,6 +4,7 @@ from apps.plugins.project import data_path, project_path
 from apps.plugins.project import exceptions as project_exceptions
 from terra_ai.exceptions.base import TerraBaseException
 from terra_ai.agent import agent_exchange
+from terra_ai.agent.exceptions import ExchangeBaseException
 
 from ..base import (
     BaseAPIView,
@@ -132,7 +133,7 @@ class CreateAPIView(BaseAPIView):
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (TerraBaseException, ExchangeBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
