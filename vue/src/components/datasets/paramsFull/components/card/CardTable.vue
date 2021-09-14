@@ -1,50 +1,54 @@
 <template>
-  <div class="csv-table">
-    <div class="grouped__actions">
-      <t-button v-if="selected_cols.length" @click.native="grouping">Связать</t-button>
-      <t-field inline v-if="selected_cols.length">
-        <t-select-new @change="selectGroup = $event.value" :list="list_inp_out" small />
-      </t-field>
-    </div>
-    <div class="table__data">
-      <div class="table__col">
-        <div class="table__row"></div>
-        <div class="table__row">0</div>
-        <div class="table__row">2</div>
-        <div class="table__row">4</div>
-        <div class="table__row">6</div>
-        <div class="table__row">8</div>
+  <div class="t-table">
+    <div class="t-table__header">
+      <div
+        v-for="(tab, i) of group"
+        :key="'tabs_' + i"
+        :class="['t-table__label', { 't-table__label--active': tab.active }]"
+        @click="clickTab(tab)"
+        :style="{ order: tab.id }"
+      >
+        <span>{{ `${tab.active ? tab.name : ''}  ${tab.id}` }}</span>
+        <i v-if="tab.active" class="t-icon icon-file-dot"></i>
       </div>
-      <div class="selected__cols"></div>
 
-      <div id="grouped__cols">
-        <div class="grouped__col" v-for="{ value: group } in list_inp_out" :key="'k_' + group" :data-group="group">
-          <div class="grouped__col-content" :data-group="group">
-            <small class="grouped__cols-headline">{{ group }}</small>
-          </div>
+      <div v-if="selectTable.length || group.length" class="t-table__add" @click="addGroup">
+        <i class="t-icon icon-tag-plus"></i>
+      </div>
+    </div>
+    <div class="t-table__data">
+      <div class="t-table__col" :style="{ padding: '1px 0' }">
+        <div v-for="(i, idx) of 6" :key="'idx_r_' + i" class="t-table__row">{{ idx ? idx : '' }}</div>
+      </div>
+
+      <div v-if="selectTable.length" class="t-table__border t-table__border--selected">
+        <div
+          v-for="(row, index) in selectTable"
+          :class="['t-table__col', { 't-table__col--first': index === 0 }]"
+          :key="'rowr_' + index"
+          @click="remove(row)"
+        >
+          <div class="t-table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
         </div>
       </div>
-      <div
-        class="table__col"
-        v-for="(row, index) in arr"
-        :key="'row_' + index"
-        @click="select(index)"
-        :data-index="index"
-      >
-        <div class="table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
+
+      <div class="t-table__border">
+        <div v-for="(row, index) in origTable" class="t-table__col" :key="'row_' + index" @click="select(row)">
+          <div class="t-table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
+        </div>
       </div>
     </div>
 
-    <div class="table__footer">
+    <div class="t-table__footer">
       <span>Список файлов</span>
-      <div class="table__footer--btn" @click="show = true">
+      <div class="t-table__footer--btn" @click="show = true">
         <i class="t-icon icon-file-dot"></i>
       </div>
-      <div v-show="show" class="table__dropdown">
+      <div v-show="show" class="t-table__dropdown">
         <div
           v-for="({ icon, event }, i) of items"
           :key="'icon' + i"
-          class="table__dropdown--item"
+          class="t-table__dropdown--item"
           @click="$emit('event', { label, event }), (show = false)"
         >
           <i :class="['t-icon', icon]"></i>
@@ -65,187 +69,173 @@ export default {
     table: Array,
   },
   data: () => ({
-    list_inp_out: [
-      { label: 'outpu1', value: 'outpu1' },
-      { label: 'input1', value: 'input1' },
-      { label: 'outpu2', value: 'outpu2' },
-    ],
-    selectGroup: null,
-    table_test: [],
-    selected_cols: [],
-    grouped_cols: [],
+    group: [],
     show: false,
     items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
+    selected: [],
   }),
   computed: {
-    arr() {
-      const newarr = [];
-      this.table.forEach((el, index) => {
-        el.forEach((elm, i) => {
-          if (!newarr[i]) {
-            newarr[i] = [];
-          }
-          newarr[i][index] = elm;
-        });
-      });
-      console.log(newarr);
-      return newarr;
+    origTable() {
+      return this.originTable.filter(item => !this.selected.includes(item[0]));
+    },
+    selectTable() {
+      return this.originTable.filter(item => this.selected.includes(item[0]));
     },
   },
   created() {
-    console.log(this.table);
-    this.list_inp_out.forEach(el => {
-      this.grouped_cols.push({
-        groupName: el.value,
-        selectedCols: [],
+    const newarr = [];
+    this.table.forEach((el, index) => {
+      el.forEach((elm, i) => {
+        if (!newarr[i]) {
+          newarr[i] = [];
+        }
+        newarr[i][index] = elm;
       });
     });
+    console.log(newarr);
+    this.originTable = newarr;
   },
   methods: {
-    grouping() {
-      if (this.selected_cols.length > 0 && this.selectGroup) {
-        this.grouped_cols = this.grouped_cols.map(el => {
-          if (el.groupName === this.selectGroup)
-            return { groupName: this.selectGroup, selectedCols: [...new Set(this.selected_cols)] };
-          return el;
-        });
-        const group = document.querySelector(`.grouped__col[data-group="${this.selectGroup}"] > .grouped__col-content`);
-
-        this.grouped_cols
-          .find(el => el.groupName === this.selectGroup)
-          .selectedCols.forEach(el => {
-            group.appendChild(document.querySelector(`.table__col[data-index='${el}']`));
-          });
-        group.style.display = 'flex';
-
-        for (let el of document.querySelectorAll(`.grouped__col-content`))
-          if (el.length === 0) el.style.display = 'none';
-
-        document.querySelector('.selected__cols').style.display = 'none';
-        this.selected_cols = [];
-        this.selectGroup = '';
-      }
-    },
-    compare(a, b) {
-      if (a.dataset.index < b.dataset.index) {
-        return -1;
-      }
-      if (a.dataset.index > b.dataset.index) {
-        return 1;
-      }
-      return 0;
-    },
-    sortOnDataIndex(el) {
-      let arr = [],
-        i = el.children.length;
-      while (i--) {
-        arr[i] = el.children[i];
-        el.children[i].remove();
-      }
-      arr.sort(this.compare);
-      i = 0;
-      while (arr[i]) {
-        el.appendChild(arr[i]);
-        ++i;
-      }
-    },
-    select(index) {
-      event.preventDefault();
-      const selected = document.querySelector('.selected__cols');
-      const table = document.querySelector('.table__data');
-      const col = document.querySelector(`.table__col[data-index="${index}"]`);
-      if (!this.selected_cols.includes(index)) {
-        this.selected_cols.push(index);
-        if (col.parentElement.hasAttribute('data-group') && col.parentElement.childNodes.length === 2)
-          col.parentElement.style.display = 'none';
-        selected.appendChild(col);
-      } else {
-        this.selected_cols.splice(this.selected_cols.indexOf(index), 1);
-        const checkGroup = this.grouped_cols.find(el => el.selectedCols.includes(index));
-        if (checkGroup) {
-          document.querySelector(`.grouped__col-content[data-group="${checkGroup.groupName}"]`).appendChild(col);
-          document.querySelector(`.grouped__col-content[data-group="${checkGroup.groupName}"]`).style.display = 'flex';
-        } else {
-          this.grouped_cols = this.grouped_cols.map(el => {
-            if (el.selectedCols.includes(index)) el.selectedCols.splice(el.selectedCols.indexOf(index), 1);
-            if (el.selectedCols.length === 0)
-              document.querySelector(`.grouped__col-content[data-group="${el.groupName}"]`).style.display = 'none';
-
-            return {
-              groupName: el.groupName,
-              selectedCols: el.selectedCols,
-            };
-          });
-          table.appendChild(col);
+    tadSave() {
+      this.group.forEach(item => {
+        if (item.active) {
+          item.data = this.selected;
         }
+      });
+    },
+    tabDeselect(id) {
+      this.group = this.group.map(item => {
+        item.active = item.id === id;
+        return item;
+      });
+    },
+    clickTab(tab) {
+      console.log(tab);
+      this.tabDeselect(tab.id);
+      this.selected = tab.data;
+    },
+    addGroup() {
+      console.log('dsdsdsdsds');
+      this.tabDeselect(999);
+      this.group.push({ id: this.group.length + 1, name: 'Группа', data: [this.selected], active: true });
+      this.selected = [];
+    },
+    select([name]) {
+      console.log('yuyuyuyuyu');
+      if (this.group.length === 0) {
+        this.group.push({ id: this.group.length + 1, name: 'Группа', data: [], active: true });
       }
-      this.sortOnDataIndex(table);
-      if (this.selected_cols.length > 0) {
-        selected.style.display = 'flex';
-      } else {
-        selected.style.display = 'none';
-      }
+      this.selected.push(name);
+      this.tadSave();
+    },
+    remove([name]) {
+      this.selected = this.selected.filter(item => item !== name);
+      this.tadSave();
     },
   },
 };
 </script>
 
 <style lang="scss" scoped>
-#grouped__cols {
-  display: flex;
-}
-.grouped__col-content {
-  border: 1px solid #89d764;
-  border-radius: 4px;
-  play: flex;
-  display: none;
+.t-table {
   position: relative;
-}
-.grouped__cols-headline {
-  position: absolute;
-  top: -18px;
-}
-
-.selected__cols {
-  display: flex;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.selected {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  color: #fff;
-
-  &:nth-child(1) {
-    border-radius: 6px 0 0 6px;
-  }
-  &:last-child {
-    border-radius: 0 6px 6px 0;
-  }
-}
-
-.csv-table {
   font-size: 0.75rem;
   border-collapse: collapse;
   border: 1px solid #6c7883;
   border-radius: 8px;
-  padding: 23px 0 2px 0;
+  padding: 0 0 2px 0;
   display: flex;
   height: 152px;
   flex-direction: column;
-
-  .table__data {
+  margin: 0 10px;
+  &__header {
     display: flex;
+    position: relative;
+    padding: 0 0 0 23px;
+    flex: 0 0 23px;
+    user-select: none;
+  }
+  &__add {
+    padding: 0 5px;
+    width: 26px;
+    border-bottom: none;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    order: 999;
+    i {
+      width: 12px;
+      height: 18px;
+      cursor: pointer;
+    }
+  }
+  &__label {
+    // min-width: 92px;
+    border: 1px solid #6c7883;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: none;
+    background-color: #17212b;
+    padding: 2px 6px 2px 6px;
+    margin-right: 1px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    z-index: 1;
+    cursor: default;
+    margin-left: -2px;
+    &:first-child {
+      // margin-left: 0px;
+    }
+    span {
+      // margin-right: 5px;
+    }
+    i {
+      width: 12px;
+      height: 18px;
+      cursor: pointer;
+    }
+    &--active {
+      margin-left: 0;
+      min-width: 92px;
+      margin-bottom: -1px;
+      margin-left: 0px;
+      order: -1 !important;
+      justify-content: space-between;
+    }
+  }
+  &__data {
+    display: flex;
+    user-select: none;
+    // border: 1px solid #6c7883;
   }
 
-  .table__col {
+  &__border {
+    padding: 1px 0;
+    display: flex;
+    position: relative;
+    // border-left: 1px solid #6c7883;
+
+    &--selected {
+      padding: 0;
+      border: 1px solid #6c7883;
+      border-radius: 4px;
+      border-top-left-radius: 0px;
+    }
+  }
+  &__col {
     display: flex;
     flex-direction: column;
+    &--first {
+      min-width: 90px;
+      // border-top-right-radius: 0px;
+    }
   }
-  .table__row {
+  &__row {
     height: 17px;
     padding: 0 8px;
+    text-overflow: ellipsis;
+    overflow: hidden;
     &:nth-child(even) {
       background: #242f3d;
     }
@@ -255,14 +245,14 @@ export default {
     }
   }
 
-  .table__footer {
-    height: 24px;
+  &__footer {
+    flex: 0 0 24px;
     width: 100%;
-    padding: 3px 8px;
+    padding: 0px 8px;
     position: relative;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    // align-items: center;
 
     &--label {
       bottom: 0;
@@ -281,7 +271,7 @@ export default {
       }
     }
   }
-  .table__dropdown {
+  &__dropdown {
     position: absolute;
     background-color: #2b5278;
     border-radius: 4px;
