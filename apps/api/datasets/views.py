@@ -61,7 +61,7 @@ class ChoiceProgressAPIView(BaseAPIView):
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         return BaseResponseSuccess(
-            agent_exchange("datasets_info", path=str(data_path.datasets)).native()
+            agent_exchange("datasets_info", path=data_path.datasets).native()
         )
 
 
