@@ -1,7 +1,19 @@
 <template>
   <svg width="100%" height="100%">
-    <circle :cx="1" :cy="endpointY" :r="1" :fill="color" />
-    <circle :cx="endpointX" :cy="1" :r="1" :fill="color" />
+    <!-- <circle :cx="1" :cy="endpointY" :r="1" :fill="color" /> -->
+    <line :x1="endpointX" :y1="0" :x2="endpointX" :y2="lenghtPoint" :style="line.style"></line>
+    <line
+      :x1="endpointX"
+      :y1="lengthHeight"
+      :x2="endpointX"
+      :y2="lengthHeight - lenghtPoint"
+      :style="line.style"
+    ></line>
+
+    <line :x1="0" :y1="endpointY" :x2="lenghtPoint" :y2="endpointY" :style="line.style"></line>
+
+    <line :x1="lengthWidth" :y1="endpointY" :x2="lengthWidth - lenghtPoint" :y2="endpointY" :style="line.style"></line>
+
     <path :d="line.data" :style="line.style" />
     <g v-if="$config.isDev">
       <template v-for="i of qtyXdown">
@@ -57,6 +69,7 @@ export default {
     scale: Number,
   },
   data: () => ({
+    lenghtPoint: 10,
     show: 0.6,
     cell: 20,
     width: 0,

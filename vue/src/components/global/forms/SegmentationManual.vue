@@ -49,7 +49,7 @@ export default {
     error: String,
   },
   data: () => ({
-    qtyTemp: 0,
+    qtyTemp: 1,
     loading: false,
     classes_names: [],
     classes_colors: [],
