@@ -1,92 +1,106 @@
 <template>
   <div class="params">
-    <scrollbar>
-      <div class="params__items">
-        <at-collapse :value="collapse">
-          <at-collapse-item class="mt-3" :title="''">
-            <template v-for="(data, i) of main.fields">
-              <t-auto-field-trainings v-bind="data" :key="'main_' + i" :state="state" :inline="false" @parse="parse" />
-            </template>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="''">
-            <div class="fit">
-              <template v-for="(data, i) of fit.fields">
+    <div class="params__body">
+      <scrollbar>
+        <div class="params__items">
+          <at-collapse :value="collapse">
+            <at-collapse-item class="mt-3" :title="''">
+              <template v-for="(data, i) of main.fields">
                 <t-auto-field-trainings
                   v-bind="data"
-                  :key="'fit_' + i"
-                  class="fit__item"
+                  :key="'main_' + i"
                   :state="state"
-                  :inline="true"
+                  :inline="false"
                   @parse="parse"
                 />
               </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="optimizer.name">
-            <div class="optimizer">
-              <template v-for="(data, i) of optimizerFields">
-                <t-auto-field-trainings v-bind="data" :key="'optimizer_' + i" class="optimizer__item" :state="state" inline @parse="parse" />
-              </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="outputs.name">
-            <div class="blocks-layers">
-              <template v-for="(field, i) of outputs.fields">
-                <div class="block-layers" :key="'block_layers_' + i">
-                  <div class="block-layers__header">
-                    {{ field.name }}
+            </at-collapse-item>
+            <at-collapse-item class="mt-3" :title="''">
+              <div class="fit">
+                <template v-for="(data, i) of fit.fields">
+                  <t-auto-field-trainings
+                    v-bind="data"
+                    :key="'fit_' + i"
+                    class="fit__item"
+                    :state="state"
+                    :inline="true"
+                    @parse="parse"
+                  />
+                </template>
+              </div>
+            </at-collapse-item>
+            <at-collapse-item class="mt-3" :title="optimizer.name">
+              <div class="optimizer">
+                <template v-for="(data, i) of optimizerFields">
+                  <t-auto-field-trainings
+                    v-bind="data"
+                    :key="'optimizer_' + i"
+                    class="optimizer__item"
+                    :state="state"
+                    inline
+                    @parse="parse"
+                  />
+                </template>
+              </div>
+            </at-collapse-item>
+            <at-collapse-item class="mt-3" :title="outputs.name">
+              <div class="blocks-layers">
+                <template v-for="(field, i) of outputs.fields">
+                  <div class="block-layers" :key="'block_layers_' + i">
+                    <div class="block-layers__header">
+                      {{ field.name }}
+                    </div>
+                    <div class="block-layers__body">
+                      <template v-for="(data, i) of field.fields">
+                        <t-auto-field-trainings
+                          v-bind="data"
+                          :key="'checkpoints_' + i"
+                          :state="state"
+                          :inline="true"
+                          @parse="parse"
+                        />
+                      </template>
+                    </div>
                   </div>
-                  <div class="block-layers__body">
-                    <template v-for="(data, i) of field.fields">
-                      <t-auto-field-trainings
-                        v-bind="data"
-                        :key="'checkpoints_' + i"
-                        :state="state"
-                        :inline="true"
-                        @parse="parse"
-                      />
-                    </template>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </at-collapse-item>
-          <at-collapse-item class="mt-3" :title="checkpoints.name">
-            <div class="checkpoints">
-              <template v-for="(data, i) of checkpoints.fields">
-                <t-auto-field-trainings
-                  v-bind="data"
-                  :key="'outputs_' + i"
-                  class="checkpoints__item"
-                  :state="state"
-                  :inline="true"
-                  @parse="parse"
-                />
-              </template>
-            </div>
-          </at-collapse-item>
-        </at-collapse>
-      </div>
-      <!-- <div class="params__items">
+                </template>
+              </div>
+            </at-collapse-item>
+            <at-collapse-item class="mt-3" :title="checkpoints.name">
+              <div class="checkpoints">
+                <template v-for="(data, i) of checkpoints.fields">
+                  <t-auto-field-trainings
+                    v-bind="data"
+                    :key="'outputs_' + i"
+                    class="checkpoints__item"
+                    :state="state"
+                    :inline="true"
+                    @parse="parse"
+                  />
+                </template>
+              </div>
+            </at-collapse-item>
+          </at-collapse>
+        </div>
+        <!-- <div class="params__items">
         <div class="params__items--item">
           <t-field label="Мониторинг" inline>
               <TCheckbox small @focus="click" />
           </t-field>
         </div>
       </div> -->
-      <div class="params__items">
-        <div class="params__items--item">
-          <div class="item d-flex mb-3" style="gap: 10px">
-            <button @click="start">Обучить</button>
-            <button>Остановить</button>
-          </div>
-          <div class="item d-flex" style="gap: 10px">
-            <button>Сохранить</button>
-            <button>Сбросить</button>
-          </div>
-        </div>
+      </scrollbar>
+    </div>
+
+    <div class="params__footer">
+      <div>
+        <t-button @click="start">Обучить</t-button>
+        <t-button @click="stop">Остановить</t-button>
       </div>
-    </scrollbar>
+      <div>
+        <t-button @click="save" >Сохранить</t-button>
+        <t-button @click="clear">Сбросить</t-button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -146,6 +160,23 @@ export default {
     },
     start() {
       console.log(JSON.stringify(this.obj, null, 2));
+      const res = this.$store.dispatch('trainings/start', this.obj);
+      console.log(res);
+    },
+    stop() {
+      console.log(JSON.stringify(this.obj, null, 2));
+      const res = this.$store.dispatch('trainings/stop', this.obj);
+      console.log(res);
+    },
+    clear() {
+      console.log(JSON.stringify(this.obj, null, 2));
+      const res = this.$store.dispatch('trainings/clear', this.obj);
+      console.log(res);
+    },
+    save() {
+      console.log(JSON.stringify(this.obj, null, 2));
+      const res = this.$store.dispatch('trainings/save', this.obj);
+      console.log(res);
     },
     parse({ parse, value, name }) {
       // console.log(this.state);
@@ -177,14 +208,29 @@ export default {
 }
 
 .params {
-  width: 400px;
-  flex-shrink: 0;
+  height: 100%;
+  flex: 0 0 400px;
   border-left: #0e1621 solid 1px;
-  overflow: hidden;
-  height: 85%;
-  // border-left: #0e1621  1px solid;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  &__body {
+    overflow: hidden;
+    flex: 0 1 auto;
+  }
+  &__footer {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    div {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+  }
   &__items {
-    height: 100%;
     padding-bottom: 20px;
     &--item {
       padding: 20px;
@@ -192,7 +238,9 @@ export default {
   }
 }
 
-.fit, .optimizer, .checkpoints {
+.fit,
+.optimizer,
+.checkpoints {
   display: flex;
   flex-wrap: wrap;
   &__item {
