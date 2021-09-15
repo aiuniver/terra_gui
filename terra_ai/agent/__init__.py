@@ -87,7 +87,7 @@ class Exchange:
         try:
             projects = ProjectsList()
             for filename in os.listdir(path):
-                if filename.endswith('project'):
+                if filename.endswith("project"):
                     projects.append({"value": Path(path, filename)})
             projects.sort(key=lambda item: item.label)
             return ProjectsInfoData(projects=projects.native())
@@ -116,14 +116,15 @@ class Exchange:
         except Exception as error:
             raise exceptions.FailedSaveProjectException(str(error))
 
-
     def _call_project_load(self, source: Path, target: Path):
         """
         Загрузка проекта
         """
         try:
             shutil.rmtree(target, ignore_errors=True)
-            destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+            destination = progress_utils.unpack(
+                "project_load", "Загрузка проекта", source
+            )
             shutil.move(destination, target)
         except Exception as error:
             raise exceptions.FailedLoadProjectException(str(error))
@@ -158,7 +159,6 @@ class Exchange:
             )
         else:
             raise exceptions.DatasetCanNotBeDeletedException(alias, group)
-
 
     def _call_datasets_info(self, path: Path) -> DatasetsGroupsList:
         """
@@ -219,6 +219,7 @@ class Exchange:
         """
         try:
             data = CreationData(**kwargs)
+            print(data.json(indent=2, ensure_ascii=False))
             creation = CreateDataset(data)
         except Exception as error:
             raise exceptions.FailedCreateDatasetException(str(error))

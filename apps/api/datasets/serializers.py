@@ -176,7 +176,7 @@ class LayerParametersClassificationSerializer(LayerParametersSerializer):
     type_processing = serializers.ChoiceField(
         choices=LayerTypeProcessingClassificationChoice.items_tuple()
     )
-    ranges = serializers.CharField(required=False)
+    ranges = serializers.CharField(required=False, allow_blank=True)
 
     def __init__(self, instance=None, data=None, **kwargs):
         _type_processing = data.get("type_processing")
