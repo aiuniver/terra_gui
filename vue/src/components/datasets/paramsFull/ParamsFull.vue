@@ -7,22 +7,27 @@
       <div :class="['params-full__files', { toggle: !toggle }]">
         <BlockFiles @toggle="change" />
       </div>
-      <div class="params-full__main">
-        <div class="main__header">
-          <BlockHeader />
-        </div>
-        <div class="main__center" :style="height">
-          <div class="main__center--left">
-            <BlockMainLeft />
+      <scrollbar class="params-full__scroll" :ops="ops">
+        <div class="params-full__main">
+          <div class="main__header">
+            <BlockHeader />
           </div>
-          <div class="main__center--right">
-            <BlockMainRight />
+          <div v-if="isTable" class="main__handlers">
+            <BlockHandlers />
+          </div>
+          <div class="main__center" :style="height">
+            <div class="main__center--left">
+              <BlockMainLeft />
+            </div>
+            <div class="main__center--right">
+              <BlockMainRight />
+            </div>
+          </div>
+          <div class="main__footer">
+            <BlockFooter @create="createObject" />
           </div>
         </div>
-        <div class="main__footer">
-          <BlockFooter @create="createObject" />
-        </div>
-      </div>
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -33,6 +38,7 @@ import BlockFooter from './block/BlockFooter.vue';
 import BlockHeader from './block/BlockHeader.vue';
 import BlockMainLeft from './block/BlockMainLeft.vue';
 import BlockMainRight from './block/BlockMainRight.vue';
+import BlockHandlers from './block/BlockHandlers.vue';
 
 export default {
   name: 'ParamsFull',
@@ -42,9 +48,16 @@ export default {
     BlockHeader,
     BlockMainLeft,
     BlockMainRight,
+    BlockHandlers
   },
   data: () => ({
     toggle: true,
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: true,
+      },
+    }
   }),
   computed: {
     // ...mapGetters({
@@ -64,6 +77,9 @@ export default {
       console.log(height);
       return { flex: '0 0 ' + height + 'px', height: height + 'px' };
     },
+    isTable() {
+      return this.$store.getters['datasets/getFilesDrop'].some(val => val.type === 'table')
+    }
   },
   methods: {
     async createObject(obj) {
@@ -145,6 +161,7 @@ export default {
     flex-direction: column;
     width: 100%;
     overflow: hidden;
+    padding: 0 10px 0 0;
     & .main__header {
       flex: 0 0 172px;
       // border-bottom: #0e1621 solid 1px;
