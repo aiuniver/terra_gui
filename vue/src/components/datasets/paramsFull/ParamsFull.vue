@@ -164,6 +164,7 @@ export default {
     padding: 0 10px 0 0;
     & .main__header {
       flex: 0 0 172px;
+      display: flex;
       // border-bottom: #0e1621 solid 1px;
     }
     & .main__center {
