@@ -497,7 +497,7 @@ class FitCallback(keras.callbacks.Callback):
         self.epochs = epochs
         self.batch = 0
         self.num_batches = 0
-        self.epoch = 0
+        # self.epoch = 0
         self.last_epoch = 1
         self._start_time = time.time()
         self._time_batch_step = time.time()
@@ -699,7 +699,7 @@ class FitCallback(keras.callbacks.Callback):
         self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
-        self.epoch = epoch
+        # self.epoch = epoch
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
@@ -771,11 +771,11 @@ class FitCallback(keras.callbacks.Callback):
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
-        interacive_logs = copy.deepcopy(logs)
-        interacive_logs['epoch'] = epoch + 1
+        interactive_logs = copy.deepcopy(logs)
+        interactive_logs['epoch'] = self.last_epoch
         current_epoch_time = time.time() - self._time_first_step
         train_epoch_data = interactive.update_state(
-            fit_logs=interacive_logs,
+            fit_logs=interactive_logs,
             y_pred=scheduled_predict,
             current_epoch_time=current_epoch_time,
             on_epoch_end_flag=True
