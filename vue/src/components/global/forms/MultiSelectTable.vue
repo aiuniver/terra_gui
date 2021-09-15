@@ -1,51 +1,40 @@
 <template>
-  <div>
-    <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
-      <label class="t-multi-select__label">
-        <slot>{{ label }}</slot>
-      </label>
-      <div
-        :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]"
+  <div :class="['t-multi-select', { 't-inline': inline }]" v-click-outside="outside">
+    <label class="t-multi-select__label">
+      <slot>{{ label }}</slot>
+    </label>
+    <div
+      :class="['t-multi-select__input', { 't-multi-select__error': error }, { 't-multi-select__input--show': show }]"
+    >
+      <span
+        :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
+        :title="input"
+        @click="click"
       >
-        <!-- <i v-show="input" class="icon icon-chevron-left" @click="next(-1)"></i> -->
-        <span
-          :class="['t-multi-select__input--text', { 't-multi-select__input--active': input }]"
-          :title="input"
-          @click="click"
-        >
-          {{ input || placeholder }}
-        </span>
-        <!-- <i v-show="input" class="icon icon-chevron-right" @click="next(1)"></i> -->
+        {{ input || placeholder }}
+      </span>
+    </div>
+    <div class="t-multi-select__content" v-show="show">
+      <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
+        <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
+        <span class="t-multi__item--title">Выбрать все</span>
       </div>
-      <div class="t-multi-select__content" v-show="show">
-        <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
-          <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
-          <span class="t-multi__item--title">Выбрать все</span>
+      <template v-for="(item, i) in filterList">
+        <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
+          <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
+          <span class="t-multi__item--title">{{ item.label }}</span>
         </div>
-        <template v-for="(item, i) in filterList">
-          <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
-            <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
-            <span class="t-multi__item--title">{{ item.label }}</span>
-          </div>
-        </template>
-        <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
-          <span class="t-multi__item--title">Нет данных</span>
-        </div>
+      </template>
+      <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
+        <span class="t-multi__item--title">Нет данных</span>
       </div>
     </div>
-    <MultiSelectTable v-if="isTable" :id="id" label="Таблица" inline/>
   </div>
 </template>
 
 <script>
-import MultiSelectTable from './MultiSelectTable';
-import blockMain from '@/mixins/datasets/blockMain';
 export default {
-  name: 't-multi-select',
-  components: {
-    MultiSelectTable
-  },
-  mixins: [blockMain],
+  name: 't-multi-select-table',
   props: {
     name: String,
     id: Number,
@@ -53,11 +42,6 @@ export default {
       type: String,
       default: 'Label',
     },
-    // lists: {
-    //   type: Array,
-    //   required: true,
-    //   default: () => [],
-    // },
     placeholder: {
       type: String,
       default: 'Не выбрано',
@@ -72,11 +56,13 @@ export default {
     pagination: 0,
   }),
   computed: {
-    isTable() {
-      return this.selected?.[0]?.type === 'table'
-    },
-    lists() {
-      return this.mixinFiles;
+    group: {
+      set(value) {
+        this.$store.dispatch('datasets/setTableGroup', value);
+      },
+      get() {
+        return this.$store.getters['datasets/getTableGroup'];
+      },
     },
     errors() {
       return this.$store.getters['datasets/getErrors'](this.id);
@@ -92,15 +78,11 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     filterList() {
-      const { type } = this.$store.getters['datasets/getInputDataByID'](this.id);
-      const filter = this.mixinFilter?.[type || ''] || [];
-      // console.log(type, filter);
-      return (
-        this.lists
-          .filter(item => (!item.id || item.id === this.id) || item.type === 'table' )
-          // .filter(item => item.type !== 'table')
-          .filter(item => filter.includes(item.type))
-      );
+      return this.group.map(item => {
+        return { label: `${item.label} ${item.id}`, value: item.data, id: item.id };
+      });
+      // .filter(item => !item.id || item.id === this.id)
+      // .filter(item => filter.includes(item.type));
     },
   },
   methods: {
@@ -123,15 +105,28 @@ export default {
       if (typeof list === 'boolean') {
         this.selected = this.filterList.map(item => (!list ? item : null)).filter(item => item);
       } else {
-        if (this.selected.find(item => item.value === list.value)) {
-          this.selected = this.selected.filter(item => item.value !== list.value);
+        if (this.selected.find(item => item.id === list.id)) {
+          this.selected = this.selected.filter(item => item.id !== list.id);
+          this.group = this.group.map(item => {
+            if (item.id === list.id) {
+              item.layer = 0;
+            }
+            return item;
+          });
         } else {
           this.selected = [...this.selected, list];
+          this.group = this.group.map(item => {
+            if (item.id === list.id) {
+              item.layer = this.id;
+            }
+            return item;
+          });
         }
       }
-      // console.log(this.id)
-      this.$emit('multiselect', { value: this.selected, id: this.id });
-      this.mixinCheck(this.selected, this.id);
+      console.log(list);
+
+      // this.$emit('multiselect', { value: this.selected, id: this.id });
+      // this.mixinCheck(this.selected, this.id);
     },
   },
   created() {
@@ -144,7 +139,7 @@ export default {
   },
   watch: {
     filterList() {
-      this.selected = this.selected.filter(element => this.lists.find(item => item.value === element.value));
+      this.selected = this.selected.filter(element => this.group.find(item => item.id === element.id));
     },
   },
 };

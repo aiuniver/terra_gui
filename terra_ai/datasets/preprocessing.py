@@ -37,7 +37,7 @@ class CreatePreprocessing(object):
 
         scaler = None
         if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
-            scaler = MinMaxScaler()
+            scaler = MinMaxScaler(feature_range=(options['min_scaler'], options['max_scaler']))
             array = array.reshape(-1, 1) if isinstance(array, np.ndarray) else np.array([[0], [255]])
             scaler.fit(array)
 

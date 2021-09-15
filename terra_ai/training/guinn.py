@@ -96,7 +96,7 @@ class GUINN:
             else self.epochs - self.callbacks[0].last_epoch + 1
         self.batch_size = params.batch
         self.set_optimizer(params)
-        self.set_chp_monitor(params)
+        # self.set_chp_monitor(params)
         for output_layer in params.architecture.outputs_dict:
             self.metrics.update({
                 str(output_layer["id"]):
@@ -109,9 +109,11 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
-        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint, batch_size=batch_size, epochs=epochs)
+        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
+                               batch_size=batch_size, epochs=epochs, save_model_path=self.training_path,
+                               model_name=self.nn_name)
         self.callbacks = [callback]
-        checkpoint.update([('filepath', 'test_model.h5')])
+        # checkpoint.update([('filepath', 'test_model.h5')])
         # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
@@ -137,56 +139,56 @@ class GUINN:
         # print(params.optimizer.parameters_dict)
         # print(self.optimizer)
 
-    def set_custom_metrics(self, params=None) -> None:
-        for i_key in self.metrics.keys():
-            for idx, metric in enumerate(self.metrics[i_key]):
-                if metric in custom_losses_dict.keys():
-                    if metric == "mean_io_u":  # TODO определить или заменить self.output_params (возможно на params)
-                        self.metrics[i_key][idx] = custom_losses_dict[metric](
-                            num_classes=self.output_params[i_key]['num_classes'], name=metric)
-                    else:
-                        self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
+    # def set_custom_metrics(self, params=None) -> None:
+    #     for i_key in self.metrics.keys():
+    #         for idx, metric in enumerate(self.metrics[i_key]):
+    #             if metric in custom_losses_dict.keys():
+    #                 if metric == "mean_io_u":  # TODO определить или заменить self.output_params (возможно на params)
+    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](
+    #                         num_classes=self.output_params[i_key]['num_classes'], name=metric)
+    #                 else:
+    #                     self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
-    def set_chp_monitor(self, params: TrainData) -> None:
-        # layer_id = params.architecture.parameters.checkpoint.layer # TODO удалить, если не используются
-        # output = params.architecture.parameters.outputs.get(layer_id)
-        if len(self.dataset.data.inputs) > 1:
-            if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
-                if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
-                            self.chp_monitor = f'{checkpoint_layer}_{output.metrics[0].value} '
-                else:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
-            else:
-                if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
-                            self.chp_monitor = f'val_{checkpoint_layer}_{output.metrics[0].value}'
-                else:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            checkpoint_layer = params.architecture.parameters.checkpoint.layer
-                            self.chp_monitor = f'val_{checkpoint_layer}_{output.loss.value}'
-        else:
-            if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
-                if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'{output.metrics[0].value}'
-                else:
-                    self.chp_monitor = 'loss'
-            else:
-                if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-                    for output in params.architecture.parameters.outputs:
-                        if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-                            self.chp_monitor = f'val_{output.metrics[0].value}'
-                else:
-                    self.chp_monitor = 'val_loss'
+    # def set_chp_monitor(self, params: TrainData) -> None:
+    #     # layer_id = params.architecture.parameters.checkpoint.layer # TODO удалить, если не используются
+    #     # output = params.architecture.parameters.outputs.get(layer_id)
+    #     if len(self.dataset.data.inputs) > 1:
+    #         if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
+    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
+    #                         self.chp_monitor = f'{checkpoint_layer}_{output.metrics[0].value} '
+    #             else:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
+    #         else:
+    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
+    #                         self.chp_monitor = f'val_{checkpoint_layer}_{output.metrics[0].value}'
+    #             else:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
+    #                         self.chp_monitor = f'val_{checkpoint_layer}_{output.loss.value}'
+    #     else:
+    #         if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
+    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         self.chp_monitor = f'{output.metrics[0].value}'
+    #             else:
+    #                 self.chp_monitor = 'loss'
+    #         else:
+    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
+    #                 for output in params.architecture.parameters.outputs:
+    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
+    #                         self.chp_monitor = f'val_{output.metrics[0].value}'
+    #             else:
+    #                 self.chp_monitor = 'val_loss'
 
     def show_training_params(self) -> None:
         """
@@ -319,7 +321,7 @@ class GUINN:
     @progress.threading
     def base_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
-        self.set_custom_metrics()
+        # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
                            optimizer=self.optimizer,
                            metrics=self.metrics
@@ -790,7 +792,10 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучшей эпохи
         if self.last_epoch > 1:
             if self._best_epoch_monitoring(logs):
-                self.model.save_weights(f'/content/best_weights_metric_{self.metric_checkpoint}_epoch_{self.last_epoch}')
+                file_path_best: str = os.path.join(
+                    self.save_model_path, f"best_weights_metric_{self.metric_checkpoint}_epoch_{self.last_epoch}"
+                )
+                self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
         self._fill_log_history(self.last_epoch, logs)
 
