@@ -141,7 +141,7 @@ class CreateDataset(object):
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
             instr = getattr(CreateArray(), f"instructions_{decamelize(elem.type)}")(temp_paths_list, **elem.native())
 
-            if not elem.type in [LayerOutputTypeChoice.Classification, LayerInputTypeChoice.Dataframe]:
+            if not elem.type == LayerOutputTypeChoice.Classification:
                 y_classes = sorted(list(instr['instructions'].keys())) if \
                     isinstance(instr['instructions'], dict) else instr['instructions']
                 self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
@@ -285,8 +285,6 @@ class CreateDataset(object):
             elif creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                 tmp_cols = creation_data.inputs.get(key).parameters.cols_names
                 cols = len(tmp_cols) if tmp_cols else creation_data.inputs.get(key).parameters.example_length
-                cols = creation_data.inputs.get(key).parameters.xlen if creation_data.inputs.get(
-                    key).parameters.xlen else cols
                 arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
                     self.dataframe['test'].iloc[0, :cols].values,
                     **self.instructions.inputs.get(key).parameters,
@@ -315,8 +313,10 @@ class CreateDataset(object):
 
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
-            if creation_data.outputs.get(key).type in [LayerOutputTypeChoice.Text,
-                                                       LayerOutputTypeChoice.TextSegmentation]:
+            if (creation_data.outputs.get(key).type in
+                [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]) or (
+                    creation_data.outputs.get(key).type in [LayerOutputTypeChoice.Classification] and
+                    creation_data.inputs.get(1).type == LayerInputTypeChoice.Dataframe):
                 arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
                     self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
                     **self.instructions.outputs.get(key).parameters, **self.preprocessing.preprocessing.get(key))
@@ -405,25 +405,85 @@ class CreateDataset(object):
                     for i in range(num_arrays):
                         globals()[f'current_arrays_{i + 1}'] = []
 
-                for i in range(len(self.dataframe[split])):
-                    if self.tags[key] in [decamelize(LayerInputTypeChoice.Text), decamelize(LayerOutputTypeChoice.Text),
-                                          decamelize(LayerOutputTypeChoice.TextSegmentation)]:
-                        arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
-                            self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'], **put_data.get(key).parameters,
-                            **self.preprocessing.preprocessing.get(key))
-                        array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                    else:
-                        arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
-                            os.path.join(self.paths.basepath, self.dataframe[split].loc[i, f'{key}_{self.tags[key]}']),
-                            **put_data.get(key).parameters, **self.preprocessing.preprocessing.get(key))
-                        array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
-                                                                                       **arr['parameters'])
-                    current_arrays.append(array)
-
+                elif self.tags[1] == 'dataframe' and self.tags[2] == 'timeseries':
+                    depth = put_data.get(key).parameters['depth']
+                    length = put_data.get(key).parameters['length']
+                    step = put_data.get(key).parameters['step']
+                    xcols = len(put_data.get(key).parameters['cols_names'])
+                    ycols = put_data.get(key).parameters['cols_names']
+                    trend = put_data.get(key).parameters['trend']
+                    for i in range(0, len(self.dataframe[split]) - length - depth, step):
+                        if self.tags[key] == decamelize(LayerInputTypeChoice.Dataframe):
+                            arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                self.dataframe[split].iloc[range(i, i + length), :xcols].values,
+                                **put_data.get(key).parameters,
+                                **self.preprocessing.preprocessing.get(key))
+                            array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                           **arr['parameters'])
+                        elif self.tags[key] in [decamelize(LayerOutputTypeChoice.Timeseries)]:
+                            tmp_df = pd.read_csv(put_data.get(key).parameters['sources_paths'][0],
+                                                 sep=None, engine='python', nrows=1, usecols=ycols)
+                            or_cols = tmp_df.columns.tolist()
+                            table_cols = self.dataframe[split].columns.tolist()
+                            idxs = []
+                            for col in or_cols:
+                                idxs.append(table_cols.index(col))
+                            if trend:
+                                arr = getattr(CreateArray(), f'create_{self.tags[key]}')([
+                                    self.dataframe[split].iloc[i, idxs],
+                                    self.dataframe[split].iloc[i + length, idxs]],
+                                    **put_data.get(key).parameters,
+                                    **self.preprocessing.preprocessing.get(key))
+                                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                               **arr['parameters'])
+                            else:
+                                arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                    self.dataframe[split].iloc[range(i + length, i + length + depth), idxs].values,
+                                    **put_data.get(key).parameters,
+                                    **self.preprocessing.preprocessing.get(key))
+                                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                               **arr['parameters'])
+                        current_arrays.append(array)
+                else:
+                    for i in range(len(self.dataframe[split])):
+                        if self.tags[key] in [decamelize(LayerInputTypeChoice.Text),
+                                              decamelize(LayerOutputTypeChoice.Text),
+                                              decamelize(LayerOutputTypeChoice.TextSegmentation)]:
+                            arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
+                                **put_data.get(key).parameters,
+                                **self.preprocessing.preprocessing.get(key))
+                            array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                           **arr['parameters'])
+                        elif self.tags[1] == decamelize(LayerInputTypeChoice.Dataframe) and \
+                                self.tags[2] == decamelize(LayerOutputTypeChoice.Classification):
+                            if self.tags[key] in [decamelize(LayerInputTypeChoice.Dataframe)]:
+                                tmp_cols = put_data.get(key).parameters['cols_names']
+                                cols = len(tmp_cols) if tmp_cols else put_data.get(key).parameters.example_length
+                                arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                    self.dataframe[split].iloc[i, :cols].values,
+                                    **put_data.get(key).parameters,
+                                    **self.preprocessing.preprocessing.get(key))
+                                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                               **arr['parameters'])
+                            else:
+                                arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                    self.dataframe[split].loc[i, f'{key}_{self.tags[key]}'],
+                                    **put_data.get(key).parameters, **self.preprocessing.preprocessing.get(key))
+                                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                               **arr['parameters'])
+                        else:
+                            arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                                os.path.join(self.paths.basepath,
+                                             self.dataframe[split].loc[i, f'{key}_{self.tags[key]}']),
+                                **put_data.get(key).parameters,
+                                **self.preprocessing.preprocessing.get(key))
+                            array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                           **arr['parameters'])
+                        current_arrays.append(array)
                 out_array[split][key] = np.array(current_arrays)
 
-        return out_array
+                return out_array
 
     def write_arrays(self, array_x, array_y):
 
