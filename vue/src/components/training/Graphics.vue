@@ -10,7 +10,9 @@
           <at-collapse-item class="mt-3" title="Метрики" center>
             <MetricGraphs @isLoad="loading = false" />
           </at-collapse-item>
+          <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
+            <PrePesults/>
             <!-- <Images /> -->
             <Prediction />
           </at-collapse-item>
@@ -35,6 +37,7 @@
 <script>
 import { mapGetters } from 'vuex';
 // import Images from './main/images/index.vue';
+// import Images from "./main/images/index.vue";
 import Texts from './main/texts/index.vue';
 import Progress from './main/progress/';
 import LoadSpiner from '../forms/LoadSpiner.vue';

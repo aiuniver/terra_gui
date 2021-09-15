@@ -70,9 +70,12 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       console.log(res)
       if (res) {
-        if (res?.error) {
-          const { error: { fields: { inputs, outputs } } } = res
-          commit('SET_ERRORS', { ...inputs, ...outputs })
+        const { error } = res
+        if (error) {
+          const { fields } = error
+          if (fields) {
+            commit('SET_ERRORS', { ...fields?.inputs || {}, ...fields?.outputs || {} })
+          }
         } else {
           commit('SET_INPUT_DATA', []);
           commit('SET_FILES_DROP', []);

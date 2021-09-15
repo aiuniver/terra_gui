@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from django.conf import settings
 
 from terra_ai.agent import agent_exchange
+from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.exceptions.base import TerraBaseException
 
 from ..base import (
@@ -48,14 +49,17 @@ class UploadAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (TerraBaseException, ExchangeBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
 class UploadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        progress = agent_exchange("deploy_upload_progress")
-        if progress.success:
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        try:
+            progress = agent_exchange("deploy_upload_progress")
+            if progress.success:
+                return BaseResponseSuccess(data=progress.native())
+            else:
+                return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        except ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))

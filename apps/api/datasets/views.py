@@ -36,20 +36,20 @@ class ChoiceAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (TerraBaseException, ExchangeBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
 class ChoiceProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         save_project = False
-        progress = agent_exchange("dataset_choice_progress")
-        if progress.finished and progress.data:
-            try:
+        try:
+            progress = agent_exchange("dataset_choice_progress")
+            if progress.finished and progress.data:
                 request.project.set_dataset(progress.data)
                 save_project = True
-            except project_exceptions.ProjectException as error:
-                return BaseResponseErrorGeneral(str(error))
+        except (project_exceptions.ProjectException, ExchangeBaseException) as error:
+            return BaseResponseErrorGeneral(str(error))
         if progress.success:
             return BaseResponseSuccess(
                 data=progress.native(), save_project=save_project
@@ -60,9 +60,12 @@ class ChoiceProgressAPIView(BaseAPIView):
 
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange("datasets_info", path=data_path.datasets).native()
-        )
+        try:
+            return BaseResponseSuccess(
+                agent_exchange("datasets_info", path=data_path.datasets).native()
+            )
+        except ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class SourceLoadAPIView(BaseAPIView):
@@ -75,17 +78,20 @@ class SourceLoadAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (ExchangeBaseException, TerraBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
 class SourceLoadProgressAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        progress = agent_exchange("dataset_source_load_progress")
-        if progress.success:
-            return BaseResponseSuccess(data=progress.native())
-        else:
-            return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        try:
+            progress = agent_exchange("dataset_source_load_progress")
+            if progress.success:
+                return BaseResponseSuccess(data=progress.native())
+            else:
+                return BaseResponseErrorGeneral(progress.error, data=progress.native())
+        except ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
@@ -103,7 +109,7 @@ class SourceSegmentationClassesAutosearchAPIView(BaseAPIView):
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (ExchangeBaseException, TerraBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
@@ -118,7 +124,7 @@ class SourceSegmentationClassesAnnotationAPIView(BaseAPIView):
             )
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (ExchangeBaseException, TerraBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 
 
@@ -139,9 +145,12 @@ class CreateAPIView(BaseAPIView):
 
 class SourcesAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange("datasets_sources", path=str(data_path.sources)).native()
-        )
+        try:
+            return BaseResponseSuccess(
+                agent_exchange("datasets_sources", path=str(data_path.sources)).native()
+            )
+        except (TerraBaseException, ExchangeBaseException) as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class DeleteAPIView(BaseAPIView):
@@ -164,5 +173,5 @@ class DeleteAPIView(BaseAPIView):
             return BaseResponseSuccess(save_project=save_project)
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except TerraBaseException as error:
+        except (ExchangeBaseException, TerraBaseException) as error:
             return BaseResponseErrorGeneral(str(error))

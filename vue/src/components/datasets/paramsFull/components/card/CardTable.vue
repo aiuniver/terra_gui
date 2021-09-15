@@ -181,6 +181,8 @@ export default {
     padding: 0 0 0 23px;
     flex: 0 0 23px;
     user-select: none;
+    z-index: 2;
+        background-color: #222c387d;
   }
   &__add {
     padding: 0 5px;
@@ -200,8 +202,7 @@ export default {
     // min-width: 92px;
     position: relative;
     border: 1px solid #6c7883;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
+    border-radius: 4px 4px 0 0;
     border-bottom: none;
     background-color: #17212b;
     padding: 2px 6px 2px 6px;
@@ -212,7 +213,7 @@ export default {
     cursor: default;
     margin-left: -2px;
     &:first-child {
-      // margin-left: 0px;
+      margin-left: 0px;
     }
     span {
       // margin-right: 5px;
