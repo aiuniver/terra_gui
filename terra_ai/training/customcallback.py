@@ -2041,11 +2041,3 @@ class InteractiveCallback:
             # image with bb
             # accuracy, corellation bb for classes
             pass
-
-
-if __name__ == '__main__':
-    from tensorflow_addons.losses import ContrastiveLoss
-
-    xxx = ContrastiveLoss()
-    print(xxx.name)
-    pass
