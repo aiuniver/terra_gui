@@ -14,6 +14,7 @@ from terra_ai.agent import exceptions as agent_exceptions
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.modeling.extra import LayerGroupChoice
+from terra_ai.exceptions.base import TerraBaseException
 
 from ..base import (
     BaseAPIView,
@@ -113,9 +114,12 @@ class LoadAPIView(BaseAPIView):
 
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange("models", path=data_path.modeling).native()
-        )
+        try:
+            return BaseResponseSuccess(
+                agent_exchange("models", path=data_path.modeling).native()
+            )
+        except (agent_exceptions.ExchangeBaseException, TerraBaseException) as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class ClearAPIView(BaseAPIView):
