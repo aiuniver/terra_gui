@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw, ImageFont  # Модули работы с из
 
 from tensorflow.keras.utils import to_categorical
 from pydub import AudioSegment
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 import numpy as np
 import moviepy.editor as moviepy_editor
 from tensorflow.python.keras.api.keras.preprocessing import image
@@ -599,14 +599,19 @@ class InteractiveCallback:
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
+        colors = {}
         if dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
                 dataset_output.classes_colors:
-            return [dataset_output.classes_colors[i].as_rgb_tuple() for i in range(len(dataset_output.classes_colors))]
+            for i, tag in enumerate(dataset_output.classes_names):
+                colors[tag] = dataset_output.classes_colors[i].as_rgb_tuple()
+            return colors
         elif dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
                 not dataset_output.classes_colors:
-            return [tuple(np.random.randint(256, size=3)) for i in range(dataset_output.num_classes)]
+            for tag in dataset_output.classes_names:
+                colors[tag] = tuple(np.random.randint(256, size=3))
+            return colors
         else:
-            return None
+            return dataset_output.classes_colors
 
     def _prepare_y_true(self, dataset: PrepareDataset):
         self.y_true = {
@@ -1231,7 +1236,8 @@ class InteractiveCallback:
                 ).numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
-                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
+                (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
+                        self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
             if loss_name == Loss.SparseCategoricalCrossentropy:
                 return float(loss_obj()(
                     np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
@@ -1242,6 +1248,12 @@ class InteractiveCallback:
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 ).numpy())
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
+                self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
+            if loss_name == Loss.SparseCategoricalCrossentropy:
+                return 0.
+            else:
+                return float(loss_obj()(y_true, y_pred).numpy())
         else:
             return 0.
 
@@ -1267,7 +1279,8 @@ class InteractiveCallback:
             return float(metric_obj.result().numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
-                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
+                (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
+                        self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
             if metric_name == Metric.SparseCategoricalAccuracy or \
                     metric_name == Metric.SparseTopKCategoricalAccuracy or \
                     metric_name == Metric.SparseCategoricalCrossentropy:
@@ -1281,6 +1294,15 @@ class InteractiveCallback:
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 )
             return float(metric_obj.result().numpy())
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
+                        self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
+            if metric_name == Metric.SparseCategoricalAccuracy or \
+                    metric_name == Metric.SparseTopKCategoricalAccuracy or \
+                    metric_name == Metric.SparseCategoricalCrossentropy:
+                return 0.
+            else:
+                metric_obj.update_state(y_true , y_pred)
+                return float(metric_obj.result().numpy())
         else:
             return 0.
 
@@ -1631,15 +1653,15 @@ class InteractiveCallback:
                         'type': type_choice,
                     }
                 for out in self.dataset_config.get("outputs").keys():
-                    tags_color = None
-                    if self.dataset_config.get("outputs").get(out).get('classes_colors') and \
-                            self.dataset_config.get("outputs").get(out).get(
-                                'task') != LayerOutputTypeChoice.Segmentation:
-                        tags_color = {}
-                        for i, classes_name in enumerate(
-                                self.dataset_config.get("outputs").get(out).get('classes_names')):
-                            tags_color[classes_name] = \
-                                self.dataset_config.get("outputs").get(out).get('classes_colors')[i]
+                    # tags_color = None
+                    # if self.dataset_config.get("outputs").get(out).get('classes_colors') and \
+                    #         self.dataset_config.get("outputs").get(out).get(
+                    #             'task') != LayerOutputTypeChoice.Segmentation:
+                    #     tags_color = {}
+                    #     for i, classes_name in enumerate(
+                    #             self.dataset_config.get("outputs").get(out).get('classes_names')):
+                    #         tags_color[classes_name] = \
+                    #             self.dataset_config.get("outputs").get(out).get('classes_colors')[i]
 
                     true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
                         output_id=out,
@@ -1652,13 +1674,13 @@ class InteractiveCallback:
                         "type": out_type,
                         "data": true_value,
                         "color_mark": None,
-                        "tags_color": tags_color
+                        "tags_color": self.dataset_config.get("outputs").get(out).get('classes_colors')
                     }
                     return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
                         "type": out_type,
                         "data": predict_value,
                         "color_mark": color_mark,
-                        "tags_color": tags_color
+                        "tags_color": self.dataset_config.get("outputs").get(out).get('classes_colors')
                     }
                     if stat:
                         return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = stat
@@ -1691,7 +1713,7 @@ class InteractiveCallback:
                 )
                 return_data[f'{out}'] = dict(
                     id=_id,
-                    task_type=TaskChoice.Classification.name,
+                    task_type=LayerOutputTypeChoice.Classification.name,
                     graph_name=f"Output_{out} - Confusion matrix",
                     x_label="Предсказание",
                     y_label="Истинное значение",
@@ -1715,7 +1737,7 @@ class InteractiveCallback:
                 )
                 return_data[f'{out}'] = dict(
                     id=_id,
-                    task_type=TaskChoice.Segmentation.name,
+                    task_type=LayerOutputTypeChoice.Segmentation.name,
                     graph_name=f"Output_{out} - Confusion matrix",
                     x_label="Предсказание",
                     y_label="Истинное значение",
@@ -1727,19 +1749,23 @@ class InteractiveCallback:
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.TextSegmentation \
                     and self.dataset_config.get(f"{out}").get('encoding') == 'multi':
-
+                report = self._get_classification_report(
+                    self.y_true.get('val').get(out).reshape((np.prod(
+                        self.y_true.get('val').get(out).shape[:-1]), self.y_true.get('val').get(out).shape[-1])
+                    ),
+                    np.where(self.y_pred.get(out) >= 0.9, 1, 0).reshape(
+                        (np.prod(self.y_pred.get(out).shape[:-1]), self.y_pred.get(out).shape[-1])
+                    ),
+                    self.dataset_config.get('output').get(out).get('classes_names')
+                )
                 return_data[f'{out}'] = dict(
                     id=_id,
-                    task_type=TaskChoice.Segmentation.name,
-                    graph_name=f"Output_{out} - Confusion matrix",
-                    x_label="Предсказание",
-                    y_label="Истинное значение",
-                    labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
-                    data_array=cm,
-                    data_percent_array=cm_percent
+                    task_type=LayerOutputTypeChoice.TextSegmentation.name,
+                    graph_name=f"Выходной слой {out} - Отчет по классам",
+                    type="Table",
+                    table_data=report,
                 )
                 _id += 1
-                pass
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Regression:
                 # Scatter
@@ -1791,7 +1817,8 @@ class InteractiveCallback:
         return_data = {}
         _id = 1
         for out in self.dataset_config.get("outputs").keys():
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
                 class_train_names, class_train_count = sort_dict(
                     self.dataset_balance.get(out).get('train'),
                     mode=self.interactive_config.get('data_balance').get('sorted')
@@ -1924,6 +1951,26 @@ class InteractiveCallback:
                     cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return cm, cm_percent
 
+    def _get_classification_report(self, y_true, y_pred, labels):
+        cr = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
+        return_stat = {}
+        for lbl in labels:
+            return_stat[lbl] = {
+                "Точность": round(cr.get(lbl).get('precision') * 100, 2),
+                "Чувствительность": round(cr.get(lbl).get('recall') * 100, 2),
+                "F1-мера": round(cr.get(lbl).get('f1-score') * 100, 2),
+                "Количество": cr.get(lbl).get('support')
+            }
+        for i in ['macro avg', 'micro avg', 'samples avg', 'weighted avg']:
+            return_stat[i] = {
+                "Точность": round(cr.get(i).get('precision') * 100, 2),
+                "Чувствительность": round(cr.get(i).get('recall') * 100, 2),
+                "F1-мера": round(cr.get(i).get('f1-score') * 100, 2),
+                "Количество": cr.get(i).get('support')
+            }
+        return return_stat
+
+
     @staticmethod
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         axis = tuple(np.arange(1, len(y_true.shape))) if batch_mode else None
@@ -1997,7 +2044,7 @@ class InteractiveCallback:
 
     def _postprocess_result_data(self, output_id: str, data_type: str, save_id: int, example_idx: int, show_stat=True):
 
-        def add_tags_to_word(word: str, tag):
+        def add_tags_to_word(word: str, tag: str):
             """
             Tag  = <s1>
             """
@@ -2124,14 +2171,41 @@ class InteractiveCallback:
             return y_true_save_path, y_pred_save_path, None, class_stat, "Image"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
-            classes_names = self.dataset_config.get("outputs").get(output_id).get("classes_names")
             # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
             #  на сегментацию текста на несколько входов то придется искать решения
-            # text_for_preparation = self.dataset_config.get('dataframe').get('val').
 
-            # coloured text
-            # stat - f1 or dice for classes
-            pass
+            classes_names = self.dataset_config.get("outputs").get(output_id).get("classes_names")
+            text_for_preparation = self.dataset_config.get('dataframe').get('val').iat[example_idx, 0]
+            true_text_segmentation = text_colorization(
+                text_for_preparation,
+                self.y_true.get(data_type).get(output_id)[example_idx],
+                classes_names,
+                self.dataset_config.get("outputs").get(output_id).get('classes_colors')
+            )
+            pred_text_segmentation = text_colorization(
+                text_for_preparation,
+                self.y_pred.get(output_id)[example_idx],
+                classes_names,
+                self.dataset_config.get("outputs").get(output_id).get('classes_colors')
+            )
+            class_stat = {}
+            if show_stat:
+                y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
+                y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.),
+                for idx, cls in enumerate(classes_names):
+                    if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]):
+                        class_stat[cls] = {
+                            "value": "-",
+                            "color_mark": None
+                        }
+                    else:
+                        dice_val = np.round(self._dice_coef(y_true[:, idx], y_pred[:, idx], batch_mode=False) * 100, 1)
+                        class_stat[cls] = {
+                            "value": f"{dice_val}%",
+                            "color_mark": 'success' if dice_val >= 90 else 'wrong'
+                        }
+            return true_text_segmentation, pred_text_segmentation, None, class_stat, "Text"
+
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Regression:
             # values
             # stat - deviation
