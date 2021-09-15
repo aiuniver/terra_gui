@@ -1,5 +1,5 @@
 from terra_ai.data.datasets.extra import LayerScalerImageChoice, LayerScalerVideoChoice, LayerPrepareMethodChoice
-from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice,\
+from terra_ai.data.datasets.extra import LayerNetChoice, LayerVideoFillModeChoice, LayerVideoFrameModeChoice, \
     LayerTextModeChoice, LayerAudioModeChoice, LayerVideoModeChoice, LayerScalerAudioChoice
 
 import os
@@ -22,6 +22,107 @@ from tensorflow.keras import utils
 
 
 class CreateArray(object):
+    @staticmethod
+    def instructions_dataframe(_, **options: dict) -> dict:
+        instructions = {"instructions": {}, 'parameters': options["parameters"]}
+        instructions['parameters']['put'] = options["id"]
+        if options["parameters"]['length']:
+            if options["parameters"]["transpose"]:
+                general_df = pd.read_csv(
+                    os.path.join(options["parameters"]["sources_paths"][0]),
+                    sep=options["parameters"]["separator"] ).T
+                general_df.columns = general_df.iloc[0]
+                general_df.drop(general_df.index[[0]], inplace=True)
+                general_df.index = range(0, len(general_df))
+                for i in options["parameters"]["cols_names"][0]:
+                    general_df = general_df.astype(
+                        {general_df.columns[i]: np.float}, errors="ignore")
+                df = general_df.iloc[:, options["parameters"]["cols_names"][0]]
+            else:
+                df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                 usecols=options["parameters"]['cols_names'],
+                                 sep=options["parameters"]["separator"])
+            instructions['parameters']["timeseries"] = True
+        else:
+            y_col = options["parameters"]['y_cols']
+            if options["parameters"]["pad_sequences"] or options["parameters"]["xlen_step"]:
+                if options["parameters"]["pad_sequences"]:
+                    example_length = options["parameters"]["example_length"]
+                    tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                         usecols=range(0, example_length + 1),
+                                         sep=options["parameters"]["separator"])
+                    tmp_df.sort_values(by=tmp_df.columns[0], ignore_index=True, inplace=True)
+                    tmp_df.fillna(0, inplace=True)
+                    df = tmp_df.iloc[:, range(1, example_length + 1)]
+
+                elif options["parameters"]["xlen_step"]:
+                    xlen = options["parameters"]["xlen"]
+                    step_len = options["parameters"]["step_len"]
+
+                    df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                     sep=options["parameters"]["separator"])
+                    df.sort_values(by=df.columns[0], ignore_index=True, inplace=True)
+                    df = df.iloc[:, 1:]
+                    xlen_array = []
+                    for i in range(len(df)):
+                        subdf = df.iloc[i, :]
+                        subdf = subdf.dropna().values.tolist()
+                        for j in range(0, len(subdf), step_len):
+                            if len(subdf[j: j + step_len]) < xlen:
+                                xlen_array.append(subdf[-xlen:])
+                            else:
+                                xlen_array.append(subdf[j: j + xlen])
+
+                if options["parameters"]["xlen_step"]:
+                    df = pd.DataFrame({"slices": xlen_array})
+                instructions["parameters"]["scaler"] = options["parameters"]["scaler"]
+            else:
+                tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                     sep=options["parameters"]["separator"], nrows=1)
+                df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                 usecols=options["parameters"]["cols_names"] + y_col,
+                                 sep=options["parameters"]["separator"])
+                sort_col = tmp_df.columns.tolist()[y_col[0]]
+                x_cols = []
+                for idx in options["parameters"]["cols_names"]:
+                    x_cols.append(tmp_df.columns.tolist()[idx])
+                df.sort_values(by=sort_col, ignore_index=True, inplace=True)
+                df = df.loc[:, x_cols]
+        instructions["instructions"] = df.to_dict()
+
+        if options["parameters"]["Categorical"]:
+            tmp_lst = options["parameters"]["Categorical"]
+            instructions["parameters"]["Categorical"] = {}
+            instructions["parameters"]["Categorical"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["Categorical"]["lst_cols"]:
+                instructions["parameters"]["Categorical"][f"col_{i}"] = list(set(df.iloc[:, i]))
+
+        if options["parameters"]["Categorical_ranges"]:
+            tmp_lst = options["parameters"]["Categorical_ranges"]
+            instructions["parameters"]["Categorical_ranges"] = {}
+            instructions["parameters"]["Categorical_ranges"]["lst_cols"] = tmp_lst
+            for i in range(len(tmp_lst)):
+                if len(list(options["parameters"]["cat_cols"].values())[i].split(" ")) == 1:
+                    border = max(df.iloc[:, tmp_lst[i]]) / int(list(options["parameters"]["cat_cols"].values())[i])
+                    instructions["parameters"]["Categorical_ranges"][f"col_{tmp_lst[i]}"] = np.linspace(
+                        border, max(df.iloc[:, tmp_lst[i]]), int(list(options["parameters"]["cat_cols"].values())[i])).tolist()
+                else:
+                    instructions["parameters"]["Categorical_ranges"][f"col_{tmp_lst[i]}"] = \
+                        list(options["parameters"]["cat_cols"].values())[i].split(" ")
+
+        if options["parameters"]["one_hot_encoding"]:
+            tmp_lst = options["parameters"]["one_hot_encoding"]
+            instructions["parameters"]["one_hot_encoding"] = {}
+            instructions["parameters"]["one_hot_encoding"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["one_hot_encoding"]["lst_cols"]:
+                if options["parameters"]["Categorical_ranges"] and (
+                        i in instructions["parameters"]["Categorical_ranges"]["lst_cols"]):
+                    instructions["parameters"]["one_hot_encoding"][f"col_{i}"] = len(
+                        instructions["parameters"]["Categorical_ranges"][f"col_{i}"])
+                else:
+                    instructions["parameters"]["one_hot_encoding"][f"col_{i}"] = len(
+                        set(df.iloc[:, i]))
+        return instructions
 
     @staticmethod
     def instructions_image(paths_list: list, **options: dict) -> dict:
@@ -141,7 +242,7 @@ class CreateArray(object):
             close_symbol = close_tags[0][-1]
         length = options['parameters']['length'] if options['parameters'][
                                                         'text_mode'] == LayerTextModeChoice.length_and_step else \
-        options['parameters']['max_words']
+            options['parameters']['max_words']
 
         for path in paths_list:
             text_file = read_text(file_path=path, lower=lower, del_symbols=options['parameters']['filters'], split=' ',
@@ -192,26 +293,34 @@ class CreateArray(object):
     @staticmethod
     def instructions_classification(paths_list: list, **options: dict) -> dict:
 
-        if os.path.isfile(options['parameters']['sources_paths'][0]) and\
+        if os.path.isfile(options['parameters']['sources_paths'][0]) and \
                 options['parameters']['sources_paths'][0].endswith('.csv'):
             file_name = options['parameters']['sources_paths'][0]
             data = pd.read_csv(file_name, usecols=options['parameters']['cols_names'])
-            column = data[options['parameters']['cols_names'][0]].to_list()
-            classes_names = []
-            for elem in column:
-                if elem not in classes_names:
-                    classes_names.append(elem)
-            num_classes = len(classes_names)
+            data.sort_values(by=data.columns[0], ignore_index=True, inplace=True)
+            column = data.iloc[:, 0].to_list()
+            type_processing = options['parameters']['type_processing']
+            if type_processing == "categorical":
+                classes_names = []
+                for elem in column:
+                    if elem not in classes_names:
+                        classes_names.append(elem)
+            else:
+                if len(options['parameters']["ranges"].split(" ")) == 1:
+                    border = max(column) / int(options['parameters']["ranges"])
+                    classes_names = np.linspace(border, max(column),
+                                                int(options['parameters']["ranges"])).tolist()
+                else:
+                    classes_names = options['parameters']["ranges"].split(" ")
         else:
             classes_names = sorted([os.path.basename(elem) for elem in options['parameters']['sources_paths']])
-            num_classes = len(classes_names)
 
         instructions = {'instructions': paths_list,
                         'parameters': {"one_hot_encoding": options['parameters']['one_hot_encoding'],
                                        "classes_names": classes_names,
-                                       "num_classes": num_classes,
-                                       'put': options['id']
-                                       }
+                                       "num_classes": len(classes_names),
+                                       'put': options['id'],
+                                       "type_processing": type_processing}
                         }
 
         return instructions
@@ -296,8 +405,8 @@ class CreateArray(object):
         close_tags: list = options['parameters']['close_tags'].split(' ')
         open_symbol = open_tags[0][0]
         close_symbol = close_tags[0][-1]
-        length = options['parameters']['length'] if\
-            options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step else\
+        length = options['parameters']['length'] if \
+            options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step else \
             options['parameters']['max_words']
 
         for path in paths_list:
@@ -308,7 +417,7 @@ class CreateArray(object):
 
         for key, value in sorted(text_list.items()):
             if options['parameters']['text_mode'] == LayerTextModeChoice.completely:
-                text_segm_data[';'.join([key, f'[0-{options["parameters"]["max_words"]}]'])] =\
+                text_segm_data[';'.join([key, f'[0-{options["parameters"]["max_words"]}]'])] = \
                     value[:options['parameters']['max_words']]
             elif options['parameters']['text_mode'] == LayerTextModeChoice.length_and_step:
                 max_length = len(value)
@@ -331,6 +440,38 @@ class CreateArray(object):
 
         return instructions
 
+    @staticmethod
+    def instructions_timeseries(_, **options: dict) -> dict:
+
+        instructions = {"instructions": {}, "parameters": options["parameters"]}
+        instructions["parameters"]["put"] = options["id"]
+        if options["parameters"]["transpose"]:
+            tmp_df_ts = pd.read_csv(options["parameters"]["sources_paths"][0], sep=options["parameters"]["separator"]).T
+            tmp_df_ts.columns = tmp_df_ts.iloc[0]
+            tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
+            tmp_df_ts.index = range(0, len(tmp_df_ts))
+            for i in instructions["parameters"]["cols_names"]:
+                tmp_df_ts = tmp_df_ts.astype({i: np.float}, errors="ignore")
+            y_subdf = tmp_df_ts.loc[:, instructions["parameters"]["cols_names"]]
+        else:
+            y_subdf = pd.read_csv(
+                options["parameters"]["sources_paths"][0], sep=options["parameters"]["separator"],
+                usecols=instructions["parameters"]["cols_names"])
+
+        if options["parameters"]['trend']:
+            instructions['parameters']['classes_names'] = ["Не изменился", "Вверх", "Вниз"]
+            instructions['parameters']['num_classes'] = 3
+        instructions["instructions"] = y_subdf.to_dict()
+        return instructions
+
+
+    @staticmethod
+    def cut_dataframe(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
 
     @staticmethod
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
@@ -401,12 +542,12 @@ class CreateArray(object):
                 ret, frame = cap.read()
                 frames_number += 1
                 output_movie.write(frame)
-                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret or\
+                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret or \
                         options['video_mode'] == 'length_and_step' and options['length'] > frames_count and ret:
                     tmp_array.append(frame)
                 if not ret or frames_number > frames_count:
                     stop_flag = True
-            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or\
+            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or \
                     options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
@@ -533,6 +674,22 @@ class CreateArray(object):
 
         return instructions
 
+    @staticmethod
+    def cut_timeseries(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions = {'instructions': paths_list,
+                        'parameters': options}
+
+        return instructions
+
+
+    @staticmethod
+    def create_dataframe(row, **options) -> dict:
+
+        instructions = {'instructions': row,
+                        'parameters': options}
+
+        return instructions
 
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
@@ -614,8 +771,14 @@ class CreateArray(object):
 
     @staticmethod
     def create_classification(class_name: str, **options) -> dict:
-
-        index = options['classes_names'].index(os.path.basename(class_name))
+        if options['type_processing'] == 'categorical':
+            # index = options['classes_names'].index(os.path.basename(class_name))
+            index = options['classes_names'].index(class_name)
+        else:
+            for i, cl_name in enumerate(options['classes_names']):
+                if class_name <= int(cl_name):
+                    index = i
+                    break
         if options['one_hot_encoding']:
             index = utils.to_categorical(index, num_classes=options['num_classes'], dtype='uint8')
         index = np.array(index)
@@ -691,6 +854,76 @@ class CreateArray(object):
 
         return instructions
 
+    @staticmethod
+    def create_timeseries(row, **options) -> dict:
+
+        instructions = {'instructions': row,
+                        'parameters': options}
+
+        return instructions
+
+
+    @staticmethod
+    def preprocess_dataframe(row: np.ndarray, **options) -> np.ndarray:
+        length = options['length'] if 'timeseries' in options.keys() else 1
+        if length == 1:
+            row = row[0] if options['xlen_step'] else [row]
+        if options['scaler'] != 'no_scaler':
+            row = np.array(row)
+            orig_shape = row.shape
+            array = options['object_scaler'].transform(row.reshape(-1, 1))
+            array = array.reshape(orig_shape)
+            return array
+
+        if options['MinMaxScaler']:
+            for j in range(length):
+                for i in options['MinMaxScaler']:
+                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
+                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+
+        if options['StandardScaler']:
+            for j in range(length):
+                for i in options['StandardScaler']:
+                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
+                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+
+        if options['Categorical']:
+            for j in range(length):
+                for i in options['Categorical']['lst_cols']:
+                    row[j][i] = list(options['Categorical'][f'col_{i}']).index(row[j][i])
+
+        if options['Categorical_ranges']:
+            for j in range(length):
+                for i in options['Categorical_ranges']['lst_cols']:
+                    for k in range(len(options['Categorical_ranges'][f'col_{i}'])):
+                        if row[j][i] <= int(options['Categorical_ranges'][f'col_{i}'][k]):
+                            row[j][i] = k
+                            break
+
+        if options['one_hot_encoding']:
+            for j in range(length):
+                for i in options['one_hot_encoding']['lst_cols']:
+                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding'][f'col_{i}'],
+                                                     dtype='uint8').tolist()
+
+        if type(row) != list:
+            row = row.tolist()
+
+        array = []
+        for i in row:
+            tmp = []
+            for j in i:
+                if type(j) == list:
+                    if type(j[0]) == list:
+                        tmp.extend(j[0])
+                    else:
+                        tmp.extend(j)
+                else:
+                    tmp.append(j)
+            array.append(tmp)
+
+        array = np.array(array)
+        return array
 
     @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
@@ -819,4 +1052,40 @@ class CreateArray(object):
     @staticmethod
     def preprocess_text_segmentation(array: np.ndarray, **options) -> np.ndarray:
 
+        return array
+
+    @staticmethod
+    def preprocess_timeseries(row: np.ndarray, **options) -> np.ndarray:
+        if options["trend"]:
+            first_value = row[0][0]
+            second_value = row[1][0]
+
+            trend_limit = options["trend_limit"]
+            if "%" in trend_limit:
+                trend_limit = float(trend_limit[: trend_limit.find("%")])
+                if abs((second_value - first_value) / first_value) * 100 <= trend_limit:
+                    array = 0
+                elif second_value > first_value:
+                    array = 1
+                else:
+                    array = 2
+            else:
+                trend_limit = float(trend_limit)
+                if abs(second_value - first_value) <= trend_limit:
+                    array = 0
+                elif second_value > first_value:
+                    array = 1
+                else:
+                    array = 2
+            array = np.array(array)
+            # if options['one_hot_encoding']:
+            #     tmp_unique = list(set(trends))
+            #     for i in range(len(trends)):
+            #         trends[i] = tmp_unique.index(trends[i])
+        else:
+            array = row
+            if options['scaler'] != 'no_scaler':
+                orig_shape = row.shape
+                array = options['object_scaler'].transform(row.reshape(-1, 1))
+                array = array.reshape(orig_shape)
         return array
