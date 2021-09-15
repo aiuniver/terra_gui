@@ -4,6 +4,7 @@ export default {
   state: () => ({
     inputData: [],
     errors: {},
+    tableGroup: [],
 
     creation: {},
     datasets: [],
@@ -17,11 +18,14 @@ export default {
     full: false,
   }),
   mutations: {
+    SET_TABLE_GROUP(state, value) {
+      state.tableGroup = [...value];
+    },
     SET_DATASETS(state, value) {
       state.datasets = [...value];
     },
     SET_ERRORS(state, value) {
-      state.errors = {...value};
+      state.errors = { ...value };
     },
     SET_INPUT_DATA(state, value) {
       state.inputData = value;
@@ -66,11 +70,14 @@ export default {
       const res = await dispatch('axios', { url: '/datasets/create/', data: newDataset }, { root: true });
       console.log(res)
       if (res) {
-        if (res?.error) {
-          const { error: { fields: { inputs, outputs } } } = res
-          commit('SET_ERRORS', { ...inputs, ...outputs })
+        const { error } = res
+        if (error) {
+          const { fields } = error
+          if (fields) {
+            commit('SET_ERRORS', { ...fields?.inputs || {}, ...fields?.outputs || {} })
+          }
         } else {
-          commit('SET_INPUT_DATA', [] );
+          commit('SET_INPUT_DATA', []);
           commit('SET_FILES_DROP', []);
           commit('SET_ERRORS', {});
           dispatch('get')
@@ -94,11 +101,11 @@ export default {
       return await dispatch('axios', { url: '/datasets/source/load/', data: source }, { root: true });
     },
 
-    async classesAnnotation ({ dispatch, state: { sourcePath } }) {
-      const data = { path: sourcePath}
+    async classesAnnotation({ dispatch, state: { sourcePath } }) {
+      const data = { path: sourcePath }
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/annotation/', data }, { root: true });
     },
-    async classesAutosearch ({ dispatch }, data ) {
+    async classesAutosearch({ dispatch }, data) {
       return await dispatch('axios', { url: '/datasets/source/segmentation/classes/autosearch/', data }, { root: true });
     },
 
@@ -161,18 +168,18 @@ export default {
       commit('SET_SELECTED_INDEX', value);
     },
     createInputData({ commit, state: { inputData } }, { layer }) {
-      let maxID = Math.max(0,...inputData.map(o => o.id));
+      let maxID = Math.max(0, ...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
       commit('SET_INPUT_DATA', [...inputData, createInputData(maxID + 1, layer, usedColors)]);
     },
     cloneInputData({ commit, state: { inputData } }, id) {
-      let maxID = Math.max(0,...inputData.map(o => o.id));
+      let maxID = Math.max(0, ...inputData.map(o => o.id));
       const usedColors = inputData.map(item => item.color)
       const layer = inputData.find(item => item.id === id)
-      commit('SET_INPUT_DATA', [...inputData, cloneInputData(maxID + 1, usedColors, layer )]);
+      commit('SET_INPUT_DATA', [...inputData, cloneInputData(maxID + 1, usedColors, layer)]);
     },
     clearInputData({ commit }) {
-      commit('SET_INPUT_DATA', [] );
+      commit('SET_INPUT_DATA', []);
     },
     updateInputData({ commit, state: { inputData } }, { id, name, value, root }) {
       const index = inputData.findIndex(item => item.id === id);
@@ -197,32 +204,38 @@ export default {
         inputData.filter(item => item.id !== id)
       );
     },
-    cleanError({ state: { errors }}, { id, name }) {
-      if(errors?.[id]?.[name]) {
+    cleanError({ state: { errors } }, { id, name }) {
+      if (errors?.[id]?.[name]) {
         errors[id][name] = ''
       }
-      if(errors?.[id]?.['parameters']?.[name]) {
+      if (errors?.[id]?.['parameters']?.[name]) {
         errors[id]['parameters'][name] = ''
       }
     },
-    setErrors ({ commit, state: { errors } }, error) {
+    setErrors({ commit, state: { errors } }, error) {
       commit('SET_ERRORS', { ...errors, ...error })
+    },
+    setTableGroup({ commit }, data) {
+      commit('SET_TABLE_GROUP', data)
     }
   },
   getters: {
+    getTableGroup({ tableGroup }) {
+      return tableGroup;
+    },
     getInputData({ inputData }) {
       // console.log(inputData)
       return inputData;
     },
-    getErrors: ({ errors }) => ( id ) => {
+    getErrors: ({ errors }) => (id) => {
       return errors?.[id] || {};
     },
     getInputDataByID:
       ({ inputData }) =>
-      id => {
-        // console.log(inputData, id);
-        return inputData.find(item => item.id === id);
-      },
+        id => {
+          // console.log(inputData, id);
+          return inputData.find(item => item.id === id);
+        },
     getTypeInput({ creation: { input } }) {
       return input || [];
     },
