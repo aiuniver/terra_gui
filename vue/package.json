@@ -1,6 +1,6 @@
 {
   "name": "vue_neural",
-  "version": "0.9.7",
+  "version": "0.9.13",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -48,7 +48,7 @@
       "parser": "babel-eslint"
     },
     "ignorePatterns": [
-      "/src/assets/*.js"
+      "**/src/assets/js/*.js"
     ],
     "rules": {}
   },
