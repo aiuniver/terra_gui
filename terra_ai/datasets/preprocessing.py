@@ -1,10 +1,11 @@
 from terra_ai.data.datasets.dataset import DatasetPathsData
-from terra_ai.data.datasets.extra import LayerScalerImageChoice
+# from terra_ai.data.datasets.extra import LayerScalerImageChoice
 
 import os
 import joblib
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from gensim.models.word2vec import Word2Vec
 from tensorflow.keras.preprocessing.text import Tokenizer
 
@@ -36,12 +37,37 @@ class CreatePreprocessing(object):
     def create_scaler(self, put_id: int, array=None, **options):
 
         scaler = None
-        if options['scaler'] == LayerScalerImageChoice.min_max_scaler:
-            scaler = MinMaxScaler()
-            array = array.reshape(-1, 1) if isinstance(array, np.ndarray) else np.array([[0], [255]])
-            scaler.fit(array)
+        if "MinMaxScaler" in options.keys() or options['length']:
+            array = pd.DataFrame(array)
 
-        self.preprocessing[put_id] = {'object_scaler': scaler}
+        if options['scaler'] != 'no_scaler':
+            if options['scaler'] == 'min_max_scaler':
+                scaler = MinMaxScaler()
+                array = np.array(array).reshape(-1, 1) if isinstance(array, np.ndarray) or \
+                                                            isinstance(array, pd.DataFrame) else np.array([[0], [255]])
+                scaler.fit(array)
+            elif options['scaler'] == 'standard_scaler':
+                scaler = StandardScaler()
+                scaler.fit(np.array(array).reshape(-1, 1))
+            self.preprocessing[put_id] = {'object_scaler': scaler}
+
+        elif ("MinMaxScaler" in options.keys() and options["MinMaxScaler"]) or \
+                ("StandardScaler" in options.keys() and options["StandardScaler"]):
+            self.preprocessing[put_id] = {"object_scaler": {}}
+            if options["MinMaxScaler"]:
+                for i in options["MinMaxScaler"]:
+                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = MinMaxScaler()
+                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
+                        array.iloc[:, [i]].values.reshape(-1, 1))
+
+            if options["StandardScaler"]:
+                for i in options["StandardScaler"]:
+                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = StandardScaler()
+                    self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
+                        array.iloc[:, [i]].values.reshape(-1, 1))
+
+        else:
+            self.preprocessing[put_id] = {'object_scaler': scaler}
 
     def create_tokenizer(self, put_id: int, text_list: list, **options):
 

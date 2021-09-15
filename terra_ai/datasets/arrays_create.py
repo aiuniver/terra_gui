@@ -329,6 +329,7 @@ class CreateArray(object):
 
         return instructions
 
+
     @staticmethod
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
@@ -528,6 +529,7 @@ class CreateArray(object):
 
         return instructions
 
+
     @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
@@ -682,6 +684,7 @@ class CreateArray(object):
                         'parameters': options}
 
         return instructions
+
 
     @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
