@@ -1274,8 +1274,6 @@ Defaults = {
                         "label": "Функция",
                         "name": "architecture_parameters_checkpoint_function",
                         "parse": "architecture[parameters][checkpoint][function]",
-                        "value": "",
-                        "list": [""],
                     },
                     {
                         "type": "checkbox",
