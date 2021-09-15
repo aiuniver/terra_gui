@@ -33,17 +33,17 @@
         <t-button style="width: 150px; height: 40px" @click.native="showTextTable = !showTextTable">Показать</t-button>
       </div>
     </div>
-    <TextTable :show="showTextTable" :predict="predictData"/>
+    <TextTableTest :show="showTextTable" :predict="predictData"/>
   </div>
 </template>
 
 <script>
-import TextTable from './TextTable';
+import TextTableTest from './TextTableTest';
 import {mapGetters} from "vuex";
 export default {
   name: 'Predictions',
   components: {
-    TextTable,
+    TextTableTest,
   },
   data: () => ({
     showTextTable: false,
