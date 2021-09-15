@@ -158,24 +158,21 @@ export default {
     click(e) {
       console.log(e);
     },
-    start() {
+    async start() {
       console.log(JSON.stringify(this.obj, null, 2));
-      const res = this.$store.dispatch('trainings/start', this.obj);
+      const res = await this.$store.dispatch('trainings/start', this.obj);
       console.log(res);
     },
-    stop() {
-      console.log(JSON.stringify(this.obj, null, 2));
-      const res = this.$store.dispatch('trainings/stop', this.obj);
+    async stop() {
+      const res = await this.$store.dispatch('trainings/stop', {});
       console.log(res);
     },
-    clear() {
-      console.log(JSON.stringify(this.obj, null, 2));
-      const res = this.$store.dispatch('trainings/clear', this.obj);
+    async clear() {
+      const res = await this.$store.dispatch('trainings/clear', {});
       console.log(res);
     },
-    save() {
-      console.log(JSON.stringify(this.obj, null, 2));
-      const res = this.$store.dispatch('trainings/save', this.obj);
+    async save() {
+      const res = await this.$store.dispatch('trainings/save', {});
       console.log(res);
     },
     parse({ parse, value, name }) {

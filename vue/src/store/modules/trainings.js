@@ -23,6 +23,7 @@ export default {
   },
   actions: {
     async start({ dispatch }, data ) {
+      console.log(data)
       return await dispatch('axios', { url: '/training/start/', data}, { root: true });
     },
     async stop({ dispatch }, data) {
