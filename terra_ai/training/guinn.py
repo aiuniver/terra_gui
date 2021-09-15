@@ -820,8 +820,10 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучшей эпохи
         if self.last_epoch > 1:
             if self._best_epoch_monitoring(logs):
+                if not os.path.exists(self.save_model_path):
+                    os.mkdir(self.save_model_path)
                 file_path_best: str = os.path.join(
-                    self.save_model_path, f"best_weights_{self.metric_checkpoint}"
+                    self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
