@@ -16,14 +16,14 @@ import moviepy.editor as moviepy_editor
 from tensorflow.python.keras.api.keras.preprocessing import image
 
 from terra_ai import progress
+from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
-
-__version__ = 0.054
+__version__ = 0.055
 
 
 def sort_dict(dict_to_sort: dict, mode='by_name'):
@@ -589,12 +589,23 @@ class InteractiveCallback:
             }
         for out in dataset.data.outputs.keys():
             self.dataset_config["outputs"][f"{out}"] = {
-                'classes_colors': dataset.data.outputs.get(out).classes_colors,
+                'classes_colors': self._get_classes_colors(dataset.data.outputs.get(out)),
                 'classes_names': dataset.data.outputs.get(out).classes_names,
                 'encoding': dataset.data.outputs.get(out).encoding.name,
                 'num_classes': dataset.data.outputs.get(out).num_classes,
                 'task': dataset.data.outputs.get(out).task.name
             }
+
+    @staticmethod
+    def _get_classes_colors(dataset_output: DatasetOutputsData):
+        if dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
+                dataset_output.classes_colors:
+            return [dataset_output.classes_colors[i].as_rgb_tuple() for i in range(len(dataset_output.classes_colors))]
+        elif dataset_output.task == LayerOutputTypeChoice.TextSegmentation and \
+                not dataset_output.classes_colors:
+            return [tuple(np.random.randint(256, size=3)) for i in range(dataset_output.num_classes)]
+        else:
+            return None
 
     def _prepare_y_true(self, dataset: PrepareDataset):
         self.y_true = {
@@ -604,7 +615,7 @@ class InteractiveCallback:
         for data_type in self.y_true.keys():
             for out in self.dataset_config.get("outputs").keys():
                 if (
-                        self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Classification
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
                         and self.dataset_config.get("outputs").get(out).get("use_generator")
                         and self.dataset_config.get("dataframe")
                 ):
@@ -622,12 +633,12 @@ class InteractiveCallback:
                             self.y_true[data_type][f'{out}'] = np.array(self.y_true[data_type][f'{out}'])
                             break
                 elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Classification
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification
                         and not self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Segmentation
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation
                         and self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     # TODO: загрузка из генераторов занимает уйму времени, нужны другие варианты
@@ -636,54 +647,14 @@ class InteractiveCallback:
                         self.y_true[data_type][out].extend(y_val.get(f'{out}').numpy())
                     self.y_true[data_type][out] = np.array(self.y_true[data_type][out])
                 elif (
-                        self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Segmentation
+                        self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or
+                        self.dataset_config.get("outputs").get(out).get(
+                            "task") == LayerOutputTypeChoice.TextSegmentation
                         and not self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
                 else:
                     pass
-
-    # def _prepare_interactive_config(self):
-    #     # fill loss_graphs config
-    #     _id = 1
-    #     for out in self.losses.keys():
-    #         self.interactive_config.get('loss_graphs').append(
-    #             dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False)
-    #         )
-    #         _id += 1
-    #         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-    #                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-    #             self.interactive_config.get('loss_graphs').append(
-    #                 dict(id=_id, output_idx=out, show_for_model=False, show_for_classes=True)
-    #             )
-    #             _id += 1
-    #
-    #     # fill metric_graphs config
-    #     _id = 1
-    #     for out in self.metrics.keys():
-    #         self.interactive_config.get('metric_graphs').append(
-    #             dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
-    #                  show_metric=self.metrics.get(out)[0])
-    #         )
-    #         _id += 1
-    #         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-    #                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-    #             self.interactive_config.get('metric_graphs').append(
-    #                 dict(id=_id, output_idx=out, show_for_model=True, show_for_classes=False,
-    #                      show_metric=self.metrics.get(out)[0])
-    #             )
-    #             _id += 1
-    #         break
-    #
-    #     # fill progress_table_config
-    #     for out in self.metrics.keys():
-    #         self.interactive_config.get('progress_table').append(
-    #             {
-    #                 'output_idx': out,
-    #                 'show_loss': True,
-    #                 'show_metrics': True,
-    #             }
-    #         )
 
     def _prepare_null_log_history_template(self):
         """
@@ -768,8 +739,9 @@ class InteractiveCallback:
                 self.log_history[out]["progress_state"]["metrics"][f"{metric}"] = {
                     "mean_log_history": [], "normal_state": [], "underfitting": [], "overfitting": []
                 }
-            if self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Classification or \
-                    self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Segmentation:
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
                 self.log_history[out]["class_loss"] = {}
                 self.log_history[out]["class_metrics"] = {}
                 for class_name in self.dataset_config.get("outputs").get(out).get("classes_names"):
@@ -799,29 +771,55 @@ class InteractiveCallback:
                         self.dataset_config.get("outputs").get(out).get("classes_names"),
                         self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
                     )
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+            if (
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation and
+                    self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
+            ):
                 for data_type in self.y_true.keys():
                     dataset_balance[out][data_type] = {
                         "presence_balance": {},
-                        "square_balance": {}
+                        "percent_balance": {}
                     }
                     classes = np.arange(self.dataset_config.get("outputs").get(out).get("num_classes"))
-                    class_square = {}
+                    class_percent = {}
                     class_count = {}
                     for cl in classes:
-                        class_square[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
+                        class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl]) * 100
                             / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape))
-                        class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = 0
+                        class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = \
+                            np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl])
 
-                    for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
-                        for cl in classes:
-                            if cl in img_array:
-                                class_count[
-                                    self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
-                                ] += 1
+                    # for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
+                    #     for cl in classes:
+                    #         if cl in img_array:
+                    #             class_count[
+                    #                 self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
+                    #             ] += 1
                     dataset_balance[out][data_type]["presence_balance"] = class_count
-                    dataset_balance[out][data_type]["square_balance"] = class_square
+                    dataset_balance[out][data_type]["square_balance"] = class_percent
+            if (
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation
+                    and self.dataset_config.get("outputs").get(out).get("encoding") == 'ohe'
+                    or self.dataset_config.get("outputs").get(out).get("encoding") == 'multi'
+            ):
+                for data_type in self.y_true.keys():
+                    dataset_balance[out][data_type] = {
+                        "presence_balance": {},
+                        "percent_balance": {}
+                    }
+                    classes = np.arange(self.dataset_config.get("outputs").get(out).get("num_classes"))
+                    class_count = {}
+                    class_percent = {}
+                    for cl in classes:
+                        class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = \
+                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl])
+                        class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
+                            np.sum(self.y_true.get(data_type).get(out)[:, :, cl]) * 100
+                            / np.prod(self.y_true.get(data_type).get(out)[:, :, cl].shape))
+                    dataset_balance[out][data_type]["presence_balance"] = class_count
+                    dataset_balance[out][data_type]["percent_balance"] = class_percent
+            pass
         return dataset_balance
 
     def _prepare_class_idx(self) -> dict:
@@ -1029,9 +1027,11 @@ class InteractiveCallback:
                     self.log_history[out]['progress_state']['loss'][loss_name]['normal_state'].append(
                         normal_state)
 
-                # get Classification loss logs
-                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
-                    for cls in self.log_history.get(out).get('class_loss').keys():
+                for cls in self.log_history.get(out).get('class_loss').keys():
+                    class_loss = 0.
+
+                    # get Classification loss
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
                         class_loss = self._get_loss_calculation(
                             loss_name=self.losses.get(out),
                             loss_obj=self.loss_obj.get(out),
@@ -1040,34 +1040,39 @@ class InteractiveCallback:
                                 self.class_idx.get('val').get(out).get(cls)],
                             y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
                         )
-                        if data_idx or data_idx == 0:
-                            self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
-                                class_loss if class_loss else 0.
-                        else:
-                            self.log_history[out]['class_loss'][cls][loss_name].append(
-                                class_loss if class_loss else 0.
-                            )
-                # get Segmentation loss logs
-                if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-                    for cls in self.log_history.get(out).get('class_loss').keys():
+                    # get Segmentation loss
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
                         class_loss = self._get_loss_calculation(
                             loss_name=self.losses.get(out),
                             loss_obj=self.loss_obj.get(out),
                             out=out,
                             y_true=self.y_true.get('val').get(out)[
-                                   :, :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                   ],
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
                             y_pred=self.y_pred.get(out)[
-                                   :, :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
-                                   ],
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
                         )
-                        if data_idx or data_idx == 0:
-                            self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
-                                class_loss if class_loss else 0.
-                        else:
-                            self.log_history[out]['class_loss'][cls][loss_name].append(
-                                class_loss if class_loss else 0.
-                            )
+                    # get TextSegmentation loss
+                    if self.dataset_config.get("outputs").get(out).get(
+                            "task") == LayerOutputTypeChoice.TextSegmentation:
+                        class_loss = self._get_loss_calculation(
+                            loss_name=self.losses.get(out),
+                            loss_obj=self.loss_obj.get(out),
+                            out=out,
+                            y_true=self.y_true.get('val').get(out)[
+                                   :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                            y_pred=self.y_pred.get(out)[
+                                   :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)],
+                        )
+
+                    if data_idx or data_idx == 0:
+                        self.log_history[out]['class_loss'][cls][loss_name][data_idx] = \
+                            class_loss if class_loss else 0.
+                    else:
+                        self.log_history[out]['class_loss'][cls][loss_name].append(
+                            class_loss if class_loss else 0.
+                        )
 
             for metric_name in self.log_history.get(out).get('metrics').keys():
                 for data_type in ['train', 'val']:
@@ -1124,8 +1129,9 @@ class InteractiveCallback:
                         normal_state)
 
                 # fill class losses
-                if self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Classification:
-                    for cls in self.log_history.get(out).get('class_metrics').keys():
+                for cls in self.log_history.get(out).get('class_metrics').keys():
+                    class_metric = 0.
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
                         class_metric = self._get_metric_calculation(
                             metric_name=metric_name,
                             metric_obj=self.metrics_obj.get(out).get(metric_name),
@@ -1134,94 +1140,107 @@ class InteractiveCallback:
                                 self.class_idx.get('val').get(out).get(cls)],
                             y_pred=self.y_pred.get(out)[self.class_idx.get('val').get(out).get(cls)],
                         )
-                        if data_idx or data_idx == 0:
-                            self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
-                                class_metric if class_metric else 0.
-                        else:
-                            self.log_history[out]['class_metrics'][cls][metric_name].append(
-                                class_metric if class_metric else 0.
-                            )
-
-                if self.dataset_config.get("outputs").get(out).get("task") == TaskChoice.Segmentation:
-                    for cls in self.log_history.get(out).get('class_metrics').keys():
+                    if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
                         class_metric = self._get_metric_calculation(
                             metric_name=metric_name,
                             metric_obj=self.metrics_obj.get(out).get(metric_name),
                             out=out,
                             y_true=self.y_true.get('val').get(out)[
-                                   :, :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                    ],
                             y_pred=self.y_pred.get(out)[
-                                   :, :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                    ],
                         )
-                        if data_idx or data_idx == 0:
-                            self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
-                                class_metric if class_metric else 0.
-                        else:
-                            self.log_history[out]['class_metrics'][cls][metric_name].append(
-                                class_metric if class_metric else 0.
-                            )
+                    if self.dataset_config.get("outputs").get(out).get(
+                            "task") == LayerOutputTypeChoice.TextSegmentation:
+                        class_metric = self._get_metric_calculation(
+                            metric_name=metric_name,
+                            metric_obj=self.metrics_obj.get(out).get(metric_name),
+                            out=out,
+                            y_true=self.y_true.get('val').get(out)[
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   ],
+                            y_pred=self.y_pred.get(out)[
+                                   :, :, :,
+                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   ],
+                        )
+                    if data_idx or data_idx == 0:
+                        self.log_history[out]['class_metrics'][cls][metric_name][data_idx] = \
+                            class_metric if class_metric else 0.
+                    else:
+                        self.log_history[out]['class_metrics'][cls][metric_name].append(
+                            class_metric if class_metric else 0.
+                        )
 
     def _update_progress_table(self, epoch_time: float):
         """
-        'progress_table': {
-            'epoch': {
-                'time': int,
-                'layer': {
-                    'Output_{layer_id}: {
-                        'loss/metric': value,
-                        ...
-                    }
-                }
+        "epoch": {
+            "time": 7.233344078063965,
+            "data": {
+                  "Output_2": {
+                        "loss": {
+                              "loss": 0.9713165163993835,
+                              "val_loss": 0.942412257194519
+                        },
+                        "metrics": {
+                              "CategoricalAccuracy": 0.5084558725357056,
+                              "val_CategoricalAccuracy": 0.568359375,
+                              "AUC": 0.7065025568008423,
+                              "val_AUC": 0.7676296234130859
+                        }
+                  }
             }
-        }
+        },
         """
         self.progress_table[self.current_epoch] = {
             "time": epoch_time,
+            "data": {}
         }
         for out in self.dataset_config.get("outputs").keys():
-            self.progress_table[self.current_epoch][f"Output_{out}"] = {
+            self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"] = {
                 'loss': {},
                 'metrics': {}
             }
-            self.progress_table[self.current_epoch][f"Output_{out}"]["loss"] = {
+            self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["loss"] = {
                 'loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('train')[-1],
                 'val_loss': self.log_history.get(out).get('loss').get(self.losses.get(out)).get('val')[-1]
             }
             for metric in self.metrics.get(out):
-                self.progress_table[self.current_epoch][f"Output_{out}"]["metrics"][metric] = \
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["metrics"][metric] = \
                     self.log_history.get(out).get('metrics').get(metric).get('train')[-1]
-                self.progress_table[self.current_epoch][f"Output_{out}"]["metrics"][f"val_{metric}"] = \
+                self.progress_table[self.current_epoch]["data"][f"Выходной слой {out}"]["metrics"][f"val_{metric}"] = \
                     self.log_history.get(out).get('metrics').get(metric).get('val')[-1]
 
     def _get_loss_calculation(self, loss_name, loss_obj, out: str, y_true, y_pred):
-        if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification and \
-                loss_name == Loss.SparseCategoricalCrossentropy:
-            return loss_obj()(
-                np.argmax(y_true, axis=-1) if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
-                else y_true, y_pred
-            ).numpy()
+        if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
+            if loss_name == Loss.SparseCategoricalCrossentropy:
+                return loss_obj()(
+                    np.argmax(y_true, axis=-1) if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
+                    else y_true, y_pred
+                ).numpy()
+            else:
+                return loss_obj()(
+                    y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
+                    else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
+                ).numpy()
 
-        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
-            return loss_obj()(
-                y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
-                else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
-            ).numpy()
-
-        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation and \
-                loss_name == Loss.SparseCategoricalCrossentropy:
-            return loss_obj()(
-                np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
-                if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe" else y_true, y_pred
-            ).numpy()
-
-        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
-            return loss_obj()(
-                y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
-                else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
-            ).numpy()
-
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
+            if loss_name == Loss.SparseCategoricalCrossentropy:
+                return loss_obj()(
+                    np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
+                    if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe" else y_true, y_pred
+                ).numpy()
+            else:
+                return loss_obj()(
+                    y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
+                    else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
+                ).numpy()
         else:
             return 0.
 
@@ -1244,8 +1263,10 @@ class InteractiveCallback:
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 )
+            return metric_obj.result().numpy()
 
-        if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+        elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
             if metric_name == Metric.SparseCategoricalAccuracy or \
                     metric_name == Metric.SparseTopKCategoricalAccuracy or \
                     metric_name == Metric.SparseCategoricalCrossentropy:
@@ -1258,7 +1279,9 @@ class InteractiveCallback:
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 )
-        return metric_obj.result().numpy()
+            return metric_obj.result().numpy()
+        else:
+            return 0.
 
     def _get_mean_log(self, logs):
         if len(logs) < self.log_gap:
@@ -1324,6 +1347,7 @@ class InteractiveCallback:
 
             # Пример для классов
             {
+                'id': 2,
                 'graph_name': f'Output_{output_idx} - График ошибки обучения по классам - Эпоха №{epoch_num}',
                 'x_label': 'Эпоха',
                 'y_label': 'Значение',
@@ -1333,91 +1357,83 @@ class InteractiveCallback:
                         'epochs': [],
                         'values': []
                     },
-                    {
-                        'class_label': f'Класс {class_name}',
-                        'epochs': [],
-                        'values': []
-                    },
-                    {
-                        'class_label': f'Класс {class_name}',
-                        'epochs': [],
-                        'values': []
-                    },
-                    etc...
                 ],
             }
         ]
         """
         data_return = []
-        if self.interactive_config.get('loss_graphs'):
-            for loss_graph_config in self.interactive_config.get('loss_graphs'):
-                if loss_graph_config.get('show_for_model'):
-                    if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
-                            "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
-                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = "overfitting"
-                    elif sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
-                            "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
-                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = "underfitting"
-                    else:
-                        progress_state = "normal"
-                    data_return.append(
-                        {
-                            "graph_name": f"'Output_{loss_graph_config.get('output_idx')} - "
-                                          f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}'",
-                            "x_label": "Эпоха",
-                            "y_label": "Значение",
-                            "plot_data": [
-                                {
-                                    "label": "Тренировочная выборка",
-                                    "epochs": self.log_history.get("epochs"),
-                                    "values": self.log_history.get(
-                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
-                                        self.losses.get(f"{loss_graph_config.get('output_idx')}")).get('train')
-                                },
-                                {
-                                    "label": "Проверочная выборка",
-                                    "epochs": self.log_history.get("epochs"),
-                                    "values": self.log_history.get(
-                                        f"{loss_graph_config.get('output_idx')}").get('loss').get(
-                                        self.losses.get(f"{loss_graph_config.get('output_idx')}")).get("val")
-                                }
-                            ],
-                            "progress_state": progress_state
-                        }
-                    )
-                elif loss_graph_config.get('show_for_classes'):
-                    data_return.append(
-                        {
-                            "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
-                                          f"График ошибки обучения по классам - "
-                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                            "x_label": "Эпоха",
-                            "y_label": "Значение",
-                            "plot_data": [
-                                {
-                                    'class_label': f'Класс {class_name}',
-                                    'epochs': self.log_history.get("epochs"),
-                                    'values': self.log_history.get(
-                                        f"{loss_graph_config.get('output_idx')}").get('class_loss').get(class_name).get(
-                                        self.losses.get(f"{loss_graph_config.get('output_idx')}"))
-                                } for class_name in self.dataset_config.get("outputs").get(
-                                    f"{loss_graph_config.get('output_idx')}").get("classes_names")
-                            ]
-                        }
-                    )
+        if not self.interactive_config.get('loss_graphs'):
+            return data_return
+        _id = 1
+        for loss_graph_config in self.interactive_config.get('loss_graphs'):
+            if loss_graph_config.get('show_for_model'):
+                if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
+                        "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
+                    'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                    progress_state = "overfitting"
+                elif sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
+                        "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
+                    'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                    progress_state = "underfitting"
                 else:
-                    data_return.append(
-                        {
-                            "graph_name": "",
-                            "x_label": "",
-                            "y_label": "",
-                            "plot_data": []
-                        }
-                    )
-        else:
-            pass
+                    progress_state = "normal"
+                data_return.append(
+                    {
+                        "id": _id,
+                        "graph_name": f"'Output_{loss_graph_config.get('output_idx')} - "
+                                      f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}'",
+                        "x_label": "Эпоха",
+                        "y_label": "Значение",
+                        "plot_data": [
+                            {
+                                "label": "Тренировочная выборка",
+                                "epochs": self.log_history.get("epochs"),
+                                "values": self.log_history.get(
+                                    f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                    self.losses.get(f"{loss_graph_config.get('output_idx')}")).get('train')
+                            },
+                            {
+                                "label": "Проверочная выборка",
+                                "epochs": self.log_history.get("epochs"),
+                                "values": self.log_history.get(
+                                    f"{loss_graph_config.get('output_idx')}").get('loss').get(
+                                    self.losses.get(f"{loss_graph_config.get('output_idx')}")).get("val")
+                            }
+                        ],
+                        "progress_state": progress_state
+                    }
+                )
+            elif loss_graph_config.get('show_for_classes'):
+                data_return.append(
+                    {
+                        "id": _id,
+                        "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                                      f"График ошибки обучения по классам - "
+                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                        "x_label": "Эпоха",
+                        "y_label": "Значение",
+                        "plot_data": [
+                            {
+                                'class_label': f'Класс {class_name}',
+                                'epochs': self.log_history.get("epochs"),
+                                'values': self.log_history.get(
+                                    f"{loss_graph_config.get('output_idx')}").get('class_loss').get(class_name).get(
+                                    self.losses.get(f"{loss_graph_config.get('output_idx')}"))
+                            } for class_name in self.dataset_config.get("outputs").get(
+                                f"{loss_graph_config.get('output_idx')}").get("classes_names")
+                        ]
+                    }
+                )
+            else:
+                data_return.append(
+                    {
+                        "graph_name": "",
+                        "x_label": "",
+                        "y_label": "",
+                        "plot_data": []
+                    }
+                )
+            _id += 1
         return data_return
 
     def _get_metric_graph_data_request(self) -> list:
@@ -1455,146 +1471,153 @@ class InteractiveCallback:
                         'epochs': [],
                         'values': []
                     },
-                    etc...
                 ],
             }
         ]
         """
         data_return = []
-        if self.interactive_config.get('metric_graphs'):
-            for metric_graph_config in self.interactive_config.get('metric_graphs'):
-                if metric_graph_config.get('show_for_model'):
-                    if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
-                            "metrics").get(metric_graph_config.get('show_metric')).get(
-                        'overfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = 'overfitting'
-                    elif sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
-                            "metrics").get(metric_graph_config.get('show_metric')).get(
-                        'underfitting')[-self.log_gap:]) >= self.progress_threashold:
-                        progress_state = 'underfitting'
-                    else:
-                        progress_state = 'normal'
-                    data_return.append(
-                        {
-                            "graph_name": f"'Output_{metric_graph_config.get('output_idx')} - "
-                                          f"График метрики {metric_graph_config.get('show_metric')} - "
-                                          f"Эпоха №{self.log_history.get('epochs')[-1]}'",
-                            "x_label": "Эпоха",
-                            "y_label": "Значение",
-                            "plot_data": [
-                                {
-                                    "label": "Тренировочная выборка",
-                                    "epochs": self.log_history.get("epochs"),
-                                    "values": self.log_history.get(
-                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
-                                        metric_graph_config.get('show_metric')).get("train")
-                                },
-                                {
-                                    "label": "Проверочная выборка",
-                                    "epochs": self.log_history.get("epochs"),
-                                    "values": self.log_history.get(
-                                        f"{metric_graph_config.get('output_idx')}").get('metrics').get(
-                                        metric_graph_config.get('show_metric')).get("val")
-                                }
-                            ],
-                            "progress_state": progress_state
-                        }
-                    )
-                elif metric_graph_config.get('show_for_classes'):
-                    data_return.append(
-                        {
-                            "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
-                                          f"График метрики {metric_graph_config.get('show_metric')} по классам - "
-                                          f"Эпоха №{self.log_history.get('epochs')[-1]}",
-                            "x_label": "Эпоха",
-                            "y_label": "Значение",
-                            "plot_data": [
-                                {
-                                    'class_label': f'Класс {class_name}',
-                                    'epochs': self.log_history.get("epochs"),
-                                    'values': self.log_history.get(
-                                        f"{metric_graph_config.get('output_idx')}").get('class_metrics').get(
-                                        class_name).get(metric_graph_config.get('show_metric'))
-                                } for class_name in self.dataset_config.get("outputs").get(
-                                    f"{metric_graph_config.get('output_idx')}").get("classes_names")
-                            ]
-                        }
-                    )
+        if not self.interactive_config.get('metric_graphs'):
+            return data_return
+        _id = 1
+        for metric_graph_config in self.interactive_config.get('metric_graphs'):
+            if metric_graph_config.get('show_for_model'):
+                if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
+                        "metrics").get(metric_graph_config.get('show_metric')).get(
+                    'overfitting')[-self.log_gap:]) >= self.progress_threashold:
+                    progress_state = 'overfitting'
+                elif sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
+                        "metrics").get(metric_graph_config.get('show_metric')).get(
+                    'underfitting')[-self.log_gap:]) >= self.progress_threashold:
+                    progress_state = 'underfitting'
                 else:
-                    data_return.append(
-                        {
-                            "graph_name": "",
-                            "x_label": "",
-                            "y_label": "",
-                            "plot_data": []
-                        }
-                    )
-        else:
-            pass
+                    progress_state = 'normal'
+                data_return.append(
+                    {
+                        "id": _id,
+                        "graph_name": f"'Output_{metric_graph_config.get('output_idx')} - "
+                                      f"График метрики {metric_graph_config.get('show_metric')} - "
+                                      f"Эпоха №{self.log_history.get('epochs')[-1]}'",
+                        "x_label": "Эпоха",
+                        "y_label": "Значение",
+                        "plot_data": [
+                            {
+                                "label": "Тренировочная выборка",
+                                "epochs": self.log_history.get("epochs"),
+                                "values": self.log_history.get(
+                                    f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                    metric_graph_config.get('show_metric')).get("train")
+                            },
+                            {
+                                "label": "Проверочная выборка",
+                                "epochs": self.log_history.get("epochs"),
+                                "values": self.log_history.get(
+                                    f"{metric_graph_config.get('output_idx')}").get('metrics').get(
+                                    metric_graph_config.get('show_metric')).get("val")
+                            }
+                        ],
+                        "progress_state": progress_state
+                    }
+                )
+            elif metric_graph_config.get('show_for_classes'):
+                data_return.append(
+                    {
+                        "id": _id,
+                        "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
+                                      f"График метрики {metric_graph_config.get('show_metric')} по классам - "
+                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
+                        "x_label": "Эпоха",
+                        "y_label": "Значение",
+                        "plot_data": [
+                            {
+                                'class_label': f'Класс {class_name}',
+                                'epochs': self.log_history.get("epochs"),
+                                'values': self.log_history.get(
+                                    f"{metric_graph_config.get('output_idx')}").get('class_metrics').get(
+                                    class_name).get(metric_graph_config.get('show_metric'))
+                            } for class_name in self.dataset_config.get("outputs").get(
+                                f"{metric_graph_config.get('output_idx')}").get("classes_names")
+                        ]
+                    }
+                )
+            else:
+                data_return.append(
+                    {
+                        "graph_name": "",
+                        "x_label": "",
+                        "y_label": "",
+                        "plot_data": []
+                    }
+                )
+            _id += 1
         return data_return
 
     def _get_intermediate_result_request(self) -> dict:
         """
         'intermediate_result': {
-            example_num: {
-                'line_number': int
-                'initial_data': [
-                    {
-                        'type': 'image',
-                        'layer': f'Input_{layer_id}',
-                        'data': '/content/file.webm'
-                    },
-                    {
-                        'type': 'video',
-                        'data': '/content/file.webm'
-                        'layer': f'Input_{layer_id}',
-                    },
-                    {
-                        'type': 'text',
-                        'layer': f'Input_{layer_id}',
-                        'data': smth in base64
-                    },
-                    {
-                        'type': 'text',
-                        'layer': f'Input_{layer_id}',
-                        'data': smth in base64
+            1: {
+                'initial_value': {
+                    'Вход 1': {
+                        {
+                            'type': 'image',
+                            'data': '/content/file.webm'
+                        },
+                        # {
+                        #     'type': 'video',
+                        #     'data': '/content/file.webm'
+                        # },
+                        # {
+                        #     'type': 'text',
+                        #     'data': text,
+                        #     }
+                        # },
+                        # {
+                        #     'type': 'audio',
+                        #     'data': '/content/file.webp'
+                        # }
                     }
-                ],
-                'true_value': [
-                    {
+                },
+                'true_value': {
+                    'Выход 2':
+                        {
+                            'type': 'str',
+                            'data': text,
+                            'color_mark': None
+                            'tags_color': {
+                                s1: #fffff,
+                                s2: #tyuhg
+                            }
+                        }
+                },
+                'predict_value': {
+                    'Выход 2': {
                         'type': str,
-                        'layer': f'Output_{layer_id}',
-                        'data': smth in base64
+                        'data': text,
+                        'color_mark': 'wrong', None, 'success'
+                        'tags_color': {
+                                s1: #fffff,
+                                s2: #tyuhg
+                            }
                     }
-                ],
-                'predict_value': [
-                    {
-                        'type': str,
-                        'layer': f'Output_{layer_id}',
-                        'data': smth in base64
-                        'color_mark': str
+                },
+                'statistic_values': {
+                    Выход 2: {
+                        'class name': {
+                            "value": str,
+                            'color_mark': 'wrong', None, 'success'
+                        },
                     }
-                ],
-                'class_stat': {
-                    'type': str,
-                    'class name': {
-                        "value": str,
-                        'color_mark': str
-                    },
                 }
             },
         }
         """
         return_data = {}
         if self.interactive_config.get('intermediate_result').get('show_results'):
-            return_data = {}
             for idx in range(self.interactive_config.get('intermediate_result').get('num_examples')):
-                return_data[idx] = {
-                    'line_number': idx + 1,
+                return_data[idx + 1] = {
                     'initial_data': {},
                     'true_value': {},
                     'predict_value': {},
-                    'class_stat': {}
+                    'statistic_values': {}
                 }
                 for inp in self.dataset_config.get("inputs").keys():
                     path, type_choice = self._postprocess_initial_data(
@@ -1602,35 +1625,42 @@ class InteractiveCallback:
                         save_id=idx,
                         example_idx=self.example_idx[idx],
                     )
-                    return_data[idx]['initial_data'] = {
-                        'layer': f'Input_{inp}',
+                    return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {
                         'data': path,
-                        'type': type_choice
+                        'type': type_choice,
                     }
                 for out in self.dataset_config.get("outputs").keys():
+                    tags_color = None
+                    if self.dataset_config.get("outputs").get(out).get('classes_colors') and \
+                            self.dataset_config.get("outputs").get(out).get(
+                                'task') != LayerOutputTypeChoice.Segmentation:
+                        tags_color = {}
+                        for i, classes_name in enumerate(
+                                self.dataset_config.get("outputs").get(out).get('classes_names')):
+                            tags_color[classes_name] = \
+                                self.dataset_config.get("outputs").get(out).get('classes_colors')[i]
+
                     true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
                         output_id=out,
                         data_type='val',
-                        save_id=idx,
+                        save_id=idx + 1,
                         example_idx=self.example_idx[idx],
                         show_stat=self.interactive_config.get('intermediate_result').get('show_statistic'),
                     )
-                    return_data[idx]['true_value'] = {
+                    return_data[idx + 1]['true_value'][f"Выходной слой {out}"] = {
                         "type": out_type,
-                        "layer": f"Output_{out}",
-                        "data": true_value
+                        "data": true_value,
+                        "color_mark": None,
+                        "tags_color": tags_color
                     }
-                    return_data[idx]['predict_value'] = {
+                    return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
                         "type": out_type,
-                        "layer": f"Output_{out}",
                         "data": predict_value,
-                        "color_mark": color_mark
+                        "color_mark": color_mark,
+                        "tags_color": tags_color
                     }
                     if stat:
-                        return_data[idx]['class_stat'] = {
-                            'layer': f'Output_{out}',
-                            'data': stat
-                        }
+                        return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = stat
         return return_data
 
     def _get_statistic_data_request(self) -> dict:
@@ -1669,7 +1699,12 @@ class InteractiveCallback:
                     data_percent_array=cm_percent)
                 _id += 1
 
-            elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Segmentation:
+            elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Segmentation or \
+                    (
+                            self.dataset_config.get("outputs").get(f"{out}").get("task") ==
+                            LayerOutputTypeChoice.TextSegmentation and self.dataset_config.get(f"{out}").get(
+                        'encoding') == 'ohe'
+                    ):
                 cm, cm_percent = self._get_confusion_matrix(
                     np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).reshape(
                         np.prod(np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).shape)).astype('int'),
@@ -1677,10 +1712,20 @@ class InteractiveCallback:
                         np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
                     get_percent=True
                 )
-                # cm = np.round(cm[1] * 100 / np.array(
-                #     [[np.sum(self.y_true.get("val").get(f'{out}')[:, :, :, cl_id])] * \
-                #      self.dataset.data.num_classes.get(2) for
-                #      cl_id in range(self.dataset.data.num_classes.get(2))]), 1)
+                return_data[f'{out}'] = dict(
+                    id=_id,
+                    task_type=TaskChoice.Segmentation.name,
+                    graph_name=f"Output_{out} - Confusion matrix",
+                    x_label="Предсказание",
+                    y_label="Истинное значение",
+                    labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
+                    data_array=cm,
+                    data_percent_array=cm_percent
+                )
+                _id += 1
+
+            elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.TextSegmentation \
+                    and self.dataset_config.get(f"{out}").get('encoding') == 'multi':
 
                 return_data[f'{out}'] = dict(
                     id=_id,
@@ -1693,6 +1738,7 @@ class InteractiveCallback:
                     data_percent_array=cm_percent
                 )
                 _id += 1
+                pass
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Regression:
                 # Scatter
@@ -1926,25 +1972,25 @@ class InteractiveCallback:
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
             img.save(save_path, 'webp')
-            return save_path, LayerInputTypeChoice.Image
+            return save_path, LayerInputTypeChoice.Image.name
 
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Text:
             text_str = self.dataset_config.get("dataframe").get('val').iat[example_idx, column_idx]
-            return text_str, LayerInputTypeChoice.Text
+            return text_str, LayerInputTypeChoice.Text.name
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
             clip.write_videofile(save_path)
-            return save_path, LayerInputTypeChoice.Video
+            return save_path, LayerInputTypeChoice.Video.name
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_audio_{save_id}_input_{input_id}.webp"
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
-            return save_path, LayerInputTypeChoice.Audio
+            return save_path, LayerInputTypeChoice.Audio.name
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Dataframe:
             # TODO: обсудить как пересылать датафреймы на фронт
-            return initial_file_path, LayerInputTypeChoice.Dataframe
+            return initial_file_path, LayerInputTypeChoice.Dataframe.name
         else:
             return initial_file_path, None
 
@@ -1959,24 +2005,24 @@ class InteractiveCallback:
 
             predict = self.y_pred.get(output_id)[example_idx]
             if y_true == np.argmax(predict):
-                color_mark = 'green'
+                color_mark = 'success'
             else:
-                color_mark = 'red'
+                color_mark = 'wrong'
 
             class_stat = {}
             if show_stat:
                 for i, val in enumerate(predict):
                     if val == max(predict) and i == y_true:
-                        class_color_mark = "green"
+                        class_color_mark = "success"
                     elif val == max(predict) and i != y_true:
-                        class_color_mark = "red"
+                        class_color_mark = "wrong"
                     else:
-                        class_color_mark = "white"
+                        class_color_mark = None
                     class_stat[labels[i]] = {
                         "value": f"{round(val * 100, 1)}%",
                         "color_mark": class_color_mark
                     }
-            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat, "class_names"
+            return labels[y_true], labels[np.argmax(predict)], color_mark, class_stat, "str"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Segmentation:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
@@ -1987,8 +2033,7 @@ class InteractiveCallback:
                 y_true = np.where(
                     y_true == [color_idx],
                     np.array(
-                        self.dataset_config.get("outputs").get(output_id).get("classes_colors")[
-                            color_idx]),
+                        self.dataset_config.get("outputs").get(output_id).get("classes_colors")[color_idx]),
                     y_true
                 )
             y_true = tensorflow.keras.utils.array_to_img(y_true)
@@ -2021,9 +2066,9 @@ class InteractiveCallback:
                                         1)
                     class_stat[cls] = {
                         "value": f"{dice_val}%",
-                        "color_mark": 'green' if dice_val >= 90 else 'red'
+                        "color_mark": 'success' if dice_val >= 90 else 'wrong'
                     }
-            return y_true_save_path, y_pred_save_path, None, class_stat, "image"
+            return y_true_save_path, y_pred_save_path, None, class_stat, "Image"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
             # coloured text
@@ -2041,11 +2086,3 @@ class InteractiveCallback:
             # image with bb
             # accuracy, corellation bb for classes
             pass
-
-
-if __name__ == '__main__':
-    from tensorflow_addons.losses import ContrastiveLoss
-
-    xxx = ContrastiveLoss()
-    print(xxx.name)
-    pass
