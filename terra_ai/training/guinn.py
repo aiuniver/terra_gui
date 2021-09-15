@@ -523,9 +523,6 @@ class FitCallback(keras.callbacks.Callback):
         self.num_outputs = len(self.dataset.data.outputs.keys())
         # аттрибуты для чекпоинта
         self.log_history = self._load_logs()
-        print(self.last_epoch)
-        print(self.log_history)
-        print(self.epochs)
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -794,7 +791,6 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             {}:
         """
-        print(self.log_history)
         if self.dataset.data.use_generator:
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
