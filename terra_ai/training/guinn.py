@@ -799,11 +799,11 @@ class FitCallback(keras.callbacks.Callback):
             scheduled_predict = self.model.predict(self.dataset.dataset.get('val').batch(1))
         else:
             scheduled_predict = self.model.predict(self.dataset.X.get('val'))
-        interacive_logs = copy.deepcopy(logs)
-        interacive_logs['epoch'] = self.last_epoch
+        interactive_logs = copy.deepcopy(logs)
+        interactive_logs['epoch'] = self.last_epoch
         current_epoch_time = time.time() - self._time_first_step
         train_epoch_data = interactive.update_state(
-            fit_logs=interacive_logs,
+            fit_logs=interactive_logs,
             y_pred=scheduled_predict,
             current_epoch_time=current_epoch_time,
             on_epoch_end_flag=True

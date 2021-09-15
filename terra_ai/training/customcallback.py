@@ -444,7 +444,8 @@ class InteractiveCallback:
         self._prepare_y_true(dataset)
         # self._prepare_interactive_config()
 
-        self._prepare_null_log_history_template()
+        if not self.log_history:
+            self._prepare_null_log_history_template()
         self.dataset_balance = self._prepare_dataset_balance()
         self.class_idx = self._prepare_class_idx()
         self.seed_idx = self._prepare_seed()
@@ -1219,28 +1220,28 @@ class InteractiveCallback:
     def _get_loss_calculation(self, loss_name, loss_obj, out: str, y_true, y_pred):
         if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
             if loss_name == Loss.SparseCategoricalCrossentropy:
-                return loss_obj()(
+                return float(loss_obj()(
                     np.argmax(y_true, axis=-1) if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else y_true, y_pred
-                ).numpy()
+                ).numpy())
             else:
-                return loss_obj()(
+                return float(loss_obj()(
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
-                ).numpy()
+                ).numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
             if loss_name == Loss.SparseCategoricalCrossentropy:
-                return loss_obj()(
+                return float(loss_obj()(
                     np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
                     if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe" else y_true, y_pred
-                ).numpy()
+                ).numpy())
             else:
-                return loss_obj()(
+                return float(loss_obj()(
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
-                ).numpy()
+                ).numpy())
         else:
             return 0.
 
@@ -1263,7 +1264,7 @@ class InteractiveCallback:
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 )
-            return metric_obj.result().numpy()
+            return float(metric_obj.result().numpy())
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
@@ -1279,15 +1280,15 @@ class InteractiveCallback:
                     y_true if self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"
                     else to_categorical(y_true, self.dataset_config.get("outputs").get(out).get("num_classes")), y_pred
                 )
-            return metric_obj.result().numpy()
+            return float(metric_obj.result().numpy())
         else:
             return 0.
 
     def _get_mean_log(self, logs):
         if len(logs) < self.log_gap:
-            return np.mean(logs)
+            return float(np.mean(logs))
         else:
-            return np.mean(logs[-self.log_gap:])
+            return float(np.mean(logs[-self.log_gap:]))
 
     @staticmethod
     def _evaluate_overfitting(metric_name: str, mean_log: list, metric_type: str):
@@ -1996,6 +1997,58 @@ class InteractiveCallback:
 
     def _postprocess_result_data(self, output_id: str, data_type: str, save_id: int, example_idx: int, show_stat=True):
 
+        def add_tags_to_word(word: str, tag):
+            """
+            Tag  = <s1>
+            """
+            if tag:
+                return f"<{tag[1:-1]}>{word}</{tag[1:-1]}>"
+            else:
+                return word
+
+        def color_mixer(colors: list):
+            if colors:
+                result = np.zeros((3,))
+                for color in colors:
+                    result += np.array(color)
+                return tuple((result / len(colors)).astype('int'))
+
+        def tag_mixer(tags: list, colors: dict):
+            tags = list(set(tags))
+            mix_tag = f"<{tags[0][1:-1]}"
+            for tag in tags[1:]:
+                mix_tag += f"+{tag[1:-1]}"
+            mix_tag = f"{mix_tag}>"
+            if mix_tag not in colors.keys():
+                colors[mix_tag] = color_mixer([colors[tag] for tag in tags])
+            return mix_tag
+
+        def reformat_tags(y_array, classes_names: list, colors: dict, sensitivity: float = 0.9):
+            norm_array = np.where(y_array >= sensitivity, 1, 0).astype('int')
+            reformat_tags = []
+            for word_tag in norm_array:
+                if np.sum(word_tag) == 0:
+                    reformat_tags.append(None)
+                elif np.sum(word_tag) == 1:
+                    reformat_tags.append(classes_names[np.argmax(word_tag, axis=-1)])
+                else:
+                    mix_tag = []
+                    for i, tag in enumerate(word_tag):
+                        if tag == 1:
+                            mix_tag.append(classes_names[i])
+                    reformat_tags.append(tag_mixer(mix_tag, colors))
+            return reformat_tags
+
+        def text_colorization(text: str, labels: list, classes_names: list, colors: dict):
+            text = text.split(" ")
+            labels = reformat_tags(labels, classes_names, colors)
+            # if isinstance(labels, str):
+            #     labels = ast.literal_eval(labels)
+            colored_text = []
+            for i, word in enumerate(text):
+                colored_text.append(add_tags_to_word(word, labels[i]))
+            return ' '.join(colored_text)
+
         if self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.Classification:
             labels = self.dataset_config.get("outputs").get(output_id).get("classes_names")
             ohe = True if self.dataset_config.get("outputs").get(output_id).get("encoding") == 'ohe' else False
@@ -2071,6 +2124,11 @@ class InteractiveCallback:
             return y_true_save_path, y_pred_save_path, None, class_stat, "Image"
 
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.TextSegmentation:
+            classes_names = self.dataset_config.get("outputs").get(output_id).get("classes_names")
+            # TODO: пока исходим что для сегментации текста есть только один вход с текстом, если будут сложные модели
+            #  на сегментацию текста на несколько входов то придется искать решения
+            # text_for_preparation = self.dataset_config.get('dataframe').get('val').
+
             # coloured text
             # stat - f1 or dice for classes
             pass

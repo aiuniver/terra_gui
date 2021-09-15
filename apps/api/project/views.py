@@ -57,9 +57,12 @@ class SaveAPIView(BaseAPIView):
 
 class InfoAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        return BaseResponseSuccess(
-            agent_exchange("projects_info", path=data_path.projects).native()
-        )
+        try:
+            return BaseResponseSuccess(
+                agent_exchange("projects_info", path=data_path.projects).native()
+            )
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class LoadAPIView(BaseAPIView):
@@ -77,8 +80,8 @@ class LoadAPIView(BaseAPIView):
             return BaseResponseSuccess()
         except ValidationError as error:
             return BaseResponseErrorFields(error)
-        except Exception as error:
-            return BaseResponseErrorFields(str(error))
+        except agent_exceptions.ExchangeBaseException as error:
+            return BaseResponseErrorGeneral(str(error))
 
 
 class DeleteAPIView(BaseAPIView):

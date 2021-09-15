@@ -1,6 +1,6 @@
 <template>
   <div class="t-field">
-    <label class="t-field__label">{{ label }}</label>
+    <label class="t-field__label" :style="'max-width: ' + maxLabel + 'px'">{{ label }}</label>
     <input style="display: none" :name="parse" :value="select" />
     <at-select
       v-model="select"
@@ -45,6 +45,10 @@ export default {
     },
     disabled: Boolean,
     error: String,
+    maxLabel: {
+      type: Number,
+      default: 130
+    },
   },
   data: () => ({
     select: '',
