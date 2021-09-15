@@ -327,10 +327,8 @@ class Exchange:
         """
         Старт обучения
         """
-        if interactive.get_states().get("status") == "stopped":
+        if interactive.get_states().get("status") == "stopped" or interactive.get_states().get("status") == "trained":
             interactive.set_status("addtrain")
-        elif interactive.get_states().get("status") == "trained":
-            interactive.set_status("retrain")
         else:
             interactive.set_status("training")
 
@@ -352,12 +350,14 @@ class Exchange:
         Остановить обучение
         """
         interactive.set_status("stopped")
+        return interactive.train_states
 
     def _call_training_clear(self):
         """
         Очистить обучение
         """
         interactive.set_status("no_train")
+        return interactive.train_states
 
     def _call_training_interactive(self, config: dict):
         """
