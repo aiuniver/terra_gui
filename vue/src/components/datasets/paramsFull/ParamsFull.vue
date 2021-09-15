@@ -69,6 +69,7 @@ export default {
     async createObject(obj) {
       this.$store.dispatch('messages/setMessage', { info: `Создается датасет "${obj.name}"` });
       const res = await this.$store.dispatch('datasets/createDataset', obj);
+      console.log(res)
       if (res) {
         const { data, error, success } = res;
         if (data && success && !error) {

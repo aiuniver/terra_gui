@@ -294,11 +294,11 @@ class CreateDataset(object):
                     os.path.join(self.paths.basepath, self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}']),
                     **self.instructions.outputs.get(key).parameters, **self.preprocessing.preprocessing.get(key))
                 array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'], **arr['parameters'])
-            cl_names = self.instructions.outputs.get(key).parameters[
-                'classes_names']  # creation_data.outputs.get(key).parameters.__dict__.get('classes_names')
+            cl_names = self.instructions.outputs.get(key).parameters['classes_names']
             classes_names = cl_names if cl_names else [os.path.basename(x) for x in creation_data.outputs.get(
                 key).parameters.sources_paths]
             num_classes = len(classes_names)
+            classes_colors = self.instructions.outputs.get(key).parameters.get('classes_colors')
             if self.instructions.outputs.get(key).parameters.get('encoding'):
                 encoding = self.instructions.outputs.get(key).parameters.get('encoding')
             elif self.instructions.outputs.get(key).parameters.get('one_hot_encoding'):
@@ -321,6 +321,7 @@ class CreateDataset(object):
                                                     name=creation_data.outputs.get(key).name,
                                                     task=creation_data.outputs.get(key).type,
                                                     classes_names=classes_names,
+                                                    classes_colors=classes_colors,
                                                     num_classes=num_classes,
                                                     encoding=encoding
                                                     )

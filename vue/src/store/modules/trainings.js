@@ -1,5 +1,6 @@
 import { temp, test } from "../temp/training";
 import { toolbar } from "../const/trainings";
+import { predict } from "../temp/predict-training";
 
 
 export default {
@@ -9,7 +10,8 @@ export default {
     params: [],
     toolbar,
     stateParams: {},
-    test
+    test,
+    predict: predict
   }),
   mutations: {
     SET_PARAMS(state, value) {
@@ -54,6 +56,9 @@ export default {
     },
     getTrainData: ({ test }) => (key) => {
       return test?.train_data?.[key] || {};
+    },
+    getPredict({ predict }) {
+      return predict || {}
     },
   },
 };

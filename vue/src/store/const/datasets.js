@@ -10,7 +10,7 @@ const color = [
   '#89D764', '#3A8815', '#2F5E18', '#1F3E10', '#101F08', // green
   '#FFB054', '#FE8900', '#A95C00', '#552E00', '#2A1700',  // orange
   '#FF8F89', '#FF322A', '#B81515', '#820803', '#550300',  // red
-  '#FBF889', '#F4ED33', '#C8C100', '#908A00', '#504E00',  // yellow  
+  // '#FBF889', '#F4ED33', '#C8C100', '#908A00', '#504E00',  // yellow  
   '#1AFFE0', '#006B5D', '#00473E', '#00362E', '#00241F',  // turquoise  
   '#D67596', '#9E3156', '#822746', '#521B2E', '#34101C',  // pink  
   '#9CBB1E', '#536314', '#3D490E', '#2B330C', '#1A1E0B',  // wtf last column
@@ -19,7 +19,7 @@ const color = [
 const getColor = usedColors => {
   let index;
   do {
-    index = Math.floor(Math.random() * 45);
+    index = Math.floor(Math.random() * color.length);
   } while (usedColors.length < color.length && usedColors.includes(color[index]))
   return color[index];
 };

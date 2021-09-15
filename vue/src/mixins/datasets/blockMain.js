@@ -21,7 +21,7 @@ export default {
       Regression: ['table'],
       Timeseries: ['table'],
       ObjectDetection: ['folder', 'table'],
-      Dataframe: ['folder', 'table'],
+      Dataframe: ['table'],
     }
   }),
   methods: {

@@ -10,13 +10,14 @@ import pandas as pd
 import shutil
 import pymorphy2
 import librosa.feature as librosa_feature
+from ast import literal_eval
 from sklearn.cluster import KMeans
 from pydub import AudioSegment
 from librosa import load as librosa_load
 from pydantic.color import Color
 from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
-from tensorflow.keras.preprocessing.image import load_img, img_to_array, smart_resize
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras import utils
 
 
@@ -70,6 +71,7 @@ class CreateArray(object):
                                        'frame_mode': options['parameters']['frame_mode'],
                                        'fill_mode': options['parameters']['fill_mode'],
                                        'video_mode': options['parameters']['video_mode'],
+                                       'length': options['parameters']['length'],
                                        'max_frames': options['parameters']['max_frames']}}
 
         return instructions
@@ -388,7 +390,7 @@ class CreateArray(object):
             cap = cv2.VideoCapture(path)
             cap.set(1, slicing[0])
             orig_shape = (int(cap.get(3)), int(cap.get(4)))
-            frames_count = options['max_frames'] if options['video_mode'] == 'completely' else int(cap.get(7))
+            frames_count = int(cap.get(7))
             frames_number = 0
             save_path = os.path.join(tmp_folder, f'{options["put"]}_video', os.path.basename(os.path.dirname(elem)),
                                      f'{name}_[{slicing[0]}-{slicing[1]}]{ext}')
@@ -399,11 +401,13 @@ class CreateArray(object):
                 ret, frame = cap.read()
                 frames_number += 1
                 output_movie.write(frame)
-                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret:
+                if options['video_mode'] == 'completely' and options['max_frames'] > frames_count and ret or\
+                        options['video_mode'] == 'length_and_step' and options['length'] > frames_count and ret:
                     tmp_array.append(frame)
                 if not ret or frames_number > frames_count:
                     stop_flag = True
-            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count:
+            if options['video_mode'] == 'completely' and options['max_frames'] > frames_count or\
+                    options['video_mode'] == 'length_and_step' and options['length'] > frames_count:
                 frames_to_add = add_frames(video_array=np.array(tmp_array),
                                            fill_mode=options['fill_mode'],
                                            frames_to_add=options['max_frames'] - frames_count,
@@ -548,7 +552,7 @@ class CreateArray(object):
         slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
         frames_count = slicing[1] - slicing[0]
         cap = cv2.VideoCapture(video_path)
-        cap.set(1, slicing[0])
+        # cap.set(1, slicing[0])
         try:
             for _ in range(frames_count):
                 ret, frame = cap.read()
@@ -667,8 +671,10 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def create_text_segmentation(text: list, **options) -> dict:
+    def create_text_segmentation(text, **options) -> dict:
 
+        if not isinstance(text, list):
+            text = literal_eval(text)
         array = []
         if len(text) < options['length']:
             text += [list() for _ in range(options['length'] - len(text))]
@@ -689,7 +695,7 @@ class CreateArray(object):
     @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
 
-        array = smart_resize(array, (options['height'], options['width']), interpolation='bilinear')
+        array = cv2.resize(array, (options['width'], options['height']))
 
         if options['net'] == LayerNetChoice.linear:
             array = array.reshape(np.prod(np.array(array.shape)))
@@ -706,7 +712,6 @@ class CreateArray(object):
         def resize_frame(one_frame, original_shape, target_shape, frame_mode):
 
             resized = None
-
             if frame_mode == LayerVideoFrameModeChoice.stretch:
                 resized = resize_layer(one_frame[None, ...])
                 resized = resized.numpy().squeeze().astype('uint8')
@@ -730,19 +735,19 @@ class CreateArray(object):
                                          dtype='uint8')
                     resized = np.concatenate((black_bar, resized), axis=1)
                     resized = np.concatenate((resized, black_bar), axis=1)
-
             return resized
 
         orig_shape = array.shape[1:]
         trgt_shape = (options['height'], options['width'])
         resize_layer = Resizing(*trgt_shape)
-
+        resized_array = []
         for i in range(len(array)):
             if array[i].shape[1:-1] != trgt_shape:
-                array[i] = resize_frame(one_frame=array[i],
-                                        original_shape=orig_shape,
-                                        target_shape=trgt_shape,
-                                        frame_mode=options['frame_mode'])
+                resized_array.append(resize_frame(one_frame=array[i],
+                                                  original_shape=orig_shape,
+                                                  target_shape=trgt_shape,
+                                                  frame_mode=options['frame_mode']))
+        array = np.array(resized_array)
 
         if options['scaler'] != LayerScalerVideoChoice.no_scaler and options.get('object_scaler'):
             orig_shape = array.shape
@@ -774,7 +779,10 @@ class CreateArray(object):
             array = options['object_tokenizer'].texts_to_matrix([text])[0]
         elif options['prepare_method'] == LayerPrepareMethodChoice.word_to_vec:
             for word in text:
-                array.append(options['object_word2vec'][word])
+                try:
+                    array.append(options['object_word2vec'][word])
+                except KeyError:
+                    array.append(np.zeros((options['length'],)))
 
         if len(array) < options['length']:
             if options['prepare_method'] in [LayerPrepareMethodChoice.embedding, LayerPrepareMethodChoice.bag_of_words]:
