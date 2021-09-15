@@ -462,6 +462,7 @@ class CreateArray(object):
 
         return instructions
 
+
     @staticmethod
     def instructions_timeseries(_, **options: dict) -> dict:
 
@@ -696,6 +697,7 @@ class CreateArray(object):
 
         return instructions
 
+
     @staticmethod
     def cut_timeseries(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
 
@@ -875,6 +877,7 @@ class CreateArray(object):
                         'parameters': options}
 
         return instructions
+
 
     @staticmethod
     def create_timeseries(row, **options) -> dict:

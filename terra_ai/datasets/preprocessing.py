@@ -36,7 +36,7 @@ class CreatePreprocessing(object):
 
     def create_scaler(self, put_id: int, array=None, **options):
         scaler = None
-        if "MinMaxScaler_cols" in options.keys() or options['length']:
+        if "MinMaxScaler" in options.keys() or options['length']:
             array = pd.DataFrame(array)
 
         if options['scaler'] != 'no_scaler':
@@ -47,21 +47,20 @@ class CreatePreprocessing(object):
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
                 scaler = StandardScaler()
-                array = np.array(array).reshape(-1, 1) if isinstance(array, pd.DataFrame) else array
-                scaler.fit(array)
+                scaler.fit(np.array(array).reshape(-1, 1))
             self.preprocessing[put_id] = {'object_scaler': scaler}
 
-        elif ("MinMaxScaler_cols" in options.keys() and options["MinMaxScaler_cols"]) or \
-                ("StandardScaler_cols" in options.keys() and options["StandardScaler_cols"]):
+        elif ("MinMaxScaler" in options.keys() and options["MinMaxScaler"]) or \
+                ("StandardScaler" in options.keys() and options["StandardScaler"]):
             self.preprocessing[put_id] = {"object_scaler": {}}
-            if options["MinMaxScaler_cols"]:
-                for i in options["MinMaxScaler_cols"]:
+            if options["MinMaxScaler"]:
+                for i in options["MinMaxScaler"]:
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = MinMaxScaler()
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
                         array.iloc[:, [i]].values.reshape(-1, 1))
 
-            if options["StandardScaler_cols"]:
-                for i in options["StandardScaler_cols"]:
+            if options["StandardScaler"]:
+                for i in options["StandardScaler"]:
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = StandardScaler()
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
                         array.iloc[:, [i]].values.reshape(-1, 1))
