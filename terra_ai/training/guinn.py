@@ -22,7 +22,8 @@ from terra_ai import progress
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.datasets.extra import LayerOutputTypeChoice
 from terra_ai.data.modeling.model import ModelDetailsData, ModelData
-from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice
+from terra_ai.data.training.extra import CheckpointIndicatorChoice, CheckpointTypeChoice, MetricChoice, \
+    CheckpointModeChoice
 from terra_ai.data.training.train import TrainData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.modeling.validator import ModelValidator
@@ -108,10 +109,10 @@ class GUINN:
 
     def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
-        callback = FitCallback(dataset=dataset, batch_size=batch_size, epochs=epochs)
+        callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint, batch_size=batch_size, epochs=epochs)
         self.callbacks = [callback]
         checkpoint.update([('filepath', 'test_model.h5')])
-        self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
+        # self.callbacks.append(keras.callbacks.ModelCheckpoint(**checkpoint))
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков выполнено'})
 
     @staticmethod
@@ -476,13 +477,15 @@ class FitCallback(keras.callbacks.Callback):
                  save_model_path: str = "./", model_name: str = "noname", log_history: dict = None):
         """
         Для примера
-        checkpoint_config = {
-            'monitor_layer': 3,
-            'type': 'loss',
-            'metric_name': 'KLDivergence',
-            'indicator': 'val',
-            'mode': 'min'
-        }
+        "checkpoint": {
+                "layer": 2,
+                "type": "Metrics",
+                "indicator": "Val",
+                "mode": "max",
+                "metric_name": "Accuracy",
+                "save_best": True,
+                "save_weights": False,
+            },
         """
 
         super().__init__()
@@ -529,50 +532,50 @@ class FitCallback(keras.callbacks.Callback):
         """Поиск среди fit_logs нужного параметра"""
         self.metric_checkpoint = "loss"
         for log in logs.keys():
-            if self.checkpoint_config.get('type') == 'loss' and \
-                    self.checkpoint_config.get('indicator') == 'val' and \
+            if self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
+                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
                     'val' in log and 'loss' in log:
                 if self.num_outputs == 1:
                     self.metric_checkpoint = log
                     break
                 else:
-                    if f"{self.checkpoint_config.get('monitor_layer')}" in log:
+                    if f"{self.checkpoint_config.get('layer')}" in log:
                         self.metric_checkpoint = log
                         break
 
-            elif self.checkpoint_config.get('type') == 'loss' and \
-                    self.checkpoint_config.get('indicator') != 'val' and \
+            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Loss and \
+                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
                     'val' not in log and 'loss' in log:
                 if self.num_outputs == 1:
                     self.metric_checkpoint = log
                     break
                 else:
-                    if f"{self.checkpoint_config.get('monitor_layer')}" in log:
+                    if f"{self.checkpoint_config.get('layer')}" in log:
                         self.metric_checkpoint = log
                         break
 
-            elif self.checkpoint_config.get('type') == 'metric' and \
-                    self.checkpoint_config.get('indicator') == 'val' and \
-                    'val' in log:
+            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
+                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Val and \
+                    "val" in log:
                 camelize_log = self._clean_and_camelize_log_name(log)
-                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
+                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
                     self.metric_checkpoint = log
                     break
                 else:
-                    if f"{self.checkpoint_config.get('monitor_layer')}" in log and \
-                            camelize_log == self.checkpoint_config.get('metric_name'):
+                    if f"{self.checkpoint_config.get('layer')}" in log and \
+                            camelize_log == self.checkpoint_config.get("metric_name"):
                         self.metric_checkpoint = log
                         break
 
-            elif self.checkpoint_config.get('type') == 'metric' and \
-                    self.checkpoint_config.get('indicator') != 'val' and \
+            elif self.checkpoint_config.get("type") == CheckpointTypeChoice.Metrics and \
+                    self.checkpoint_config.get("indicator") == CheckpointIndicatorChoice.Train and \
                     'val' not in log:
                 camelize_log = self._clean_and_camelize_log_name(log)
-                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get('metric_name'):
+                if self.num_outputs == 1 and camelize_log == self.checkpoint_config.get("metric_name"):
                     self.metric_checkpoint = log
                     break
                 else:
-                    if f"{self.checkpoint_config.get('monitor_layer')}" in log and \
+                    if f"{self.checkpoint_config.get('layer')}" in log and \
                             camelize_log == self.checkpoint_config.get('metric_name'):
                         self.metric_checkpoint = log
                         break
@@ -609,11 +612,11 @@ class FitCallback(keras.callbacks.Callback):
 
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
-        if self.checkpoint_config.get('mode') == 'min' and \
-                logs.get(self.metric_checkpoint) < min(self.log_history.get('logs').get(self.metric_checkpoint)):
+        if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
+                logs.get(self.metric_checkpoint) < min(self.log_history.get("logs").get(self.metric_checkpoint)):
             return True
-        elif self.checkpoint_config.get('mode') == 'max' and \
-                logs.get(self.metric_checkpoint) > max(self.log_history.get('logs').get(self.metric_checkpoint)):
+        elif self.checkpoint_config.get("mode") == CheckpointModeChoice.Max and \
+                logs.get(self.metric_checkpoint) > max(self.log_history.get("logs").get(self.metric_checkpoint)):
             return True
         else:
             return False
