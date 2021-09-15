@@ -87,7 +87,7 @@ class Exchange:
         try:
             projects = ProjectsList()
             for filename in os.listdir(path):
-                if filename.endswith('project'):
+                if filename.endswith("project"):
                     projects.append({"value": Path(path, filename)})
             projects.sort(key=lambda item: item.label)
             return ProjectsInfoData(projects=projects.native())
@@ -122,7 +122,9 @@ class Exchange:
         """
         try:
             shutil.rmtree(target, ignore_errors=True)
-            destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+            destination = progress_utils.unpack(
+                "project_load", "Загрузка проекта", source
+            )
             shutil.move(destination, target)
         except Exception as error:
             raise exceptions.FailedLoadProjectException(str(error))
@@ -233,6 +235,7 @@ class Exchange:
         """
         try:
             data = CreationData(**kwargs)
+            print(data.json(indent=2, ensure_ascii=False))
             creation = CreateDataset(data)
             return creation.datasetdata
         except Exception as error:
@@ -340,10 +343,9 @@ class Exchange:
         Старт обучения
         """
         try:
-            if interactive.get_states().get("status") == "stopped":
+            if interactive.get_states().get("status") == "stopped" or interactive.get_states().get(
+                    "status") == "trained":
                 interactive.set_status("addtrain")
-            elif interactive.get_states().get("status") == "trained":
-                interactive.set_status("retrain")
             else:
                 interactive.set_status("training")
 
@@ -365,6 +367,7 @@ class Exchange:
         """
         try:
             interactive.set_status("stopped")
+            return interactive.train_states
         except Exception as error:
             raise exceptions.FailedStopTrainException(str(error))
 
@@ -374,6 +377,7 @@ class Exchange:
         """
         try:
             interactive.set_status("no_train")
+            return interactive.train_states
         except Exception as error:
             raise exceptions.FailedCleanTrainException(str(error))
 

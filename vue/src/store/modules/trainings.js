@@ -22,6 +22,22 @@ export default {
     },
   },
   actions: {
+    async start({ dispatch }, data ) {
+      console.log(data)
+      return await dispatch('axios', { url: '/training/start/', data}, { root: true });
+    },
+    async stop({ dispatch }, data) {
+      return await dispatch('axios', { url: '/training/stop/', data }, { root: true });
+    },
+    async clear({ dispatch }, data) {
+      return await dispatch('axios', { url: '/training/cler/', data }, { root: true });
+    },
+    async interactive({ dispatch }, data) {
+      return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
+    },
+    async progress({ dispatch }, data) {
+      return await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+    },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
     },

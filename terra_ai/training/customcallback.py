@@ -453,7 +453,7 @@ class InteractiveCallback:
 
     def set_status(self, status):
         self.train_states["status"] = status
-        if status in ["training", "addtrain", "retrain"]:
+        if status in ["training", "addtrain"]:
             self.train_states["buttons"]["train"]["title"] = "Возобновить"
             self.train_states["buttons"]["train"]["visible"] = False
             self.train_states["buttons"]["stop"]["visible"] = True

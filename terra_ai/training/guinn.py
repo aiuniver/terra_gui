@@ -1,4 +1,5 @@
 import gc
+import json
 import os
 import re
 import sys
@@ -88,10 +89,11 @@ class GUINN:
                 output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)())
         return output
 
-    def _set_training_params(self, dataset: DatasetData, params: TrainData,
+    def _set_training_params(self, dataset: DatasetData, params: TrainData, model_name: str,
                              training_path: Path, dataset_path: str, initial_config: dict) -> None:
         self.dataset = self._prepare_dataset(dataset, dataset_path)
         self.training_path = training_path
+        self.nn_name = model_name
         self.epochs = params.epochs if interactive.get_states().get("status") != "addtrain" \
             else self.epochs - self.callbacks[0].last_epoch + 1
         self.batch_size = params.batch
@@ -104,6 +106,7 @@ class GUINN:
                                         num_classes=output_layer.get("classes_quantity"))
             })
             self.loss.update({str(output_layer["id"]): output_layer["loss"]})
+        # if interactive.get_states().get("status") != "addtrain":
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                    dataset_path=dataset_path, initial_config=initial_config)
 
@@ -236,8 +239,9 @@ class GUINN:
         Return:
             None
         """
-        self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "retrain" else False)
-        self._set_training_params(dataset=dataset, dataset_path=dataset_path,
+        print(interactive.get_states().get("status"))
+        self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
+        self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
         nn_model = self._set_model(model=gui_model)
 
@@ -286,7 +290,6 @@ class GUINN:
 
         else:
             self.model = nn_model
-            self.nn_name = f"{self.model.name}"
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
@@ -326,10 +329,11 @@ class GUINN:
                            optimizer=self.optimizer,
                            metrics=self.metrics
                            )
+        # self.model.load_weight(os.path.join(self.training_path, self.nn_name))
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
-        if interactive.get_states().get("status") != "addtrain":
-            self._set_callbacks(dataset=dataset, batch_size=params.batch,
-                                epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
+        # if interactive.get_states().get("status") != "addtrain":
+        self._set_callbacks(dataset=dataset, batch_size=params.batch,
+                            epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         self.history = self.model.fit(
             self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
@@ -476,7 +480,7 @@ class FitCallback(keras.callbacks.Callback):
     """CustomCallback for all task type"""
 
     def __init__(self, dataset: PrepareDataset, checkpoint_config: dict, batch_size: int = None, epochs: int = None,
-                 save_model_path: str = "./", model_name: str = "noname", log_history: dict = None):
+                 save_model_path: str = "./", model_name: str = "noname"):
         """
         Для примера
         "checkpoint": {
@@ -497,7 +501,6 @@ class FitCallback(keras.callbacks.Callback):
         self.epochs = epochs
         self.batch = 0
         self.num_batches = 0
-        # self.epoch = 0
         self.last_epoch = 1
         self._start_time = time.time()
         self._time_batch_step = time.time()
@@ -516,19 +519,10 @@ class FitCallback(keras.callbacks.Callback):
             'train_data': None,
             'states': {}
         }
-
-        # аттрибуты для чекпоинта
-        self.log_history = {
-            'epoch': [],
-            'logs': {}
-        }
         self.checkpoint_config = checkpoint_config
         self.num_outputs = len(self.dataset.data.outputs.keys())
-        if log_history:
-            # log_history это сохраненная self.log_history
-            self.log_history = copy.deepcopy(log_history)
-            self.last_epoch = max(log_history.get('epoch')) + 1
-            self._get_metric_name_checkpoint(log_history.get('logs'))
+        # аттрибуты для чекпоинта
+        self.log_history = self._load_logs()
 
     def _get_metric_name_checkpoint(self, logs: dict):
         """Поиск среди fit_logs нужного параметра"""
@@ -612,6 +606,37 @@ class FitCallback(keras.callbacks.Callback):
         for metric in logs:
             self.log_history['logs'][metric].append(logs.get(metric))
 
+    def _save_logs(self):
+        interactive_path = os.path.join(self.save_model_path, "interactive.history")
+        if not os.path.exists(interactive_path):
+            os.mkdir(interactive_path)
+        with open(os.path.join(self.save_model_path, "log.history"), "w", encoding="utf-8") as history:
+            json.dump(self.log_history, history)
+        with open(os.path.join(interactive_path, "log.int"), "w", encoding="utf-8") as log:
+            json.dump(interactive.log_history, log)
+        with open(os.path.join(interactive_path, "table.int"), "w", encoding="utf-8") as table:
+            json.dump(interactive.progress_table, table)
+
+    def _load_logs(self):
+        interactive_path = os.path.join(self.save_model_path, "interactive.history")
+        if interactive.get_states().get("status") == "addtrain":
+            with open(os.path.join(self.save_model_path, "log.history"), "r", encoding="utf-8") as history:
+                logs = json.load(history)
+            with open(os.path.join(interactive_path, "log.int"), "r", encoding="utf-8") as int_log:
+                interactive_logs = json.load(int_log)
+            with open(os.path.join(interactive_path, "table.int"), "r", encoding="utf-8") as table_int:
+                interactive_table = json.load(table_int)
+            self.last_epoch = max(logs.get('epoch')) + 1
+            self._get_metric_name_checkpoint(logs.get('logs'))
+            interactive.log_history = interactive_logs
+            interactive.progress_table = interactive_table
+            return logs
+        else:
+            return {
+                'epoch': [],
+                'logs': {}
+            }
+
     def _best_epoch_monitoring(self, logs):
         """Оценка текущей эпохи"""
         if self.checkpoint_config.get("mode") == CheckpointModeChoice.Min and \
@@ -643,7 +668,7 @@ class FitCallback(keras.callbacks.Callback):
         Returns:
             None
         """
-        model_name = f"model_{self.nn_name}_on_epoch_end.last.h5"
+        model_name = f"{self.nn_name}.trm"
         file_path_model: str = os.path.join(
             self.save_model_path, f"{model_name}"
         )
@@ -699,7 +724,6 @@ class FitCallback(keras.callbacks.Callback):
         self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
-        # self.epoch = epoch
         self._time_first_step = time.time()
 
     def on_train_batch_end(self, batch, logs=None):
@@ -792,17 +816,18 @@ class FitCallback(keras.callbacks.Callback):
         # сохранение лучшей эпохи
         if self.last_epoch > 1:
             if self._best_epoch_monitoring(logs):
+                if not os.path.exists(self.save_model_path):
+                    os.mkdir(self.save_model_path)
                 file_path_best: str = os.path.join(
-                    self.save_model_path, f"best_weights_metric_{self.metric_checkpoint}_epoch_{self.last_epoch}"
+                    self.save_model_path, f"best_weights_{self.metric_checkpoint}.h5"
                 )
                 self.model.save_weights(file_path_best)
                 print(f"Epoch {self.last_epoch} - best weights was successfully saved")
         self._fill_log_history(self.last_epoch, logs)
-
-        if self._get_train_status() != "stopped":
-            self.last_epoch += 1
+        self.last_epoch += 1
 
     def on_train_end(self, logs=None):
+        self._save_logs()
         self.save_lastmodel()
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
                                         self.batch, self._start_time, finalize=True)[1]

@@ -14,7 +14,11 @@ export default {
   },
   actions: {
     async get({ dispatch, commit }) {
-      const { data } = await dispatch("axios", { url: "/config/" }, { root: true });
+      const res = await dispatch("axios", { url: "/config/" }, { root: true });
+      if (!res) {
+        return;
+      }
+      const { data } = res;
       console.log(data);
       if (!data) {
         return;
