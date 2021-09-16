@@ -81,6 +81,14 @@ class CreateDataset(object):
                             out.parameters.xlen = inp.parameters.xlen
                             out.parameters.step_len = inp.parameters.step_len
                             out.parameters.separator = inp.parameters.separator
+            elif out.type == LayerOutputTypeChoice.Regression:
+                for inp in creation_data.inputs:
+                    if inp.type == LayerInputTypeChoice.Dataframe:
+                        inp.parameters.y_cols = out.parameters.cols_names
+                        # out.parameters.xlen_step = inp.parameters.xlen_step
+                        # out.parameters.xlen = inp.parameters.xlen
+                        # out.parameters.step_len = inp.parameters.step_len
+                        # out.parameters.separator = inp.parameters.separator
             elif out.type == LayerOutputTypeChoice.Segmentation:
                 for inp in creation_data.inputs:
                     if inp.type == LayerInputTypeChoice.Image:
