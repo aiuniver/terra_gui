@@ -2,6 +2,7 @@ import gc
 import json
 import os
 import re
+import shutil
 import sys
 
 import copy
@@ -132,6 +133,17 @@ class GUINN:
         train_model = validator.get_keras_model()
         return train_model
 
+    @staticmethod
+    def _save_params_for_deploy(dataset_path: str, training_path: Path, params: TrainData):
+        if not os.path.exists(training_path):
+            os.mkdir(training_path)
+        if os.path.exists(os.path.join(training_path, "dataset")):
+            shutil.rmtree(os.path.join(training_path, "dataset"), ignore_errors=True)
+        shutil.copytree(dataset_path, os.path.join(training_path, "dataset"),
+                        ignore=shutil.ignore_patterns("sources", "arrays"))
+        with open(os.path.join(training_path, "config.train"), "w", encoding="utf-8") as train_config:
+            json.dump(params.native(), train_config)
+
     def set_optimizer(self, params: TrainData) -> None:
         """
         Set optimizer method for using terra w/o gui
@@ -152,46 +164,6 @@ class GUINN:
     #                 else:
     #                     self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
-    # def set_chp_monitor(self, params: TrainData) -> None:
-    #     # layer_id = params.architecture.parameters.checkpoint.layer # TODO удалить, если не используются
-    #     # output = params.architecture.parameters.outputs.get(layer_id)
-    #     if len(self.dataset.data.inputs) > 1:
-    #         if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.train:
-    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
-    #                         self.chp_monitor = f'{checkpoint_layer}_{output.metrics[0].value} '
-    #             else:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         self.chp_monitor = f'{params.architecture.parameters.checkpoint.layer}_{output.loss.value}'
-    #         else:
-    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
-    #                         self.chp_monitor = f'val_{checkpoint_layer}_{output.metrics[0].value}'
-    #             else:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         checkpoint_layer = params.architecture.parameters.checkpoint.layer
-    #                         self.chp_monitor = f'val_{checkpoint_layer}_{output.loss.value}'
-    #     else:
-    #         if params.architecture.parameters.checkpoint.indicator == CheckpointIndicatorChoice.Train:
-    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         self.chp_monitor = f'{output.metrics[0].value}'
-    #             else:
-    #                 self.chp_monitor = 'loss'
-    #         else:
-    #             if params.architecture.parameters.checkpoint.type == CheckpointTypeChoice.Metrics:
-    #                 for output in params.architecture.parameters.outputs:
-    #                     if str(output.id) == str(params.architecture.parameters.checkpoint.layer):
-    #                         self.chp_monitor = f'val_{output.metrics[0].value}'
-    #             else:
-    #                 self.chp_monitor = 'val_loss'
 
     def show_training_params(self) -> None:
         """
@@ -239,7 +211,7 @@ class GUINN:
         Return:
             None
         """
-        print(interactive.get_states().get("status"))
+        self._save_params_for_deploy(dataset_path=dataset_path, training_path=training_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
