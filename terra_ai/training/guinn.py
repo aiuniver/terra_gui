@@ -125,7 +125,6 @@ class GUINN:
     def _prepare_dataset(dataset: DatasetData, datasets_path: str) -> PrepareDataset:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
-        print(prepared_dataset.dataframe)
         return prepared_dataset
 
     @staticmethod
@@ -696,7 +695,7 @@ class FitCallback(keras.callbacks.Callback):
         if status != "addtrain":
             self.batch = 0
         if not self.dataset.data.use_generator:
-            self.num_batches = self.dataset.X['train']['1'].shape[0]
+            self.num_batches = self.dataset.X['train']['1'].shape[0] // self.batch_size
         else:
             self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
