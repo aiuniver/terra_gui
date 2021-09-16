@@ -10,6 +10,16 @@ from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorGeneral
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
+        architecture = request.data.get("architecture", {})
+        architecture.update({"type": "Basic"})
+        request.data.update({"architecture": architecture})
+        for layer_data in architecture.get("parameters", {}).get("outputs", []):
+            if not layer_data:
+                continue
+            layer = request.project.model.outputs.get(layer_data.get("id"))
+            if not layer:
+                continue
+            layer_data.update({"task": layer.task.value})
         try:
             data = {
                 "dataset": request.project.dataset,
@@ -17,6 +27,7 @@ class StartAPIView(BaseAPIView):
                 "training_path": project_path.training,
                 "dataset_path": project_path.datasets,
                 "params": TrainData(**request.data),
+                "initial_config": {},
             }
             return BaseResponseSuccess(agent_exchange("training_start", **data))
         except (TerraBaseException, ExchangeBaseException) as error:
