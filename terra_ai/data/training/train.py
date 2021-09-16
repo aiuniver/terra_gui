@@ -15,7 +15,9 @@ from .extra import OptimizerChoice, ArchitectureChoice
 
 
 class LossGraphData(IDMixinData):
-    pass
+    output_idx: PositiveInt
+    show_for_model: bool = True
+    show_for_classes: bool = True
 
 
 class LossGraphsList(UniqueListMixin):
