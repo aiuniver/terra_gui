@@ -53,7 +53,7 @@ def make_preprocess(preprocess_list):
     return fun
 
 
-def json2cascade(path: str):
+def json2model_cascade(path: str):
     with open(path) as cfg:
         config = json.load(cfg)
 

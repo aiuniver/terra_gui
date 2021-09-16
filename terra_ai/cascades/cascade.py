@@ -41,6 +41,32 @@ class CascadeElement(Cascade):
         return self.out
 
 
+class CascadeInput(Cascade):
+    """
+
+    """
+    def __init__(self, iter: Callable, name: str = "Итератор"):
+        super(CascadeInput, self).__init__(name)
+        self.iter = iter
+
+    def __call__(self, path: str):
+        for i in self.iter(path):
+            yield i
+
+
+class CascadeOutput(Cascade):
+    """
+
+    """
+    def __init__(self, iter: Callable, name: str = "Итератор"):
+        super(CascadeOutput, self).__init__(name)
+        self.iter = iter
+
+    def __call__(self, path: str):
+        for i in self.iter(path):
+            yield i
+
+
 class CascadeBlock(Cascade):
     """
     Занимается всей логикой для связи каскадов Может содержать CascadeElement и CascadeBlock Необходима матрица
@@ -70,13 +96,19 @@ class CascadeBlock(Cascade):
         self.out = cascade.out
         return cascade.out
 
-    def loop(self, iterator):
-        for item in iterator:
-            yield self.__call__(item)
+
+class CompleteCascade(CascadeBlock):
+    def __init__(self, adjacency_map: OrderedDict):
+        super(CompleteCascade, self).__init__(adjacency_map)
+
+    def __call__(self, input_path, ):
+        pass
 
 
 class BuildModelCascade(CascadeBlock):
-
+    """
+    Класс который вызывается при создании модели из json
+    """
     def __init__(self, preprocess, model, postprocessing, name=None):
 
         self.preprocess = CascadeElement(preprocess, name="Препроцесс") if preprocess else preprocess
