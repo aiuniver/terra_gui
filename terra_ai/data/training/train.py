@@ -11,13 +11,18 @@ from pydantic.errors import EnumMemberError
 from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from . import optimizers
 from . import architectures
-from .extra import OptimizerChoice, ArchitectureChoice
+from .extra import (
+    OptimizerChoice,
+    ArchitectureChoice,
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    MetricChoice,
+)
 
 
 class LossGraphData(IDMixinData):
     output_idx: PositiveInt
-    show_for_model: bool = True
-    show_for_classes: bool = True
+    show: LossGraphShowChoice
 
 
 class LossGraphsList(UniqueListMixin):
@@ -26,8 +31,21 @@ class LossGraphsList(UniqueListMixin):
         identifier = "id"
 
 
+class MetricGraphData(IDMixinData):
+    output_idx: PositiveInt
+    show: MetricGraphShowChoice
+    show_metric: MetricChoice
+
+
+class MetricGraphsList(UniqueListMixin):
+    class Meta:
+        source = MetricGraphData
+        identifier = "id"
+
+
 class InteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
+    metric_graphs: MetricGraphsList = MetricGraphsList()
 
 
 class OptimizerData(BaseMixinData):
