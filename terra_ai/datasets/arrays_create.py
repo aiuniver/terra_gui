@@ -74,7 +74,7 @@ class CreateArray(object):
                                 xlen_array.append(subdf[j: j + xlen])
                     tmp_dict = {}
                     for i in range(xlen):
-                        tmp_dict.update({i: np.array(xlen_array)[:, i]})
+                        tmp_dict.update({f'col_{i}': np.array(xlen_array)[:, i]})
                     df = pd.DataFrame(tmp_dict)
                 instructions["parameters"]["scaler"] = options["parameters"]["scaler"]
             else:
@@ -495,39 +495,6 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def instructions_timeseries(_, **options: dict) -> dict:
-
-        instructions = {"instructions": {}, "parameters": options["parameters"]}
-        instructions["parameters"]["put"] = options["id"]
-        if options["parameters"]["transpose"]:
-            tmp_df_ts = pd.read_csv(options["parameters"]["sources_paths"][0], sep=options["parameters"]["separator"]).T
-            tmp_df_ts.columns = tmp_df_ts.iloc[0]
-            tmp_df_ts.drop(tmp_df_ts.index[[0]], inplace=True)
-            tmp_df_ts.index = range(0, len(tmp_df_ts))
-            for i in instructions["parameters"]["cols_names"]:
-                tmp_df_ts = tmp_df_ts.astype({i: np.float}, errors="ignore")
-            y_subdf = tmp_df_ts.loc[:, instructions["parameters"]["cols_names"]]
-        else:
-            y_subdf = pd.read_csv(
-                options["parameters"]["sources_paths"][0], sep=options["parameters"]["separator"],
-                usecols=instructions["parameters"]["cols_names"])
-
-        if options["parameters"]['trend']:
-            instructions['parameters']['classes_names'] = ["Не изменился", "Вверх", "Вниз"]
-            instructions['parameters']['num_classes'] = 3
-        instructions["instructions"] = y_subdf.to_dict()
-        return instructions
-
-
-    @staticmethod
-    def cut_dataframe(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
-
-        instructions = {'instructions': paths_list,
-                        'parameters': options}
-
-        return instructions
-
-    @staticmethod
     def cut_image(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict):
 
         for elem in paths_list:
@@ -746,23 +713,6 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
-    def cut_timeseries(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
-
-        instructions = {'instructions': paths_list,
-                        'parameters': options}
-
-        return instructions
-
-
-    @staticmethod
-    def create_dataframe(row, **options) -> dict:
-
-        instructions = {'instructions': row,
-                        'parameters': options}
-
-        return instructions
-
-    @staticmethod
     def create_image(image_path: str, **options) -> dict:
 
         img = load_img(image_path)
@@ -843,8 +793,10 @@ class CreateArray(object):
     @staticmethod
     def create_classification(class_name: str, **options) -> dict:
         if options['type_processing'] == 'categorical':
-            # index = options['classes_names'].index(os.path.basename(class_name))
-            index = options['classes_names'].index(class_name)
+            if '.trds' in class_name:
+                index = options['classes_names'].index(os.path.basename(class_name))
+            else:
+                index = options['classes_names'].index(class_name)
         else:
             for i, cl_name in enumerate(options['classes_names']):
                 if class_name <= int(cl_name):
@@ -924,80 +876,6 @@ class CreateArray(object):
                         'parameters': options}
 
         return instructions
-
-    @staticmethod
-    def create_timeseries(row, **options) -> dict:
-
-        instructions = {'instructions': row,
-                        'parameters': options}
-
-        return instructions
-
-
-    @staticmethod
-    def preprocess_dataframe(row: np.ndarray, **options) -> np.ndarray:
-        length = options['length'] if 'timeseries' in options.keys() else 1
-        if length == 1:
-            row = row if options['xlen_step'] else [row]
-        if options['scaler'] != 'no_scaler':
-            row = np.array(row)
-            orig_shape = row.shape
-            array = options['object_scaler'].transform(row.reshape(-1, 1))
-            array = array.reshape(orig_shape)
-            return array
-
-        if options['MinMaxScaler_cols']:
-            for j in range(length):
-                for i in options['MinMaxScaler_cols']:
-                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
-                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
-
-        if options['StandardScaler_cols']:
-            for j in range(length):
-                for i in options['StandardScaler_cols']:
-                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
-                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
-
-        if options['Categorical_cols']:
-            for j in range(length):
-                for i in options['Categorical_cols']['lst_cols']:
-                    row[j][i] = list(options['Categorical_cols'][f'col_{i}']).index(row[j][i])
-
-        if options['Categorical_ranges_cols']:
-            for j in range(length):
-                for i in options['Categorical_ranges_cols']['lst_cols']:
-                    for k in range(len(options['Categorical_ranges_cols'][f'col_{i}'])):
-                        if row[j][i] <= int(options['Categorical_ranges_cols'][f'col_{i}'][k]):
-                            row[j][i] = k
-                            break
-
-        if options['one_hot_encoding_cols']:
-            for j in range(length):
-                for i in options['one_hot_encoding_cols']['lst_cols']:
-                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding_cols'][f'col_{i}'],
-                                                     dtype='uint8').tolist()
-
-        if type(row) != list:
-            row = row.tolist()
-
-        if options['xlen_step']:
-            array = np.array(row)
-        else:
-            array = []
-            for i in row:
-                tmp = []
-                for j in i:
-                    if type(j) == list:
-                        if type(j[0]) == list:
-                            tmp.extend(j[0])
-                        else:
-                            tmp.extend(j)
-                    else:
-                        tmp.append(j)
-                array.append(tmp)
-
-            array = np.array(array)
-        return array
 
     @staticmethod
     def create_timeseries(row, **options) -> dict:
