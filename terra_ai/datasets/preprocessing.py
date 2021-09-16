@@ -36,7 +36,7 @@ class CreatePreprocessing(object):
 
     def create_scaler(self, put_id: int, array=None, **options):
         scaler = None
-        if "MinMaxScaler_cols" in options.keys() or 'length' in options.keys():
+        if "MinMaxScaler_cols" in options.keys() or 'trend' in options.keys():
             array = pd.DataFrame(array)
 
         if options['scaler'] != 'no_scaler':
