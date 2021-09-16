@@ -77,6 +77,10 @@ class CreateDataset(object):
                     for inp in creation_data.inputs:
                         if inp.type == LayerInputTypeChoice.Dataframe:
                             inp.parameters.y_cols = out.parameters.cols_names
+                            out.parameters.xlen_step = inp.parameters.xlen_step
+                            out.parameters.xlen = inp.parameters.xlen
+                            out.parameters.step_len = inp.parameters.step_len
+                            out.parameters.separator = inp.parameters.separator
             elif out.type == LayerOutputTypeChoice.Segmentation:
                 for inp in creation_data.inputs:
                     if inp.type == LayerInputTypeChoice.Image:
@@ -141,7 +145,7 @@ class CreateDataset(object):
                 temp_paths_list = [os.path.join(self.source_path, x) for x in paths_list]
             instr = getattr(CreateArray(), f"instructions_{decamelize(elem.type)}")(temp_paths_list, **elem.native())
 
-            if not elem.type == LayerOutputTypeChoice.Classification:
+            if not elem.type in [LayerOutputTypeChoice.Classification, LayerInputTypeChoice.Dataframe]:
                 y_classes = sorted(list(instr['instructions'].keys())) if \
                     isinstance(instr['instructions'], dict) else instr['instructions']
                 self.y_cls = [os.path.basename(os.path.dirname(dir_name)) for dir_name in y_classes]
@@ -285,6 +289,8 @@ class CreateDataset(object):
             elif creation_data.inputs.get(key).type == LayerInputTypeChoice.Dataframe:
                 tmp_cols = creation_data.inputs.get(key).parameters.cols_names
                 cols = len(tmp_cols) if tmp_cols else creation_data.inputs.get(key).parameters.example_length
+                cols = creation_data.inputs.get(key).parameters.xlen if creation_data.inputs.get(
+                    key).parameters.xlen else cols
                 arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
                     self.dataframe['test'].iloc[0, :cols].values,
                     **self.instructions.inputs.get(key).parameters,
@@ -405,7 +411,7 @@ class CreateDataset(object):
                     for i in range(num_arrays):
                         globals()[f'current_arrays_{i + 1}'] = []
 
-                elif self.tags[1] == 'dataframe' and self.tags[2] == 'timeseries':
+                elif 'timeseries' in self.tags.values():
                     depth = put_data.get(key).parameters['depth']
                     length = put_data.get(key).parameters['length']
                     step = put_data.get(key).parameters['step']
@@ -455,11 +461,12 @@ class CreateDataset(object):
                                 **self.preprocessing.preprocessing.get(key))
                             array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
                                                                                            **arr['parameters'])
-                        elif self.tags[1] == decamelize(LayerInputTypeChoice.Dataframe) and \
-                                self.tags[2] == decamelize(LayerOutputTypeChoice.Classification):
+                        elif 'dataframe' in self.tags.values():
                             if self.tags[key] in [decamelize(LayerInputTypeChoice.Dataframe)]:
                                 tmp_cols = put_data.get(key).parameters['cols_names']
-                                cols = len(tmp_cols) if tmp_cols else put_data.get(key).parameters.example_length
+                                cols = len(tmp_cols) if tmp_cols else put_data.get(key).parameters['example_length']
+                                cols = put_data.get(key).parameters['xlen'] if put_data.get(key).parameters[
+                                    'xlen'] else cols
                                 arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
                                     self.dataframe[split].iloc[i, :cols].values,
                                     **put_data.get(key).parameters,
@@ -483,7 +490,7 @@ class CreateDataset(object):
                         current_arrays.append(array)
                 out_array[split][key] = np.array(current_arrays)
 
-                return out_array
+        return out_array
 
     def write_arrays(self, array_x, array_y):
 
