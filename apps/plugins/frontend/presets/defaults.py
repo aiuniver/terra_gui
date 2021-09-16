@@ -1219,7 +1219,7 @@ Defaults = {
                 "collapsed": False,
                 "fields": [],
             },
-            "checkpoints": {
+            "checkpoint": {
                 "name": "Чекпоинты",
                 "collapsable": True,
                 "collapsed": False,
