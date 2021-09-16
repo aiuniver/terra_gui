@@ -47,7 +47,8 @@ class CreatePreprocessing(object):
                 scaler.fit(array)
             elif options['scaler'] == 'standard_scaler':
                 scaler = StandardScaler()
-                scaler.fit(np.array(array).reshape(-1, 1))
+                array = np.array(array).reshape(-1, 1) if isinstance(array, pd.DataFrame) else array
+                scaler.fit(array)
             self.preprocessing[put_id] = {'object_scaler': scaler}
 
         elif ("MinMaxScaler" in options.keys() and options["MinMaxScaler"]) or \
