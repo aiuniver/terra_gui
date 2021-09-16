@@ -20,6 +20,7 @@ from terra_ai.data.datasets.dataset import DatasetOutputsData
 from terra_ai.data.datasets.extra import LayerInputTypeChoice, LayerOutputTypeChoice, DatasetGroupChoice
 from terra_ai.data.presets.training import Metric, Loss
 from terra_ai.data.training.extra import TaskChoice
+from terra_ai.data.training.train import InteractiveData
 from terra_ai.datasets.preparing import PrepareDataset
 from terra_ai.utils import camelize, decamelize
 
