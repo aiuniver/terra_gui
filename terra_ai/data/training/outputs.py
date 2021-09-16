@@ -27,8 +27,6 @@ class OutputData(IDMixinData):
     "Loss"
     metrics: List[MetricChoice]
     "Список метрик"
-    callbacks: Any
-    "Список колбэков"
 
     @validator("loss")
     def _validate_loss(cls, value: LossChoice, values) -> LossChoice:
@@ -47,19 +45,6 @@ class OutputData(IDMixinData):
         if __not_in_list:
             raise ValueNotInListException(__not_in_list, __metrics)
         return value
-
-    @validator("task", pre=True)
-    def _validate_task(cls, value: TaskChoice) -> TaskChoice:
-        if value not in list(TaskChoice):
-            raise EnumMemberError(enum_values=list(TaskChoice))
-        name = (value if isinstance(value, TaskChoice) else TaskChoice(value)).name
-        type_ = getattr(callbacks, getattr(callbacks.Callback, name))
-        cls.__fields__["callbacks"].type_ = type_
-        return value
-
-    @validator("callbacks", always=True)
-    def _validate_callbacks(cls, value: Any, values, field) -> Any:
-        return field.type_(**value or {})
 
 
 class OutputsList(UniqueListMixin):
