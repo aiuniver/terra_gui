@@ -184,6 +184,12 @@ export default {
     async start() {
       console.log(JSON.stringify(this.obj, null, 2));
       const res = await this.$store.dispatch('trainings/start', this.obj);
+      if (res) {
+        const { data } = res;
+        if (data.status) {
+          this.progress();
+        }
+      }
       console.log(res);
     },
     async stop() {
@@ -198,6 +204,32 @@ export default {
       const res = await this.$store.dispatch('trainings/save', {});
       console.log(res);
     },
+    async progress() {
+      setTimeout(async () => {
+        const res = await this.$store.dispatch('trainings/progress', {});
+        console.log(res);
+        if (res) {
+          const { finished, message, percent, data } = res.data;
+          console.log(percent);
+          this.$store.dispatch('messages/setProgressMessage', message);
+          this.$store.dispatch('messages/setProgress', percent);
+          if (data) {
+            const { info, states, train_data, usage } = data;
+            this.$store.dispatch('trainings/setInfo', info);
+            this.$store.dispatch('trainings/setStates', states);
+            this.$store.dispatch('trainings/setTrainData', train_data);
+            this.$store.dispatch('trainings/setUsage', usage);
+          }
+          if (finished) {
+            console.log(res);
+          } else {
+            this.progress();
+          }
+        } else {
+          console.log(res);
+        }
+      }, 1000);
+    },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
@@ -211,6 +243,9 @@ export default {
       }
     },
   },
+  created() {
+    this.progress()
+  }
 };
 </script>
 

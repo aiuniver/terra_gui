@@ -3,8 +3,6 @@
     <div class="charts__title">Графики</div>
     <div class="charts__content">
       <TChar v-for="(char, i) of lossGraphs" :key="'char1_' + i" :char="char" />
-      <TChar v-for="(char, i) of lossGraphs" :key="'char2_' + i" :char="char" />
-      <TChar v-for="(char, i) of lossGraphs" :key="'char3_' + i" :char="char" />
     </div>
   </div>
 </template>
