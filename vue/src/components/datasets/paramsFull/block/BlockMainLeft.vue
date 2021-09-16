@@ -153,6 +153,7 @@ export default {
     color: #ffffff;
     padding: 4px 40px;
     justify-content: flex-end;
+    user-select: none;
   }
   &__body {
     width: 100%;
