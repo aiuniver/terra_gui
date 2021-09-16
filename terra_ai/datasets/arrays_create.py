@@ -350,10 +350,9 @@ class CreateArray(object):
     @staticmethod
     def instructions_regression(number_list: list, **options: dict) -> dict:
 
-        options["put"] = options['id']
-
         instructions = {'instructions': number_list,
-                        'parameters': options}
+                        'parameters': options["parameters"]}
+        instructions['parameters']['put'] = options["id"]
 
         return instructions
 

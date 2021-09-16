@@ -28,8 +28,8 @@ class ParametersData(MinMaxScalerData):
     cat_cols: Optional[Dict[str, str]]
     one_hot_encoding_cols: Optional[List[int]]
 
-    step: Optional[int]
-    length: Optional[int]
-    trend: Optional[bool]
-    depth: Optional[int]
-    y_cols: Optional[List[int]]
+    step: Optional[int] = None
+    length: Optional[int] = None
+    trend: Optional[bool] = False
+    depth: Optional[int] = None
+    y_cols: Optional[List[int]] = None
