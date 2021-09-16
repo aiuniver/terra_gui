@@ -6,15 +6,20 @@
     <div class="t-field__switch">
       <input
         v-model="checVal"
-        class="t-field__input"
+        :class="['t-field__input', { 't-field__error': error }]"
         :checked="checVal ? 'checked' : ''"
         type="checkbox"
         :value="checVal"
         :name="parse"
         :data-reverse="reverse"
         @change="change"
+        @mouseover="hover = true"
+        @mouseleave="hover = false"
       />
       <span></span>
+    </div>
+    <div v-if="error && hover" class="t-field__hint">
+      <span>{{ error }}</span>
     </div>
   </div>
 </template>
@@ -31,6 +36,7 @@ export default {
     value: Boolean,
     name: String,
     parse: String,
+    error: String,
     reverse: Boolean,
     event: {
       type: Array,
@@ -39,6 +45,7 @@ export default {
   },
   data: () => ({
     checVal: false,
+    hover: false,
   }),
   methods: {
     change(e) {
@@ -64,6 +71,8 @@ export default {
 <style lang="scss" scoped>
 .t-field {
   margin-bottom: 20px;
+  position: relative;
+
   &__label {
     width: 150px;
     max-width: 330px;
@@ -94,6 +103,10 @@ export default {
       background-color: #65b9f4;
     }
   }
+  &__error {
+    border-color: #ca5035;
+    color: #ca5035;
+  }
   &__switch {
     width: 26px;
     height: 14px;
@@ -122,6 +135,29 @@ export default {
         transition: 0.2s;
       }
     }
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 
