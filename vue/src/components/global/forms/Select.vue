@@ -15,6 +15,9 @@
         {{ label }}
       </at-option>
     </at-select>
+    <div v-if="error" class="t-field__hint">
+      <span>{{ error }}</span>
+    </div>
   </div>
 </template>
 
@@ -47,15 +50,20 @@ export default {
     error: String,
     maxLabel: {
       type: Number,
-      default: 130
+      default: 130,
     },
   },
   data: () => ({
+    hover: false,
     select: '',
   }),
   computed: {
     items() {
-       return this.lists ? (Array.isArray(this.lists) ? this.lists.map(item => item || '') : Object.keys(this.lists)) : []
+      return this.lists
+        ? Array.isArray(this.lists)
+          ? this.lists.map(item => item || '')
+          : Object.keys(this.lists)
+        : [];
     },
   },
   methods: {
@@ -96,6 +104,7 @@ export default {
   -webkit-box-pack: end;
   margin-bottom: 10px;
   align-items: center;
+  position: relative;
   &__label {
     width: 150px;
     max-width: 130px;
@@ -121,6 +130,29 @@ export default {
   }
   &__error {
     border-color: #b53b3b;
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 </style>

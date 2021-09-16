@@ -86,7 +86,7 @@ export default {
 
 <style scoped>
 .board {
-  height: 85%;
+  flex: 1 1 auto;
 }
 .wrapper {
   padding: 20px;

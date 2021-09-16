@@ -137,6 +137,7 @@ export default {
     text-align: center;
     color: #ffffff;
     padding: 4px 40px;
+    user-select: none;
   }
   &__body {
     width: 100%;

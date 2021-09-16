@@ -61,7 +61,7 @@ export default {
 }
 .block-header {
   width: 100%;
-  height: 100%;
+  // height: 100%;
   &__main {
     display: flex;
     flex-direction: row;
@@ -71,6 +71,7 @@ export default {
     position: relative;
   }
   &__overlay {
+    user-select: none;
     background: #242f3d;
     border: 1px dashed #2b5278;
     border-radius: 4px;
