@@ -72,9 +72,10 @@ class CreateArray(object):
                                 xlen_array.append(subdf[-xlen:])
                             else:
                                 xlen_array.append(subdf[j: j + xlen])
-
-                if options["parameters"]["xlen_step"]:
-                    df = pd.DataFrame({"slices": xlen_array})
+                    tmp_dict = {}
+                    for i in range(xlen):
+                        tmp_dict.update({i: np.array(xlen_array)[:, i]})
+                    df = pd.DataFrame(tmp_dict)
                 instructions["parameters"]["scaler"] = options["parameters"]["scaler"]
             else:
                 tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
@@ -292,14 +293,35 @@ class CreateArray(object):
 
     @staticmethod
     def instructions_classification(paths_list: list, **options: dict) -> dict:
+        type_processing = options['parameters']['type_processing']
+        if options["parameters"]["xlen_step"]:
+            xlen = options["parameters"]["xlen"]
+            step_len = options["parameters"]["step_len"]
 
-        if os.path.isfile(options['parameters']['sources_paths'][0]) and \
+            df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                             sep=options["parameters"]["separator"])
+            df.sort_values(by=df.columns[0], ignore_index=True, inplace=True)
+            classes_names = df[df.columns[0]].tolist()
+            df = df.iloc[:, 1:]
+            y_class = []
+            for i in range(len(df)):
+                subdf = df.iloc[i, :]
+                subdf = subdf.dropna().values.tolist()
+                for j in range(0, len(subdf), step_len):
+                    if len(subdf[j: j + step_len]) < xlen:
+                        y_class.append(classes_names[i])
+                    else:
+                        y_class.append(classes_names[i])
+            paths_list = y_class
+
+        elif os.path.isfile(options['parameters']['sources_paths'][0]) and \
                 options['parameters']['sources_paths'][0].endswith('.csv'):
             file_name = options['parameters']['sources_paths'][0]
-            data = pd.read_csv(file_name, usecols=options['parameters']['cols_names'])
+            data = pd.read_csv(file_name, usecols=options['parameters']['cols_names'],
+                                     sep=options["parameters"]["separator"])
             data.sort_values(by=data.columns[0], ignore_index=True, inplace=True)
             column = data.iloc[:, 0].to_list()
-            type_processing = options['parameters']['type_processing']
+
             if type_processing == "categorical":
                 classes_names = []
                 for elem in column:
@@ -867,7 +889,7 @@ class CreateArray(object):
     def preprocess_dataframe(row: np.ndarray, **options) -> np.ndarray:
         length = options['length'] if 'timeseries' in options.keys() else 1
         if length == 1:
-            row = row[0] if options['xlen_step'] else [row]
+            row = row if options['xlen_step'] else [row]
         if options['scaler'] != 'no_scaler':
             row = np.array(row)
             orig_shape = row.shape
@@ -909,20 +931,23 @@ class CreateArray(object):
         if type(row) != list:
             row = row.tolist()
 
-        array = []
-        for i in row:
-            tmp = []
-            for j in i:
-                if type(j) == list:
-                    if type(j[0]) == list:
-                        tmp.extend(j[0])
+        if options['xlen_step']:
+            array = np.array(row)
+        else:
+            array = []
+            for i in row:
+                tmp = []
+                for j in i:
+                    if type(j) == list:
+                        if type(j[0]) == list:
+                            tmp.extend(j[0])
+                        else:
+                            tmp.extend(j)
                     else:
-                        tmp.extend(j)
-                else:
-                    tmp.append(j)
-            array.append(tmp)
+                        tmp.append(j)
+                array.append(tmp)
 
-        array = np.array(array)
+            array = np.array(array)
         return array
 
     @staticmethod

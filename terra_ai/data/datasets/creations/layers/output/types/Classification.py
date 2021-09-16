@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional, List
 from pydantic import validator
+from pydantic.types import PositiveInt
 
 from ...extra import SourcesPathsData
 from .....extra import LayerTypeProcessingClassificationChoice
@@ -12,6 +13,11 @@ class ParametersData(SourcesPathsData):
     ranges: Optional[str]
 
     cols_names: Optional[List[int]]
+
+    xlen_step: Optional[bool]
+    xlen: Optional[PositiveInt] = None
+    step_len: Optional[PositiveInt] = None
+    separator: Optional[str]
 
     @validator("type_processing")
     def _validate_type_processing(
