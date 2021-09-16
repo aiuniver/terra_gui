@@ -96,7 +96,7 @@ class ConfigAPIView(BaseAPIView):
                     field_data = item.native()
                     field_data.update(
                         {
-                            "value": layers_choice[0].get("value"),
+                            "value": str(layers_choice[0].get("value")),
                             "list": layers_choice,
                         }
                     )

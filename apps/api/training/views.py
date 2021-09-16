@@ -1,11 +1,18 @@
+from pydantic import ValidationError
+
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
-from terra_ai.data.training.train import TrainData
+from terra_ai.data.training.train import TrainData, InteractiveData
 
 from apps.plugins.project import project_path
 from terra_ai.exceptions.base import TerraBaseException
 
-from ..base import BaseAPIView, BaseResponseSuccess, BaseResponseErrorGeneral
+from ..base import (
+    BaseAPIView,
+    BaseResponseSuccess,
+    BaseResponseErrorGeneral,
+    BaseResponseErrorFields,
+)
 
 
 class StartAPIView(BaseAPIView):
@@ -27,9 +34,19 @@ class StartAPIView(BaseAPIView):
                 "training_path": project_path.training,
                 "dataset_path": project_path.datasets,
                 "params": TrainData(**request.data),
-                "initial_config": {},
+                "initial_config": InteractiveData(
+                    **{
+                        "loss_graphs": [
+                            {
+                                "id": 1,
+                            }
+                        ],
+                    }
+                ),
             }
             return BaseResponseSuccess(agent_exchange("training_start", **data))
+        except ValidationError as error:
+            return BaseResponseErrorFields(error)
         except (TerraBaseException, ExchangeBaseException) as error:
             return BaseResponseErrorGeneral(str(error))
 

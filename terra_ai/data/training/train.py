@@ -8,10 +8,24 @@ from pydantic import validator
 from pydantic.types import PositiveInt
 from pydantic.errors import EnumMemberError
 
-from ..mixins import BaseMixinData
+from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from . import optimizers
 from . import architectures
 from .extra import OptimizerChoice, ArchitectureChoice
+
+
+class LossGraphData(IDMixinData):
+    pass
+
+
+class LossGraphsList(UniqueListMixin):
+    class Meta:
+        source = LossGraphData
+        identifier = "id"
+
+
+class InteractiveData(BaseMixinData):
+    loss_graphs: LossGraphsList = LossGraphsList()
 
 
 class OptimizerData(BaseMixinData):
@@ -72,4 +86,3 @@ class TrainData(BaseMixinData):
     epochs: PositiveInt = 20
     optimizer: OptimizerData = OptimizerData(type=OptimizerChoice.Adam)
     architecture: ArchitectureData = ArchitectureData(type=ArchitectureChoice.Basic)
-
