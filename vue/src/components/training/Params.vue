@@ -54,7 +54,7 @@
                       <template v-for="(data, i) of field.fields">
                         <t-auto-field-trainings
                           v-bind="data"
-                          :key="'checkpoints_' + i"
+                          :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
                           @parse="parse"
@@ -65,16 +65,16 @@
                 </template>
               </div>
             </at-collapse-item>
-            <at-collapse-item class="mt-3" :title="checkpoints.name">
-              <div class="checkpoints">
-                <t-field class="checkpoints__item" inline label="Функция">
-                  <t-select-new :list="func" small name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" @parse="parse" />
+            <at-collapse-item class="mt-3" :title="checkpoint.name">
+              <div class="checkpoint">
+                <t-field class="checkpoint__item" inline label="Функция">
+                  <t-select-new :list="func" small update name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" :value="'Accuracy'" @parse="parse" />
                 </t-field>
-                <template v-for="(data, i) of checkpoints.fields">
+                <template v-for="(data, i) of checkpoint.fields">
                   <t-auto-field-trainings
                     v-bind="data"
                     :key="'outputs_' + i"
-                    class="checkpoints__item"
+                    class="checkpoint__item"
                     :state="state"
                     :inline="true"
                     @parse="parse"
@@ -123,6 +123,7 @@ export default {
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
+    metricData: ''
   }),
   computed: {
     ...mapGetters({
@@ -153,16 +154,15 @@ export default {
     optimizer() {
       return this.params?.optimizer || {};
     },
-    checkpoints() {
-      return this.params?.checkpoints || {};
+    checkpoint() {
+      return this.params?.checkpoint || {};
     },
     func() {
       let data = this.obj?.architecture?.parameters?.outputs || [];
-      data = data.filter(item => item)?.[0]?.metrics || [];
+      data = data?.[this.metricData]?.metrics || [];
       data = data.map(item => {
         return { label: item, value: item };
       });
-      console.log(data);
       return data;
     },
   },
@@ -188,10 +188,13 @@ export default {
       console.log(res);
     },
     parse({ parse, value, name }) {
-      console.log({ parse, value, name });
+      // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
+      if (name === 'architecture_parameters_checkpoint_layer') {
+        this.metricData = value
+      }
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
@@ -250,7 +253,7 @@ export default {
 
 .fit,
 .optimizer,
-.checkpoints {
+.checkpoint {
   display: flex;
   flex-wrap: wrap;
   &__item {

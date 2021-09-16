@@ -3,6 +3,7 @@
     <label :for="name">{{ label }}</label>
     <input
       class="auto-complete__input"
+      :class="['auto-complete__input', { 'auto-complete__error': error }]"
       v-model="search"
       :id="name"
       :name="name"
@@ -11,12 +12,17 @@
       :autocomplete="'off'"
       @focus="focus"
       @blur="select(false)"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
     />
     <div class="auto-complete__content" v-show="show">
       <div v-for="(item, i) in filterList" :key="i" @mousedown="select(item)">
         {{ item.label }}
       </div>
       <div v-if="!filterList.length">Нет данных</div>
+    </div>
+    <div v-if="error && hover" class="auto-complete__hint">
+      <span>{{ error }}</span>
     </div>
   </div>
 </template>
@@ -36,12 +42,14 @@ export default {
     label: String,
     parse: String,
     value: String,
+    error: String,
   },
   data() {
     return {
       selected: {},
       show: false,
       search: '',
+      hover: false,
     };
   },
   created() {
@@ -67,7 +75,7 @@ export default {
         this.show = false;
         this.search = item.label;
         this.$emit('input', this.selected.value);
-        this.$emit('change', { name: this.name, value: item.value});
+        this.$emit('change', { name: this.name, value: item.value });
         this.$emit('parse', { name: this.name, parse: this.parse, value: item.value });
       } else {
         this.search = this.selected.label || this.value;
@@ -75,7 +83,7 @@ export default {
       }
     },
     focus({ target }) {
-      target.select()
+      target.select();
       this.show = true;
       this.$emit('focus', true);
     },
@@ -136,6 +144,33 @@ export default {
       cursor: auto;
       opacity: 0.35;
     }
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
+  }
+  &__error {
+    border-color: #ca5035;
+    color: #ca5035;
   }
   .auto-complete__content {
     bottom: -28px;

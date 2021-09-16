@@ -1219,7 +1219,7 @@ Defaults = {
                 "collapsed": False,
                 "fields": [],
             },
-            "checkpoints": {
+            "checkpoint": {
                 "name": "Чекпоинты",
                 "collapsable": True,
                 "collapsed": False,
@@ -1268,12 +1268,6 @@ Defaults = {
                                 list(CheckpointModeChoice),
                             )
                         ),
-                    },
-                    {
-                        "type": "select",
-                        "label": "Функция",
-                        "name": "architecture_parameters_checkpoint_function",
-                        "parse": "architecture[parameters][checkpoint][function]",
                     },
                     {
                         "type": "checkbox",
