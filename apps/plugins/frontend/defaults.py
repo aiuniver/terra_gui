@@ -31,7 +31,7 @@ class DefaultsTrainingBaseData(BaseMixinData):
     fit: DefaultsTrainingBaseGroupData
     optimizer: DefaultsTrainingBaseGroupData
     outputs: DefaultsTrainingBaseGroupData
-    checkpoints: DefaultsTrainingBaseGroupData
+    checkpoint: DefaultsTrainingBaseGroupData
 
 
 class DefaultsTrainingData(BaseMixinData):
