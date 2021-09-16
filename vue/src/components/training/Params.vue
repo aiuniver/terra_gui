@@ -67,6 +67,9 @@
             </at-collapse-item>
             <at-collapse-item class="mt-3" :title="checkpoints.name">
               <div class="checkpoints">
+                <t-field class="checkpoints__item" inline label="Функция">
+                  <t-select-new :list="func" small name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" @parse="parse" />
+                </t-field>
                 <template v-for="(data, i) of checkpoints.fields">
                   <t-auto-field-trainings
                     v-bind="data"
@@ -97,7 +100,7 @@
         <t-button @click="stop">Остановить</t-button>
       </div>
       <div>
-        <t-button @click="save" >Сохранить</t-button>
+        <t-button @click="save">Сохранить</t-button>
         <t-button @click="clear">Сбросить</t-button>
       </div>
     </div>
@@ -153,6 +156,15 @@ export default {
     checkpoints() {
       return this.params?.checkpoints || {};
     },
+    func() {
+      let data = this.obj?.architecture?.parameters?.outputs || [];
+      data = data.filter(item => item)?.[0]?.metrics || [];
+      data = data.map(item => {
+        return { label: item, value: item };
+      });
+      console.log(data);
+      return data;
+    },
   },
   methods: {
     click(e) {
@@ -176,9 +188,10 @@ export default {
       console.log(res);
     },
     parse({ parse, value, name }) {
-      // console.log(this.state);
+      console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
+      this.obj = { ...this.obj };
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
