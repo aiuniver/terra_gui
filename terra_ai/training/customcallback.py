@@ -522,6 +522,7 @@ class InteractiveCallback:
         if config.get('intermediate_result').get('show_results') or config.get('statistic_data').get('output_id'):
             self.urgent_predict = True
             return
+
         self.train_progress['train_data'] = {
             'loss_graphs': self._get_loss_graph_data_request(),
             'metric_graphs': self._get_metric_graph_data_request(),
@@ -610,6 +611,8 @@ class InteractiveCallback:
             for tag in dataset_output.classes_names:
                 colors[tag] = tuple(np.random.randint(256, size=3))
             return colors
+        elif dataset_output.task == LayerOutputTypeChoice.Segmentation:
+            return [classes_color.as_rgb_tuple() for classes_color in dataset_output.classes_colors]
         else:
             return dataset_output.classes_colors
 
@@ -793,15 +796,14 @@ class InteractiveCallback:
                         class_percent[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = np.round(
                             np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl]) * 100
                             / np.prod(self.y_true.get(data_type).get(out)[:, :, :, 0].shape))
-                        class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = \
-                            np.sum(self.y_true.get(data_type).get(out)[:, :, :, cl])
+                        class_count[self.dataset_config.get("outputs").get(out).get("classes_names")[cl]] = 0
 
-                    # for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
-                    #     for cl in classes:
-                    #         if cl in img_array:
-                    #             class_count[
-                    #                 self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
-                    #             ] += 1
+                    for img_array in np.argmax(self.y_true.get(data_type).get(out), axis=-1):
+                        for cl in classes:
+                            if cl in img_array:
+                                class_count[
+                                    self.dataset_config.get("outputs").get(out).get("classes_names")[cl]
+                                ] += 1
                     dataset_balance[out][data_type]["presence_balance"] = class_count
                     dataset_balance[out][data_type]["square_balance"] = class_percent
             if (
@@ -946,7 +948,8 @@ class InteractiveCallback:
                 if choice_type == "worst":
                     example_idx = sorted_args[:count]
 
-            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
+                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
                 y_true = self.y_true.get("val").get(out)
                 y_pred = to_categorical(
                     np.argmax(self.y_pred.get(out), axis=-1),
@@ -1167,12 +1170,10 @@ class InteractiveCallback:
                             metric_obj=self.metrics_obj.get(out).get(metric_name),
                             out=out,
                             y_true=self.y_true.get('val').get(out)[
-                                   :, :, :,
-                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                    ],
                             y_pred=self.y_pred.get(out)[
-                                   :, :, :,
-                                   self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
+                                   :, :, self.dataset_config.get("outputs").get(out).get("classes_names").index(cls)
                                    ],
                         )
                     if data_idx or data_idx == 0:
@@ -1237,7 +1238,7 @@ class InteractiveCallback:
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
-                        self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
+                 self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
             if loss_name == Loss.SparseCategoricalCrossentropy:
                 return float(loss_obj()(
                     np.expand_dims(np.argmax(y_true, axis=-1), axis=-1)
@@ -1280,7 +1281,7 @@ class InteractiveCallback:
 
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation or \
                 (self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and
-                        self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
+                 self.dataset_config.get("outputs").get(out).get("encoding") == "ohe"):
             if metric_name == Metric.SparseCategoricalAccuracy or \
                     metric_name == Metric.SparseTopKCategoricalAccuracy or \
                     metric_name == Metric.SparseCategoricalCrossentropy:
@@ -1295,13 +1296,13 @@ class InteractiveCallback:
                 )
             return float(metric_obj.result().numpy())
         elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation and \
-                        self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
+                self.dataset_config.get("outputs").get(out).get("encoding") == "multi":
             if metric_name == Metric.SparseCategoricalAccuracy or \
                     metric_name == Metric.SparseTopKCategoricalAccuracy or \
                     metric_name == Metric.SparseCategoricalCrossentropy:
                 return 0.
             else:
-                metric_obj.update_state(y_true , y_pred)
+                metric_obj.update_state(y_true, y_pred)
                 return float(metric_obj.result().numpy())
         else:
             return 0.
@@ -1356,13 +1357,13 @@ class InteractiveCallback:
                 'plot_data': [
                     {
                         'label': 'Тренировочная выборка',
-                        'epochs': []:
-                        'values': []
+                        'x': []:
+                        'y': []
                     },
                     {
                         'label': 'Проверочная выборка',
-                        'epochs': []:
-                        'values': []
+                        'x': []:
+                        'y': []
                     },
                 ],
                 "progress_state": "normal",
@@ -1377,8 +1378,8 @@ class InteractiveCallback:
                 'plot_data': [
                     {
                         'class_label': f'Класс {class_name}',
-                        'epochs': [],
-                        'values': []
+                        'x': [],
+                        'y': []
                     },
                 ],
             }
@@ -1403,22 +1404,22 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": _id,
-                        "graph_name": f"'Output_{loss_graph_config.get('output_idx')} - "
-                                      f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}'",
+                        "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
+                                      f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
                         "y_label": "Значение",
                         "plot_data": [
                             {
                                 "label": "Тренировочная выборка",
-                                "epochs": self.log_history.get("epochs"),
-                                "values": self.log_history.get(
+                                "x": self.log_history.get("epochs"),
+                                "y": self.log_history.get(
                                     f"{loss_graph_config.get('output_idx')}").get('loss').get(
                                     self.losses.get(f"{loss_graph_config.get('output_idx')}")).get('train')
                             },
                             {
                                 "label": "Проверочная выборка",
-                                "epochs": self.log_history.get("epochs"),
-                                "values": self.log_history.get(
+                                "x": self.log_history.get("epochs"),
+                                "y": self.log_history.get(
                                     f"{loss_graph_config.get('output_idx')}").get('loss').get(
                                     self.losses.get(f"{loss_graph_config.get('output_idx')}")).get("val")
                             }
@@ -1438,8 +1439,8 @@ class InteractiveCallback:
                         "plot_data": [
                             {
                                 'class_label': f'Класс {class_name}',
-                                'epochs': self.log_history.get("epochs"),
-                                'values': self.log_history.get(
+                                'x': self.log_history.get("epochs"),
+                                'y': self.log_history.get(
                                     f"{loss_graph_config.get('output_idx')}").get('class_loss').get(class_name).get(
                                     self.losses.get(f"{loss_graph_config.get('output_idx')}"))
                             } for class_name in self.dataset_config.get("outputs").get(
@@ -1471,13 +1472,13 @@ class InteractiveCallback:
                 'plot_data': [
                     {
                         'label': 'Тренировочная выборка',
-                        'epochs': []:
-                        'values': []
+                        'x': []:
+                        'y': []
                     },
                     {
                         'label': 'Проверочная выборка',
-                        'epochs': []:
-                        'values': []
+                        'x': []:
+                        'y': []
                     },
                 ],
                 "progress_state": "normal",
@@ -1491,8 +1492,8 @@ class InteractiveCallback:
                 'plot_data': [
                     {
                         'class_label': f'Класс {class_name}',
-                        'epochs': [],
-                        'values': []
+                        'x': [],
+                        'y': []
                     },
                 ],
             }
@@ -1517,23 +1518,23 @@ class InteractiveCallback:
                 data_return.append(
                     {
                         "id": _id,
-                        "graph_name": f"'Output_{metric_graph_config.get('output_idx')} - "
+                        "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
                                       f"График метрики {metric_graph_config.get('show_metric')} - "
-                                      f"Эпоха №{self.log_history.get('epochs')[-1]}'",
+                                      f"Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
                         "y_label": "Значение",
                         "plot_data": [
                             {
                                 "label": "Тренировочная выборка",
-                                "epochs": self.log_history.get("epochs"),
-                                "values": self.log_history.get(
+                                "x": self.log_history.get("epochs"),
+                                "y": self.log_history.get(
                                     f"{metric_graph_config.get('output_idx')}").get('metrics').get(
                                     metric_graph_config.get('show_metric')).get("train")
                             },
                             {
                                 "label": "Проверочная выборка",
-                                "epochs": self.log_history.get("epochs"),
-                                "values": self.log_history.get(
+                                "x": self.log_history.get("epochs"),
+                                "y": self.log_history.get(
                                     f"{metric_graph_config.get('output_idx')}").get('metrics').get(
                                     metric_graph_config.get('show_metric')).get("val")
                             }
@@ -1553,8 +1554,8 @@ class InteractiveCallback:
                         "plot_data": [
                             {
                                 'class_label': f'Класс {class_name}',
-                                'epochs': self.log_history.get("epochs"),
-                                'values': self.log_history.get(
+                                'x': self.log_history.get("epochs"),
+                                'y': self.log_history.get(
                                     f"{metric_graph_config.get('output_idx')}").get('class_metrics').get(
                                     class_name).get(metric_graph_config.get('show_metric'))
                             } for class_name in self.dataset_config.get("outputs").get(
@@ -1642,27 +1643,22 @@ class InteractiveCallback:
                     'predict_value': {},
                     'statistic_values': {}
                 }
-                for inp in self.dataset_config.get("inputs").keys():
-                    path, type_choice = self._postprocess_initial_data(
-                        input_id=inp,
-                        save_id=idx,
-                        example_idx=self.example_idx[idx],
-                    )
-                    return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {
-                        'data': path,
-                        'type': type_choice,
-                    }
+                if len(self.dataset_config.get("outputs").keys()) == 1 and self.dataset_config.get("outputs").get(
+                        list(self.dataset_config.get("outputs").keys())[0]).get("task") == \
+                        LayerOutputTypeChoice.TextSegmentation:
+                    return_data[idx + 1]['initial_data'] = {}
+                else:
+                    for inp in self.dataset_config.get("inputs").keys():
+                        path, type_choice = self._postprocess_initial_data(
+                            input_id=inp,
+                            save_id=idx + 1,
+                            example_idx=self.example_idx[idx],
+                        )
+                        return_data[idx + 1]['initial_data'][f"Входной слой {inp}"] = {
+                            'data': path,
+                            'type': type_choice,
+                        }
                 for out in self.dataset_config.get("outputs").keys():
-                    # tags_color = None
-                    # if self.dataset_config.get("outputs").get(out).get('classes_colors') and \
-                    #         self.dataset_config.get("outputs").get(out).get(
-                    #             'task') != LayerOutputTypeChoice.Segmentation:
-                    #     tags_color = {}
-                    #     for i, classes_name in enumerate(
-                    #             self.dataset_config.get("outputs").get(out).get('classes_names')):
-                    #         tags_color[classes_name] = \
-                    #             self.dataset_config.get("outputs").get(out).get('classes_colors')[i]
-
                     true_value, predict_value, color_mark, stat, out_type = self._postprocess_result_data(
                         output_id=out,
                         data_type='val',
@@ -1674,14 +1670,17 @@ class InteractiveCallback:
                         "type": out_type,
                         "data": true_value,
                         "color_mark": None,
-                        "tags_color": self.dataset_config.get("outputs").get(out).get('classes_colors')
                     }
                     return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
                         "type": out_type,
                         "data": predict_value,
                         "color_mark": color_mark,
-                        "tags_color": self.dataset_config.get("outputs").get(out).get('classes_colors')
-                    }
+                    },
+                    return_data[idx + 1]['tags_color'] = \
+                        self.dataset_config.get("outputs").get(out).get('classes_colors') if \
+                            self.dataset_config.get("outputs").get(
+                                list(self.dataset_config.get("outputs").keys())[0]).get(
+                                "task") == LayerOutputTypeChoice.TextSegmentation else None
                     if stat:
                         return_data[idx + 1]['statistic_values'][f"Выходной слой {out}"] = stat
         return return_data
@@ -1725,20 +1724,20 @@ class InteractiveCallback:
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.Segmentation or \
                     (
                             self.dataset_config.get("outputs").get(f"{out}").get("task") ==
-                            LayerOutputTypeChoice.TextSegmentation and self.dataset_config.get(f"{out}").get(
-                        'encoding') == 'ohe'
+                            LayerOutputTypeChoice.TextSegmentation and self.dataset_config.get(
+                        "outputs").get(f"{out}").get('encoding') == 'ohe'
                     ):
                 cm, cm_percent = self._get_confusion_matrix(
-                    np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).reshape(
-                        np.prod(np.argmax(self.y_true.get("val").get(f'{out}'), axis=-1).shape)).astype('int'),
+                    np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).reshape(
+                        np.prod(np.argmax(self.y_true.get("val").get(f"{out}"), axis=-1).shape)).astype('int'),
                     np.argmax(self.y_pred.get(f'{out}'), axis=-1).reshape(
                         np.prod(np.argmax(self.y_pred.get(f'{out}'), axis=-1).shape)).astype('int'),
                     get_percent=True
                 )
-                return_data[f'{out}'] = dict(
+                return_data[f"{out}"] = dict(
                     id=_id,
                     task_type=LayerOutputTypeChoice.Segmentation.name,
-                    graph_name=f"Output_{out} - Confusion matrix",
+                    graph_name=f"Выходной слой {out} - Confusion matrix",
                     x_label="Предсказание",
                     y_label="Истинное значение",
                     labels=self.dataset_config.get("outputs").get(f"{out}").get("classes_names"),
@@ -1748,17 +1747,18 @@ class InteractiveCallback:
                 _id += 1
 
             elif self.dataset_config.get("outputs").get(f"{out}").get("task") == LayerOutputTypeChoice.TextSegmentation \
-                    and self.dataset_config.get(f"{out}").get('encoding') == 'multi':
+                    and self.dataset_config.get("outputs").get(f"{out}").get("encoding") == "multi":
                 report = self._get_classification_report(
-                    self.y_true.get('val').get(out).reshape((np.prod(
-                        self.y_true.get('val').get(out).shape[:-1]), self.y_true.get('val').get(out).shape[-1])
+                    self.y_true.get("val").get(f"{out}").reshape((np.prod(
+                        self.y_true.get("val").get(f"{out}").shape[:-1]),
+                                                                  self.y_true.get("val").get(f"{out}").shape[-1])
                     ),
-                    np.where(self.y_pred.get(out) >= 0.9, 1, 0).reshape(
-                        (np.prod(self.y_pred.get(out).shape[:-1]), self.y_pred.get(out).shape[-1])
+                    np.where(self.y_pred.get(f"{out}") >= 0.9, 1, 0).reshape(
+                        (np.prod(self.y_pred.get(f"{out}").shape[:-1]), self.y_pred.get(f"{out}").shape[-1])
                     ),
-                    self.dataset_config.get('output').get(out).get('classes_names')
+                    self.dataset_config.get("outputs").get(f"{out}").get("classes_names")
                 )
-                return_data[f'{out}'] = dict(
+                return_data[f"{out}"] = dict(
                     id=_id,
                     task_type=LayerOutputTypeChoice.TextSegmentation.name,
                     graph_name=f"Выходной слой {out} - Отчет по классам",
@@ -1780,7 +1780,7 @@ class InteractiveCallback:
                 pass
 
             else:
-                return_data[f'{out}'] = {}
+                return_data[f"{out}"] = {}
         return return_data
 
     def _get_balance_data_request(self) -> dict:
@@ -1817,8 +1817,7 @@ class InteractiveCallback:
         return_data = {}
         _id = 1
         for out in self.dataset_config.get("outputs").keys():
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification or \
-                    self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
+            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Classification:
                 class_train_names, class_train_count = sort_dict(
                     self.dataset_balance.get(out).get('train'),
                     mode=self.interactive_config.get('data_balance').get('sorted')
@@ -1827,7 +1826,6 @@ class InteractiveCallback:
                     self.dataset_balance.get(out).get('val'),
                     mode=self.interactive_config.get('data_balance').get('sorted')
                 )
-
                 return_data[out] = [
                     {
                         'id': _id,
@@ -1856,7 +1854,7 @@ class InteractiveCallback:
                 ]
                 _id += 2
 
-            if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
+            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Segmentation:
                 presence_train_names, presence_train_count = sort_dict(
                     self.dataset_balance.get(out).get('train').get('presence_balance'),
                     mode=self.interactive_config.get('data_balance').get('sorted')
@@ -1925,6 +1923,43 @@ class InteractiveCallback:
                 ]
                 _id += 4
 
+            elif self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.TextSegmentation:
+                presence_train_names, presence_train_count = sort_dict(
+                    self.dataset_balance.get(out).get('train').get('presence_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                presence_val_names, presence_val_count = sort_dict(
+                    self.dataset_balance.get(out).get('val').get('presence_balance'),
+                    mode=self.interactive_config.get('data_balance').get('sorted')
+                )
+                return_data[out] = [
+                    {
+                        'id': _id,
+                        'graph_name': 'Тренировочная выборка - баланс присутсвия',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': presence_train_names,
+                                'values': presence_train_count
+                            },
+                        ]
+                    },
+                    {
+                        'id': _id + 1,
+                        'graph_name': 'Проверочная выборка - баланс присутсвия',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': presence_val_names,
+                                'values': presence_val_count
+                            },
+                        ]
+                    },
+                ]
+                _id += 2
+
             if self.dataset_config.get("outputs").get(out).get("task") == LayerOutputTypeChoice.Regression:
                 # histograms for result and any chosen categorizing column
                 pass
@@ -1951,7 +1986,8 @@ class InteractiveCallback:
                     cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
         return cm, cm_percent
 
-    def _get_classification_report(self, y_true, y_pred, labels):
+    @staticmethod
+    def _get_classification_report(y_true, y_pred, labels):
         cr = classification_report(y_true, y_pred, target_names=labels, output_dict=True)
         return_stat = {}
         for lbl in labels:
@@ -1969,7 +2005,6 @@ class InteractiveCallback:
                 "Количество": cr.get(i).get('support')
             }
         return return_stat
-
 
     @staticmethod
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
@@ -2019,6 +2054,7 @@ class InteractiveCallback:
             img = img.convert('RGB')
             # filepath = NamedTemporaryFile()
             save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
+            # save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
             img.save(save_path, 'webp')
             return save_path, LayerInputTypeChoice.Image.name
 
@@ -2061,7 +2097,7 @@ class InteractiveCallback:
                 return tuple((result / len(colors)).astype('int'))
 
         def tag_mixer(tags: list, colors: dict):
-            tags = list(set(tags))
+            tags = list(set(sorted(tags, reverse=True)))
             mix_tag = f"<{tags[0][1:-1]}"
             for tag in tags[1:]:
                 mix_tag += f"+{tag[1:-1]}"
@@ -2140,6 +2176,7 @@ class InteractiveCallback:
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
             y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_true.save(y_true_save_path, 'webp')
 
             # prepare y_pred image
@@ -2154,6 +2191,7 @@ class InteractiveCallback:
             y_pred = y_pred.convert('RGB')
             # filepath_pred = NamedTemporaryFile()
             y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_pred.save(y_pred_save_path, 'webp')
 
             class_stat = {}
@@ -2191,9 +2229,9 @@ class InteractiveCallback:
             class_stat = {}
             if show_stat:
                 y_true = np.array(self.y_true.get(data_type).get(output_id)[example_idx]).astype('int')
-                y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.),
+                y_pred = np.where(self.y_pred.get(output_id)[example_idx] >= 0.9, 1., 0.)
                 for idx, cls in enumerate(classes_names):
-                    if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]):
+                    if np.sum(y_true[:, idx]) == 0 and np.sum(y_pred[:, idx]) == 0:
                         class_stat[cls] = {
                             "value": "-",
                             "color_mark": None
