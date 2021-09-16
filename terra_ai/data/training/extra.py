@@ -18,6 +18,18 @@ class MetricGraphShowChoice(str, Enum):
     classes = "classes"
 
 
+class ExampleChoiceTypeChoice(str, Enum):
+    best = "best"
+    last = "last"
+    seed = "seed"
+    random = "random"
+
+
+class BalanceSortedChoice(str, Enum):
+    descending = "descending"
+    ascending = "ascending"
+
+
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
     Yolo = "Yolo"

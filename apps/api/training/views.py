@@ -40,12 +40,12 @@ class StartAPIView(BaseAPIView):
         architecture = data.get("architecture", {})
         loss_graphs = []
         metric_graphs = []
+        progress_table = []
         index = 0
         for layer_data in architecture.get("parameters", {}).get("outputs", []):
             if not layer_data:
                 continue
             layer = project.model.outputs.get(layer_data.get("id"))
-            print(layer_data)
             if not layer:
                 continue
             metrics_list = layer_data.get("metrics", [])
@@ -82,10 +82,22 @@ class StartAPIView(BaseAPIView):
                     "show_metric": metric,
                 }
             )
+            progress_table.append(
+                {
+                    "output_idx": layer.id,
+                }
+            )
         return InteractiveData(
             **{
                 "loss_graphs": loss_graphs,
                 "metric_graphs": metric_graphs,
+                "intermediate_result": {
+                    "main_output": project.model.outputs[0].id,
+                },
+                "progress_table": progress_table,
+                "statistic_data": {
+                    "output_id": project.model.outputs.ids,
+                },
             }
         )
 
