@@ -91,7 +91,7 @@ class ConfigAPIView(BaseAPIView):
                 }
             )
         if layers_choice:
-            for item in checkpoint.fields:
+            for index, item in enumerate(checkpoint.fields):
                 if item.name == "architecture_parameters_checkpoint_layer":
                     field_data = item.native()
                     field_data.update(
@@ -100,7 +100,7 @@ class ConfigAPIView(BaseAPIView):
                             "list": layers_choice,
                         }
                     )
-                    checkpoint.fields.append(field_data)
+                    checkpoint.fields[index] = Field(**field_data)
                     break
         return checkpoint
 
