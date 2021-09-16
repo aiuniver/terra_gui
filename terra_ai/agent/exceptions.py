@@ -20,10 +20,14 @@ class ExceptionMessages(str, Enum):
     FailedChoiceDataset = "Error when choosing dataset: %s"
     FailedDeleteDataset = "Dataset could not be deleted: %s"
     DatasetCanNotBeDeleted = "Dataset `%s` from group `%s` can't be deleted"
-    FailedGetProgressDatasetChoice = "Could not get the progress of the dataset choice: %s"
+    FailedGetProgressDatasetChoice = (
+        "Could not get the progress of the dataset choice: %s"
+    )
     FailedGetDatasetsInfo = "Error when getting datasets info: %s"
     FailedLoadDatasetsSource = "Error when loading datasets sour: %s"
-    FailedLoadProgressDatasetsSource = "Error when loading progress of datasets info: %s"
+    FailedLoadProgressDatasetsSource = (
+        "Error when loading progress of datasets info: %s"
+    )
     FailedGetDatasetsSources = "Could not get the datasets info: %s"
     FailedCreateDataset = "Ошибка создания датасета: %s"
     # Modeling
@@ -38,13 +42,16 @@ class ExceptionMessages(str, Enum):
     FailedStopTrain = "Error when stop training model: %s"
     FailedCleanTrain = "Error when clean training model: %s"
     FailedSetInteractiveConfig = "Error when setting interactive config: %s"
-    FailedGetTrainingProgress = "Could not get the progress of the training progress: %s"
+    FailedGetTrainingProgress = (
+        "Could not get the progress of the training progress: %s"
+    )
     # Deploy
     FailedUploadDeploy = "Error when uploading deploy: %s"
     FailedGetUploadDeployResult = "Error when getting upload deploy result: %s"
 
 
 # Base Exceptions
+
 
 class ExchangeBaseException(Exception):
     class Meta:
@@ -62,6 +69,7 @@ class ValueException(ExchangeBaseException):
 
 
 # Agent
+
 
 class FileNotFoundException(ValueException):
     class Meta:
@@ -85,6 +93,7 @@ class MethodNotCallableException(ExchangeBaseException):
 
 
 # Project exceptions
+
 
 class FailedGetProjectsInfoException(ValueException):
     class Meta:
@@ -115,6 +124,7 @@ class ProjectAlreadyExistsException(ValueException):
 
 
 # Dataset exceptions
+
 
 class FailedChoiceDatasetException(ValueException):
     class Meta:
@@ -166,6 +176,7 @@ class FailedCreateDatasetException(ValueException):
 
 # Modeling exceptions
 
+
 class ModelAlreadyExistsException(ValueException):
     class Meta:
         message = ExceptionMessages.ModelAlreadyExists
@@ -200,11 +211,8 @@ class FailedDeleteModelException(ValueException):
     class Meta:
         message = ExceptionMessages.FailedDeleteModel
 
-# Training exceptions
 
-class FailedStartTrainException(ValueException):
-    class Meta:
-        message = ExceptionMessages.FailedStartTrain
+# Training exceptions
 
 
 class FailedStopTrainException(ValueException):
@@ -228,6 +236,7 @@ class FailedSetInteractiveConfigException(ValueException):
 
 
 # Deploy exceptions
+
 
 class FailedUploadDeployException(ValueException):
     class Meta:

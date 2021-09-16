@@ -342,25 +342,22 @@ class Exchange:
         """
         Старт обучения
         """
-        try:
-            if (
-                interactive.get_states().get("status") == "stopped"
-                or interactive.get_states().get("status") == "trained"
-            ):
-                interactive.set_status("addtrain")
-            else:
-                interactive.set_status("training")
+        if (
+            interactive.get_states().get("status") == "stopped"
+            or interactive.get_states().get("status") == "trained"
+        ):
+            interactive.set_status("addtrain")
+        else:
+            interactive.set_status("training")
 
-            training_obj.terra_fit(
-                dataset=dataset,
-                gui_model=model,
-                training_path=training_path,
-                dataset_path=dataset_path,
-                training_params=params,
-                initial_config=initial_config,
-            )
-        except Exception as error:
-            raise exceptions.FailedStartTrainException(str(error))
+        training_obj.terra_fit(
+            dataset=dataset,
+            gui_model=model,
+            training_path=training_path,
+            dataset_path=dataset_path,
+            training_params=params,
+            initial_config=initial_config,
+        )
         return interactive.train_states
 
     def _call_training_stop(self):
