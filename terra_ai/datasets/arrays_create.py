@@ -68,7 +68,7 @@ class CreateArray(object):
                         subdf = df.iloc[i, :]
                         subdf = subdf.dropna().values.tolist()
                         for j in range(0, len(subdf), step_len):
-                            if len(subdf[j: j + step_len]) < xlen:
+                            if len(subdf[j: j + xlen]) < xlen:
                                 xlen_array.append(subdf[-xlen:])
                             else:
                                 xlen_array.append(subdf[j: j + xlen])
@@ -308,7 +308,7 @@ class CreateArray(object):
                 subdf = df.iloc[i, :]
                 subdf = subdf.dropna().values.tolist()
                 for j in range(0, len(subdf), step_len):
-                    if len(subdf[j: j + step_len]) < xlen:
+                    if len(subdf[j: j + xlen]) < xlen:
                         y_class.append(classes_names[i])
                     else:
                         y_class.append(classes_names[i])
