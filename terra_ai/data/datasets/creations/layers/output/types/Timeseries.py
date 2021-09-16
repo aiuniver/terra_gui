@@ -16,7 +16,9 @@ class ParametersData(MinMaxScalerData):
     depth: Optional[PositiveInt]
     scaler: Optional[LayerScalerTimeseriesChoice]
 
-    cols_names: Optional[List[str]]
+    cols_names: Optional[List[int]]
+    transpose: Optional[bool]
+    separator:  Optional[str]
 
     @validator("trend")
     def _validate_trend(cls, value: bool) -> bool:

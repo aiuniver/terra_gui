@@ -157,3 +157,8 @@ class LayerOutputTypeChoice(str, Enum):
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
+
+class LayerEncodingChoice(str, Enum):
+    none = "none"
+    ohe = "ohe"
+    multi = "multi"

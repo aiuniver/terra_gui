@@ -11,7 +11,7 @@ class ParametersData(MinMaxScalerData):
 
     separator: Optional[str]
     encoding: str = "utf-8"
-    cols_names: Optional[List[str]]
+    cols_names: Optional[List[int]]
     transpose: bool
 
     pad_sequences: Optional[bool]
@@ -21,9 +21,15 @@ class ParametersData(MinMaxScalerData):
     step_len: Optional[PositiveInt]
     scaler: LayerScalerDataframeChoice = LayerScalerDataframeChoice.no_scaler
 
-    StandardScaler: Optional[str]
-    MinMaxScaler: Optional[str]
-    Categorical: Optional[str]
-    Categorical_ranges: Optional[str]
+    StandardScaler_cols: Optional[List[int]]
+    MinMaxScaler_cols: Optional[List[int]]
+    Categorical_cols: Optional[List[int]]
+    Categorical_ranges_cols: Optional[List[int]]
     cat_cols: Optional[Dict[str, str]]
-    one_hot_encoding: Optional[str]
+    one_hot_encoding_cols: Optional[List[int]]
+
+    step: Optional[int]
+    length: Optional[int]
+    trend: Optional[bool]
+    depth: Optional[int]
+    y_cols: Optional[List[int]]

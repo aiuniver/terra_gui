@@ -9,4 +9,4 @@ class ParametersData(MinMaxScalerData):
     sources_paths: List[confilepath(ext="csv")]
     scaler: LayerScalerRegressionChoice
 
-    cols_names: Optional[List[str]]
+    cols_names: Optional[List[int]]
