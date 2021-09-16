@@ -4,7 +4,7 @@ from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.data.training.train import TrainData, InteractiveData
 
-from apps.plugins.project import project_path
+from apps.plugins.project import project_path, Project
 from terra_ai.exceptions.base import TerraBaseException
 
 from ..base import (
@@ -16,33 +16,43 @@ from ..base import (
 
 
 class StartAPIView(BaseAPIView):
-    def post(self, request, **kwargs):
-        architecture = request.data.get("architecture", {})
+    def _get_training_defaults(self, data: dict, project: Project) -> TrainData:
+        architecture = data.get("architecture", {})
         architecture.update({"type": "Basic"})
-        request.data.update({"architecture": architecture})
+        data.update({"architecture": architecture})
         for layer_data in architecture.get("parameters", {}).get("outputs", []):
             if not layer_data:
                 continue
-            layer = request.project.model.outputs.get(layer_data.get("id"))
+            layer = project.model.outputs.get(layer_data.get("id"))
             if not layer:
                 continue
             layer_data.update({"task": layer.task.value})
+        return TrainData(**data)
+
+    def _get_interactive_defaults(self, project: Project) -> InteractiveData:
+        loss_graphs = []
+        for index, layer in enumerate(project.model.outputs, 1):
+            loss_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                }
+            )
+        return InteractiveData(
+            **{
+                "loss_graphs": loss_graphs,
+            }
+        )
+
+    def post(self, request, **kwargs):
         try:
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
                 "training_path": project_path.training,
                 "dataset_path": project_path.datasets,
-                "params": TrainData(**request.data),
-                "initial_config": InteractiveData(
-                    **{
-                        "loss_graphs": [
-                            {
-                                "id": 1,
-                            }
-                        ],
-                    }
-                ),
+                "params": self._get_training_defaults(request.data, request.project),
+                "initial_config": self._get_interactive_defaults(request.project),
             }
             return BaseResponseSuccess(agent_exchange("training_start", **data))
         except ValidationError as error:

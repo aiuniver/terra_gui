@@ -29,7 +29,7 @@ from ..data.extra import (
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
-from ..data.training.train import TrainData
+from ..data.training.train import TrainData, InteractiveData
 
 from ..datasets import utils as datasets_utils
 from ..datasets import loading as datasets_loading
@@ -337,7 +337,7 @@ class Exchange:
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
-        initial_config: dict,
+        initial_config: InteractiveData,
     ):
         """
         Старт обучения
@@ -353,7 +353,7 @@ class Exchange:
         print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
         print(params.json(indent=2, ensure_ascii=False))
         print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
-        print(initial_config)
+        print(initial_config.json(indent=2, ensure_ascii=False))
         print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
 
         training_obj.terra_fit(
