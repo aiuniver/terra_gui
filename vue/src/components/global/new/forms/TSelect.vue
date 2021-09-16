@@ -62,16 +62,16 @@ export default {
     },
     search: {
       set(value) {
-        console.log(value);
+        this.input = value
       },
       get() {
-        return this.list.find(item => item.value === this.selected?.value)?.label;
+        return this.list.find(item => item.value === this.selected?.value)?.label || '';
       },
     },
   },
   methods: {
     send(value) {
-      this.$emit('input', value);
+      // this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
       this.$emit('parse', { name: this.name, parse: this.parse, value });
     },
@@ -86,8 +86,9 @@ export default {
       if (item) {
         this.selected = item;
         this.send(item.value);
+        this.input = item.value
       } else {
-        this.search = this.selected.label || this.value;
+        this.search = this.selected.label || this.value || '';
       }
       this.show = false;
     },
@@ -96,11 +97,6 @@ export default {
       this.$emit('click', e);
     },
   },
-  watch: {
-    list(value) {
-      this.selected = value.find(item => item.value === this.value);
-    }
-  }
 };
 </script>
 

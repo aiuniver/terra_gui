@@ -190,7 +190,7 @@ export default {
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
-      ser(this.obj, parse, value);
+      console.log(ser(this.obj, parse, value));
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
         this.metricData = value

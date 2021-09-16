@@ -989,14 +989,14 @@ Defaults = {
                         "type": "number",
                         "label": "Размер батча",
                         "name": "batch",
-                        "parse": "batch",
+                        "parse": "[batch]",
                         "value": 32,
                     },
                     {
                         "type": "number",
                         "label": "Количество эпох",
                         "name": "epochs",
-                        "parse": "epochs",
+                        "parse": "[epochs]",
                         "value": 20,
                     },
                     {
