@@ -10,12 +10,14 @@
       @on-change="change"
       @click="cleanError"
       :disabled="disabled"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
     >
       <at-option v-for="({ label, value }, key) in items" :key="'item_' + key" :value="value" :title="label">
         {{ label }}
       </at-option>
     </at-select>
-    <div v-if="error" class="t-field__hint">
+    <div v-if="error && hover" class="t-field__hint">
       <span>{{ error }}</span>
     </div>
   </div>
@@ -46,6 +48,7 @@ export default {
     lists: {
       type: [Array, Object],
     },
+
     disabled: Boolean,
     error: String,
     maxLabel: {
@@ -94,7 +97,6 @@ export default {
   },
 };
 </script>
-
 
 <style lang="scss" scoped>
 .t-field {

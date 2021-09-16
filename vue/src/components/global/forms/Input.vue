@@ -50,7 +50,7 @@ export default {
   },
   data: () => ({
     isChange: false,
-    hover: false
+    hover: false,
   }),
   computed: {
     input: {
