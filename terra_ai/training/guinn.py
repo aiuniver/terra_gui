@@ -1,4 +1,5 @@
 import gc
+import importlib
 import json
 import os
 import re
@@ -83,11 +84,11 @@ class GUINN:
         output = []
         for metric in metrics:
             if metric == MetricChoice.MeanIoU.value:
-                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)(num_classes))
+                output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)(num_classes))
             elif metric == MetricChoice.DiceCoef:
                 output.append(DiceCoefficient())
             else:
-                output.append(getattr(sys.modules.get("tensorflow.keras.metrics"), metric)())
+                output.append(getattr(importlib.import_module("tensorflow.keras.metrics"), metric)())
         return output
 
     def _set_training_params(self, dataset: DatasetData, params: TrainData, model_name: str,
@@ -111,10 +112,11 @@ class GUINN:
         interactive.set_attributes(dataset=self.dataset, metrics=self.metrics, losses=self.loss,
                                    dataset_path=dataset_path, initial_config=initial_config)
 
-    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int, checkpoint: dict) -> None:
+    def _set_callbacks(self, dataset: PrepareDataset, batch_size: int, epochs: int,
+                       checkpoint: dict, save_model_path: str) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Добавление колбэков...'})
         callback = FitCallback(dataset=dataset, checkpoint_config=checkpoint,
-                               batch_size=batch_size, epochs=epochs, save_model_path=self.training_path,
+                               batch_size=batch_size, epochs=epochs, save_model_path=save_model_path,
                                model_name=self.nn_name)
         self.callbacks = [callback]
         # checkpoint.update([('filepath', 'test_model.h5')])
@@ -134,7 +136,7 @@ class GUINN:
         return train_model
 
     @staticmethod
-    def _save_params_for_deploy(dataset_path: str, training_path: Path, params: TrainData):
+    def _save_params_for_deploy(dataset_path: str, training_path: str, params: TrainData):
         if not os.path.exists(training_path):
             os.mkdir(training_path)
         if os.path.exists(os.path.join(training_path, "dataset")):
@@ -211,8 +213,8 @@ class GUINN:
         Return:
             None
         """
-        # print(dataset, gui_model, training_params, initial_config)
-        self._save_params_for_deploy(dataset_path=dataset_path, training_path=training_path, params=training_params)
+        model_path = os.path.join(training_path, gui_model.name)
+        self._save_params_for_deploy(dataset_path=dataset_path, training_path=model_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
                                   params=training_params, training_path=training_path, initial_config=initial_config)
@@ -259,14 +261,14 @@ class GUINN:
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=True)
             else:
-                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=True)
+                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, save_model_path=model_path)
 
         else:
             self.model = nn_model
             if list(self.dataset.data.outputs.values())[0].task == LayerOutputTypeChoice.ObjectDetection:
                 self.yolo_model_fit(params=training_params, dataset=self.dataset, verbose=1, retrain=False)
             else:
-                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, retrain=False)
+                self.base_model_fit(params=training_params, dataset=self.dataset, verbose=0, save_model_path=model_path)
 
             self.sum_epoch += self.epochs
         return {"dataset": self.dataset, "metrics": self.metrics, "losses": self.loss}
@@ -295,7 +297,7 @@ class GUINN:
         return self
 
     @progress.threading
-    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, verbose=0, retrain=False) -> None:
+    def base_model_fit(self, params: TrainData, dataset: PrepareDataset, save_model_path: str, verbose=0) -> None:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели ...'})
         # self.set_custom_metrics()
         self.model.compile(loss=self.loss,
@@ -306,7 +308,8 @@ class GUINN:
         progress.pool(self.progress_name, finished=False, data={'status': 'Компиляция модели выполнена'})
         # if interactive.get_states().get("status") != "addtrain":
         self._set_callbacks(dataset=dataset, batch_size=params.batch,
-                            epochs=params.epochs, checkpoint=params.architecture.parameters.checkpoint.native())
+                            epochs=params.epochs, save_model_path=save_model_path,
+                            checkpoint=params.architecture.parameters.checkpoint.native())
         progress.pool(self.progress_name, finished=False, data={'status': 'Начало обучения ...'})
         self.history = self.model.fit(
             self.dataset.dataset.get('train').batch(self.batch_size, drop_remainder=True).take(-1),
