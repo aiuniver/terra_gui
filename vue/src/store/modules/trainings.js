@@ -22,8 +22,14 @@ export default {
     },
   },
   actions: {
-    async start({ dispatch }, data ) {
+    async start({ dispatch }, parse ) {
+      let data = JSON.parse(JSON.stringify(parse))
       console.log(data)
+      const arht = data.architecture.parameters.outputs || []
+      data.architecture.parameters.outputs = arht.map((item, index) => {
+        return item ? { id: index, ...item} : null
+      }).filter(item => item)
+
       return await dispatch('axios', { url: '/training/start/', data}, { root: true });
     },
     async stop({ dispatch }, data) {
