@@ -1270,6 +1270,12 @@ Defaults = {
                         ),
                     },
                     {
+                        "type": "select",
+                        "label": "Функция",
+                        "name": "architecture_parameters_checkpoint_function",
+                        "parse": "architecture[parameters][checkpoint][function]",
+                    },
+                    {
                         "type": "checkbox",
                         "label": "Сохранить лучшее",
                         "name": "architecture_parameters_checkpoint_save_best",

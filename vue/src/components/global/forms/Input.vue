@@ -15,7 +15,12 @@
       :autocomplete="'off'"
       @blur="change"
       @focus="focus"
+      @mouseover="hover = true"
+      @mouseleave="hover = false"
     />
+    <div v-if="error && hover" class="t-field__hint">
+      <span>{{ error }}</span>
+    </div>
   </div>
 </template>
 
@@ -45,6 +50,7 @@ export default {
   },
   data: () => ({
     isChange: false,
+    hover: false
   }),
   computed: {
     input: {
@@ -85,8 +91,8 @@ export default {
     update(obj) {
       console.log(obj);
       if (obj[this.name]) {
-        console.log('ok')
-        this.$el.getElementsByTagName('input')[0].value = obj[this.name]
+        console.log('ok');
+        this.$el.getElementsByTagName('input')[0].value = obj[this.name];
         this.$nextTick(() => {
           this.input = obj[this.name];
         });
@@ -99,6 +105,7 @@ export default {
 <style lang="scss" scoped>
 .t-field {
   margin-bottom: 10px;
+  position: relative;
   &__label {
     text-align: left;
     color: #a7bed3;
@@ -125,7 +132,8 @@ export default {
     }
   }
   &__error {
-    border-color: #b53b3b;
+    border-color: #ca5035;
+    color: #ca5035;
   }
   &__input.small {
     height: 24px;
@@ -133,6 +141,29 @@ export default {
     font-size: 12px;
     line-height: 24px;
     padding: 0 3px;
+  }
+  &__hint {
+    user-select: none;
+    position: absolute;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 5px;
+    top: 25px;
+    background-color: #ca5035;
+    color: #fff;
+    border-radius: 4px;
+    z-index: 5;
+    // display: none;
+    span {
+      font-style: normal;
+      font-weight: normal;
+      font-size: 9px;
+      line-height: 12px;
+    }
+    // &--hover {
+    //   display: flex;
+    // }
   }
 }
 .t-inline {

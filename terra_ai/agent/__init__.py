@@ -87,7 +87,7 @@ class Exchange:
         try:
             projects = ProjectsList()
             for filename in os.listdir(path):
-                if filename.endswith('project'):
+                if filename.endswith("project"):
                     projects.append({"value": Path(path, filename)})
             projects.sort(key=lambda item: item.label)
             return ProjectsInfoData(projects=projects.native())
@@ -97,7 +97,7 @@ class Exchange:
             raise exceptions.FailedGetProjectsInfoException(str(error))
 
     def _call_project_save(
-            self, source: Path, target: Path, name: str, overwrite: bool
+        self, source: Path, target: Path, name: str, overwrite: bool
     ):
         """
         Сохранение проекта
@@ -122,13 +122,15 @@ class Exchange:
         """
         try:
             shutil.rmtree(target, ignore_errors=True)
-            destination = progress_utils.unpack("project_load", "Загрузка проекта", source)
+            destination = progress_utils.unpack(
+                "project_load", "Загрузка проекта", source
+            )
             shutil.move(destination, target)
         except Exception as error:
             raise exceptions.FailedLoadProjectException(str(error))
 
     def _call_dataset_choice(
-            self, custom_path: Path, destination: Path, group: str, alias: str
+        self, custom_path: Path, destination: Path, group: str, alias: str
     ) -> NoReturn:
         """
         Выбор датасета
@@ -206,7 +208,7 @@ class Exchange:
             raise exceptions.FailedLoadProgressDatasetsSource(str(error))
 
     def _call_dataset_source_segmentation_classes_autosearch(
-            self, path: Path, num_classes: int, mask_range: int
+        self, path: Path, num_classes: int, mask_range: int
     ) -> dict:
         """
         Автопоиск классов для сегментации при создании датасета
@@ -233,6 +235,7 @@ class Exchange:
         """
         try:
             data = CreationData(**kwargs)
+            print(data.json(indent=2, ensure_ascii=False))
             creation = CreateDataset(data)
             return creation.datasetdata
         except Exception as error:
@@ -245,7 +248,7 @@ class Exchange:
         try:
             files = FilePathSourcesList()
             for filename in os.listdir(path):
-                if filename.endswith('.zip'):
+                if filename.endswith(".zip"):
                     filepath = Path(path, filename)
                     files.append({"value": filepath})
             files.sort(key=lambda item: item.label)
@@ -261,13 +264,13 @@ class Exchange:
             models = ModelsGroupsList(ModelsGroups)
             preset_models_path = Path(settings.ASSETS_PATH, "models")
             custom_models_path = path
-            couples = (('preset', preset_models_path), ('custom', custom_models_path))
+            couples = (("preset", preset_models_path), ("custom", custom_models_path))
             for models_group, models_path in couples:
                 for filename in os.listdir(models_path):
-                    if filename.endswith('.model'):
-                        models.get(getattr(ModelGroupChoice, models_group).name).models.append(
-                            {"value": Path(models_path, filename)}
-                        )
+                    if filename.endswith(".model"):
+                        models.get(
+                            getattr(ModelGroupChoice, models_group).name
+                        ).models.append({"value": Path(models_path, filename)})
                 models.get(getattr(ModelGroupChoice, models_group).name).models.sort(
                     key=lambda item: item.label
                 )
@@ -328,22 +331,23 @@ class Exchange:
             raise exceptions.FailedDeleteModelException(str(error))
 
     def _call_training_start(
-            self,
-            dataset: DatasetData,
-            model: ModelDetailsData,
-            training_path: Path,
-            dataset_path: Path,
-            params: TrainData,
-            initial_config: dict,
+        self,
+        dataset: DatasetData,
+        model: ModelDetailsData,
+        training_path: Path,
+        dataset_path: Path,
+        params: TrainData,
+        initial_config: dict,
     ):
         """
         Старт обучения
         """
         try:
-            if interactive.get_states().get("status") == "stopped":
+            if (
+                interactive.get_states().get("status") == "stopped"
+                or interactive.get_states().get("status") == "trained"
+            ):
                 interactive.set_status("addtrain")
-            elif interactive.get_states().get("status") == "trained":
-                interactive.set_status("retrain")
             else:
                 interactive.set_status("training")
 
@@ -365,6 +369,7 @@ class Exchange:
         """
         try:
             interactive.set_status("stopped")
+            return interactive.train_states
         except Exception as error:
             raise exceptions.FailedStopTrainException(str(error))
 
@@ -374,6 +379,7 @@ class Exchange:
         """
         try:
             interactive.set_status("no_train")
+            return interactive.train_states
         except Exception as error:
             raise exceptions.FailedCleanTrainException(str(error))
 
