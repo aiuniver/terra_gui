@@ -123,6 +123,7 @@ export default {
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
+    metricData: ''
   }),
   computed: {
     ...mapGetters({
@@ -158,11 +159,10 @@ export default {
     },
     func() {
       let data = this.obj?.architecture?.parameters?.outputs || [];
-      data = data.filter(item => item)?.[0]?.metrics || [];
+      data = data?.[this.metricData]?.metrics || [];
       data = data.map(item => {
         return { label: item, value: item };
       });
-      console.log(data);
       return data;
     },
   },
@@ -188,10 +188,13 @@ export default {
       console.log(res);
     },
     parse({ parse, value, name }) {
-      console.log({ parse, value, name });
+      // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
+      if (name === 'architecture_parameters_checkpoint_layer') {
+        this.metricData = value
+      }
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }

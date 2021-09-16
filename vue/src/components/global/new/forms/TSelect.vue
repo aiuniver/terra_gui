@@ -33,7 +33,10 @@ export default {
     name: String,
     parse: String,
     inputLabel: String,
-    list: [Array, Object],
+    list: {
+      type: Array,
+      default: () => []
+    },
     disabled: Boolean,
     small: Boolean,
     error: String,
@@ -46,17 +49,14 @@ export default {
     };
   },
   created() {
-    this.search = this.value;
-    console.log(this.list);
+    // console.log(this.list);
+    // console.log(this.name, this.value);
+    const value = this.list.find(item => item.value === this.value)
+    this.search = value?.label || ''; 
   },
   computed: {
     filterList() {
-      return this.list || [];
-      // ? this.list.filter(item => {
-      //     const search = this.search;
-      //     return search ? item.label.toLowerCase().includes(search.toLowerCase()) : true;
-      //   })
-      // : [];
+      return this.list;
     },
   },
   methods: {
