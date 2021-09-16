@@ -91,37 +91,37 @@ class CreateArray(object):
                 df = df.loc[:, x_cols]
         instructions["instructions"] = df.to_dict()
 
-        if options["parameters"]["Categorical"]:
-            tmp_lst = options["parameters"]["Categorical"]
-            instructions["parameters"]["Categorical"] = {}
-            instructions["parameters"]["Categorical"]["lst_cols"] = tmp_lst
-            for i in instructions["parameters"]["Categorical"]["lst_cols"]:
-                instructions["parameters"]["Categorical"][f"col_{i}"] = list(set(df.iloc[:, i]))
+        if options["parameters"]["Categorical_cols"]:
+            tmp_lst = options["parameters"]["Categorical_cols"]
+            instructions["parameters"]["Categorical_cols"] = {}
+            instructions["parameters"]["Categorical_cols"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["Categorical_cols"]["lst_cols"]:
+                instructions["parameters"]["Categorical_cols"][f"col_{i}"] = list(set(df.iloc[:, i]))
 
-        if options["parameters"]["Categorical_ranges"]:
-            tmp_lst = options["parameters"]["Categorical_ranges"]
-            instructions["parameters"]["Categorical_ranges"] = {}
-            instructions["parameters"]["Categorical_ranges"]["lst_cols"] = tmp_lst
+        if options["parameters"]["Categorical_ranges_cols"]:
+            tmp_lst = options["parameters"]["Categorical_ranges_cols"]
+            instructions["parameters"]["Categorical_ranges_cols"] = {}
+            instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"] = tmp_lst
             for i in range(len(tmp_lst)):
                 if len(list(options["parameters"]["cat_cols"].values())[i].split(" ")) == 1:
                     border = max(df.iloc[:, tmp_lst[i]]) / int(list(options["parameters"]["cat_cols"].values())[i])
-                    instructions["parameters"]["Categorical_ranges"][f"col_{tmp_lst[i]}"] = np.linspace(
+                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = np.linspace(
                         border, max(df.iloc[:, tmp_lst[i]]), int(list(options["parameters"]["cat_cols"].values())[i])).tolist()
                 else:
-                    instructions["parameters"]["Categorical_ranges"][f"col_{tmp_lst[i]}"] = \
+                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = \
                         list(options["parameters"]["cat_cols"].values())[i].split(" ")
 
-        if options["parameters"]["one_hot_encoding"]:
-            tmp_lst = options["parameters"]["one_hot_encoding"]
-            instructions["parameters"]["one_hot_encoding"] = {}
-            instructions["parameters"]["one_hot_encoding"]["lst_cols"] = tmp_lst
-            for i in instructions["parameters"]["one_hot_encoding"]["lst_cols"]:
-                if options["parameters"]["Categorical_ranges"] and (
-                        i in instructions["parameters"]["Categorical_ranges"]["lst_cols"]):
-                    instructions["parameters"]["one_hot_encoding"][f"col_{i}"] = len(
-                        instructions["parameters"]["Categorical_ranges"][f"col_{i}"])
+        if options["parameters"]["one_hot_encoding_cols"]:
+            tmp_lst = options["parameters"]["one_hot_encoding_cols"]
+            instructions["parameters"]["one_hot_encoding_cols"] = {}
+            instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"]:
+                if options["parameters"]["Categorical_ranges_cols"] and (
+                        i in instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"]):
+                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
+                        instructions["parameters"]["Categorical_ranges_cols"][f"col_{i}"])
                 else:
-                    instructions["parameters"]["one_hot_encoding"][f"col_{i}"] = len(
+                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
                         set(df.iloc[:, i]))
         return instructions
 
@@ -897,35 +897,35 @@ class CreateArray(object):
             array = array.reshape(orig_shape)
             return array
 
-        if options['MinMaxScaler']:
+        if options['MinMaxScaler_cols']:
             for j in range(length):
-                for i in options['MinMaxScaler']:
+                for i in options['MinMaxScaler_cols']:
                     row[j][i] = options['object_scaler'][f'col_{i}'].transform(
                         np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
 
-        if options['StandardScaler']:
+        if options['StandardScaler_cols']:
             for j in range(length):
-                for i in options['StandardScaler']:
+                for i in options['StandardScaler_cols']:
                     row[j][i] = options['object_scaler'][f'col_{i}'].transform(
                         np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
 
-        if options['Categorical']:
+        if options['Categorical_cols']:
             for j in range(length):
-                for i in options['Categorical']['lst_cols']:
-                    row[j][i] = list(options['Categorical'][f'col_{i}']).index(row[j][i])
+                for i in options['Categorical_cols']['lst_cols']:
+                    row[j][i] = list(options['Categorical_cols'][f'col_{i}']).index(row[j][i])
 
-        if options['Categorical_ranges']:
+        if options['Categorical_ranges_cols']:
             for j in range(length):
-                for i in options['Categorical_ranges']['lst_cols']:
-                    for k in range(len(options['Categorical_ranges'][f'col_{i}'])):
-                        if row[j][i] <= int(options['Categorical_ranges'][f'col_{i}'][k]):
+                for i in options['Categorical_ranges_cols']['lst_cols']:
+                    for k in range(len(options['Categorical_ranges_cols'][f'col_{i}'])):
+                        if row[j][i] <= int(options['Categorical_ranges_cols'][f'col_{i}'][k]):
                             row[j][i] = k
                             break
 
-        if options['one_hot_encoding']:
+        if options['one_hot_encoding_cols']:
             for j in range(length):
-                for i in options['one_hot_encoding']['lst_cols']:
-                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding'][f'col_{i}'],
+                for i in options['one_hot_encoding_cols']['lst_cols']:
+                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding_cols'][f'col_{i}'],
                                                      dtype='uint8').tolist()
 
         if type(row) != list:

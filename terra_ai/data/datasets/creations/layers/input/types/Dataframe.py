@@ -21,12 +21,12 @@ class ParametersData(MinMaxScalerData):
     step_len: Optional[PositiveInt]
     scaler: LayerScalerDataframeChoice = LayerScalerDataframeChoice.no_scaler
 
-    StandardScaler: Optional[List[int]]
-    MinMaxScaler: Optional[List[int]]
-    Categorical: Optional[List[int]]
-    Categorical_ranges: Optional[List[int]]
+    StandardScaler_cols: Optional[List[int]]
+    MinMaxScaler_cols: Optional[List[int]]
+    Categorical_cols: Optional[List[int]]
+    Categorical_ranges_cols: Optional[List[int]]
     cat_cols: Optional[Dict[str, str]]
-    one_hot_encoding: Optional[List[int]]
+    one_hot_encoding_cols: Optional[List[int]]
 
     step: Optional[int]
     length: Optional[int]

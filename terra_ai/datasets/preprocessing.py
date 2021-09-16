@@ -36,7 +36,7 @@ class CreatePreprocessing(object):
 
     def create_scaler(self, put_id: int, array=None, **options):
         scaler = None
-        if "MinMaxScaler" in options.keys() or options['length']:
+        if "MinMaxScaler_cols" in options.keys() or options['length']:
             array = pd.DataFrame(array)
 
         if options['scaler'] != 'no_scaler':
@@ -51,17 +51,17 @@ class CreatePreprocessing(object):
                 scaler.fit(array)
             self.preprocessing[put_id] = {'object_scaler': scaler}
 
-        elif ("MinMaxScaler" in options.keys() and options["MinMaxScaler"]) or \
-                ("StandardScaler" in options.keys() and options["StandardScaler"]):
+        elif ("MinMaxScaler_cols" in options.keys() and options["MinMaxScaler_cols"]) or \
+                ("StandardScaler_cols" in options.keys() and options["StandardScaler_cols"]):
             self.preprocessing[put_id] = {"object_scaler": {}}
-            if options["MinMaxScaler"]:
-                for i in options["MinMaxScaler"]:
+            if options["MinMaxScaler_cols"]:
+                for i in options["MinMaxScaler_cols"]:
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = MinMaxScaler()
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
                         array.iloc[:, [i]].values.reshape(-1, 1))
 
-            if options["StandardScaler"]:
-                for i in options["StandardScaler"]:
+            if options["StandardScaler_cols"]:
+                for i in options["StandardScaler_cols"]:
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"] = StandardScaler()
                     self.preprocessing[put_id]["object_scaler"][f"col_{i}"].fit(
                         array.iloc[:, [i]].values.reshape(-1, 1))
