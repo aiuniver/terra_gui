@@ -68,7 +68,15 @@
             <at-collapse-item class="mt-3" :title="checkpoint.name">
               <div class="checkpoint">
                 <t-field class="checkpoint__item" inline label="Функция">
-                  <t-select-new :list="func" small update name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" :value="'Accuracy'" @parse="parse" />
+                  <t-select-new
+                    :list="func"
+                    small
+                    update
+                    name="metric_name"
+                    :parse="'architecture[parameters][checkpoint][metric_name]'"
+                    :value="getValue"
+                    @parse="parse"
+                  />
                 </t-field>
                 <template v-for="(data, i) of checkpoint.fields">
                   <t-auto-field-trainings
@@ -123,12 +131,15 @@ export default {
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
-    metricData: ''
+    metricData: '',
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
     }),
+    getValue() {
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
+    },
     state: {
       set(value) {
         this.$store.dispatch('trainings/setStateParams', value);
@@ -190,10 +201,10 @@ export default {
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
-      console.log(ser(this.obj, parse, value));
+      ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
-        this.metricData = value
+        this.metricData = value;
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
