@@ -375,29 +375,25 @@ class InteractiveCallback:
             #     # {
             #     #     'id': 1,
             #     #     'output_idx': 2,
-            #     #     'show_for_model': True,
-            #     #     'show_for_classes': False
+            #     #     'show': ['model'],
             #     # },
             #     # {
             #     #     'id': 2,
             #     #     'output_idx': 2,
-            #     #     'show_for_model': False,
-            #     #     'show_for_classes': True
+            #     #     'show': ['classes'],
             #     # },
             # ],
             # 'metric_graphs': [
             #     # {
             #     #     'id': 1,
             #     #     'output_idx': 2,
-            #     #     'show_for_model': True,
-            #     #     'show_for_classes': False,
+            #     #     'show': ['model'],
             #     #     'show_metric': 'CategoricalAccuracy'
             #     # },
             #     # {
             #     #     'id': 2,
             #     #     'output_idx': 2,
-            #     #     'show_for_model': False,
-            #     #     'show_for_classes': True,
+            #     #     'show': ['classes'],
             #     #     'show_metric': 'CategoricalAccuracy'
             #     # }
             # ],
@@ -1388,9 +1384,9 @@ class InteractiveCallback:
         data_return = []
         if not self.interactive_config.get('loss_graphs'):
             return data_return
-        _id = 1
+
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
-            if loss_graph_config.get('show_for_model'):
+            if loss_graph_config.get('show') == 'model':
                 if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
                         "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1403,7 +1399,7 @@ class InteractiveCallback:
                     progress_state = "normal"
                 data_return.append(
                     {
-                        "id": _id,
+                        "id": loss_graph_config.get('id'),
                         "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
                                       f"График ошибки обучения - Эпоха №{self.log_history.get('epochs')[-1]}",
                         "x_label": "Эпоха",
@@ -1427,10 +1423,10 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show_for_classes'):
+            elif loss_graph_config.get('show') == 'classes':
                 data_return.append(
                     {
-                        "id": _id,
+                        "id": loss_graph_config.get('id'),
                         "graph_name": f"Output_{loss_graph_config.get('output_idx')} - "
                                       f"График ошибки обучения по классам - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
@@ -1457,7 +1453,6 @@ class InteractiveCallback:
                         "plot_data": []
                     }
                 )
-            _id += 1
         return data_return
 
     def _get_metric_graph_data_request(self) -> list:
@@ -1502,9 +1497,9 @@ class InteractiveCallback:
         data_return = []
         if not self.interactive_config.get('metric_graphs'):
             return data_return
-        _id = 1
+
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
-            if metric_graph_config.get('show_for_model'):
+            if metric_graph_config.get('show') == 'model':
                 if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                         "metrics").get(metric_graph_config.get('show_metric')).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1517,7 +1512,7 @@ class InteractiveCallback:
                     progress_state = 'normal'
                 data_return.append(
                     {
-                        "id": _id,
+                        "id": metric_graph_config.get('id'),
                         "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
                                       f"График метрики {metric_graph_config.get('show_metric')} - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
@@ -1542,10 +1537,10 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show_for_classes'):
+            elif metric_graph_config.get('show') == 'classes':
                 data_return.append(
                     {
-                        "id": _id,
+                        "id": metric_graph_config.get('id'),
                         "graph_name": f"Output_{metric_graph_config.get('output_idx')} - "
                                       f"График метрики {metric_graph_config.get('show_metric')} по классам - "
                                       f"Эпоха №{self.log_history.get('epochs')[-1]}",
@@ -1572,7 +1567,6 @@ class InteractiveCallback:
                         "plot_data": []
                     }
                 )
-            _id += 1
         return data_return
 
     def _get_intermediate_result_request(self) -> dict:
@@ -1979,12 +1973,12 @@ class InteractiveCallback:
         cm = confusion_matrix(y_true, y_pred)
         cm_percent = None
         if get_percent:
-            cm_percent = np.zeros_like(cm).astype('float32')
+            cm_percent = np.zeros_like(cm).astype('float')
             for i in range(len(cm)):
                 total = np.sum(cm[i])
                 for j in range(len(cm[i])):
                     cm_percent[i][j] = round(cm[i][j] * 100 / total, 1)
-        return cm, cm_percent
+        return cm.astype('float'), cm_percent.astype('float')
 
     @staticmethod
     def _get_classification_report(y_true, y_pred, labels):
@@ -2053,8 +2047,8 @@ class InteractiveCallback:
                 img = image.array_to_img(self.x_val.get(input_id)[example_idx])
             img = img.convert('RGB')
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
-            # save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
+            # save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
+            save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
             img.save(save_path, 'webp')
             return save_path, LayerInputTypeChoice.Image.name
 
@@ -2064,12 +2058,14 @@ class InteractiveCallback:
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Video:
             clip = moviepy_editor.VideoFileClip(initial_file_path)
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
+            # save_path = f"/tmp/initial_data_video_{save_id}_input_{input_id}.webm"
+            save_path = f"initial_data_video_{save_id}_input_{input_id}.webm"
             clip.write_videofile(save_path)
             return save_path, LayerInputTypeChoice.Video.name
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Audio:
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_audio_{save_id}_input_{input_id}.webp"
+            # save_path = f"/tmp/initial_data_audio_{save_id}_input_{input_id}.webp"
+            save_path = f"initial_data_audio_{save_id}_input_{input_id}.webp"
             AudioSegment.from_file(initial_file_path).export(save_path, format="webm")
             return save_path, LayerInputTypeChoice.Audio.name
         elif self.dataset_config.get("inputs").get(input_id).get("task") == LayerInputTypeChoice.Dataframe:
@@ -2175,8 +2171,8 @@ class InteractiveCallback:
             y_true = tensorflow.keras.utils.array_to_img(y_true)
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
-            y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            # y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_true.save(y_true_save_path, 'webp')
 
             # prepare y_pred image
@@ -2190,8 +2186,8 @@ class InteractiveCallback:
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
             # filepath_pred = NamedTemporaryFile()
-            y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            # y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_pred.save(y_pred_save_path, 'webp')
 
             class_stat = {}
@@ -2254,5 +2250,5 @@ class InteractiveCallback:
             pass
         elif self.dataset_config.get("outputs").get(output_id).get("task") == LayerOutputTypeChoice.ObjectDetection:
             # image with bb
-            # accuracy, corellation bb for classes
+            # accuracy, correlation bb for classes
             pass
