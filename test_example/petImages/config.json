@@ -1,7 +1,0 @@
-{
-  "model_name": "petImages",
-  "weight": "test_example/petImages",
-  "preprocess": "test_example/petImages/preprocess.json",
-  "postprocessing": null,
-  "tags": [{"alias": "image", "name": "Image"}, {"alias": "classification", "name": "Classification"}]
-}
