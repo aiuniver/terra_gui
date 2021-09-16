@@ -3,6 +3,11 @@ from pydantic import ValidationError
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
 from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.data.training.extra import (
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    MetricChoice,
+)
 
 from apps.plugins.project import project_path, Project
 from terra_ai.exceptions.base import TerraBaseException
@@ -29,18 +34,70 @@ class StartAPIView(BaseAPIView):
             layer_data.update({"task": layer.task.value})
         return TrainData(**data)
 
-    def _get_interactive_defaults(self, project: Project) -> InteractiveData:
+    def _get_interactive_defaults(
+        self, data: dict, project: Project
+    ) -> InteractiveData:
+        architecture = data.get("architecture", {})
         loss_graphs = []
-        for index, layer in enumerate(project.model.outputs, 1):
+        metric_graphs = []
+        progress_table = []
+        index = 0
+        for layer_data in architecture.get("parameters", {}).get("outputs", []):
+            if not layer_data:
+                continue
+            layer = project.model.outputs.get(layer_data.get("id"))
+            if not layer:
+                continue
+            metrics_list = layer_data.get("metrics", [])
+            metric = metrics_list[0] if metrics_list else None
+            index += 1
             loss_graphs.append(
                 {
                     "id": index,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.model,
+                }
+            )
+            metric_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": MetricGraphShowChoice.model,
+                    "show_metric": metric,
+                }
+            )
+            index += 1
+            loss_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.classes,
+                }
+            )
+            metric_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": MetricGraphShowChoice.classes,
+                    "show_metric": metric,
+                }
+            )
+            progress_table.append(
+                {
                     "output_idx": layer.id,
                 }
             )
         return InteractiveData(
             **{
                 "loss_graphs": loss_graphs,
+                "metric_graphs": metric_graphs,
+                "intermediate_result": {
+                    "main_output": project.model.outputs[0].id,
+                },
+                "progress_table": progress_table,
+                "statistic_data": {
+                    "output_id": project.model.outputs.ids,
+                },
             }
         )
 
@@ -52,7 +109,9 @@ class StartAPIView(BaseAPIView):
                 "training_path": project_path.training,
                 "dataset_path": project_path.datasets,
                 "params": self._get_training_defaults(request.data, request.project),
-                "initial_config": self._get_interactive_defaults(request.project),
+                "initial_config": self._get_interactive_defaults(
+                    request.data, request.project
+                ),
             }
             return BaseResponseSuccess(agent_exchange("training_start", **data))
         except ValidationError as error:

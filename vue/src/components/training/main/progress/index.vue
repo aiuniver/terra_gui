@@ -17,7 +17,7 @@ export default {
   },
   computed: {
     usage() {
-      return this.$store.getters['trainings/getTest']('usage');
+      return this.$store.getters['trainings/getUsage'];
     },
   },
   mounted() {

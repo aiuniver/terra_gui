@@ -3,21 +3,28 @@
 """
 
 import json
-from typing import Any
+from typing import Any, List
 from pydantic import validator
-from pydantic.types import PositiveInt
+from pydantic.types import conint, PositiveInt
 from pydantic.errors import EnumMemberError
 
 from ..mixins import BaseMixinData, UniqueListMixin, IDMixinData
 from . import optimizers
 from . import architectures
-from .extra import OptimizerChoice, ArchitectureChoice
+from .extra import (
+    OptimizerChoice,
+    ArchitectureChoice,
+    LossGraphShowChoice,
+    MetricGraphShowChoice,
+    ExampleChoiceTypeChoice,
+    BalanceSortedChoice,
+    MetricChoice,
+)
 
 
 class LossGraphData(IDMixinData):
     output_idx: PositiveInt
-    show_for_model: bool = True
-    show_for_classes: bool = True
+    show: LossGraphShowChoice
 
 
 class LossGraphsList(UniqueListMixin):
@@ -26,8 +33,57 @@ class LossGraphsList(UniqueListMixin):
         identifier = "id"
 
 
+class MetricGraphData(IDMixinData):
+    output_idx: PositiveInt
+    show: MetricGraphShowChoice
+    show_metric: MetricChoice
+
+
+class MetricGraphsList(UniqueListMixin):
+    class Meta:
+        source = MetricGraphData
+        identifier = "id"
+
+
+class IntermediateResultData(BaseMixinData):
+    show_results: bool = False
+    example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
+    main_output: PositiveInt
+    num_examples: conint(ge=1, le=10) = 10
+    show_statistic: bool = False
+    autoupdate: bool = False
+
+
+class ProgressTableData(BaseMixinData):
+    output_idx: PositiveInt
+    show_loss: bool = True
+    show_metrics: bool = True
+
+
+class ProgressTableList(UniqueListMixin):
+    class Meta:
+        source = ProgressTableData
+        identifier = "output_idx"
+
+
+class StatisticData(BaseMixinData):
+    output_id: List[PositiveInt]
+    autoupdate: bool = False
+
+
+class BalanceData(BaseMixinData):
+    show_train: bool = True
+    show_val: bool = True
+    sorted: BalanceSortedChoice = BalanceSortedChoice.descending
+
+
 class InteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
+    metric_graphs: MetricGraphsList = MetricGraphsList()
+    intermediate_result: IntermediateResultData
+    progress_table: ProgressTableList = ProgressTableList()
+    statistic_data: StatisticData
+    data_balance: BalanceData = BalanceData()
 
 
 class OptimizerData(BaseMixinData):

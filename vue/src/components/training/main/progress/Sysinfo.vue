@@ -7,21 +7,30 @@
         <p class="t-sysinfo__gpu-name">NVIDIA GeForce GTX 1060 6 GB</p>
         <p>{{ `${gpu.gpu_utilization || '0%'} (${gpu.gpu_memory_used || '0'} / ${gpu.gpu_memory_total || '0'})` }}</p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: gpu.gpu_utilization || '0%'}"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: (gpu.gpu_utilization || 0) + '%' }"></div>
+        </div>
+      </div>
+      <div class="t-sysinfo__grid-item">CPU</div>
+      <div :class="['t-sysinfo__grid-item', { warning: isWarning(cpu.cpu_utilization) }]">
+        <p>{{ `${cpu.cpu_utilization || '0%'} (${cpu.cpu_memory_used || '0'} / ${cpu.cpu_memory_total || '0'})` }}</p>
+        <div class="t-sysinfo__progress-bar">
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: (cpu.cpu_utilization || 0) + '%' }"></div>
         </div>
       </div>
       <div class="t-sysinfo__grid-item">RAM</div>
       <div :class="['t-sysinfo__grid-item', { warning: isWarning(ram.ram_utilization) }]">
-        <p>{{ `${ram.ram_utilization || '0%'} (${ram.ram_memory_used || '0'} / ${ram.ram_memory_total || '0'})` }}</p>
+        <p>{{ `${ram.ram_utilization + '% '  || '0%'} (${ram.ram_memory_used || '0'} / ${ram.ram_memory_total || '0'})` }}</p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: ram.ram_utilization || '0%' }"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: (ram.ram_utilization || 0) + '%' }"></div>
         </div>
       </div>
       <div class="t-sysinfo__grid-item">Disk</div>
       <div :class="['t-sysinfo__grid-item', { warning: isWarning(disk.disk_utilization) }]">
-        <p>{{ `${disk.disk_utilization || '0%'} (${disk.disk_memory_used || '0'} / ${disk.disk_memory_total || '0'})` }}</p>
+        <p>
+          {{ `${disk.disk_utilization + '% ' || '0%'} (${disk.disk_memory_used || '0'} / ${disk.disk_memory_total || '0'})` }}
+        </p>
         <div class="t-sysinfo__progress-bar">
-          <div class="t-sysinfo__progress-bar--fill" :style="{ width: disk.disk_utilization || '0%'}"></div>
+          <div class="t-sysinfo__progress-bar--fill" :style="{ width: (disk.disk_utilization || 0) + '%' }"></div>
         </div>
       </div>
     </div>
@@ -41,6 +50,9 @@ export default {
     gpu() {
       return this.usage?.GPU || {};
     },
+    cpu() {
+      return this.usage?.CPU || {};
+    },
     ram() {
       return this.usage?.RAM || {};
     },
@@ -48,7 +60,7 @@ export default {
   methods: {
     isWarning(value) {
       const int = value?.trim()?.replace('%', '');
-      console.log()
+      console.log();
       return +int > 50;
     },
   },

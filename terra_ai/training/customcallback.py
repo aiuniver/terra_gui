@@ -434,7 +434,8 @@ class InteractiveCallback:
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
-        self.interactive_config = initial_config
+        self.interactive_config = initial_config.native()
+        # print("INITIAL_CONFIG", self.interactive_config)
         # self.dataset = dataset
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = dataset.X.get("val") if dataset.data.group == DatasetGroupChoice.keras else None

@@ -1,41 +1,23 @@
 <template>
   <div class="t-table">
-    <div class="t-table__header" v-click-outside="outside">
-      <div
-        v-for="(tab, i) of group"
-        :key="'tabs_' + i"
-        :class="['t-table__label', { 't-table__label--active': tab.active }]"
-        @click="clickTab(tab)"
-        :style="{ order: tab.id, backgroundColor: color(tab.layer) || '', borderColor: color(tab.layer) || '' }"
-      >
-        <span>{{ `${tab.active ? tab.label : ''}  ${tab.id}` }}</span>
-        <i v-if="tab.active" class="t-icon icon-file-dot" @click="show = true"></i>
-        <PopUpMenu v-if="tab.active && show" />
-      </div>
-
-      <div v-if="selectTable.length || group.length" class="t-table__add" @click="addGroup">
-        <i class="t-icon icon-tag-plus"></i>
-      </div>
-    </div>
+    <div class="t-table__header"></div>
     <div class="t-table__data">
       <div class="t-table__col" :style="{ padding: '1px 0' }">
         <div v-for="(i, idx) of 6" :key="'idx_r_' + i" class="t-table__row">{{ idx ? idx : '' }}</div>
       </div>
-
-      <div v-if="selectTable.length" class="t-table__border t-table__border--selected" :style="getColor">
-        <div
-          v-for="(row, index) in selectTable"
-          :class="['t-table__col', { 't-table__col--first': index === 0 }]"
-          :key="'rowr_' + index"
-          @click="remove(row)"
-        >
-          <div class="t-table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
-        </div>
-      </div>
-
       <div class="t-table__border">
-        <div v-for="(row, index) in origTable" class="t-table__col" :key="'row_' + index" @click="select(row)">
-          <div class="t-table__row" v-for="(item, i) in row" :key="'item_' + i">{{ item }}</div>
+        <div
+          v-for="(row, index) in origTable"
+          :class="['t-table__col', { 't-table__col--active': row.active }]"
+          :key="'row_' + index"
+          @click="select(row, $event)"
+        >
+          <div v-if="row.active" class="t-table__select">
+            <t-select-new small :list="[]"></t-select-new>
+          </div>
+          <div v-for="(item, i) in row" class="t-table__row" :key="'item_' + i">
+            {{ item }}
+          </div>
         </div>
       </div>
     </div>
@@ -60,7 +42,6 @@
 </template>
 
 <script>
-import PopUpMenu from '@/components/global/forms/PopUpMenu.vue';
 export default {
   name: 'CardTable',
   props: {
@@ -69,9 +50,6 @@ export default {
     id: Number,
     cover: String,
     table: Array,
-  },
-  components: {
-    PopUpMenu,
   },
   data: () => ({
     show: false,
@@ -85,10 +63,10 @@ export default {
       return { borderColor: this.color(id?.[0]?.layer) || '' };
     },
     origTable() {
-      return this.originTable.filter(item => !this.selected.includes(item[0]));
-    },
-    selectTable() {
-      return this.originTable.filter(item => this.selected.includes(item[0]));
+      return this.originTable.map(item => {
+        item.active = this.selected.includes(item[0]);
+        return item;
+      });
     },
     group: {
       set(value) {
@@ -113,51 +91,20 @@ export default {
     this.originTable = newarr;
   },
   methods: {
-    outside() {
-      this.show = false;
-    },
     color(id) {
       const selectInputData = this.$store.getters['datasets/getInputDataByID'](id) || {};
       return selectInputData.color || '';
     },
-    tadSave() {
-      this.group.forEach(item => {
-        if (item.active) {
-          item.data = this.selected;
-        }
-      });
-      this.group = [...this.group];
-    },
-    tabDeselect(id) {
-      this.group = this.group.map(item => {
-        item.active = item.id === id;
-        return item;
-      });
-    },
-    clickTab(tab) {
-      console.log(tab);
-      this.tabDeselect(tab.id);
-      this.selected = tab.data;
-    },
-    addGroup() {
-      console.log('dsdsdsdsds');
-      this.tabDeselect(999);
-      this.group.push({ id: this.group.length + 1, label: 'Группа', data: [this.selected], active: true });
-      this.selected = [];
-      this.tadSave();
-    },
-    select([name]) {
-      if (this.show) return;
-      console.log('yuyuyuyuyu');
-      if (this.group.length === 0) {
-        this.group.push({ id: this.group.length + 1, label: 'Группа', data: [], active: true });
+    select([name], event) {
+      console.log(event)
+      if (this.selected.find(item => item === name)) {
+        this.selected = this.selected.filter(item => item !== name);
+      } else {
+        // if () {
+
+        // }
+        this.selected.push(name);
       }
-      this.selected.push(name);
-      this.tadSave();
-    },
-    remove([name]) {
-      this.selected = this.selected.filter(item => item !== name);
-      this.tadSave();
     },
   },
 };
@@ -181,8 +128,8 @@ export default {
     padding: 0 0 0 23px;
     flex: 0 0 23px;
     user-select: none;
-    z-index: 2;
-        background-color: #222c387d;
+    // z-index: 2;
+    background-color: #222c387d;
   }
   &__add {
     padding: 0 5px;
@@ -243,19 +190,21 @@ export default {
     display: flex;
     position: relative;
     // border-left: 1px solid #6c7883;
-
-    &--selected {
-      padding: 0;
-      border: 1px solid #6c7883;
-      border-radius: 0px 0px 4px 4px;
-    }
+  }
+  &__select {
+    position: absolute;
+    top: -24px;
+    width: 100px;
   }
   &__col {
     display: flex;
     flex-direction: column;
-    &--first {
-      min-width: 90px;
-      // border-top-right-radius: 0px;
+    padding: 1px;
+    &--active {
+      min-width: 100px;
+      padding: 0;
+      border: 1px solid #6c7883;
+      border-radius: 0px 0px 4px 4px;
     }
   }
   &__row {

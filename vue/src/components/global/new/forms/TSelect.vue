@@ -50,10 +50,10 @@ export default {
     };
   },
   created() {
-    this.selected = this.list.find(item => item.value === this.value);
-    console.log(this.name, this.list);
+    this.selected = this.list.find(item => item.value === this.value) || {};
+    // console.log(this.name, this.list);
     if (this.update) {
-      this.send('Accuracy');//wtf
+      this.send(this.value);//wtf
     }
   },
   computed: {
@@ -62,10 +62,11 @@ export default {
     },
     search: {
       set(value) {
-        console.log(value);
+        this.input = value
       },
       get() {
-        return this.list.find(item => item.value === this.selected?.value)?.label;
+        const label = this.list.find(item => (item.value === this.selected?.value || item.value === this.value ))?.label || '';
+        return label
       },
     },
   },
@@ -79,15 +80,17 @@ export default {
       this.show = !this.show;
     },
     outside() {
-      console.log('sdsdsd');
       this.show = false;
     },
     select(item) {
       if (item) {
         this.selected = item;
         this.send(item.value);
+        this.input = item.value
       } else {
-        this.search = this.selected.label || this.value;
+        // console.log(this.selected)
+        // console.log(this.selected)
+        this.search = this.selected.label || this.value || '';
       }
       this.show = false;
     },
@@ -97,8 +100,11 @@ export default {
     },
   },
   watch: {
-    list(value) {
-      this.selected = value.find(item => item.value === this.value);
+    search(value) {
+      if(!value) {
+        this.$emit('parse', { name: this.name, parse: this.parse, value });
+      }
+      console.log(value)
     }
   }
 };

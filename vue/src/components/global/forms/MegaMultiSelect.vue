@@ -34,12 +34,14 @@ export default {
       return this.valueTemp.includes(value);
     },
     click(value) {
-      this.valueTemp = this.valueTemp.includes(value)
-        ? this.valueTemp.filter(item => item !== value)
-        : [...this.valueTemp, value];
-      this.$emit('input', this.valueTemp);
-      this.$emit('change', { name: this.name, value });
-      this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
+      if (this.valueTemp.length > 1 || !this.valueTemp.includes(value)) {
+        this.valueTemp = this.valueTemp.includes(value)
+          ? this.valueTemp.filter(item => item !== value)
+          : [...this.valueTemp, value];
+        this.$emit('input', this.valueTemp);
+        this.$emit('change', { name: this.name, value });
+        this.$emit('parse', { name: this.name, parse: this.parse, value: this.valueTemp });
+      }
     },
   },
   created() {
@@ -64,7 +66,7 @@ export default {
     border-radius: 4px;
     padding: 5px;
     overflow: hidden;
-    background: #242F3D;
+    background: #242f3d;
     &--empty {
       color: #a7bed3;
       font-size: 0.7em;
