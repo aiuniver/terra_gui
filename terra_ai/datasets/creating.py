@@ -178,7 +178,7 @@ class CreateDataset(object):
     def create_preprocessing(self, instructions: DatasetInstructionsData):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            if 'MinMaxScaler' in put.parameters.keys() or 'length' in put.parameters.keys():
+            if 'MinMaxScaler_cols' in put.parameters.keys() or 'length' in put.parameters.keys():
                 self.preprocessing.create_scaler(put.parameters['put'], array=put.instructions, **put.parameters)
             elif 'scaler' in put.parameters.keys() and put.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
                 self.preprocessing.create_scaler(put.parameters['put'], **put.parameters)
