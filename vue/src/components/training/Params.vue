@@ -244,7 +244,7 @@ export default {
     },
   },
   created() {
-    this.progress()
+    // this.progress()
   }
 };
 </script>
