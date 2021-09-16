@@ -125,6 +125,7 @@ class GUINN:
     def _prepare_dataset(dataset: DatasetData, datasets_path: str) -> PrepareDataset:
         prepared_dataset = PrepareDataset(data=dataset, datasets_path=datasets_path)
         prepared_dataset.prepare_dataset()
+        print(prepared_dataset.dataframe)
         return prepared_dataset
 
     @staticmethod
@@ -211,6 +212,7 @@ class GUINN:
         Return:
             None
         """
+        # print(dataset, gui_model, training_params, initial_config)
         self._save_params_for_deploy(dataset_path=dataset_path, training_path=training_path, params=training_params)
         self.nn_cleaner(retrain=True if interactive.get_states().get("status") == "training" else False)
         self._set_training_params(dataset=dataset, dataset_path=dataset_path, model_name=gui_model.name,
@@ -693,7 +695,10 @@ class FitCallback(keras.callbacks.Callback):
         self._start_time = time.time()
         if status != "addtrain":
             self.batch = 0
-        self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
+        if not self.dataset.data.use_generator:
+            self.num_batches = self.dataset.X['train']['1'].shape[0]
+        else:
+            self.num_batches = len(self.dataset.dataframe['train']) // self.batch_size
 
     def on_epoch_begin(self, epoch, logs=None):
         self._time_first_step = time.time()
