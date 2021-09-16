@@ -54,7 +54,7 @@
                       <template v-for="(data, i) of field.fields">
                         <t-auto-field-trainings
                           v-bind="data"
-                          :key="'checkpoints_' + i"
+                          :key="'checkpoint_' + i"
                           :state="state"
                           :inline="true"
                           @parse="parse"
@@ -65,16 +65,16 @@
                 </template>
               </div>
             </at-collapse-item>
-            <at-collapse-item class="mt-3" :title="checkpoints.name">
-              <div class="checkpoints">
-                <t-field class="checkpoints__item" inline label="Функция">
+            <at-collapse-item class="mt-3" :title="checkpoint.name">
+              <div class="checkpoint">
+                <t-field class="checkpoint__item" inline label="Функция">
                   <t-select-new :list="func" small name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" @parse="parse" />
                 </t-field>
-                <template v-for="(data, i) of checkpoints.fields">
+                <template v-for="(data, i) of checkpoint.fields">
                   <t-auto-field-trainings
                     v-bind="data"
                     :key="'outputs_' + i"
-                    class="checkpoints__item"
+                    class="checkpoint__item"
                     :state="state"
                     :inline="true"
                     @parse="parse"
@@ -153,8 +153,8 @@ export default {
     optimizer() {
       return this.params?.optimizer || {};
     },
-    checkpoints() {
-      return this.params?.checkpoints || {};
+    checkpoint() {
+      return this.params?.checkpoint || {};
     },
     func() {
       let data = this.obj?.architecture?.parameters?.outputs || [];
@@ -250,7 +250,7 @@ export default {
 
 .fit,
 .optimizer,
-.checkpoints {
+.checkpoint {
   display: flex;
   flex-wrap: wrap;
   &__item {
