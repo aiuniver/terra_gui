@@ -8,6 +8,16 @@ from typing import List
 from ..mixins import BaseMixinData, UniqueListMixin
 
 
+class LossGraphShowChoice(str, Enum):
+    model = "model"
+    classes = "classes"
+
+
+class MetricGraphShowChoice(str, Enum):
+    model = "model"
+    classes = "classes"
+
+
 class ArchitectureChoice(str, Enum):
     Basic = "Basic"
     Yolo = "Yolo"
