@@ -1,8 +1,8 @@
 <template>
   <div class="board">
-    <scrollbar>
+    <scrollbar :ops="{ scrollPanel: { scrollingX: false } }">
       <div class="wrapper">
-        <at-collapse @on-change="change">
+        <at-collapse @on-change="change" class="mt-3">
           <at-collapse-item class="mt-3" title="Лоссы" center>
             <LoadSpiner v-show="loading" />
             <LossGraphs v-if="show" @isLoad="loading = false" />
@@ -83,11 +83,15 @@ export default {
 <style scoped>
 .board {
   flex: 1 1 auto;
+  overflow: hidden;
 }
 .wrapper {
   padding: 20px;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
+}
+.mt-3 {
+  width: 100%;
 }
 </style>

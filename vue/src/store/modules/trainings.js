@@ -13,8 +13,8 @@ export default {
 
     info: '',
     states: {},
-    trainData: {},
-    // trainData: data,
+    // trainData: {},
+    trainData: data,
     usage: {},
   }),
   mutations: {
