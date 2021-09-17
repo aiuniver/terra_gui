@@ -212,9 +212,10 @@ class Project(BaseMixinData):
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
-        self.training.base.architecture.parameters.checkpoint = CheckpointData(
-            **{"layer": self.model.outputs[0].id}
-        )
+        if self.model.outputs:
+            self.training.base.architecture.parameters.checkpoint = CheckpointData(
+                **{"layer": self.model.outputs[0].id}
+            )
 
     def __update_training_interactive(self):
         loss_graphs = []
