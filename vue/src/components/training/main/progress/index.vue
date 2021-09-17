@@ -1,7 +1,11 @@
 <template>
   <div class="t-progress">
-    <Timers />
-    <Sysinfo :usage="usage"/>
+    <div class="t-progress__item t-progress__item--timers">
+      <Timers />
+    </div>
+    <div class="t-progress__item t-progress__item--info">
+      <Sysinfo :usage="usage" />
+    </div>
   </div>
 </template>
 
@@ -28,11 +32,21 @@ export default {
 
 <style lang="scss" scoped>
 .t-progress {
+  padding: 10px 0;
   font-size: 12px;
   line-height: 24px;
   color: #a7bed3;
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 5px;
+  &__item {
+
+    &--timers {
+    }
+    &--info {
+      width: 40%;
+    }
+  }
 }
 </style>

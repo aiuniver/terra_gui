@@ -10,7 +10,6 @@
           <at-collapse-item class="mt-3" title="Метрики" center>
             <MetricGraphs @isLoad="loading = false" />
           </at-collapse-item>
-          <at-collapse-item class="mt-3" title="Метрики" center></at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
             <PrePesults/>
             <!-- <Images /> -->

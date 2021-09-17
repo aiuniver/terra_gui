@@ -2,35 +2,46 @@
   <div class="charts">
     <div class="charts__title">Графики</div>
     <div class="charts__content">
-      <TChar v-for="(char, i) of lossGraphs" :key="'char1_' + i" :char="char" />
+      <div class="chart">
+        <TCharTemp />
+      </div>
+      <div v-for="(char, i) of lossGraphs" :key="'char1_' + i" class="chart">
+        <TChar :char="char" />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import TChar from './TChar.vue'
-import { mapGetters } from 'vuex'
+import TChar from './TChar';
+import TCharTemp from './TCharTemp';
+import { mapGetters } from 'vuex';
 export default {
   name: 'TMetricGraphs',
   components: {
     TChar,
+    TCharTemp,
   },
   computed: {
     ...mapGetters({
-      chars : 'trainings/getChars'    
+      chars: 'trainings/getChars',
     }),
     lossGraphs() {
-      return this.$store.getters['trainings/getTrainData']('metric_graphs') || []
-    }
+      return this.$store.getters['trainings/getTrainData']('metric_graphs') || [];
+    },
   },
   mounted() {
-    this.$emit('isLoad', true)
-    console.log('mounted')
-  }
-}
+    this.$emit('isLoad', true);
+    console.log('mounted');
+  },
+};
 </script>
 
 <style lang="scss" scoped>
+.chart {
+  width: 48%;
+  margin: 0 0 20px 0;
+}
 .charts {
   margin-bottom: 20px;
   // &__title {
@@ -42,29 +53,12 @@ export default {
     display: -ms-flexbox;
     display: -webkit-flex;
     display: flex;
-    -webkit-box-direction: normal;
-    -moz-box-direction: normal;
-    -webkit-box-orient: horizontal;
-    -moz-box-orient: horizontal;
-    -webkit-flex-direction: row;
-    -ms-flex-direction: row;
     flex-direction: row;
-    -webkit-flex-wrap: wrap;
-    -ms-flex-wrap: wrap;
     flex-wrap: wrap;
-    -webkit-box-pack: start;
-    -moz-box-pack: start;
-    -webkit-justify-content: flex-start;
-    -ms-flex-pack: start;
     justify-content: flex-start;
-    -webkit-align-content: flex-start;
-    -ms-flex-line-pack: start;
     align-content: flex-start;
-    -webkit-box-align: start;
-    -moz-box-align: start;
-    -webkit-align-items: flex-start;
-    -ms-flex-align: start;
     align-items: flex-start;
+    gap: 2%;
   }
 }
 </style>
