@@ -15,7 +15,7 @@ export default {
     states: {},
     trainData: {},
     // trainData: data,
-    usage: {},
+    trainUsage: {},
   }),
   mutations: {
     SET_PARAMS(state, value) {
@@ -33,8 +33,8 @@ export default {
     SET_TRAIN(state, value) {
       state.trainData = { ...value };
     },
-    SET_USAGE(state, value) {
-      state.usage = { ...value };
+    SET_TRAIN_USAGE(state, value) {
+      state.trainUsage = { ...value };
     },
   },
   actions: {
@@ -75,8 +75,8 @@ export default {
     setTrainData({ commit }, data) {
       commit("SET_TRAIN", data);
     },
-    setUsage({ commit }, data) {
-      commit("SET_USAGE", data);
+    setTrainUsage({ commit }, data) {
+      commit("SET_TRAIN_USAGE", data);
     },
   },
   getters: {
@@ -101,8 +101,8 @@ export default {
     getTexts({ data: { texts } }) {
       return texts;
     },
-    getUsage: ({ usage }) => {
-      return usage || {};
+    getTrainUsage: ({ trainUsage }) => {
+      return trainUsage || {};
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key] || {};

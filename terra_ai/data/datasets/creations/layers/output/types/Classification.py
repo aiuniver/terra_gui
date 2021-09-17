@@ -9,7 +9,7 @@ from .....extra import LayerTypeProcessingClassificationChoice
 
 class ParametersData(SourcesPathsData):
     one_hot_encoding: bool = True
-    type_processing: Optional[LayerTypeProcessingClassificationChoice]
+    type_processing: Optional[LayerTypeProcessingClassificationChoice] = LayerTypeProcessingClassificationChoice.categorical
     ranges: Optional[str]
 
     cols_names: Optional[List[int]]

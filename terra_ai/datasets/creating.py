@@ -189,7 +189,7 @@ class CreateDataset(object):
     def create_preprocessing(self, instructions: DatasetInstructionsData):
 
         for put in list(instructions.inputs.values()) + list(instructions.outputs.values()):
-            if 'dataframe' in self.tags.values():
+            if ('dataframe' in self.tags.values()) and ('scaler' in put.parameters.keys()):
                 self.preprocessing.create_scaler(put.parameters['put'], array=put.instructions, **put.parameters)
             elif 'scaler' in put.parameters.keys() and put.parameters['scaler'] != LayerScalerImageChoice.no_scaler:
                 self.preprocessing.create_scaler(put.parameters['put'], **put.parameters)
@@ -330,22 +330,7 @@ class CreateDataset(object):
 
         creating_outputs_data = {}
         for key in self.instructions.outputs.keys():
-            if (creation_data.outputs.get(key).type in
-                [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]) or (
-                    'dataframe' in self.tags.values()):
-                arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
-                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
-                    **self.instructions.outputs.get(key).parameters, **self.preprocessing.preprocessing.get(key))
-                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'], **arr['parameters'])
-                if 'classification' in self.tags.values():
-                    cl_names = self.instructions.outputs.get(key).parameters['classes_names']
-                    classes_names = cl_names if cl_names else [os.path.basename(x) for x in creation_data.outputs.get(
-                        key).parameters.sources_paths]
-                    num_classes = len(classes_names)
-                else:
-                    classes_names = None
-                    num_classes = None
-            elif creation_data.outputs.get(key).type in [LayerOutputTypeChoice.Timeseries]:
+            if creation_data.outputs.get(key).type in [LayerOutputTypeChoice.Timeseries]:
                 trend = creation_data.outputs.get(key).parameters.trend
                 length = creation_data.outputs.get(key).parameters.length
                 depth = creation_data.outputs.get(key).parameters.depth
@@ -372,6 +357,22 @@ class CreateDataset(object):
                                                                                **arr['parameters'])
                 classes_names = None
                 num_classes = None
+
+            elif (creation_data.outputs.get(key).type in
+                [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]) or (
+                    'dataframe' in self.tags.values()):
+                arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                    self.dataframe['test'].loc[0, f'{key}_{self.tags[key]}'],
+                    **self.instructions.outputs.get(key).parameters, **self.preprocessing.preprocessing.get(key))
+                array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'], **arr['parameters'])
+                if 'classification' in self.tags.values():
+                    cl_names = self.instructions.outputs.get(key).parameters['classes_names']
+                    classes_names = cl_names if cl_names else [os.path.basename(x) for x in creation_data.outputs.get(
+                        key).parameters.sources_paths]
+                    num_classes = len(classes_names)
+                else:
+                    classes_names = None
+                    num_classes = None
 
             else:
                 arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
