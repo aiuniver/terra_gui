@@ -430,6 +430,11 @@ class LayerVGG16Data(LayerMixinData):
     extra: types.VGG16.ParametersExtraData = types.VGG16.ParametersExtraData()
 
 
+class LayerVGG19Data(LayerMixinData):
+    main: types.VGG19.ParametersMainData = types.VGG19.ParametersMainData()
+    extra: types.VGG19.ParametersExtraData = types.VGG19.ParametersExtraData()
+
+
 class LayerResNet50Data(LayerMixinData):
     main: types.ResNet50.ParametersMainData = types.ResNet50.ParametersMainData()
     extra: types.ResNet50.ParametersExtraData = types.ResNet50.ParametersExtraData()

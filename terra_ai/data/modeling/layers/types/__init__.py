@@ -129,7 +129,7 @@ from . import (
     #  ResNet50V2,
     Xception,
     VGG16,
-    # VGG19,
+    VGG19,
     CustomUNETBlock,
     YOLOResBlock,
     YOLOConvBlock,

@@ -1095,9 +1095,27 @@ class LayerValidation:
                         self.inp_shape[0][1:]
                     )
             elif self.layer_type == "VGG16" or self.layer_type == "ResNet50":
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][
-                                                                1:
-                                                                ] != (224, 224, 3):
+                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
+
+                    return ValidatorMessages.InputShapeMustBeOnly.value % (
+                        "'include_top'=True",
+                        (224, 224, 3),
+                        self.inp_shape[0][1:]
+                    )
+                elif (
+                        not self.layer_parameters.get("include_top")
+                        and self.inp_shape[0][1] < 32
+                        or self.inp_shape[0][2] < 32
+                        or self.inp_shape[0][3] < 3
+                ):
+                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
+                        "greater or equal",
+                        (32, 32, 3),
+                        self.inp_shape[0][1:]
+                    )
+            elif self.layer_type == "VGG19":
+                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
+
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
                         "'include_top'=True",
                         (224, 224, 3),

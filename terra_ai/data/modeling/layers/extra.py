@@ -193,7 +193,9 @@ class ModuleChoice(str, Enum):
     inception_v3 = "tensorflow.keras.applications.inception_v3"
     xception = "tensorflow.keras.applications.xception"
     vgg16 = "tensorflow.keras.applications.vgg16"
+    vgg19 = "tensorflow.keras.applications.vgg19"
     resnet50 = "tensorflow.keras.applications.resnet50"
+
 
 
 class ModuleTypeChoice(str, Enum):
