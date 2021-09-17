@@ -817,7 +817,7 @@ class CreateArray(object):
     def create_classification(class_name: str, **options) -> dict:
 
         if options['type_processing'] == 'categorical':
-            if '.trds' in class_name:
+            if '.trds' in str(class_name):
                 index = options['classes_names'].index(os.path.basename(class_name))
             else:
                 index = options['classes_names'].index(class_name)

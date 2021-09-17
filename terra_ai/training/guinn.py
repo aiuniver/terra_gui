@@ -740,8 +740,8 @@ class FitCallback(keras.callbacks.Callback):
             self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
         else:
             train_batch_data = None
-            msg_batch = {"batch": {"current": batch, "total": self.num_batches}}
-            msg_epoch = {"epoch": {"current": self.last_epoch, "total": self.epochs}}
+            msg_batch = {"current": batch, "total": self.num_batches}
+            msg_epoch = {"current": self.last_epoch, "total": self.epochs}
             elapsed_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
             elapsed_time = self.update_progress(self.num_batches * self.epochs + 1,
                                                 self.batch, self._start_time, finalize=True)
