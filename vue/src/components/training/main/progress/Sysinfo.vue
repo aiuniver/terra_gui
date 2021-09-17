@@ -1,51 +1,42 @@
 <template>
-  <div class="t-sysinfo" v-if="isEmptyAll()">
+  <div class="t-sysinfo">
     <div class="t-sysinfo__label">Информация об устройстве</div>
     <div class="t-sysinfo__grid">
-      <div v-if="isEmpty(gpu)">
+      <div v-if="GPU.gpu_utilization">
         <div class="t-sysinfo__grid--item">GPU</div>
-        <div :class="['t-sysinfo__grid--item', { warning: isWarning(gpu.gpu_utilization) }]">
+        <div :class="['t-sysinfo__grid--item', { warning: isWarning(GPU.gpu_utilization) }]">
           <p class="t-sysinfo__gpu-name">NVIDIA GeForce GTX 1060 6 GB</p>
-          <p>{{ `${gpu.gpu_utilization || '0%'} (${gpu.gpu_memory_used || '0'} / ${gpu.gpu_memory_total || '0'})` }}</p>
+          <p>{{ `${GPU.gpu_utilization}% (${GPU.gpu_memory_used} / ${GPU.gpu_memory_total})` }}</p>
           <div class="t-sysinfo__progress-bar">
-            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (gpu.gpu_utilization || 0) + '%' }"></div>
+            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (GPU.gpu_utilization) + '%' }"></div>
           </div>
         </div>
       </div>
-      <div v-if="isEmpty(cpu)">
+      <div v-if="CPU.cpu_utilization">
         <div class="t-sysinfo__grid--item">CPU</div>
-        <div :class="['t-sysinfo__grid--item', { warning: isWarning(cpu.cpu_utilization) }]">
-          <p>{{ `${cpu.cpu_utilization || '0%'} (${cpu.cpu_memory_used || '0'} / ${cpu.cpu_memory_total || '0'})` }}</p>
+        <div :class="['t-sysinfo__grid--item', { warning: isWarning(CPU.cpu_utilization) }]">
+          <p>{{`${CPU.cpu_utilization || 0}% (${CPU.cpu_memory_used || 0} / ${CPU.cpu_memory_total || 0})`}}</p>
           <div class="t-sysinfo__progress-bar">
-            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (cpu.cpu_utilization || 0) + '%' }"></div>
+            <div class="t-sysinfo__progress-bar--fill" :style="{ width: `${CPU.cpu_utilization || 0}%` }"></div>
           </div>
         </div>
       </div>
-      <div v-if="isEmpty(ram)">
+      <div>
         <div class="t-sysinfo__grid--item">RAM</div>
-        <div :class="['t-sysinfo__grid--item', { warning: isWarning(ram.ram_utilization) }]">
-          <p>
-            {{
-              `${ram.ram_utilization + '% ' || '0%'} (${ram.ram_memory_used || '0'} / ${ram.ram_memory_total || '0'})`
-            }}
-          </p>
+        <div :class="['t-sysinfo__grid--item', { warning: isWarning(RAM.ram_utilization) }]">
+          <p>{{`${RAM.ram_utilization}% (${RAM.ram_memory_used} / ${RAM.ram_memory_total})`}}</p>
           <div class="t-sysinfo__progress-bar">
-            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (ram.ram_utilization || 0) + '%' }"></div>
+            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (RAM.ram_utilization) + '%' }"></div>
           </div>
         </div>
       </div>
-      <div v-if="isEmpty(disk)">
+      <div>
         <div class="t-sysinfo__grid-item">Disk</div>
-        <div :class="['t-sysinfo__grid-item', { warning: isWarning(disk.disk_utilization) }]">
-          <p>
-            {{
-              `${disk.disk_utilization + '% ' || '0%'} (${disk.disk_memory_used || '0'} / ${
-                disk.disk_memory_total || '0'
-              })`
-            }}
+        <div :class="['t-sysinfo__grid-item', { warning: isWarning(Disk.disk_utilization || 0) }]">
+          <p>{{`${Disk.disk_utilization + '%'} (${Disk.disk_memory_used} / ${Disk.disk_memory_total})`}}
           </p>
           <div class="t-sysinfo__progress-bar">
-            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (disk.disk_utilization || 0) + '%' }"></div>
+            <div class="t-sysinfo__progress-bar--fill" :style="{ width: (Disk.disk_utilization) + '%' }"></div>
           </div>
         </div>
       </div>
@@ -57,32 +48,56 @@
 export default {
   name: '',
   props: {
-    usage: Object,
-  },
-  computed: {
-    disk() {
-      return this.usage?.Disk || {};
+    Disk: {
+      type: Object,
+      default: () => {
+        return {
+          disk_utilization: 0,
+          disk_memory_total: 0,
+          disk_memory_used: 0,
+        }
+      },
     },
-    gpu() {
-      return this.usage?.GPU || {};
+    GPU: {
+      type: Object,
+      default: () => {
+        return {
+          gpu_utilization: 0,
+          gpu_memory_total: 0,
+          gpu_memory_used: 0,
+        }
+      },
     },
-    cpu() {
-      return this.usage?.CPU || {};
+    CPU: {
+      type: Object,
+      default: () => {
+        return {
+          cpu_utilization: 0,
+          cpu_memory_total: 0,
+          cpu_memory_used: 0,
+        }
+      },
     },
-    ram() {
-      return this.usage?.RAM || {};
+    RAM: {
+      type: Object,
+      default: () => {
+        return {
+          ram_utilization: 0,
+          ram_memory_total: 0,
+          ram_memory_used: 0,
+        }
+      },
     },
   },
   methods: {
     isEmptyAll() {
-      return this.isEmpty(this.disk) && (this.isEmpty(this.gpu) || this.isEmpty(this.cpu)) && this.isEmpty(this.ram)
+      return this.isEmpty(this.Disk) && (this.isEmpty(this.GPU) || this.isEmpty(this.CPU)) && this.isEmpty(this.RAM);
     },
     isEmpty(obj) {
-      return Object.keys(obj).length !== 0;
+      return obj ? Object.keys(obj).length !== 0 : false;
     },
     isWarning(value) {
-      const int = value?.trim()?.replace('%', '');
-      console.log();
+      const int = value ? value : 0;
       return +int > 50;
     },
   },

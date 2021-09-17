@@ -1,14 +1,22 @@
 <template>
-  <table >
+  <table>
     <thead>
       <tr class="outputs_heads">
         <th rowspan="2">Эпоха</th>
-        <th rowspan="2">Время<br />(сек.)</th>
-        <th v-for="output, key of outputs" :key="key" colspan="4">{{ key }}</th>
+        <th rowspan="2">
+          Время
+          <br />
+          (сек.)
+        </th>
+        <th v-for="(output, key) of outputs" :key="key" colspan="4">
+          {{ key }}
+        </th>
       </tr>
       <tr class="callbacks_heads">
-        <template v-for="item, keyI of output">
-          <th v-for="th, key of item" :key="keyI + key">{{ key }}</th>
+        <template v-for="(output, keyO) of outputs">
+          <template v-for="(item, keyI) of output">
+            <th v-for="(th, key) of item" :key="keyI + key + keyO">{{ key }}</th>
+          </template>
         </template>
       </tr>
     </thead>
@@ -17,8 +25,12 @@
         <td class="epoch_num">{{ key }}</td>
         <td>{{ time | int }}</td>
         <template v-for="(output, keyO) of data">
-          <template v-for="metric, keyM of output">
-            <td v-for="item, keyI of metric" class="value" :key="keyO + 't' + keyM + 'r' + keyI"><span>{{ item | int }}</span><i>.</i>{{ item | drob }}</td>
+          <template v-for="(metric, keyM) of output">
+            <td v-for="(item, keyI) of metric" class="value" :key="keyO + 't' + keyM + 'r' + keyI">
+              <span>{{ item | int }}</span>
+              <i>.</i>
+              {{ item | drob }}
+            </td>
           </template>
         </template>
       </tr>
@@ -33,7 +45,7 @@
 
 <script>
 export default {
-  name: 'TTable',
+  name: 't-table',
   props: {
     data: {
       type: Object,
@@ -42,11 +54,8 @@ export default {
   },
   computed: {
     outputs() {
-      return this.data?.[1]?.data || {}
+      return this.data?.[1]?.data || {};
     },
-    output() {
-      return Object.values(this.outputs)[0]
-    }
   },
   filters: {
     int(val) {

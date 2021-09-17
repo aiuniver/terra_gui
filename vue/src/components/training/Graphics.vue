@@ -11,7 +11,7 @@
             <MetricGraphs @isLoad="loading = false" />
           </at-collapse-item>
           <at-collapse-item class="mt-3" title="Промежуточные результаты" center>
-            <PrePesults/>
+            <!-- <PrePesults/> -->
             <!-- <Images /> -->
             <Prediction />
           </at-collapse-item>

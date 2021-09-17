@@ -4,7 +4,7 @@
       <Timers v-bind="timings" />
     </div>
     <div class="t-progress__item t-progress__item--info">
-      <Sysinfo :usage="usage" />
+      <Sysinfo v-bind="usage" />
     </div>
   </div>
 </template>
@@ -24,7 +24,6 @@ export default {
       return this.$store.getters['trainings/getTrainUsage'] || {};
     },
     usage() {
-      console.log(this.lossGraphs)
       return this.lossGraphs?.hard_usage || {};
     },
     timings() {

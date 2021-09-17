@@ -100,7 +100,7 @@ export default {
     },
     formatTime(sec) {
       sec = ~~sec
-      return `${Math.floor(sec / 60 / 60)} : ${Math.floor(sec / 60)} : ${(sec * 60) % 60}`;
+      return `${Math.floor(sec / 60 / 60)}h : ${Math.floor(sec / 60)}m : ${(sec * 60) % 60}s`;
     },
   },
 };
