@@ -1,25 +1,21 @@
 <template>
   <div class="t-texts">
-    <div class="t-texts__inner">
-      <div class="t-texts__header">
-        <div class="t-texts__block">
-          <p>output 1</p>
-          <t-field inline label="loss">
-            <t-checkbox-new />
-          </t-field>
-          <t-field inline label="metrics">
-            <t-checkbox-new />
-          </t-field>
-        </div>
-        <div class="t-texts__block">
-          <t-button>Показать</t-button>
-        </div>
+    <div class="t-texts__header">
+      <div class="t-texts__block">
+        <p>output 1</p>
+        <t-field inline label="loss">
+          <t-checkbox-new />
+        </t-field>
+        <t-field inline label="metrics">
+          <t-checkbox-new />
+        </t-field>
       </div>
-      <div class="t-texts__content">
-        <div class="epochs">
-          <Table :data="data" />
-        </div>
+      <div class="t-texts__block">
+        <t-button>Показать</t-button>
       </div>
+    </div>
+    <div class="t-texts__content">
+      <Table :data="data" />
     </div>
   </div>
 </template>
@@ -34,7 +30,7 @@ export default {
   data: () => ({
     ops: {
       scrollPanel: {
-        scrollingX: true,
+        scrollingX: false,
         scrollingY: false,
       },
     },
@@ -51,9 +47,6 @@ export default {
 .t-texts {
   margin-bottom: 20px;
   position: relative;
-  &__inner {
-    overflow: hidden;
-  }
   &__header {
     display: flex;
     gap: 15px;
@@ -69,8 +62,8 @@ export default {
     }
   }
   &__content {
-    margin-top: 10px;
-    box-sizing: border-box;
+    display: flex;
+    height: 100%;
   }
 }
 </style>
