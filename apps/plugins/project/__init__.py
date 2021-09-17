@@ -28,6 +28,7 @@ from terra_ai.data.training.train import (
     ProgressTableList,
 )
 from terra_ai.data.training.outputs import OutputsList
+from terra_ai.data.training.checkpoint import CheckpointData
 from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
 
 
@@ -211,6 +212,9 @@ class Project(BaseMixinData):
                 }
             )
         self.training.base.architecture.parameters.outputs = OutputsList(outputs)
+        self.training.base.architecture.parameters.checkpoint = CheckpointData(
+            **{"layer": self.model.outputs[0].id}
+        )
 
     def __update_training_interactive(self):
         loss_graphs = []
@@ -257,7 +261,7 @@ class Project(BaseMixinData):
             )
         self.training.interactive.loss_graphs = LossGraphsList(loss_graphs)
         self.training.interactive.metric_graphs = MetricGraphsList(metric_graphs)
-        self.training.interactive.loss_graphs = ProgressTableList(progress_table)
+        self.training.interactive.progress_table = ProgressTableList(progress_table)
 
     def set_training(self):
         defaults_data.update_by_model(self.model)
@@ -282,3 +286,4 @@ except Exception:
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
+project.set_training()
