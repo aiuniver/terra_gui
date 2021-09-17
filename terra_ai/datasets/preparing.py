@@ -63,10 +63,6 @@ class PrepareDataset(object):
         outputs = {}
         for idx in range(len(self.dataframe['train'])):
             for key, value in self.data.inputs.items():
-                # inputs[str(key)] = getattr(CreateArray(), f"create_{decamelize(value.task)}")(
-                #     self.paths.basepath,
-                #     self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'],
-                #     **self.instructions['inputs'][key])
                 if value.task == LayerInputTypeChoice.Text:
                     sample = self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}']
                 else:
@@ -76,20 +72,11 @@ class PrepareDataset(object):
                 arr = getattr(CreateArray(), f'create_{decamelize(value.task)}')(
                     sample,
                     **self.instructions['inputs'][key],
-                    # **self.data.inputs[key].native(),
                     **self.preprocessing.preprocessing.get(key))
                 inputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
                                                                                                   **arr['parameters'])
 
             for key, value in self.data.outputs.items():
-                # if self.data.tags[1].alias == 'object_detection':
-                #     arrays = getattr(self.paths.basepath, f"create_{decamelize(value.task)}")(
-                #         self.paths.basepath,
-                #         self.dataframe['train'].loc[idx, f'2_{decamelize(value.task)}'],
-                #         **self.instructions['outputs'][2])
-                #     outputs[str(key)] = np.array(arrays[key - 2])
-                # else:
-
                 if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
                     sample = self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}']
                 else:
@@ -100,13 +87,14 @@ class PrepareDataset(object):
                     sample,
                     **self.instructions['outputs'][key],
                     **self.preprocessing.preprocessing.get(key))
-                outputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                   **arr['parameters'])
-
-                # outputs[str(key)] = getattr(CreateArray(), f"create_{decamelize(value.task)}")(
-                #     self.paths.basepath,
-                #     self.dataframe['train'].loc[idx, f'{key}_{decamelize(value.task)}'],
-                #     **self.instructions['outputs'][key])
+                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
+                                                                                       **arr['parameters'])
+                if value.task == LayerOutputTypeChoice.ObjectDetection:
+                    for m in range(len(array)):
+                        outputs[str(key + m)] = array[m]
+                    break
+                else:
+                    outputs[str(key)] = array
 
             yield inputs, outputs
 
@@ -128,13 +116,8 @@ class PrepareDataset(object):
                     **self.preprocessing.preprocessing.get(key))
                 inputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
                                                                                                   **arr['parameters'])
+
             for key, value in self.data.outputs.items():
-                # if self.data.tags[1].alias == 'object_detection':
-                #     arrays = getattr(CreateArray(), f"create_{decamelize(value.task)}")(
-                #         self.paths.basepath, self.dataframe['val'].loc[idx, f'2_{decamelize(value.task)}'],
-                #         **self.instructions['outputs'][2])
-                #     outputs[str(key)] = np.array(arrays[key - 2])
-                # else:
                 if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
                     sample = self.dataframe['val'].loc[idx, f'{key}_{decamelize(value.task)}']
                 else:
@@ -145,8 +128,14 @@ class PrepareDataset(object):
                     sample,
                     **self.instructions['outputs'][key],
                     **self.preprocessing.preprocessing.get(key))
-                outputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                   **arr['parameters'])
+                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
+                                                                                       **arr['parameters'])
+                if value.task == LayerOutputTypeChoice.ObjectDetection:
+                    for m in range(len(array)):
+                        outputs[str(key + m)] = array[m]
+                    break
+                else:
+                    outputs[str(key)] = array
 
             yield inputs, outputs
 
@@ -171,13 +160,6 @@ class PrepareDataset(object):
                                                                                                   **arr['parameters'])
 
             for key, value in self.data.outputs.items():
-                # if self.data.tags[1].alias == 'object_detection':
-                #     arrays = getattr(CreateArray(), f"create_{decamelize(value.task)}")(
-                #         self.paths.basepath, self.dataframe['test'].loc[idx, f'2_{decamelize(value.task)}'],
-                #         **self.instructions['outputs'][2])
-                #     outputs[str(key)] = np.array(arrays[key - 2])
-                # else:
-
                 if value.task in [LayerOutputTypeChoice.Text, LayerOutputTypeChoice.TextSegmentation]:
                     sample = self.dataframe['test'].loc[idx, f'{key}_{decamelize(value.task)}']
                 else:
@@ -188,8 +170,14 @@ class PrepareDataset(object):
                     sample,
                     **self.instructions['outputs'][key],
                     **self.preprocessing.preprocessing.get(key))
-                outputs[str(key)] = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
-                                                                                                   **arr['parameters'])
+                array = getattr(CreateArray(), f'preprocess_{decamelize(value.task)}')(arr['instructions'],
+                                                                                       **arr['parameters'])
+                if value.task == LayerOutputTypeChoice.ObjectDetection:
+                    for m in range(len(array)):
+                        outputs[str(key + m)] = array[m]
+                    break
+                else:
+                    outputs[str(key)] = array
 
             yield inputs, outputs
 
