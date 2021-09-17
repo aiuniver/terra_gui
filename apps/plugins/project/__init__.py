@@ -5,10 +5,12 @@ import shutil
 
 from typing import Optional
 from pathlib import Path
-from pydantic import validator, ValidationError, DirectoryPath, FilePath
+from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from django.conf import settings
+
+from apps.plugins.frontend import defaults_data
 
 from terra_ai.agent import agent_exchange
 from terra_ai.data.mixins import BaseMixinData
@@ -17,6 +19,7 @@ from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoi
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.training.train import TrainData, InteractiveData
 
 from . import exceptions
 
@@ -84,6 +87,11 @@ class ProjectPathData(BaseMixinData):
         return value
 
 
+class TrainingDetailsData(BaseMixinData):
+    base: TrainData = TrainData()
+    interactive: InteractiveData = InteractiveData()
+
+
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     hardware: HardwareAcceleratorData = HardwareAcceleratorData(
@@ -91,6 +99,7 @@ class Project(BaseMixinData):
     )
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
+    training: TrainingDetailsData = TrainingDetailsData()
 
     @property
     def name_alias(self) -> str:
@@ -138,6 +147,7 @@ class Project(BaseMixinData):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
+            self.set_training()
             return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
@@ -166,6 +176,7 @@ class Project(BaseMixinData):
                 self.model.layers.append(layer_data)
                 self.model.name = model_init.name
                 self.model.alias = model_init.alias
+        self.set_training()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -175,6 +186,10 @@ class Project(BaseMixinData):
             if model.outputs and len(model.outputs) != len(dataset_model.outputs):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
+        self.set_training()
+
+    def set_training(self):
+        defaults_data.update_by_model(self.model)
 
     def clear_model(self):
         if self.dataset:

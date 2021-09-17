@@ -3,7 +3,7 @@
 """
 
 import json
-from typing import Any, List
+from typing import Any, List, Optional
 from pydantic import validator
 from pydantic.types import conint, PositiveInt
 from pydantic.errors import EnumMemberError
@@ -48,7 +48,7 @@ class MetricGraphsList(UniqueListMixin):
 class IntermediateResultData(BaseMixinData):
     show_results: bool = False
     example_choice_type: ExampleChoiceTypeChoice = ExampleChoiceTypeChoice.seed
-    main_output: PositiveInt
+    main_output: Optional[PositiveInt]
     num_examples: conint(ge=1, le=10) = 10
     show_statistic: bool = False
     autoupdate: bool = False
@@ -67,7 +67,7 @@ class ProgressTableList(UniqueListMixin):
 
 
 class StatisticData(BaseMixinData):
-    output_id: List[PositiveInt]
+    output_id: List[PositiveInt] = []
     autoupdate: bool = False
 
 
@@ -80,9 +80,9 @@ class BalanceData(BaseMixinData):
 class InteractiveData(BaseMixinData):
     loss_graphs: LossGraphsList = LossGraphsList()
     metric_graphs: MetricGraphsList = MetricGraphsList()
-    intermediate_result: IntermediateResultData
+    intermediate_result: IntermediateResultData = IntermediateResultData()
     progress_table: ProgressTableList = ProgressTableList()
-    statistic_data: StatisticData
+    statistic_data: StatisticData = StatisticData()
     data_balance: BalanceData = BalanceData()
 
 
