@@ -1391,7 +1391,7 @@ class InteractiveCallback:
             return data_return
         _id = 1
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
-            if loss_graph_config.get('show_for_model'):
+            if loss_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
                         "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1428,7 +1428,7 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show_for_classes'):
+            elif loss_graph_config.get('show') == "classes":
                 data_return.append(
                     {
                         "id": _id,
@@ -1505,7 +1505,7 @@ class InteractiveCallback:
             return data_return
         _id = 1
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
-            if metric_graph_config.get('show_for_model'):
+            if metric_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                         "metrics").get(metric_graph_config.get('show_metric')).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1543,7 +1543,7 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show_for_classes'):
+            elif metric_graph_config.get('show') == "classes":
                 data_return.append(
                     {
                         "id": _id,
