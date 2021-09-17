@@ -106,8 +106,8 @@ export default {
     },
     data() {
       const data = this.char.plot_data || [];
-      const arr = data.map(({ epochs: x, values: y, mode = 'lines', label: name }) => {
-        return { x, y, mode, name };
+      const arr = data.map(({ x, y, mode = 'lines', label }) => {
+        return { x, y, mode, label };
       });
       return arr;
     },
