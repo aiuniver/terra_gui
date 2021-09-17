@@ -1,31 +1,25 @@
 <template>
-  <div class="content">
-    <div class="item">
-      <div class="item__header">
-        <div class="item__header-roll">
-          <i
-            :class="['t-icon', 'icon-training-roll-down']"
-            :title="'roll down'"
-            @click="graphicShow = !graphicShow"
-          ></i>
-        </div>
-        <div class="item__header-title">{{ char.graph_name || '' }}</div>
-        <div class="item__header-condition normal">
-          <span>{{ char.progress_state || '' }}</span>
-          <div class="indicator"></div>
-        </div>
-        <div class="item__header-additionally">
-          <i
-            :class="['t-icon', 'icon-training-additionally']"
-            :title="'roll down'"
-            @click="popMenuShow = !popMenuShow"
-          ></i>
-          <PopUpMenu v-if="popMenuShow" />
-        </div>
+  <div class="t-char" v-click-outside="outside">
+    <div class="t-char__header" >
+      <div class="t-char__header--roll">
+        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="graphicShow = !graphicShow"></i>
       </div>
-      <div class="item__main" v-if="graphicShow">
-        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div class="t-char__header--title">{{ char.graph_name || '' }}</div>
+      <div v-if="char.progress_state" :class="['t-char__header--condition', char.progress_state]">
+        <span>{{ char.progress_state || '' }}</span>
+        <div class="indicator"></div>
       </div>
+      <div class="t-char__header--additionally">
+        <i
+          :class="['t-icon', 'icon-training-additionally']"
+          :title="'roll down'"
+          @click="popMenuShow = !popMenuShow"
+        ></i>
+        <PopUpMenu v-if="popMenuShow" />
+      </div>
+    </div>
+    <div class="t-char__main" v-if="graphicShow">
+      <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
   </div>
 </template>
@@ -34,7 +28,7 @@
 import { Plotly } from 'vue-plotly';
 import PopUpMenu from './menu/PopUpMenu';
 export default {
-  name: 'Tchar',
+  name: 't-char',
   props: {
     char: {
       type: Object,
@@ -46,7 +40,7 @@ export default {
     PopUpMenu,
   },
   data: () => ({
-    graphicShow: false,
+    graphicShow: true,
     popMenuShow: false,
     defLayout: {
       autosize: true,
@@ -115,14 +109,16 @@ export default {
   mounted() {
     console.log(this.char);
   },
+  methods: {
+    outside() {
+      console.log('sdsdsd')
+      this.popMenuShow = false
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
-.content {
-  width: 50%;
-  padding: 0 10px 20px 10px;
-}
 .normal {
   span {
     color: #65ca35;
@@ -131,7 +127,7 @@ export default {
     background: #65ca35;
   }
 }
-.undertraining {
+.underfitting {
   span {
     color: #f3d11d;
   }
@@ -139,28 +135,35 @@ export default {
     background: #f3d11d;
   }
 }
-.retraining {
+.overfitting {
   span {
-    color: #ca5035;
+    color: #d42e22;
   }
   .indicator {
-    background: #ca5035;
+    background: #d42e22;
   }
 }
-.item {
+.t-char {
   width: 100%;
   height: 100%;
   background: #242f3d;
   border-radius: 4px;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
-  overflow: hidden;
+  position: relative;
+  &__main {
+  }
   &__header {
     padding: 12px;
     display: flex;
-    &-title {
+    justify-content: space-between;
+
+    &--title {
+      overflow: hidden;
+      text-overflow: ellipsis;
       padding-left: 12px;
+      white-space: nowrap;
     }
-    &-condition {
+    &--condition {
       border: 1px solid #6c7883;
       box-sizing: border-box;
       border-radius: 4px;
@@ -178,7 +181,8 @@ export default {
         margin: 6px;
       }
     }
-    &-additionally {
+    &--additionally {
+      position: relative;
       padding-left: 10px;
     }
   }
