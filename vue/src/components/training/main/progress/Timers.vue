@@ -4,21 +4,21 @@
       <div class="t-time__timer-wrapper">
         <div class="t-time__timer">
           <span>Расчетное время обучения</span>
-          <div>0h : 55m : 07s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Прошло времени</span>
-          <div>0h : 35m : 07s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Время до окончания обучения</span>
-          <div>0h : 07m : 35s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Эпоха</span>
-          <div>18</div>
+          <div>{{ epoch.current || 0 }}</div>
           /
-          <div>25</div>
+          <div>{{ epoch.total || 0 }}</div>
         </div>
       </div>
       <div class="t-time__progress-bar">
@@ -29,21 +29,21 @@
       <div class="t-time__timer-wrapper">
         <div class="t-time__timer">
           <span>Среднее время эпохи</span>
-          <div>0h : 05m : 57s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Прошло времени на эпоху</span>
-          <div>0h : 05m : 37s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Время до окончания текущей эпохи</span>
-          <div>0h : 00m : 15s</div>
+          <div>{{ formatTime(avg_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Батч</span>
-          <div>245</div>
+          <div>{{ batch.current || 0 }}</div>
           /
-          <div>256</div>
+          <div>{{ batch.total || 0 }}</div>
         </div>
       </div>
       <div class="t-time__progress-bar">
@@ -56,6 +56,49 @@
 <script>
 export default {
   name: 't-train-time',
+  props: {
+    avg_epoch_time: {
+      type: Number,
+      default: 0,
+    },
+    elapsed_epoch_time: {
+      type: Number,
+      default: 0,
+    },
+    elapsed_time: {
+      type: Number,
+      default: 0,
+    },
+    estimated_time: {
+      type: Number,
+      default: 0,
+    },
+    still_epoch_time: {
+      type: Number,
+      default: 0,
+    },
+    still_time: {
+      type: Number,
+      default: 0,
+    },
+    batch: {
+      type: Object,
+      default: () => {
+        return { current: 0, total: 0 };
+      },
+    },
+    epoch: {
+      type: Object,
+      default: () => {
+        return { current: 0, total: 0 };
+      },
+    },
+  },
+  methods: {
+    formatTime(sec) {
+      return `${Math.floor(sec / 60 / 60)} : ${Math.floor(sec / 60)} : ${sec}`;
+    },
+  },
 };
 </script>
 
