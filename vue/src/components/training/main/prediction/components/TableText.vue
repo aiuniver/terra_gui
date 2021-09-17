@@ -1,8 +1,5 @@
 <template>
-  <p
-    v-if="type === 'str' || type === 'number'"
-    :class="['table-prediction__text', { [`table-prediction__text--marked-${color}`]: color }]"
-  >
+  <p :class="['table-prediction__text', { [`table-prediction__text--marked-${color}`]: color }]">
     {{ text }}
   </p>
 </template>

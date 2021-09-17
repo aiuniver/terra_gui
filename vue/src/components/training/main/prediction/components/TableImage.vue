@@ -1,11 +1,5 @@
 <template>
-  <img
-    v-if="type == 'image'"
-    class="table-prediction__image"
-    :src="require('@/../public/imgs/' + path)"
-    alt="img"
-    height="160"
-  />
+  <img class="table-prediction__image" :src="require('@/../public/imgs/' + path)" alt="img" />
 </template>
 
 <script>

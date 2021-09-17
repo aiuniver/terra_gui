@@ -18,8 +18,8 @@
             <div class="table__column" v-for="(value, input_name) in predict.initial_value" :key="input_name">
               <div class="table__item title size-2">{{ input_name }}</div>
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
-                <TableImage :image="input_val" />
-                <TableText :data="input_val" />
+                <TableImage v-if="input_val.type == 'image'" :image="input_val" />
+                <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
               </div>
             </div>
           </div>
@@ -32,8 +32,8 @@
             <div class="table__column" v-for="(value, input_name) in predict.true_value" :key="input_name">
               <div class="table__item title size-2">{{ input_name }}</div>
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
-                <TableImage :image="input_val" />
-                <TableText :data="input_val" />
+                <TableImage v-if="input_val.type == 'image'" :image="input_val" />
+                <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
               </div>
             </div>
           </div>
@@ -46,8 +46,8 @@
             <div class="table__column" v-for="(value, input_name) in predict.predict_value" :key="input_name">
               <div class="table__item title size-2">{{ input_name }}</div>
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
-                <TableImage :image="input_val" />
-                <TableText :data="input_val" />
+                <TableImage v-if="input_val.type == 'image'" :image="input_val" />
+                <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
               </div>
             </div>
           </div>
@@ -60,8 +60,8 @@
             <div class="table__column" v-for="(value, input_name) in predict.statistic_values" :key="input_name">
               <div class="table__item title size-2">{{ input_name }}</div>
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
-                <TableImage :image="input_val" />
-                <TableText :data="input_val" />
+                <TableImage v-if="input_val.type == 'image'" :image="input_val" />
+                <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
               </div>
             </div>
           </div>
