@@ -104,18 +104,20 @@ $border: #0e1621;
   }
   &__row{
     display: flex;
+    height: 100%;
   }
   &__column{
     display: flex;
     flex-direction: column;
     width: fill-available;
-    height: 100%;
+    min-height: 100%;
   }
   &__item{
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
+    height: 100%;
     border-right: 1px solid $border;
     border-top: 1px solid $border;
   }
