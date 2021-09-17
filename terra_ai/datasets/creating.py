@@ -52,7 +52,7 @@ class CreateDataset(object):
 
         if not creation_data.use_generator:
             self.x_array = self.create_dataset_arrays(put_data=self.instructions.inputs)  # TODO
-            self.y_array = self.create_dataset_arrays(put_data=self.instructions.outputs) # TODO
+            self.y_array = self.create_dataset_arrays(put_data=self.instructions.outputs)  # TODO
             self.write_arrays(self.x_array, self.y_array)
 
         self.write_preprocesses_to_files()
@@ -114,6 +114,12 @@ class CreateDataset(object):
                         inp.parameters.length = out.parameters.length
                         inp.parameters.trend = out.parameters.trend
                         inp.parameters.depth = out.parameters.depth
+            elif out.type == LayerOutputTypeChoice.ObjectDetection:
+                with open(creation_data.source_path.joinpath('obj.names'), 'r') as names:
+                    names_list = names.read()
+                names_list = [elem for elem in names_list.split('\n') if elem]
+                out.parameters.classes_names = names_list
+                out.parameters.num_classes = len(names_list)
 
         return creation_data
 
@@ -163,20 +169,17 @@ class CreateDataset(object):
                                                                          os.path.join(self.paths.sources,
                                                                                       f"{elem.id}_{decamelize(elem.type)}"),
                                                                          **instr['parameters']))
-            if 'dataframe' in self.tags.values():
-                pass
-            else:
+            if 'dataframe' not in self.tags.values():
                 if elem.type not in [LayerInputTypeChoice.Text, LayerOutputTypeChoice.Text,
                                      LayerOutputTypeChoice.TextSegmentation, LayerOutputTypeChoice.Regression]:
-                    if elem.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Image,
-                                     LayerOutputTypeChoice.Segmentation]:
+                    if elem.type in [LayerInputTypeChoice.Image, LayerOutputTypeChoice.Segmentation,
+                                     LayerOutputTypeChoice.Image, LayerOutputTypeChoice.ObjectDetection]:
                         new_paths = [os.path.join('sources', f'{elem.id}_{decamelize(elem.type)}',
                                                   path.replace(self.source_directory + os.path.sep, '')) for path in
                                      instructions_data.instructions]
                     else:
                         new_paths = [os.path.join('sources', path.replace(self.temp_directory + os.path.sep, '')) for
-                                     path
-                                     in instructions_data.instructions]
+                                     path in instructions_data.instructions]
                     instructions_data.instructions = new_paths
 
             instructions.update([(elem.id, instructions_data)])
@@ -420,6 +423,16 @@ class CreateDataset(object):
                     num_arrays = 6
                     for i in range(num_arrays):
                         globals()[f'current_arrays_{i + 1}'] = []
+                    for i in range(len(self.dataframe[split])):
+                        arr = getattr(CreateArray(), f'create_{self.tags[key]}')(
+                            os.path.join(self.paths.basepath,
+                                         self.dataframe[split].loc[i, f'{key}_{self.tags[key]}']),
+                            **put_data.get(key).parameters,
+                            **self.preprocessing.preprocessing.get(key))
+                        array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
+                                                                                       **arr['parameters'])
+                        for j in range(num_arrays):
+                            globals()[f'current_arrays_{j + 1}'].append(array[j])
 
                 elif 'timeseries' in self.tags.values():
                     depth = put_data.get(key).parameters['depth']
@@ -497,8 +510,13 @@ class CreateDataset(object):
                                 **self.preprocessing.preprocessing.get(key))
                             array = getattr(CreateArray(), f'preprocess_{self.tags[key]}')(arr['instructions'],
                                                                                            **arr['parameters'])
-                        current_arrays.append(array)
-                out_array[split][key] = np.array(current_arrays)
+                            current_arrays.append(array)
+                if self.tags[key] == 'object_detection':
+                    for n in range(num_arrays):
+                        out_array[split][key + n] = np.array(globals()[f'current_arrays_{n + 1}'])
+                else:
+                    out_array[split][key] = np.array(current_arrays)
+                # out_array[split][key] = np.array(current_arrays)
 
         return out_array
 
@@ -518,10 +536,14 @@ class CreateDataset(object):
         os.makedirs(parameters_path, exist_ok=True)
         for inp in creation_data.inputs:
             with open(os.path.join(parameters_path, f'{inp.id}_inputs.json'), 'w') as cfg:
-                json.dump(inp.native(), cfg)
+                inp = inp.native()
+                del inp['parameters']['sources_paths']
+                json.dump(inp, cfg)
         for out in creation_data.outputs:
             with open(os.path.join(parameters_path, f'{out.id}_outputs.json'), 'w') as cfg:
-                json.dump(out.native(), cfg)
+                out = out.native()
+                del out['parameters']['sources_paths']
+                json.dump(out, cfg)
 
         os.makedirs(tables_path, exist_ok=True)
         for key in self.dataframe.keys():
@@ -552,6 +574,8 @@ class CreateDataset(object):
         tags_list = []
         for value in self.tags.values():
             tags_list.append({'alias': value, 'name': value.title()})
+        for tag in creation_data.tags:
+            tags_list.append(tag.native())
 
         data = {'name': creation_data.name,
                 'alias': creation_data.alias,

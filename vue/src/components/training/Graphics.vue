@@ -64,10 +64,6 @@ export default {
   }),
   computed: {
     ...mapGetters({
-      chars: 'trainings/getToolbarChars',
-      scatters: 'trainings/getToolbarScatters',
-      images: 'trainings/getToolbarImages',
-      texts: 'trainings/getToolbarTexts',
       // height: "settings/autoHeight",
     }),
     show() {

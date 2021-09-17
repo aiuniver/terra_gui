@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import shutil
 import pymorphy2
+import random
 import librosa.feature as librosa_feature
 from ast import literal_eval
 from sklearn.cluster import KMeans
@@ -19,111 +20,12 @@ from tensorflow.keras.layers.experimental.preprocessing import Resizing
 from tensorflow.keras.preprocessing.text import text_to_word_sequence
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras import utils
+from tensorflow import concat as tf_concat
+from tensorflow import maximum as tf_maximum
+from tensorflow import minimum as tf_minimum
 
 
 class CreateArray(object):
-    @staticmethod
-    def instructions_dataframe(_, **options: dict) -> dict:
-        instructions = {"instructions": {}, 'parameters': options["parameters"]}
-        instructions['parameters']['put'] = options["id"]
-        if options["parameters"]['length']:
-            if options["parameters"]["transpose"]:
-                general_df = pd.read_csv(
-                    os.path.join(options["parameters"]["sources_paths"][0]),
-                    sep=options["parameters"]["separator"] ).T
-                general_df.columns = general_df.iloc[0]
-                general_df.drop(general_df.index[[0]], inplace=True)
-                general_df.index = range(0, len(general_df))
-                for i in options["parameters"]["cols_names"][0]:
-                    general_df = general_df.astype(
-                        {general_df.columns[i]: np.float}, errors="ignore")
-                df = general_df.iloc[:, options["parameters"]["cols_names"][0]]
-            else:
-                df = pd.read_csv(options["parameters"]["sources_paths"][0],
-                                 usecols=options["parameters"]['cols_names'],
-                                 sep=options["parameters"]["separator"])
-            instructions['parameters']["timeseries"] = True
-        else:
-            y_col = options["parameters"]['y_cols']
-            if options["parameters"]["pad_sequences"] or options["parameters"]["xlen_step"]:
-                if options["parameters"]["pad_sequences"]:
-                    example_length = options["parameters"]["example_length"]
-                    tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
-                                         usecols=range(0, example_length + 1),
-                                         sep=options["parameters"]["separator"])
-                    tmp_df.sort_values(by=tmp_df.columns[0], ignore_index=True, inplace=True)
-                    tmp_df.fillna(0, inplace=True)
-                    df = tmp_df.iloc[:, range(1, example_length + 1)]
-
-                elif options["parameters"]["xlen_step"]:
-                    xlen = options["parameters"]["xlen"]
-                    step_len = options["parameters"]["step_len"]
-
-                    df = pd.read_csv(options["parameters"]["sources_paths"][0],
-                                     sep=options["parameters"]["separator"])
-                    df.sort_values(by=df.columns[0], ignore_index=True, inplace=True)
-                    df = df.iloc[:, 1:]
-                    xlen_array = []
-                    for i in range(len(df)):
-                        subdf = df.iloc[i, :]
-                        subdf = subdf.dropna().values.tolist()
-                        for j in range(0, len(subdf), step_len):
-                            if len(subdf[j: j + xlen]) < xlen:
-                                xlen_array.append(subdf[-xlen:])
-                            else:
-                                xlen_array.append(subdf[j: j + xlen])
-                    tmp_dict = {}
-                    for i in range(xlen):
-                        tmp_dict.update({f'col_{i}': np.array(xlen_array)[:, i]})
-                    df = pd.DataFrame(tmp_dict)
-                instructions["parameters"]["scaler"] = options["parameters"]["scaler"]
-            else:
-                tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
-                                     sep=options["parameters"]["separator"], nrows=1)
-                df = pd.read_csv(options["parameters"]["sources_paths"][0],
-                                 usecols=options["parameters"]["cols_names"] + y_col,
-                                 sep=options["parameters"]["separator"])
-                sort_col = tmp_df.columns.tolist()[y_col[0]]
-                x_cols = []
-                for idx in options["parameters"]["cols_names"]:
-                    x_cols.append(tmp_df.columns.tolist()[idx])
-                df.sort_values(by=sort_col, ignore_index=True, inplace=True)
-                df = df.loc[:, x_cols]
-        instructions["instructions"] = df.to_dict()
-
-        if options["parameters"]["Categorical_cols"]:
-            tmp_lst = options["parameters"]["Categorical_cols"]
-            instructions["parameters"]["Categorical_cols"] = {}
-            instructions["parameters"]["Categorical_cols"]["lst_cols"] = tmp_lst
-            for i in instructions["parameters"]["Categorical_cols"]["lst_cols"]:
-                instructions["parameters"]["Categorical_cols"][f"col_{i}"] = list(set(df.iloc[:, i]))
-
-        if options["parameters"]["Categorical_ranges_cols"]:
-            tmp_lst = options["parameters"]["Categorical_ranges_cols"]
-            instructions["parameters"]["Categorical_ranges_cols"] = {}
-            instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"] = tmp_lst
-            for i in range(len(tmp_lst)):
-                if len(list(options["parameters"]["cat_cols"].values())[i].split(" ")) == 1:
-                    border = max(df.iloc[:, tmp_lst[i]]) / int(list(options["parameters"]["cat_cols"].values())[i])
-                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = np.linspace(
-                        border, max(df.iloc[:, tmp_lst[i]]), int(list(options["parameters"]["cat_cols"].values())[i])).tolist()
-                else:
-                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = \
-                        list(options["parameters"]["cat_cols"].values())[i].split(" ")
-
-        if options["parameters"]["one_hot_encoding_cols"]:
-            tmp_lst = options["parameters"]["one_hot_encoding_cols"]
-            instructions["parameters"]["one_hot_encoding_cols"] = {}
-            instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"] = tmp_lst
-            for i in instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"]:
-                if options["parameters"]["Categorical_ranges_cols"] and (
-                        i in instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"]):
-                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
-                        instructions["parameters"]["Categorical_ranges_cols"][f"col_{i}"])
-                else:
-                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
-                        set(df.iloc[:, i]))
-        return instructions
 
     @staticmethod
     def instructions_image(paths_list: list, **options: dict) -> dict:
@@ -292,6 +194,112 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def instructions_dataframe(_, **options: dict) -> dict:
+
+        instructions = {"instructions": {}, 'parameters': options["parameters"]}
+        instructions['parameters']['put'] = options["id"]
+        if options["parameters"]['length']:
+            if options["parameters"]["transpose"]:
+                general_df = pd.read_csv(
+                    os.path.join(options["parameters"]["sources_paths"][0]),
+                    sep=options["parameters"]["separator"]).T
+                general_df.columns = general_df.iloc[0]
+                general_df.drop(general_df.index[[0]], inplace=True)
+                general_df.index = range(0, len(general_df))
+                for i in options["parameters"]["cols_names"][0]:
+                    general_df = general_df.astype(
+                        {general_df.columns[i]: np.float}, errors="ignore")
+                df = general_df.iloc[:, options["parameters"]["cols_names"][0]]
+            else:
+                df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                 usecols=options["parameters"]['cols_names'],
+                                 sep=options["parameters"]["separator"])
+            instructions['parameters']["timeseries"] = True
+        else:
+            y_col = options["parameters"]['y_cols']
+            if options["parameters"]["pad_sequences"] or options["parameters"]["xlen_step"]:
+                if options["parameters"]["pad_sequences"]:
+                    example_length = options["parameters"]["example_length"]
+                    tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                         usecols=range(0, example_length + 1),
+                                         sep=options["parameters"]["separator"])
+                    tmp_df.sort_values(by=tmp_df.columns[0], ignore_index=True, inplace=True)
+                    tmp_df.fillna(0, inplace=True)
+                    df = tmp_df.iloc[:, range(1, example_length + 1)]
+
+                elif options["parameters"]["xlen_step"]:
+                    xlen = options["parameters"]["xlen"]
+                    step_len = options["parameters"]["step_len"]
+
+                    df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                     sep=options["parameters"]["separator"])
+                    df.sort_values(by=df.columns[0], ignore_index=True, inplace=True)
+                    df = df.iloc[:, 1:]
+                    xlen_array = []
+                    for i in range(len(df)):
+                        subdf = df.iloc[i, :]
+                        subdf = subdf.dropna().values.tolist()
+                        for j in range(0, len(subdf), step_len):
+                            if len(subdf[j: j + xlen]) < xlen:
+                                xlen_array.append(subdf[-xlen:])
+                            else:
+                                xlen_array.append(subdf[j: j + xlen])
+                    tmp_dict = {}
+                    for i in range(xlen):
+                        tmp_dict.update({i: np.array(xlen_array)[:, i]})
+                    df = pd.DataFrame(tmp_dict)
+                instructions["parameters"]["scaler"] = options["parameters"]["scaler"]
+            else:
+                tmp_df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                     sep=options["parameters"]["separator"], nrows=1)
+                df = pd.read_csv(options["parameters"]["sources_paths"][0],
+                                 usecols=options["parameters"]["cols_names"] + y_col,
+                                 sep=options["parameters"]["separator"])
+                sort_col = tmp_df.columns.tolist()[y_col[0]]
+                x_cols = []
+                for idx in options["parameters"]["cols_names"]:
+                    x_cols.append(tmp_df.columns.tolist()[idx])
+                df.sort_values(by=sort_col, ignore_index=True, inplace=True)
+                df = df.loc[:, x_cols]
+        instructions["instructions"] = df.to_dict()
+
+        if options["parameters"]["Categorical_cols"]:
+            tmp_lst = options["parameters"]["Categorical_cols"]
+            instructions["parameters"]["Categorical_cols"] = {}
+            instructions["parameters"]["Categorical_cols"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["Categorical_cols"]["lst_cols"]:
+                instructions["parameters"]["Categorical_cols"][f"col_{i}"] = list(set(df.iloc[:, i]))
+
+        if options["parameters"]["Categorical_ranges_cols"]:
+            tmp_lst = options["parameters"]["Categorical_ranges_cols"]
+            instructions["parameters"]["Categorical_ranges_cols"] = {}
+            instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"] = tmp_lst
+            for i in range(len(tmp_lst)):
+                if len(list(options["parameters"]["cat_cols"].values())[i].split(" ")) == 1:
+                    border = max(df.iloc[:, tmp_lst[i]]) / int(list(options["parameters"]["cat_cols"].values())[i])
+                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = np.linspace(
+                        border, max(df.iloc[:, tmp_lst[i]]),
+                        int(list(options["parameters"]["cat_cols"].values())[i])).tolist()
+                else:
+                    instructions["parameters"]["Categorical_ranges_cols"][f"col_{tmp_lst[i]}"] = \
+                        list(options["parameters"]["cat_cols"].values())[i].split(" ")
+
+        if options["parameters"]["one_hot_encoding_cols"]:
+            tmp_lst = options["parameters"]["one_hot_encoding_cols"]
+            instructions["parameters"]["one_hot_encoding_cols"] = {}
+            instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"] = tmp_lst
+            for i in instructions["parameters"]["one_hot_encoding_cols"]["lst_cols"]:
+                if options["parameters"]["Categorical_ranges_cols"] and (
+                        i in instructions["parameters"]["Categorical_ranges_cols"]["lst_cols"]):
+                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
+                        instructions["parameters"]["Categorical_ranges_cols"][f"col_{i}"])
+                else:
+                    instructions["parameters"]["one_hot_encoding_cols"][f"col_{i}"] = len(
+                        set(df.iloc[:, i]))
+
+        return instructions
+
+    @staticmethod
     def instructions_classification(paths_list: list, **options: dict) -> dict:
         type_processing = options['parameters']['type_processing']
         if options["parameters"]["xlen_step"]:
@@ -379,7 +387,9 @@ class CreateArray(object):
         """
 
         Args:
-            **put_data:
+            paths_list: list
+                Пути к файлам.
+            **options:
                 open_tags: str
                     Открывающие теги.
                 close_tags: str
@@ -485,12 +495,14 @@ class CreateArray(object):
         instructions["instructions"] = y_subdf.to_dict()
         return instructions
 
-
     @staticmethod
-    def cut_dataframe(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+    def instructions_object_detection(paths_list: list, **options: dict) -> dict:
 
         instructions = {'instructions': paths_list,
-                        'parameters': options}
+                        'parameters': {'yolo': options['parameters']['yolo'],
+                                       'num_classes': options['parameters']['num_classes'],
+                                       'classes_names': options['parameters']['classes_names'],
+                                       'put': options['id']}}
 
         return instructions
 
@@ -618,20 +630,20 @@ class CreateArray(object):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
-            # path, _ = elem.split(';')
-            # name, ext = os.path.splitext(os.path.basename(path))
-            # os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_text', os.path.basename(os.path.dirname(path))), exist_ok=True)
-            # shutil.copyfile(path, os.path.join(tmp_folder, f'{options["put"]}_text', os.path.basename(os.path.dirname(path)), os.path.basename(path)))
             text_list.append(paths_list[elem])
-
-        # if dataset_folder:
-        # if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_text')):
-        # shutil.move(os.path.join(tmp_folder, f'{options["put"]}_text'), dataset_folder)
 
         text_list = []
         for key in sorted(paths_list.keys()):
             text_list.append(paths_list[key])
         instructions = {'instructions': text_list,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
+    def cut_dataframe(paths_list: dict, tmp_folder=None, dataset_folder=None, **options: dict):
+
+        instructions = {'instructions': paths_list,
                         'parameters': options}
 
         return instructions
@@ -676,15 +688,7 @@ class CreateArray(object):
 
         text_list = []
         for elem in sorted(paths_list.keys()):
-            # path, slicing = elem.split(';')
-            # name, ext = os.path.splitext(os.path.basename(path))
-            # os.makedirs(os.path.join(tmp_folder, f'{options["put"]}_text_segmentation', os.path.basename(os.path.dirname(path))), exist_ok=True)
-            # shutil.copyfile(path, os.path.join(tmp_folder, f'{options["put"]}_text_segmentation', os.path.basename(os.path.dirname(path)), os.path.basename(path)))
             text_list.append(paths_list[elem])
-
-        # if dataset_folder:
-        # if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_text_segmentation')):
-        # shutil.move(os.path.join(tmp_folder, f'{options["put"]}_text_segmentation'), dataset_folder)
 
         text_list = []
         for key in sorted(paths_list.keys()):
@@ -703,11 +707,23 @@ class CreateArray(object):
 
         return instructions
 
-
     @staticmethod
-    def create_dataframe(row, **options) -> dict:
+    def cut_object_detection(paths_list: list, tmp_folder=None, dataset_folder=None, **options: dict) -> dict:
 
-        instructions = {'instructions': row,
+        for elem in paths_list:
+            os.makedirs(
+                os.path.join(tmp_folder, f'{options["put"]}_object_detection', os.path.basename(os.path.dirname(elem))),
+                exist_ok=True)
+            shutil.copyfile(elem,
+                            os.path.join(tmp_folder, f'{options["put"]}_object_detection',
+                                         os.path.basename(os.path.dirname(elem)),
+                                         os.path.basename(elem)))
+
+        if dataset_folder:
+            if not os.path.isdir(os.path.join(dataset_folder, f'{options["put"]}_object_detection')):
+                shutil.move(os.path.join(tmp_folder, f'{options["put"]}_object_detection'), dataset_folder)
+
+        instructions = {'instructions': paths_list,
                         'parameters': options}
 
         return instructions
@@ -730,7 +746,6 @@ class CreateArray(object):
         slicing = [int(x) for x in video_path[video_path.index('[') + 1:video_path.index(']')].split('-')]
         frames_count = slicing[1] - slicing[0]
         cap = cv2.VideoCapture(video_path)
-        # cap.set(1, slicing[0])
         try:
             for _ in range(frames_count):
                 ret, frame = cap.read()
@@ -791,7 +806,16 @@ class CreateArray(object):
         return instructions
 
     @staticmethod
+    def create_dataframe(row, **options) -> dict:
+
+        instructions = {'instructions': row,
+                        'parameters': options}
+
+        return instructions
+
+    @staticmethod
     def create_classification(class_name: str, **options) -> dict:
+
         if options['type_processing'] == 'categorical':
             if '.trds' in class_name:
                 index = options['classes_names'].index(os.path.basename(class_name))
@@ -885,71 +909,143 @@ class CreateArray(object):
 
         return instructions
 
-
     @staticmethod
-    def preprocess_dataframe(row: np.ndarray, **options) -> np.ndarray:
-        length = options['length'] if 'timeseries' in options.keys() else 1
-        if length == 1:
-            row = row if options['xlen_step'] else [row]
-        if options['scaler'] != 'no_scaler':
-            row = np.array(row)
-            orig_shape = row.shape
-            array = options['object_scaler'].transform(row.reshape(-1, 1))
-            array = array.reshape(orig_shape)
-            return array
+    def create_object_detection(annot_path: str, **options):
 
-        if options['MinMaxScaler_cols']:
-            for j in range(length):
-                for i in options['MinMaxScaler_cols']:
-                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
-                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+        """
+        Args:
+            annot_path: str
+                Путь к файлу
+            **options:
+                height: int ######!!!!!!
+                    Высота изображения.
+                width: int ######!!!!!!
+                    Ширина изображения.
+                num_classes: int
+                    Количество классов.
+        Returns:
+            array: np.ndarray
+                Массивы в трёх выходах.
+        """
 
-        if options['StandardScaler_cols']:
-            for j in range(length):
-                for i in options['StandardScaler_cols']:
-                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
-                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+        def bbox_iou(boxes1, boxes2):
 
-        if options['Categorical_cols']:
-            for j in range(length):
-                for i in options['Categorical_cols']['lst_cols']:
-                    row[j][i] = list(options['Categorical_cols'][f'col_{i}']).index(row[j][i])
+            boxes1_area = boxes1[..., 2] * boxes1[..., 3]
+            boxes2_area = boxes2[..., 2] * boxes2[..., 3]
 
-        if options['Categorical_ranges_cols']:
-            for j in range(length):
-                for i in options['Categorical_ranges_cols']['lst_cols']:
-                    for k in range(len(options['Categorical_ranges_cols'][f'col_{i}'])):
-                        if row[j][i] <= int(options['Categorical_ranges_cols'][f'col_{i}'][k]):
-                            row[j][i] = k
-                            break
+            boxes1 = tf_concat([boxes1[..., :2] - boxes1[..., 2:] * 0.5,
+                                boxes1[..., :2] + boxes1[..., 2:] * 0.5], axis=-1)
+            boxes2 = tf_concat([boxes2[..., :2] - boxes2[..., 2:] * 0.5,
+                                boxes2[..., :2] + boxes2[..., 2:] * 0.5], axis=-1)
 
-        if options['one_hot_encoding_cols']:
-            for j in range(length):
-                for i in options['one_hot_encoding_cols']['lst_cols']:
-                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding_cols'][f'col_{i}'],
-                                                     dtype='uint8').tolist()
+            left_up = tf_maximum(boxes1[..., :2], boxes2[..., :2])
+            right_down = tf_minimum(boxes1[..., 2:], boxes2[..., 2:])
 
-        if type(row) != list:
-            row = row.tolist()
+            inter_section = tf_maximum(right_down - left_up, 0.0)
+            inter_area = inter_section[..., 0] * inter_section[..., 1]
+            union_area = boxes1_area + boxes2_area - inter_area
 
-        if options['xlen_step']:
-            array = np.array(row)
-        else:
-            array = []
-            for i in row:
-                tmp = []
-                for j in i:
-                    if type(j) == list:
-                        if type(j[0]) == list:
-                            tmp.extend(j[0])
-                        else:
-                            tmp.extend(j)
-                    else:
-                        tmp.append(j)
-                array.append(tmp)
+            return 1.0 * inter_area / union_area
 
-            array = np.array(array)
-        return array
+        # height: int = options['height']
+        # width: int = options['width']
+
+        with open(annot_path, 'r') as coordinates:
+            coords = coordinates.read()
+        real_boxes = []
+        for coord in coords.split('\n'):
+            if coord:
+                real_boxes.append([literal_eval(num) for num in coord.split(',')])
+
+        num_classes: int = options['num_classes']
+        zero_boxes_flag: bool = False
+        strides = np.array([8, 16, 32])
+        output_levels = len(strides)
+        train_input_sizes = 416
+        anchor_per_scale = 3
+        yolo_anchors = None
+
+        if options['yolo'] == 'v3':
+            yolo_anchors = [[[10, 13], [16, 30], [33, 23]],
+                            [[30, 61], [62, 45], [59, 119]],
+                            [[116, 90], [156, 198], [373, 326]]]
+        elif options['yolo'] == 'v4':
+            yolo_anchors = [[[12, 16], [19, 36], [40, 28]],
+                            [[36, 75], [76, 55], [72, 146]],
+                            [[142, 110], [192, 243], [459, 401]]]
+
+        anchors = (np.array(yolo_anchors).T / strides).T
+        max_bbox_per_scale = 100
+        train_input_size = random.choice([train_input_sizes])
+        train_output_sizes = train_input_size // strides
+
+        label = [np.zeros((train_output_sizes[i], train_output_sizes[i], anchor_per_scale,
+                           5 + num_classes)) for i in range(output_levels)]
+        bboxes_xywh = [np.zeros((max_bbox_per_scale, 4)) for _ in range(output_levels)]
+        bbox_count = np.zeros((output_levels,))
+
+        for bbox in real_boxes:
+            bbox_class_ind = int(bbox[4])
+            bbox_coordinate = np.array(bbox[:4])
+            one_hot = np.zeros(num_classes, dtype=np.float)
+            one_hot[bbox_class_ind] = 0.0 if zero_boxes_flag else 1.0
+            uniform_distribution = np.full(num_classes, 1.0 / num_classes)
+            deta = 0.01
+            smooth_one_hot = one_hot * (1 - deta) + deta * uniform_distribution
+
+            bbox_xywh = np.concatenate([(bbox_coordinate[2:] + bbox_coordinate[:2]) * 0.5,
+                                        bbox_coordinate[2:] - bbox_coordinate[:2]], axis=-1)
+            bbox_xywh_scaled = 1.0 * bbox_xywh[np.newaxis, :] / strides[:, np.newaxis]
+
+            iou = []
+            exist_positive = False
+            for i in range(output_levels):  # range(3):
+                anchors_xywh = np.zeros((anchor_per_scale, 4))
+                anchors_xywh[:, 0:2] = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32) + 0.5
+                anchors_xywh[:, 2:4] = anchors[i]
+
+                iou_scale = bbox_iou(bbox_xywh_scaled[i][np.newaxis, :], anchors_xywh)
+                iou.append(iou_scale)
+                iou_mask = iou_scale > 0.3
+
+                if np.any(iou_mask):
+                    xind, yind = np.floor(bbox_xywh_scaled[i, 0:2]).astype(np.int32)
+
+                    label[i][yind, xind, iou_mask, :] = 0
+                    label[i][yind, xind, iou_mask, 0:4] = bbox_xywh
+                    label[i][yind, xind, iou_mask, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                    label[i][yind, xind, iou_mask, 5:] = smooth_one_hot
+
+                    bbox_ind = int(bbox_count[i] % max_bbox_per_scale)
+                    bboxes_xywh[i][bbox_ind, :4] = bbox_xywh
+                    bbox_count[i] += 1
+
+                    exist_positive = True
+
+            if not exist_positive:
+                best_anchor_ind = np.argmax(np.array(iou).reshape(-1), axis=-1)
+                best_detect = int(best_anchor_ind / anchor_per_scale)
+                best_anchor = int(best_anchor_ind % anchor_per_scale)
+                xind, yind = np.floor(bbox_xywh_scaled[best_detect, 0:2]).astype(np.int32)
+
+                label[best_detect][yind, xind, best_anchor, :] = 0
+                label[best_detect][yind, xind, best_anchor, 0:4] = bbox_xywh
+                label[best_detect][yind, xind, best_anchor, 4:5] = 0.0 if zero_boxes_flag else 1.0
+                label[best_detect][yind, xind, best_anchor, 5:] = smooth_one_hot
+
+                bbox_ind = int(bbox_count[best_detect] % max_bbox_per_scale)
+                bboxes_xywh[best_detect][bbox_ind, :4] = bbox_xywh
+                bbox_count[best_detect] += 1
+
+        label_sbbox, label_mbbox, label_lbbox = label
+        sbboxes, mbboxes, lbboxes = bboxes_xywh
+
+        instructions = {'instructions': [np.array(label_sbbox, dtype='float32'), np.array(sbboxes, dtype='float32'),
+                                         np.array(label_mbbox, dtype='float32'), np.array(mbboxes, dtype='float32'),
+                                         np.array(label_lbbox, dtype='float32'), np.array(lbboxes, dtype='float32')],
+                        'parameters': options}
+
+        return instructions
 
     @staticmethod
     def preprocess_image(array: np.ndarray, **options) -> np.ndarray:
@@ -1056,6 +1152,71 @@ class CreateArray(object):
         return array
 
     @staticmethod
+    def preprocess_dataframe(row: np.ndarray, **options) -> np.ndarray:
+        length = options['length'] if 'timeseries' in options.keys() else 1
+        if length == 1:
+            row = row if options['xlen_step'] else [row]
+        if options['scaler'] != 'no_scaler':
+            row = np.array(row)
+            orig_shape = row.shape
+            array = options['object_scaler'].transform(row.reshape(-1, 1))
+            array = array.reshape(orig_shape)
+            return array
+
+        if options['MinMaxScaler_cols']:
+            for j in range(length):
+                for i in options['MinMaxScaler_cols']:
+                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
+                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+
+        if options['StandardScaler_cols']:
+            for j in range(length):
+                for i in options['StandardScaler_cols']:
+                    row[j][i] = options['object_scaler'][f'col_{i}'].transform(
+                        np.array(row[j][i]).reshape(-1, 1)).tolist()[0][0]
+
+        if options['Categorical_cols']:
+            for j in range(length):
+                for i in options['Categorical_cols']['lst_cols']:
+                    row[j][i] = list(options['Categorical_cols'][f'col_{i}']).index(row[j][i])
+
+        if options['Categorical_ranges_cols']:
+            for j in range(length):
+                for i in options['Categorical_ranges_cols']['lst_cols']:
+                    for k in range(len(options['Categorical_ranges_cols'][f'col_{i}'])):
+                        if row[j][i] <= int(options['Categorical_ranges_cols'][f'col_{i}'][k]):
+                            row[j][i] = k
+                            break
+
+        if options['one_hot_encoding_cols']:
+            for j in range(length):
+                for i in options['one_hot_encoding_cols']['lst_cols']:
+                    row[j][i] = utils.to_categorical(row[j][i], options['one_hot_encoding_cols'][f'col_{i}'],
+                                                     dtype='uint8').tolist()
+
+        if type(row) != list:
+            row = row.tolist()
+
+        if options['xlen_step']:
+            array = np.array(row)
+        else:
+            array = []
+            for i in row:
+                tmp = []
+                for j in i:
+                    if type(j) == list:
+                        if type(j[0]) == list:
+                            tmp.extend(j[0])
+                        else:
+                            tmp.extend(j)
+                    else:
+                        tmp.append(j)
+                array.append(tmp)
+
+            array = np.array(array)
+        return array
+
+    @staticmethod
     def preprocess_classification(array: np.ndarray, **options) -> np.ndarray:
 
         return array
@@ -1114,4 +1275,9 @@ class CreateArray(object):
                 orig_shape = row.shape
                 array = options['object_scaler'].transform(row.reshape(-1, 1))
                 array = array.reshape(orig_shape)
+        return array
+
+    @staticmethod
+    def preprocess_object_detection(array: list, **options):
+
         return array

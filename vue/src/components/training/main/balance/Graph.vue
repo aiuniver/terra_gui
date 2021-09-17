@@ -52,15 +52,16 @@ export default {
 
 <style lang="scss" scoped>
 .t-graph {
-  width: max-content;
+  width: 100%;
   margin-bottom: 25px;
   position: relative;
+  overflow: hidden;
   &__wrapper {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 5px;
-    max-width: 420px;
+    max-width: 450px;
   }
   &__x-label {
     position: absolute;

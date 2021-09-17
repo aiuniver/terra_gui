@@ -1,27 +1,25 @@
 <template>
-  <table>
+  <table >
     <thead>
       <tr class="outputs_heads">
         <th rowspan="2">Эпоха</th>
         <th rowspan="2">Время<br />(сек.)</th>
-        <th colspan="4">output_1</th>
+        <th v-for="output, key of outputs" :key="key" colspan="4">{{ key }}</th>
       </tr>
       <tr class="callbacks_heads">
-        <th>accuracy</th>
-        <th>val_accuracy</th>
-        <th>loss</th>
-        <th>val_loss</th>
+        <template v-for="item, keyI of output">
+          <th v-for="th, key of item" :key="keyI + key">{{ key }}</th>
+        </template>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="({time, data}, key, i) of data" :key="'epoch_' + i">
+      <tr v-for="({ time, data }, key, i) of data" :key="'epoch_' + i">
         <td class="epoch_num">{{ key }}</td>
         <td>{{ time | int }}</td>
-        <template v-for="item, key, i of data">
-          <td class="value" :key="key + '_tr_1' + i"><span>{{ item.loss.loss | drob }}</span><i>.</i>{{ '' }}</td>
-          <td class="value" :key="key + '_tr_2' + i"><span>{{ item.loss.val_loss | drob }}</span><i>.</i>{{ '' }}</td>
-          <td class="value" :key="key + '_tr_3' + i"><span>{{ item.metrics.AUC | drob}}</span><i>.</i>{{ '' }}</td>
-          <td class="value" :key="key + '_tr_4' + i"><span>{{ item.metrics.val_AUC | drob }}</span><i>.</i>{{ '' }}</td>
+        <template v-for="(output, keyO) of data">
+          <template v-for="metric, keyM of output">
+            <td v-for="item, keyI of metric" class="value" :key="keyO + 't' + keyM + 'r' + keyI"><span>{{ item | int }}</span><i>.</i>{{ item | drob }}</td>
+          </template>
         </template>
       </tr>
     </tbody>
@@ -35,21 +33,29 @@
 
 <script>
 export default {
-  name: "TTable",
+  name: 'TTable',
   props: {
     data: {
       type: Object,
-      default: () => {}
-    }    
+      default: () => {},
+    },
+  },
+  computed: {
+    outputs() {
+      return this.data?.[1]?.data || {}
+    },
+    output() {
+      return Object.values(this.outputs)[0]
+    }
   },
   filters: {
     int(val) {
-      return ~~val
+      return ~~val;
     },
     drob(val) {
-      return (val%1).toFixed(3).slice(2)
-    }
-  }
+      return (val % 1).toFixed(9).slice(2);
+    },
+  },
 };
 </script>
 

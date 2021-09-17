@@ -3,33 +3,37 @@
     <div class="charts__title">Графики</div>
     <div class="charts__content">
       <TChar v-for="(char, i) of lossGraphs" :key="'char1_' + i" :char="char" />
-      <TChar v-for="(char, i) of lossGraphs" :key="'char2_' + i" :char="char" />
-      <TChar v-for="(char, i) of lossGraphs" :key="'char3_' + i" :char="char" />
+      <TCharTemp />
     </div>
   </div>
 </template>
 
 <script>
-import TChar from './TChar.vue'
-import { mapGetters } from 'vuex'
+import TChar from './TChar.vue';
+import TCharTemp from './TCharTemp.vue';
+import { mapGetters } from 'vuex';
 export default {
   name: 'TLossGraphs',
   components: {
     TChar,
+    TCharTemp
   },
+  data: () => ({
+    
+  }),
   computed: {
     ...mapGetters({
-      chars : 'trainings/getChars'    
+      chars: 'trainings/getChars',
     }),
     lossGraphs() {
-      return this.$store.getters['trainings/getTrainData']('loss_graphs') || []
-    }
+      return this.$store.getters['trainings/getTrainData']('loss_graphs') || [];
+    },
   },
   mounted() {
-    this.$emit('isLoad', true)
-    console.log('mounted')
-  }
-}
+    this.$emit('isLoad', true);
+    console.log('mounted');
+  },
+};
 </script>
 
 <style lang="scss" scoped>
