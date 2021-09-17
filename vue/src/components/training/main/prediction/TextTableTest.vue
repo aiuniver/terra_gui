@@ -85,8 +85,7 @@ export default {
       default: ()=>({})
     }
   },
-  data: () => ({
-  }),
+  data: () => ({}),
 };
 </script>
 
