@@ -12,11 +12,11 @@
       </div>
     </div>
     <div class="t-balance__graphs">
-      <template v-for="(id, index) of dataDalance">
-        <template v-for="(item, i) of id">
-          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+        <template v-for="(id, index) of dataDalance">
+          <template v-for="(item, i) of id">
+              <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+          </template>
         </template>
-      </template>
     </div>
   </div>
 </template>
@@ -46,6 +46,7 @@ export default {
     flex-wrap: wrap;
     gap: 30px;
     margin-top: 20px;
+    height: 300px;
   }
   &__wrapper {
     display: flex;

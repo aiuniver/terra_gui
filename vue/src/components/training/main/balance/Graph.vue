@@ -1,4 +1,5 @@
 <template>
+<scrollbar :ops="ops">
   <div class="t-graph">
     <p>{{ graph_name || '' }}</p>
     <div class="t-graph__wrapper">
@@ -10,12 +11,13 @@
       <div class="t-graph__diagram">
         <div class="t-graph__diagram-item" v-for="(val, idx) in values" :key="idx">
           <span>{{ val }}</span>
-          <div class="t-graph__diagram-fill" :style="{ height: `${((val / maxValue) * 100).toFixed()}%` }"></div>
-          <div class="t-graph__diagram-label">{{ labels[idx] }}</div>
+          <div class="t-graph__diagram-fill" :style="{ height: `${((val / max) * 100).toFixed()}%` }"></div>
+          <div class="t-graph__diagram-label" :title="labels[idx]">{{ labels[idx] }}</div>
         </div>
       </div>
     </div>
   </div>
+</scrollbar>
 </template>
 
 <script>
@@ -28,7 +30,14 @@ export default {
     y_label: String,
     plot_data: Array,
   },
-  data: () => ({}),
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: true,
+        scrollingY: false,
+      },
+    }
+  }),
   computed: {
     values() {
       console.log(this.plot_data[0]);
@@ -55,13 +64,11 @@ export default {
   width: 100%;
   margin-bottom: 25px;
   position: relative;
-  overflow: hidden;
   &__wrapper {
     display: flex;
-    flex-wrap: wrap;
     justify-content: flex-end;
     gap: 5px;
-    max-width: 450px;
+    padding-left: 50px;
   }
   &__x-label {
     position: absolute;
@@ -74,8 +81,8 @@ export default {
   }
   &__y-label {
     position: absolute;
-    left: 50%;
-    bottom: -30px;
+    left: 75px;
+    bottom: -40px;
     color: #a7bed3;
     font-size: 12px;
     line-height: 14px;
@@ -100,7 +107,7 @@ export default {
     display: flex;
     gap: 18px;
     padding: 0 10px;
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     &-item {
       font-size: 9px;
       line-height: 14px;
@@ -122,9 +129,11 @@ export default {
       transform: translateX(50%);
       top: 100%;
       max-width: 40px;
-      // word-wrap: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
       text-align: center;
       color: #a7bed3;
+      padding: 0 2px;
     }
   }
   p {
@@ -132,7 +141,7 @@ export default {
     font-weight: 600;
     font-size: 14px;
     line-height: 17px;
-    text-align: center;
+    padding-left: 75px;
     margin-bottom: 10px;
   }
 }
