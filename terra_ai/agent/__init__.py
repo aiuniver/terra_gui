@@ -235,7 +235,6 @@ class Exchange:
         """
         try:
             data = CreationData(**kwargs)
-            print(data.json(indent=2, ensure_ascii=False))
             creation = CreateDataset(data)
             return creation.datasetdata
         except Exception as error:
