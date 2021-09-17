@@ -166,7 +166,6 @@ class GUINN:
     #                 else:
     #                     self.metrics[i_key][idx] = custom_losses_dict[metric](name=metric)
 
-
     def show_training_params(self) -> None:
         """
         output the parameters of the neural network: batch_size, epochs, shuffle, callbacks, loss, metrics,
@@ -482,6 +481,7 @@ class FitCallback(keras.callbacks.Callback):
         self._time_batch_step = time.time()
         self._time_first_step = time.time()
         self._sum_time = 0
+        self._sum_epoch_time = 0
         # self.stop_training = False
         # self.retrain_flag = False
         # self.stop_flag = False
@@ -491,7 +491,25 @@ class FitCallback(keras.callbacks.Callback):
         self.progress_name = "training"
         self.result = {
             'info': None,
-            'usage': self.usage_info.get_usage(),
+            "train_usage": {
+                "hard_usage": self.usage_info.get_usage(),
+                "timings": {
+                    "estimated_time": 0,
+                    "elapsed_time": 0,
+                    "still_time": 0,
+                    "avg_epoch_time": 0,
+                    "elapsed_epoch_time": 0,
+                    "still_epoch_time": 0,
+                    "epoch": {
+                        "current": 0,
+                        "total": 0
+                    },
+                    "batch": {
+                        "current": 0,
+                        "total": 0
+                    },
+                }
+            },
             'train_data': None,
             'states': {}
         }
@@ -628,6 +646,15 @@ class FitCallback(keras.callbacks.Callback):
         for key in param.keys():
             if key in self.result.keys():
                 self.result[key] = param[key]
+            elif key == "timings":
+                self.result["train_usage"]["timings"]["estimated_time"] = param[key][0]
+                self.result["train_usage"]["timings"]["elapsed_time"] = param[key][1]
+                self.result["train_usage"]["timings"]["still_time"] = param[key][0] - param[key][1]
+                self.result["train_usage"]["timings"]["avg_epoch_time"] = self._sum_epoch_time / self.last_epoch
+                self.result["train_usage"]["timings"]["elapsed_epoch_time"] = self._sum_epoch_time / self.last_epoch + param[key][2]
+                self.result["train_usage"]["timings"]["still_epoch_time"] = param[key][2]
+                self.result["train_usage"]["timings"]["epoch"] = param[key][3]
+                self.result["train_usage"]["timings"]["batch"] = param[key][4]
 
     def _get_result_data(self):
         self.result["states"] = interactive.get_states()
@@ -690,7 +717,7 @@ class FitCallback(keras.callbacks.Callback):
             else:
                 time_per_unit = self._estimate_step(current, start_time, _now_time)
             eta = time_per_unit * (target - current)
-        return [self.eta_format(eta), int(eta)]
+        return int(eta)
 
     def on_train_begin(self, logs=None):
         status = self._get_train_status()
@@ -713,26 +740,20 @@ class FitCallback(keras.callbacks.Callback):
             self._set_result_data({'info': f"'Обучение остановлено пользователем, '{msg}"})
         else:
             train_batch_data = None
-            msg_batch = f'Батч {batch}/{self.num_batches}'
-            msg_epoch = f'Эпоха {self.last_epoch}/{self.epochs}:' \
-                        f'{self.update_progress(self.num_batches, batch, self._time_first_step)[0]}, '
-            time_start = \
-                self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, finalize=True)[1]
+            msg_batch = {"batch": {"current": batch, "total": self.num_batches}}
+            msg_epoch = {"epoch": {"current": self.last_epoch, "total": self.epochs}}
+            elapsed_epoch_time = self.update_progress(self.num_batches, batch, self._time_first_step)
+            elapsed_time = self.update_progress(self.num_batches * self.epochs + 1,
+                                                self.batch, self._start_time, finalize=True)
             if self._get_train_status() == "retrain":
-                msg_progress_end = f'Расчетное время окончания:' \
-                                   f'{self.update_progress(self.num_batches * self.retrain_epochs + 1, self.batch, self._start_time)[0]}, '
-                msg_progress_start = f'Время выполнения дообучения:' \
-                                     f'{self.eta_format(time_start)}, '
+                estimated_time = self.update_progress(self.num_batches * self.retrain_epochs + 1,
+                                                      self.batch, self._start_time)
             elif self._get_train_status() == "addtrain":
-                msg_progress_end = f'Расчетное время окончания после остановки:' \
-                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time, stop_current=batch, stop_flag=True)[0]}'
-                msg_progress_start = f'Время выполнения:' \
-                                     f'{self.eta_format(self._sum_time + time_start)}, '
+                estimated_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch,
+                                                      self._start_time, stop_current=batch, stop_flag=True)
+                elapsed_time = self._sum_time + elapsed_time
             else:
-                msg_progress_end = f'Расчетное время окончания:' \
-                                   f'{self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)[0]}, '
-                msg_progress_start = f'Время выполнения:' \
-                                     f'{self.eta_format(time_start)}, '
+                estimated_time = self.update_progress(self.num_batches * self.epochs + 1, self.batch, self._start_time)
             self.batch += 1
 
             if interactive.urgent_predict:
@@ -745,18 +766,13 @@ class FitCallback(keras.callbacks.Callback):
 
                 train_batch_data = interactive.update_state(y_pred=upred)
             if train_batch_data:
-                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}",
-                                       'train_data': train_batch_data
-                                       })
-                # progress.pool(
-                #     self.progress_name,
-                #     percent=(self.last_epoch - 1) / self.epochs * 100,
-                #     message=f"Обучение. Эпоха {self.last_epoch} из {self.epochs}",
-                #     data=self._get_result_data(),
-                #     finished=False,
-                # )
+                result_data = {
+                    'timings': [estimated_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch],
+                    'train_data': train_batch_data
+                }
             else:
-                self._set_result_data({'info': f"{msg_progress_start + msg_progress_end + msg_epoch + msg_batch}"})
+                result_data = {'timings': [estimated_time, elapsed_time, elapsed_epoch_time, msg_epoch, msg_batch]}
+            self._set_result_data(result_data)
             progress.pool(
                 self.progress_name,
                 percent=(self.last_epoch - 1) / self.epochs * 100,
@@ -777,6 +793,7 @@ class FitCallback(keras.callbacks.Callback):
         interactive_logs = copy.deepcopy(logs)
         interactive_logs['epoch'] = self.last_epoch
         current_epoch_time = time.time() - self._time_first_step
+        self._sum_epoch_time += current_epoch_time
         train_epoch_data = interactive.update_state(
             fit_logs=interactive_logs,
             y_pred=scheduled_predict,
@@ -809,7 +826,7 @@ class FitCallback(keras.callbacks.Callback):
         self._save_logs()
         self.save_lastmodel()
         time_end = self.update_progress(self.num_batches * self.epochs + 1,
-                                        self.batch, self._start_time, finalize=True)[1]
+                                        self.batch, self._start_time, finalize=True)
         self._sum_time += time_end
         if self.model.stop_training:
             msg = f'Модель сохранена.'
