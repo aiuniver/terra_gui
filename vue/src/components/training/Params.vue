@@ -214,11 +214,11 @@ export default {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
           if (data) {
-            const { info, states, train_data, usage } = data;
+            const { info, states, train_data, train_usage } = data;
             this.$store.dispatch('trainings/setInfo', info);
             this.$store.dispatch('trainings/setStates', states);
             this.$store.dispatch('trainings/setTrainData', train_data);
-            this.$store.dispatch('trainings/setUsage', usage);
+            this.$store.dispatch('trainings/setTrainUsage', train_usage);
           }
           if (finished) {
             console.log(res);

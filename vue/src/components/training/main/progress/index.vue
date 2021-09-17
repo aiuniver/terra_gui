@@ -1,7 +1,7 @@
 <template>
   <div class="t-progress">
     <div class="t-progress__item t-progress__item--timers">
-      <Timers />
+      <Timers v-bind="timings" />
     </div>
     <div class="t-progress__item t-progress__item--info">
       <Sysinfo :usage="usage" />
@@ -20,9 +20,17 @@ export default {
     Timers,
   },
   computed: {
-    usage() {
-      return this.$store.getters['trainings/getUsage'];
+    lossGraphs() {
+      return this.$store.getters['trainings/getTrainUsage'] || {};
     },
+    usage() {
+      console.log(this.lossGraphs)
+      return this.lossGraphs?.hard_usage || {};
+    },
+    timings() {
+      return this.lossGraphs?.timings || {};
+    },
+
   },
   mounted() {
     console.log(this.data);
