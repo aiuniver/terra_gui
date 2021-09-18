@@ -103,13 +103,8 @@
     </div>
 
     <div class="params__footer">
-      <div>
-        <t-button @click="start">Обучить</t-button>
-        <t-button @click="stop">Остановить</t-button>
-      </div>
-      <div>
-        <t-button @click="save">Сохранить</t-button>
-        <t-button @click="clear">Сбросить</t-button>
+      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
+        <t-button @click="btnEvent(key)" :disabled="!visible">{{ title }}</t-button>
       </div>
     </div>
   </div>
@@ -138,6 +133,7 @@ export default {
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
+      button: 'trainings/getButtons',
     }),
     getValue() {
       return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
@@ -180,6 +176,20 @@ export default {
     },
   },
   methods: {
+    btnEvent(key) {
+      if (key === 'train') {
+        this.start();
+      }
+      if (key === 'stop') {
+        this.stop();
+      }
+      if (key === 'clear') {
+        this.clear();
+      }
+      if (key === 'save') {
+        this.save();
+      }
+    },
     click(e) {
       console.log(e);
     },
@@ -284,15 +294,17 @@ export default {
     flex: 0 1 auto;
   }
   &__footer {
-    width: 100%;
+    // width: 100%;
     padding: 10px 20px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    div {
-      width: 100%;
-      display: flex;
-      gap: 10px;
+    flex-wrap: wrap;
+    // flex-direction: column;
+    gap: 5%;
+  }
+  &__btn {
+    width: 45%;
+    margin: 0 0 10px 0;
+    button {
     }
   }
   &__items {
