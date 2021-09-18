@@ -1,12 +1,12 @@
 from terra_ai.cascades import input, output
-from terra_ai.cascades.cascade import CascadeInput, CascadeElement
+from terra_ai.cascades.cascade import CascadeElement
 from terra_ai.common import json2model_cascade
 from terra_ai.utils import decamelize
 from terra_ai import general_fucntions
 
 
 def create_input(**params):
-    iter = CascadeInput(getattr(input, params['type']))
+    iter = getattr(input, params['type'])
 
     return iter
 

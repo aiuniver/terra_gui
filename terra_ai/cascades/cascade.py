@@ -1,5 +1,4 @@
 from typing import Callable
-from inspect import signature
 from collections import OrderedDict
 
 
@@ -33,25 +32,10 @@ class CascadeElement(Cascade):
         super(CascadeElement, self).__init__(name)
 
         self.fun = fun
-        self.input = signature(fun).parameters
-        self.output = signature(fun).return_annotation
 
     def __call__(self, *agr):
         self.out = self.fun(*agr)
         return self.out
-
-
-class CascadeInput(Cascade):
-    """
-
-    """
-    def __init__(self, iter: Callable, name: str = "Итератор"):
-        super(CascadeInput, self).__init__(name)
-        self.iter = iter
-
-    def __call__(self, path: str):
-        for i in self.iter(path):
-            yield i
 
 
 class CascadeOutput(Cascade):
@@ -61,6 +45,9 @@ class CascadeOutput(Cascade):
     def __init__(self, iter: Callable, name: str = "Итератор"):
         super(CascadeOutput, self).__init__(name)
         self.iter = iter
+
+    def choose_path(self, path: str):
+        self.iter = self.iter(path)
 
     def __call__(self, path: str):
         for i in self.iter(path):
@@ -79,11 +66,12 @@ class CascadeBlock(Cascade):
     def __init__(self, adjacency_map: OrderedDict):
 
         self.adjacency_map = adjacency_map
-        self.input = signature(next(iter(adjacency_map))).parameters
-        self.output = signature(next(reversed(adjacency_map))).return_annotation
-
+        self.cascades = list(adjacency_map.keys())
         name = "[" + ", ".join([str(x.name) for x in adjacency_map]) + "]"
         super(CascadeBlock, self).__init__(name)
+
+    def __getitem__(self, index):
+        return self.cascades[index]
 
     def __call__(self, item):
         self.out_map = {}
@@ -98,11 +86,14 @@ class CascadeBlock(Cascade):
 
 
 class CompleteCascade(CascadeBlock):
-    def __init__(self, adjacency_map: OrderedDict):
+    def __init__(self, input_cascade: Callable, adjacency_map: OrderedDict):
+
+        self.input = input_cascade
         super(CompleteCascade, self).__init__(adjacency_map)
 
-    def __call__(self, input_path, ):
-        pass
+    def __call__(self, input_path: str, output_path: str):
+        for img in self.input(input_path):
+            super(CompleteCascade, self).__call__(img)
 
 
 class BuildModelCascade(CascadeBlock):

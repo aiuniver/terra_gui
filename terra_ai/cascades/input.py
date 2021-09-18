@@ -2,11 +2,12 @@ import cv2
 
 
 def video(path):
-    while True:
-        cap = cv2.VideoCapture(path)
 
-        while cap.isOpened:
+    cap = cv2.VideoCapture(path)
 
-            ret, frame = cap.read()
+    while cap.isOpened:
 
-            yield frame
+        ret, frame = cap.read()
+        frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+
+        yield frame
