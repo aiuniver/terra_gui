@@ -47,4 +47,22 @@ const cloneInputData = function (id, usedColors, { layer, type, parameters }) {
     parameters: parameters || {}
   }
 }
-export { createInputData, cloneInputData };
+
+const changeStructTable = function (data) {
+  data.forEach(table => {
+    if (table.type === 'table' && table.data) {
+      const newarr = [];
+      table.data.forEach((el, index) => {
+        el.forEach((elm, i) => {
+          if (!newarr[i]) {
+            newarr[i] = [];
+          }
+          newarr[i][index] = elm;
+        });
+      });
+      table.data = newarr
+    }
+  })
+  return data;
+}
+export { createInputData, cloneInputData, changeStructTable };

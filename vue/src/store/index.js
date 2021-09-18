@@ -6,6 +6,7 @@ import settings from './modules/settings';
 import projects from './modules/projects';
 import trainings from './modules/trainings';
 import deploy from './modules/deploy';
+import tables from './modules/tables';
 
 import axios from 'axios';
 // import Vue from 'vue';
@@ -19,11 +20,12 @@ export default {
     trainings,
     deploy,
     projects,
+    tables
   },
   actions: {
     async axios({ dispatch }, { method = 'post', url, data = {} }) {
       try {
-        const response = await axios({ method, url: '/api/v1' + url, data});
+        const response = await axios({ method, url: '/api/v1' + url, data });
         const { error, success } = response.data;
         if (success) {
           dispatch('messages/setMessage', '');

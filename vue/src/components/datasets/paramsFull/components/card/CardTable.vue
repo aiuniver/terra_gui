@@ -10,13 +10,14 @@
           v-for="(row, index) in origTable"
           :class="['t-table__col', { 't-table__col--active': row.active }]"
           :key="'row_' + index"
+          :style="getColor"
           @click="select(row, $event)"
         >
-          <div v-if="row.active" class="t-table__select">
-            <t-select-new small :list="[]"></t-select-new>
-          </div>
           <div v-for="(item, i) in row" class="t-table__row" :key="'item_' + i">
             {{ item }}
+          </div>
+          <div class="t-table__select">
+            <div v-for="(color, i) of all(row)" :key="'all' + i" :style="color"></div>
           </div>
         </div>
       </div>
@@ -50,63 +51,75 @@ export default {
     id: Number,
     cover: String,
     table: Array,
+    value: String
   },
   data: () => ({
     show: false,
     items: [{ icon: 'icon-deploy-remove', event: 'remove' }],
-    selected: [],
+    // selected: [],
   }),
   computed: {
     getColor() {
-      const id = this.group.filter(item => item.active);
-      console.log();
-      return { borderColor: this.color(id?.[0]?.layer) || '' };
+      const handler = this.handlers.find(item => item.active);
+      return { borderColor: handler?.color || '' };
     },
     origTable() {
-      return this.originTable.map(item => {
+      return this.table.map(item => {
         item.active = this.selected.includes(item[0]);
         return item;
       });
     },
-    group: {
+    handlers: {
       set(value) {
-        this.$store.dispatch('datasets/setTableGroup', value);
+        this.$store.dispatch('tables/setHandlers', value);
       },
       get() {
-        return this.$store.getters['datasets/getTableGroup'];
+        return this.$store.getters['tables/getHandlers'];
+      },
+    },
+    selected: {
+
+      set(value) {
+        console.log(value);
+        this.handlers = this.handlers.map(item => {
+          if (item.active && item.table[this.label]) {
+            item.table[this.label] = value;
+          }
+          return item;
+        });
+      },
+      get() {
+        const select = this.handlers.find(item => item.active);
+        console.log(select);
+        return select ? select.table[this.label] : [];
       },
     },
   },
-  created() {
-    const newarr = [];
-    this.table.forEach((el, index) => {
-      el.forEach((elm, i) => {
-        if (!newarr[i]) {
-          newarr[i] = [];
-        }
-        newarr[i][index] = elm;
-      });
-    });
-    console.log(newarr);
-    this.originTable = newarr;
-  },
   methods: {
-    color(id) {
-      const selectInputData = this.$store.getters['datasets/getInputDataByID'](id) || {};
-      return selectInputData.color || '';
+    all([name]) {
+      return this.handlers
+        .filter(item => item.table[this.label].includes(name))
+        .map((item, i) => {
+          return { backgroundColor: item.color, top: -(3 * i) + 'px' };
+        });
     },
-    select([name], event) {
-      console.log(event)
+    select([name]) {
       if (this.selected.find(item => item === name)) {
         this.selected = this.selected.filter(item => item !== name);
       } else {
-        // if () {
-
-        // }
         this.selected.push(name);
       }
     },
   },
+  // watch: {
+  //   handlers(value) {
+  //     const select = this.handlers.find(item => item.active)
+  //     if (select) {
+  //       this.selected = select?.colons || []
+  //     }
+  //     console.log(value)
+  //   }
+  // }
 };
 </script>
 
@@ -172,7 +185,7 @@ export default {
     }
     &--active {
       margin-left: 0;
-      min-width: 92px;
+      // min-width: 92px;
       margin-bottom: -1px;
       margin-left: 0px;
       // order: -1 !important;
@@ -193,18 +206,30 @@ export default {
   }
   &__select {
     position: absolute;
-    top: -24px;
-    width: 100px;
+    top: -11px;
+    width: 100%;
+    display: flex;
+    gap: 1px;
+    justify-content: center;
+    div {
+      height: 8px;
+      width: 8px;
+      border-radius: 4px;
+    }
   }
   &__col {
     display: flex;
     flex-direction: column;
     padding: 1px;
+    position: relative;
     &--active {
-      min-width: 100px;
+      // min-width: 100px;
       padding: 0;
       border: 1px solid #6c7883;
-      border-radius: 0px 0px 4px 4px;
+      border-radius: 4px;
+      & > div {
+        top: -12px;
+      }
     }
   }
   &__row {
@@ -212,6 +237,7 @@ export default {
     padding: 0 8px;
     text-overflow: ellipsis;
     overflow: hidden;
+
     &:nth-child(even) {
       background: #242f3d;
     }

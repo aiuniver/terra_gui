@@ -56,12 +56,12 @@ export default {
     pagination: 0,
   }),
   computed: {
-    group: {
+    handlers: {
       set(value) {
-        this.$store.dispatch('datasets/setTableGroup', value);
+        this.$store.dispatch('tables/setHandlers', value);
       },
       get() {
-        return this.$store.getters['datasets/getTableGroup'];
+        return this.$store.getters['tables/getHandlers'];
       },
     },
     errors() {
@@ -78,7 +78,7 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     filterList() {
-      return this.group.map(item => {
+      return this.handlers.map(item => {
         return { label: `${item.label} ${item.id}`, value: item.data, id: item.id };
       });
       // .filter(item => !item.id || item.id === this.id)
@@ -107,7 +107,7 @@ export default {
       } else {
         if (this.selected.find(item => item.id === list.id)) {
           this.selected = this.selected.filter(item => item.id !== list.id);
-          this.group = this.group.map(item => {
+          this.handlers = this.handlers.map(item => {
             if (item.id === list.id) {
               item.layer = 0;
             }
@@ -115,7 +115,7 @@ export default {
           });
         } else {
           this.selected = [...this.selected, list];
-          this.group = this.group.map(item => {
+          this.handlers = this.handlers.map(item => {
             if (item.id === list.id) {
               item.layer = this.id;
             }
@@ -137,11 +137,11 @@ export default {
       this.selected = this.filterList.filter(item => value.includes(item.value));
     }
   },
-  watch: {
-    filterList() {
-      this.selected = this.selected.filter(element => this.group.find(item => item.id === element.id));
-    },
-  },
+  // watch: {
+  //   filterList() {
+  //     this.selected = this.selected.filter(element => this.handlers.find(item => item.id === element.id));
+  //   },
+  // },
 };
 </script>
 
