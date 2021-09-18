@@ -36,6 +36,7 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
               </div>
             </div>
           </div>
@@ -50,6 +51,7 @@
               <div class="table__item" v-for="(input_val, key) in value" :key="key">
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
+                <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
               </div>
             </div>
           </div>
