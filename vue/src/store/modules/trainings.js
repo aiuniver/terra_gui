@@ -13,13 +13,34 @@ export default {
 
     info: '',
     states: {},
-    trainData: {},
-    // trainData: data,
+    // trainData: {},
+    trainData: data,
     trainUsage: {},
+    buttons: {
+      train: {
+        title: "Обучить",
+        visible: true
+      },
+      stop: {
+        title: "Остановить",
+        visible: false
+      },
+      clear: {
+        title: "Сбросить",
+        visible: true
+      },
+      save: {
+        title: "Сохранить",
+        visible: true
+      }
+    }
   }),
   mutations: {
     SET_PARAMS(state, value) {
       state.params = value;
+    },
+    SET_BUTTONS(state, buttons) {
+      state.buttons = { ...buttons };
     },
     SET_STATE_PARAMS(state, value) {
       state.stateParams = { ...value };
@@ -38,6 +59,14 @@ export default {
     },
   },
   actions: {
+    setButtons({ commit }, res) {
+      if (res && res?.data) {
+        const { buttons } = res?.data?.data?.states || res?.data
+        if (buttons) {
+          commit("SET_BUTTONS", buttons);
+        }
+      }
+    },
     async start({ dispatch }, parse) {
       let data = JSON.parse(JSON.stringify(parse))
       console.log(data)
@@ -45,20 +74,27 @@ export default {
       data.architecture.parameters.outputs = arht.map((item, index) => {
         return item ? { id: index, ...item } : null
       }).filter(item => item)
-
-      return await dispatch('axios', { url: '/training/start/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/start/', data }, { root: true });
+      dispatch('setButtons', res);
+      return res
     },
     async stop({ dispatch }, data) {
-      return await dispatch('axios', { url: '/training/stop/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/stop/', data }, { root: true });
+      dispatch('setButtons', res);
+      return res
     },
     async clear({ dispatch }, data) {
-      return await dispatch('axios', { url: '/training/clear/', data }, { root: true });
+      const res = await dispatch('axios', { url: '/training/clear/', data }, { root: true });
+      dispatch('setButtons', res);
+      return res
     },
     async interactive({ dispatch }, data) {
       return await dispatch('axios', { url: '/training/interactive/', data }, { root: true });
     },
     async progress({ dispatch }, data) {
-      return await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+      const res =  await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+      dispatch('setButtons', res);
+      return res
     },
     setDrawer({ commit }, data) {
       commit("SET_DRAWER", data);
@@ -109,6 +145,9 @@ export default {
     },
     getPredict({ predict }) {
       return predict || {}
+    },
+    getButtons({ buttons }) {
+      return buttons
     },
   },
 };

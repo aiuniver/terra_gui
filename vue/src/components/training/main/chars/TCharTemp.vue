@@ -15,7 +15,7 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" />
+        <PopUpMenu v-if="popMenuShow" :data="dataList" :metrics="metrics" @menu-click="handleMenu" />
       </div>
     </div>
     <div class="t-char-temp__main" v-if="graphicShow">
@@ -34,6 +34,8 @@ export default {
     PopUpMenu,
   },
   data: () => ({
+    dataList: ['loss', 'Metrics'],
+    metrics: ['Accuracy', 'CategoricalHinge', 'KLDivergence'],
     char: {
       graph_name: 'График',
       x_label: 'Эпоха',
@@ -107,6 +109,12 @@ export default {
       return arr;
     },
   },
+  methods: {
+    handleMenu(e) {
+      console.log(e);
+      this.popMenuShow = false;
+    },
+  },
   mounted() {
     console.log(this.char);
   },
@@ -139,13 +147,11 @@ export default {
   }
 }
 .t-char-temp {
-
   width: 100%;
   height: 100%;
   background: #242f3d;
   border-radius: 4px;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
-  overflow: hidden;
   position: relative;
   &__overflow {
     user-select: none;
@@ -167,11 +173,13 @@ export default {
     }
   }
   &__main {
-      opacity: 0.3;
+    opacity: 0.3;
   }
   &__header {
+    opacity: 0.3;
     padding: 12px;
     display: flex;
+    justify-content: space-between;
     &-title {
       padding-left: 12px;
     }
@@ -195,6 +203,9 @@ export default {
     }
     &-additionally {
       padding-left: 10px;
+      position: relative;
+      cursor: pointer;
+      z-index: 10;
     }
   }
 }

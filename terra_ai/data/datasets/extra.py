@@ -55,6 +55,12 @@ class LayerAudioModeChoice(str, Enum):
     length_and_step = "length_and_step"
 
 
+class LayerScalerDefaultChoice(str, Enum):
+    no_scaler = "no_scaler"
+    min_max_scaler = "min_max_scaler"
+    standard_scaler = "standard_scaler"
+
+
 class LayerScalerDataframeChoice(str, Enum):
     no_scaler = "no_scaler"
     min_max_scaler = "min_max_scaler"
@@ -131,6 +137,22 @@ class DatasetGroupChoice(str, Enum):
         return list(map(lambda item: item.value, DatasetGroupChoice))
 
 
+class ColumnProcessingTypeChoice(str, Enum):
+    """
+    Типы обработчиков для колонок таблиц
+    """
+
+    Image = "Image"
+    Text = "Text"
+    Audio = "Audio"
+    Video = "Video"
+    ImageSegmentation = "ImageSegmentation"
+    Classification = "Classification"
+    Regression = "Regression"
+    Timeseries = "Timeseries"
+    Scaler = "Scaler"
+
+
 class LayerInputTypeChoice(str, Enum):
     """
     Типы данных для `input`-слоев
@@ -157,8 +179,3 @@ class LayerOutputTypeChoice(str, Enum):
     Regression = "Regression"
     Timeseries = "Timeseries"
     ObjectDetection = "ObjectDetection"
-
-class LayerEncodingChoice(str, Enum):
-    none = "none"
-    ohe = "ohe"
-    multi = "multi"

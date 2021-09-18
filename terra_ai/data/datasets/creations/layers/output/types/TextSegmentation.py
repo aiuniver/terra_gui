@@ -1,7 +1,7 @@
 from typing import Optional
 
 from ......mixins import BaseMixinData
-from terra_ai.data.datasets.extra import LayerTextModeChoice, LayerPrepareMethodChoice
+from terra_ai.data.datasets.extra import LayerTextModeChoice
 from pydantic.types import PositiveInt
 
 

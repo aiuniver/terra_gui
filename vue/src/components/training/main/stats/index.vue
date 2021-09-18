@@ -13,9 +13,9 @@
             @change="change($event, key)"
           />
         </template>
-        <t-checkbox :inline="true" label="Автоотбновление" />
+        <t-checkbox :inline="true" label="Автообновление" />
       </div>
-      <button @click="showContent = !showContent">Показать</button>
+      <t-button class="t-scatters__btn">Показать</t-button>
     </div>
     <div v-if="showContent" class="t-scatters__content">
       <template v-for="(output, key, i) of statisticData">
@@ -44,20 +44,23 @@ export default {
   }),
   methods: {
     change(e, key) {
-      console.log(e)
+      console.log(e);
       this.isShowKeys = !this.isShowKeys.includes(key)
         ? [...this.isShowKeys, key]
         : this.isShowKeys.filter(item => item !== key);
     },
   },
   created() {
-    this.isShowKeys = Object.keys(this.statisticData)
-  }
+    this.isShowKeys = Object.keys(this.statisticData);
+  },
 };
 </script>
 
 <style lang="scss" scoped>
 .t-scatters {
+  &__btn {
+    margin-left: auto;
+  }
   &__header {
     display: flex;
     .checks {

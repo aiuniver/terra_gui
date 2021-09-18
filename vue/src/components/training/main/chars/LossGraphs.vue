@@ -1,6 +1,6 @@
 <template>
   <div class="charts">
-    <div class="charts__title">Графики</div>
+    <!-- <div class="charts__title">Графики</div> -->
     <div class="charts__content">
       <div class="chart">
         <TCharTemp />
@@ -22,7 +22,6 @@ export default {
     TChar,
     TCharTemp,
   },
-  data: () => ({}),
   computed: {
     ...mapGetters({
       chars: 'trainings/getChars',

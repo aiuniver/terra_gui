@@ -1,8 +1,8 @@
 <template>
-  <div class="t-char" v-click-outside="outside">
-    <div class="t-char__header" >
+  <div class="t-char">
+    <div class="t-char__header" v-click-outside="outside">
       <div class="t-char__header--roll">
-        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="graphicShow = !graphicShow"></i>
+        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="show"></i>
       </div>
       <div class="t-char__header--title">{{ char.graph_name || '' }}</div>
       <div v-if="char.progress_state" :class="['t-char__header--condition', char.progress_state]">
@@ -15,7 +15,7 @@
           :title="'roll down'"
           @click="popMenuShow = !popMenuShow"
         ></i>
-        <PopUpMenu v-if="popMenuShow" />
+        <PopUpMenu v-if="popMenuShow" :data="['Loss', 'Metrics']" :metrics="['Accuracy', 'Hinge']" />
       </div>
     </div>
     <div class="t-char__main" v-if="graphicShow">
@@ -110,11 +110,17 @@ export default {
     console.log(this.char);
   },
   methods: {
+    show() {
+      if (this.graphicShow) {
+        this.popMenuShow = false
+      }
+      this.graphicShow = !this.graphicShow;
+    },
     outside() {
-      console.log('sdsdsd')
-      this.popMenuShow = false
-    }
-  }
+      console.log('sdsdsd');
+      this.popMenuShow = false;
+    },
+  },
 };
 </script>
 

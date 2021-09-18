@@ -5,7 +5,7 @@
     :type="type || 'text'"
     :name="name || parse"
     :data-degree="degree"
-    :autocomplete="'off'"
+    autocomplete="off"
     @blur="change"
     @focus="focus"
   />

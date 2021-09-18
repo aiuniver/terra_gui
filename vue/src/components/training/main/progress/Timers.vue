@@ -4,15 +4,15 @@
       <div class="t-time__timer-wrapper">
         <div class="t-time__timer">
           <span>Расчетное время обучения</span>
-          <div>{{ formatTime(avg_epoch_time) }}</div>
+          <div>{{ formatTime(estimated_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Прошло времени</span>
-          <div>{{ formatTime(avg_epoch_time) }}</div>
+          <div>{{ formatTime(elapsed_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Время до окончания обучения</span>
-          <div>{{ formatTime(avg_epoch_time) }}</div>
+          <div>{{ formatTime(still_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Эпоха</span>
@@ -22,7 +22,7 @@
         </div>
       </div>
       <div class="t-time__progress-bar">
-        <div class="t-time__progress-bar--fill" style="width: 553px"></div>
+        <div class="t-time__progress-bar--fill" :style="total(epoch)"></div>
       </div>
     </div>
     <div class="t-time__age">
@@ -33,11 +33,11 @@
         </div>
         <div class="t-time__timer">
           <span>Прошло времени на эпоху</span>
-          <div>{{ formatTime(avg_epoch_time) }}</div>
+          <div>{{ formatTime(elapsed_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Время до окончания текущей эпохи</span>
-          <div>{{ formatTime(avg_epoch_time) }}</div>
+          <div>{{ formatTime(still_epoch_time) }}</div>
         </div>
         <div class="t-time__timer">
           <span>Батч</span>
@@ -47,7 +47,7 @@
         </div>
       </div>
       <div class="t-time__progress-bar">
-        <div class="t-time__progress-bar--fill" style="width: 743px"></div>
+        <div class="t-time__progress-bar--fill" :style="total(batch)"></div>
       </div>
     </div>
   </div>
@@ -95,8 +95,12 @@ export default {
     },
   },
   methods: {
+    total({ total, current }) {
+      return { width: Math.round(current * 100  / total) + '%'};
+    },
     formatTime(sec) {
-      return `${Math.floor(sec / 60 / 60)} : ${Math.floor(sec / 60)} : ${sec}`;
+      sec = ~~sec
+      return `${Math.floor(sec / 60 / 60)}h : ${Math.floor(sec / 60)}m : ${(sec * 60) % 60}s`;
     },
   },
 };
