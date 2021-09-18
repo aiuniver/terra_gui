@@ -28,6 +28,8 @@ class LayerSerializer(serializers.Serializer):
     group = serializers.ChoiceField(choices=tuple(LayerGroupChoice.values()))
     bind = LayerBindSerializer()
     shape = LayerShapeSerializer(required=False)
+    task = serializers.CharField(required=False, allow_null=True)
+    num_classes = serializers.IntegerField(required=False, min_value=1, allow_null=True)
     position = serializers.ListSerializer(child=serializers.FloatField())
     parameters = serializers.DictField()
 
