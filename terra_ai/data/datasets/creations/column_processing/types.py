@@ -114,9 +114,9 @@ class ParametersImageSegmentationData(ParametersBaseData):
 
 
 class ParametersClassificationData(ParametersBaseData):
+    one_hot_encoding: bool = True
     type_processing: LayerTypeProcessingClassificationChoice
     ranges: Optional[str]
-    one_hot_encoding: bool = True
 
     @validator("type_processing")
     def _validate_type_processing(

@@ -16,6 +16,7 @@ from .base import Field
 
 
 class DefaultsDatasetsCreationData(BaseMixinData):
+    column_processing: List[Field]
     input: List[Field]
     output: List[Field]
 
