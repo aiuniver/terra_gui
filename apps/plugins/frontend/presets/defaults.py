@@ -437,6 +437,7 @@ LayerAudioDefaults = [
 Defaults = {
     "datasets": {
         "creation": {
+            "column_processing": {},
             "input": [
                 {
                     "type": "text",
@@ -716,18 +717,6 @@ Defaults = {
                         ],
                         "Segmentation": [
                             SourcesPaths,
-                            {
-                                "type": "number",
-                                "label": "Ширина",
-                                "name": "width",
-                                "parse": "width",
-                            },
-                            {
-                                "type": "number",
-                                "label": "Высота",
-                                "name": "height",
-                                "parse": "height",
-                            },
                             {
                                 "type": "number",
                                 "label": "Диапазон каналов",

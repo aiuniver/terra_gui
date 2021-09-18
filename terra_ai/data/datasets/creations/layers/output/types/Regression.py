@@ -1,12 +1,10 @@
 from typing import Optional, List
 
-from ...extra import MinMaxScalerData
+from ...extra import MinMaxScalerData, ColumnProcessingData
 from .....extra import LayerScalerRegressionChoice
 from ......types import confilepath
 
 
-class ParametersData(MinMaxScalerData):
+class ParametersData(MinMaxScalerData, ColumnProcessingData):
     sources_paths: List[confilepath(ext="csv")]
     scaler: LayerScalerRegressionChoice
-
-    cols_names: Optional[List[int]]

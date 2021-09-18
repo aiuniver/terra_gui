@@ -1,4 +1,4 @@
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 from pydantic import validator
 from pydantic.types import DirectoryPath, PositiveInt, PositiveFloat
 
@@ -25,20 +25,23 @@ class MinMaxScalerData(BaseMixinData):
     max_scaler: int = 1
 
 
-class ParametersImageData(MinMaxScalerData, SourcesPathsData):
+class ColumnProcessingData(BaseMixinData):
+    cols_names: Dict[str, List[str]] = {}
+
+
+class ParametersImageData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
     width: PositiveInt
     height: PositiveInt
     net: LayerNetChoice
     scaler: LayerScalerImageChoice
 
     put: Optional[str]
-    cols_names: Optional[List[str]]
     augmentation: Optional[AugmentationData]
     deploy: Optional[bool] = False
     object_detection: Optional[bool] = False
 
 
-class ParametersTextData(SourcesPathsData):
+class ParametersTextData(SourcesPathsData, ColumnProcessingData):
     filters: str = '–—!"#$%&()*+,-./:;<=>?@[\\]^«»№_`{|}~\t\n\xa0–\ufeff'
     text_mode: LayerTextModeChoice
     max_words: Optional[PositiveInt]
@@ -51,7 +54,6 @@ class ParametersTextData(SourcesPathsData):
 
     put: Optional[str]
     deploy: Optional[bool] = False
-    cols_names: Optional[List[str]]
     open_tags: Optional[str]
     close_tags: Optional[str]
 
@@ -76,7 +78,7 @@ class ParametersTextData(SourcesPathsData):
         return value
 
 
-class ParametersAudioData(MinMaxScalerData, SourcesPathsData):
+class ParametersAudioData(MinMaxScalerData, SourcesPathsData, ColumnProcessingData):
     sample_rate: PositiveInt = 22050
     audio_mode: LayerAudioModeChoice
     max_seconds: Optional[PositiveFloat]
@@ -85,7 +87,6 @@ class ParametersAudioData(MinMaxScalerData, SourcesPathsData):
     parameter: LayerAudioParameterChoice
     scaler: LayerScalerAudioChoice
 
-    cols_names: Optional[List[str]]
     deploy: Optional[bool] = False
 
     @validator("audio_mode")
