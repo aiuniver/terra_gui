@@ -1,35 +1,25 @@
 <template>
-  <div class="content">
-    <div class="char-overflow">
+  <div class="t-char-temp">
+    <div class="t-char-temp__overflow">
       <i class="t-icon icon-add-chart"></i>
       Добавить график
     </div>
-    <div class="item">
-      <div class="item__header">
-        <div class="item__header-roll">
-          <i
-            :class="['t-icon', 'icon-training-roll-down']"
-            :title="'roll down'"
-            @click="graphicShow = !graphicShow"
-          ></i>
-        </div>
-        <div class="item__header-title">{{ char.graph_name || '' }}</div>
-        <div class="item__header-condition normal">
-          <span>{{ char.progress_state || '' }}</span>
-          <div class="indicator"></div>
-        </div>
-        <div class="item__header-additionally">
-          <i
-            :class="['t-icon', 'icon-training-additionally']"
-            :title="'roll down'"
-            @click="popMenuShow = !popMenuShow"
-          ></i>
-          <PopUpMenu v-if="popMenuShow" />
-        </div>
+    <div class="t-char-temp__header">
+      <div class="t-char-temp__header-roll">
+        <i :class="['t-icon', 'icon-training-roll-down']" :title="'roll down'" @click="graphicShow = !graphicShow"></i>
       </div>
-      <div class="item__main" v-if="graphicShow">
-        <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
+      <div class="t-char-temp__header-title">{{ char.graph_name || '' }}</div>
+      <div class="t-char-temp__header-additionally">
+        <i
+          :class="['t-icon', 'icon-training-additionally']"
+          :title="'roll down'"
+          @click="popMenuShow = !popMenuShow"
+        ></i>
+        <PopUpMenu v-if="popMenuShow" :data="dataList" :metrics="metrics" @menu-click="handleMenu" />
       </div>
+    </div>
+    <div class="t-char-temp__main" v-if="graphicShow">
+      <Plotly :data="data" :layout="layout" :display-mode-bar="false"></Plotly>
     </div>
   </div>
 </template>
@@ -38,36 +28,19 @@
 import { Plotly } from 'vue-plotly';
 import PopUpMenu from './menu/PopUpMenu';
 export default {
-  name: 'Tchar',
+  name: 't-char-temp',
   components: {
     Plotly,
     PopUpMenu,
   },
   data: () => ({
+    dataList: ['loss', 'Metrics'],
+    metrics: ['Accuracy', 'CategoricalHinge', 'KLDivergence'],
     char: {
       graph_name: 'График',
       x_label: 'Эпоха',
       y_label: 'Значение',
-      plot_data: [
-        {
-          label: 'Тренировочная выборка',
-          epochs: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-          values: [
-            0.9713165163993835, 0.8578746318817139, 0.802897572517395, 0.7554795145988464, 0.7013662457466125,
-            0.6513573527336121, 0.6137965321540833, 0.5739713907241821, 0.5361674427986145, 0.5122222900390625,
-            0.4707668423652649, 0.4400102198123932,
-          ],
-        },
-        {
-          label: 'Проверочная выборка',
-          epochs: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-          values: [
-            0.942412257194519, 0.8653479218482971, 0.8113749623298645, 0.7803205251693726, 0.7638459205627441,
-            0.7569182515144348, 0.7524999380111694, 0.7603248357772827, 0.757815957069397, 0.7624929547309875,
-            0.7704657912254333, 0.7801728844642639,
-          ],
-        },
-      ],
+      plot_data: [],
       progress_state: 'underfitting',
     },
     graphicShow: true,
@@ -136,6 +109,12 @@ export default {
       return arr;
     },
   },
+  methods: {
+    handleMenu(e) {
+      console.log(e);
+      this.popMenuShow = false;
+    },
+  },
   mounted() {
     console.log(this.char);
   },
@@ -143,28 +122,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.content {
-  width: 50%;
-  padding: 0;
-  position: relative;
-}
-.char-overflow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  z-index: 5;
-  // background-color: #242f3da1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-style: normal;
-  font-weight: bold;
-  font-size: 14px;
-  line-height: 24px;
-  i {
-    margin-right: 20px;
-  }
-}
 .normal {
   span {
     color: #65ca35;
@@ -189,17 +146,40 @@ export default {
     background: #ca5035;
   }
 }
-.item {
-  opacity: 0.3;
+.t-char-temp {
   width: 100%;
   height: 100%;
   background: #242f3d;
   border-radius: 4px;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 25%);
-  overflow: hidden;
+  position: relative;
+  &__overflow {
+    user-select: none;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    // background-color: #242f3da1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 14px;
+    line-height: 24px;
+    color: aliceblue;
+    i {
+      margin-right: 20px;
+    }
+  }
+  &__main {
+    opacity: 0.3;
+  }
   &__header {
+    opacity: 0.3;
     padding: 12px;
     display: flex;
+    justify-content: space-between;
     &-title {
       padding-left: 12px;
     }
@@ -223,6 +203,9 @@ export default {
     }
     &-additionally {
       padding-left: 10px;
+      position: relative;
+      cursor: pointer;
+      z-index: 10;
     }
   }
 }

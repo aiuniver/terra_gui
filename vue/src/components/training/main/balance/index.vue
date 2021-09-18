@@ -1,14 +1,19 @@
 <template>
   <div class="t-balance">
     <div class="t-balance__header">
-      <p>Параметры</p>
       <div class="t-balance__wrapper">
         <div class="t-balance__checks">
-          <t-checkbox :inline="true" label="Показать тренировочную выборку" />
-          <t-checkbox :inline="true" label="Показать проверочную выборку" />
+          <t-field inline :label="'Показать тренировочную выборку'">
+            <t-checkbox-new />
+          </t-field>
+          <t-field inline :label="'Показать проверочную выборку'">
+            <t-checkbox-new small />
+          </t-field>
         </div>
-        <Select :small="true" :inline="true" label="Сортировать" :lists="[]" width="180px"></Select>
-        <button>Показать</button>
+        <t-field inline :label="'Сортировать'">
+          <t-select-new small :list="[]" />
+        </t-field>
+        <t-button class="t-balance__btn">Показать</t-button>
       </div>
     </div>
     <div class="t-balance__graphs">
@@ -22,13 +27,11 @@
 </template>
 
 <script>
-import Select from './Select.vue';
-import Graph from './Graph.vue';
+import Graph from './Graph';
 
 export default {
   name: 't-balance',
   components: {
-    Select,
     Graph,
   },
   computed: {
@@ -46,6 +49,10 @@ export default {
     flex-wrap: wrap;
     gap: 30px;
     margin-top: 20px;
+    height: 300px;
+  }
+  &__btn {
+      margin-left: auto;
   }
   &__wrapper {
     display: flex;

@@ -5,10 +5,13 @@ import shutil
 
 from typing import Optional
 from pathlib import Path
-from pydantic import validator, ValidationError, DirectoryPath, FilePath
+from pydantic import validator, DirectoryPath, FilePath
 from transliterate import slugify
 
 from django.conf import settings
+
+from apps.plugins.frontend import defaults_data
+from apps.plugins.frontend.presets.defaults import TrainingLosses, TrainingMetrics
 
 from terra_ai.agent import agent_exchange
 from terra_ai.data.mixins import BaseMixinData
@@ -17,6 +20,17 @@ from terra_ai.data.extra import HardwareAcceleratorData, HardwareAcceleratorChoi
 from terra_ai.data.datasets.dataset import DatasetData
 from terra_ai.data.modeling.model import ModelDetailsData
 from terra_ai.data.presets.models import EmptyModelDetailsData
+from terra_ai.data.training.train import (
+    TrainData,
+    InteractiveData,
+    LossGraphsList,
+    MetricGraphsList,
+    ProgressTableList,
+)
+from terra_ai.data.training.outputs import OutputsList
+from terra_ai.data.training.checkpoint import CheckpointData
+from terra_ai.data.training.extra import LossGraphShowChoice, MetricGraphShowChoice
+
 
 from . import exceptions
 
@@ -84,6 +98,11 @@ class ProjectPathData(BaseMixinData):
         return value
 
 
+class TrainingDetailsData(BaseMixinData):
+    base: TrainData = TrainData()
+    interactive: InteractiveData = InteractiveData()
+
+
 class Project(BaseMixinData):
     name: str = UNKNOWN_NAME
     hardware: HardwareAcceleratorData = HardwareAcceleratorData(
@@ -91,6 +110,7 @@ class Project(BaseMixinData):
     )
     dataset: Optional[DatasetData]
     model: ModelDetailsData = ModelDetailsData(**EmptyModelDetailsData)
+    training: TrainingDetailsData = TrainingDetailsData()
 
     @property
     def name_alias(self) -> str:
@@ -138,6 +158,7 @@ class Project(BaseMixinData):
         if dataset is None:
             self.dataset = None
             self.model = ModelDetailsData(**EmptyModelDetailsData)
+            self.set_training()
             return
         model_init = dataset.model
         if self.model.inputs and len(self.model.inputs) != len(model_init.inputs):
@@ -166,6 +187,7 @@ class Project(BaseMixinData):
                 self.model.layers.append(layer_data)
                 self.model.name = model_init.name
                 self.model.alias = model_init.alias
+        self.set_training()
 
     def set_model(self, model: ModelDetailsData):
         if self.dataset:
@@ -175,6 +197,77 @@ class Project(BaseMixinData):
             if model.outputs and len(model.outputs) != len(dataset_model.outputs):
                 raise exceptions.DatasetModelOutputsCountNotMatchException()
         self.model = model
+        self.set_training()
+
+    def __update_training_base(self):
+        outputs = []
+        for layer in self.model.outputs:
+            outputs.append(
+                {
+                    "id": layer.id,
+                    "classes_quantity": layer.num_classes,
+                    "task": layer.task.value,
+                    "loss": TrainingLosses.get(layer.task)[0],
+                    "metrics": [TrainingMetrics.get(layer.task)[0]],
+                }
+            )
+        self.training.base.architecture.parameters.outputs = OutputsList(outputs)
+        if self.model.outputs:
+            self.training.base.architecture.parameters.checkpoint = CheckpointData(
+                **{"layer": self.model.outputs[0].id}
+            )
+
+    def __update_training_interactive(self):
+        loss_graphs = []
+        metric_graphs = []
+        progress_table = []
+        index = 0
+        for layer in self.model.outputs:
+            index += 1
+            loss_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.model,
+                }
+            )
+            metric_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": MetricGraphShowChoice.model,
+                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                }
+            )
+            index += 1
+            loss_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": LossGraphShowChoice.classes,
+                }
+            )
+            metric_graphs.append(
+                {
+                    "id": index,
+                    "output_idx": layer.id,
+                    "show": MetricGraphShowChoice.classes,
+                    "show_metric": TrainingMetrics.get(layer.task)[0],
+                }
+            )
+            progress_table.append(
+                {
+                    "output_idx": layer.id,
+                }
+            )
+        self.training.interactive.loss_graphs = LossGraphsList(loss_graphs)
+        self.training.interactive.metric_graphs = MetricGraphsList(metric_graphs)
+        self.training.interactive.progress_table = ProgressTableList(progress_table)
+
+    def set_training(self):
+        defaults_data.update_by_model(self.model)
+        self.__update_training_base()
+        self.__update_training_interactive()
 
     def clear_model(self):
         if self.dataset:
@@ -194,3 +287,4 @@ except Exception:
 
 _config.update({"hardware": agent_exchange("hardware_accelerator")})
 project = Project(**_config)
+project.set_training()

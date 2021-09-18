@@ -132,6 +132,8 @@ export default {
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
     metricData: '',
+    learningStop: false,
+    status: '',
   }),
   computed: {
     ...mapGetters({
@@ -187,12 +189,14 @@ export default {
       if (res) {
         const { data } = res;
         if (data.status) {
+          this.learningStop = false;
           this.progress();
         }
       }
       console.log(res);
     },
     async stop() {
+      this.learningStop = true;
       const res = await this.$store.dispatch('trainings/stop', {});
       console.log(res);
     },
@@ -214,16 +218,18 @@ export default {
           this.$store.dispatch('messages/setProgressMessage', message);
           this.$store.dispatch('messages/setProgress', percent);
           if (data) {
-            const { info, states, train_data, usage } = data;
+            const { info, states, train_data, train_usage } = data;
             this.$store.dispatch('trainings/setInfo', info);
             this.$store.dispatch('trainings/setStates', states);
             this.$store.dispatch('trainings/setTrainData', train_data);
-            this.$store.dispatch('trainings/setUsage', usage);
+            this.$store.dispatch('trainings/setTrainUsage', train_usage);
           }
           if (finished) {
             console.log(res);
           } else {
-            this.progress();
+            if (!this.learningStop) {
+              this.progress();
+            }
           }
         } else {
           console.log(res);
@@ -245,7 +251,7 @@ export default {
   },
   created() {
     // this.progress()
-  }
+  },
 };
 </script>
 
