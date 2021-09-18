@@ -446,7 +446,7 @@ Defaults = {
                 },
                 {
                     "type": "select",
-                    "label": "Тип задачи",
+                    "label": "Тип данных",
                     "name": "type",
                     "parse": "type",
                     "value": LayerInputTypeChoice.Image.name,
@@ -665,7 +665,7 @@ Defaults = {
                 {
                     "type": "select",
                     "name": "type",
-                    "label": "Тип данных",
+                    "label": "Тип задачи",
                     "parse": "type",
                     "value": LayerOutputTypeChoice.Image.name,
                     "list": list(
