@@ -1,6 +1,7 @@
 import { data } from "../temp/training";
 import { toolbar } from "../const/trainings";
-import { predict } from "../temp/predict-training";
+// import { predict } from "../temp/predict-training";
+import { predict_video } from "../temp/predict-training-video-audio";
 
 console.warn(data)
 export default {
@@ -9,7 +10,7 @@ export default {
     params: [],
     toolbar,
     stateParams: {},
-    predict: predict,
+    predict: predict_video,
 
     info: '',
     states: {},
