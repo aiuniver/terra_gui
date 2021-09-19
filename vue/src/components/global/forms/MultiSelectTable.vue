@@ -15,19 +15,23 @@
       </span>
     </div>
     <div class="t-multi-select__content" v-show="show">
-      <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
-        <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
-        <span class="t-multi__item--title">Выбрать все</span>
-      </div>
-      <template v-for="(item, i) in filterList">
-        <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
-          <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
-          <span class="t-multi__item--title">{{ item.label }}</span>
+      <scrollbar style="height: 165px">
+        <div class="t-milti-select__inner">
+          <div v-if="filterList.length" class="t-multi__item" @click="select(checkAll)">
+            <span :class="['t-multi__item--check', { 't-multi__item--active': checkAll }]" />
+            <span class="t-multi__item--title">Выбрать все</span>
+          </div>
+          <template v-for="(item, i) in filterList">
+            <div class="t-multi__item" :key="i" :title="item.label" @click="select(item)">
+              <span :class="['t-multi__item--check', { 't-multi__item--active': active(item) }]"></span>
+              <span class="t-multi__item--title">{{ item.label }}</span>
+            </div>
+          </template>
+          <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
+            <span class="t-multi__item--title">Нет данных</span>
+          </div>
         </div>
-      </template>
-      <div v-if="!filterList.length" class="t-multi__item t-multi__item--empty">
-        <span class="t-multi__item--title">Нет данных</span>
-      </div>
+      </scrollbar>
     </div>
   </div>
 </template>
@@ -55,22 +59,25 @@ export default {
     },
   },
   data: () => ({
-    selected: [],
+    // selected: [],
     show: false,
     pagination: 0,
   }),
   computed: {
-    // files() {
-    //   return this.$store.getters['datasets/getFilesSource'];
-    // },
     handlers: {
       set(value) {
         this.$store.dispatch('tables/setHandlers', value);
       },
       get() {
-        console.log(this.table);
-        // console.log(this.files)
         return this.$store.getters['tables/getHandlers'];
+      },
+    },
+    selected: {
+      set(value) {
+        this.$store.dispatch('tables/setSaveCols', {id: this.id, value});
+      },
+      get() {
+        return this.$store.getters['tables/getSaveCols'](this.id);
       },
     },
     errors() {
@@ -87,21 +94,44 @@ export default {
       return this.filterList.length === this.selected.length;
     },
     cols() {
-      return []
-        .concat(
-          ...this.table.map(item => {
-            return item.table;
-          })
-        )
-        .map(item => {
-          return { label: item[0], value: [] };
-        });
+      return [].concat(
+        ...this.table.map(item => {
+          // console.log(item);
+          const arr = item.table.map(td => {
+            return { label: td[0], value: null, id: `${td[0]}[${item.label}]`, name: td[0], table: item.label };
+          });
+          return arr;
+        })
+      );
     },
     colsHandlers() {
-      return this.handlers.map(item => { return item.table })
+      return [].concat(
+        ...this.handlers.map(item => {
+          let all = [];
+          let arr = [];
+          for (let key in item.table) {
+            arr = arr.concat(
+              ...item.table[key].map(td => {
+                return {
+                  label: `${td} (${item.name})`,
+                  name: td,
+                  value: item.id,
+                  id: `${td}[${key}](${item.id})`,
+                  table: key,
+                };
+                // return { label: `${td}[${key}](${item.name})`, value: [item.name] };
+              })
+            );
+          }
+          // console.log(arr);
+          return all.concat(arr);
+        })
+      );
     },
     filterList() {
-      return [].concat(this.cols);
+      return [].concat(...this.cols, ...this.colsHandlers).sort(function (a, b) {
+        return a.label.toLowerCase() < b.label.toLowerCase() ? -1 : 1;
+      });
 
       // .filter(item => !item.id || item.id === this.id)
       // .filter(item => filter.includes(item.type));
@@ -115,8 +145,8 @@ export default {
         this.$store.dispatch('datasets/cleanError', { id: this.id, name: this.name });
       }
     },
-    active({ value }) {
-      return !!this.selected.find(item => item.value === value);
+    active({ id }) {
+      return !!this.selected.find(item => item.id === id);
     },
     outside() {
       if (this.show) {
@@ -124,12 +154,12 @@ export default {
       }
     },
     select(list) {
-      console.log(list);
+      // console.log(list);
       if (typeof list === 'boolean') {
         this.selected = this.filterList.map(item => (!list ? item : null)).filter(item => item);
       } else {
-        if (this.selected.find(item => item.label === list.label)) {
-          this.selected = this.selected.filter(item => item.label !== list.label);
+        if (this.selected.find(item => item.id === list.id)) {
+          this.selected = this.selected.filter(item => item.id !== list.id);
           // this.handlers = this.handlers.map(item => {
           //   if (item.id === list.id) {
           //     item.layer = 0;
@@ -146,25 +176,35 @@ export default {
           // });
         }
       }
-      // console.log(list);
-
+      // console.log(this.selected);
+      // this.$emit('change', { name: 'cols_names', value: this.selected });
       // this.$emit('multiselect', { value: this.selected, id: this.id });
       // this.mixinCheck(this.selected, this.id);
     },
   },
-  created() {
-    // console.log(this.value);
-    // console.log(this.filterList.filter(item => item));
-    const value = this.value;
-    if (Array.isArray(value)) {
-      this.selected = this.filterList.filter(item => value.includes(item.value));
-    }
-  },
-  // watch: {
-  //   filterList() {
-  //     this.selected = this.selected.filter(element => this.handlers.find(item => item.id === element.id));
-  //   },
+  // created() {
+  //   // console.log(this.value);
+  //   // console.log(this.filterList.filter(item => item));
+  //   const value = this.value;
+  //   if (Array.isArray(value)) {
+  //     this.selected = this.filterList.filter(item => value.includes(item.value));
+  //   }
   // },
+  created() {
+    console.log('created')
+  },
+  mounted() {
+    console.log('moudsd')
+  },
+  watch: {
+    // filterList() {
+    //   this.selected = this.selected.filter(element => this.colsHandlers.find(item => item.id === element.id));
+    // },
+    // selected(value) {
+    // console.warn('value')
+    // this.$emit('change', { name: 'cols_names', value });
+    // },
+  },
 };
 </script>
 
@@ -237,11 +277,12 @@ export default {
     overflow: auto;
     border-radius: 0 0 4px 4px;
     z-index: 102;
+    overflow: auto;
   }
 }
 .t-multi__item {
   display: flex;
-  padding: 1px 5px;
+  padding: 1px 20px 0 5px;
   align-items: center;
   cursor: pointer;
   &--empty {
@@ -276,6 +317,7 @@ export default {
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    flex: 1 0 auto;
   }
 }
 .t-inline {
