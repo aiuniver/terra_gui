@@ -91,7 +91,7 @@ export default {
       newDataset.obworkers = {}
       handlers.forEach(el => {
         console.log(el)
-        newDataset.obworkers[el.name] = el
+        newDataset.obworkers[el.id] = el
       })
       newDataset.source_path = sourcePath
       newDataset.inputs = inputs
