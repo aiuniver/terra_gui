@@ -1094,7 +1094,8 @@ class LayerValidation:
                         (71, 71, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type == "VGG16" or self.layer_type == "ResNet50":
+            elif self.layer_type == "VGG16" or self.layer_type == "ResNet50" \
+                    or self.layer_type == "VGG19":
                 if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
 
                     return ValidatorMessages.InputShapeMustBeOnly.value % (
@@ -1113,24 +1114,14 @@ class LayerValidation:
                         (32, 32, 3),
                         self.inp_shape[0][1:]
                     )
-            elif self.layer_type == "VGG19":
-                if self.layer_parameters.get("include_top") and self.inp_shape[0][1:] != (224, 224, 3):
-
-                    return ValidatorMessages.InputShapeMustBeOnly.value % (
-                        "'include_top'=True",
-                        (224, 224, 3),
-                        self.inp_shape[0][1:]
-                    )
                 elif (
-                        not self.layer_parameters.get("include_top")
-                        and self.inp_shape[0][1] < 32
-                        or self.inp_shape[0][2] < 32
-                        or self.inp_shape[0][3] < 3
+                    self.layer_parameters.get("include_top")
+                    and self.layer_parameters.get("weights")
+                    and self.layer_parameters.get("classifier_activation") != "softmax"
                 ):
-                    return ValidatorMessages.InputShapeMustBeInEchDim.value % (
-                        "greater or equal",
-                        (32, 32, 3),
-                        self.inp_shape[0][1:]
+                    return ValidatorMessages.ActivationFunctionShouldBe.value % (
+                        "using pretrained weights, with `include_top=True`",
+                        "`None` or `softmax`"
                     )
             else:
                 pass

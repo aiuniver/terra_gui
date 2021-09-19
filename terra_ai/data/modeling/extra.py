@@ -100,6 +100,7 @@ class LayerTypeChoice(str, Enum):
     InceptionV3 = "InceptionV3"
     Xception = "Xception"
     VGG16 = "VGG16"
+    VGG19 = "VGG19"
     ResNet50 = "ResNet50"
     CustomUNETBlock = "CustomUNETBlock"
     YOLOResBlock = "YOLOResBlock"

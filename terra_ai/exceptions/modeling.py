@@ -25,6 +25,7 @@ class ModelingMessages(str, Enum):
     DimensionSizeMustBeEvenlyDivisible = "Dimension size (%s) from %s both must be evenly divisible by %s"
     InputDimMustBeThenSizeOf = "input_dim=%s must be %s then size of %s"
     ParameterCanNotBeForInputShape = "For input shape with %s parameter %s can not be %s but received %s"
+    ActivationFunctionShouldBe = "If %s, activation function should be %s"
     # Position
     IncorrectNumberOfFiltersAndChannels = "The number of filters %s and channels %s " \
                                           "must be evenly divisible by the number of groups %s"
@@ -59,6 +60,7 @@ class ValidatorMessages(str, Enum):
     DimensionSizeMustBeEvenlyDivisible = "Dimension size (%s) from %s both must be evenly divisible by %s"
     InputDimMustBeThenSizeOf = "input_dim=%s must be %s then size of %s"
     ParameterCanNotBeForInputShape = "For input shape with %s parameter %s can not be %s but received %s"
+    ActivationFunctionShouldBe = "If %s, activation function should be %s"
     # Position
     IncorrectNumberOfFiltersAndChannels = "The number of filters %s and channels %s " \
                                           "must be evenly divisible by the number of groups %s"
