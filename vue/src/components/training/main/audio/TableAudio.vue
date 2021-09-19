@@ -12,7 +12,7 @@
           :canv-top="true"
           canv-class="custom-player"
           canv-fill-color="#2B5278"
-          :audio-src="require(url)"
+          :audio-src="require('@/../public/sounds/'+url)"
         ></av-waveform>
       </div>
     </div>
@@ -25,7 +25,7 @@ export default {
   props: {
     url:{
       type: String,
-      default: "@/../public/sounds/sound1.mp3"
+      default: "sound1.mp3"
     }
   },
   mounted() {

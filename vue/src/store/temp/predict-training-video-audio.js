@@ -17,15 +17,15 @@ const predict_video = {
     'Input_2 (Аудио)': {
       1: {
           type: 'audio',
-          data: '@/../public/sounds/sound1.mp3'
+          data: 'sound1.mp3'
       },
       2: {
           type: 'audio',
-          data: '@/../public/sounds/sound1.mp3'
+          data: 'sound1.mp3'
       },
       3: {
           type: 'audio',
-          data: '@/../public/sounds/sound1.mp3'
+          data: 'sound1.mp3'
       }
     }
   },
