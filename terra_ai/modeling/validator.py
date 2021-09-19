@@ -3,6 +3,7 @@ import gc
 import importlib
 import sys
 from dataclasses import dataclass, field
+from terra_ai.data.datasets.dataset import DatasetData
 
 from typing import List, Optional, Tuple, Dict, Any, Union
 
@@ -1457,19 +1458,19 @@ if __name__ == "__main__":
     x, y = LV.get_validated()
     print("\n", x, y)
 
-    # x = tensorflow.keras.layers.Input(input_shape[0][1:])
+    x = tensorflow.keras.layers.Input(input_shape[0][1:])
     # x2 = tensorflow.keras.layers.Input(input_shape[1][1:])
     # x3 = tensorflow.keras.layers.Input(input_shape[2][1:])
     # x4 = tensorflow.keras.layers.Input(input_shape[3][1:])
     # x = tensorflow.keras.layers.LSTM(return_state=True, return_sequences=False, units=64)(x)
-    # x = getattr(tensorflow.keras.layers, layer_name)(**params)(x)
+    x = getattr(tensorflow.keras.layers, layer_name)(**params)(x)
     # params.pop('trainable')
     # x = getattr(tensorflow.keras.applications.resnet50, layer_name)(**params)(x)
     # x = getattr(tensorflow.keras.layers, layer_name)(**params)([x, x2, x3, x4])
     # x = getattr(customLayers, layer_name)(**params)(x)
     # x = tensorflow_addons.activations.mish(x)
     # x = tensorflow.nn.space_to_depth(x, **params)
-    # print(x.shape)
+    print(x.shape)
 
     # import importlib
     #
