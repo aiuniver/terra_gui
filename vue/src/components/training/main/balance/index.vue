@@ -17,8 +17,10 @@
       </div>
     </div>
     <div class="t-balance__graphs">
-      <template v-for="(item, i) of dataDalance">
-        <Graph :key="'graph_' + i + '/' + i" v-bind="item" />
+      <template v-for="(id, index) of dataDalance">
+        <template v-for="(item, i) of id">
+          <Graph :key="'graph_' + index + '/' + i" v-bind="item" />
+        </template>
       </template>
     </div>
   </div>
@@ -44,7 +46,7 @@ export default {
   }),
   computed: {
     dataDalance() {
-      return this.$store.getters['trainings/getTrainData']('data_balance')[2] || [];
+      return this.$store.getters['trainings/getTrainData']('data_balance') || [];
     }
   },
   methods: {
