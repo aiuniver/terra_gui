@@ -1,0 +1,2 @@
+class ImageClassification:
+    pass

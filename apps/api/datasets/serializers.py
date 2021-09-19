@@ -106,9 +106,9 @@ class LayerParametersTextSerializer(LayerParametersSerializer):
 class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSerializer):
     sample_rate = serializers.IntegerField(min_value=1)
     audio_mode = serializers.ChoiceField(choices=LayerAudioModeChoice.items_tuple())
-    max_seconds = serializers.IntegerField(required=False, min_value=1)
-    length = serializers.IntegerField(required=False, min_value=1)
-    step = serializers.IntegerField(required=False, min_value=1)
+    max_seconds = serializers.IntegerField(required=False, min_value=1, allow_null=True)
+    length = serializers.IntegerField(required=False, min_value=1, allow_null=True)
+    step = serializers.IntegerField(required=False, min_value=1, allow_null=True)
     parameter = serializers.ChoiceField(choices=LayerAudioParameterChoice.items_tuple())
     scaler = serializers.ChoiceField(choices=LayerScalerAudioChoice.items_tuple())
 
@@ -116,9 +116,12 @@ class LayerParametersAudioSerializer(MinMaxScalerSerializer, LayerParametersSeri
         _audio_mode = data.get("audio_mode")
         if _audio_mode == LayerAudioModeChoice.completely.name:
             self.fields.get("max_seconds").required = True
+            data["length"] = None
+            data["step"] = None
         elif _audio_mode == LayerAudioModeChoice.length_and_step.name:
             self.fields.get("length").required = True
             self.fields.get("step").required = True
+            data["max_seconds"] = None
 
         super().__init__(instance=instance, data=data, **kwargs)
 
