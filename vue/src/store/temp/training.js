@@ -808,9 +808,7 @@ const config = {
       }
   ],
   "statistic_data": {
-      "output_id": [
-          2
-      ],
+      "output_id": [2],
       "autoupdate": false
   },
   "data_balance": {
