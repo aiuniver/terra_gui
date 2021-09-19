@@ -123,6 +123,7 @@ export default {
     text-indent: 0;
     text-shadow: none;
     text-decoration: none;
+
   }
   }
 }
