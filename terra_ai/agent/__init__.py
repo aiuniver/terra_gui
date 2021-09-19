@@ -381,12 +381,12 @@ class Exchange:
         except Exception as error:
             raise exceptions.FailedCleanTrainException(str(error))
 
-    def _call_training_interactive(self, config: dict):
+    def _call_training_interactive(self, **kwargs):
         """
         Обновление интерактивных параметров обучения
         """
         try:
-            interactive.get_train_results(config=config)
+            interactive.get_train_results(config=InteractiveData(**kwargs))
         except Exception as error:
             raise exceptions.FailedSetInteractiveConfigException(str(error))
 
