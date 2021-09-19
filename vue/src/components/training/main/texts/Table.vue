@@ -1,7 +1,7 @@
 <template>
   <div class="t-table">
     <scrollbar :ops="ops">
-      <table>
+      <table v-if="isTable">
         <thead>
           <tr class="outputs_heads">
             <th rowspan="2">Эпоха</th>
@@ -68,6 +68,9 @@ export default {
     console.log(this.$el.clientHiegth);
   },
   computed: {
+    isTable () {
+      return !!this.data?.[1]
+    },
     outputs() {
       return this.data?.[1]?.data || {};
     },
