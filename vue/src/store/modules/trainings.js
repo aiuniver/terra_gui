@@ -1,4 +1,4 @@
-import { data } from "../temp/training";
+import { data, config } from "../temp/training";
 import { toolbar } from "../const/trainings";
 // import { predict } from "../temp/predict-training";
 import { predict_video } from "../temp/predict-training-video-audio";
@@ -11,12 +11,12 @@ export default {
     toolbar,
     stateParams: {},
     predict: predict_video,
-
     info: '',
     states: {},
     // trainData: {},
     trainData: data,
     trainUsage: {},
+    trainDisplay: config,
     buttons: {
       train: {
         title: "Обучить",
@@ -58,6 +58,9 @@ export default {
     SET_TRAIN_USAGE(state, value) {
       state.trainUsage = { ...value };
     },
+    SET_TRAIN_DISPLAY(state, value) {
+      Object.assign(state.trainDisplay, value);
+    },
   },
   actions: {
     setButtons({ commit }, res) {
@@ -94,6 +97,7 @@ export default {
     },
     async progress({ dispatch }, data) {
       const res =  await dispatch('axios', { url: '/training/progress/', data }, { root: true });
+      console.log();
       dispatch('setButtons', res);
       return res
     },
@@ -114,6 +118,9 @@ export default {
     },
     setTrainUsage({ commit }, data) {
       commit("SET_TRAIN_USAGE", data);
+    },
+    setTrainDisplay({ commit }, data) {
+      commit("SET_TRAIN_DISPLAY", data);
     },
   },
   getters: {
@@ -143,6 +150,9 @@ export default {
     },
     getTrainData: ({ trainData }) => (key) => {
       return trainData?.[key] || {};
+    },
+    getTrainDisplay: ({ trainDisplay }) => {
+      return trainDisplay;
     },
     getPredict({ predict }) {
       return predict || {}
