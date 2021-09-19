@@ -14,7 +14,9 @@
 
     <line :x1="lengthWidth" :y1="endpointY" :x2="lengthWidth - lenghtPoint" :y2="endpointY" :style="line.style"></line>
 
-    <path :d="line.data" :style="line.style" />
+    <line :x1="x" :y1="y - line.dist" :x2="x" :y2="y + line.dist" :style="line.style"></line>
+    <line :x1="x - line.dist" :y1="y" :x2="x + line.dist" :y2="y" :style="line.style"></line>
+
     <g v-if="$config.isDev">
       <template v-for="i of qtyXdown">
         <line
@@ -115,9 +117,10 @@ export default {
     line() {
       const dist = 60 * this.scale;
       return {
-        data: `M ${this.x},${this.y + dist} ${this.x},${this.y - dist} M ${this.x + dist},${this.y} ${this.x - dist},${
-          this.y
-        }`,
+        // data: `M ${this.x},${this.y + dist} ${this.x},${this.y - dist} M ${this.x + dist},${this.y} ${this.x - dist},${
+        //   this.y
+        // }`,
+        dist,
         style: {
           stroke: this.color,
           strokeWidth: 0.5 * this.scale,

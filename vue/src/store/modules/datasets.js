@@ -1,4 +1,4 @@
-import { createInputData, cloneInputData } from '../const/datasets';
+import { createInputData, cloneInputData, changeStructTable } from '../const/datasets';
 export default {
   namespaced: true,
   state: () => ({
@@ -156,6 +156,7 @@ export default {
       commit('SET_FULL', value);
     },
     setFilesSource({ commit }, value) {
+      console.log(changeStructTable(value))
       commit('SET_FILES_SOURCE', value);
     },
     setSourcePath({ commit }, value) {
@@ -238,6 +239,9 @@ export default {
         },
     getTypeInput({ creation: { input } }) {
       return input || [];
+    },
+    getFormsHandler({ creation: { column_processing } }) {
+      return column_processing || [];
     },
     getTypeOutput({ creation: { output } }) {
       return output || [];

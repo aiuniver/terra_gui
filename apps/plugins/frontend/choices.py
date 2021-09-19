@@ -17,6 +17,7 @@ class LayerOutputTypeChoice(str, Enum):
     Image = "Изображения"
     Text = "Текст"
     Audio = "Аудио"
+    Dataframe = "Таблицы"
     Classification = "Классификация"
     Segmentation = "Сегментация"
     TextSegmentation = "Сегментация текстов"
@@ -45,6 +46,16 @@ class LayerScalerChoice(str, Enum):
     @staticmethod
     def items_tuple() -> list:
         return list(map(lambda item: (item.name, item.value), LayerScalerChoice))
+
+
+class LayerScalerDefaultChoice(str, Enum):
+    min_max_scaler = "MinMaxScaler"
+    standard_scaler = "StandardScaler"
+    no_scaler = "Не применять"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(map(lambda item: (item.name, item.value), LayerScalerDefaultChoice))
 
 
 class LayerScalerImageChoice(str, Enum):
@@ -218,4 +229,22 @@ class LayerTypeProcessingClassificationChoice(str, Enum):
                 lambda item: (item.name, item.value),
                 LayerTypeProcessingClassificationChoice,
             )
+        )
+
+
+class ColumnProcessingTypeChoice(str, Enum):
+    Image = "Изображения"
+    Text = "Текст"
+    Audio = "Аудио"
+    Video = "Видео"
+    ImageSegmentation = "Сегментация изображений"
+    Classification = "Классификация"
+    Regression = "Регрессия"
+    Timeseries = "Временные ряды"
+    Scaler = "Скейлер"
+
+    @staticmethod
+    def items_tuple() -> list:
+        return list(
+            map(lambda item: (item.name, item.value), ColumnProcessingTypeChoice)
         )

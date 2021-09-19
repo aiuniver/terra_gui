@@ -7,6 +7,7 @@ import cv2
 import pandas
 import base64
 
+from PIL import Image
 from enum import Enum
 from pathlib import Path
 from typing import Optional, Tuple, Union, Dict, Any
@@ -199,10 +200,10 @@ class FileManagerItem(BaseMixinData):
                         except KeyError:
                             _type = FileManagerTypeChoice.undefined
                         if _type == FileManagerTypeBaseChoice.image:
-                            _im = cv2.imread(str(item_path.absolute()))
+                            _im = Image.open(str(item_path.absolute()))
                             _extra = {
-                                "width": _im.shape[1],
-                                "height": _im.shape[0],
+                                "width": _im.size[0],
+                                "height": _im.size[1],
                             }
                         elif _type == FileManagerTypeBaseChoice.video:
                             _vid = cv2.VideoCapture(str(item_path.absolute()))

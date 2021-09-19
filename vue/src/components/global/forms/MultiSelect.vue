@@ -33,7 +33,7 @@
         </div>
       </div>
     </div>
-    <MultiSelectTable v-if="isTable" :id="id" label="Таблица" inline/>
+    <MultiSelectTable v-if="selectedTable.length" :id="id" :table="selectedTable" label="Таблица" inline/>
   </div>
 </template>
 
@@ -72,8 +72,8 @@ export default {
     pagination: 0,
   }),
   computed: {
-    isTable() {
-      return this.selected?.[0]?.type === 'table'
+    selectedTable() {
+      return this.selected.filter(item => item.type === 'table')
     },
     lists() {
       return this.mixinFiles;

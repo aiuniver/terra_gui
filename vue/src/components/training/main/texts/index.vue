@@ -1,37 +1,42 @@
 <template>
-  <div class="texts">
-    <div class="texts__header">
-      <div class="texts__header__out">
+  <div class="t-texts">
+    <div class="t-texts__header">
+      <div class="t-texts__block">
         <p>output 1</p>
-        <t-checkbox :inline="true" label="loss" />
-        <t-checkbox :inline="true" label="данные метрики" />
+        <t-field inline label="loss">
+          <t-checkbox-new />
+        </t-field>
+        <t-field inline label="metrics">
+          <t-checkbox-new />
+        </t-field>
       </div>
-      <div class="texts__header__out">
-        <p>output 2</p>
-        <t-checkbox :inline="true" label="loss" />
-        <t-checkbox :inline="true" label="данные метрики" />
+      <div class="t-texts__block">
+        <t-button>Показать</t-button>
       </div>
-      <button>Показать</button>
     </div>
-    <div class="texts__content">
-      <div class="inner">
-        <div class="epochs">
-          <Table :data="progressTable" />
-        </div>
-      </div>
+    <div class="t-texts__content">
+      <Table :data="data" />
     </div>
   </div>
 </template>
 
 <script>
-import Table from './Table.vue';
+import Table from './Table';
 export default {
   name: 'Texts',
   components: {
     Table,
   },
+  data: () => ({
+    ops: {
+      scrollPanel: {
+        scrollingX: false,
+        scrollingY: false,
+      },
+    },
+  }),
   computed: {
-    progressTable() {
+    data() {
       return this.$store.getters['trainings/getTrainData']('progress_table') || [];
     },
   },
@@ -39,29 +44,26 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.texts {
+.t-texts {
   margin-bottom: 20px;
+  position: relative;
   &__header {
     display: flex;
     gap: 15px;
     align-items: center;
-    &__out {
-      flex-shrink: 0;
-      > p {
-        color: #a7bed3;
-        font-weight: 600;
-        font-size: 14px;
-        line-height: 17px;
-        margin-bottom: 15px;
-      }
+  }
+  &__block {
+    p {
+      margin: 0 0 5px 0;
     }
-    button {
-      flex: 0 0 150px;
+    &:last-child {
+      width: 150px;
+      margin-left: auto;
     }
   }
   &__content {
-    margin-top: 10px;
-    box-sizing: border-box;
+    display: flex;
+    height: 100%;
   }
 }
 </style>

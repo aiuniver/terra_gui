@@ -437,7 +437,8 @@ class InteractiveCallback:
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
         self.metrics_obj = self._prepare_metric_obj(metrics)
-        self.interactive_config = initial_config
+        self.interactive_config = initial_config.native()
+        # print("INITIAL_CONFIG", self.interactive_config)
         # self.dataset = dataset
         self._prepare_dataset_config(dataset, dataset_path)
         self.x_val = dataset.X.get("val") if dataset.data.group == DatasetGroupChoice.keras else None
@@ -485,11 +486,12 @@ class InteractiveCallback:
         self.train_progress = data
 
     def update_state(self, y_pred, fit_logs=None, current_epoch_time=None, on_epoch_end_flag=False) -> dict:
+        if self.interactive_config.get('intermediate_result').get('show_results'):
+            self.example_idx = self._prepare_example_idx_to_show()
         if on_epoch_end_flag:
             self.current_epoch = fit_logs.get('epoch')
             self.current_logs = self._reformat_fit_logs(fit_logs)
             self._reformat_y_pred(y_pred)
-            self.example_idx = self._prepare_example_idx_to_show()
             self._update_log_history()
             self._update_progress_table(current_epoch_time)
             if self.interactive_config.get('intermediate_result').get('show_results') and \
@@ -500,7 +502,6 @@ class InteractiveCallback:
                 self.statistic_result = self._get_statistic_data_request()
         else:
             self._reformat_y_pred(y_pred)
-            self.example_idx = self._prepare_example_idx_to_show()
             if self.interactive_config.get('intermediate_result').get('show_results'):
                 self.intermediate_result = self._get_intermediate_result_request()
             if self.interactive_config.get('statistic_data').get('output_id'):
@@ -1390,7 +1391,7 @@ class InteractiveCallback:
             return data_return
         _id = 1
         for loss_graph_config in self.interactive_config.get('loss_graphs'):
-            if loss_graph_config.get('show_for_model'):
+            if loss_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{loss_graph_config.get('output_idx')}").get("progress_state").get(
                         "loss").get(self.losses.get(f"{loss_graph_config.get('output_idx')}")).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1427,7 +1428,7 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif loss_graph_config.get('show_for_classes'):
+            elif loss_graph_config.get('show') == "classes":
                 data_return.append(
                     {
                         "id": _id,
@@ -1504,7 +1505,7 @@ class InteractiveCallback:
             return data_return
         _id = 1
         for metric_graph_config in self.interactive_config.get('metric_graphs'):
-            if metric_graph_config.get('show_for_model'):
+            if metric_graph_config.get('show') == "model":
                 if sum(self.log_history.get(f"{metric_graph_config.get('output_idx')}").get("progress_state").get(
                         "metrics").get(metric_graph_config.get('show_metric')).get(
                     'overfitting')[-self.log_gap:]) >= self.progress_threashold:
@@ -1542,7 +1543,7 @@ class InteractiveCallback:
                         "progress_state": progress_state
                     }
                 )
-            elif metric_graph_config.get('show_for_classes'):
+            elif metric_graph_config.get('show') == "classes":
                 data_return.append(
                     {
                         "id": _id,

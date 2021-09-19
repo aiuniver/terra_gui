@@ -3,16 +3,16 @@ from typing import Optional, List
 from pydantic import validator
 from pydantic.types import PositiveInt
 
-from ...extra import SourcesPathsData
+from ...extra import SourcesPathsData, ColumnProcessingData
 from .....extra import LayerTypeProcessingClassificationChoice
 
 
-class ParametersData(SourcesPathsData):
+class ParametersData(SourcesPathsData, ColumnProcessingData):
     one_hot_encoding: bool = True
-    type_processing: Optional[LayerTypeProcessingClassificationChoice]
+    type_processing: Optional[
+        LayerTypeProcessingClassificationChoice
+    ] = LayerTypeProcessingClassificationChoice.categorical
     ranges: Optional[str]
-
-    cols_names: Optional[List[int]]
 
     xlen_step: Optional[bool]
     xlen: Optional[PositiveInt] = None

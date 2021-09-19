@@ -68,7 +68,15 @@
             <at-collapse-item class="mt-3" :title="checkpoint.name">
               <div class="checkpoint">
                 <t-field class="checkpoint__item" inline label="Функция">
-                  <t-select-new :list="func" small name="metric_name" :parse="'architecture[parameters][checkpoint][metric_name]'" @parse="parse" />
+                  <t-select-new
+                    :list="func"
+                    small
+                    update
+                    name="metric_name"
+                    :parse="'architecture[parameters][checkpoint][metric_name]'"
+                    :value="getValue"
+                    @parse="parse"
+                  />
                 </t-field>
                 <template v-for="(data, i) of checkpoint.fields">
                   <t-auto-field-trainings
@@ -95,13 +103,8 @@
     </div>
 
     <div class="params__footer">
-      <div>
-        <t-button @click="start">Обучить</t-button>
-        <t-button @click="stop">Остановить</t-button>
-      </div>
-      <div>
-        <t-button @click="save">Сохранить</t-button>
-        <t-button @click="clear">Сбросить</t-button>
+      <div v-for="({ title, visible }, key) of button" :key="key" class="params__btn">
+        <t-button @click="btnEvent(key)" :disabled="!visible">{{ title }}</t-button>
       </div>
     </div>
   </div>
@@ -123,12 +126,18 @@ export default {
     obj: {},
     collapse: [0, 1, 2, 3, 4],
     optimizerValue: '',
-    metricData: ''
+    metricData: '',
+    learningStop: false,
+    status: '',
   }),
   computed: {
     ...mapGetters({
       params: 'trainings/getParams',
+      button: 'trainings/getButtons',
     }),
+    getValue() {
+      return this.state?.['architecture[parameters][checkpoint][metric_name]'] ?? 'Accuracy';
+    },
     state: {
       set(value) {
         this.$store.dispatch('trainings/setStateParams', value);
@@ -167,15 +176,37 @@ export default {
     },
   },
   methods: {
+    btnEvent(key) {
+      if (key === 'train') {
+        this.start();
+      }
+      if (key === 'stop') {
+        this.stop();
+      }
+      if (key === 'clear') {
+        this.clear();
+      }
+      if (key === 'save') {
+        this.save();
+      }
+    },
     click(e) {
       console.log(e);
     },
     async start() {
       console.log(JSON.stringify(this.obj, null, 2));
       const res = await this.$store.dispatch('trainings/start', this.obj);
+      if (res) {
+        const { data } = res;
+        if (data.status) {
+          this.learningStop = false;
+          this.progress();
+        }
+      }
       console.log(res);
     },
     async stop() {
+      this.learningStop = true;
       const res = await this.$store.dispatch('trainings/stop', {});
       console.log(res);
     },
@@ -187,18 +218,49 @@ export default {
       const res = await this.$store.dispatch('trainings/save', {});
       console.log(res);
     },
+    async progress() {
+      setTimeout(async () => {
+        const res = await this.$store.dispatch('trainings/progress', {});
+        console.log(res);
+        if (res) {
+          const { finished, message, percent, data } = res.data;
+          console.log(percent);
+          this.$store.dispatch('messages/setProgressMessage', message);
+          this.$store.dispatch('messages/setProgress', percent);
+          if (data) {
+            const { info, states, train_data, train_usage } = data;
+            this.$store.dispatch('trainings/setInfo', info);
+            this.$store.dispatch('trainings/setStates', states);
+            this.$store.dispatch('trainings/setTrainData', train_data);
+            this.$store.dispatch('trainings/setTrainUsage', train_usage);
+          }
+          if (finished) {
+            console.log(res);
+          } else {
+            if (!this.learningStop) {
+              this.progress();
+            }
+          }
+        } else {
+          console.log(res);
+        }
+      }, 1000);
+    },
     parse({ parse, value, name }) {
       // console.log({ parse, value, name });
       this.state = { [`${parse}`]: value };
       ser(this.obj, parse, value);
       this.obj = { ...this.obj };
       if (name === 'architecture_parameters_checkpoint_layer') {
-        this.metricData = value
+        this.metricData = value;
       }
       if (name === 'optimizer') {
         this.optimizerValue = value;
       }
     },
+  },
+  created() {
+    // this.progress()
   },
 };
 </script>
@@ -232,15 +294,17 @@ export default {
     flex: 0 1 auto;
   }
   &__footer {
-    width: 100%;
+    // width: 100%;
     padding: 10px 20px;
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    div {
-      width: 100%;
-      display: flex;
-      gap: 10px;
+    flex-wrap: wrap;
+    // flex-direction: column;
+    gap: 5%;
+  }
+  &__btn {
+    width: 45%;
+    margin: 0 0 10px 0;
+    button {
     }
   }
   &__items {

@@ -1,45 +1,41 @@
-import os
 import json
+import os
 import shutil
+from pathlib import Path
+from typing import Any, NoReturn, Optional
 
 import tensorflow
 
-from typing import Any, NoReturn
-from pathlib import Path
-
-from ..data.projects.project import ProjectsInfoData, ProjectsList
-
+from . import exceptions
+from .. import settings, progress
+from ..data.datasets.creation import FilePathSourcesList
+from ..data.datasets.creation import SourceData, CreationData
 from ..data.datasets.dataset import (
     DatasetLoadData,
     CustomDatasetConfigData,
     DatasetsGroupsList,
     DatasetData,
 )
-from ..data.datasets.creation import SourceData, CreationData
-from ..data.datasets.creation import FilePathSourcesList
 from ..data.datasets.extra import DatasetGroupChoice
-
-from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
-from ..data.modeling.extra import ModelGroupChoice
-
-from ..data.presets.datasets import DatasetsGroups
-from ..data.presets.models import ModelsGroups
 from ..data.extra import (
     HardwareAcceleratorData,
     HardwareAcceleratorChoice,
     FileManagerItem,
 )
-from ..data.training.train import TrainData
-
-from ..datasets import utils as datasets_utils
+from ..data.modeling.extra import ModelGroupChoice
+from ..data.modeling.model import ModelsGroupsList, ModelLoadData, ModelDetailsData
+from ..data.presets.datasets import DatasetsGroups
+from ..data.presets.models import ModelsGroups
+from ..data.projects.project import ProjectsInfoData, ProjectsList
+from ..data.training.train import TrainData, InteractiveData
+from ..data.deploy.collection import CollectionData as DeployCollectionData
 from ..datasets import loading as datasets_loading
+from ..datasets import utils as datasets_utils
 from ..datasets.creating import CreateDataset
 from ..deploy import loading as deploy_loading
-
-from .. import settings, progress
-from ..progress import utils as progress_utils
-from . import exceptions
+from ..deploy import collect as deploy_collect
 from ..modeling.validator import ModelValidator
+from ..progress import utils as progress_utils
 from ..training import training_obj
 from ..training.guinn import interactive
 
@@ -235,7 +231,6 @@ class Exchange:
         """
         try:
             data = CreationData(**kwargs)
-            print(data.json(indent=2, ensure_ascii=False))
             creation = CreateDataset(data)
             return creation.datasetdata
         except Exception as error:
@@ -337,7 +332,7 @@ class Exchange:
         training_path: Path,
         dataset_path: Path,
         params: TrainData,
-        initial_config: dict,
+        initial_config: InteractiveData,
     ):
         """
         Старт обучения
@@ -353,7 +348,7 @@ class Exchange:
         print("\033[1;33m—————————————————— Training params ——————————————————\033[0m")
         print(params.json(indent=2, ensure_ascii=False))
         print("\033[1;33m—————————————————— Initial config ———————————————————\033[0m")
-        print(initial_config)
+        print(initial_config.json(indent=2, ensure_ascii=False))
         print("\033[1;33m—————————————————————————————————————————————————————\033[0m")
 
         training_obj.terra_fit(
@@ -403,6 +398,12 @@ class Exchange:
             return progress.pool("training")
         except Exception as error:
             raise exceptions.FailedGetTrainingProgressException(str(error))
+
+    def _call_deploy_collection(
+        self, dataset: Optional[DatasetData] = None, path: Optional[Path] = None
+    ) -> Optional[DeployCollectionData]:
+        deploy_collect.update(dataset=dataset, path=path)
+        return deploy_collect.data
 
     def _call_deploy_upload(self, source: Path, **kwargs):
         """

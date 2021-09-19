@@ -2,10 +2,9 @@ from pydantic import ValidationError
 
 from terra_ai.agent import agent_exchange
 from terra_ai.agent.exceptions import ExchangeBaseException
-from terra_ai.data.training.train import TrainData, InteractiveData
+from terra_ai.exceptions.base import TerraBaseException
 
 from apps.plugins.project import project_path
-from terra_ai.exceptions.base import TerraBaseException
 
 from ..base import (
     BaseAPIView,
@@ -17,32 +16,14 @@ from ..base import (
 
 class StartAPIView(BaseAPIView):
     def post(self, request, **kwargs):
-        architecture = request.data.get("architecture", {})
-        architecture.update({"type": "Basic"})
-        request.data.update({"architecture": architecture})
-        for layer_data in architecture.get("parameters", {}).get("outputs", []):
-            if not layer_data:
-                continue
-            layer = request.project.model.outputs.get(layer_data.get("id"))
-            if not layer:
-                continue
-            layer_data.update({"task": layer.task.value})
         try:
             data = {
                 "dataset": request.project.dataset,
                 "model": request.project.model,
                 "training_path": project_path.training,
                 "dataset_path": project_path.datasets,
-                "params": TrainData(**request.data),
-                "initial_config": InteractiveData(
-                    **{
-                        "loss_graphs": [
-                            {
-                                "id": 1,
-                            }
-                        ],
-                    }
-                ),
+                "params": request.project.training.base,
+                "initial_config": request.project.training.interactive,
             }
             return BaseResponseSuccess(agent_exchange("training_start", **data))
         except ValidationError as error:
@@ -54,8 +35,7 @@ class StartAPIView(BaseAPIView):
 class StopAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_stop")
-            return BaseResponseSuccess()
+            return BaseResponseSuccess(agent_exchange("training_stop"))
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
@@ -63,8 +43,7 @@ class StopAPIView(BaseAPIView):
 class ClearAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_clear")
-            return BaseResponseSuccess()
+            return BaseResponseSuccess(agent_exchange("training_clear"))
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
@@ -72,8 +51,9 @@ class ClearAPIView(BaseAPIView):
 class InteractiveAPIView(BaseAPIView):
     def post(self, request, **kwargs):
         try:
-            agent_exchange("training_interactive", **request.data)
-            return BaseResponseSuccess()
+            return BaseResponseSuccess(
+                agent_exchange("training_interactive", **request.data)
+            )
         except ExchangeBaseException as error:
             return BaseResponseErrorGeneral(str(error))
 
