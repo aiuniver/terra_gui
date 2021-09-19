@@ -72,17 +72,17 @@ export default {
   }
   &__x-label {
     position: absolute;
-    top: 50%;
-    left: -25px;
-    transform: rotate(-90deg);
+    left: 75px;
+    bottom: -40px;
     color: #a7bed3;
     font-size: 12px;
     line-height: 14px;
   }
   &__y-label {
     position: absolute;
-    left: 75px;
-    bottom: -40px;
+    top: 50%;
+    left: -25px;
+    transform: rotate(-90deg);
     color: #a7bed3;
     font-size: 12px;
     line-height: 14px;

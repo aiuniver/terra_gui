@@ -30,8 +30,8 @@ export default {
       this.checked = !this.checked
     },
     change(e) {
-      console.log(e);
       const value = e.target.checked;
+      this.$emit('input', value);
       this.$emit('change', { name: this.name, value });
       this.$emit('parse', { parse: this.parse, value });
       if (this.error) {
