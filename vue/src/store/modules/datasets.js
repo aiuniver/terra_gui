@@ -240,6 +240,9 @@ export default {
     getTypeInput({ creation: { input } }) {
       return input || [];
     },
+    getFormsHandler({ creation: { column_processing } }) {
+      return column_processing || [];
+    },
     getTypeOutput({ creation: { output } }) {
       return output || [];
     },

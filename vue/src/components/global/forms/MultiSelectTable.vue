@@ -49,6 +49,10 @@ export default {
     disabled: Boolean,
     inline: Boolean,
     value: Array,
+    table: {
+      type: Array,
+      default: () => [],
+    },
   },
   data: () => ({
     selected: [],
@@ -56,11 +60,16 @@ export default {
     pagination: 0,
   }),
   computed: {
+    // files() {
+    //   return this.$store.getters['datasets/getFilesSource'];
+    // },
     handlers: {
       set(value) {
         this.$store.dispatch('tables/setHandlers', value);
       },
       get() {
+        console.log(this.table);
+        // console.log(this.files)
         return this.$store.getters['tables/getHandlers'];
       },
     },
@@ -77,10 +86,23 @@ export default {
     checkAll() {
       return this.filterList.length === this.selected.length;
     },
+    cols() {
+      return []
+        .concat(
+          ...this.table.map(item => {
+            return item.table;
+          })
+        )
+        .map(item => {
+          return { label: item[0], value: [] };
+        });
+    },
+    colsHandlers() {
+      return this.handlers.map(item => { return item.table })
+    },
     filterList() {
-      return this.handlers.map(item => {
-        return { label: `${item.label} ${item.id}`, value: item.data, id: item.id };
-      });
+      return [].concat(this.cols);
+
       // .filter(item => !item.id || item.id === this.id)
       // .filter(item => filter.includes(item.type));
     },
@@ -102,28 +124,29 @@ export default {
       }
     },
     select(list) {
+      console.log(list);
       if (typeof list === 'boolean') {
         this.selected = this.filterList.map(item => (!list ? item : null)).filter(item => item);
       } else {
-        if (this.selected.find(item => item.id === list.id)) {
-          this.selected = this.selected.filter(item => item.id !== list.id);
-          this.handlers = this.handlers.map(item => {
-            if (item.id === list.id) {
-              item.layer = 0;
-            }
-            return item;
-          });
+        if (this.selected.find(item => item.label === list.label)) {
+          this.selected = this.selected.filter(item => item.label !== list.label);
+          // this.handlers = this.handlers.map(item => {
+          //   if (item.id === list.id) {
+          //     item.layer = 0;
+          //   }
+          //   return item;
+          // });
         } else {
           this.selected = [...this.selected, list];
-          this.handlers = this.handlers.map(item => {
-            if (item.id === list.id) {
-              item.layer = this.id;
-            }
-            return item;
-          });
+          // this.handlers = this.handlers.map(item => {
+          //   if (item.id === list.id) {
+          //     item.layer = this.id;
+          //   }
+          //   return item;
+          // });
         }
       }
-      console.log(list);
+      // console.log(list);
 
       // this.$emit('multiselect', { value: this.selected, id: this.id });
       // this.mixinCheck(this.selected, this.id);

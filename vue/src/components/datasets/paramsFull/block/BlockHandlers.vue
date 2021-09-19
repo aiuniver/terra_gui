@@ -1,10 +1,15 @@
 <template>
-  <div class="block-handlers">
+  <div :class="['block-handlers', { 'block-handlers--hide': !show }]">
     <div class="block-handlers__header">
-      <p>Обработчики</p>
-      <Fab @click="handleAdd" />
+      <div class="block-handlers__item">
+        <Fab @click="handleAdd" />
+        <p>Обработчики</p>
+        <div class="block-handlers__item--left" @click="show = !show">
+          <i class="t-icon icon-collapsable"></i>
+        </div>
+      </div>
     </div>
-    <scrollbar :ops="ops">
+    <scrollbar v-if="show" :ops="ops">
       <div class="block-handlers__content">
         <template v-for="(handler, index) in handlers">
           <CardHandler
@@ -14,7 +19,20 @@
             @click.native="select(handler.id)"
           >
             <template v-slot:header>{{ `${handler.name} ${handler.id}` }}</template>
-
+            <template v-slot:default="{ data: { parameters, errors } }">
+              <template v-for="(data, index) of formsHandler">
+                <t-auto-field
+                  v-bind="data"
+                  :parameters="parameters"
+                  :errors="errors"
+                  :key="handler.color + index"
+                  :idKey="'key_' + index"
+                  :id="handler.id"
+                  root
+                  @change="change"
+                />
+              </template>
+            </template>
           </CardHandler>
         </template>
       </div>
@@ -33,6 +51,7 @@ export default {
     CardHandler,
   },
   data: () => ({
+    show: true,
     ops: {
       scrollPanel: {
         scrollingX: true,
@@ -59,6 +78,9 @@ export default {
     table: {},
   }),
   computed: {
+    formsHandler() {
+      return this.$store.getters['datasets/getFormsHandler'];
+    },
     handlers: {
       set(value) {
         this.$store.dispatch('tables/setHandlers', value);
@@ -79,6 +101,13 @@ export default {
       }, {});
   },
   methods: {
+    change({ id, value, name }) {
+      const index = this.handlers.findIndex(item => item.id === id);
+      if (this.handlers[index]) {
+        this.handlers[index].parameters[name] = value;
+      }
+      this.handlers = [...this.handlers];
+    },
     select(id) {
       this.handlers = this.handlers.map(item => {
         item.active = item.id === id;
@@ -92,6 +121,7 @@ export default {
       });
     },
     handleAdd() {
+      if (!this.show) return;
       console.log(this.table);
       this.deselect();
       this.handlers.push({
@@ -99,14 +129,15 @@ export default {
         name: 'Name',
         active: true,
         color: this.colors[this.handlers.length],
-        layer: 'String',
+        layer: (this.handlers.length + 1).toString(),
         type: 'String',
         table: JSON.parse(JSON.stringify(this.table)),
+        parameters: {},
       });
       console.log(this.handlers);
     },
-    handleClick(e, id) {
-      if (e === 'remove') {
+    handleClick(event, id) {
+      if (event === 'remove') {
         this.deselect();
         this.handlers = this.handlers.filter(item => item.id !== id);
       }
@@ -120,6 +151,9 @@ export default {
   margin: 10px auto;
   height: 400px;
   padding: 0 0 25px;
+  &--hide {
+    height: 30px;
+  }
   p {
     font-size: 14px;
   }
@@ -127,9 +161,29 @@ export default {
     height: 32px;
     background: #242f3d;
     display: flex;
-    justify-content: center;
-    gap: 10px;
+    flex-direction: row;
+    justify-content: flex-end;
+    // gap: 10px;
     align-items: center;
+    padding: 0 10px;
+  }
+  &__item {
+    width: 50%;
+    display: flex;
+    align-items: center;
+    padding: 0 7px;
+    p {
+      margin-left: 15px;
+    }
+    &--left {
+      height: 30px;
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+      i {
+        height: 12px;
+      }
+    }
   }
   &__content {
     margin: 10px auto;
