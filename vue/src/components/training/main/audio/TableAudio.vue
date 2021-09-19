@@ -84,7 +84,6 @@ export default {
     padding: 0;
     width: 200px;
     background-color: transparent;
-
   }
   audio::-webkit-media-controls-play-button, video::-webkit-media-controls-play-button {
     -webkit-appearance: media-play-button;
