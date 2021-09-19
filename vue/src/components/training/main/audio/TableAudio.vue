@@ -12,7 +12,7 @@
           :canv-top="true"
           canv-class="custom-player"
           canv-fill-color="#2B5278"
-          :audio-src="require('@/../public/sounds/sound1.mp3')"
+          :audio-src="require(url)"
         ></av-waveform>
       </div>
     </div>
@@ -22,6 +22,12 @@
 <script>
 export default {
   name: "TableAudio",
+  props: {
+    url:{
+      type: String,
+      default: "@/../public/sounds/sound1.mp3"
+    }
+  },
   mounted() {
     this.$el.querySelector('audio').setAttribute("controlsList", "nodownload")
   }

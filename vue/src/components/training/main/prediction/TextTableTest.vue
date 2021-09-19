@@ -21,7 +21,7 @@
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
-                <TableAudio v-if="input_val.type === 'audio'"/>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
               </div>
             </div>
           </div>
@@ -37,6 +37,7 @@
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
               </div>
             </div>
           </div>
@@ -52,6 +53,7 @@
                 <TableImage v-if="input_val.type == 'image'" :image="input_val" />
                 <TableText v-if="input_val.type === 'str' || input_val.type === 'number'" :data="input_val" />
                 <Embed v-if="input_val.type === 'video'" :src="input_val.data"></Embed>
+                <TableAudio v-if="input_val.type === 'audio'" :url="input_val.data"/>
               </div>
             </div>
           </div>

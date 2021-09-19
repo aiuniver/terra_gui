@@ -17,15 +17,15 @@ const predict_video = {
     'Input_2 (Аудио)': {
       1: {
           type: 'audio',
-          data: 'https://files.realrocks.ru/download/1246100/edgar_simonyan_kompozitor__-_krasivoe_pianino.mp3'
+          data: '@/../public/sounds/sound1.mp3'
       },
       2: {
           type: 'audio',
-          data: 'https://files.realrocks.ru/download/1246100/edgar_simonyan_kompozitor__-_krasivoe_pianino.mp3'
+          data: '@/../public/sounds/sound1.mp3'
       },
       3: {
           type: 'audio',
-          data: 'https://files.realrocks.ru/download/1246100/edgar_simonyan_kompozitor__-_krasivoe_pianino.mp3'
+          data: '@/../public/sounds/sound1.mp3'
       }
     }
   },
