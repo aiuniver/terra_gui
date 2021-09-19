@@ -114,6 +114,9 @@ components.forEach(component=>Vue.component(component.name, component))
 import VuePapaParse from "vue-papa-parse";
 Vue.use(VuePapaParse)
 
+import AudioVisual from 'vue-audio-visual'
+Vue.use(AudioVisual)
+
 Vue.config.productionTip = false;
 Vue.use(Vuex);
 Vue.use(VueAxios, axios);
