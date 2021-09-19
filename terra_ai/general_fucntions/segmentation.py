@@ -14,11 +14,14 @@ def masked_image(class_id=1):
         return mask_img
 
     def fun(img, mask):
+
+        if len(img.shape) == 3:
+            img = img[np.newaxis, ...]
+
+        mask = tensorflow.image.resize(mask, img.shape[1:-1]).numpy()
+
         mask = mask[:, :, :, class_id]
         mask = np.around(mask)
-
-        img = img[np.newaxis, ...]
-        img = tensorflow.image.resize(img, mask.shape[1:]).numpy()
 
         img = mul_mask(img, mask)
         return img
@@ -33,7 +36,8 @@ def plot_mask_segmentation(num_class, classes_colors):
         if len(img.shape) == 3:
             img = img[np.newaxis, ...]
 
-        img = tensorflow.image.resize(img, mask.shape[1:-1]).numpy()
+        mask = tensorflow.image.resize(mask, img.shape[1:-1]).numpy()
+        img = img.copy()
 
         for i in range(num_class):
             mask_class = mask[:, :, :, i]

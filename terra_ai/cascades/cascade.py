@@ -39,19 +39,25 @@ class CascadeElement(Cascade):
 
 
 class CascadeOutput(Cascade):
-    """
-
-    """
-    def __init__(self, iter: Callable, name: str = "Итератор"):
+    def __init__(self, iter: Callable, params: dict, name: str = "Recorder"):
         super(CascadeOutput, self).__init__(name)
         self.iter = iter
+        self.params = params
+
+        self.recorder = self.writer = None
 
     def choose_path(self, path: str):
-        self.iter = self.iter(path)
+        self.writer, self.recorder = self.iter(path, **self.params)
 
-    def __call__(self, path: str):
-        for i in self.iter(path):
-            yield i
+    def release(self):
+        if self.writer:
+            self.writer.release()
+
+    def __call__(self, img, path):
+        if not self.recorder:
+            self.choose_path(path)
+
+        self.recorder(img)
 
 
 class CascadeBlock(Cascade):
@@ -86,12 +92,14 @@ class CascadeBlock(Cascade):
 
 
 class CompleteCascade(CascadeBlock):
-    def __init__(self, input_cascade: Callable, adjacency_map: OrderedDict):
+    def __init__(self, input_cascade: Callable, params: dict, adjacency_map: OrderedDict):
 
         self.input = input_cascade
+
         super(CompleteCascade, self).__init__(adjacency_map)
 
     def __call__(self, input_path: str, output_path: str):
+        self.writer, self.iterator = self.input(output_path, )
         for img in self.input(input_path):
             super(CompleteCascade, self).__call__(img)
 
