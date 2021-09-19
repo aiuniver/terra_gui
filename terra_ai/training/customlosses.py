@@ -5,10 +5,10 @@ import numpy as np
 __version__ = 0.08
 
 
-class DiceCoefficient(tf.keras.metrics.Metric):
+class DiceCoef(tf.keras.metrics.Metric):
 
     def __init__(self, name='dice_coef', **kwargs):
-        super(DiceCoefficient, self).__init__(name=name, **kwargs)
+        super(DiceCoef, self).__init__(name=name, **kwargs)
         self.dice: float = 0
         # pass
 
@@ -31,7 +31,7 @@ class DiceCoefficient(tf.keras.metrics.Metric):
         """
         Returns the serializable config of the metric.
         """
-        config = super(DiceCoefficient, self).get_config()
+        config = super(DiceCoef, self).get_config()
         return config
 
     @classmethod

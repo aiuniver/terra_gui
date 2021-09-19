@@ -60,7 +60,6 @@ class Metric(str, Enum):
     SparseCategoricalAccuracy = "SparseCategoricalAccuracy"
     SparseCategoricalCrossentropy = "SparseCategoricalCrossentropy"
     SparseTopKCategoricalAccuracy = "SparseTopKCategoricalAccuracy"
-
     DiceCoef = "DiceCoef"
 
 
