@@ -516,9 +516,10 @@ class InteractiveCallback:
 
     def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
-        self.interactive_config = config if config else self.interactive_config
+        self.interactive_config = config.native() if config else self.interactive_config
         self.example_idx = self._prepare_example_idx_to_show()
-        if config.get('intermediate_result').get('show_results') or config.get('statistic_data').get('output_id'):
+        if config.native().get('intermediate_result').get('show_results') or \
+                config.native().get('statistic_data').get('output_id'):
             self.urgent_predict = True
             return
 
