@@ -28,6 +28,7 @@ class ExampleChoiceTypeChoice(str, Enum):
 class BalanceSortedChoice(str, Enum):
     descending = "descending"
     ascending = "ascending"
+    alphabetic = "alphabetic"
 
 
 class ArchitectureChoice(str, Enum):

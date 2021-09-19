@@ -5,6 +5,7 @@ import re
 from tempfile import NamedTemporaryFile
 from typing import Union
 
+import pandas as pd
 import tensorflow
 from PIL import Image, ImageDraw, ImageFont  # Модули работы с изображениями
 
@@ -420,7 +421,7 @@ class InteractiveCallback:
             # 'data_balance': {
             #     'show_train': True,
             #     'show_val': True,
-            #     'sorted': 'by_name'  # 'descending', 'ascending'
+            #     'sorted': 'alphabetic'  # 'descending', 'ascending'
             # }
         }
         pass
@@ -429,7 +430,7 @@ class InteractiveCallback:
                        metrics: dict,
                        losses: dict,
                        dataset_path: str,
-                       initial_config: dict):
+                       initial_config: InteractiveData):
         self.losses = losses
         self.metrics = self._reformat_metrics(metrics)
         self.loss_obj = self._prepare_loss_obj(losses)
@@ -513,7 +514,7 @@ class InteractiveCallback:
             'data_balance': self._get_balance_data_request(),
         }
 
-    def get_train_results(self, config: dict = None) -> Union[dict, None]:
+    def get_train_results(self, config: InteractiveData) -> Union[dict, None]:
         """Return dict with data for current interactive request"""
         self.interactive_config = config if config else self.interactive_config
         self.example_idx = self._prepare_example_idx_to_show()
@@ -587,6 +588,8 @@ class InteractiveCallback:
                 'task': dataset.data.inputs.get(inp).task.name,
                 "input_shape": dataset.data.inputs.get(inp).shape
             }
+            if dataset.data.inputs.get(inp).task == LayerInputTypeChoice.Dataframe:
+                self.dataset_config["inputs"][f"{inp}"]['cols_names'] = list(dataset.dataframe.get('train').columns)
         for out in dataset.data.outputs.keys():
             self.dataset_config["outputs"][f"{out}"] = {
                 'classes_colors': self._get_classes_colors(dataset.data.outputs.get(out)),
@@ -595,6 +598,15 @@ class InteractiveCallback:
                 'num_classes': dataset.data.outputs.get(out).num_classes,
                 'task': dataset.data.outputs.get(out).task.name
             }
+            if dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Regression or \
+                    dataset.data.outputs.get(out).task == LayerOutputTypeChoice.Timeseries:
+                # TODO: пока берется последняя колонка как таргет,
+                #       когда поправят датасеты на указание кололонки таргета - скорректировать код
+                columns_num = dataset.data.outputs.get(out).shape[-1]
+                self.dataset_config["inputs"][f"{out}"]['cols_names'] = \
+                    list(dataset.dataframe.get('train').columns)[-columns_num:]
+                # TODO: Добавить scaler
+                self.dataset_config["inputs"][f"{out}"]['scaler'] = None
 
     @staticmethod
     def _get_classes_colors(dataset_output: DatasetOutputsData):
@@ -660,6 +672,7 @@ class InteractiveCallback:
                         and not self.dataset_config.get("outputs").get(out).get("use_generator")
                 ):
                     self.y_true[data_type][out] = dataset.Y.get(data_type).get(f"{out}")
+
                 else:
                     pass
 
@@ -1577,10 +1590,11 @@ class InteractiveCallback:
             1: {
                 'initial_value': {
                     'Вход 1': {
-                        {
-                            'type': 'image',
-                            'data': '/content/file.webm'
-                        },
+                        "Изображение":
+                            {
+                                'type': 'image',
+                                'data': '/content/file.webm'
+                            },
                         # {
                         #     'type': 'video',
                         #     'data': '/content/file.webm'
@@ -1597,27 +1611,34 @@ class InteractiveCallback:
                     }
                 },
                 'true_value': {
-                    'Выход 2':
-                        {
+                    'Выход 2': {
+                        "Класс": {
                             'type': 'str',
                             'data': text,
                             'color_mark': None
                             'tags_color': {
-                                s1: #fffff,
-                                s2: #tyuhg
-                            }
+                                    '<s1>': (255, 0, 0),
+                                    '<s2>': (255, 0, 0)
+                            },
                         }
+                    }
                 },
                 'predict_value': {
                     'Выход 2': {
-                        'type': str,
-                        'data': text,
-                        'color_mark': 'wrong', None, 'success'
-                        'tags_color': {
-                                s1: #fffff,
-                                s2: #tyuhg
-                            }
+                        "Класс": {
+                            'type': str,
+                            'data': text,
+                            'color_mark': 'wrong', None, 'success'
+                            'tags_color': {
+                                '<s1>': (255, 0, 0),
+                                '<s2>': (255, 0, 0)
+                            },
+                        }
                     }
+                },
+                'tags_color': {
+                                '<s1>': (255, 0, 0),
+                                '<s2>': (255, 0, 0)
                 },
                 'statistic_values': {
                     Выход 2: {
@@ -1668,10 +1689,10 @@ class InteractiveCallback:
                         "color_mark": None,
                     }
                     return_data[idx + 1]['predict_value'][f"Выходной слой {out}"] = {
-                        "type": out_type,
-                        "data": predict_value,
-                        "color_mark": color_mark,
-                    },
+                                                                                        "type": out_type,
+                                                                                        "data": predict_value,
+                                                                                        "color_mark": color_mark,
+                                                                                    },
                     return_data[idx + 1]['tags_color'] = \
                         self.dataset_config.get("outputs").get(out).get('classes_colors') if \
                             self.dataset_config.get("outputs").get(
@@ -1785,26 +1806,32 @@ class InteractiveCallback:
             'output_id': [
                 {
                     'id': 1,
-                    'graph_name': 'Тренировочная выборка',
-                    'x_label': 'Название класса',
-                    'y_label': 'Значение',
-                    'plot_data': [
-                        {
-                            'labels': []:
-                            'values': []
-                        },
+                    'type': 'histogram',
+                    'data': {
+                        'graph_name': 'Тренировочная выборка',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': []:
+                                'values': []
+                            },
+                        }
                     ]
                 },
                 {
                     'id': 2,
-                    'graph_name': 'Проверочная выборка',
-                    'x_label': 'Название класса',
-                    'y_label': 'Значение',
-                    'plot_data': [
-                        {
-                            'labels': []:
-                            'values': []
-                        },
+                    'type': 'histogram',
+                    'data': {
+                        'graph_name': 'Проверочная выборка',
+                        'x_label': 'Название класса',
+                        'y_label': 'Значение',
+                        'plot_data': [
+                            {
+                                'labels': []:
+                                'values': []
+                            },
+                        }
                     ]
                 },
             ]
@@ -2002,6 +2029,66 @@ class InteractiveCallback:
             }
         return return_stat
 
+    def _get_error_distribution(self, y_true, y_pred, bins=20, absolute=True):
+        """
+        return x_labels, bar_values
+        """
+        error = (y_true - y_pred) * 100 / y_true
+        if absolute:
+            error = np.abs(error)
+        return self._get_distribution_histogram(error, bins=bins, categorical=False)
+
+    @staticmethod
+    def _get_time_series_graphic(data):
+        """
+        return x_data, y_data
+        """
+        return np.arange(len(data)).astype('float'), np.array(data).astype('float')
+
+    def _get_correlation_matrix(self, data_frame):
+        pass
+
+    def _get_scatter(self, y_true, y_pred):
+        # TODO: добавить inverse_transform
+        pass
+
+    @staticmethod
+    def _get_distribution_histogram(data_series, bins=20, categorical=True):
+        """
+        return x_labels, bar_values
+        """
+        if categorical:
+            hist_data = pd.Series(data_series).value_counts()
+            return hist_data.index, hist_data
+        else:
+            data_series = np.array(data_series)
+            bar_values, x_labels = np.histogram(data_series, bins=bins)
+            return x_labels.astype('float'), bar_values.astype('float')
+
+    @staticmethod
+    def _get_autocorrelation_graphic(y_true, y_pred, depth=10):
+
+        def get_auto_corr(y_true, y_pred, k):
+            l = len(y_true)
+            time_series_1 = y_pred[:-k]
+            time_series_2 = y_true[k:]
+            time_series_mean = np.mean(y_true)
+            time_series_var = np.array([i ** 2 for i in y_true - time_series_mean]).sum()
+            auto_corr = 0
+            for i in range(l - k):
+                temp = (time_series_1[i] - time_series_mean) * (time_series_2[i] - time_series_mean) / time_series_var
+                auto_corr = auto_corr + temp
+            return auto_corr
+
+        x_axis = np.arange(depth).astype('int')
+        auto_corr_true = []
+        for i in range(depth):
+            auto_corr_true.append(get_auto_corr(y_true, y_true, i + 1))
+        auto_corr_pred = []
+        for i in range(depth):
+            auto_corr_pred.append(get_auto_corr(y_true, y_pred, i + 1))
+        return x_axis, auto_corr_true, auto_corr_pred
+
     @staticmethod
     def _dice_coef(y_true, y_pred, batch_mode=True, smooth=1.0):
         axis = tuple(np.arange(1, len(y_true.shape))) if batch_mode else None
@@ -2049,8 +2136,8 @@ class InteractiveCallback:
                 img = image.array_to_img(self.x_val.get(input_id)[example_idx])
             img = img.convert('RGB')
             # filepath = NamedTemporaryFile()
-            save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
-            # save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
+            # save_path = f"/tmp/initial_data_image_{save_id}_input_{input_id}.webp"
+            save_path = f"initial_data_image_{save_id}_input_{input_id}.webp"
             img.save(save_path, 'webp')
             return save_path, LayerInputTypeChoice.Image.name
 
@@ -2171,8 +2258,8 @@ class InteractiveCallback:
             y_true = tensorflow.keras.utils.array_to_img(y_true)
             y_true = y_true.convert('RGB')
             # filepath_true = NamedTemporaryFile()
-            y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            # y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_true_save_path = f"/tmp/true_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_true_save_path = f"true_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_true.save(y_true_save_path, 'webp')
 
             # prepare y_pred image
@@ -2186,8 +2273,8 @@ class InteractiveCallback:
             y_pred = tensorflow.keras.utils.array_to_img(y_pred)
             y_pred = y_pred.convert('RGB')
             # filepath_pred = NamedTemporaryFile()
-            y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
-            # y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            # y_pred_save_path = f"/tmp/predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
+            y_pred_save_path = f"predict_segmentation_data_image_{save_id}_output_{output_id}.webp"
             y_pred.save(y_pred_save_path, 'webp')
 
             class_stat = {}
